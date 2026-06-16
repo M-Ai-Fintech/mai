@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+
+# Local cache
+.deno/
+.env
+
+# Generated outputs
+term_sheets/
+
+# Local database storage
+data/
+
+# OS specific files
+.DS_Store
+Thumbs.db
