@@ -1,4 +1,4 @@
-// src/engines/prediction/Transformers.ts
+// src/engines/prediction/transformers.ts
 import { pipeline } from "@huggingface/transformers";
 
 export class TransformersEngine {
@@ -11,7 +11,6 @@ export class TransformersEngine {
   private static async getExtractor() {
     if (this.extractor) return this.extractor;
     try {
-      // Using a small, fast model for embeddings: Xenova/all-MiniLM-L6-v2
       this.extractor = await pipeline(
         "feature-extraction",
         "Xenova/all-MiniLM-L6-v2"
@@ -55,7 +54,6 @@ export class TransformersEngine {
       const val = Math.sin(hash + i) * 10000;
       vector[i] = val - Math.floor(val);
     }
-    // Normalize vector
     const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
     return vector.map(v => v / (norm || 1));
   }

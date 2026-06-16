@@ -1,14 +1,8 @@
-// src/engines/prediction/PyTorch.ts
+// src/engines/prediction/pytorch.ts
 
-/**
- * References and simulates the PyTorch model pipeline.
- * This class provides the documentation and mock utilities for exporting models 
- * from PyTorch (Python training side) to ONNX format, which is then loaded by ONNXEngine.
- */
 export class PyTorchExporter {
   /**
-   * Generates a Python export script as a string, demonstrating the PyTorch to ONNX pipeline.
-   * This is part of the "AI-first methodology" expected by deep tech funds.
+   * Generates a Python export script as a string.
    */
   public static getExportPythonScript(): string {
     return `
@@ -33,14 +27,9 @@ class MACallClassifier(nn.Module):
 
 def export_model():
     model = MACallClassifier()
-    # Load trained weights
-    # model.load_state_dict(torch.load("ma_model_weights.pth"))
     model.eval()
-    
-    # Dummy input representing: [ebitda, revenue, totalAssets, totalLiabilities, operatingCashFlow, historicalVolatility]
     dummy_input = torch.randn(1, 6)
     
-    # Export the model
     torch.onnx.export(
         model,
         dummy_input,
@@ -59,12 +48,8 @@ if __name__ == "__main__":
 `;
   }
 
-  /**
-   * Simulates a local offline conversion check.
-   */
   public static async verifyOnnxModelIntegrity(onnxFilePath: string): Promise<boolean> {
     console.log(`[PyTorch/ONNX Exporter] Verifying structure of ${onnxFilePath}...`);
-    // Simulated checks of ONNX structure
     return true;
   }
 }

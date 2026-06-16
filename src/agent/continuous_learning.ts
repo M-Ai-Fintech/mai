@@ -24,7 +24,6 @@ export class ContinuousLearningEngine {
 
     this.feedbackCache.push(entry);
     
-    // Attempt to persist to a JSON file
     try {
       await Deno.mkdir("./data", { recursive: true });
       let existing: HumanFeedback[] = [];
@@ -43,7 +42,7 @@ export class ContinuousLearningEngine {
   }
 
   /**
-   * Retrieves all corrections for a given deal.
+   * Retrieves all corrections.
    */
   public static async getFeedbackHistory(dealId?: string): Promise<HumanFeedback[]> {
     try {
@@ -59,7 +58,7 @@ export class ContinuousLearningEngine {
   }
 
   /**
-   * Generates dynamic system prompt guidelines based on historical feedback corrections (In-Context Learning).
+   * Generates dynamic system prompt guidelines based on historical feedback corrections.
    */
   public static async generateInContextLearningPrompt(dealId: string): Promise<string> {
     const historicalCorrections = await this.getFeedbackHistory(dealId);

@@ -1,6 +1,6 @@
 // src/cli/chat.ts
-import { AgentOrchestrator } from "../agent/Mastra.ts";
-import { ClientSiloedRAG } from "../agent/rag-layer.ts";
+import { AgentOrchestrator } from "../agent/mastra.ts";
+import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { ContinuousLearningEngine } from "../agent/continuous_learning.ts";
 
 export class CLIChat {

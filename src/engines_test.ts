@@ -1,12 +1,12 @@
 // src/engines_test.ts
 import { assertEquals, assertNotEquals, assertThrows } from "jsr:@std/assert";
-import { TransformersEngine } from "./engines/prediction/Transformers.ts";
-import { ONNXEngine } from "./engines/prediction/ONNX.ts";
-import { MILPOptimizer, MATarget } from "./engines/optimization/MILP.ts";
+import { TransformersEngine } from "./engines/prediction/transformers.ts";
+import { ONNXEngine } from "./engines/prediction/onnx.ts";
+import { MILPOptimizer, MATarget } from "./engines/optimization/milp.ts";
 import { TermSheetGeneticOptimizer } from "./engines/optimization/genetic_search.ts";
-import { PDFGenerator } from "./engines/document-generator/PDF.ts";
-import { VDRIntegration } from "./core/integrations/vdr.ts";
-import { MADealLifecycle } from "./core/business_logic/ma_flow.ts";
+import { PDFGenerator } from "./engines/document-generator/pdf.ts";
+import { VDRIntegration } from "./core/vdr.ts";
+import { MADealLifecycle } from "./core/ma_flow.ts";
 import { ContinuousLearningEngine } from "./agent/continuous_learning.ts";
 
 /**

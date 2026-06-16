@@ -1,10 +1,9 @@
-// src/agent/Mastra.ts
+// src/agent/mastra.ts
 import { Mastra } from "@mastra/core";
 import { Agent } from "@mastra/core/agent";
 import * as tools from "./actions.ts";
 import { ContinuousLearningEngine } from "./continuous_learning.ts";
 
-// System instructions for the M&A Broker Agent
 const BASE_INSTRUCTIONS = `
 Você é o "M&A Broker Agent", um agente de IA especializado em fusões e aquisições (middle-market e lower-middle-market).
 Seu objetivo é ajudar assessores, investidores de Private Equity e diretores corporativos a desintermediar o ciclo de M&A.
@@ -20,8 +19,6 @@ DIRETRIZ DE SEGURANÇA: Mantenha os silos de dados de cada cliente/deal estritam
 DIRETRIZ MATEMÁTICA: Você NÃO executa cálculos matemáticos finais diretamente. Use sempre a ferramenta adequada (MILP para portfólio, Algoritmo Genético para cláusulas).
 `;
 
-// Instantiating the Mastra Agent.
-// If OPENAI_API_KEY is not present, we fallback to a mock execution layer in our CLI chat.
 const openaiKey = Deno.env.get("OPENAI_API_KEY");
 const geminiKey = Deno.env.get("GEMINI_API_KEY");
 
@@ -53,7 +50,7 @@ export const mastra = new Mastra({
 
 export class AgentOrchestrator {
   /**
-   * Generates a response from the M&A broker agent, including RAG content and In-Context Learning overrides.
+   * Generates a response from the M&A broker agent.
    */
   public static async executeAgentQuery(
     dealId: string,
@@ -65,13 +62,11 @@ export class AgentOrchestrator {
       ragContext || "Nenhum documento VDR relevante recuperado."
     }`;
 
-    // If no real API keys are present, execute offline mock rule-based agent routing
     if (!openaiKey && !geminiKey) {
       return await this.simulateAgentExecution(userInput, dealId, systemPrompt);
     }
 
     try {
-      // Execute using Mastra's agent interface
       const result = await brokerAgent.generate(
         `${userInput}\n\n[System Context Override: ${systemPrompt}]`
       );
@@ -82,10 +77,6 @@ export class AgentOrchestrator {
     }
   }
 
-  /**
-   * Deterministic rule-based LLM simulator to run the agent completely offline.
-   * Parses keywords and invokes tools, mimicking the agentic reasoning loop.
-   */
   private static async simulateAgentExecution(
     input: string,
     dealId: string,
@@ -93,7 +84,6 @@ export class AgentOrchestrator {
   ): Promise<string> {
     const text = input.toLowerCase();
 
-    // 1. Check registry / KYB keyword
     if (text.includes("cnpj") || text.includes("receita") || text.includes("kyb") || text.includes("cadastro")) {
       const cnpjMatch = input.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{14}/);
       const cnpj = cnpjMatch ? cnpjMatch[0] : "12345678000199";
@@ -115,7 +105,6 @@ ${res.data.taxDebtsAmount > 0
   : "✅ Nenhuma pendência fiscal inicial encontrada."}`;
     }
 
-    // 2. Check risk prediction keyword
     if (text.includes("risco") || text.includes("preve") || text.includes("saude") || text.includes("insolvencia")) {
       const mockFinancials = {
         name: "Target Corp Ltda",
@@ -145,7 +134,6 @@ Chamei a ferramenta 'analyze-company-risks-tool' rodando modelo ONNX local quant
 *Parecer Técnico:* A saúde geral do ativo é de nível **${rep.dcfRiskLabel}**. A volatilidade do fluxo de caixa e o endividamento indicam riscos moderados que exigirão earn-outs estendidos.`;
     }
 
-    // 3. Check portfolio optimization keyword
     if (text.includes("portfol") || text.includes("aloc") || text.includes("milp") || text.includes("matching")) {
       const mockTargets = [
         { id: "T1", name: "Alfa Logistica", synergyValue: 85, acquisitionCost: 40, kycRiskIndex: 0.15 },
@@ -165,7 +153,7 @@ Chamei a ferramenta 'analyze-company-risks-tool' rodando modelo ONNX local quant
       
       return `[MOCK AGENT REASONING - OFFLINE MODE]
 Identifiquei uma solicitação de otimização de portfólio de aquisições (deal matching).
-Formulei o problema de Programação Inteira Mista (MILP) e chamei a ferramenta 'optimize-portfolio-tool' rodando solver HiGHS WASM.
+Formulei o problem de Programação Inteira Mista (MILP) e chamei a ferramenta 'optimize-portfolio-tool'.
 
 **Fórmula de Otimização Executada:**
 - Maximização de Sinergia subject to Capital <= 90 e Risco KYC <= 0.3
@@ -179,7 +167,6 @@ Formulei o problema de Programação Inteira Mista (MILP) e chamei a ferramenta 
   *(Selecionados T1 e T2. T3 foi excluído pelo alto risco de compliance e T4 pela restrição de concorrência com T1)*`;
     }
 
-    // 4. Check term sheet optimization keyword
     if (text.includes("contrat") || text.includes("term") || text.includes("genetic") || text.includes("negocia")) {
       const res = await tools.optimizeTermSheetTool.execute({
         minBuyerReservationUtility: 0.35,
@@ -204,7 +191,6 @@ Executei o motor de algoritmo genético chamando a ferramenta 'optimize-term-she
 - Pontuação de Aptidão Conjunta: ${opt.fitness.toFixed(4)}`;
     }
 
-    // 5. Check PDF generation keyword
     if (text.includes("pdf") || text.includes("gerar doc") || text.includes("salvar")) {
       const mockProps = {
         cashPercentage: 0.55,
@@ -235,7 +221,6 @@ Chamei a ferramenta 'generate-pdf-term-sheet-tool'.
 O PDF do Term Sheet contendo os termos otimizados de valoração e cláusulas não vinculativas foi gerado com sucesso.`;
     }
 
-    // 6. Generic response
     return `[MOCK AGENT REASONING - OFFLINE MODE]
 Olá, sou o seu M&A Broker Agent.
 Recebi sua mensagem. Como estamos operando sem chaves de API externas, processarei suas solicitações localmente e offline.

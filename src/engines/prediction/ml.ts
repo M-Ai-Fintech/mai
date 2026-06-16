@@ -1,6 +1,6 @@
-// src/engines/prediction/ML.ts
-import { ONNXEngine, ONNXModelInput, ONNXPredictionResult } from "./ONNX.ts";
-import { TransformersEngine } from "./Transformers.ts";
+// src/engines/prediction/ml.ts
+import { ONNXEngine, ONNXModelInput, ONNXPredictionResult } from "./onnx.ts";
+import { TransformersEngine } from "./transformers.ts";
 
 export interface CompanyFinancialProfile {
   name: string;

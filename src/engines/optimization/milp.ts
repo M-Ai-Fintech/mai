@@ -1,5 +1,5 @@
-// src/engines/optimization/MILP.ts
-import { HighsWasmSolver } from "./bubblyworld_highs.ts";
+// src/engines/optimization/milp.ts
+import { HighsWasmSolver } from "./highs.ts";
 
 export interface MATarget {
   id: string;
@@ -10,9 +10,9 @@ export interface MATarget {
 }
 
 export interface MILPConfig {
-  budgetLimit: number; // B (Capital available)
-  riskToleranceLimit: number; // tau_max (Max acceptable risk per target)
-  mutualExclusions?: Array<[string, string]>; // Pairs of targets that are mutually exclusive
+  budgetLimit: number;
+  riskToleranceLimit: number;
+  mutualExclusions?: Array<[string, string]>;
 }
 
 export interface MILPResult {
@@ -54,11 +54,10 @@ export class MILPOptimizer {
       lpLines.push(`  risk_${target.id}: ${target.kycRiskIndex} x_${target.id} <= ${config.riskToleranceLimit}`);
     }
     
-    // Mutual exclusions constraints (e.g. competitor conflicts)
+    // Mutual exclusions constraints
     if (config.mutualExclusions) {
       let idx = 1;
       for (const [idA, idB] of config.mutualExclusions) {
-        // Only add if both targets exist in the dataset
         if (targets.some(t => t.id === idA) && targets.some(t => t.id === idB)) {
           lpLines.push(`  exclude_${idx}: x_${idA} + x_${idB} <= 1`);
           idx++;
@@ -84,13 +83,11 @@ export class MILPOptimizer {
     // Solve using the HiGHS WASM wrapper
     const solution = await HighsWasmSolver.solveLP(lpString);
     
-    // Parse the result
     const selectedTargetIds: string[] = [];
     let totalCostSpent = 0;
     
     for (const target of targets) {
       const val = solution.vars[`x_${target.id}`];
-      // Values might be floats near 1 due to floating point precision (e.g., 0.9999999)
       if (val && val > 0.5) {
         selectedTargetIds.push(target.id);
         totalCostSpent += target.acquisitionCost;

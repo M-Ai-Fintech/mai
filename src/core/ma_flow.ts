@@ -1,4 +1,4 @@
-// src/core/business_logic/ma_flow.ts
+// src/core/ma_flow.ts
 
 export type MADealState =
   | "INITIATED"
@@ -90,7 +90,6 @@ export class MADealLifecycle {
     deal.history.push(entry);
 
     if (nextState === "DUE_DILIGENCE_ACTIVE") {
-      // Compliance check flag starts as true, to be toggled by results
       deal.complianceVerified = true;
     }
 
@@ -98,7 +97,7 @@ export class MADealLifecycle {
   }
 
   /**
-   * Enforces sequence compliance (e.g. cannot sign term sheet without NDA).
+   * Enforces sequence compliance.
    */
   private static validateTransition(from: MADealState, to: MADealState): boolean {
     if (from === to) return true;
@@ -115,9 +114,9 @@ export class MADealLifecycle {
       case "TERM_SHEET_NEGOTIATING":
         return to === "TERM_SHEET_APPROVED";
       case "TERM_SHEET_APPROVED":
-        return to === "COMPLETED" || to === "TERM_SHEET_NEGOTIATING"; // Can renegotiate
+        return to === "COMPLETED" || to === "TERM_SHEET_NEGOTIATING";
       case "COMPLETED":
-        return false; // Terminal state
+        return false;
       default:
         return false;
     }

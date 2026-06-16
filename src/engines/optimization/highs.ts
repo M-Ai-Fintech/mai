@@ -1,4 +1,4 @@
-// src/engines/optimization/bubblyworld_highs.ts
+// src/engines/optimization/highs.ts
 import { HiGHS } from "@bubblyworld/highs-ts";
 
 export interface HighsSolveResult {
@@ -14,13 +14,8 @@ export class HighsWasmSolver {
   public static async solveLP(lpString: string): Promise<HighsSolveResult> {
     let highsInstance: any = null;
     try {
-      // Create the WASM instance
       highsInstance = await HiGHS.create();
-      
-      // Parse the LP format string
       await highsInstance.parse(lpString, "lp");
-      
-      // Solve the optimization problem
       const rawResult = await highsInstance.solve();
       
       const vars: Record<string, number> = {};
@@ -33,7 +28,6 @@ export class HighsWasmSolver {
           vars[key] = value;
         }
       } else if (rawResult.solution && typeof rawResult.solution === "object") {
-        // Fallback for object representations
         Object.assign(vars, rawResult.solution);
       }
       
@@ -44,31 +38,25 @@ export class HighsWasmSolver {
       };
     } catch (err) {
       console.error("HiGHS Solver encountered an error:", err);
-      // Fallback: A deterministic heuristic greedy knapsack solver if WASM fails to load/run
       return this.fallbackGreedySolver(lpString);
     } finally {
       if (highsInstance && typeof highsInstance.free === "function") {
         try {
           highsInstance.free();
         } catch (e) {
-          // Ignore freeing errors
+          // Ignore
         }
       }
     }
   }
 
-  /**
-   * Safe fallback greedy solver to make sure the MVP works even if WASM fails to load.
-   */
   private static fallbackGreedySolver(lpString: string): HighsSolveResult {
     console.warn("Using fallback greedy solver for LP matching.");
     
-    // Parse values from LP string (rough parsing for fallback)
     const lines = lpString.split("\n");
     let budget = 100;
     const items: Array<{ id: string; val: number; cost: number; risk: number }> = [];
     
-    // Simple regex parsing of the LP format for fallback
     const objLine = lines.find(l => l.includes("obj:"));
     const capLine = lines.find(l => l.includes("capital:"));
     
@@ -77,18 +65,16 @@ export class HighsWasmSolver {
       if (budgetMatch) budget = parseFloat(budgetMatch[1]);
     }
     
-    // Extract variables
     const binarySectionIdx = lines.findIndex(l => l.includes("Binaries"));
     if (binarySectionIdx !== -1) {
       const varLine = lines[binarySectionIdx + 1] || "";
       const varNames = varLine.trim().split(/\s+/).filter(Boolean);
       
       for (const vName of varNames) {
-        let val = 10; // Default synergy
-        let cost = 30; // Default cost
-        let risk = 0.2; // Default risk
+        let val = 10;
+        let cost = 30;
+        let risk = 0.2;
         
-        // Find cost and synergy values in the LP string
         if (objLine) {
           const match = objLine.match(new RegExp(`(\\d+)\\s+${vName}`));
           if (match) val = parseFloat(match[1]);
@@ -98,7 +84,6 @@ export class HighsWasmSolver {
           if (match) cost = parseFloat(match[1]);
         }
         
-        // Check risk constraints
         const rLine = lines.find(l => l.includes(`risk_${vName}:`));
         if (rLine) {
           const match = rLine.match(new RegExp(`([\\d.]+)\\s+${vName}`));
@@ -109,8 +94,6 @@ export class HighsWasmSolver {
       }
     }
     
-    // Greedy knapsack solver
-    // Sort items by value/cost ratio descending
     items.sort((a, b) => (b.val / b.cost) - (a.val / a.cost));
     
     let currentCost = 0;

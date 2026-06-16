@@ -1,10 +1,10 @@
 // src/cli/commands.ts
-import { VDRIntegration } from "../core/integrations/vdr.ts";
-import { MLEngine, CompanyFinancialProfile } from "../engines/prediction/ML.ts";
-import { KYCValuationsCoordinator, TargetRawInput } from "../engines/optimization/KYC_Valuations.ts";
+import { VDRIntegration } from "../core/vdr.ts";
+import { MLEngine, CompanyFinancialProfile } from "../engines/prediction/ml.ts";
+import { KYCValuationsCoordinator, TargetRawInput } from "../engines/optimization/kyc_valuations.ts";
 import { TermSheetGeneticOptimizer } from "../engines/optimization/genetic_search.ts";
-import { LaTeXGenerator } from "../engines/document-generator/LaTeX.ts";
-import { PDFGenerator } from "../engines/document-generator/PDF.ts";
+import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
+import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 
 export class CLICommands {
   /**

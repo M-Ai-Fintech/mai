@@ -1,6 +1,6 @@
-// src/agent/rag-layer.ts
-import { VDRIntegration, VDRDocument } from "../core/integrations/vdr.ts";
-import { TransformersEngine } from "../engines/prediction/Transformers.ts";
+// src/agent/rag_layer.ts
+import { VDRIntegration, VDRDocument } from "../core/vdr.ts";
+import { TransformersEngine } from "../engines/prediction/transformers.ts";
 
 export interface VectorRecord {
   documentName: string;
@@ -10,7 +10,6 @@ export interface VectorRecord {
 }
 
 export class ClientSiloedRAG {
-  // Vector database siloed by client ID / deal ID
   private static silos: Record<string, VectorRecord[]> = {};
 
   /**
@@ -23,7 +22,6 @@ export class ClientSiloedRAG {
     const records: VectorRecord[] = [];
     
     for (const doc of docs) {
-      // For the MVP, we chunk the text summary. In production we would read files.
       const chunks = this.chunkText(doc.contentSummary, 150);
       
       for (let i = 0; i < chunks.length; i++) {
@@ -69,15 +67,10 @@ export class ClientSiloedRAG {
       };
     });
 
-    // Sort descending by score
     results.sort((a, b) => b.score - a.score);
-    
     return results.slice(0, topK);
   }
 
-  /**
-   * Simple text chunking by word count limit.
-   */
   private static chunkText(text: string, maxWords: number): string[] {
     const words = text.split(/\s+/);
     const chunks: string[] = [];
@@ -87,9 +80,6 @@ export class ClientSiloedRAG {
     return chunks;
   }
 
-  /**
-   * Computes the cosine similarity between two vector embeddings.
-   */
   private static cosineSimilarity(vecA: number[], vecB: number[]): number {
     if (vecA.length !== vecB.length) return 0;
     let dotProduct = 0;

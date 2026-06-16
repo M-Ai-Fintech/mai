@@ -1,4 +1,4 @@
-// src/core/integrations/vdr.ts
+// src/core/vdr.ts
 
 export interface KYBRegistryData {
   cnpj: string;
@@ -23,12 +23,9 @@ export class VDRIntegration {
    * Simulates querying the Receita Federal/SERPRO registry database for KYB verification.
    */
   public static async queryKYBRegistry(cnpj: string): Promise<KYBRegistryData> {
-    // Simulate API network delay
     await new Promise((resolve) => setTimeout(resolve, 80));
 
     const cnpjDigits = cnpj.replace(/\D/g, "");
-    
-    // Fallback/Mock registry query based on CNPJ digits
     const seed = parseInt(cnpjDigits.slice(-4)) || 1000;
     const isSuspended = seed % 13 === 0;
     const isInactive = seed % 17 === 0;
@@ -51,7 +48,6 @@ export class VDRIntegration {
    * Scans a client Virtual Data Room (VDR) directory and indexes the documents found.
    */
   public static async scanVDR(vdrDirectory: string): Promise<VDRDocument[]> {
-    // Real check: see if directory exists
     const docs: VDRDocument[] = [];
     try {
       for await (const entry of Deno.readDir(vdrDirectory)) {
@@ -70,7 +66,6 @@ export class VDRIntegration {
         }
       }
     } catch (_err) {
-      // If folder doesn't exist, generate standard sandbox VDR files
       return this.generateMockVDRDocuments();
     }
     
@@ -111,9 +106,6 @@ export class VDRIntegration {
     return "internal";
   }
 
-  /**
-   * Generates sample/standard mock VDR files for testing and evaluation
-   */
   public static generateMockVDRDocuments(): VDRDocument[] {
     return [
       {

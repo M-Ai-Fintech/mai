@@ -1,11 +1,11 @@
 // src/agent/actions.ts
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { VDRIntegration } from "../core/integrations/vdr.ts";
-import { MLEngine } from "../engines/prediction/ML.ts";
-import { MILPOptimizer } from "../engines/optimization/MILP.ts";
+import { VDRIntegration } from "../core/vdr.ts";
+import { MLEngine } from "../engines/prediction/ml.ts";
+import { MILPOptimizer } from "../engines/optimization/milp.ts";
 import { TermSheetGeneticOptimizer } from "../engines/optimization/genetic_search.ts";
-import { PDFGenerator } from "../engines/document-generator/PDF.ts";
+import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 
 /**
  * Tool 1: KYB/Registry verification

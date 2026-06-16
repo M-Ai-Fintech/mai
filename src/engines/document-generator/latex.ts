@@ -1,4 +1,4 @@
-// src/engines/document-generator/LaTeX.ts
+// src/engines/document-generator/latex.ts
 import { TermSheetProposal } from "../optimization/genetic_search.ts";
 
 export interface LaTeXDocumentParams {

@@ -1,6 +1,6 @@
-// src/engines/optimization/KYC_Valuations.ts
-import { MLEngine, CompanyFinancialProfile } from "../prediction/ML.ts";
-import { MILPOptimizer, MATarget, MILPConfig, MILPResult } from "./MILP.ts";
+// src/engines/optimization/kyc_valuations.ts
+import { MLEngine, CompanyFinancialProfile } from "../prediction/ml.ts";
+import { MILPOptimizer, MATarget, MILPConfig, MILPResult } from "./milp.ts";
 
 export interface TargetRawInput {
   id: string;
@@ -35,7 +35,7 @@ export class KYCValuationsCoordinator {
     const evaluatedProfiles: Record<string, any> = {};
     const optimizedTargets: MATarget[] = [];
 
-    // 1. Run predictive analysis (ONNX model) on each target to determine its real risk profile
+    // 1. Run predictive analysis (ONNX model) on each target
     for (const raw of rawTargets) {
       const profile: CompanyFinancialProfile = {
         name: raw.name,
@@ -51,8 +51,6 @@ export class KYCValuationsCoordinator {
       const analysis = await MLEngine.analyzeProfile(profile);
       evaluatedProfiles[raw.id] = analysis;
 
-      // Map the analysis output to the MILP target interface
-      // Using the predicted insolvency risk as the KYC risk index
       optimizedTargets.push({
         id: raw.id,
         name: raw.name,
