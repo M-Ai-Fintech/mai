@@ -1,61 +1,104 @@
-# Middleware de M&A Low-Touch
+# M&Ai - MVP
 
-Monolito MVP desenvolvido em Deno para automação e desintermediação das fases de due diligence e estruturação de transações (fusões e aquisições) corporativas. 
+MVP em estrutura de monolito para prova de conceito do produto. O projeto
+consiste em princípio de 3 pilares principais, similares ao MVC, sendo engines,
+cli e core, respectivamente, com uma camada extra agentica.
+
+A escolha inicial do Deno é por uma questão da junção da facilidade da criação
+de um MVP que o node possui, sem abrir mão da segurança e performance do TS e do
+conceito de runtime seguro por padrão. Que também permite que parte do código
+seja aproveitada no futuro, quando as engines forem convertidas em seus
+repositórios próprios em Rust, compilados em WASM, visando a execução de alta
+performance e baixo consumo de recursos, enquanto se mantém o core (business
+logic) em Deno, com TS por padrão.
+
+O CLI é uma escolha que visa uma interface mais simples possível, mas ainda
+funcional, unicamente com o intuíto de provar o conceito do produto em si, não
+visando ser uma ferramenta de uso produtivo, mas sim, uma ferramenta de
+demonstração.
+
+A camada agentica da aplicação é uma experimentação com LLMs e agentes de IA
+para auxiliar na tomada de decisão e na automação de tarefas, mantendo tracking
+de continuous learning, e seu próprio gerenciamento de memória e de curto e
+longo prazo.
 
 ---
 
-## 📁 Estrutura do Monolito
+## Estrutura do Monolito
 
-O projeto é organizado seguindo uma arquitetura de código "flat" sob os 6 diretórios principais de responsabilidade:
+O projeto é organizado seguindo uma arquitetura de código "flat" sob os 6
+diretórios principais de responsabilidade:
 
 ```
 src/
-├── cli/                 # Interface de linha de comando
-│   ├── interface.ts     # Menu principal interativo ANSI
-│   ├── commands.ts      # Handlers de comandos de terminal
-│   └── chat.ts          # REPL chatbot agêntico
-├── core/                # Lógica de negócio e conexões base
-│   ├── vdr.ts           # Integração cadastral KYB e virtual data rooms
-│   └── ma_flow.ts       # Máquina de estados do ciclo do Deal
+├── agent/                  # Camada agêntica
+├── cli/                    # Interface de linha de comando
+├── core/                   # Lógica de negócio e conexões base
 ├── engines/
-│   ├── prediction/      # IA preditiva e análise de risco
-│   │   ├── ml.ts        # Coordenação preditiva
-│   │   ├── transformers.ts # Embeddings semânticos locais
-│   │   ├── onnx.ts      # Classificação de insolvência via ONNX
-│   │   └── pytorch.ts   # Metadados e script de exportação PyTorch
-│   ├── optimization/    # Pesquisa operacional e solvers
-│   │   ├── kyc_valuations.ts # Otimização de portfólio pré-filtrada por risco
-│   │   ├── milp.ts      # Otimização MILP de deal matching
-│   │   ├── highs.ts     # HiGHS Solver compilado para WebAssembly
-│   │   └── genetic_search.ts # Algoritmo Genético de negociação de Nash
-│   └── document-generator/ # Emissão de contratos
-│       ├── latex.ts     # Emissor de código-fonte LaTeX
-│       └── pdf.ts       # Compilador físico PDF via pdf-lib
-└── agent/               # Camada agêntica
-    ├── actions.ts       # Ferramentas do Mastra Agent
-    ├── rag_layer.ts     # RAG siloado e isolado por Deal
-    ├── fine_tuning.ts   # Documentação PEFT/LoRA pós-investimento
-    ├── continuous_learning.ts # Aprendizado em contexto (Observational Memory)
-    └── mastra.ts        # Setup do Agente de IA M&A Broker
+│   ├── prediction/         # IA preditiva e análise de risco
+│   ├── optimization/       # Pesquisa operacional e solvers
+└───└── document-generator/ # Emissão de contratos
 ```
 
 ---
 
-## 🚀 Como Executar
+## Motores
+
+afasfaf
+
+### Predição
+
+### Otimização
+
+### Gerador de Documentos
+
+---
+
+## Cloud
+
+aaaa
+
+### Google AI Studio
+
+### Google Vertex AI
+
+### Google Cloud Platform (GCP)
+
+---
+
+## Desenvolvimento
+
+aaaaaaa
+
+### Antigravity
+
+### Google Colab
+
+### Gemini
+
+---
+
+## Como Executar
 
 ### Pré-requisitos
-Certifique-se de que o Deno está instalado no sistema. Caso não esteja, instale executando:
+
+Certifique-se de que o Deno está instalado no sistema. Caso não esteja, instale
+executando:
+
 ```bash
 curl -fsSL https://deno.land/install.sh | sh
 ```
 
 ### Inicializando o Menu Interativo
+
 O middleware possui uma interface de terminal interativa com menus guiados:
+
 ```bash
 deno task start
 ```
 
 ### Comandos CLI Diretos
+
 Você também pode rodar tarefas específicas diretamente do terminal:
 
 ```bash
@@ -82,9 +125,10 @@ deno run --no-prompt --allow-read --allow-write --allow-env --allow-ffi src/cli/
 
 ---
 
-## 🧪 Testes Automatizados
+## Testes Automatizados
 
-A suíte de testes unitários integrada cobre todos os motores computacionais (predição, solvers, PDF, ciclo de vida e aprendizado contínuo):
+A suíte de testes unitários integrada cobre todos os motores computacionais
+(predição, solvers, PDF, ciclo de vida e aprendizado contínuo):
 
 ```bash
 deno task test
@@ -92,7 +136,9 @@ deno task test
 
 ---
 
-## 🧠 Integração Google AI
+## Integração Google AI
 
-Para detalhes sobre como configurar chaves de API, fazer deploy na Vertex AI (produção), usar o Google Colab para treinar o classificador PyTorch/ONNX e integrar agentes usando o SDK Google Antigravity, leia:
-👉 **[GEMINI.md](file:///home/luis/mai/GEMINI.md)**
+Para detalhes sobre como configurar chaves de API, fazer deploy na Vertex AI
+(produção), usar o Google Colab para treinar o classificador PyTorch/ONNX e
+integrar agentes usando o SDK Google Antigravity, leia: 👉
+**[GEMINI.md](file:///home/luis/mai/GEMINI.md)**
