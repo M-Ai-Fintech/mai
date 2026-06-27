@@ -118,3 +118,124 @@ export interface ValuationReport {
   readonly ebitdaValuation: MethodResult;
   readonly allFlags: readonly ValuationFlag[];
 }
+
+/**
+ * Data inputs for the Chaffe Option-Pricing Model to calculate DLOM.
+ * Uses a European-style Black-Scholes put option at-the-money.
+ */
+export interface DlomInput {
+  /** Expected annualized asset price volatility (sigma), e.g. 0.35 for 35% */
+  readonly volatility: number;
+  /** Risk-free interest rate matching the holding period (r), e.g. 0.0575 for 5.75% */
+  readonly riskFreeRate: number;
+  /** Expected holding period/time-to-liquidity in years (T), e.g. 2.5 years */
+  readonly holdingPeriod: number;
+  /** Optional dividend yield (q), default is 0.0 */
+  readonly dividendYield?: number;
+}
+
+/**
+ * Data inputs for Juros sobre o Capital Próprio (JCP) tax shield adjustment.
+ * Accounts for Brazilian tax-deductible interest paid on equity.
+ */
+export interface JcpInput {
+  /** Total JCP distribution planned or paid */
+  readonly jcpAmount: number;
+  /** Corporate tax rate (combined IRPJ + CSLL + surcharge, e.g., 0.34 for 34%) */
+  readonly corporateTaxRate: number;
+  /** Withholding tax rate (IRRF, typically 0.15 for 15%) */
+  readonly withholdingTaxRate?: number;
+}
+
+/** Severity or probability of loss classification for legal/fiscal claims. */
+export type ContingencyProbability = "PROBABLE" | "POSSIBLE" | "REMOTE";
+
+/** Represents a single legal or tax claim identified during due diligence. */
+export interface ContingencyInput {
+  readonly id: string;
+  readonly category: "tax" | "labor" | "civil" | "other";
+  readonly description: string;
+  readonly amount: number;
+  readonly probability: ContingencyProbability;
+  /** Custom multiplier (e.g. 1.0 for PROBABLE, 0.50 for POSSIBLE, 0.0 for REMOTE) */
+  readonly probabilityWeight?: number;
+}
+
+/** Structured tax and labor contingencies DTO. */
+export interface ContingenciesData {
+  readonly taxContingencies: readonly ContingencyInput[];
+  readonly laborContingencies: readonly ContingencyInput[];
+}
+
+/** Dynamic target profiling data used to derive valuation priors. */
+export interface CompanyProfile {
+  readonly sector:
+    | "technology"
+    | "manufacturing"
+    | "retail"
+    | "energy"
+    | "services"
+    | "biotech";
+  readonly stage: "startup" | "growth" | "mature" | "distressed";
+  readonly listingStatus: "public" | "private";
+  readonly financialStability: "high" | "medium" | "low";
+}
+
+/** Bound constraints for a valuation method's weight in reconciliation. */
+export interface MethodWeightBounds {
+  readonly minWeight: number;
+  readonly maxWeight: number;
+  readonly priorWeight: number;
+}
+
+/** Weights configuration structure covering the 6 valuation methods. */
+export interface ValuationReconciliationWeights {
+  readonly bookValue: MethodWeightBounds;
+  readonly dcf: MethodWeightBounds;
+  readonly terminalValue: MethodWeightBounds;
+  readonly marketCap: MethodWeightBounds;
+  readonly enterpriseValue: MethodWeightBounds;
+  readonly ebitdaValuation: MethodWeightBounds;
+}
+
+/**
+ * Extended input DTO received by the ValuationEngine.
+ */
+export interface ExtendedValuationInput extends ValuationInput {
+  readonly profile?: CompanyProfile;
+  readonly dlom?: DlomInput;
+  readonly jcp?: JcpInput;
+  readonly contingencies?: ContingenciesData;
+  readonly customWeights?: Partial<
+    Record<keyof ValuationReconciliationWeights, MethodWeightBounds>
+  >;
+}
+
+/** Valuation contribution for a specific calculation method. */
+export interface ReconciledMethodResult {
+  readonly method: string;
+  readonly rawValue: number;
+  readonly weight: number;
+  readonly contribution: number;
+  readonly flags: readonly string[];
+}
+
+/** Consolidated mathematical reconciliation report. */
+export interface ReconciliationReport {
+  readonly baseReconciledValue: number;
+  readonly dlomDiscountRate: number;
+  readonly dlomDiscountAmount: number;
+  readonly jcpTaxShieldBenefit: number;
+  readonly contingencyDeductions: number;
+  readonly finalReconciledValuation: number;
+  readonly methodBreakdown: readonly ReconciledMethodResult[];
+  readonly optimizationStatus: "optimal" | "fallback";
+  readonly optimizationMessage?: string;
+}
+
+/**
+ * Extended output DTO returned by the updated ValuationEngine.
+ */
+export interface ExtendedValuationReport extends ValuationReport {
+  readonly reconciliation?: ReconciliationReport;
+}
