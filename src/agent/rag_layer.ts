@@ -1,5 +1,4 @@
 // src/agent/rag_layer.ts
-import { VDRIntegration, VDRDocument } from "../core/vdr.ts";
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 
 export interface VectorRecord {
@@ -15,9 +14,28 @@ export class ClientSiloedRAG {
   /**
    * Initializes the silo for a given deal by loading and vectorizing VDR documents.
    */
-  public static async initializeSilo(dealId: string, vdrDirectory: string): Promise<number> {
+  public static async initializeSilo(dealId: string, _vdrDirectory: string): Promise<number> {
     console.log(`[RAG Silo] Initializing vector silo for Deal ${dealId}...`);
-    const docs: VDRDocument[] = await VDRIntegration.scanVDR(vdrDirectory);
+    
+    // Dados mockados inline para eliminar qualquer dependência de VDR externo
+    const docs = [
+      {
+        name: "DRE_Target_2025.txt",
+        contentSummary: "Demonstração de Resultados do Exercício (DRE) consolidada. EBITDA: 4500000. Receita: 15000000. Total Ativos: 20000000. Total Passivos: 12000000. Caixa Operacional: 3200000. Volatilidade Histórica: 0.12.",
+      },
+      {
+        name: "Estatuto_Social_Registrado.txt",
+        contentSummary: "Estatuto social arquivado na Junta Comercial. Contempla cláusula de Mudança de Controle (Change of Control) determinando aprovação unânime do conselho administrativo para aquisições hostis.",
+      },
+      {
+        name: "Folha_Pagamento_C_Level.txt",
+        contentSummary: "Detalhamento salarial e bônus de performance do quadro Executivo (CEO, CFO, CTO) com cláusulas de golden parachute de 12 meses.",
+      },
+      {
+        name: "Acordo_Acionistas_Target.txt",
+        contentSummary: "Contrato de acordo de acionistas estabelecendo direitos de tag-along de 100% e direito de preferência (Right of First Refusal).",
+      },
+    ];
     
     const records: VectorRecord[] = [];
     

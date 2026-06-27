@@ -12,7 +12,9 @@
     "zod": "npm:zod@^3.23.8",
     "@huggingface/transformers": "npm:@huggingface/transformers@^4.2.0",
     "commander": "npm:commander@^12.1.0",
-    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
+    "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts",
+    "pg": "npm:pg@^8.11.3",
+    "@types/pg": "npm:@types/pg@^8.11.4"
   },
   "compilerOptions": {
     "strict": true

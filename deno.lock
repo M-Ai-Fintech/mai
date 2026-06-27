@@ -7,9 +7,11 @@
     "npm:@bubblyworld/highs-ts@^1.2.0": "1.2.0",
     "npm:@huggingface/transformers@^4.2.0": "4.2.0",
     "npm:@mastra/core@1": "1.42.0_zod@3.25.76",
+    "npm:@types/pg@^8.11.4": "8.20.0",
     "npm:commander@^12.1.0": "12.1.0",
     "npm:genetic-search@1": "1.0.0",
     "npm:pdf-lib@^1.17.1": "1.17.1",
+    "npm:pg@^8.11.3": "8.22.0",
     "npm:zod@^3.23.8": "3.25.76"
   },
   "jsr": {
@@ -443,6 +445,14 @@
       "integrity": "sha512-603BddQMv3pUcr4U2dhujk83N2tTDVr/34wII2B6bJy6g+8WD6yUb11jszNs0gdi4PesVWl7ABt8nYMVpnLUcg==",
       "dependencies": [
         "undici-types"
+      ]
+    },
+    "@types/pg@8.20.0": {
+      "integrity": "sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==",
+      "dependencies": [
+        "@types/node",
+        "pg-protocol",
+        "pg-types"
       ]
     },
     "@types/unist@3.0.3": {
@@ -1452,6 +1462,53 @@
         "tslib@1.14.1"
       ]
     },
+    "pg-cloudflare@1.4.0": {
+      "integrity": "sha512-Vo7z/6rrQYxpNRylp4Tlob2elzbh+N/MOQbxFVWCxS7oEx6jF53GTJFxK2WWpKuBRkmiin4Mt+xofFDjx09R0A=="
+    },
+    "pg-connection-string@2.14.0": {
+      "integrity": "sha512-XwWDGcLRGCXAR8F/AM5bG7Q+A3Wm2s6QeEjlOKZLlH3UYcguiqCWKyWXVag5TLTIjR7oOJUY8kcADaZgWPyLeg=="
+    },
+    "pg-int8@1.0.1": {
+      "integrity": "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw=="
+    },
+    "pg-pool@3.14.0_pg@8.22.0": {
+      "integrity": "sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw==",
+      "dependencies": [
+        "pg"
+      ]
+    },
+    "pg-protocol@1.15.0": {
+      "integrity": "sha512-cq9sECI5s0+uPUXjbz8ioyPJni6RzsRib0US67i5IoTZKw8fNeYlVE7u8F4dG7vEJJtc5wdD1K189lCCUwqWTQ=="
+    },
+    "pg-types@2.2.0": {
+      "integrity": "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==",
+      "dependencies": [
+        "pg-int8",
+        "postgres-array",
+        "postgres-bytea",
+        "postgres-date",
+        "postgres-interval"
+      ]
+    },
+    "pg@8.22.0": {
+      "integrity": "sha512-8wih1vVIBMxoUM2oB4soJsD9tDnDpLv4OXBJ+EJzFsvycD+lfyIreC2gGHq78f8jbLLt+bvlPTFdFZfJkOuzAA==",
+      "dependencies": [
+        "pg-connection-string",
+        "pg-pool",
+        "pg-protocol",
+        "pg-types",
+        "pgpass"
+      ],
+      "optionalDependencies": [
+        "pg-cloudflare"
+      ]
+    },
+    "pgpass@1.0.5": {
+      "integrity": "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==",
+      "dependencies": [
+        "split2"
+      ]
+    },
     "picomatch@4.0.4": {
       "integrity": "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A=="
     },
@@ -1460,6 +1517,21 @@
     },
     "platform@1.3.6": {
       "integrity": "sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg=="
+    },
+    "postgres-array@2.0.0": {
+      "integrity": "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA=="
+    },
+    "postgres-bytea@1.0.1": {
+      "integrity": "sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ=="
+    },
+    "postgres-date@1.0.7": {
+      "integrity": "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q=="
+    },
+    "postgres-interval@1.2.0": {
+      "integrity": "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==",
+      "dependencies": [
+        "xtend"
+      ]
     },
     "posthog-node@5.37.1": {
       "integrity": "sha512-CU2o/FGCyvKQSCsQhc6iA3lc50xMWTqSEpKS8HINABj87YD9iefEqDQWVWJ4TABcpDo5fkbjTyRig/zMe/WNQw==",
@@ -1710,6 +1782,9 @@
     "signal-exit@4.1.0": {
       "integrity": "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="
     },
+    "split2@4.2.0": {
+      "integrity": "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="
+    },
     "sprintf-js@1.0.3": {
       "integrity": "sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g=="
     },
@@ -1833,6 +1908,9 @@
     "ws@8.21.0": {
       "integrity": "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="
     },
+    "xtend@4.0.2": {
+      "integrity": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="
+    },
     "xxhash-wasm@1.1.0": {
       "integrity": "sha512-147y/6YNh+tlp6nd/2pWq38i9h6mz/EuQ6njIrmW8D1BS5nCqs0P6DG+m6zTGnNz5I+uhZ0SHxBs9BsPrwcKDA=="
     },
@@ -1908,9 +1986,11 @@
       "npm:@bubblyworld/highs-ts@^1.2.0",
       "npm:@huggingface/transformers@^4.2.0",
       "npm:@mastra/core@1",
+      "npm:@types/pg@^8.11.4",
       "npm:commander@^12.1.0",
       "npm:genetic-search@1",
       "npm:pdf-lib@^1.17.1",
+      "npm:pg@^8.11.3",
       "npm:zod@^3.23.8"
     ]
   }

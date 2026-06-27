@@ -1,10 +1,9 @@
 // src/agent/actions.ts
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { VDRIntegration, VDRService } from "../core/vdr.ts";
+import { VDRIntegration, VDRService } from "./vdr_mock.ts";
 import { MLEngine } from "../engines/prediction/ml.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
-import { PubSubBus } from "../core/pubsub.ts";
 import { DatabaseMemoryService } from "../core/db/memory_service.ts";
 
 interface TargetItem {
@@ -211,7 +210,7 @@ export const generatePdfTermSheetTool = createTool({
 export const googleCloudPubSubTool = createTool({
   id: "pubsub-bus-tool",
   description:
-    "Publica eventos assíncronos no barramento local de mensageria para requisitar dados do VDR à Core API e acionar as Engines computacionais.",
+    "Simula a requisição de acesso ao VDR e acionamento assíncrono das Engines computacionais no MVP.",
   inputSchema: z.object({
     topic: z.string().describe("Tópico do Pub/Sub para publicar a mensagem."),
     dealId: z.string().optional().describe("ID do deal/transação associado."),
@@ -221,19 +220,17 @@ export const googleCloudPubSubTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async ({ input }) => {
+    const mockMessageId = `msg_${Math.random().toString(36).substring(2, 11)}`;
     if (input.action === "request_vdr_access" && input.dealId && input.requester) {
-      const messageId = await VDRService.requestVDRAccessViaPubSub(input.dealId, input.requester);
       const documents = await VDRService.getDocumentsForDeal(input.dealId);
-      return { success: true, messageId, action: input.action, dealId: input.dealId, documents };
+      return { success: true, messageId: mockMessageId, action: input.action, dealId: input.dealId, documents };
     }
-    const pubsubInstance = PubSubBus.getInstance();
-    const messageId = await pubsubInstance.publish(input.topic, input.payload ?? { dealId: input.dealId, action: input.action });
     return {
       success: true,
-      messageId,
+      messageId: mockMessageId,
       topic: input.topic,
       action: input.action,
-      message: "Evento publicado com sucesso no Pub/SubBus para processamento assíncrono (Cloud Run Engines / Core API).",
+      message: "Mensagem enviada com sucesso ao simulador local de mensageria.",
     };
   },
 });
