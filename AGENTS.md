@@ -1,56 +1,121 @@
-# Integração Google AI: M&A Low-Touch Middleware
+# Integração Google AI & ADK: M&A Low-Touch Middleware
 
-Este documento detalha o ecossistema de Inteligência Artificial do Google
-aplicado ao middleware de M&A, fornecendo a ponte de desenvolvimento (MVP) e de
-nível corporativo (produção), além do treinamento de modelos.
+Este documento estabelece as diretrizes de integração com o ecossistema de Inteligência Artificial do Google e o Agent Development Kit (ADK) em TypeScript aplicados ao middleware de M&A, englobando a fase de MVP (Monolito em Deno) e a futura arquitetura corporativa em nuvem (GCP).
 
 ---
 
-## 1. Google AI Studio (Fase MVP / Desenvolvimento)
+## 1. Google AI Studio & ADK TypeScript (Fase MVP / Monolito)
 
-Para a fase rápida de MVP (45 dias), o **Google AI Studio** é a plataforma
-recomendada. Ele fornece chaves de API rápidas de configurar, cotas gratuitas
-generosas e acesso imediato aos modelos Gemini de última geração.
+Para a construção ágil do MVP em Deno, utilizamos o **Google AI Studio** para prover as chaves de acesso aos modelos Gemini de última geração, integrados nativamente via ADK em TypeScript no ponto de entrada central `src/agent/index.ts`.
 
-### Configurando o Agente com Gemini
-
-O middleware está configurado para ler o modelo Gemini se a chave de ambiente
-estiver definida.
-
-1. Acesse o [Google AI Studio](https://aistudio.google.com/app/api-keys) e gere
-   uma API Key.
-2. Defina a variável de ambiente:
+### Configurando a Chave de API
+1. Gere uma API Key no [Google AI Studio](https://aistudio.google.com/app/api-keys).
+2. Defina a variável de ambiente no terminal:
    ```bash
    export GEMINI_API_KEY="sua_chave_aqui"
    ```
-3. O orquestrador Mastra em `src/agent/mastra.ts` detectará a variável e
-   direcionará as chamadas de inferência de linguagem para o modelo
-   `google/gemini-1.5-pro` (ou o modelo padrão selecionado), fornecendo
-   raciocínio avançado para analisar cláusulas contratuais extraídas via RAG.
+3. A camada agêntica inicializará os modelos conectando-os ao ecossistema de 7 agentes.
 
 ---
 
-## 2. Vertex AI (Fase Produção / Enterprise)
+## 2. O Ecossistema de 7 Agentes no ADK
 
-Quando a startup receber o aporte do **Gama Fund** e transicionar do MVP para o
-ambiente produtivo regulado, a infraestrutura deve migrar para o **Vertex AI**
-na Google Cloud Platform (GCP).
+O ADK orquestra a comunicação entre os agentes através de fluxos determinísticos (Workflows) e comandos diretos via CLI, garantindo acesso compartilhado universal ao VDR, Engines e PostgreSQL.
 
-### Vantagens de Conformidade e Segurança (M&A)
+```
+src/agent/
+├── agents/
+│   ├── orchestrator.ts       # BrokerOrchestratorAgent
+│   ├── kyb_sourcing.ts       # SourcingAndKYBAgent
+│   ├── due_diligence.ts      # GeneralDD, FinancialRisk e LegalDD
+│   ├── deal_matching.ts      # DealMatchingAgent
+│   ├── negotiation.ts        # NegotiationAgent
+│   └── legal_closing.ts      # LegalClosingAgent
+├── workflows/                # Validação Zod e Workflows
+├── context/                  # Adaptadores VDR, Engines e DB
+├── actions.ts                # As 5 Ferramentas do ADK
+└── index.ts                  # Ponto de Entrada Unificado
+```
 
-- **Silos e Privacidade Fiduciária:** No Vertex AI, os dados confidenciais dos
-  Data Rooms Virtuais (VDR) e as consultas RAG nunca trafegam em redes abertas
-  nem são utilizados para treinar os modelos fundacionais do Google.
-- **VPC Service Controls:** Permite envelopar o pipeline do Deno e as chamadas
-  de inferência do Gemini dentro de um perímetro de rede privado e seguro.
-- **CMEK (Customer-Managed Encryption Keys):** Os embeddings gerados no RAG
-  local e gravados nos bancos de dados do cliente são criptografados com chaves
-  gerenciadas diretamente pela equipe de M&A.
+### Comportamento e Regras dos Agentes
+* **`BrokerOrchestratorAgent`**: Ponto de acesso e orquestração. Intercepta correções do usuário e alimenta o *Database Memory Service*, segregando *Domain Knowledge* de *User Preferences*.
+* **`SourcingAndKYBAgent`**: Acessível via CLI. Combina a checagem analítica na Receita/SERPRO com a investigação da cultura corporativa, movimentações passadas e perfil dos negociadores.
+* **`GeneralDueDiligenceAgent`**: Acesso direto do usuário à auditoria. Requisita VDR via barramento Pub/Sub e delega tarefas pesadas para seus dois subagentes de backend:
+  * `FinancialRiskAgent`: Dedicado aos demonstrativos financeiros e ao motor ONNX.
+  * `LegalDueDiligenceAgent`: Dedicado à varredura de contratos (RAG) e cláusulas de *Change of Control*.
+* **`DealMatchingAgent`**: Otimiza a alocação de capital focando em faixas flexíveis (*valuation ranges*) para eliminar o desgaste e a fadiga de negociação (*deal fatigue*).
+* **`NegotiationAgent`**: Mesa de conselho iterativa. Nunca impõe acordos finais; oferece sempre 3 ou mais alternativas estratégicas (combinando *Cash*, *Equity*, *Earn-outs* e *Escrow*).
+* **`LegalClosingAgent`**: Atua após a aprovação prévia dos termos finais. Exibe um preview estruturado em Markdown na CLI antes de gerar os binários PDF/LaTeX via `pdf-lib`.
 
-### Exemplo de Integração Mastra + Vertex AI (TypeScript)
+---
 
-No ambiente de produção, a autenticação usará credenciais padrão do Google Cloud
-(Application Default Credentials - ADC) e o SDK do Vertex AI:
+## 3. As 5 Integrações Globais do ADK
+
+O arquivo `src/agent/actions.ts` expõe as 5 integrações fundamentais do ADK:
+1. **`Google Cloud Pub/Sub tool`**: Adaptador assíncrono para solicitação de dados do VDR à Core API e acionamento de Engines.
+2. **`MCP Toolbox for Databases tool`**: Interface MCP nativa para gerenciar e consultar o esquema PostgreSQL.
+3. **`Hugging Face MCP tool`**: Conexão MCP para interagir com modelos e carregar pesos ONNX/Transformers locais.
+4. **`Gemini API Google Search tool`**: Busca em tempo real e *grounding* para apurar reputação, cultura e notícias do setor.
+5. **`Database Memory Service`**: Repositório autônomo no Postgres dedicado a armazenar memórias, cultura e preferências do usuário separadamente de `phase_history`.
+
+---
+
+## 4. Google Colab (Treinamento do Motor Preditivo)
+
+O classificador neural ONNX do motor preditivo (`src/engines/prediction/onnx.ts`) é treinado em GPU (T4 ou L4) fora do runtime Deno através do **Google Colab**.
+
+O pipeline compreende:
+1. **Coleta de Dados:** Carga de balanços históricos e scores Altman Z-Score normatizados.
+2. **Treino no PyTorch:** Criação do modelo classificador feedforward (MLP).
+3. **Exportação ONNX:** Compilação do grafo treinado para `.onnx` (`torch.onnx.export`).
+4. **Quantização q8/q4:** Redução de pesos para 8 bits, viabilizando inferência ultrarrápida no Deno via WASM/FFI.
+
+O notebook simulado está localizado em: 👉 **[scripts/colab_training_notebook.ipynb](file:///home/luis/mai/scripts/colab_training_notebook.ipynb)**
+
+---
+
+## 5. Vertex AI & Infra GCP (Fase Futura de Produção / Enterprise)
+
+A arquitetura corporativa na Google Cloud Platform (GCP) representa a visão de evolução futura pós-MVP. O monolito atual em Deno adota práticas rígidas de desacoplamento de eventos e persistência para que a futura migração para a nuvem da Google seja instantânea.
+
+```mermaid
+graph TD
+    subgraph Entrada e Roteamento
+        LB[Cloud Load Balancing] --> AG[Cloud API Gateway]
+        LB --> AGE[Camada Agêntica]
+    end
+
+    subgraph Core & Barramento de Eventos
+        AG --> CORE[Core API / Integrações VDR]
+        CORE <-->|Eventos / Mensageria| PUB[Google Cloud Pub/Sub]
+        AGE <-->|Requisição VDR e Engines| PUB
+    end
+
+    subgraph Inteligência & Persistência (Vertex AI / BigQuery)
+        BQ[BigQuery / Histórico de Mercado] --> VTX[Vertex AI / Gemini Endpoint]
+        VTX --> AGE
+    end
+
+    subgraph Motores Computacionais (Cloud Run)
+        PUB -->|Gatilho| CR_ENG[Engines: Predição, Otimização e Documentos]
+    end
+
+    subgraph Armazenamento & Banco de Dados (Replica Pool)
+        CR_ENG <--> CS[Cloud Storage: VDR, ONNX, PDFs]
+        CR_ENG <--> PG_M[(Postgres Master)]
+        CORE <--> PG_M
+        PG_M --> PG_S1[(Postgres Slave 1)]
+        PG_M --> PG_S2[(Postgres Slave 2)]
+    end
+```
+
+### Vantagens de Conformidade na Escala Enterprise (GCP)
+* **Silos e Privacidade Fiduciária:** Na Vertex AI, os dados confidenciais dos VDRs e as consultas RAG nunca trafegam em redes abertas nem treinam modelos fundacionais do Google.
+* **VPC Service Controls:** Envelopa os pipelines do Deno, Cloud Run e inferências do Gemini dentro de um perímetro de rede privado e seguro.
+* **CMEK (Customer-Managed Encryption Keys):** Os embeddings gerados e gravados no Cloud Storage / Postgres são criptografados com chaves gerenciadas diretamente pela equipe de M&A.
+
+### Exemplo de Conexão Segura Futura (Vertex AI)
+No ambiente produtivo futuro, o ADK em TypeScript utilizará credenciais padrão da GCP (ADC) e a biblioteca `@google-cloud/vertexai`:
 
 ```typescript
 import { GoogleVertexAI } from "@google-cloud/vertexai";
@@ -62,60 +127,13 @@ const vertexAI = new GoogleVertexAI({
   location: "us-central1",
 });
 
-// A conexão é roteada de forma privada
 export const productionBrokerAgent = new Agent({
   id: "ma-broker-prod",
   name: "M&A Production Agent",
   instructions: "...",
-  // Conectado diretamente ao endpoint privado do Gemini no Vertex AI
   model: {
     provider: "VERTEX_AI",
     name: "gemini-1.5-pro-preview-0409",
   },
 });
 ```
-
----
-
-## 3. Google Colab (Treinamento do Motor Preditivo)
-
-O classificador neural ONNX do motor preditivo
-(`src/engines/prediction/onnx.ts`) é treinado fora do runtime Deno. Para essa
-tarefa computacional pesada, utilizamos o **Google Colab** com aceleração por
-GPU (T4 ou L4) para treinamento rápido em PyTorch.
-
-O pipeline de treino no Colab compreende:
-
-1. **Coleta de Massa de Dados:** Carga de balanços históricos e scores Altman
-   Z-Score normatizados.
-2. **Definição e Treino no PyTorch:** Criação do modelo classificador
-   feedforward (MLP) utilizando a GPU para otimizar os gradientes.
-3. **Exportação ONNX:** Compilação do grafo treinado para o formato portátil
-   `.onnx` usando `torch.onnx.export`.
-4. **Quantização q8/q4:** Redução do peso de precisão para 8 bits, permitindo
-   que a inferência rode em frações de segundo diretamente no Deno via WASM/FFI.
-
-O notebook completo simulado com as instruções de execução no Colab está
-localizado em: 👉
-[scripts/colab_training_notebook.ipynb](file:///home/luis/mai/scripts/colab_training_notebook.ipynb)
-
----
-
-## 4. Google Antigravity SDK (Agentes Avançados)
-
-Para cenários avançados de multi-agentes que requeiram raciocínio e execução
-robusta fora do ambiente TypeScript (como pipelines pesados de engenharia de
-dados em Python), o **Google Antigravity (AGY) SDK** fornece o ferramental ideal
-para construir sistemas agênticos autônomos.
-
-### Arquitetura de Integração (Python + Deno)
-
-O monolito Deno orquestra os motores analíticos determinísticos e a CLI. Para
-análises profundas de Due Diligence jurídica (por exemplo, varrer 10.000 páginas
-de contratos buscando termos de "Change of Control"), o Deno pode despachar uma
-tarefa em background para um agente agêntico robusto rodando em Python com o SDK
-Antigravity.
-
-O script de demonstração contendo o setup do agente do Antigravity está
-disponível em: 👉
-[scripts/antigravity_agent.py](file:///home/luis/mai/scripts/antigravity_agent.py)
