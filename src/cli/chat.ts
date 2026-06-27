@@ -1,5 +1,5 @@
 // src/cli/chat.ts
-import { AgentOrchestrator } from "../agent/mastra.ts";
+import { AgentOrchestrator } from "../agent/index.ts";
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { ContinuousLearningEngine } from "../agent/continuous_learning.ts";
 
