@@ -1,5 +1,11 @@
 // src/engines/document-generator/latex.ts
-import { TermSheetProposal } from "../optimization/genetic_search.ts";
+
+export interface TermSheetProposal {
+  cashPercentage: number;
+  buyerEquityShare: number;
+  earnOutTargetYears: number;
+  nonCompeteMonths: number;
+}
 
 export interface LaTeXDocumentParams {
   buyerName: string;
@@ -15,8 +21,9 @@ export class LaTeXGenerator {
    */
   public static generateTermSheetLaTeX(params: LaTeXDocumentParams): string {
     const cashAmount = params.valuationAmount * params.proposal.cashPercentage;
-    const equityAmount = params.valuationAmount * (1 - params.proposal.cashPercentage);
-    
+    const equityAmount = params.valuationAmount *
+      (1 - params.proposal.cashPercentage);
+
     return `\\documentclass[11pt,a4paper]{article}
 \\usepackage[utf8]{inputenc}
 \\usepackage{amsmath}
@@ -45,15 +52,23 @@ Este Term Sheet resume os principais termos e condições relativos à potencial
 As partes concordam preliminarmente com a seguinte estrutura de transação otimizada por algoritmo genético de negociação estratégica:
 \\begin{itemize}
     \\item \\textbf{Valuation de Referência:} \$${params.valuationAmount.toLocaleString()}
-    \\item \\textbf{Componente em Caixa (Upfront Cash):} \$${cashAmount.toLocaleString()} (${(params.proposal.cashPercentage * 100).toFixed(2)}\\%)
-    \\item \\textbf{Componente em Ações (Equity Roll):} \$${equityAmount.toLocaleString()} (${((1 - params.proposal.cashPercentage) * 100).toFixed(2)}\\%)
-    \\item \\textbf{Participação do Comprador no Capital Social Pós-Fechamento:} ${(params.proposal.buyerEquityShare * 100).toFixed(2)}\\%
+    \\item \\textbf{Componente em Caixa (Upfront Cash):} \$${cashAmount.toLocaleString()} (${
+      (params.proposal.cashPercentage * 100).toFixed(2)
+    }\\%)
+    \\item \\textbf{Componente em Ações (Equity Roll):} \$${equityAmount.toLocaleString()} (${
+      ((1 - params.proposal.cashPercentage) * 100).toFixed(2)
+    }\\%)
+    \\item \\textbf{Participação do Comprador no Capital Social Pós-Fechamento:} ${
+      (params.proposal.buyerEquityShare * 100).toFixed(2)
+    }\\%
 \\end{itemize}
 
 \\section{Condições de Desempenho (Earn-out)}
 A transação prevê uma estrutura de earn-out vinculada a metas de desempenho corporativo:
 \\begin{itemize}
-    \\item \\textbf{Período de Medição de Metas:} ${params.proposal.earnOutTargetYears.toFixed(1)} anos.
+    \\item \\textbf{Período de Medição de Metas:} ${
+      params.proposal.earnOutTargetYears.toFixed(1)
+    } anos.
 \\end{itemize}
 
 \\section{Restrições de Não-Competição (Non-Compete)}
