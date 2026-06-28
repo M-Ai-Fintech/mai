@@ -1,4 +1,4 @@
-import type { DlomInput } from "../../../shared/types.ts";
+import type { DlomInput } from "../../../../shared/types.ts";
 
 /**
  * Approximates the standard normal cumulative distribution function (CDF).

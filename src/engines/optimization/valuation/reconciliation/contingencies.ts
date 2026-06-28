@@ -1,7 +1,7 @@
 import type {
   ContingenciesData,
   ContingencyInput,
-} from "../../../shared/types.ts";
+} from "../../../../shared/types.ts";
 
 /**
  * Computes probability-weighted expected values of off-balance-sheet tax and labor contingencies.

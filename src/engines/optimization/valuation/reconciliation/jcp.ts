@@ -1,4 +1,4 @@
-import type { JcpInput } from "../../../shared/types.ts";
+import type { JcpInput } from "../../../../shared/types.ts";
 
 /**
  * Computes the JCP corporate tax shield benefits.

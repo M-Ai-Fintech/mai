@@ -1,4 +1,4 @@
-import type { ValuationReconciliationWeights } from "../../../shared/types.ts";
+import type { ValuationReconciliationWeights } from "../../../../shared/types.ts";
 
 export interface ReconciliationInput {
   readonly values: readonly number[];
