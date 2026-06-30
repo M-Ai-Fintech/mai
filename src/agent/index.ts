@@ -52,10 +52,11 @@ ${query}
 `;
 
     const apiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY") ||
-      Deno.env.get("GOOGLE_API_KEY");
+      Deno.env.get("GOOGLE_API_KEY") ||
+      Deno.env.get("GEMINI_API_KEY");
 
     if (!apiKey) {
-      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY não configurada no ambiente. Não há fallback ou mocks ativos.");
+      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY ou GEMINI_API_KEY não configurada no ambiente. Não há fallback ou mocks ativos.");
     }
 
     const response = await brokerOrchestratorAgent.generate(prompt);

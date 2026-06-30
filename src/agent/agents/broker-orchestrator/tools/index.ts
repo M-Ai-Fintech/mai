@@ -1,8 +1,15 @@
 // src/agent/agents/broker-orchestrator/tools/index.ts
 import {
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool,
+  geminiGoogleSearchTool
 } from "../../../actions.ts";
 
 export {
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool,
+  geminiGoogleSearchTool
 };
+

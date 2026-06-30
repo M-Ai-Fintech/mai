@@ -2,6 +2,7 @@
 import { CompanyFinancialProfile, MLEngine } from "../engines/prediction/ml.ts";
 import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
+import solver from "npm:javascript-lp-solver";
 
 export interface TargetRawInput {
   id: string;
@@ -35,44 +36,189 @@ class KYCValuationsCoordinator {
     totalCost: number;
     evaluatedProfiles: Record<string, EvaluatedProfile>;
   }> {
-    await Promise.resolve();
-    const selectedTargetIds: string[] = [];
+    // Step 1: Evaluate risk profiles for each target
     const evaluatedProfiles: Record<string, EvaluatedProfile> = {};
+    const eligibleTargets: TargetRawInput[] = [];
+
     for (const t of targets) {
       evaluatedProfiles[t.id] = {
         metrics: { insolvencyRisk: t.historicalVolatility },
       };
-      if (
-        t.historicalVolatility <= criteria.riskToleranceLimit &&
-        selectedTargetIds.length < 2
-      ) {
-        selectedTargetIds.push(t.id);
+      if (t.historicalVolatility <= criteria.riskToleranceLimit) {
+        eligibleTargets.push(t);
       }
     }
+
+    if (eligibleTargets.length === 0) {
+      return {
+        optimization: { status: "infeasible", selectedTargetIds: [] },
+        totalSynergy: 0,
+        totalCost: 0,
+        evaluatedProfiles,
+      };
+    }
+
+    // Step 2: Build and solve MILP model with javascript-lp-solver
+    const variables: Record<string, any> = {};
+    const ints: Record<string, 1 | 0> = {};
+    const constraints: Record<string, any> = {
+      budget: { max: criteria.budgetLimit },
+    };
+
+    if (criteria.mutualExclusions) {
+      criteria.mutualExclusions.forEach((_pair, index) => {
+        constraints[`exclusion_${index}`] = { max: 1 };
+      });
+    }
+
+    eligibleTargets.forEach((t) => {
+      const varDef: Record<string, number> = {
+        budget: t.acquisitionCost,
+        synergy: t.synergyValue,
+        [t.id]: 1,
+      };
+      constraints[t.id] = { max: 1 };
+
+      if (criteria.mutualExclusions) {
+        criteria.mutualExclusions.forEach(([idA, idB], index) => {
+          if (t.id === idA || t.id === idB) {
+            varDef[`exclusion_${index}`] = 1;
+          }
+        });
+      }
+
+      variables[t.id] = varDef;
+      ints[t.id] = 1;
+    });
+
+    const model = {
+      optimize: "synergy",
+      opType: "max" as const,
+      constraints,
+      variables,
+      ints,
+    };
+
+    const solution = solver.Solve(model) as any;
+
+    const selectedTargetIds: string[] = [];
+    let totalSynergy = 0;
+    let totalCost = 0;
+
+    if (solution.feasible) {
+      eligibleTargets.forEach((t) => {
+        if (solution[t.id] === 1) {
+          selectedTargetIds.push(t.id);
+          totalSynergy += t.synergyValue;
+          totalCost += t.acquisitionCost;
+        }
+      });
+    }
+
     return {
       optimization: {
-        status: "optimal",
+        status: solution.feasible ? "optimal" : "infeasible",
         selectedTargetIds,
       },
-      totalSynergy: 155,
-      totalCost: 70,
+      totalSynergy,
+      totalCost,
       evaluatedProfiles,
     };
   }
 }
 
 class TermSheetGeneticOptimizer {
-  public static optimizeTermSheet(_params?: unknown) {
+  public static optimizeTermSheet(params: {
+    populationSize: number;
+    generations: number;
+    mutationRate: number;
+    crossoverRate: number;
+    minBuyerReservationUtility: number;
+    minSellerReservationUtility: number;
+  }) {
+    const {
+      minBuyerReservationUtility,
+      minSellerReservationUtility,
+      populationSize,
+      generations,
+      mutationRate,
+    } = params;
+
+    const calculateUtilities = (c: {
+      cashPercentage: number;
+      buyerEquityShare: number;
+      earnOutTargetYears: number;
+      nonCompeteMonths: number;
+    }) => {
+      const uS = 0.4 * c.cashPercentage +
+                 0.3 * (1 - c.buyerEquityShare) +
+                 0.15 * ((5 - c.earnOutTargetYears) / 4) +
+                 0.15 * ((60 - c.nonCompeteMonths) / 48);
+      const uB = 0.35 * (1 - c.cashPercentage) +
+                 0.35 * c.buyerEquityShare +
+                 0.15 * ((c.earnOutTargetYears - 1) / 4) +
+                 0.15 * ((c.nonCompeteMonths - 12) / 48);
+      return { uS, uB };
+    };
+
+    const fitness = (c: {
+      cashPercentage: number;
+      buyerEquityShare: number;
+      earnOutTargetYears: number;
+      nonCompeteMonths: number;
+    }) => {
+      const { uS, uB } = calculateUtilities(c);
+      if (uS < minSellerReservationUtility || uB < minBuyerReservationUtility) return 0;
+      return (uS - minSellerReservationUtility) * (uB - minBuyerReservationUtility);
+    };
+
+    const rand = () => ({
+      cashPercentage: 0.1 + Math.random() * 0.9,
+      buyerEquityShare: 0.1 + Math.random() * 0.9,
+      earnOutTargetYears: 1.0 + Math.random() * 4.0,
+      nonCompeteMonths: Math.floor(12 + Math.random() * 49),
+    });
+
+    let pop = Array.from({ length: populationSize }, () => {
+      const c = rand();
+      return { c, f: fitness(c) };
+    });
+
+    for (let g = 0; g < generations; g++) {
+      pop.sort((a, b) => b.f - a.f);
+      const next: typeof pop = pop.slice(0, Math.floor(populationSize * 0.2));
+      while (next.length < populationSize) {
+        const pA = pop[Math.floor(Math.random() * pop.length * 0.5)].c;
+        const pB = pop[Math.floor(Math.random() * pop.length * 0.5)].c;
+        const child = {
+          cashPercentage: (pA.cashPercentage + pB.cashPercentage) / 2,
+          buyerEquityShare: (pA.buyerEquityShare + pB.buyerEquityShare) / 2,
+          earnOutTargetYears: (pA.earnOutTargetYears + pB.earnOutTargetYears) / 2,
+          nonCompeteMonths: Math.round((pA.nonCompeteMonths + pB.nonCompeteMonths) / 2),
+        };
+        if (Math.random() < mutationRate) child.cashPercentage = Math.min(1, Math.max(0.1, child.cashPercentage + (Math.random() - 0.5) * 0.2));
+        if (Math.random() < mutationRate) child.buyerEquityShare = Math.min(1, Math.max(0.1, child.buyerEquityShare + (Math.random() - 0.5) * 0.2));
+        if (Math.random() < mutationRate) child.earnOutTargetYears = Math.min(5, Math.max(1, child.earnOutTargetYears + (Math.random() - 0.5)));
+        if (Math.random() < mutationRate) child.nonCompeteMonths = Math.min(60, Math.max(12, Math.round(child.nonCompeteMonths + (Math.random() - 0.5) * 12)));
+        next.push({ c: child, f: fitness(child) });
+      }
+      pop = next;
+    }
+
+    pop.sort((a, b) => b.f - a.f);
+    const best = pop[0];
+    const { uS, uB } = calculateUtilities(best.c);
+
     return {
       bestProposal: {
-        cashPercentage: 0.6,
-        buyerEquityShare: 0.75,
-        earnOutTargetYears: 3.0,
-        nonCompeteMonths: 24,
+        cashPercentage: parseFloat(best.c.cashPercentage.toFixed(2)),
+        buyerEquityShare: parseFloat(best.c.buyerEquityShare.toFixed(2)),
+        earnOutTargetYears: parseFloat(best.c.earnOutTargetYears.toFixed(1)),
+        nonCompeteMonths: best.c.nonCompeteMonths,
       },
-      buyerUtility: 0.45,
-      sellerUtility: 0.45,
-      fitness: 0.85,
+      buyerUtility: parseFloat(uB.toFixed(3)),
+      sellerUtility: parseFloat(uS.toFixed(3)),
+      fitness: parseFloat(best.f.toFixed(4)),
     };
   }
 }
@@ -409,7 +555,14 @@ export class CLICommands {
     console.log(`[LegalClosingAgent] Verificando aprovação prévia dos termos finais... OK.`);
     
     // Fetch optimized terms using genetic algorithm
-    const negotiation = TermSheetGeneticOptimizer.optimizeTermSheet();
+    const negotiation = TermSheetGeneticOptimizer.optimizeTermSheet({
+      populationSize: 100,
+      generations: 50,
+      mutationRate: 0.1,
+      crossoverRate: 0.8,
+      minBuyerReservationUtility: 0.3,
+      minSellerReservationUtility: 0.3,
+    });
     const proposal = negotiation.bestProposal;
 
     console.log("\n" + "=".repeat(60));

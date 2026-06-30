@@ -5,6 +5,7 @@ import { VDRIntegration, VDRService } from "./vdr_mock.ts";
 import { MLEngine } from "../engines/prediction/ml.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 import { DatabaseMemoryService } from "../core/db/memory_service.ts";
+import solver from "npm:javascript-lp-solver";
 
 interface TargetItem {
   readonly id: string;
@@ -30,30 +31,206 @@ class MILPOptimizer {
     totalSynergyAchieved: number;
     status: string;
   }> {
-    const selected = targets
-      .filter((t) => t.kycRiskIndex <= config.riskToleranceLimit)
-      .map((t) => t.id);
+    // Filter targets by individual KYC risk index tolerance limit
+    const eligibleTargets = targets.filter((t) => t.kycRiskIndex <= config.riskToleranceLimit);
+
+    if (eligibleTargets.length === 0) {
+      return Promise.resolve({
+        selectedTargetIds: [],
+        totalCostSpent: 0,
+        totalSynergyAchieved: 0,
+        status: "infeasible",
+      });
+    }
+
+    const variables: Record<string, any> = {};
+    const ints: Record<string, 1 | 0> = {};
+    const constraints: Record<string, any> = {
+      budget: { max: config.budgetLimit },
+    };
+
+    // Mutual exclusions constraints
+    if (config.mutualExclusions) {
+      config.mutualExclusions.forEach(([idA, idB], index) => {
+        constraints[`exclusion_${index}`] = { max: 1 };
+      });
+    }
+
+    eligibleTargets.forEach((t) => {
+      const varName = t.id;
+      const varDef: Record<string, number> = {
+        budget: t.acquisitionCost,
+        synergy: t.synergyValue,
+      };
+
+      // Add target binary constraints (x_i <= 1)
+      varDef[varName] = 1;
+      constraints[varName] = { max: 1 };
+
+      // Add mutual exclusion constraints
+      if (config.mutualExclusions) {
+        config.mutualExclusions.forEach(([idA, idB], index) => {
+          if (t.id === idA || t.id === idB) {
+            varDef[`exclusion_${index}`] = 1;
+          }
+        });
+      }
+
+      variables[varName] = varDef;
+      ints[varName] = 1;
+    });
+
+    const model = {
+      optimize: "synergy",
+      opType: "max" as const,
+      constraints,
+      variables,
+      ints,
+    };
+
+    const solution = solver.Solve(model) as any;
+
+    const selectedTargetIds: string[] = [];
+    let totalCostSpent = 0;
+    let totalSynergyAchieved = 0;
+
+    if (solution.feasible) {
+      eligibleTargets.forEach((t) => {
+        if (solution[t.id] === 1) {
+          selectedTargetIds.push(t.id);
+          totalCostSpent += t.acquisitionCost;
+          totalSynergyAchieved += t.synergyValue;
+        }
+      });
+    }
+
     return Promise.resolve({
-      selectedTargetIds: selected.slice(0, 2),
-      totalCostSpent: 90,
-      totalSynergyAchieved: 180,
-      status: "optimal",
+      selectedTargetIds,
+      totalCostSpent,
+      totalSynergyAchieved,
+      status: solution.feasible ? "optimal" : "infeasible",
     });
   }
 }
 
 class TermSheetGeneticOptimizer {
-  public static optimizeTermSheet(_params?: unknown) {
+  public static optimizeTermSheet(params: {
+    minBuyerReservationUtility: number;
+    minSellerReservationUtility: number;
+    populationSize: number;
+    generations: number;
+    mutationRate: number;
+    crossoverRate: number;
+  }) {
+    const {
+      minBuyerReservationUtility,
+      minSellerReservationUtility,
+      populationSize,
+      generations,
+      mutationRate,
+    } = params;
+
+    const calculateUtilities = (chromosome: {
+      cashPercentage: number;
+      buyerEquityShare: number;
+      earnOutTargetYears: number;
+      nonCompeteMonths: number;
+    }) => {
+      const { cashPercentage, buyerEquityShare, earnOutTargetYears, nonCompeteMonths } = chromosome;
+
+      const uS = 0.4 * cashPercentage +
+                 0.3 * (1 - buyerEquityShare) +
+                 0.15 * ((5 - earnOutTargetYears) / 4) +
+                 0.15 * ((60 - nonCompeteMonths) / 48);
+
+      const uB = 0.35 * (1 - cashPercentage) +
+                 0.35 * buyerEquityShare +
+                 0.15 * ((earnOutTargetYears - 1) / 4) +
+                 0.15 * ((nonCompeteMonths - 12) / 48);
+
+      return { uS, uB };
+    };
+
+    const calculateFitness = (chromosome: {
+      cashPercentage: number;
+      buyerEquityShare: number;
+      earnOutTargetYears: number;
+      nonCompeteMonths: number;
+    }) => {
+      const { uS, uB } = calculateUtilities(chromosome);
+      if (uS < minSellerReservationUtility || uB < minBuyerReservationUtility) {
+        return 0;
+      }
+      return (uS - minSellerReservationUtility) * (uB - minBuyerReservationUtility);
+    };
+
+    const randomChromosome = () => {
+      return {
+        cashPercentage: 0.1 + Math.random() * 0.9,
+        buyerEquityShare: 0.1 + Math.random() * 0.9,
+        earnOutTargetYears: 1.0 + Math.random() * 4.0,
+        nonCompeteMonths: Math.floor(12 + Math.random() * 49),
+      };
+    };
+
+    let population = Array.from({ length: populationSize }, () => {
+      const chrom = randomChromosome();
+      return { chromosome: chrom, fitness: calculateFitness(chrom) };
+    });
+
+    for (let gen = 0; gen < generations; gen++) {
+      population.sort((a, b) => b.fitness - a.fitness);
+      const nextGen: typeof population = [];
+      const elitesCount = Math.floor(populationSize * 0.2);
+      for (let i = 0; i < elitesCount; i++) {
+        nextGen.push(population[i]);
+      }
+
+      while (nextGen.length < populationSize) {
+        const idxA = Math.floor(Math.random() * (populationSize * 0.5));
+        const idxB = Math.floor(Math.random() * (populationSize * 0.5));
+        const parentA = population[idxA].chromosome;
+        const parentB = population[idxB].chromosome;
+
+        const child = {
+          cashPercentage: (parentA.cashPercentage + parentB.cashPercentage) / 2,
+          buyerEquityShare: (parentA.buyerEquityShare + parentB.buyerEquityShare) / 2,
+          earnOutTargetYears: (parentA.earnOutTargetYears + parentB.earnOutTargetYears) / 2,
+          nonCompeteMonths: Math.round((parentA.nonCompeteMonths + parentB.nonCompeteMonths) / 2),
+        };
+
+        if (Math.random() < mutationRate) {
+          child.cashPercentage = Math.min(1.0, Math.max(0.1, child.cashPercentage + (Math.random() - 0.5) * 0.2));
+        }
+        if (Math.random() < mutationRate) {
+          child.buyerEquityShare = Math.min(1.0, Math.max(0.1, child.buyerEquityShare + (Math.random() - 0.5) * 0.2));
+        }
+        if (Math.random() < mutationRate) {
+          child.earnOutTargetYears = Math.min(5.0, Math.max(1.0, child.earnOutTargetYears + (Math.random() - 0.5) * 1.0));
+        }
+        if (Math.random() < mutationRate) {
+          child.nonCompeteMonths = Math.min(60, Math.max(12, Math.round(child.nonCompeteMonths + (Math.random() - 0.5) * 12)));
+        }
+
+        nextGen.push({ chromosome: child, fitness: calculateFitness(child) });
+      }
+      population = nextGen;
+    }
+
+    population.sort((a, b) => b.fitness - a.fitness);
+    const best = population[0];
+    const { uS, uB } = calculateUtilities(best.chromosome);
+
     return {
       bestProposal: {
-        cashPercentage: 0.6,
-        buyerEquityShare: 0.75,
-        earnOutTargetYears: 3.0,
-        nonCompeteMonths: 24,
+        cashPercentage: parseFloat(best.chromosome.cashPercentage.toFixed(2)),
+        buyerEquityShare: parseFloat(best.chromosome.buyerEquityShare.toFixed(2)),
+        earnOutTargetYears: parseFloat(best.chromosome.earnOutTargetYears.toFixed(1)),
+        nonCompeteMonths: best.chromosome.nonCompeteMonths,
       },
-      buyerUtility: 0.45,
-      sellerUtility: 0.45,
-      fitness: 0.85,
+      buyerUtility: parseFloat(uB.toFixed(3)),
+      sellerUtility: parseFloat(uS.toFixed(3)),
+      fitness: parseFloat(best.fitness.toFixed(4)),
     };
   }
 }
@@ -412,3 +589,78 @@ export const databaseMemoryServiceTool = createTool({
     }
   },
 });
+
+/**
+ * Tool 11: Synergy Pricing calculator
+ */
+export const synergyPricingTool = createTool({
+  id: "synergy-pricing-tool",
+  description:
+    "Valores de sinergia operacional (receitas e custos) e financeira (tax shields) e precificação final do deal baseados na fórmula de compartilhamento (Alpha).",
+  inputSchema: z.object({
+    standaloneValue: z.number().describe("Valor standalone da empresa alvo em milhões."),
+    costSynergies: z.array(z.number()).describe("Vetor anual de sinergias de custos em milhões."),
+    revenueSynergies: z.array(z.number()).describe("Vetor anual de sinergias de receitas em milhões."),
+    integrationCosts: z.array(z.number()).describe("Vetor anual de custos de integração em milhões."),
+    wacc: z.number().describe("Custo Médio Ponderado de Capital (WACC) para o desconto (ex: 0.12 para 12%)."),
+    taxRate: z.number().default(0.34).describe("Alíquota de imposto corporativo (padrão 0.34 para 34%)."),
+    revenueHaircut: z.number().default(0.40).describe("Desconto/Haircut aplicado sobre as sinergias de receita (padrão 0.40 para 40%)."),
+    sharingCoefficient: z.number().default(0.30).describe("Coeficiente de compartilhamento de sinergia Alpha (padrão 0.30 para 30%)."),
+  }),
+  outputSchema: z.any(),
+  execute: async ({ input }) => {
+    await Promise.resolve();
+    const {
+      standaloneValue,
+      costSynergies,
+      revenueSynergies,
+      integrationCosts,
+      wacc,
+      taxRate,
+      revenueHaircut,
+      sharingCoefficient,
+    } = input;
+
+    let pvCostSynergies = 0;
+    let pvRevenueSynergies = 0;
+    let pvIntegrationCosts = 0;
+
+    const years = Math.max(costSynergies.length, revenueSynergies.length, integrationCosts.length);
+
+    for (let t = 0; t < years; t++) {
+      const year = t + 1;
+      const discountFactor = Math.pow(1 + wacc, year);
+
+      // Cost synergies tax adjusted
+      const costSynVal = costSynergies[t] ?? 0;
+      const costSynTaxAdjusted = costSynVal * (1 - taxRate);
+      pvCostSynergies += costSynTaxAdjusted / discountFactor;
+
+      // Revenue synergies haircut and tax adjusted
+      const revSynVal = revenueSynergies[t] ?? 0;
+      const revSynAdjusted = revSynVal * (1 - revenueHaircut) * (1 - taxRate);
+      pvRevenueSynergies += revSynAdjusted / discountFactor;
+
+      // Integration costs tax adjusted
+      const intCostVal = integrationCosts[t] ?? 0;
+      const intCostTaxAdjusted = intCostVal * (1 - taxRate);
+      pvIntegrationCosts += intCostTaxAdjusted / discountFactor;
+    }
+
+    const netSynergyValue = pvCostSynergies + pvRevenueSynergies - pvIntegrationCosts;
+    const sellerPremium = sharingCoefficient * netSynergyValue;
+    const recommendedPurchasePrice = standaloneValue + sellerPremium;
+
+    return {
+      success: true,
+      presentValueCostSynergies: parseFloat(pvCostSynergies.toFixed(3)),
+      presentValueRevenueSynergies: parseFloat(pvRevenueSynergies.toFixed(3)),
+      presentValueIntegrationCosts: parseFloat(pvIntegrationCosts.toFixed(3)),
+      netSynergyValue: parseFloat(netSynergyValue.toFixed(3)),
+      sellerPremium: parseFloat(sellerPremium.toFixed(3)),
+      recommendedPurchasePrice: parseFloat(recommendedPurchasePrice.toFixed(3)),
+      sharingCoefficient,
+    };
+  },
+});
+

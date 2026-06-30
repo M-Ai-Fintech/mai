@@ -1,10 +1,15 @@
 // src/agent/agents/negotiation/tools/index.ts
 import {
   optimizeTermSheetTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool
 } from "../../../actions.ts";
 
 export {
   optimizeTermSheetTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool
 };
+

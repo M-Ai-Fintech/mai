@@ -57,18 +57,3 @@ Understanding the psychology of the Brazilian middle-market founder is vital for
 * **Late-Stage Renegotiations (the "Chorinho"):** Proposing modifications to the purchase price or indemnity caps days before the planned signing date.
 * **Bringing Unqualified Advisors:** Replacing specialized M&A boutiques or law firms with the company's historical accountant (*contador da família*) or a local generalist lawyer. These advisors, fearing they will lose the client post-transaction, often create artificial legal barriers to block the deal.
 
----
-
-## 4. Negotiation Agent Strategy & Playbook
-
-When interacting with Brazilian middle-market founders, the Negotiation Agent should deploy the following strategies:
-
-* **Always Propose Three Structured Alternatives:**
-  Avoid presenting a single take-it-or-leave-it offer. Instead, provide a menu of options that allow the founder to trade nominal value for transaction security:
-  * **Option A (The "Cash Out" Strategy):** Lower overall enterprise value, but paid 90% upfront at closing with minimal earn-out and standard escrow.
-  * **Option B (The "Legacy / Growth" Strategy):** Higher overall valuation, but structured with 60% upfront, 40% tied to a performance earn-out, and the founder retaining a minority equity rollover (10-20%) with a seat on the board.
-  * **Option C (The "Indemnity Cap Tradeoff" Strategy):** Standard valuation, but with a highly restricted escrow account in exchange for strict representations and warranties.
-* **De-escalate the "Fio de Bigode" Discomfort:**
-  If the founder reacts defensively to standard representation, warranty, or indemnification clauses ("Você está dizendo que sou mentiroso?"), explain that these clauses are international institutional standards required by underwriters or investment committees, not a personal indictment of their character.
-* **Honoring Legacy Mechanisms:**
-  Incorporate non-financial terms that soothe the transition of control. Propose the creation of an honorary title (e.g., "Presidente de Honra") or name a corporate facility after the founder's parents. These emotional concessions cost nothing to the buyer but hold massive value for the seller.

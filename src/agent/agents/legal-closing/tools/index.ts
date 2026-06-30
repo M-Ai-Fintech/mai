@@ -1,10 +1,15 @@
 // src/agent/agents/legal-closing/tools/index.ts
 import {
   generatePdfTermSheetTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  mcpDatabaseTool,
+  googleCloudPubSubTool
 } from "../../../actions.ts";
 
 export {
   generatePdfTermSheetTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  mcpDatabaseTool,
+  googleCloudPubSubTool
 };
+

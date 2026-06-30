@@ -10,6 +10,7 @@
     "npm:@types/pg@^8.11.4": "8.20.0",
     "npm:commander@^12.1.0": "12.1.0",
     "npm:genetic-search@1": "1.0.0",
+    "npm:javascript-lp-solver@*": "1.0.3",
     "npm:pdf-lib@^1.17.1": "1.17.1",
     "npm:pg@^8.11.3": "8.22.0",
     "npm:zod@^3.23.8": "3.25.76"
@@ -938,6 +939,9 @@
     },
     "isexe@2.0.0": {
       "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="
+    },
+    "javascript-lp-solver@1.0.3": {
+      "integrity": "sha512-+qUYrubmn227YTz25uf9wOTlgB3wFKGtutECxL1shjOkgi/Tcn3SpnC7+T9rxhv/JNOxLIfZ3O6wEx0FwLlXbw=="
     },
     "jose@6.2.3": {
       "integrity": "sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw=="

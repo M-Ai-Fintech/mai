@@ -2,11 +2,16 @@
 import {
   verifyRegistryTool,
   mcpDatabaseTool,
-  geminiGoogleSearchTool
+  geminiGoogleSearchTool,
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool
 } from "../../../actions.ts";
 
 export {
   verifyRegistryTool,
   mcpDatabaseTool,
-  geminiGoogleSearchTool
+  geminiGoogleSearchTool,
+  databaseMemoryServiceTool,
+  googleCloudPubSubTool
 };
+

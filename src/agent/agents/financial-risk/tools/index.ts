@@ -1,10 +1,17 @@
 // src/agent/agents/financial-risk/tools/index.ts
 import {
   huggingFaceMcpTool,
-  analyzeCompanyRisksTool
+  analyzeCompanyRisksTool,
+  googleCloudPubSubTool,
+  databaseMemoryServiceTool,
+  mcpDatabaseTool
 } from "../../../actions.ts";
 
 export {
   huggingFaceMcpTool,
-  analyzeCompanyRisksTool
+  analyzeCompanyRisksTool,
+  googleCloudPubSubTool,
+  databaseMemoryServiceTool,
+  mcpDatabaseTool
 };
+
