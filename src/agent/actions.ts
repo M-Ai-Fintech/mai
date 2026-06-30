@@ -248,7 +248,7 @@ export const verifyRegistryTool = createTool({
     ),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     const data = await VDRIntegration.queryKYBRegistry(input.cnpj);
     return { success: true, data };
   },
@@ -272,7 +272,7 @@ export const analyzeCompanyRisksTool = createTool({
     businessSector: z.string(),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     const report = await MLEngine.analyzeProfile(input);
     return { success: true, report };
   },
@@ -300,7 +300,7 @@ export const optimizePortfolioTool = createTool({
     mutualExclusions: z.array(z.tuple([z.string(), z.string()])).optional(),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     const result = await MILPOptimizer.optimizePortfolio(input.targets, {
       budgetLimit: input.budgetLimit,
       riskToleranceLimit: input.riskToleranceLimit,
@@ -324,7 +324,7 @@ export const optimizeTermSheetTool = createTool({
     generations: z.number().optional(),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     await Promise.resolve();
     const result = TermSheetGeneticOptimizer.optimizeTermSheet({
       populationSize: input.populationSize ?? 100,
@@ -361,7 +361,7 @@ export const generatePdfTermSheetTool = createTool({
     }),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     await Deno.mkdir("./term_sheets", { recursive: true });
     await PDFGenerator.writeTermSheetPDF(input.filePath, {
       buyerName: input.buyerName,
@@ -396,7 +396,7 @@ export const googleCloudPubSubTool = createTool({
     action: z.enum(["request_vdr_access", "publish_event", "trigger_engine"]).default("publish_event"),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     const mockMessageId = `msg_${Math.random().toString(36).substring(2, 11)}`;
     if (input.action === "request_vdr_access" && input.dealId && input.requester) {
       const documents = await VDRService.getDocumentsForDeal(input.dealId);
@@ -426,7 +426,7 @@ export const mcpDatabaseTool = createTool({
     parameters: z.array(z.any()).optional().describe("Parâmetros para a consulta SQL."),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     // Simula a consulta via MCP Toolbox for Databases ao schema PostgreSQL
     await Promise.resolve();
     if (input.action === "list_tables") {
@@ -467,7 +467,7 @@ export const huggingFaceMcpTool = createTool({
     text: z.string().optional().describe("Texto para geração de embedding."),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     await Promise.resolve();
     if (input.task === "load_weights") {
       return { success: true, model: input.model, status: "Weights loaded successfully (q8/q4 quantized ONNX)" };
@@ -501,7 +501,7 @@ export const geminiGoogleSearchTool = createTool({
     aspect: z.enum(["reputation", "culture", "past_deals", "news", "general"]).default("general"),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     await Promise.resolve();
     return {
       success: true,
@@ -546,7 +546,7 @@ export const databaseMemoryServiceTool = createTool({
     queryEmbedding: z.array(z.number()).optional().describe("Vetor de consulta para busca por similaridade."),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     const memoryService = new DatabaseMemoryService();
     switch (input.action) {
       case "get_user_preferences": {
@@ -608,7 +608,7 @@ export const synergyPricingTool = createTool({
     sharingCoefficient: z.number().default(0.30).describe("Coeficiente de compartilhamento de sinergia Alpha (padrão 0.30 para 30%)."),
   }),
   outputSchema: z.any(),
-  execute: async ({ input }) => {
+  execute: async (input) => {
     await Promise.resolve();
     const {
       standaloneValue,

@@ -22,7 +22,7 @@ interface EvaluatedProfile {
   metrics: { insolvencyRisk: number };
 }
 
-class KYCValuationsCoordinator {
+export class KYCValuationsCoordinator {
   public static async evaluateAndOptimize(
     targets: TargetRawInput[],
     criteria: {
@@ -127,7 +127,7 @@ class KYCValuationsCoordinator {
   }
 }
 
-class TermSheetGeneticOptimizer {
+export class TermSheetGeneticOptimizer {
   public static optimizeTermSheet(params: {
     populationSize: number;
     generations: number;
