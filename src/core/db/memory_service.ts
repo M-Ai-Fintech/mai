@@ -198,4 +198,11 @@ export class DatabaseMemoryService {
     `;
     return await this.db.query(sql, [queryEmbedding, limit]);
   }
+
+  /**
+   * Executa uma consulta SQL genérica parametrizada no banco real.
+   */
+  public async executeRawQuery<T>(sql: string, params?: unknown[]): Promise<T[]> {
+    return await this.db.query<T>(sql, params);
+  }
 }
