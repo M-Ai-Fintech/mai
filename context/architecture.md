@@ -56,12 +56,12 @@ O ADK em TypeScript estrutura a inteligência em 7 agentes com responsabilidades
 
 ## 3. As 5 Integrações Centrais do ADK
 
-No arquivo `src/agent/actions.ts`, o ADK expõe as seguintes ferramentas globais:
-* **`Google Cloud Pub/Sub tool`**: Para solicitar dados do VDR à Core API e acionar as Engines no Cloud Run de forma assíncrona.
-* **`MCP Toolbox for Databases tool`**: Interface para inspecionar, consultar e gerenciar o esquema PostgreSQL.
-* **`Hugging Face MCP tool`**: Para carregar e interagir com modelos, embeddings e transformadores (pesos ONNX locais).
-* **`Gemini API Google Search tool`**: Busca em tempo real e *grounding* para apurar reputação, notícias e cultura corporativa de alvos.
-* **`Database Memory Service`**: Conector com o Postgres para ler e persistir preferências e conhecimentos adquiridos.
+No arquivo `src/agent/actions.ts`, o ADK expõe as seguintes ferramentas globais, agora com implementações reais e ativas (unmocked):
+* **`Google Cloud Pub/Sub tool`**: Conectada ao `LocalPubSubBus` no runtime do Deno para simular o tráfego assíncrono e acionar as Engines.
+* **`MCP Toolbox for Databases tool`**: Interface real (via `DatabaseMemoryService`) para inspecionar, consultar e gerenciar o esquema PostgreSQL.
+* **`Hugging Face MCP tool`**: Realiza inferência nativa local consumindo a arquitetura ONNX/Transformers do sistema (`ONNXEngine` e `TransformersEngine`).
+* **`Gemini API Google Search tool`**: Busca em tempo real habilitada com *grounding* do Google Search via Gemini 3.1 Pro.
+* **`Database Memory Service`**: Conector ativo com o Postgres para ler e persistir preferências e conhecimentos adquiridos de forma isolada.
 
 ---
 

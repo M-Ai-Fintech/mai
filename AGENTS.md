@@ -133,7 +133,7 @@ export const productionBrokerAgent = new Agent({
   instructions: "...",
   model: {
     provider: "VERTEX_AI",
-    name: "gemini-1.5-pro-preview-0409",
+    name: "gemini-3.1-pro",
   },
 });
 ```

@@ -45,11 +45,14 @@ A inteligência da aplicação reside no `src/agent/`, estruturada em **7 Agente
 6. **`LegalClosingAgent`**: Emissor formal de documentos. Exibe uma visualização prévia estruturada do contrato em Markdown no terminal da CLI, aguardando aprovação prévia do usuário (HITL) antes de compilar os binários.
 
 ### As 5 Integrações do ADK (`src/agent/actions.ts`)
-* `Google Cloud Pub/Sub tool`
-* `MCP Toolbox for Databases tool`
-* `Hugging Face MCP tool`
-* `Gemini API Google Search tool`
-* `Database Memory Service`
+As ferramentas globais foram totalmente conectadas a implementações reais para evitar dependência de mocks:
+* **`Google Cloud Pub/Sub tool`**: Conectada ao `LocalPubSubBus` no runtime do Deno para simular o tráfego do Cloud Pub/Sub de forma local e determinística.
+* **`MCP Toolbox for Databases tool`**: Conectada com o repositório PostgreSQL real (`DatabaseMemoryService`).
+* **`Hugging Face MCP tool`**: Realiza inferência nativa local consumindo a arquitetura ONNX/Transformers do sistema.
+* **`Gemini API Google Search tool`**: Habilitada com _grounding_ real do Google Search via Gemini 3.1 Pro.
+* **`Database Memory Service`**: Integrado ativamente para ler e escrever memórias persistentes durante a execução dos workflows.
+
+Todos os agentes foram padronizados para rodar exclusivamente no modelo **Gemini 3.1 Pro** via `@ai-sdk/google`.
 
 ---
 
