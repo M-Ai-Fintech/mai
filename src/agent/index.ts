@@ -1,6 +1,6 @@
 // src/agent/index.ts
 // Ponto de entrada unificado do ecossistema agêntico de M&A Low-Touch Middleware.
-// Todos os agentes executam exclusivamente com Gemini 2.5 Flash via @ai-sdk/google.
+// Todos os agentes executam exclusivamente com Gemini 3.1 Pro via @ai-sdk/google.
 // A variável de ambiente esperada é GOOGLE_GENERATIVE_AI_API_KEY.
 
 import { BrokerOrchestratorAgent, BrokerOrchestratorService } from "./agents/broker-orchestrator/index.ts";

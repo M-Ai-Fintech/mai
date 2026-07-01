@@ -69,3 +69,10 @@ Deno.test("E2E CLI - document command generates PDF and LaTeX", async () => {
   assertEquals(texInfo.isFile, true);
   assertEquals(texInfo.size > 0, true);
 });
+
+Deno.test("E2E CLI - invalid command shows help/error", async () => {
+  const { code, stdout } = await runCLI(["invalid_command_123"]);
+  // Depending on commander config it might exit with 0 or 1
+  assertEquals(stdout.includes("Comando desconhecido: invalid_command_123"), true);
+});
+
