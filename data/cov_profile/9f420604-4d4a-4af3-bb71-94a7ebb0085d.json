@@ -1,0 +1,204 @@
+{
+  "scriptId": "292",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/deflate.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 11074,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Deflate",
+      "ranges": [
+        {
+          "startOffset": 3289,
+          "endOffset": 4947,
+          "count": 3
+        },
+        {
+          "startOffset": 3351,
+          "endOffset": 3379,
+          "count": 0
+        },
+        {
+          "startOffset": 3638,
+          "endOffset": 3661,
+          "count": 0
+        },
+        {
+          "startOffset": 3663,
+          "endOffset": 3706,
+          "count": 0
+        },
+        {
+          "startOffset": 3728,
+          "endOffset": 3751,
+          "count": 0
+        },
+        {
+          "startOffset": 3752,
+          "endOffset": 3776,
+          "count": 0
+        },
+        {
+          "startOffset": 3778,
+          "endOffset": 3809,
+          "count": 0
+        },
+        {
+          "startOffset": 4260,
+          "endOffset": 4299,
+          "count": 0
+        },
+        {
+          "startOffset": 4319,
+          "endOffset": 4382,
+          "count": 0
+        },
+        {
+          "startOffset": 4406,
+          "endOffset": 4945,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Deflate.push",
+      "ranges": [
+        {
+          "startOffset": 6214,
+          "endOffset": 7940,
+          "count": 3
+        },
+        {
+          "startOffset": 6344,
+          "endOffset": 6361,
+          "count": 0
+        },
+        {
+          "startOffset": 6391,
+          "endOffset": 6397,
+          "count": 0
+        },
+        {
+          "startOffset": 6428,
+          "endOffset": 6440,
+          "count": 0
+        },
+        {
+          "startOffset": 6504,
+          "endOffset": 6613,
+          "count": 0
+        },
+        {
+          "startOffset": 6671,
+          "endOffset": 6715,
+          "count": 0
+        },
+        {
+          "startOffset": 7070,
+          "endOffset": 7088,
+          "count": 0
+        },
+        {
+          "startOffset": 7090,
+          "endOffset": 7168,
+          "count": 0
+        },
+        {
+          "startOffset": 7245,
+          "endOffset": 7270,
+          "count": 0
+        },
+        {
+          "startOffset": 7316,
+          "endOffset": 7414,
+          "count": 0
+        },
+        {
+          "startOffset": 7557,
+          "endOffset": 7583,
+          "count": 0
+        },
+        {
+          "startOffset": 7775,
+          "endOffset": 7939,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Deflate.onData",
+      "ranges": [
+        {
+          "startOffset": 8319,
+          "endOffset": 8366,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Deflate.onEnd",
+      "ranges": [
+        {
+          "startOffset": 8759,
+          "endOffset": 9056,
+          "count": 3
+        },
+        {
+          "startOffset": 8865,
+          "endOffset": 8914,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "deflate",
+      "ranges": [
+        {
+          "startOffset": 9934,
+          "endOffset": 10198,
+          "count": 3
+        },
+        {
+          "startOffset": 10125,
+          "endOffset": 10169,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "deflateRaw",
+      "ranges": [
+        {
+          "startOffset": 10472,
+          "endOffset": 10594,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "gzip",
+      "ranges": [
+        {
+          "startOffset": 10846,
+          "endOffset": 10963,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

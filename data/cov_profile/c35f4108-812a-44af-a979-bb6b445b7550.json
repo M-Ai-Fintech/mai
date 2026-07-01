@@ -1,0 +1,33 @@
+{
+  "scriptId": "287",
+  "url": "file:///home/luis/mai/node_modules/.deno/@pdf-lib+standard-fonts@1.0.0/node_modules/@pdf-lib/standard-fonts/lib/index.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 236,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "__export",
+      "ranges": [
+        {
+          "startOffset": 14,
+          "endOffset": 110,
+          "count": 2
+        },
+        {
+          "startOffset": 58,
+          "endOffset": 108,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

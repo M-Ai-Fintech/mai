@@ -1,0 +1,61 @@
+{
+  "scriptId": "383",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroListBox.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 869,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 220,
+          "endOffset": 765,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroListBox",
+      "ranges": [
+        {
+          "startOffset": 291,
+          "endOffset": 397,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroListBox.fromDict",
+      "ranges": [
+        {
+          "startOffset": 428,
+          "endOffset": 502,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroListBox.create",
+      "ranges": [
+        {
+          "startOffset": 532,
+          "endOffset": 735,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

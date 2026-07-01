@@ -1,0 +1,50 @@
+{
+  "scriptId": "361",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/RunLengthStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2184,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 471,
+          "endOffset": 2079,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "RunLengthStream",
+      "ranges": [
+        {
+          "startOffset": 543,
+          "endOffset": 709,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "RunLengthStream.readBlock",
+      "ranges": [
+        {
+          "startOffset": 752,
+          "endOffset": 2048,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

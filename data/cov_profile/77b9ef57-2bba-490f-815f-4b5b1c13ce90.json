@@ -1,0 +1,141 @@
+{
+  "scriptId": "269",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/reconciliation/index.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2840,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "reconcile",
+      "ranges": [
+        {
+          "startOffset": 263,
+          "endOffset": 2409,
+          "count": 2
+        },
+        {
+          "startOffset": 793,
+          "endOffset": 1016,
+          "count": 12
+        },
+        {
+          "startOffset": 836,
+          "endOffset": 948,
+          "count": 0
+        },
+        {
+          "startOffset": 1069,
+          "endOffset": 1234,
+          "count": 0
+        },
+        {
+          "startOffset": 2026,
+          "endOffset": 2213,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 499,
+          "endOffset": 536,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 574,
+          "endOffset": 611,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 651,
+          "endOffset": 690,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1386,
+          "endOffset": 1411,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1464,
+          "endOffset": 1489,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeSum",
+      "ranges": [
+        {
+          "startOffset": 1516,
+          "endOffset": 1728,
+          "count": 2
+        },
+        {
+          "startOffset": 1579,
+          "endOffset": 1704,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2262,
+          "endOffset": 2330,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getUniformFallback",
+      "ranges": [
+        {
+          "startOffset": 2419,
+          "endOffset": 2837,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

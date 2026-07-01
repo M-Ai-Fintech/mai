@@ -1,0 +1,105 @@
+{
+  "scriptId": "366",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroTerminal.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3030,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 499,
+          "endOffset": 2925,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroTerminal",
+      "ranges": [
+        {
+          "startOffset": 571,
+          "endOffset": 678,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.FT",
+      "ranges": [
+        {
+          "startOffset": 714,
+          "endOffset": 886,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.getWidgets",
+      "ranges": [
+        {
+          "startOffset": 931,
+          "endOffset": 1457,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.addWidget",
+      "ranges": [
+        {
+          "startOffset": 1501,
+          "endOffset": 1597,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.removeWidget",
+      "ranges": [
+        {
+          "startOffset": 1644,
+          "endOffset": 2165,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.normalizedEntries",
+      "ranges": [
+        {
+          "startOffset": 2217,
+          "endOffset": 2786,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroTerminal.fromDict",
+      "ranges": [
+        {
+          "startOffset": 2819,
+          "endOffset": 2894,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

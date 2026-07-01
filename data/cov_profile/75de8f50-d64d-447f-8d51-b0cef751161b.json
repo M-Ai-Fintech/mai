@@ -1,0 +1,28 @@
+{
+  "scriptId": "422",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFPageOptions.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 729,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 121,
+          "endOffset": 625,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "scriptId": "266",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/reconciliation/dlom.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1313,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "cumulativeNormalCDF",
+      "ranges": [
+        {
+          "startOffset": 167,
+          "endOffset": 562,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "computeChaffeDLOM",
+      "ranges": [
+        {
+          "startOffset": 716,
+          "endOffset": 1312,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

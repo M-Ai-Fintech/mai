@@ -1,0 +1,61 @@
+{
+  "scriptId": "420",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFJavaScript.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3365,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 255,
+          "endOffset": 3286,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFJavaScript",
+      "ranges": [
+        {
+          "startOffset": 273,
+          "endOffset": 443,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFJavaScript.embed",
+      "ranges": [
+        {
+          "startOffset": 826,
+          "endOffset": 2624,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFJavaScript.of",
+      "ranges": [
+        {
+          "startOffset": 3166,
+          "endOffset": 3257,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

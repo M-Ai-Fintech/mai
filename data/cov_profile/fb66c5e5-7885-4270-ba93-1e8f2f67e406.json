@@ -1,0 +1,402 @@
+{
+  "scriptId": "406",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFForm.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 31024,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1562,
+          "endOffset": 28880,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFForm",
+      "ranges": [
+        {
+          "startOffset": 1580,
+          "endOffset": 2136,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.hasXFA",
+      "ranges": [
+        {
+          "startOffset": 2638,
+          "endOffset": 2722,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.deleteXFA",
+      "ranges": [
+        {
+          "startOffset": 3075,
+          "endOffset": 3155,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getFields",
+      "ranges": [
+        {
+          "startOffset": 3593,
+          "endOffset": 3991,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getFieldMaybe",
+      "ranges": [
+        {
+          "startOffset": 4405,
+          "endOffset": 4731,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getField",
+      "ranges": [
+        {
+          "startOffset": 5148,
+          "endOffset": 5365,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getButton",
+      "ranges": [
+        {
+          "startOffset": 5847,
+          "endOffset": 6126,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getCheckBox",
+      "ranges": [
+        {
+          "startOffset": 6659,
+          "endOffset": 6942,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getDropdown",
+      "ranges": [
+        {
+          "startOffset": 7527,
+          "endOffset": 7810,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getOptionList",
+      "ranges": [
+        {
+          "startOffset": 8420,
+          "endOffset": 8707,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getRadioGroup",
+      "ranges": [
+        {
+          "startOffset": 9316,
+          "endOffset": 9603,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getSignature",
+      "ranges": [
+        {
+          "startOffset": 10116,
+          "endOffset": 10401,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getTextField",
+      "ranges": [
+        {
+          "startOffset": 10985,
+          "endOffset": 11270,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createButton",
+      "ranges": [
+        {
+          "startOffset": 11889,
+          "endOffset": 12353,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createCheckBox",
+      "ranges": [
+        {
+          "startOffset": 12973,
+          "endOffset": 13449,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createDropdown",
+      "ranges": [
+        {
+          "startOffset": 14072,
+          "endOffset": 14548,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createOptionList",
+      "ranges": [
+        {
+          "startOffset": 15190,
+          "endOffset": 15661,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createRadioGroup",
+      "ranges": [
+        {
+          "startOffset": 16384,
+          "endOffset": 16883,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.createTextField",
+      "ranges": [
+        {
+          "startOffset": 17513,
+          "endOffset": 17962,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.flatten",
+      "ranges": [
+        {
+          "startOffset": 18953,
+          "endOffset": 20309,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.removeField",
+      "ranges": [
+        {
+          "startOffset": 20607,
+          "endOffset": 21558,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.updateFieldAppearances",
+      "ranges": [
+        {
+          "startOffset": 22958,
+          "endOffset": 23415,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.markFieldAsDirty",
+      "ranges": [
+        {
+          "startOffset": 23823,
+          "endOffset": 23976,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.markFieldAsClean",
+      "ranges": [
+        {
+          "startOffset": 24388,
+          "endOffset": 24544,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.fieldIsDirty",
+      "ranges": [
+        {
+          "startOffset": 24983,
+          "endOffset": 25143,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.getDefaultFont",
+      "ranges": [
+        {
+          "startOffset": 25184,
+          "endOffset": 25250,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.findWidgetPage",
+      "ranges": [
+        {
+          "startOffset": 25291,
+          "endOffset": 25902,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.findWidgetAppearanceRef",
+      "ranges": [
+        {
+          "startOffset": 25952,
+          "endOffset": 26697,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.findOrCreateNonTerminals",
+      "ranges": [
+        {
+          "startOffset": 26748,
+          "endOffset": 27669,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.findNonTerminal",
+      "ranges": [
+        {
+          "startOffset": 27711,
+          "endOffset": 28319,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFForm.of",
+      "ranges": [
+        {
+          "startOffset": 28782,
+          "endOffset": 28857,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "convertToPDFField",
+      "ranges": [
+        {
+          "startOffset": 28936,
+          "endOffset": 29758,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "splitFieldName",
+      "ranges": [
+        {
+          "startOffset": 29781,
+          "endOffset": 30428,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "addFieldToParent",
+      "ranges": [
+        {
+          "startOffset": 30453,
+          "endOffset": 30987,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

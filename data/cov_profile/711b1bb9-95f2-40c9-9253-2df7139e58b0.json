@@ -1,0 +1,215 @@
+{
+  "scriptId": "413",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFRadioGroup.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 19710,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1397,
+          "endOffset": 19613,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRadioGroup",
+      "ranges": [
+        {
+          "startOffset": 1467,
+          "endOffset": 1801,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.getOptions",
+      "ranges": [
+        {
+          "startOffset": 2436,
+          "endOffset": 3080,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.getSelected",
+      "ranges": [
+        {
+          "startOffset": 3698,
+          "endOffset": 4224,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.select",
+      "ranges": [
+        {
+          "startOffset": 6330,
+          "endOffset": 7192,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.clear",
+      "ranges": [
+        {
+          "startOffset": 7777,
+          "endOffset": 7883,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.isOffToggleable",
+      "ranges": [
+        {
+          "startOffset": 8493,
+          "endOffset": 8590,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.enableOffToggling",
+      "ranges": [
+        {
+          "startOffset": 9295,
+          "endOffset": 9393,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.disableOffToggling",
+      "ranges": [
+        {
+          "startOffset": 9882,
+          "endOffset": 9979,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.isMutuallyExclusive",
+      "ranges": [
+        {
+          "startOffset": 10816,
+          "endOffset": 10914,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.enableMutualExclusion",
+      "ranges": [
+        {
+          "startOffset": 11521,
+          "endOffset": 11620,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.disableMutualExclusion",
+      "ranges": [
+        {
+          "startOffset": 12224,
+          "endOffset": 12322,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.addOptionToPage",
+      "ranges": [
+        {
+          "startOffset": 13361,
+          "endOffset": 15592,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 16053,
+          "endOffset": 16591,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 16962,
+          "endOffset": 17015,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 18060,
+          "endOffset": 18491,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 18546,
+          "endOffset": 18879,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRadioGroup.of",
+      "ranges": [
+        {
+          "startOffset": 19491,
+          "endOffset": 19584,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

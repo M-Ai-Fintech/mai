@@ -1,0 +1,204 @@
+{
+  "scriptId": "343",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/CustomFontEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 11604,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 645,
+          "endOffset": 11515,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CustomFontEmbedder",
+      "ranges": [
+        {
+          "startOffset": 663,
+          "endOffset": 1591,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 1621,
+          "endOffset": 2176,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.encodeText",
+      "ranges": [
+        {
+          "startOffset": 2390,
+          "endOffset": 2750,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.widthOfTextAtSize",
+      "ranges": [
+        {
+          "startOffset": 2950,
+          "endOffset": 3288,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.heightOfFontAtSize",
+      "ranges": [
+        {
+          "startOffset": 3344,
+          "endOffset": 3847,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.sizeOfFontAtHeight",
+      "ranges": [
+        {
+          "startOffset": 3903,
+          "endOffset": 4179,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedIntoContext",
+      "ranges": [
+        {
+          "startOffset": 4233,
+          "endOffset": 4412,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedFontDict",
+      "ranges": [
+        {
+          "startOffset": 4463,
+          "endOffset": 5750,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.isCFF",
+      "ranges": [
+        {
+          "startOffset": 5793,
+          "endOffset": 5842,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedCIDFontDict",
+      "ranges": [
+        {
+          "startOffset": 5896,
+          "endOffset": 7137,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedFontDescriptor",
+      "ranges": [
+        {
+          "startOffset": 7194,
+          "endOffset": 9217,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.serializeFont",
+      "ranges": [
+        {
+          "startOffset": 9268,
+          "endOffset": 9499,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedFontStream",
+      "ranges": [
+        {
+          "startOffset": 9552,
+          "endOffset": 10266,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.embedUnicodeCmap",
+      "ranges": [
+        {
+          "startOffset": 10320,
+          "endOffset": 10532,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.glyphId",
+      "ranges": [
+        {
+          "startOffset": 10577,
+          "endOffset": 10639,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontEmbedder.computeWidths",
+      "ranges": [
+        {
+          "startOffset": 10690,
+          "endOffset": 11481,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

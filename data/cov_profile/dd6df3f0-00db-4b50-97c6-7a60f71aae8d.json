@@ -1,0 +1,116 @@
+{
+  "scriptId": "386",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/parser/BaseParser.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4299,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 557,
+          "endOffset": 4226,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "BaseParser",
+      "ranges": [
+        {
+          "startOffset": 575,
+          "endOffset": 746,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.parseRawInt",
+      "ranges": [
+        {
+          "startOffset": 786,
+          "endOffset": 1253,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.parseRawNumber",
+      "ranges": [
+        {
+          "startOffset": 1426,
+          "endOffset": 2809,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.skipWhitespace",
+      "ranges": [
+        {
+          "startOffset": 2853,
+          "endOffset": 2998,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.skipLine",
+      "ranges": [
+        {
+          "startOffset": 3036,
+          "endOffset": 3260,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.skipComment",
+      "ranges": [
+        {
+          "startOffset": 3301,
+          "endOffset": 3640,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.skipWhitespaceAndComments",
+      "ranges": [
+        {
+          "startOffset": 3695,
+          "endOffset": 3815,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BaseParser.matchKeyword",
+      "ranges": [
+        {
+          "startOffset": 3857,
+          "endOffset": 4200,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

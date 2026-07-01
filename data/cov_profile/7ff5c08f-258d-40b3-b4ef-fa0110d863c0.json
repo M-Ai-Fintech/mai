@@ -1,0 +1,228 @@
+{
+  "scriptId": "384",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFPageTree.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 7433,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 544,
+          "endOffset": 7341,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree",
+      "ranges": [
+        {
+          "startOffset": 612,
+          "endOffset": 715,
+          "count": 1
+        },
+        {
+          "startOffset": 701,
+          "endOffset": 708,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.Parent",
+      "ranges": [
+        {
+          "startOffset": 751,
+          "endOffset": 830,
+          "count": 34
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.Kids",
+      "ranges": [
+        {
+          "startOffset": 865,
+          "endOffset": 962,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.Count",
+      "ranges": [
+        {
+          "startOffset": 998,
+          "endOffset": 1097,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.pushTreeNode",
+      "ranges": [
+        {
+          "startOffset": 1140,
+          "endOffset": 1226,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageTree.pushLeafNode",
+      "ranges": [
+        {
+          "startOffset": 1269,
+          "endOffset": 1377,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageTree.insertLeafNode",
+      "ranges": [
+        {
+          "startOffset": 1856,
+          "endOffset": 3399,
+          "count": 1
+        },
+        {
+          "startOffset": 2000,
+          "endOffset": 2087,
+          "count": 0
+        },
+        {
+          "startOffset": 2204,
+          "endOffset": 3064,
+          "count": 0
+        },
+        {
+          "startOffset": 3254,
+          "endOffset": 3398,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.removeLeafNode",
+      "ranges": [
+        {
+          "startOffset": 3815,
+          "endOffset": 5368,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageTree.ascend",
+      "ranges": [
+        {
+          "startOffset": 5405,
+          "endOffset": 5546,
+          "count": 34
+        },
+        {
+          "startOffset": 5517,
+          "endOffset": 5540,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.traverse",
+      "ranges": [
+        {
+          "startOffset": 5646,
+          "endOffset": 5987,
+          "count": 1
+        },
+        {
+          "startOffset": 5762,
+          "endOffset": 5981,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.insertLeafKid",
+      "ranges": [
+        {
+          "startOffset": 6031,
+          "endOffset": 6328,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 6112,
+          "endOffset": 6282,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.removeKid",
+      "ranges": [
+        {
+          "startOffset": 6368,
+          "endOffset": 6764,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageTree.withContext",
+      "ranges": [
+        {
+          "startOffset": 6796,
+          "endOffset": 7198,
+          "count": 1
+        },
+        {
+          "startOffset": 7096,
+          "endOffset": 7145,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageTree.fromMapWithContext",
+      "ranges": [
+        {
+          "startOffset": 7237,
+          "endOffset": 7314,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

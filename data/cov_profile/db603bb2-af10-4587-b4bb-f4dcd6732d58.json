@@ -1,0 +1,97 @@
+{
+  "scriptId": "289",
+  "url": "file:///home/luis/mai/node_modules/.deno/@pdf-lib+standard-fonts@1.0.0/node_modules/@pdf-lib/standard-fonts/lib/utils.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2197,
+          "count": 1
+        },
+        {
+          "startOffset": 744,
+          "endOffset": 784,
+          "count": 64
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "__importDefault",
+      "ranges": [
+        {
+          "startOffset": 70,
+          "endOffset": 151,
+          "count": 1
+        },
+        {
+          "startOffset": 122,
+          "endOffset": 127,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.decodeFromBase64",
+      "ranges": [
+        {
+          "startOffset": 812,
+          "endOffset": 1661,
+          "count": 3
+        },
+        {
+          "startOffset": 1047,
+          "endOffset": 1165,
+          "count": 1
+        },
+        {
+          "startOffset": 1245,
+          "endOffset": 1641,
+          "count": 8775
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "arrayToString",
+      "ranges": [
+        {
+          "startOffset": 1683,
+          "endOffset": 1834,
+          "count": 3
+        },
+        {
+          "startOffset": 1763,
+          "endOffset": 1816,
+          "count": 152732
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.decompressJson",
+      "ranges": [
+        {
+          "startOffset": 1861,
+          "endOffset": 1982,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.padStart",
+      "ranges": [
+        {
+          "startOffset": 2003,
+          "endOffset": 2195,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

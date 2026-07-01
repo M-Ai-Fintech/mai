@@ -1,0 +1,28 @@
+{
+  "scriptId": "233",
+  "url": "file:///home/luis/mai/src/engines/document-generator/latex.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2917,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "generateTermSheetLaTeX",
+      "ranges": [
+        {
+          "startOffset": 164,
+          "endOffset": 2914,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

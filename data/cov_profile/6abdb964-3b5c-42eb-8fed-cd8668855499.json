@@ -1,0 +1,197 @@
+{
+  "scriptId": "333",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/writers/PDFWriter.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 7907,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 682,
+          "endOffset": 7836,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter",
+      "ranges": [
+        {
+          "startOffset": 700,
+          "endOffset": 1053,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter.shouldWaitForTick",
+      "ranges": [
+        {
+          "startOffset": 837,
+          "endOffset": 968,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter.serializeToBuffer",
+      "ranges": [
+        {
+          "startOffset": 1098,
+          "endOffset": 4912,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1167,
+          "endOffset": 4904,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1383,
+          "endOffset": 4892,
+          "count": 9
+        },
+        {
+          "startOffset": 1455,
+          "endOffset": 1510,
+          "count": 1
+        },
+        {
+          "startOffset": 1531,
+          "endOffset": 2128,
+          "count": 1
+        },
+        {
+          "startOffset": 2149,
+          "endOffset": 3981,
+          "count": 4
+        },
+        {
+          "startOffset": 2199,
+          "endOffset": 2223,
+          "count": 1
+        },
+        {
+          "startOffset": 2223,
+          "endOffset": 3800,
+          "count": 3
+        },
+        {
+          "startOffset": 3800,
+          "endOffset": 3826,
+          "count": 1
+        },
+        {
+          "startOffset": 3827,
+          "endOffset": 3830,
+          "count": 2
+        },
+        {
+          "startOffset": 3888,
+          "endOffset": 3912,
+          "count": 3
+        },
+        {
+          "startOffset": 3912,
+          "endOffset": 3981,
+          "count": 0
+        },
+        {
+          "startOffset": 4002,
+          "endOffset": 4082,
+          "count": 0
+        },
+        {
+          "startOffset": 4103,
+          "endOffset": 4190,
+          "count": 3
+        },
+        {
+          "startOffset": 4211,
+          "endOffset": 4860,
+          "count": 1
+        },
+        {
+          "startOffset": 4253,
+          "endOffset": 4430,
+          "count": 0
+        },
+        {
+          "startOffset": 4472,
+          "endOffset": 4732,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter.computeIndirectObjectSize",
+      "ranges": [
+        {
+          "startOffset": 4966,
+          "endOffset": 5197,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter.createTrailerDict",
+      "ranges": [
+        {
+          "startOffset": 5243,
+          "endOffset": 5562,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWriter.computeBufferSize",
+      "ranges": [
+        {
+          "startOffset": 5608,
+          "endOffset": 7685,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWriter.forContext",
+      "ranges": [
+        {
+          "startOffset": 7714,
+          "endOffset": 7811,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

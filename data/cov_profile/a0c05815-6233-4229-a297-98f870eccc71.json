@@ -1,0 +1,127 @@
+{
+  "scriptId": "271",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/appearances.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 21983,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.normalizeAppearance",
+      "ranges": [
+        {
+          "startOffset": 821,
+          "endOffset": 940,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "getDefaultFontSize",
+      "ranges": [
+        {
+          "startOffset": 1171,
+          "endOffset": 1510,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "getDefaultColor",
+      "ranges": [
+        {
+          "startOffset": 1823,
+          "endOffset": 2509,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "updateDefaultAppearance",
+      "ranges": [
+        {
+          "startOffset": 2541,
+          "endOffset": 2930,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultCheckBoxAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 2976,
+          "endOffset": 5618,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultRadioGroupAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 5666,
+          "endOffset": 8282,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultButtonAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 8326,
+          "endOffset": 11947,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultTextFieldAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 11994,
+          "endOffset": 15719,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultDropdownAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 15765,
+          "endOffset": 18528,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.defaultOptionListAppearanceProvider",
+      "ranges": [
+        {
+          "startOffset": 18576,
+          "endOffset": 21942,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,633 @@
+{
+  "scriptId": "277",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/errors.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 15100,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1143,
+          "endOffset": 1509,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MethodNotImplementedError",
+      "ranges": [
+        {
+          "startOffset": 1225,
+          "endOffset": 1469,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1627,
+          "endOffset": 1979,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PrivateConstructorError",
+      "ranges": [
+        {
+          "startOffset": 1707,
+          "endOffset": 1941,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2095,
+          "endOffset": 2889,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UnexpectedObjectTypeError",
+      "ranges": [
+        {
+          "startOffset": 2177,
+          "endOffset": 2849,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3008,
+          "endOffset": 3338,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UnsupportedEncodingError",
+      "ranges": [
+        {
+          "startOffset": 3089,
+          "endOffset": 3299,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3443,
+          "endOffset": 3774,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ReparseError",
+      "ranges": [
+        {
+          "startOffset": 3512,
+          "endOffset": 3747,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3862,
+          "endOffset": 4164,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingCatalogError",
+      "ranges": [
+        {
+          "startOffset": 3938,
+          "endOffset": 4130,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4280,
+          "endOffset": 4626,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingPageContentsEmbeddingError",
+      "ranges": [
+        {
+          "startOffset": 4370,
+          "endOffset": 4578,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4764,
+          "endOffset": 5414,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UnrecognizedStreamTypeError",
+      "ranges": [
+        {
+          "startOffset": 4848,
+          "endOffset": 5372,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 5548,
+          "endOffset": 6002,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PageEmbeddingMismatchedContextError",
+      "ranges": [
+        {
+          "startOffset": 5640,
+          "endOffset": 5952,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 6144,
+          "endOffset": 6542,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArrayIsNotRectangleError",
+      "ranges": [
+        {
+          "startOffset": 6228,
+          "endOffset": 6500,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 6666,
+          "endOffset": 7054,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "InvalidPDFDateStringError",
+      "ranges": [
+        {
+          "startOffset": 6748,
+          "endOffset": 7014,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7172,
+          "endOffset": 7563,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "InvalidTargetIndexError",
+      "ranges": [
+        {
+          "startOffset": 7252,
+          "endOffset": 7525,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7674,
+          "endOffset": 8111,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CorruptPageTreeError",
+      "ranges": [
+        {
+          "startOffset": 7751,
+          "endOffset": 8076,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 8217,
+          "endOffset": 8591,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "IndexOutOfBoundsError",
+      "ranges": [
+        {
+          "startOffset": 8295,
+          "endOffset": 8555,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 8704,
+          "endOffset": 9027,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "InvalidAcroFieldValueError",
+      "ranges": [
+        {
+          "startOffset": 8787,
+          "endOffset": 8986,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 9145,
+          "endOffset": 9476,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MultiSelectValueError",
+      "ranges": [
+        {
+          "startOffset": 9223,
+          "endOffset": 9440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 9582,
+          "endOffset": 9920,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingDAEntryError",
+      "ranges": [
+        {
+          "startOffset": 9658,
+          "endOffset": 9886,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 10025,
+          "endOffset": 10359,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingTfOperatorError",
+      "ranges": [
+        {
+          "startOffset": 10104,
+          "endOffset": 10322,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 10466,
+          "endOffset": 10872,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "NumberParsingError",
+      "ranges": [
+        {
+          "startOffset": 10541,
+          "endOffset": 10839,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 10968,
+          "endOffset": 11366,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFParsingError",
+      "ranges": [
+        {
+          "startOffset": 11040,
+          "endOffset": 11336,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 11463,
+          "endOffset": 11851,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "NextByteAssertionError",
+      "ranges": [
+        {
+          "startOffset": 11542,
+          "endOffset": 11814,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 11971,
+          "endOffset": 12325,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFObjectParsingError",
+      "ranges": [
+        {
+          "startOffset": 12049,
+          "endOffset": 12289,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 12450,
+          "endOffset": 12785,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFInvalidObjectParsingError",
+      "ranges": [
+        {
+          "startOffset": 12535,
+          "endOffset": 12742,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 12917,
+          "endOffset": 13223,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFStreamParsingError",
+      "ranges": [
+        {
+          "startOffset": 12995,
+          "endOffset": 13187,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 13346,
+          "endOffset": 13705,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UnbalancedParenthesisError",
+      "ranges": [
+        {
+          "startOffset": 13429,
+          "endOffset": 13664,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 13830,
+          "endOffset": 14115,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StalledParserError",
+      "ranges": [
+        {
+          "startOffset": 13905,
+          "endOffset": 14082,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 14227,
+          "endOffset": 14526,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingPDFHeaderError",
+      "ranges": [
+        {
+          "startOffset": 14305,
+          "endOffset": 14490,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 14642,
+          "endOffset": 14995,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingKeywordError",
+      "ranges": [
+        {
+          "startOffset": 14718,
+          "endOffset": 14961,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "scriptId": "330",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/rng.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 781,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 404,
+          "endOffset": 714,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "SimpleRNG",
+      "ranges": [
+        {
+          "startOffset": 422,
+          "endOffset": 480,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "SimpleRNG.nextInt",
+      "ranges": [
+        {
+          "startOffset": 515,
+          "endOffset": 615,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "SimpleRNG.withSeed",
+      "ranges": [
+        {
+          "startOffset": 642,
+          "endOffset": 689,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "scriptId": "232",
+  "url": "file:///home/luis/mai/src/engines/document-generator/pdf.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4043,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "generateTermSheetPDF",
+      "ranges": [
+        {
+          "startOffset": 208,
+          "endOffset": 3881,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "drawParagraph",
+      "ranges": [
+        {
+          "startOffset": 1242,
+          "endOffset": 1629,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "writeTermSheetPDF",
+      "ranges": [
+        {
+          "startOffset": 3891,
+          "endOffset": 4040,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

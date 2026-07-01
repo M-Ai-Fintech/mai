@@ -1,0 +1,622 @@
+{
+  "scriptId": "274",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/operators.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 13565,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.clip",
+      "ranges": [
+        {
+          "startOffset": 1656,
+          "endOffset": 1738,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.clipEvenOdd",
+      "ranges": [
+        {
+          "startOffset": 1762,
+          "endOffset": 1844,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.concatTransformationMatrix",
+      "ranges": [
+        {
+          "startOffset": 2008,
+          "endOffset": 2338,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.translate",
+      "ranges": [
+        {
+          "startOffset": 2360,
+          "endOffset": 2456,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.scale",
+      "ranges": [
+        {
+          "startOffset": 2474,
+          "endOffset": 2570,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.rotateRadians",
+      "ranges": [
+        {
+          "startOffset": 2596,
+          "endOffset": 2798,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.rotateDegrees",
+      "ranges": [
+        {
+          "startOffset": 2824,
+          "endOffset": 2935,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.skewRadians",
+      "ranges": [
+        {
+          "startOffset": 2959,
+          "endOffset": 3129,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.skewDegrees",
+      "ranges": [
+        {
+          "startOffset": 3153,
+          "endOffset": 3346,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setDashPattern",
+      "ranges": [
+        {
+          "startOffset": 3373,
+          "endOffset": 3605,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.restoreDashPattern",
+      "ranges": [
+        {
+          "startOffset": 3636,
+          "endOffset": 3689,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3710,
+          "endOffset": 3910,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setLineCap",
+      "ranges": [
+        {
+          "startOffset": 4002,
+          "endOffset": 4129,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4151,
+          "endOffset": 4350,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setLineJoin",
+      "ranges": [
+        {
+          "startOffset": 4446,
+          "endOffset": 4574,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setGraphicsState",
+      "ranges": [
+        {
+          "startOffset": 4603,
+          "endOffset": 4735,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.pushGraphicsState",
+      "ranges": [
+        {
+          "startOffset": 4765,
+          "endOffset": 4853,
+          "count": 18
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.popGraphicsState",
+      "ranges": [
+        {
+          "startOffset": 4882,
+          "endOffset": 4969,
+          "count": 18
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setLineWidth",
+      "ranges": [
+        {
+          "startOffset": 4994,
+          "endOffset": 5118,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.appendBezierCurve",
+      "ranges": [
+        {
+          "startOffset": 5224,
+          "endOffset": 5557,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.appendQuadraticCurve",
+      "ranges": [
+        {
+          "startOffset": 5590,
+          "endOffset": 5856,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.closePath",
+      "ranges": [
+        {
+          "startOffset": 5878,
+          "endOffset": 5958,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.moveTo",
+      "ranges": [
+        {
+          "startOffset": 5977,
+          "endOffset": 6128,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.lineTo",
+      "ranges": [
+        {
+          "startOffset": 6147,
+          "endOffset": 6298,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.rectangle",
+      "ranges": [
+        {
+          "startOffset": 6550,
+          "endOffset": 6825,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.square",
+      "ranges": [
+        {
+          "startOffset": 7034,
+          "endOffset": 7119,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.stroke",
+      "ranges": [
+        {
+          "startOffset": 7210,
+          "endOffset": 7291,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.fill",
+      "ranges": [
+        {
+          "startOffset": 7308,
+          "endOffset": 7390,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.fillAndStroke",
+      "ranges": [
+        {
+          "startOffset": 7416,
+          "endOffset": 7507,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.endPath",
+      "ranges": [
+        {
+          "startOffset": 7527,
+          "endOffset": 7605,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.nextLine",
+      "ranges": [
+        {
+          "startOffset": 7701,
+          "endOffset": 7780,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.moveText",
+      "ranges": [
+        {
+          "startOffset": 7801,
+          "endOffset": 7942,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.showText",
+      "ranges": [
+        {
+          "startOffset": 8034,
+          "endOffset": 8129,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.beginText",
+      "ranges": [
+        {
+          "startOffset": 8220,
+          "endOffset": 8300,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.endText",
+      "ranges": [
+        {
+          "startOffset": 8320,
+          "endOffset": 8398,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setFontAndSize",
+      "ranges": [
+        {
+          "startOffset": 8425,
+          "endOffset": 8578,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setCharacterSpacing",
+      "ranges": [
+        {
+          "startOffset": 8610,
+          "endOffset": 8745,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setWordSpacing",
+      "ranges": [
+        {
+          "startOffset": 8772,
+          "endOffset": 8902,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setCharacterSqueeze",
+      "ranges": [
+        {
+          "startOffset": 8985,
+          "endOffset": 9125,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setLineHeight",
+      "ranges": [
+        {
+          "startOffset": 9151,
+          "endOffset": 9290,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setTextRise",
+      "ranges": [
+        {
+          "startOffset": 9314,
+          "endOffset": 9435,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 9461,
+          "endOffset": 10101,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setTextRenderingMode",
+      "ranges": [
+        {
+          "startOffset": 10218,
+          "endOffset": 10348,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setTextMatrix",
+      "ranges": [
+        {
+          "startOffset": 10374,
+          "endOffset": 10691,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.rotateAndSkewTextRadiansAndTranslate",
+      "ranges": [
+        {
+          "startOffset": 10740,
+          "endOffset": 11075,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.rotateAndSkewTextDegreesAndTranslate",
+      "ranges": [
+        {
+          "startOffset": 11124,
+          "endOffset": 11434,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawObject",
+      "ranges": [
+        {
+          "startOffset": 11522,
+          "endOffset": 11640,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setFillingGrayscaleColor",
+      "ranges": [
+        {
+          "startOffset": 11741,
+          "endOffset": 11871,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setStrokingGrayscaleColor",
+      "ranges": [
+        {
+          "startOffset": 11909,
+          "endOffset": 12036,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setFillingRgbColor",
+      "ranges": [
+        {
+          "startOffset": 12067,
+          "endOffset": 12297,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setStrokingRgbColor",
+      "ranges": [
+        {
+          "startOffset": 12329,
+          "endOffset": 12556,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setFillingCmykColor",
+      "ranges": [
+        {
+          "startOffset": 12588,
+          "endOffset": 12870,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setStrokingCmykColor",
+      "ranges": [
+        {
+          "startOffset": 12903,
+          "endOffset": 13182,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.beginMarkedContent",
+      "ranges": [
+        {
+          "startOffset": 13286,
+          "endOffset": 13410,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.endMarkedContent",
+      "ranges": [
+        {
+          "startOffset": 13439,
+          "endOffset": 13526,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

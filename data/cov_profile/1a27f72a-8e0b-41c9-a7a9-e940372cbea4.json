@@ -1,0 +1,94 @@
+{
+  "scriptId": "372",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroCheckBox.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2069,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 330,
+          "endOffset": 1963,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroCheckBox",
+      "ranges": [
+        {
+          "startOffset": 402,
+          "endOffset": 509,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroCheckBox.setValue",
+      "ranges": [
+        {
+          "startOffset": 551,
+          "endOffset": 1199,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroCheckBox.getValue",
+      "ranges": [
+        {
+          "startOffset": 1242,
+          "endOffset": 1397,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroCheckBox.getOnValue",
+      "ranges": [
+        {
+          "startOffset": 1442,
+          "endOffset": 1588,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroCheckBox.fromDict",
+      "ranges": [
+        {
+          "startOffset": 1621,
+          "endOffset": 1696,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroCheckBox.create",
+      "ranges": [
+        {
+          "startOffset": 1727,
+          "endOffset": 1932,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

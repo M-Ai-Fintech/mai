@@ -1,0 +1,61 @@
+{
+  "scriptId": "286",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/objects.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 686,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.values",
+      "ranges": [
+        {
+          "startOffset": 261,
+          "endOffset": 341,
+          "count": 22
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 306,
+          "endOffset": 337,
+          "count": 248
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.isStandardFont",
+      "ranges": [
+        {
+          "startOffset": 441,
+          "endOffset": 516,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.rectanglesAreEqual",
+      "ranges": [
+        {
+          "startOffset": 547,
+          "endOffset": 649,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

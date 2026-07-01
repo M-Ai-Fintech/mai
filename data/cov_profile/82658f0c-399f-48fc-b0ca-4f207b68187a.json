@@ -1,0 +1,182 @@
+{
+  "scriptId": "356",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/DecodeStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5062,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 817,
+          "endOffset": 4985,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "DecodeStream",
+      "ranges": [
+        {
+          "startOffset": 835,
+          "endOffset": 1291,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "get",
+      "ranges": [
+        {
+          "startOffset": 1368,
+          "endOffset": 1542,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.getByte",
+      "ranges": [
+        {
+          "startOffset": 1643,
+          "endOffset": 1882,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.getUint16",
+      "ranges": [
+        {
+          "startOffset": 1923,
+          "endOffset": 2110,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.getInt32",
+      "ranges": [
+        {
+          "startOffset": 2150,
+          "endOffset": 2358,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.getBytes",
+      "ranges": [
+        {
+          "startOffset": 2398,
+          "endOffset": 3323,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.peekByte",
+      "ranges": [
+        {
+          "startOffset": 3363,
+          "endOffset": 3470,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.peekBytes",
+      "ranges": [
+        {
+          "startOffset": 3511,
+          "endOffset": 3726,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.skip",
+      "ranges": [
+        {
+          "startOffset": 3762,
+          "endOffset": 3852,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.reset",
+      "ranges": [
+        {
+          "startOffset": 3889,
+          "endOffset": 3930,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.makeSubStream",
+      "ranges": [
+        {
+          "startOffset": 3975,
+          "endOffset": 4224,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.decode",
+      "ranges": [
+        {
+          "startOffset": 4262,
+          "endOffset": 4396,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.readBlock",
+      "ranges": [
+        {
+          "startOffset": 4437,
+          "endOffset": 4546,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "DecodeStream.ensureBuffer",
+      "ranges": [
+        {
+          "startOffset": 4590,
+          "endOffset": 4957,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

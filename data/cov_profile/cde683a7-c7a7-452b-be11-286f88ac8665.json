@@ -1,0 +1,170 @@
+{
+  "scriptId": "279",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/arrays.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4627,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.last",
+      "ranges": [
+        {
+          "startOffset": 475,
+          "endOffset": 527,
+          "count": 14
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.typedArrayFor",
+      "ranges": [
+        {
+          "startOffset": 641,
+          "endOffset": 919,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.mergeIntoTypedArray",
+      "ranges": [
+        {
+          "startOffset": 951,
+          "endOffset": 1788,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.mergeUint8Arrays",
+      "ranges": [
+        {
+          "startOffset": 1817,
+          "endOffset": 2241,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.arrayAsString",
+      "ranges": [
+        {
+          "startOffset": 2267,
+          "endOffset": 2440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.byAscendingId",
+      "ranges": [
+        {
+          "startOffset": 2466,
+          "endOffset": 2505,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.sortedUniq",
+      "ranges": [
+        {
+          "startOffset": 2528,
+          "endOffset": 2826,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.reverseArray",
+      "ranges": [
+        {
+          "startOffset": 3082,
+          "endOffset": 3408,
+          "count": 30
+        },
+        {
+          "startOffset": 3206,
+          "endOffset": 3388,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.sum",
+      "ranges": [
+        {
+          "startOffset": 3424,
+          "endOffset": 3578,
+          "count": 1
+        },
+        {
+          "startOffset": 3522,
+          "endOffset": 3558,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.range",
+      "ranges": [
+        {
+          "startOffset": 3596,
+          "endOffset": 3773,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.pluckIndices",
+      "ranges": [
+        {
+          "startOffset": 3798,
+          "endOffset": 4002,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.canBeConvertedToUint8Array",
+      "ranges": [
+        {
+          "startOffset": 4041,
+          "endOffset": 4178,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.toUint8Array",
+      "ranges": [
+        {
+          "startOffset": 4203,
+          "endOffset": 4591,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

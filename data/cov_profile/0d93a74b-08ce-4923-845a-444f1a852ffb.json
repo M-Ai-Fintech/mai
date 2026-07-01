@@ -1,0 +1,83 @@
+{
+  "scriptId": "312",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/document/PDFHeader.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1740,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 253,
+          "endOffset": 1669,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHeader",
+      "ranges": [
+        {
+          "startOffset": 271,
+          "endOffset": 383,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHeader.toString",
+      "ranges": [
+        {
+          "startOffset": 419,
+          "endOffset": 566,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHeader.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 606,
+          "endOffset": 684,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHeader.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 726,
+          "endOffset": 1540,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHeader.forVersion",
+      "ranges": [
+        {
+          "startOffset": 1569,
+          "endOffset": 1644,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "scriptId": "281",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/strings.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 6492,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.toCharCode",
+      "ranges": [
+        {
+          "startOffset": 605,
+          "endOffset": 661,
+          "count": 690
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.toCodePoint",
+      "ranges": [
+        {
+          "startOffset": 685,
+          "endOffset": 742,
+          "count": 733
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.toHexStringOfMinLength",
+      "ranges": [
+        {
+          "startOffset": 777,
+          "endOffset": 883,
+          "count": 823
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.toHexString",
+      "ranges": [
+        {
+          "startOffset": 907,
+          "endOffset": 972,
+          "count": 733
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.charFromCode",
+      "ranges": [
+        {
+          "startOffset": 997,
+          "endOffset": 1050,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.charFromHexCode",
+      "ranges": [
+        {
+          "startOffset": 1078,
+          "endOffset": 1144,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.padStart",
+      "ranges": [
+        {
+          "startOffset": 1165,
+          "endOffset": 1357,
+          "count": 835
+        },
+        {
+          "startOffset": 1292,
+          "endOffset": 1327,
+          "count": 180
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.copyStringIntoBuffer",
+      "ranges": [
+        {
+          "startOffset": 1390,
+          "endOffset": 1571,
+          "count": 531
+        },
+        {
+          "startOffset": 1495,
+          "endOffset": 1550,
+          "count": 3900
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.addRandomSuffix",
+      "ranges": [
+        {
+          "startOffset": 1599,
+          "endOffset": 1771,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.escapeRegExp",
+      "ranges": [
+        {
+          "startOffset": 1796,
+          "endOffset": 1869,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.cleanText",
+      "ranges": [
+        {
+          "startOffset": 1891,
+          "endOffset": 1994,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.isNewlineChar",
+      "ranges": [
+        {
+          "startOffset": 2137,
+          "endOffset": 2194,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.lineSplit",
+      "ranges": [
+        {
+          "startOffset": 2216,
+          "endOffset": 2272,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.mergeLines",
+      "ranges": [
+        {
+          "startOffset": 2295,
+          "endOffset": 2363,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.charAtIndex",
+      "ranges": [
+        {
+          "startOffset": 2673,
+          "endOffset": 3267,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.charSplit",
+      "ranges": [
+        {
+          "startOffset": 3289,
+          "endOffset": 3525,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buildWordBreakRegex",
+      "ranges": [
+        {
+          "startOffset": 3553,
+          "endOffset": 4148,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.breakTextIntoLines",
+      "ranges": [
+        {
+          "startOffset": 4179,
+          "endOffset": 4995,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.parseDate",
+      "ranges": [
+        {
+          "startOffset": 5167,
+          "endOffset": 5999,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.findLastMatch",
+      "ranges": [
+        {
+          "startOffset": 6025,
+          "endOffset": 6455,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

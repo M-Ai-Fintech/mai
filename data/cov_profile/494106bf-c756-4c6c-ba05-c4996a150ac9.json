@@ -1,0 +1,93 @@
+{
+  "scriptId": "306",
+  "url": "file:///home/luis/mai/node_modules/.deno/@pdf-lib+standard-fonts@1.0.0/node_modules/@pdf-lib/standard-fonts/lib/Encoding.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1779,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "__importDefault",
+      "ranges": [
+        {
+          "startOffset": 70,
+          "endOffset": 151,
+          "count": 1
+        },
+        {
+          "startOffset": 122,
+          "endOffset": 127,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 574,
+          "endOffset": 1539,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Encoding",
+      "ranges": [
+        {
+          "startOffset": 592,
+          "endOffset": 1516,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Encoding.canEncodeUnicodeCodePoint",
+      "ranges": [
+        {
+          "startOffset": 702,
+          "endOffset": 789,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Encoding.encodeUnicodeCodePoint",
+      "ranges": [
+        {
+          "startOffset": 829,
+          "endOffset": 1292,
+          "count": 733
+        },
+        {
+          "startOffset": 936,
+          "endOffset": 1225,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1427,
+          "endOffset": 1460,
+          "count": 612
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

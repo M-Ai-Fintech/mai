@@ -1,0 +1,59 @@
+{
+  "scriptId": "296",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/zlib/crc32.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1750,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "makeTable",
+      "ranges": [
+        {
+          "startOffset": 1178,
+          "endOffset": 1408,
+          "count": 1
+        },
+        {
+          "startOffset": 1255,
+          "endOffset": 1389,
+          "count": 256
+        },
+        {
+          "startOffset": 1300,
+          "endOffset": 1367,
+          "count": 2048
+        },
+        {
+          "startOffset": 1321,
+          "endOffset": 1347,
+          "count": 1024
+        },
+        {
+          "startOffset": 1348,
+          "endOffset": 1359,
+          "count": 1024
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "crc32",
+      "ranges": [
+        {
+          "startOffset": 1503,
+          "endOffset": 1723,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

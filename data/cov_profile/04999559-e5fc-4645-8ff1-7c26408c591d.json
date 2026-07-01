@@ -1,0 +1,292 @@
+{
+  "scriptId": "408",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFField.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 17452,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.assertFieldAppearanceOptions",
+      "ranges": [
+        {
+          "startOffset": 501,
+          "endOffset": 1772,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2724,
+          "endOffset": 17383,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFField",
+      "ranges": [
+        {
+          "startOffset": 2742,
+          "endOffset": 3116,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.getName",
+      "ranges": [
+        {
+          "startOffset": 4136,
+          "endOffset": 4269,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.isReadOnly",
+      "ranges": [
+        {
+          "startOffset": 4768,
+          "endOffset": 4858,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.enableReadOnly",
+      "ranges": [
+        {
+          "startOffset": 5343,
+          "endOffset": 5434,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.disableReadOnly",
+      "ranges": [
+        {
+          "startOffset": 5730,
+          "endOffset": 5822,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.isRequired",
+      "ranges": [
+        {
+          "startOffset": 6243,
+          "endOffset": 6333,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.enableRequired",
+      "ranges": [
+        {
+          "startOffset": 6584,
+          "endOffset": 6675,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.disableRequired",
+      "ranges": [
+        {
+          "startOffset": 6935,
+          "endOffset": 7027,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.isExported",
+      "ranges": [
+        {
+          "startOffset": 7484,
+          "endOffset": 7575,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.enableExporting",
+      "ranges": [
+        {
+          "startOffset": 7861,
+          "endOffset": 7953,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.disableExporting",
+      "ranges": [
+        {
+          "startOffset": 8249,
+          "endOffset": 8340,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 8409,
+          "endOffset": 8529,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 8600,
+          "endOffset": 8727,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.markAsDirty",
+      "ranges": [
+        {
+          "startOffset": 8766,
+          "endOffset": 8840,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.markAsClean",
+      "ranges": [
+        {
+          "startOffset": 8879,
+          "endOffset": 8953,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.isDirty",
+      "ranges": [
+        {
+          "startOffset": 8988,
+          "endOffset": 9065,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.createWidget",
+      "ranges": [
+        {
+          "startOffset": 9105,
+          "endOffset": 11164,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.updateWidgetAppearanceWithFont",
+      "ranges": [
+        {
+          "startOffset": 11222,
+          "endOffset": 11621,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.updateOnOffWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 11676,
+          "endOffset": 12081,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.updateWidgetAppearances",
+      "ranges": [
+        {
+          "startOffset": 12132,
+          "endOffset": 12577,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.createAppearanceStream",
+      "ranges": [
+        {
+          "startOffset": 13141,
+          "endOffset": 13900,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.createImageAppearanceStream",
+      "ranges": [
+        {
+          "startOffset": 14386,
+          "endOffset": 16861,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFField.createAppearanceDict",
+      "ranges": [
+        {
+          "startOffset": 16909,
+          "endOffset": 17359,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

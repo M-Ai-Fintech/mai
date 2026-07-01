@@ -1,0 +1,292 @@
+{
+  "scriptId": "370",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/annotation/PDFAnnotation.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5548,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 584,
+          "endOffset": 5469,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAnnotation",
+      "ranges": [
+        {
+          "startOffset": 602,
+          "endOffset": 664,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.Rect",
+      "ranges": [
+        {
+          "startOffset": 752,
+          "endOffset": 854,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.AP",
+      "ranges": [
+        {
+          "startOffset": 889,
+          "endOffset": 993,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.F",
+      "ranges": [
+        {
+          "startOffset": 1027,
+          "endOffset": 1197,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.getRectangle",
+      "ranges": [
+        {
+          "startOffset": 1242,
+          "endOffset": 1464,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setRectangle",
+      "ranges": [
+        {
+          "startOffset": 1509,
+          "endOffset": 1742,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.getAppearanceState",
+      "ranges": [
+        {
+          "startOffset": 1793,
+          "endOffset": 1969,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setAppearanceState",
+      "ranges": [
+        {
+          "startOffset": 2020,
+          "endOffset": 2102,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setAppearances",
+      "ranges": [
+        {
+          "startOffset": 2149,
+          "endOffset": 2243,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.ensureAP",
+      "ranges": [
+        {
+          "startOffset": 2284,
+          "endOffset": 2482,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.getNormalAppearance",
+      "ranges": [
+        {
+          "startOffset": 2534,
+          "endOffset": 2846,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setNormalAppearance",
+      "ranges": [
+        {
+          "startOffset": 2966,
+          "endOffset": 3084,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setRolloverAppearance",
+      "ranges": [
+        {
+          "startOffset": 3206,
+          "endOffset": 3324,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setDownAppearance",
+      "ranges": [
+        {
+          "startOffset": 3442,
+          "endOffset": 3560,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.removeRolloverAppearance",
+      "ranges": [
+        {
+          "startOffset": 3617,
+          "endOffset": 3750,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.removeDownAppearance",
+      "ranges": [
+        {
+          "startOffset": 3803,
+          "endOffset": 3936,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.getAppearances",
+      "ranges": [
+        {
+          "startOffset": 3983,
+          "endOffset": 4421,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.getFlags",
+      "ranges": [
+        {
+          "startOffset": 4462,
+          "endOffset": 4626,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setFlags",
+      "ranges": [
+        {
+          "startOffset": 4667,
+          "endOffset": 4772,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.hasFlag",
+      "ranges": [
+        {
+          "startOffset": 4812,
+          "endOffset": 4909,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setFlag",
+      "ranges": [
+        {
+          "startOffset": 4949,
+          "endOffset": 5046,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.clearFlag",
+      "ranges": [
+        {
+          "startOffset": 5088,
+          "endOffset": 5186,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.setFlagTo",
+      "ranges": [
+        {
+          "startOffset": 5228,
+          "endOffset": 5358,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAnnotation.fromDict",
+      "ranges": [
+        {
+          "startOffset": 5389,
+          "endOffset": 5440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

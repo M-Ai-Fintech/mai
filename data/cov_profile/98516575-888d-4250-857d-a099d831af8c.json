@@ -1,0 +1,28 @@
+{
+  "scriptId": "268",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/reconciliation/contingencies.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 909,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeContingencyDeductions",
+      "ranges": [
+        {
+          "startOffset": 177,
+          "endOffset": 908,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

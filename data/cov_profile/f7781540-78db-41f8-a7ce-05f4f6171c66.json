@@ -1,0 +1,33 @@
+{
+  "scriptId": "308",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/pdfDocEncoding.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5073,
+          "count": 1
+        },
+        {
+          "startOffset": 344,
+          "endOffset": 387,
+          "count": 256
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.pdfDocEncodingDecode",
+      "ranges": [
+        {
+          "startOffset": 4773,
+          "endOffset": 5029,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

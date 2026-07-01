@@ -1,0 +1,148 @@
+{
+  "scriptId": "298",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/utils/strings.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5293,
+          "count": 1
+        },
+        {
+          "startOffset": 349,
+          "endOffset": 385,
+          "count": 0
+        },
+        {
+          "startOffset": 446,
+          "endOffset": 486,
+          "count": 0
+        },
+        {
+          "startOffset": 752,
+          "endOffset": 851,
+          "count": 256
+        },
+        {
+          "startOffset": 780,
+          "endOffset": 783,
+          "count": 4
+        },
+        {
+          "startOffset": 784,
+          "endOffset": 847,
+          "count": 252
+        },
+        {
+          "startOffset": 795,
+          "endOffset": 798,
+          "count": 4
+        },
+        {
+          "startOffset": 799,
+          "endOffset": 847,
+          "count": 248
+        },
+        {
+          "startOffset": 810,
+          "endOffset": 813,
+          "count": 8
+        },
+        {
+          "startOffset": 814,
+          "endOffset": 847,
+          "count": 240
+        },
+        {
+          "startOffset": 825,
+          "endOffset": 828,
+          "count": 16
+        },
+        {
+          "startOffset": 829,
+          "endOffset": 847,
+          "count": 224
+        },
+        {
+          "startOffset": 840,
+          "endOffset": 843,
+          "count": 32
+        },
+        {
+          "startOffset": 844,
+          "endOffset": 847,
+          "count": 192
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.string2buf",
+      "ranges": [
+        {
+          "startOffset": 986,
+          "endOffset": 2410,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "buf2binstring",
+      "ranges": [
+        {
+          "startOffset": 2442,
+          "endOffset": 2987,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.buf2binstring",
+      "ranges": [
+        {
+          "startOffset": 3053,
+          "endOffset": 3112,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.binstring2buf",
+      "ranges": [
+        {
+          "startOffset": 3188,
+          "endOffset": 3348,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.buf2string",
+      "ranges": [
+        {
+          "startOffset": 3400,
+          "endOffset": 4485,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.utf8border",
+      "ranges": [
+        {
+          "startOffset": 4733,
+          "endOffset": 5291,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

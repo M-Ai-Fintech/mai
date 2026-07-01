@@ -1,0 +1,191 @@
+{
+  "scriptId": "318",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFName.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5454,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "decodeName",
+      "ranges": [
+        {
+          "startOffset": 393,
+          "endOffset": 518,
+          "count": 163
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 456,
+          "endOffset": 514,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "isRegularChar",
+      "ranges": [
+        {
+          "startOffset": 540,
+          "endOffset": 719,
+          "count": 646
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 791,
+          "endOffset": 5368,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFName",
+      "ranges": [
+        {
+          "startOffset": 855,
+          "endOffset": 1422,
+          "count": 61
+        },
+        {
+          "startOffset": 963,
+          "endOffset": 1017,
+          "count": 0
+        },
+        {
+          "startOffset": 1155,
+          "endOffset": 1353,
+          "count": 646
+        },
+        {
+          "startOffset": 1309,
+          "endOffset": 1342,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFName.asBytes",
+      "ranges": [
+        {
+          "startOffset": 1455,
+          "endOffset": 2951,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.decodeText",
+      "ranges": [
+        {
+          "startOffset": 3075,
+          "endOffset": 3199,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.asString",
+      "ranges": [
+        {
+          "startOffset": 3234,
+          "endOffset": 3286,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.value",
+      "ranges": [
+        {
+          "startOffset": 3374,
+          "endOffset": 3426,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.clone",
+      "ranges": [
+        {
+          "startOffset": 3458,
+          "endOffset": 3498,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.toString",
+      "ranges": [
+        {
+          "startOffset": 3533,
+          "endOffset": 3585,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFName.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 3623,
+          "endOffset": 3682,
+          "count": 95
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFName.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 3722,
+          "endOffset": 3877,
+          "count": 87
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFName.of",
+      "ranges": [
+        {
+          "startOffset": 3896,
+          "endOffset": 4177,
+          "count": 163
+        },
+        {
+          "startOffset": 4029,
+          "endOffset": 4146,
+          "count": 61
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

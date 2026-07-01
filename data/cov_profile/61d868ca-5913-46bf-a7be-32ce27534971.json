@@ -1,0 +1,193 @@
+{
+  "scriptId": "368",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/annotation/PDFWidgetAnnotation.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4606,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 767,
+          "endOffset": 4492,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFWidgetAnnotation",
+      "ranges": [
+        {
+          "startOffset": 843,
+          "endOffset": 954,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.MK",
+      "ranges": [
+        {
+          "startOffset": 994,
+          "endOffset": 1170,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.BS",
+      "ranges": [
+        {
+          "startOffset": 1211,
+          "endOffset": 1387,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.DA",
+      "ranges": [
+        {
+          "startOffset": 1428,
+          "endOffset": 1646,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.P",
+      "ranges": [
+        {
+          "startOffset": 1686,
+          "endOffset": 1854,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.setP",
+      "ranges": [
+        {
+          "startOffset": 1897,
+          "endOffset": 1976,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.setDefaultAppearance",
+      "ranges": [
+        {
+          "startOffset": 2035,
+          "endOffset": 2151,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getDefaultAppearance",
+      "ranges": [
+        {
+          "startOffset": 2210,
+          "endOffset": 2425,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getAppearanceCharacteristics",
+      "ranges": [
+        {
+          "startOffset": 2492,
+          "endOffset": 2650,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getOrCreateAppearanceCharacteristics",
+      "ranges": [
+        {
+          "startOffset": 2725,
+          "endOffset": 3026,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getBorderStyle",
+      "ranges": [
+        {
+          "startOffset": 3079,
+          "endOffset": 3223,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getOrCreateBorderStyle",
+      "ranges": [
+        {
+          "startOffset": 3284,
+          "endOffset": 3557,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.getOnValue",
+      "ranges": [
+        {
+          "startOffset": 3606,
+          "endOffset": 4073,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.fromDict",
+      "ranges": [
+        {
+          "startOffset": 4110,
+          "endOffset": 4179,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFWidgetAnnotation.create",
+      "ranges": [
+        {
+          "startOffset": 4214,
+          "endOffset": 4457,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

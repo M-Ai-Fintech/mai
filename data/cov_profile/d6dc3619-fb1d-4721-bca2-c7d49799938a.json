@@ -1,0 +1,75 @@
+{
+  "scriptId": "284",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/numbers.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1896,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.numberToString",
+      "ranges": [
+        {
+          "startOffset": 496,
+          "endOffset": 1188,
+          "count": 228
+        },
+        {
+          "startOffset": 572,
+          "endOffset": 939,
+          "count": 94
+        },
+        {
+          "startOffset": 646,
+          "endOffset": 933,
+          "count": 0
+        },
+        {
+          "startOffset": 939,
+          "endOffset": 1167,
+          "count": 134
+        },
+        {
+          "startOffset": 1027,
+          "endOffset": 1161,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 1212,
+          "endOffset": 1272,
+          "count": 60
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.bytesFor",
+      "ranges": [
+        {
+          "startOffset": 1663,
+          "endOffset": 1859,
+          "count": 30
+        },
+        {
+          "startOffset": 1778,
+          "endOffset": 1839,
+          "count": 33
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "scriptId": "232",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/index.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 10523,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "<static_initializer>",
+      "ranges": [
+        {
+          "startOffset": 1204,
+          "endOffset": 1269,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "evaluate",
+      "ranges": [
+        {
+          "startOffset": 1620,
+          "endOffset": 5428,
+          "count": 1
+        },
+        {
+          "startOffset": 2392,
+          "endOffset": 2395,
+          "count": 0
+        },
+        {
+          "startOffset": 2837,
+          "endOffset": 2891,
+          "count": 6
+        },
+        {
+          "startOffset": 2966,
+          "endOffset": 3021,
+          "count": 0
+        },
+        {
+          "startOffset": 3181,
+          "endOffset": 3294,
+          "count": 0
+        },
+        {
+          "startOffset": 3412,
+          "endOffset": 3500,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4268,
+          "endOffset": 4433,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "resolveWeightsConfig",
+      "ranges": [
+        {
+          "startOffset": 5525,
+          "endOffset": 6124,
+          "count": 1
+        },
+        {
+          "startOffset": 5710,
+          "endOffset": 6097,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getDynamicProfilePriors",
+      "ranges": [
+        {
+          "startOffset": 6127,
+          "endOffset": 9746,
+          "count": 1
+        },
+        {
+          "startOffset": 6916,
+          "endOffset": 9742,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

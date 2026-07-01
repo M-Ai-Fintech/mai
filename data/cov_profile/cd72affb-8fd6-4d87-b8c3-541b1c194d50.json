@@ -1,0 +1,78 @@
+{
+  "scriptId": "261",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/discounted_cash_flow.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1359,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeDCF",
+      "ranges": [
+        {
+          "startOffset": 585,
+          "endOffset": 1358,
+          "count": 6
+        },
+        {
+          "startOffset": 634,
+          "endOffset": 651,
+          "count": 5
+        },
+        {
+          "startOffset": 653,
+          "endOffset": 758,
+          "count": 2
+        },
+        {
+          "startOffset": 758,
+          "endOffset": 809,
+          "count": 4
+        },
+        {
+          "startOffset": 809,
+          "endOffset": 910,
+          "count": 1
+        },
+        {
+          "startOffset": 910,
+          "endOffset": 996,
+          "count": 3
+        },
+        {
+          "startOffset": 996,
+          "endOffset": 1165,
+          "count": 7
+        },
+        {
+          "startOffset": 1069,
+          "endOffset": 1110,
+          "count": 1
+        },
+        {
+          "startOffset": 1165,
+          "endOffset": 1213,
+          "count": 3
+        },
+        {
+          "startOffset": 1213,
+          "endOffset": 1265,
+          "count": 1
+        },
+        {
+          "startOffset": 1265,
+          "endOffset": 1357,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

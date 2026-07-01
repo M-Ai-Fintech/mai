@@ -1,0 +1,435 @@
+{
+  "scriptId": "415",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFTextField.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 32764,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1094,
+          "endOffset": 32669,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTextField",
+      "ranges": [
+        {
+          "startOffset": 1163,
+          "endOffset": 1424,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.getText",
+      "ranges": [
+        {
+          "startOffset": 2837,
+          "endOffset": 3113,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.setText",
+      "ranges": [
+        {
+          "startOffset": 5046,
+          "endOffset": 5590,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.getAlignment",
+      "ranges": [
+        {
+          "startOffset": 6319,
+          "endOffset": 6668,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.setAlignment",
+      "ranges": [
+        {
+          "startOffset": 7566,
+          "endOffset": 7751,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.getMaxLength",
+      "ranges": [
+        {
+          "startOffset": 8441,
+          "endOffset": 8506,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.setMaxLength",
+      "ranges": [
+        {
+          "startOffset": 9441,
+          "endOffset": 9963,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.removeMaxLength",
+      "ranges": [
+        {
+          "startOffset": 10404,
+          "endOffset": 10493,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.setImage",
+      "ranges": [
+        {
+          "startOffset": 10950,
+          "endOffset": 11671,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 12576,
+          "endOffset": 12731,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isMultiline",
+      "ranges": [
+        {
+          "startOffset": 13328,
+          "endOffset": 13418,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableMultiline",
+      "ranges": [
+        {
+          "startOffset": 13846,
+          "endOffset": 13965,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableMultiline",
+      "ranges": [
+        {
+          "startOffset": 14398,
+          "endOffset": 14518,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isPassword",
+      "ranges": [
+        {
+          "startOffset": 15027,
+          "endOffset": 15116,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enablePassword",
+      "ranges": [
+        {
+          "startOffset": 15985,
+          "endOffset": 16075,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disablePassword",
+      "ranges": [
+        {
+          "startOffset": 16367,
+          "endOffset": 16458,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isFileSelector",
+      "ranges": [
+        {
+          "startOffset": 16939,
+          "endOffset": 17030,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableFileSelection",
+      "ranges": [
+        {
+          "startOffset": 17412,
+          "endOffset": 17504,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableFileSelection",
+      "ranges": [
+        {
+          "startOffset": 17797,
+          "endOffset": 17890,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isSpellChecked",
+      "ranges": [
+        {
+          "startOffset": 18392,
+          "endOffset": 18489,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableSpellChecking",
+      "ranges": [
+        {
+          "startOffset": 18773,
+          "endOffset": 18871,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableSpellChecking",
+      "ranges": [
+        {
+          "startOffset": 19164,
+          "endOffset": 19261,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isScrollable",
+      "ranges": [
+        {
+          "startOffset": 19806,
+          "endOffset": 19899,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableScrolling",
+      "ranges": [
+        {
+          "startOffset": 20373,
+          "endOffset": 20467,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableScrolling",
+      "ranges": [
+        {
+          "startOffset": 20813,
+          "endOffset": 20906,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isCombed",
+      "ranges": [
+        {
+          "startOffset": 22033,
+          "endOffset": 22276,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableCombing",
+      "ranges": [
+        {
+          "startOffset": 23237,
+          "endOffset": 23627,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableCombing",
+      "ranges": [
+        {
+          "startOffset": 24128,
+          "endOffset": 24243,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.isRichFormatted",
+      "ranges": [
+        {
+          "startOffset": 24707,
+          "endOffset": 24796,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.enableRichFormatting",
+      "ranges": [
+        {
+          "startOffset": 25529,
+          "endOffset": 25619,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.disableRichFormatting",
+      "ranges": [
+        {
+          "startOffset": 25922,
+          "endOffset": 26013,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.addToPage",
+      "ranges": [
+        {
+          "startOffset": 26934,
+          "endOffset": 28777,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 29243,
+          "endOffset": 29725,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 30235,
+          "endOffset": 30370,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 31178,
+          "endOffset": 31615,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 31669,
+          "endOffset": 32004,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTextField.of",
+      "ranges": [
+        {
+          "startOffset": 32551,
+          "endOffset": 32641,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,802 @@
+{
+  "scriptId": "352",
+  "url": "file:///home/luis/mai/node_modules/.deno/@pdf-lib+upng@1.0.1/node_modules/@pdf-lib/upng/cjs/UPNG.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 54141,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "_interopRequireDefault",
+      "ranges": [
+        {
+          "startOffset": 161,
+          "endOffset": 256,
+          "count": 1
+        },
+        {
+          "startOffset": 229,
+          "endOffset": 234,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UPNG.toRGBA8",
+      "ranges": [
+        {
+          "startOffset": 289,
+          "endOffset": 1359,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.toRGBA8.decodeImage",
+      "ranges": [
+        {
+          "startOffset": 1389,
+          "endOffset": 6608,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode",
+      "ranges": [
+        {
+          "startOffset": 6625,
+          "endOffset": 11298,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._decompress",
+      "ranges": [
+        {
+          "startOffset": 11327,
+          "endOffset": 11844,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._inflate",
+      "ranges": [
+        {
+          "startOffset": 11870,
+          "endOffset": 11996,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 12017,
+          "endOffset": 19755,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "H.H.N",
+      "ranges": [
+        {
+          "startOffset": 12068,
+          "endOffset": 14680,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.W",
+      "ranges": [
+        {
+          "startOffset": 14693,
+          "endOffset": 14829,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.R",
+      "ranges": [
+        {
+          "startOffset": 14842,
+          "endOffset": 15513,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.V",
+      "ranges": [
+        {
+          "startOffset": 15526,
+          "endOffset": 15846,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.n",
+      "ranges": [
+        {
+          "startOffset": 15859,
+          "endOffset": 16332,
+          "count": 2
+        },
+        {
+          "startOffset": 16024,
+          "endOffset": 16033,
+          "count": 16
+        },
+        {
+          "startOffset": 16066,
+          "endOffset": 16076,
+          "count": 320
+        },
+        {
+          "startOffset": 16150,
+          "endOffset": 16202,
+          "count": 14
+        },
+        {
+          "startOffset": 16235,
+          "endOffset": 16328,
+          "count": 320
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "H.H.A",
+      "ranges": [
+        {
+          "startOffset": 16345,
+          "endOffset": 16732,
+          "count": 2
+        },
+        {
+          "startOffset": 16460,
+          "endOffset": 16728,
+          "count": 320
+        },
+        {
+          "startOffset": 16649,
+          "endOffset": 16722,
+          "count": 544
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "H.H.l",
+      "ranges": [
+        {
+          "startOffset": 16745,
+          "endOffset": 16919,
+          "count": 2
+        },
+        {
+          "startOffset": 16847,
+          "endOffset": 16915,
+          "count": 320
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "H.H.M",
+      "ranges": [
+        {
+          "startOffset": 16932,
+          "endOffset": 17039,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.I",
+      "ranges": [
+        {
+          "startOffset": 17052,
+          "endOffset": 17185,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.e",
+      "ranges": [
+        {
+          "startOffset": 17198,
+          "endOffset": 17298,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.b",
+      "ranges": [
+        {
+          "startOffset": 17311,
+          "endOffset": 17436,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.Z",
+      "ranges": [
+        {
+          "startOffset": 17449,
+          "endOffset": 17556,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "H.H.i",
+      "ranges": [
+        {
+          "startOffset": 17569,
+          "endOffset": 17701,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 17714,
+          "endOffset": 18831,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 18839,
+          "endOffset": 19732,
+          "count": 1
+        },
+        {
+          "startOffset": 18926,
+          "endOffset": 19222,
+          "count": 32768
+        },
+        {
+          "startOffset": 19327,
+          "endOffset": 19408,
+          "count": 32
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "n",
+      "ranges": [
+        {
+          "startOffset": 19228,
+          "endOffset": 19292,
+          "count": 9
+        },
+        {
+          "startOffset": 19273,
+          "endOffset": 19286,
+          "count": 975
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UPNG.decode._readInterlace",
+      "ranges": [
+        {
+          "startOffset": 19789,
+          "endOffset": 21639,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._getBPP",
+      "ranges": [
+        {
+          "startOffset": 21664,
+          "endOffset": 21760,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._filterZero",
+      "ranges": [
+        {
+          "startOffset": 21789,
+          "endOffset": 23084,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._paeth",
+      "ranges": [
+        {
+          "startOffset": 23108,
+          "endOffset": 23313,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.decode._IHDR",
+      "ranges": [
+        {
+          "startOffset": 23336,
+          "endOffset": 23714,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "nextZero",
+      "ranges": [
+        {
+          "startOffset": 23743,
+          "endOffset": 23812,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readUshort",
+      "ranges": [
+        {
+          "startOffset": 23828,
+          "endOffset": 23891,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "writeUshort",
+      "ranges": [
+        {
+          "startOffset": 23908,
+          "endOffset": 23990,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readUint",
+      "ranges": [
+        {
+          "startOffset": 24004,
+          "endOffset": 24123,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "writeUint",
+      "ranges": [
+        {
+          "startOffset": 24138,
+          "endOffset": 24286,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readASCII",
+      "ranges": [
+        {
+          "startOffset": 24301,
+          "endOffset": 24431,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "writeASCII",
+      "ranges": [
+        {
+          "startOffset": 24447,
+          "endOffset": 24544,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readBytes",
+      "ranges": [
+        {
+          "startOffset": 24559,
+          "endOffset": 24677,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "pad",
+      "ranges": [
+        {
+          "startOffset": 24686,
+          "endOffset": 24743,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readUTF8",
+      "ranges": [
+        {
+          "startOffset": 24757,
+          "endOffset": 25028,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG._copyTile",
+      "ranges": [
+        {
+          "startOffset": 25050,
+          "endOffset": 27120,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode",
+      "ranges": [
+        {
+          "startOffset": 27137,
+          "endOffset": 27440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encodeLL",
+      "ranges": [
+        {
+          "startOffset": 27459,
+          "endOffset": 28076,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode._main",
+      "ranges": [
+        {
+          "startOffset": 28099,
+          "endOffset": 32754,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode.compressPNG",
+      "ranges": [
+        {
+          "startOffset": 32783,
+          "endOffset": 33108,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode.compress",
+      "ranges": [
+        {
+          "startOffset": 33134,
+          "endOffset": 37736,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode.framize",
+      "ranges": [
+        {
+          "startOffset": 37761,
+          "endOffset": 41255,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode._updateFrame",
+      "ranges": [
+        {
+          "startOffset": 41285,
+          "endOffset": 42827,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode._prepareDiff",
+      "ranges": [
+        {
+          "startOffset": 42857,
+          "endOffset": 43641,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode._filterZero",
+      "ranges": [
+        {
+          "startOffset": 43670,
+          "endOffset": 44628,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode._filterLine",
+      "ranges": [
+        {
+          "startOffset": 44657,
+          "endOffset": 46200,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 46225,
+          "endOffset": 46481,
+          "count": 1
+        },
+        {
+          "startOffset": 46310,
+          "endOffset": 46460,
+          "count": 256
+        },
+        {
+          "startOffset": 46364,
+          "endOffset": 46435,
+          "count": 2048
+        },
+        {
+          "startOffset": 46385,
+          "endOffset": 46427,
+          "count": 1024
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "update",
+      "ranges": [
+        {
+          "startOffset": 46495,
+          "endOffset": 46634,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "crc",
+      "ranges": [
+        {
+          "startOffset": 46643,
+          "endOffset": 46729,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize",
+      "ranges": [
+        {
+          "startOffset": 46750,
+          "endOffset": 47603,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.getKDtree",
+      "ranges": [
+        {
+          "startOffset": 47632,
+          "endOffset": 49414,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.getNearest",
+      "ranges": [
+        {
+          "startOffset": 49444,
+          "endOffset": 49952,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.planeDst",
+      "ranges": [
+        {
+          "startOffset": 49980,
+          "endOffset": 50089,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.dist",
+      "ranges": [
+        {
+          "startOffset": 50113,
+          "endOffset": 50273,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.splitPixels",
+      "ranges": [
+        {
+          "startOffset": 50304,
+          "endOffset": 50741,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.vecDot",
+      "ranges": [
+        {
+          "startOffset": 50767,
+          "endOffset": 50880,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.stats",
+      "ranges": [
+        {
+          "startOffset": 50905,
+          "endOffset": 51684,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.quantize.estats",
+      "ranges": [
+        {
+          "startOffset": 51710,
+          "endOffset": 52994,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "multVec",
+      "ranges": [
+        {
+          "startOffset": 53020,
+          "endOffset": 53280,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "dot",
+      "ranges": [
+        {
+          "startOffset": 53289,
+          "endOffset": 53376,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "sml",
+      "ranges": [
+        {
+          "startOffset": 53385,
+          "endOffset": 53459,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "UPNG.encode.concatRGBA",
+      "ranges": [
+        {
+          "startOffset": 53489,
+          "endOffset": 54090,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

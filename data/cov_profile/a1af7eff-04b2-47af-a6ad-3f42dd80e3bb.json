@@ -1,0 +1,105 @@
+{
+  "scriptId": "323",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFRawStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1262,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 248,
+          "endOffset": 1166,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRawStream",
+      "ranges": [
+        {
+          "startOffset": 317,
+          "endOffset": 472,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.asUint8Array",
+      "ranges": [
+        {
+          "startOffset": 515,
+          "endOffset": 572,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.clone",
+      "ranges": [
+        {
+          "startOffset": 609,
+          "endOffset": 716,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.getContentsString",
+      "ranges": [
+        {
+          "startOffset": 765,
+          "endOffset": 837,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.getContents",
+      "ranges": [
+        {
+          "startOffset": 880,
+          "endOffset": 929,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.getContentsSize",
+      "ranges": [
+        {
+          "startOffset": 976,
+          "endOffset": 1032,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRawStream.of",
+      "ranges": [
+        {
+          "startOffset": 1056,
+          "endOffset": 1138,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "scriptId": "309",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/Cache.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 689,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 104,
+          "endOffset": 626,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Cache",
+      "ranges": [
+        {
+          "startOffset": 122,
+          "endOffset": 220,
+          "count": 8
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Cache.getValue",
+      "ranges": [
+        {
+          "startOffset": 252,
+          "endOffset": 298,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Cache.access",
+      "ranges": [
+        {
+          "startOffset": 329,
+          "endOffset": 442,
+          "count": 21
+        },
+        {
+          "startOffset": 380,
+          "endOffset": 409,
+          "count": 7
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Cache.invalidate",
+      "ranges": [
+        {
+          "startOffset": 477,
+          "endOffset": 528,
+          "count": 41
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Cache.populatedBy",
+      "ranges": [
+        {
+          "startOffset": 554,
+          "endOffset": 605,
+          "count": 8
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

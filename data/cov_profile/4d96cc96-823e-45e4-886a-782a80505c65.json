@@ -1,0 +1,99 @@
+{
+  "scriptId": "316",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFBool.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1868,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 336,
+          "endOffset": 1782,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFBool",
+      "ranges": [
+        {
+          "startOffset": 400,
+          "endOffset": 663,
+          "count": 2
+        },
+        {
+          "startOffset": 509,
+          "endOffset": 563,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFBool.asBoolean",
+      "ranges": [
+        {
+          "startOffset": 698,
+          "endOffset": 744,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFBool.clone",
+      "ranges": [
+        {
+          "startOffset": 776,
+          "endOffset": 816,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFBool.toString",
+      "ranges": [
+        {
+          "startOffset": 851,
+          "endOffset": 905,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFBool.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 943,
+          "endOffset": 997,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFBool.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 1037,
+          "endOffset": 1661,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

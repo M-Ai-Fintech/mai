@@ -1,0 +1,387 @@
+{
+  "scriptId": "311",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/PDFContext.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 8982,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "byAscendingObjectNumber",
+      "ranges": [
+        {
+          "startOffset": 1299,
+          "endOffset": 1402,
+          "count": 12
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1436,
+          "endOffset": 8909,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext",
+      "ranges": [
+        {
+          "startOffset": 1454,
+          "endOffset": 1702,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.assign",
+      "ranges": [
+        {
+          "startOffset": 1737,
+          "endOffset": 1940,
+          "count": 7
+        },
+        {
+          "startOffset": 1866,
+          "endOffset": 1934,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.nextRef",
+      "ranges": [
+        {
+          "startOffset": 1977,
+          "endOffset": 2097,
+          "count": 7
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.register",
+      "ranges": [
+        {
+          "startOffset": 2135,
+          "endOffset": 2248,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.delete",
+      "ranges": [
+        {
+          "startOffset": 2284,
+          "endOffset": 2355,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.lookupMaybe",
+      "ranges": [
+        {
+          "startOffset": 2396,
+          "endOffset": 3375,
+          "count": 121
+        },
+        {
+          "startOffset": 2789,
+          "endOffset": 2820,
+          "count": 43
+        },
+        {
+          "startOffset": 2821,
+          "endOffset": 2826,
+          "count": 78
+        },
+        {
+          "startOffset": 2848,
+          "endOffset": 2901,
+          "count": 96
+        },
+        {
+          "startOffset": 2881,
+          "endOffset": 2900,
+          "count": 0
+        },
+        {
+          "startOffset": 2915,
+          "endOffset": 2932,
+          "count": 25
+        },
+        {
+          "startOffset": 2932,
+          "endOffset": 3300,
+          "count": 96
+        },
+        {
+          "startOffset": 3078,
+          "endOffset": 3178,
+          "count": 0
+        },
+        {
+          "startOffset": 3300,
+          "endOffset": 3374,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.lookup",
+      "ranges": [
+        {
+          "startOffset": 3411,
+          "endOffset": 4154,
+          "count": 203
+        },
+        {
+          "startOffset": 3506,
+          "endOffset": 3560,
+          "count": 130
+        },
+        {
+          "startOffset": 3614,
+          "endOffset": 3645,
+          "count": 7
+        },
+        {
+          "startOffset": 3646,
+          "endOffset": 3651,
+          "count": 196
+        },
+        {
+          "startOffset": 3697,
+          "endOffset": 3711,
+          "count": 73
+        },
+        {
+          "startOffset": 3711,
+          "endOffset": 4079,
+          "count": 130
+        },
+        {
+          "startOffset": 3857,
+          "endOffset": 3957,
+          "count": 0
+        },
+        {
+          "startOffset": 4079,
+          "endOffset": 4153,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.getObjectRef",
+      "ranges": [
+        {
+          "startOffset": 4196,
+          "endOffset": 4540,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.enumerateIndirectObjects",
+      "ranges": [
+        {
+          "startOffset": 4594,
+          "endOffset": 4702,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.obj",
+      "ranges": [
+        {
+          "startOffset": 4735,
+          "endOffset": 6030,
+          "count": 49
+        },
+        {
+          "startOffset": 4808,
+          "endOffset": 4847,
+          "count": 2
+        },
+        {
+          "startOffset": 4847,
+          "endOffset": 6024,
+          "count": 47
+        },
+        {
+          "startOffset": 4908,
+          "endOffset": 4957,
+          "count": 0
+        },
+        {
+          "startOffset": 5004,
+          "endOffset": 5065,
+          "count": 8
+        },
+        {
+          "startOffset": 5065,
+          "endOffset": 6024,
+          "count": 39
+        },
+        {
+          "startOffset": 5112,
+          "endOffset": 5175,
+          "count": 20
+        },
+        {
+          "startOffset": 5175,
+          "endOffset": 6024,
+          "count": 19
+        },
+        {
+          "startOffset": 5223,
+          "endOffset": 5313,
+          "count": 0
+        },
+        {
+          "startOffset": 5355,
+          "endOffset": 5592,
+          "count": 9
+        },
+        {
+          "startOffset": 5489,
+          "endOffset": 5556,
+          "count": 18
+        },
+        {
+          "startOffset": 5592,
+          "endOffset": 6024,
+          "count": 10
+        },
+        {
+          "startOffset": 5780,
+          "endOffset": 5989,
+          "count": 13
+        },
+        {
+          "startOffset": 5922,
+          "endOffset": 5975,
+          "count": 11
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.stream",
+      "ranges": [
+        {
+          "startOffset": 6066,
+          "endOffset": 6234,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.flateStream",
+      "ranges": [
+        {
+          "startOffset": 6275,
+          "endOffset": 6510,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.contentStream",
+      "ranges": [
+        {
+          "startOffset": 6553,
+          "endOffset": 6704,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.formXObject",
+      "ranges": [
+        {
+          "startOffset": 6745,
+          "endOffset": 7021,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.getPushGraphicsStateContentStream",
+      "ranges": [
+        {
+          "startOffset": 7350,
+          "endOffset": 7805,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.getPopGraphicsStateContentStream",
+      "ranges": [
+        {
+          "startOffset": 8133,
+          "endOffset": 8583,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContext.addRandomSuffix",
+      "ranges": [
+        {
+          "startOffset": 8628,
+          "endOffset": 8817,
+          "count": 15
+        },
+        {
+          "startOffset": 8699,
+          "endOffset": 8720,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContext.create",
+      "ranges": [
+        {
+          "startOffset": 8843,
+          "endOffset": 8883,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

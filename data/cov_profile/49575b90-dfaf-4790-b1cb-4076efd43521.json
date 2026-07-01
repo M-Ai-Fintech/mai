@@ -1,0 +1,905 @@
+{
+  "scriptId": "402",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFDocument.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 62223,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1057,
+          "endOffset": 61828,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument",
+      "ranges": [
+        {
+          "startOffset": 1075,
+          "endOffset": 2818,
+          "count": 1
+        },
+        {
+          "startOffset": 2710,
+          "endOffset": 2749,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.computePages",
+      "ranges": [
+        {
+          "startOffset": 1299,
+          "endOffset": 1809,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1384,
+          "endOffset": 1771,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getOrCreateForm",
+      "ranges": [
+        {
+          "startOffset": 1842,
+          "endOffset": 1987,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.load",
+      "ranges": [
+        {
+          "startOffset": 5459,
+          "endOffset": 7094,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.create",
+      "ranges": [
+        {
+          "startOffset": 7232,
+          "endOffset": 8057,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7358,
+          "endOffset": 8049,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7494,
+          "endOffset": 8037,
+          "count": 1
+        },
+        {
+          "startOffset": 7593,
+          "endOffset": 7597,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.registerFontkit",
+      "ranges": [
+        {
+          "startOffset": 8758,
+          "endOffset": 8816,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getForm",
+      "ranges": [
+        {
+          "startOffset": 9281,
+          "endOffset": 9537,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getTitle",
+      "ranges": [
+        {
+          "startOffset": 9873,
+          "endOffset": 10089,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getAuthor",
+      "ranges": [
+        {
+          "startOffset": 10431,
+          "endOffset": 10652,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getSubject",
+      "ranges": [
+        {
+          "startOffset": 11000,
+          "endOffset": 11226,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getKeywords",
+      "ranges": [
+        {
+          "startOffset": 11579,
+          "endOffset": 11810,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getCreator",
+      "ranges": [
+        {
+          "startOffset": 12158,
+          "endOffset": 12384,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getProducer",
+      "ranges": [
+        {
+          "startOffset": 12738,
+          "endOffset": 12969,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getCreationDate",
+      "ranges": [
+        {
+          "startOffset": 13364,
+          "endOffset": 13615,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getModificationDate",
+      "ranges": [
+        {
+          "startOffset": 14037,
+          "endOffset": 14299,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setTitle",
+      "ranges": [
+        {
+          "startOffset": 14972,
+          "endOffset": 15479,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setAuthor",
+      "ranges": [
+        {
+          "startOffset": 15795,
+          "endOffset": 15998,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setSubject",
+      "ranges": [
+        {
+          "startOffset": 16332,
+          "endOffset": 16539,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setKeywords",
+      "ranges": [
+        {
+          "startOffset": 16923,
+          "endOffset": 17143,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setCreator",
+      "ranges": [
+        {
+          "startOffset": 17467,
+          "endOffset": 17675,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.setProducer",
+      "ranges": [
+        {
+          "startOffset": 18005,
+          "endOffset": 18217,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.setLanguage",
+      "ranges": [
+        {
+          "startOffset": 18650,
+          "endOffset": 18844,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.setCreationDate",
+      "ranges": [
+        {
+          "startOffset": 19194,
+          "endOffset": 19430,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.setModificationDate",
+      "ranges": [
+        {
+          "startOffset": 19813,
+          "endOffset": 20060,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.getPageCount",
+      "ranges": [
+        {
+          "startOffset": 20317,
+          "endOffset": 20462,
+          "count": 3
+        },
+        {
+          "startOffset": 20385,
+          "endOffset": 20425,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.getPages",
+      "ranges": [
+        {
+          "startOffset": 20990,
+          "endOffset": 21049,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.getPage",
+      "ranges": [
+        {
+          "startOffset": 21472,
+          "endOffset": 21628,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.getPageIndices",
+      "ranges": [
+        {
+          "startOffset": 22181,
+          "endOffset": 22254,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.removePage",
+      "ranges": [
+        {
+          "startOffset": 22783,
+          "endOffset": 23100,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.addPage",
+      "ranges": [
+        {
+          "startOffset": 24597,
+          "endOffset": 24773,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.insertPage",
+      "ranges": [
+        {
+          "startOffset": 26372,
+          "endOffset": 27173,
+          "count": 1
+        },
+        {
+          "startOffset": 26689,
+          "endOffset": 26711,
+          "count": 0
+        },
+        {
+          "startOffset": 26817,
+          "endOffset": 26916,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.copyPages",
+      "ranges": [
+        {
+          "startOffset": 27979,
+          "endOffset": 29291,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.copy",
+      "ranges": [
+        {
+          "startOffset": 29711,
+          "endOffset": 31743,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.addJavaScript",
+      "ranges": [
+        {
+          "startOffset": 32822,
+          "endOffset": 33191,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.attach",
+      "ranges": [
+        {
+          "startOffset": 35798,
+          "endOffset": 37164,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedFont",
+      "ranges": [
+        {
+          "startOffset": 38797,
+          "endOffset": 41014,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 38929,
+          "endOffset": 41006,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 39082,
+          "endOffset": 40994,
+          "count": 4
+        },
+        {
+          "startOffset": 39154,
+          "endOffset": 39690,
+          "count": 2
+        },
+        {
+          "startOffset": 39238,
+          "endOffset": 39242,
+          "count": 0
+        },
+        {
+          "startOffset": 39531,
+          "endOffset": 39555,
+          "count": 0
+        },
+        {
+          "startOffset": 39711,
+          "endOffset": 40113,
+          "count": 0
+        },
+        {
+          "startOffset": 40134,
+          "endOffset": 40230,
+          "count": 0
+        },
+        {
+          "startOffset": 40251,
+          "endOffset": 40349,
+          "count": 0
+        },
+        {
+          "startOffset": 40370,
+          "endOffset": 40455,
+          "count": 0
+        },
+        {
+          "startOffset": 40476,
+          "endOffset": 40571,
+          "count": 0
+        },
+        {
+          "startOffset": 40592,
+          "endOffset": 40697,
+          "count": 0
+        },
+        {
+          "startOffset": 40718,
+          "endOffset": 40962,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.embedStandardFont",
+      "ranges": [
+        {
+          "startOffset": 41447,
+          "endOffset": 41907,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedJpg",
+      "ranges": [
+        {
+          "startOffset": 43286,
+          "endOffset": 44140,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedPng",
+      "ranges": [
+        {
+          "startOffset": 45499,
+          "endOffset": 46352,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedPdf",
+      "ranges": [
+        {
+          "startOffset": 47156,
+          "endOffset": 48417,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedPage",
+      "ranges": [
+        {
+          "startOffset": 49662,
+          "endOffset": 50334,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedPages",
+      "ranges": [
+        {
+          "startOffset": 51515,
+          "endOffset": 54018,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.flush",
+      "ranges": [
+        {
+          "startOffset": 54455,
+          "endOffset": 55440,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 54524,
+          "endOffset": 55432,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 54583,
+          "endOffset": 55420,
+          "count": 6
+        },
+        {
+          "startOffset": 54655,
+          "endOffset": 54711,
+          "count": 1
+        },
+        {
+          "startOffset": 54732,
+          "endOffset": 54848,
+          "count": 1
+        },
+        {
+          "startOffset": 54869,
+          "endOffset": 54992,
+          "count": 1
+        },
+        {
+          "startOffset": 55013,
+          "endOffset": 55136,
+          "count": 1
+        },
+        {
+          "startOffset": 55157,
+          "endOffset": 55278,
+          "count": 1
+        },
+        {
+          "startOffset": 55299,
+          "endOffset": 55388,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.save",
+      "ranges": [
+        {
+          "startOffset": 56081,
+          "endOffset": 57920,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 56207,
+          "endOffset": 57912,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 56386,
+          "endOffset": 57900,
+          "count": 2
+        },
+        {
+          "startOffset": 56458,
+          "endOffset": 57594,
+          "count": 1
+        },
+        {
+          "startOffset": 56561,
+          "endOffset": 56565,
+          "count": 0
+        },
+        {
+          "startOffset": 56634,
+          "endOffset": 56638,
+          "count": 0
+        },
+        {
+          "startOffset": 56705,
+          "endOffset": 56709,
+          "count": 0
+        },
+        {
+          "startOffset": 56794,
+          "endOffset": 56798,
+          "count": 0
+        },
+        {
+          "startOffset": 57276,
+          "endOffset": 57291,
+          "count": 0
+        },
+        {
+          "startOffset": 57478,
+          "endOffset": 57508,
+          "count": 0
+        },
+        {
+          "startOffset": 57615,
+          "endOffset": 57868,
+          "count": 1
+        },
+        {
+          "startOffset": 57733,
+          "endOffset": 57751,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.saveAsBase64",
+      "ranges": [
+        {
+          "startOffset": 58575,
+          "endOffset": 59474,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.findPageForAnnotationRef",
+      "ranges": [
+        {
+          "startOffset": 59529,
+          "endOffset": 59936,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDocument.embedAll",
+      "ranges": [
+        {
+          "startOffset": 59975,
+          "endOffset": 60795,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 60055,
+          "endOffset": 60787,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 60140,
+          "endOffset": 60775,
+          "count": 14
+        },
+        {
+          "startOffset": 60212,
+          "endOffset": 60316,
+          "count": 5
+        },
+        {
+          "startOffset": 60337,
+          "endOffset": 60483,
+          "count": 7
+        },
+        {
+          "startOffset": 60387,
+          "endOffset": 60411,
+          "count": 5
+        },
+        {
+          "startOffset": 60411,
+          "endOffset": 60483,
+          "count": 2
+        },
+        {
+          "startOffset": 60504,
+          "endOffset": 60584,
+          "count": 2
+        },
+        {
+          "startOffset": 60605,
+          "endOffset": 60692,
+          "count": 2
+        },
+        {
+          "startOffset": 60713,
+          "endOffset": 60743,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.updateInfoDict",
+      "ranges": [
+        {
+          "startOffset": 60840,
+          "endOffset": 61257,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.getInfoDict",
+      "ranges": [
+        {
+          "startOffset": 61299,
+          "endOffset": 61622,
+          "count": 5
+        },
+        {
+          "startOffset": 61456,
+          "endOffset": 61476,
+          "count": 4
+        },
+        {
+          "startOffset": 61476,
+          "endOffset": 61621,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDocument.assertFontkit",
+      "ranges": [
+        {
+          "startOffset": 61666,
+          "endOffset": 61801,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "assertIsLiteralOrHexString",
+      "ranges": [
+        {
+          "startOffset": 61916,
+          "endOffset": 62183,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

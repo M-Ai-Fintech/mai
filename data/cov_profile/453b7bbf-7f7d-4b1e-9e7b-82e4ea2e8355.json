@@ -1,0 +1,240 @@
+{
+  "scriptId": "272",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/operations.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 21418,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.drawText",
+      "ranges": [
+        {
+          "startOffset": 720,
+          "endOffset": 1359,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawLinesOfText",
+      "ranges": [
+        {
+          "startOffset": 1387,
+          "endOffset": 2231,
+          "count": 15
+        },
+        {
+          "startOffset": 1508,
+          "endOffset": 1562,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.drawImage",
+      "ranges": [
+        {
+          "startOffset": 2253,
+          "endOffset": 2816,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawPage",
+      "ranges": [
+        {
+          "startOffset": 2837,
+          "endOffset": 3401,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawLine",
+      "ranges": [
+        {
+          "startOffset": 3422,
+          "endOffset": 4222,
+          "count": 3
+        },
+        {
+          "startOffset": 3543,
+          "endOffset": 3597,
+          "count": 0
+        },
+        {
+          "startOffset": 3805,
+          "endOffset": 3809,
+          "count": 0
+        },
+        {
+          "startOffset": 3867,
+          "endOffset": 3871,
+          "count": 0
+        },
+        {
+          "startOffset": 3964,
+          "endOffset": 4006,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.drawRectangle",
+      "ranges": [
+        {
+          "startOffset": 4248,
+          "endOffset": 5654,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawEllipsePath",
+      "ranges": [
+        {
+          "startOffset": 5749,
+          "endOffset": 6580,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "drawEllipseCurves",
+      "ranges": [
+        {
+          "startOffset": 6606,
+          "endOffset": 7498,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawEllipse",
+      "ranges": [
+        {
+          "startOffset": 7522,
+          "endOffset": 8976,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawSvgPath",
+      "ranges": [
+        {
+          "startOffset": 9000,
+          "endOffset": 10392,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawCheckMark",
+      "ranges": [
+        {
+          "startOffset": 10418,
+          "endOffset": 12443,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.rotateInPlace",
+      "ranges": [
+        {
+          "startOffset": 12488,
+          "endOffset": 13149,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawCheckBox",
+      "ranges": [
+        {
+          "startOffset": 13201,
+          "endOffset": 14139,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawRadioButton",
+      "ranges": [
+        {
+          "startOffset": 14167,
+          "endOffset": 15029,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawButton",
+      "ranges": [
+        {
+          "startOffset": 15052,
+          "endOffset": 16025,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawTextLines",
+      "ranges": [
+        {
+          "startOffset": 16051,
+          "endOffset": 16685,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawTextField",
+      "ranges": [
+        {
+          "startOffset": 16711,
+          "endOffset": 18652,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.drawOptionList",
+      "ranges": [
+        {
+          "startOffset": 18679,
+          "endOffset": 21378,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

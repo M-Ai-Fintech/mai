@@ -1,0 +1,39 @@
+{
+  "scriptId": "345",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/FontFlags.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1220,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "makeFontFlags",
+      "ranges": [
+        {
+          "startOffset": 150,
+          "endOffset": 688,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.deriveFontFlags",
+      "ranges": [
+        {
+          "startOffset": 836,
+          "endOffset": 1181,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

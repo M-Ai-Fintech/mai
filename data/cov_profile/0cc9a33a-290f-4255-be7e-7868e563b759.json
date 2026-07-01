@@ -1,0 +1,79 @@
+{
+  "scriptId": "268",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/reconciliation/contingencies.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 909,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeContingencyDeductions",
+      "ranges": [
+        {
+          "startOffset": 177,
+          "endOffset": 908,
+          "count": 2
+        },
+        {
+          "startOffset": 687,
+          "endOffset": 741,
+          "count": 3
+        },
+        {
+          "startOffset": 823,
+          "endOffset": 877,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "processContingency",
+      "ranges": [
+        {
+          "startOffset": 278,
+          "endOffset": 612,
+          "count": 6
+        },
+        {
+          "startOffset": 328,
+          "endOffset": 380,
+          "count": 1
+        },
+        {
+          "startOffset": 380,
+          "endOffset": 414,
+          "count": 5
+        },
+        {
+          "startOffset": 414,
+          "endOffset": 461,
+          "count": 2
+        },
+        {
+          "startOffset": 468,
+          "endOffset": 515,
+          "count": 2
+        },
+        {
+          "startOffset": 522,
+          "endOffset": 567,
+          "count": 1
+        },
+        {
+          "startOffset": 574,
+          "endOffset": 602,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

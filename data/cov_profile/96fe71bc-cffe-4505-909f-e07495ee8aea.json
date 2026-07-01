@@ -1,0 +1,33 @@
+{
+  "scriptId": "267",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/reconciliation/jcp.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 577,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeJcpTaxShield",
+      "ranges": [
+        {
+          "startOffset": 147,
+          "endOffset": 576,
+          "count": 2
+        },
+        {
+          "startOffset": 283,
+          "endOffset": 356,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

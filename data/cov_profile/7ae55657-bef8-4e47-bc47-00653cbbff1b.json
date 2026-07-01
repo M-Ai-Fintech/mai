@@ -1,0 +1,48 @@
+{
+  "scriptId": "265",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/growing_perpetuity.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1654,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeTerminalValue",
+      "ranges": [
+        {
+          "startOffset": 726,
+          "endOffset": 1653,
+          "count": 1
+        },
+        {
+          "startOffset": 804,
+          "endOffset": 919,
+          "count": 0
+        },
+        {
+          "startOffset": 952,
+          "endOffset": 1054,
+          "count": 0
+        },
+        {
+          "startOffset": 1128,
+          "endOffset": 1176,
+          "count": 0
+        },
+        {
+          "startOffset": 1213,
+          "endOffset": 1365,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

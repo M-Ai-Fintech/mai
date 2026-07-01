@@ -1,0 +1,83 @@
+{
+  "scriptId": "351",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/png.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2501,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "getImageType",
+      "ranges": [
+        {
+          "startOffset": 232,
+          "endOffset": 604,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "splitAlphaChannel",
+      "ranges": [
+        {
+          "startOffset": 630,
+          "endOffset": 1260,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1276,
+          "endOffset": 1546,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1627,
+          "endOffset": 2446,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PNG",
+      "ranges": [
+        {
+          "startOffset": 1645,
+          "endOffset": 2364,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PNG.load",
+      "ranges": [
+        {
+          "startOffset": 2380,
+          "endOffset": 2427,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

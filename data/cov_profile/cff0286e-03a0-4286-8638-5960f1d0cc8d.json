@@ -1,0 +1,104 @@
+{
+  "scriptId": "325",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFRef.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1730,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 320,
+          "endOffset": 1646,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRef",
+      "ranges": [
+        {
+          "startOffset": 383,
+          "endOffset": 800,
+          "count": 11
+        },
+        {
+          "startOffset": 516,
+          "endOffset": 569,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRef.clone",
+      "ranges": [
+        {
+          "startOffset": 830,
+          "endOffset": 870,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRef.toString",
+      "ranges": [
+        {
+          "startOffset": 904,
+          "endOffset": 948,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFRef.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 985,
+          "endOffset": 1036,
+          "count": 24
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRef.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 1075,
+          "endOffset": 1214,
+          "count": 21
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFRef.of",
+      "ranges": [
+        {
+          "startOffset": 1232,
+          "endOffset": 1624,
+          "count": 11
+        },
+        {
+          "startOffset": 1317,
+          "endOffset": 1342,
+          "count": 10
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

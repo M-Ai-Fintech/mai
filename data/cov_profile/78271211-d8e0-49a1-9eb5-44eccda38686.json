@@ -1,0 +1,53 @@
+{
+  "scriptId": "264",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/market_capitalization.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1111,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeMarketCap",
+      "ranges": [
+        {
+          "startOffset": 603,
+          "endOffset": 1110,
+          "count": 4
+        },
+        {
+          "startOffset": 664,
+          "endOffset": 694,
+          "count": 3
+        },
+        {
+          "startOffset": 696,
+          "endOffset": 806,
+          "count": 1
+        },
+        {
+          "startOffset": 806,
+          "endOffset": 856,
+          "count": 3
+        },
+        {
+          "startOffset": 856,
+          "endOffset": 957,
+          "count": 1
+        },
+        {
+          "startOffset": 957,
+          "endOffset": 1109,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

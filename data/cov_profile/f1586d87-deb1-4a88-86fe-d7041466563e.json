@@ -1,0 +1,65 @@
+{
+  "scriptId": "275",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/objects.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 556,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.asPDFName",
+      "ranges": [
+        {
+          "startOffset": 199,
+          "endOffset": 294,
+          "count": 15
+        },
+        {
+          "startOffset": 266,
+          "endOffset": 291,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.asPDFNumber",
+      "ranges": [
+        {
+          "startOffset": 318,
+          "endOffset": 413,
+          "count": 198
+        },
+        {
+          "startOffset": 378,
+          "endOffset": 383,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.asNumber",
+      "ranges": [
+        {
+          "startOffset": 434,
+          "endOffset": 519,
+          "count": 90
+        },
+        {
+          "startOffset": 494,
+          "endOffset": 510,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

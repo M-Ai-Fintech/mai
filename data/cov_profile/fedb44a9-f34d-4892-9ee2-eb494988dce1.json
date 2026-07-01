@@ -1,0 +1,281 @@
+{
+  "scriptId": "367",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroField.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 6382,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 955,
+          "endOffset": 6305,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroField",
+      "ranges": [
+        {
+          "startOffset": 973,
+          "endOffset": 1063,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.T",
+      "ranges": [
+        {
+          "startOffset": 1095,
+          "endOffset": 1224,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.Ff",
+      "ranges": [
+        {
+          "startOffset": 1258,
+          "endOffset": 1441,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.V",
+      "ranges": [
+        {
+          "startOffset": 1474,
+          "endOffset": 1628,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.Kids",
+      "ranges": [
+        {
+          "startOffset": 1664,
+          "endOffset": 1771,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.DA",
+      "ranges": [
+        {
+          "startOffset": 1923,
+          "endOffset": 2141,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setKids",
+      "ranges": [
+        {
+          "startOffset": 2180,
+          "endOffset": 2285,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getParent",
+      "ranges": [
+        {
+          "startOffset": 2326,
+          "endOffset": 2786,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setParent",
+      "ranges": [
+        {
+          "startOffset": 2827,
+          "endOffset": 3015,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getFullyQualifiedName",
+      "ranges": [
+        {
+          "startOffset": 3068,
+          "endOffset": 3266,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getPartialName",
+      "ranges": [
+        {
+          "startOffset": 3312,
+          "endOffset": 3432,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setPartialName",
+      "ranges": [
+        {
+          "startOffset": 3478,
+          "endOffset": 3704,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setDefaultAppearance",
+      "ranges": [
+        {
+          "startOffset": 3756,
+          "endOffset": 3872,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getDefaultAppearance",
+      "ranges": [
+        {
+          "startOffset": 3924,
+          "endOffset": 4139,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 4182,
+          "endOffset": 4908,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getFlags",
+      "ranges": [
+        {
+          "startOffset": 4948,
+          "endOffset": 5113,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setFlags",
+      "ranges": [
+        {
+          "startOffset": 5153,
+          "endOffset": 5259,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.hasFlag",
+      "ranges": [
+        {
+          "startOffset": 5298,
+          "endOffset": 5395,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setFlag",
+      "ranges": [
+        {
+          "startOffset": 5434,
+          "endOffset": 5531,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.clearFlag",
+      "ranges": [
+        {
+          "startOffset": 5572,
+          "endOffset": 5670,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.setFlagTo",
+      "ranges": [
+        {
+          "startOffset": 5711,
+          "endOffset": 5841,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.getInheritableAttribute",
+      "ranges": [
+        {
+          "startOffset": 5896,
+          "endOffset": 6095,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroField.ascend",
+      "ranges": [
+        {
+          "startOffset": 6133,
+          "endOffset": 6277,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

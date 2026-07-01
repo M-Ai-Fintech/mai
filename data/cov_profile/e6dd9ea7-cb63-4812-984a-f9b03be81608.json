@@ -1,0 +1,127 @@
+{
+  "scriptId": "376",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroForm.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3254,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 479,
+          "endOffset": 3179,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroForm",
+      "ranges": [
+        {
+          "startOffset": 497,
+          "endOffset": 557,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.Fields",
+      "ranges": [
+        {
+          "startOffset": 593,
+          "endOffset": 786,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.getFields",
+      "ranges": [
+        {
+          "startOffset": 826,
+          "endOffset": 1219,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.getAllFields",
+      "ranges": [
+        {
+          "startOffset": 1262,
+          "endOffset": 1858,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.addField",
+      "ranges": [
+        {
+          "startOffset": 1897,
+          "endOffset": 2051,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.removeField",
+      "ranges": [
+        {
+          "startOffset": 2093,
+          "endOffset": 2649,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.normalizedEntries",
+      "ranges": [
+        {
+          "startOffset": 2697,
+          "endOffset": 2935,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.fromDict",
+      "ranges": [
+        {
+          "startOffset": 2964,
+          "endOffset": 3013,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroForm.create",
+      "ranges": [
+        {
+          "startOffset": 3040,
+          "endOffset": 3152,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

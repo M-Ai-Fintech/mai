@@ -1,0 +1,83 @@
+{
+  "scriptId": "335",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/document/PDFTrailer.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1868,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 254,
+          "endOffset": 1795,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTrailer",
+      "ranges": [
+        {
+          "startOffset": 272,
+          "endOffset": 369,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTrailer.toString",
+      "ranges": [
+        {
+          "startOffset": 406,
+          "endOffset": 489,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTrailer.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 530,
+          "endOffset": 597,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTrailer.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 640,
+          "endOffset": 1657,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTrailer.forLastCrossRefSectionOffset",
+      "ranges": [
+        {
+          "startOffset": 1705,
+          "endOffset": 1769,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+{
+  "scriptId": "412",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFOptionList.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 22518,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1120,
+          "endOffset": 22421,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFOptionList",
+      "ranges": [
+        {
+          "startOffset": 1190,
+          "endOffset": 1473,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.getOptions",
+      "ranges": [
+        {
+          "startOffset": 1948,
+          "endOffset": 2353,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.getSelected",
+      "ranges": [
+        {
+          "startOffset": 2870,
+          "endOffset": 3143,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.setOptions",
+      "ranges": [
+        {
+          "startOffset": 4776,
+          "endOffset": 5156,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.addOptions",
+      "ranges": [
+        {
+          "startOffset": 5894,
+          "endOffset": 6438,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.select",
+      "ranges": [
+        {
+          "startOffset": 7394,
+          "endOffset": 8369,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.clear",
+      "ranges": [
+        {
+          "startOffset": 8943,
+          "endOffset": 9028,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 10327,
+          "endOffset": 10482,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.isSorted",
+      "ranges": [
+        {
+          "startOffset": 11047,
+          "endOffset": 11134,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.enableSorting",
+      "ranges": [
+        {
+          "startOffset": 11514,
+          "endOffset": 11602,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.disableSorting",
+      "ranges": [
+        {
+          "startOffset": 11990,
+          "endOffset": 12079,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.isMultiselect",
+      "ranges": [
+        {
+          "startOffset": 12567,
+          "endOffset": 12661,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.enableMultiselect",
+      "ranges": [
+        {
+          "startOffset": 12952,
+          "endOffset": 13047,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.disableMultiselect",
+      "ranges": [
+        {
+          "startOffset": 13347,
+          "endOffset": 13443,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.isSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 14197,
+          "endOffset": 14297,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.enableSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 14733,
+          "endOffset": 14834,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.disableSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 15217,
+          "endOffset": 15319,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.addToPage",
+      "ranges": [
+        {
+          "startOffset": 16337,
+          "endOffset": 18182,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 18661,
+          "endOffset": 19143,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 19665,
+          "endOffset": 19800,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 20621,
+          "endOffset": 21058,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 21388,
+          "endOffset": 21724,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOptionList.of",
+      "ranges": [
+        {
+          "startOffset": 22295,
+          "endOffset": 22392,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

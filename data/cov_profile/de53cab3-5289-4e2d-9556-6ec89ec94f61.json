@@ -1,0 +1,165 @@
+{
+  "scriptId": "363",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFCatalog.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3461,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 422,
+          "endOffset": 3371,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCatalog",
+      "ranges": [
+        {
+          "startOffset": 489,
+          "endOffset": 591,
+          "count": 1
+        },
+        {
+          "startOffset": 577,
+          "endOffset": 584,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCatalog.Pages",
+      "ranges": [
+        {
+          "startOffset": 625,
+          "endOffset": 722,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCatalog.AcroForm",
+      "ranges": [
+        {
+          "startOffset": 760,
+          "endOffset": 865,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.getAcroForm",
+      "ranges": [
+        {
+          "startOffset": 906,
+          "endOffset": 1064,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.getOrCreateAcroForm",
+      "ranges": [
+        {
+          "startOffset": 1113,
+          "endOffset": 1440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.ViewerPreferences",
+      "ranges": [
+        {
+          "startOffset": 1487,
+          "endOffset": 1601,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.getViewerPreferences",
+      "ranges": [
+        {
+          "startOffset": 1651,
+          "endOffset": 1823,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.getOrCreateViewerPreferences",
+      "ranges": [
+        {
+          "startOffset": 1881,
+          "endOffset": 2252,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.insertLeafNode",
+      "ranges": [
+        {
+          "startOffset": 2620,
+          "endOffset": 2834,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCatalog.removeLeafNode",
+      "ranges": [
+        {
+          "startOffset": 2878,
+          "endOffset": 2946,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCatalog.withContextAndPages",
+      "ranges": [
+        {
+          "startOffset": 2985,
+          "endOffset": 3231,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCatalog.fromMapWithContext",
+      "ranges": [
+        {
+          "startOffset": 3269,
+          "endOffset": 3345,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

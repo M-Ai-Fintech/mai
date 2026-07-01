@@ -1,0 +1,466 @@
+{
+  "scriptId": "332",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFPageLeaf.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 9199,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 512,
+          "endOffset": 9107,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf",
+      "ranges": [
+        {
+          "startOffset": 580,
+          "endOffset": 878,
+          "count": 1
+        },
+        {
+          "startOffset": 676,
+          "endOffset": 704,
+          "count": 0
+        },
+        {
+          "startOffset": 757,
+          "endOffset": 764,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.clone",
+      "ranges": [
+        {
+          "startOffset": 913,
+          "endOffset": 1286,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.Parent",
+      "ranges": [
+        {
+          "startOffset": 1323,
+          "endOffset": 1420,
+          "count": 43
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.Contents",
+      "ranges": [
+        {
+          "startOffset": 1459,
+          "endOffset": 1540,
+          "count": 31
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.Annots",
+      "ranges": [
+        {
+          "startOffset": 1577,
+          "endOffset": 1675,
+          "count": 32
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.BleedBox",
+      "ranges": [
+        {
+          "startOffset": 1714,
+          "endOffset": 1814,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.TrimBox",
+      "ranges": [
+        {
+          "startOffset": 1852,
+          "endOffset": 1951,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.ArtBox",
+      "ranges": [
+        {
+          "startOffset": 1988,
+          "endOffset": 2086,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.Resources",
+      "ranges": [
+        {
+          "startOffset": 2126,
+          "endOffset": 2299,
+          "count": 31
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.MediaBox",
+      "ranges": [
+        {
+          "startOffset": 2338,
+          "endOffset": 2508,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.CropBox",
+      "ranges": [
+        {
+          "startOffset": 2546,
+          "endOffset": 2720,
+          "count": 5
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.Rotate",
+      "ranges": [
+        {
+          "startOffset": 2757,
+          "endOffset": 2933,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.getInheritableAttribute",
+      "ranges": [
+        {
+          "startOffset": 2987,
+          "endOffset": 3181,
+          "count": 43
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3048,
+          "endOffset": 3147,
+          "count": 76
+        },
+        {
+          "startOffset": 3110,
+          "endOffset": 3137,
+          "count": 43
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.setParent",
+      "ranges": [
+        {
+          "startOffset": 3221,
+          "endOffset": 3304,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.addContentStream",
+      "ranges": [
+        {
+          "startOffset": 3351,
+          "endOffset": 3565,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.wrapContentStreams",
+      "ranges": [
+        {
+          "startOffset": 3614,
+          "endOffset": 3889,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.addAnnot",
+      "ranges": [
+        {
+          "startOffset": 3928,
+          "endOffset": 4040,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.removeAnnot",
+      "ranges": [
+        {
+          "startOffset": 4082,
+          "endOffset": 4288,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.setFontDictionary",
+      "ranges": [
+        {
+          "startOffset": 4336,
+          "endOffset": 4459,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.newFontDictionaryKey",
+      "ranges": [
+        {
+          "startOffset": 4510,
+          "endOffset": 4618,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.newFontDictionary",
+      "ranges": [
+        {
+          "startOffset": 4666,
+          "endOffset": 4821,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.setXObject",
+      "ranges": [
+        {
+          "startOffset": 4862,
+          "endOffset": 4992,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.newXObjectKey",
+      "ranges": [
+        {
+          "startOffset": 5036,
+          "endOffset": 5153,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.newXObject",
+      "ranges": [
+        {
+          "startOffset": 5194,
+          "endOffset": 5333,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.setExtGState",
+      "ranges": [
+        {
+          "startOffset": 5376,
+          "endOffset": 5516,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.newExtGStateKey",
+      "ranges": [
+        {
+          "startOffset": 5562,
+          "endOffset": 5685,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.newExtGState",
+      "ranges": [
+        {
+          "startOffset": 5728,
+          "endOffset": 5875,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageLeaf.ascend",
+      "ranges": [
+        {
+          "startOffset": 5912,
+          "endOffset": 6053,
+          "count": 43
+        },
+        {
+          "startOffset": 6024,
+          "endOffset": 6047,
+          "count": 33
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.normalize",
+      "ranges": [
+        {
+          "startOffset": 6093,
+          "endOffset": 7730,
+          "count": 31
+        },
+        {
+          "startOffset": 6148,
+          "endOffset": 6155,
+          "count": 30
+        },
+        {
+          "startOffset": 6155,
+          "endOffset": 6366,
+          "count": 1
+        },
+        {
+          "startOffset": 6366,
+          "endOffset": 6455,
+          "count": 0
+        },
+        {
+          "startOffset": 6455,
+          "endOffset": 6491,
+          "count": 1
+        },
+        {
+          "startOffset": 6491,
+          "endOffset": 6638,
+          "count": 0
+        },
+        {
+          "startOffset": 6638,
+          "endOffset": 6850,
+          "count": 1
+        },
+        {
+          "startOffset": 6850,
+          "endOffset": 6868,
+          "count": 0
+        },
+        {
+          "startOffset": 7061,
+          "endOffset": 7079,
+          "count": 1
+        },
+        {
+          "startOffset": 7276,
+          "endOffset": 7294,
+          "count": 1
+        },
+        {
+          "startOffset": 7503,
+          "endOffset": 7521,
+          "count": 1
+        },
+        {
+          "startOffset": 7621,
+          "endOffset": 7639,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.normalizedEntries",
+      "ranges": [
+        {
+          "startOffset": 7778,
+          "endOffset": 8316,
+          "count": 31
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.withContextAndParent",
+      "ranges": [
+        {
+          "startOffset": 8481,
+          "endOffset": 8858,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageLeaf.fromMapWithContext",
+      "ranges": [
+        {
+          "startOffset": 8897,
+          "endOffset": 9080,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

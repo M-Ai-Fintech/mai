@@ -1,0 +1,72 @@
+{
+  "scriptId": "350",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/PngEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2636,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 407,
+          "endOffset": 2561,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PngEmbedder",
+      "ranges": [
+        {
+          "startOffset": 425,
+          "endOffset": 643,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PngEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 666,
+          "endOffset": 983,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PngEmbedder.embedIntoContext",
+      "ranges": [
+        {
+          "startOffset": 1030,
+          "endOffset": 2009,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PngEmbedder.embedAlphaChannel",
+      "ranges": [
+        {
+          "startOffset": 2057,
+          "endOffset": 2534,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

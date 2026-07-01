@@ -1,0 +1,204 @@
+{
+  "scriptId": "391",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/parser/PDFParser.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 16906,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1417,
+          "endOffset": 16810,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFParser",
+      "ranges": [
+        {
+          "startOffset": 1483,
+          "endOffset": 2266,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseDocument",
+      "ranges": [
+        {
+          "startOffset": 2307,
+          "endOffset": 3868,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.maybeRecoverRoot",
+      "ranges": [
+        {
+          "startOffset": 3913,
+          "endOffset": 4628,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseHeader",
+      "ranges": [
+        {
+          "startOffset": 4668,
+          "endOffset": 5234,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseIndirectObjectHeader",
+      "ranges": [
+        {
+          "startOffset": 5288,
+          "endOffset": 5768,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.matchIndirectObjectHeader",
+      "ranges": [
+        {
+          "startOffset": 5822,
+          "endOffset": 6087,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseIndirectObject",
+      "ranges": [
+        {
+          "startOffset": 6135,
+          "endOffset": 8001,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.tryToParseInvalidIndirectObject",
+      "ranges": [
+        {
+          "startOffset": 8100,
+          "endOffset": 9113,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseIndirectObjects",
+      "ranges": [
+        {
+          "startOffset": 9162,
+          "endOffset": 10976,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.maybeParseCrossRefSection",
+      "ranges": [
+        {
+          "startOffset": 11030,
+          "endOffset": 12249,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.maybeParseTrailerDict",
+      "ranges": [
+        {
+          "startOffset": 12299,
+          "endOffset": 12946,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.maybeParseTrailer",
+      "ranges": [
+        {
+          "startOffset": 12992,
+          "endOffset": 13512,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.parseDocumentSection",
+      "ranges": [
+        {
+          "startOffset": 13561,
+          "endOffset": 14287,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.skipJibberish",
+      "ranges": [
+        {
+          "startOffset": 14659,
+          "endOffset": 15410,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.skipBinaryHeaderComment",
+      "ranges": [
+        {
+          "startOffset": 16243,
+          "endOffset": 16580,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFParser.forBytesWithOptions",
+      "ranges": [
+        {
+          "startOffset": 16618,
+          "endOffset": 16785,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

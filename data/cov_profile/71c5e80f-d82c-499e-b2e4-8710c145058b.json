@@ -1,0 +1,94 @@
+{
+  "scriptId": "405",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFImage.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5443,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 354,
+          "endOffset": 5374,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFImage",
+      "ranges": [
+        {
+          "startOffset": 372,
+          "endOffset": 883,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFImage.scale",
+      "ranges": [
+        {
+          "startOffset": 1516,
+          "endOffset": 1674,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFImage.scaleToFit",
+      "ranges": [
+        {
+          "startOffset": 2438,
+          "endOffset": 2774,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFImage.size",
+      "ranges": [
+        {
+          "startOffset": 3003,
+          "endOffset": 3052,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFImage.embed",
+      "ranges": [
+        {
+          "startOffset": 3421,
+          "endOffset": 4711,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFImage.of",
+      "ranges": [
+        {
+          "startOffset": 5264,
+          "endOffset": 5350,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

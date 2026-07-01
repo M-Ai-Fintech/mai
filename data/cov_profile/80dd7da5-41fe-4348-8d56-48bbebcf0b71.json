@@ -1,0 +1,204 @@
+{
+  "scriptId": "371",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/annotation/AppearanceCharacteristics.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5172,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 536,
+          "endOffset": 5069,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "AppearanceCharacteristics",
+      "ranges": [
+        {
+          "startOffset": 554,
+          "endOffset": 628,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.R",
+      "ranges": [
+        {
+          "startOffset": 673,
+          "endOffset": 847,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.BC",
+      "ranges": [
+        {
+          "startOffset": 894,
+          "endOffset": 1071,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.BG",
+      "ranges": [
+        {
+          "startOffset": 1118,
+          "endOffset": 1295,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.CA",
+      "ranges": [
+        {
+          "startOffset": 1342,
+          "endOffset": 1560,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.RC",
+      "ranges": [
+        {
+          "startOffset": 1607,
+          "endOffset": 1825,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.AC",
+      "ranges": [
+        {
+          "startOffset": 1872,
+          "endOffset": 2090,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.getRotation",
+      "ranges": [
+        {
+          "startOffset": 2146,
+          "endOffset": 2264,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.getBorderColor",
+      "ranges": [
+        {
+          "startOffset": 2323,
+          "endOffset": 2740,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.getBackgroundColor",
+      "ranges": [
+        {
+          "startOffset": 2803,
+          "endOffset": 3220,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.getCaptions",
+      "ranges": [
+        {
+          "startOffset": 3276,
+          "endOffset": 3638,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.setRotation",
+      "ranges": [
+        {
+          "startOffset": 3694,
+          "endOffset": 3823,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.setBorderColor",
+      "ranges": [
+        {
+          "startOffset": 3882,
+          "endOffset": 4008,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.setBackgroundColor",
+      "ranges": [
+        {
+          "startOffset": 4071,
+          "endOffset": 4197,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.setCaptions",
+      "ranges": [
+        {
+          "startOffset": 4253,
+          "endOffset": 4910,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AppearanceCharacteristics.fromDict",
+      "ranges": [
+        {
+          "startOffset": 4953,
+          "endOffset": 5028,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

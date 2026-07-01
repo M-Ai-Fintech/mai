@@ -1,0 +1,48 @@
+{
+  "scriptId": "262",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/ebitda.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1331,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeEbitdaMultiple",
+      "ranges": [
+        {
+          "startOffset": 685,
+          "endOffset": 1330,
+          "count": 3
+        },
+        {
+          "startOffset": 758,
+          "endOffset": 849,
+          "count": 0
+        },
+        {
+          "startOffset": 907,
+          "endOffset": 1000,
+          "count": 0
+        },
+        {
+          "startOffset": 1045,
+          "endOffset": 1182,
+          "count": 1
+        },
+        {
+          "startOffset": 1182,
+          "endOffset": 1329,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

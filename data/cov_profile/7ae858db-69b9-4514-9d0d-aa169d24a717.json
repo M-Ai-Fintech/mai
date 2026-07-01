@@ -1,0 +1,83 @@
+{
+  "scriptId": "336",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/document/PDFTrailerDict.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1329,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 220,
+          "endOffset": 1248,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFTrailerDict",
+      "ranges": [
+        {
+          "startOffset": 238,
+          "endOffset": 301,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTrailerDict.toString",
+      "ranges": [
+        {
+          "startOffset": 342,
+          "endOffset": 412,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTrailerDict.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 457,
+          "endOffset": 520,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTrailerDict.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 567,
+          "endOffset": 1140,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFTrailerDict.of",
+      "ranges": [
+        {
+          "startOffset": 1166,
+          "endOffset": 1218,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

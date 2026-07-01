@@ -1,0 +1,171 @@
+{
+  "scriptId": "380",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroText.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3095,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 527,
+          "endOffset": 2995,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroText",
+      "ranges": [
+        {
+          "startOffset": 595,
+          "endOffset": 698,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.MaxLen",
+      "ranges": [
+        {
+          "startOffset": 734,
+          "endOffset": 928,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.Q",
+      "ranges": [
+        {
+          "startOffset": 960,
+          "endOffset": 1134,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.setMaxLength",
+      "ranges": [
+        {
+          "startOffset": 1177,
+          "endOffset": 1295,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.removeMaxLength",
+      "ranges": [
+        {
+          "startOffset": 1341,
+          "endOffset": 1418,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.getMaxLength",
+      "ranges": [
+        {
+          "startOffset": 1461,
+          "endOffset": 1584,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.setQuadding",
+      "ranges": [
+        {
+          "startOffset": 1626,
+          "endOffset": 1737,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.getQuadding",
+      "ranges": [
+        {
+          "startOffset": 1779,
+          "endOffset": 1897,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.setValue",
+      "ranges": [
+        {
+          "startOffset": 1936,
+          "endOffset": 2322,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.removeValue",
+      "ranges": [
+        {
+          "startOffset": 2364,
+          "endOffset": 2436,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.getValue",
+      "ranges": [
+        {
+          "startOffset": 2475,
+          "endOffset": 2653,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.fromDict",
+      "ranges": [
+        {
+          "startOffset": 2682,
+          "endOffset": 2741,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroText.create",
+      "ranges": [
+        {
+          "startOffset": 2768,
+          "endOffset": 2968,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+{
+  "scriptId": "340",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFCrossRefStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 9326,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 410,
+          "endOffset": 609,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 884,
+          "endOffset": 9215,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream",
+      "ranges": [
+        {
+          "startOffset": 958,
+          "endOffset": 4441,
+          "count": 1
+        },
+        {
+          "startOffset": 1041,
+          "endOffset": 1059,
+          "count": 0
+        },
+        {
+          "startOffset": 1112,
+          "endOffset": 1119,
+          "count": 0
+        },
+        {
+          "startOffset": 4074,
+          "endOffset": 4079,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream._this.computeIndex",
+      "ranges": [
+        {
+          "startOffset": 1349,
+          "endOffset": 2150,
+          "count": 1
+        },
+        {
+          "startOffset": 1511,
+          "endOffset": 2060,
+          "count": 10
+        },
+        {
+          "startOffset": 1652,
+          "endOffset": 1737,
+          "count": 1
+        },
+        {
+          "startOffset": 1737,
+          "endOffset": 2007,
+          "count": 9
+        },
+        {
+          "startOffset": 1824,
+          "endOffset": 2007,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream._this.computeEntryTuples",
+      "ranges": [
+        {
+          "startOffset": 2187,
+          "endOffset": 3226,
+          "count": 1
+        },
+        {
+          "startOffset": 2340,
+          "endOffset": 3184,
+          "count": 10
+        },
+        {
+          "startOffset": 2444,
+          "endOffset": 2665,
+          "count": 1
+        },
+        {
+          "startOffset": 2725,
+          "endOffset": 2904,
+          "count": 3
+        },
+        {
+          "startOffset": 2962,
+          "endOffset": 3170,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream._this.computeMaxEntryByteWidths",
+      "ranges": [
+        {
+          "startOffset": 3270,
+          "endOffset": 4040,
+          "count": 1
+        },
+        {
+          "startOffset": 3457,
+          "endOffset": 4003,
+          "count": 10
+        },
+        {
+          "startOffset": 3793,
+          "endOffset": 3815,
+          "count": 1
+        },
+        {
+          "startOffset": 3880,
+          "endOffset": 3903,
+          "count": 2
+        },
+        {
+          "startOffset": 3967,
+          "endOffset": 3989,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.addDeletedEntry",
+      "ranges": [
+        {
+          "startOffset": 4492,
+          "endOffset": 4840,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.addUncompressedEntry",
+      "ranges": [
+        {
+          "startOffset": 4897,
+          "endOffset": 5208,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.addCompressedEntry",
+      "ranges": [
+        {
+          "startOffset": 5263,
+          "endOffset": 5620,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.clone",
+      "ranges": [
+        {
+          "startOffset": 5662,
+          "endOffset": 5852,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCrossRefStream.getContentsString",
+      "ranges": [
+        {
+          "startOffset": 5906,
+          "endOffset": 6940,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCrossRefStream.getUnencodedContents",
+      "ranges": [
+        {
+          "startOffset": 6997,
+          "endOffset": 8090,
+          "count": 1
+        },
+        {
+          "startOffset": 7321,
+          "endOffset": 8061,
+          "count": 10
+        },
+        {
+          "startOffset": 7759,
+          "endOffset": 7763,
+          "count": 1
+        },
+        {
+          "startOffset": 7842,
+          "endOffset": 7915,
+          "count": 20
+        },
+        {
+          "startOffset": 7896,
+          "endOffset": 7900,
+          "count": 9
+        },
+        {
+          "startOffset": 7979,
+          "endOffset": 8051,
+          "count": 20
+        },
+        {
+          "startOffset": 8032,
+          "endOffset": 8036,
+          "count": 13
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.getUnencodedContentsSize",
+      "ranges": [
+        {
+          "startOffset": 8151,
+          "endOffset": 8328,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.updateDict",
+      "ranges": [
+        {
+          "startOffset": 8375,
+          "endOffset": 8737,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.create",
+      "ranges": [
+        {
+          "startOffset": 8770,
+          "endOffset": 9002,
+          "count": 1
+        },
+        {
+          "startOffset": 8827,
+          "endOffset": 8845,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCrossRefStream.of",
+      "ranges": [
+        {
+          "startOffset": 9031,
+          "endOffset": 9182,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

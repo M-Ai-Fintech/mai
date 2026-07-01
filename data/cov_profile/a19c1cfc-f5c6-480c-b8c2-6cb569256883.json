@@ -1,0 +1,154 @@
+{
+  "scriptId": "342",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFHexString.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2910,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 360,
+          "endOffset": 2814,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHexString",
+      "ranges": [
+        {
+          "startOffset": 429,
+          "endOffset": 563,
+          "count": 17
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHexString.asBytes",
+      "ranges": [
+        {
+          "startOffset": 601,
+          "endOffset": 1224,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.decodeText",
+      "ranges": [
+        {
+          "startOffset": 1266,
+          "endOffset": 1460,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.decodeDate",
+      "ranges": [
+        {
+          "startOffset": 1502,
+          "endOffset": 1707,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.asString",
+      "ranges": [
+        {
+          "startOffset": 1747,
+          "endOffset": 1793,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.clone",
+      "ranges": [
+        {
+          "startOffset": 1830,
+          "endOffset": 1893,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.toString",
+      "ranges": [
+        {
+          "startOffset": 1933,
+          "endOffset": 1991,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFHexString.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 2034,
+          "endOffset": 2091,
+          "count": 17
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHexString.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 2136,
+          "endOffset": 2400,
+          "count": 17
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHexString.of",
+      "ranges": [
+        {
+          "startOffset": 2424,
+          "endOffset": 2476,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFHexString.fromText",
+      "ranges": [
+        {
+          "startOffset": 2506,
+          "endOffset": 2786,
+          "count": 2
+        },
+        {
+          "startOffset": 2663,
+          "endOffset": 2742,
+          "count": 90
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

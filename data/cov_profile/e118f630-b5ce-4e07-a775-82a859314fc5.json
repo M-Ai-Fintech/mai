@@ -1,0 +1,160 @@
+{
+  "scriptId": "385",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/parser/PDFObjectParser.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 10969,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1699,
+          "endOffset": 10866,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFObjectParser",
+      "ranges": [
+        {
+          "startOffset": 1771,
+          "endOffset": 2021,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseObject",
+      "ranges": [
+        {
+          "startOffset": 2142,
+          "endOffset": 3254,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseNumberOrRef",
+      "ranges": [
+        {
+          "startOffset": 3305,
+          "endOffset": 3917,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseHexString",
+      "ranges": [
+        {
+          "startOffset": 4057,
+          "endOffset": 4440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseString",
+      "ranges": [
+        {
+          "startOffset": 4486,
+          "endOffset": 5656,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseName",
+      "ranges": [
+        {
+          "startOffset": 5856,
+          "endOffset": 6280,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseArray",
+      "ranges": [
+        {
+          "startOffset": 6325,
+          "endOffset": 6838,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseDict",
+      "ranges": [
+        {
+          "startOffset": 6882,
+          "endOffset": 8226,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.parseDictOrStream",
+      "ranges": [
+        {
+          "startOffset": 8278,
+          "endOffset": 9475,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.findEndOfStreamFallback",
+      "ranges": [
+        {
+          "startOffset": 9533,
+          "endOffset": 10464,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.forBytes",
+      "ranges": [
+        {
+          "startOffset": 10497,
+          "endOffset": 10619,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectParser.forByteStream",
+      "ranges": [
+        {
+          "startOffset": 10657,
+          "endOffset": 10835,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

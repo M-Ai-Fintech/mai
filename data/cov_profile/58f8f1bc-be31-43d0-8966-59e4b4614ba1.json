@@ -1,0 +1,138 @@
+{
+  "scriptId": "407",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFCheckBox.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 10310,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 924,
+          "endOffset": 10217,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFCheckBox",
+      "ranges": [
+        {
+          "startOffset": 992,
+          "endOffset": 1303,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.check",
+      "ranges": [
+        {
+          "startOffset": 2182,
+          "endOffset": 2403,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.uncheck",
+      "ranges": [
+        {
+          "startOffset": 3114,
+          "endOffset": 3220,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.isChecked",
+      "ranges": [
+        {
+          "startOffset": 3647,
+          "endOffset": 3784,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.addToPage",
+      "ranges": [
+        {
+          "startOffset": 4656,
+          "endOffset": 6465,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 6903,
+          "endOffset": 7441,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 7792,
+          "endOffset": 7845,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 8617,
+          "endOffset": 9157,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 9210,
+          "endOffset": 9541,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFCheckBox.of",
+      "ranges": [
+        {
+          "startOffset": 10093,
+          "endOffset": 10190,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

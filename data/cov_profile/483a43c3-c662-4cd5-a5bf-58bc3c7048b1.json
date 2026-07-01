@@ -1,0 +1,50 @@
+{
+  "scriptId": "358",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/AsciiHexStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2651,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 468,
+          "endOffset": 2548,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "AsciiHexStream",
+      "ranges": [
+        {
+          "startOffset": 539,
+          "endOffset": 919,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "AsciiHexStream.readBlock",
+      "ranges": [
+        {
+          "startOffset": 961,
+          "endOffset": 2518,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

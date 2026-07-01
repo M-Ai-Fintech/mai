@@ -1,0 +1,83 @@
+{
+  "scriptId": "359",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/FlateStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 16547,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7131,
+          "endOffset": 16450,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "FlateStream",
+      "ranges": [
+        {
+          "startOffset": 7199,
+          "endOffset": 8019,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FlateStream.readBlock",
+      "ranges": [
+        {
+          "startOffset": 8058,
+          "endOffset": 13659,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FlateStream.getBits",
+      "ranges": [
+        {
+          "startOffset": 13697,
+          "endOffset": 14215,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FlateStream.getCode",
+      "ranges": [
+        {
+          "startOffset": 14253,
+          "endOffset": 15267,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FlateStream.generateHuffmanTable",
+      "ranges": [
+        {
+          "startOffset": 15318,
+          "endOffset": 16423,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

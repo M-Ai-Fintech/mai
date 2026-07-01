@@ -1,0 +1,182 @@
+{
+  "scriptId": "357",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/Stream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3429,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 339,
+          "endOffset": 3364,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Stream",
+      "ranges": [
+        {
+          "startOffset": 357,
+          "endOffset": 573,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "get",
+      "ranges": [
+        {
+          "startOffset": 643,
+          "endOffset": 708,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "get",
+      "ranges": [
+        {
+          "startOffset": 842,
+          "endOffset": 903,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.getByte",
+      "ranges": [
+        {
+          "startOffset": 998,
+          "endOffset": 1125,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.getUint16",
+      "ranges": [
+        {
+          "startOffset": 1160,
+          "endOffset": 1347,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.getInt32",
+      "ranges": [
+        {
+          "startOffset": 1381,
+          "endOffset": 1589,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.getBytes",
+      "ranges": [
+        {
+          "startOffset": 1688,
+          "endOffset": 2462,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.peekByte",
+      "ranges": [
+        {
+          "startOffset": 2496,
+          "endOffset": 2603,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.peekBytes",
+      "ranges": [
+        {
+          "startOffset": 2638,
+          "endOffset": 2853,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.skip",
+      "ranges": [
+        {
+          "startOffset": 2883,
+          "endOffset": 2973,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.reset",
+      "ranges": [
+        {
+          "startOffset": 3004,
+          "endOffset": 3054,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.moveStart",
+      "ranges": [
+        {
+          "startOffset": 3089,
+          "endOffset": 3139,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.makeSubStream",
+      "ranges": [
+        {
+          "startOffset": 3178,
+          "endOffset": 3264,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Stream.decode",
+      "ranges": [
+        {
+          "startOffset": 3296,
+          "endOffset": 3342,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

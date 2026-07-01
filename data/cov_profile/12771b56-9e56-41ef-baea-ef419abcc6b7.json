@@ -1,0 +1,130 @@
+{
+  "scriptId": "328",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFContentStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2529,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 299,
+          "endOffset": 2420,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContentStream",
+      "ranges": [
+        {
+          "startOffset": 372,
+          "endOffset": 600,
+          "count": 1
+        },
+        {
+          "startOffset": 456,
+          "endOffset": 474,
+          "count": 0
+        },
+        {
+          "startOffset": 527,
+          "endOffset": 534,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContentStream.push",
+      "ranges": [
+        {
+          "startOffset": 639,
+          "endOffset": 868,
+          "count": 18
+        },
+        {
+          "startOffset": 751,
+          "endOffset": 805,
+          "count": 177
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContentStream.clone",
+      "ranges": [
+        {
+          "startOffset": 909,
+          "endOffset": 1278,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContentStream.getContentsString",
+      "ranges": [
+        {
+          "startOffset": 1331,
+          "endOffset": 1530,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFContentStream.getUnencodedContents",
+      "ranges": [
+        {
+          "startOffset": 1586,
+          "endOffset": 1940,
+          "count": 1
+        },
+        {
+          "startOffset": 1767,
+          "endOffset": 1911,
+          "count": 177
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContentStream.getUnencodedContentsSize",
+      "ranges": [
+        {
+          "startOffset": 2000,
+          "endOffset": 2206,
+          "count": 1
+        },
+        {
+          "startOffset": 2109,
+          "endOffset": 2179,
+          "count": 177
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFContentStream.of",
+      "ranges": [
+        {
+          "startOffset": 2234,
+          "endOffset": 2388,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "scriptId": "381",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroPushButton.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 986,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 257,
+          "endOffset": 876,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroPushButton",
+      "ranges": [
+        {
+          "startOffset": 331,
+          "endOffset": 440,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroPushButton.fromDict",
+      "ranges": [
+        {
+          "startOffset": 474,
+          "endOffset": 551,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroPushButton.create",
+      "ranges": [
+        {
+          "startOffset": 584,
+          "endOffset": 843,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

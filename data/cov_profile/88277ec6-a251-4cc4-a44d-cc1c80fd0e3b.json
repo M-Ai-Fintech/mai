@@ -1,0 +1,94 @@
+{
+  "scriptId": "382",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroRadioButton.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2278,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 367,
+          "endOffset": 2166,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroRadioButton",
+      "ranges": [
+        {
+          "startOffset": 442,
+          "endOffset": 552,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroRadioButton.setValue",
+      "ranges": [
+        {
+          "startOffset": 597,
+          "endOffset": 1171,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroRadioButton.getValue",
+      "ranges": [
+        {
+          "startOffset": 1217,
+          "endOffset": 1372,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroRadioButton.getOnValues",
+      "ranges": [
+        {
+          "startOffset": 1421,
+          "endOffset": 1729,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroRadioButton.fromDict",
+      "ranges": [
+        {
+          "startOffset": 1765,
+          "endOffset": 1843,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroRadioButton.create",
+      "ranges": [
+        {
+          "startOffset": 1877,
+          "endOffset": 2132,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

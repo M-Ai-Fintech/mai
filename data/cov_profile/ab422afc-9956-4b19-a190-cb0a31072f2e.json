@@ -1,0 +1,94 @@
+{
+  "scriptId": "339",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFInvalidObject.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1233,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 214,
+          "endOffset": 1129,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFInvalidObject",
+      "ranges": [
+        {
+          "startOffset": 287,
+          "endOffset": 422,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFInvalidObject.clone",
+      "ranges": [
+        {
+          "startOffset": 462,
+          "endOffset": 536,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFInvalidObject.toString",
+      "ranges": [
+        {
+          "startOffset": 580,
+          "endOffset": 666,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFInvalidObject.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 713,
+          "endOffset": 765,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFInvalidObject.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 814,
+          "endOffset": 1015,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFInvalidObject.of",
+      "ranges": [
+        {
+          "startOffset": 1043,
+          "endOffset": 1097,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "scriptId": "346",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFString.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5048,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 357,
+          "endOffset": 4958,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFString",
+      "ranges": [
+        {
+          "startOffset": 423,
+          "endOffset": 554,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFString.asBytes",
+      "ranges": [
+        {
+          "startOffset": 589,
+          "endOffset": 2905,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.decodeText",
+      "ranges": [
+        {
+          "startOffset": 2944,
+          "endOffset": 3138,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.decodeDate",
+      "ranges": [
+        {
+          "startOffset": 3177,
+          "endOffset": 3382,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.asString",
+      "ranges": [
+        {
+          "startOffset": 3419,
+          "endOffset": 3465,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.clone",
+      "ranges": [
+        {
+          "startOffset": 3499,
+          "endOffset": 3559,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.toString",
+      "ranges": [
+        {
+          "startOffset": 3596,
+          "endOffset": 3654,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 3694,
+          "endOffset": 3751,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFString.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 3793,
+          "endOffset": 4057,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFString.of",
+      "ranges": [
+        {
+          "startOffset": 4300,
+          "endOffset": 4349,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFString.fromDate",
+      "ranges": [
+        {
+          "startOffset": 4376,
+          "endOffset": 4933,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

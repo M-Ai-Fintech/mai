@@ -1,0 +1,60 @@
+{
+  "scriptId": "230",
+  "url": "file:///home/luis/mai/tests/engines/document_generator.spec.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1948,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 596,
+          "endOffset": 925,
+          "count": 1
+        },
+        {
+          "startOffset": 677,
+          "endOffset": 924,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 992,
+          "endOffset": 1223,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1284,
+          "endOffset": 1945,
+          "count": 1
+        },
+        {
+          "startOffset": 1730,
+          "endOffset": 1767,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "scriptId": "263",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/enterprise_value.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1016,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeEnterpriseValue",
+      "ranges": [
+        {
+          "startOffset": 579,
+          "endOffset": 1015,
+          "count": 3
+        },
+        {
+          "startOffset": 676,
+          "endOffset": 778,
+          "count": 0
+        },
+        {
+          "startOffset": 885,
+          "endOffset": 935,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

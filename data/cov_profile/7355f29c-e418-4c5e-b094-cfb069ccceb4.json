@@ -1,0 +1,94 @@
+{
+  "scriptId": "322",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFNull.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1145,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 280,
+          "endOffset": 1053,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNull",
+      "ranges": [
+        {
+          "startOffset": 344,
+          "endOffset": 443,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNull.asNull",
+      "ranges": [
+        {
+          "startOffset": 475,
+          "endOffset": 515,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNull.clone",
+      "ranges": [
+        {
+          "startOffset": 547,
+          "endOffset": 587,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNull.toString",
+      "ranges": [
+        {
+          "startOffset": 622,
+          "endOffset": 664,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNull.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 702,
+          "endOffset": 739,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNull.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 779,
+          "endOffset": 1030,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

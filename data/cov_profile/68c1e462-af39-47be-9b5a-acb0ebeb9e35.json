@@ -1,0 +1,94 @@
+{
+  "scriptId": "353",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/PDFPageEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4625,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "fullPageBoundingBox",
+      "ranges": [
+        {
+          "startOffset": 657,
+          "endOffset": 1033,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "boundingBoxAdjustedMatrix",
+      "ranges": [
+        {
+          "startOffset": 1172,
+          "endOffset": 1232,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1271,
+          "endOffset": 4542,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPageEmbedder",
+      "ranges": [
+        {
+          "startOffset": 1289,
+          "endOffset": 1766,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 1793,
+          "endOffset": 2110,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageEmbedder.embedIntoContext",
+      "ranges": [
+        {
+          "startOffset": 2161,
+          "endOffset": 3464,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPageEmbedder.decodeContents",
+      "ranges": [
+        {
+          "startOffset": 3685,
+          "endOffset": 4511,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

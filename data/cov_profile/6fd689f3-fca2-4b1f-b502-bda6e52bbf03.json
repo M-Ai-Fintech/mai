@@ -1,0 +1,93 @@
+{
+  "scriptId": "329",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/structures/PDFFlateStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1586,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 423,
+          "endOffset": 1486,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFlateStream",
+      "ranges": [
+        {
+          "startOffset": 494,
+          "endOffset": 1056,
+          "count": 3
+        },
+        {
+          "startOffset": 578,
+          "endOffset": 585,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFlateStream._this.computeContents",
+      "ranges": [
+        {
+          "startOffset": 619,
+          "endOffset": 805,
+          "count": 3
+        },
+        {
+          "startOffset": 775,
+          "endOffset": 794,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFlateStream.getContents",
+      "ranges": [
+        {
+          "startOffset": 1100,
+          "endOffset": 1163,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFlateStream.getContentsSize",
+      "ranges": [
+        {
+          "startOffset": 1212,
+          "endOffset": 1282,
+          "count": 9
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFlateStream.getUnencodedContents",
+      "ranges": [
+        {
+          "startOffset": 1336,
+          "endOffset": 1456,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

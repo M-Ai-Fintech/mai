@@ -1,0 +1,567 @@
+{
+  "scriptId": "362",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/interactive/ViewerPreferences.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 22141,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "asEnum",
+      "ranges": [
+        {
+          "startOffset": 561,
+          "endOffset": 683,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 713,
+          "endOffset": 1360,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1481,
+          "endOffset": 1798,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1900,
+          "endOffset": 2091,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2175,
+          "endOffset": 2623,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2715,
+          "endOffset": 22054,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ViewerPreferences",
+      "ranges": [
+        {
+          "startOffset": 2752,
+          "endOffset": 2818,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.lookupBool",
+      "ranges": [
+        {
+          "startOffset": 2864,
+          "endOffset": 3063,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.lookupName",
+      "ranges": [
+        {
+          "startOffset": 3110,
+          "endOffset": 3309,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.HideToolbar",
+      "ranges": [
+        {
+          "startOffset": 3376,
+          "endOffset": 3442,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.HideMenubar",
+      "ranges": [
+        {
+          "startOffset": 3509,
+          "endOffset": 3575,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.HideWindowUI",
+      "ranges": [
+        {
+          "startOffset": 3643,
+          "endOffset": 3710,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.FitWindow",
+      "ranges": [
+        {
+          "startOffset": 3775,
+          "endOffset": 3839,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.CenterWindow",
+      "ranges": [
+        {
+          "startOffset": 3907,
+          "endOffset": 3974,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.DisplayDocTitle",
+      "ranges": [
+        {
+          "startOffset": 4045,
+          "endOffset": 4115,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.NonFullScreenPageMode",
+      "ranges": [
+        {
+          "startOffset": 4192,
+          "endOffset": 4268,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.Direction",
+      "ranges": [
+        {
+          "startOffset": 4333,
+          "endOffset": 4397,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.PrintScaling",
+      "ranges": [
+        {
+          "startOffset": 4465,
+          "endOffset": 4532,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.Duplex",
+      "ranges": [
+        {
+          "startOffset": 4594,
+          "endOffset": 4655,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.PickTrayByPDFSize",
+      "ranges": [
+        {
+          "startOffset": 4728,
+          "endOffset": 4800,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.PrintPageRange",
+      "ranges": [
+        {
+          "startOffset": 4870,
+          "endOffset": 5095,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.NumCopies",
+      "ranges": [
+        {
+          "startOffset": 5160,
+          "endOffset": 5366,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getHideToolbar",
+      "ranges": [
+        {
+          "startOffset": 5596,
+          "endOffset": 5775,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getHideMenubar",
+      "ranges": [
+        {
+          "startOffset": 6004,
+          "endOffset": 6183,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getHideWindowUI",
+      "ranges": [
+        {
+          "startOffset": 6535,
+          "endOffset": 6715,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getFitWindow",
+      "ranges": [
+        {
+          "startOffset": 6973,
+          "endOffset": 7150,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getCenterWindow",
+      "ranges": [
+        {
+          "startOffset": 7391,
+          "endOffset": 7571,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getDisplayDocTitle",
+      "ranges": [
+        {
+          "startOffset": 7954,
+          "endOffset": 8137,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getNonFullScreenPageMode",
+      "ranges": [
+        {
+          "startOffset": 8400,
+          "endOffset": 8670,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getReadingDirection",
+      "ranges": [
+        {
+          "startOffset": 8837,
+          "endOffset": 9091,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getPrintScaling",
+      "ranges": [
+        {
+          "startOffset": 9316,
+          "endOffset": 9568,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getDuplex",
+      "ranges": [
+        {
+          "startOffset": 9787,
+          "endOffset": 9957,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getPickTrayByPDFSize",
+      "ranges": [
+        {
+          "startOffset": 10239,
+          "endOffset": 10374,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getPrintPageRange",
+      "ranges": [
+        {
+          "startOffset": 11236,
+          "endOffset": 11945,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.getNumCopies",
+      "ranges": [
+        {
+          "startOffset": 12178,
+          "endOffset": 12350,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setHideToolbar",
+      "ranges": [
+        {
+          "startOffset": 12585,
+          "endOffset": 12750,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setHideMenubar",
+      "ranges": [
+        {
+          "startOffset": 12986,
+          "endOffset": 13151,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setHideWindowUI",
+      "ranges": [
+        {
+          "startOffset": 13509,
+          "endOffset": 13679,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setFitWindow",
+      "ranges": [
+        {
+          "startOffset": 13933,
+          "endOffset": 14088,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setCenterWindow",
+      "ranges": [
+        {
+          "startOffset": 14335,
+          "endOffset": 14505,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setDisplayDocTitle",
+      "ranges": [
+        {
+          "startOffset": 14880,
+          "endOffset": 15059,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setNonFullScreenPageMode",
+      "ranges": [
+        {
+          "startOffset": 16012,
+          "endOffset": 16294,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setReadingDirection",
+      "ranges": [
+        {
+          "startOffset": 17004,
+          "endOffset": 17259,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setPrintScaling",
+      "ranges": [
+        {
+          "startOffset": 17801,
+          "endOffset": 18035,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setDuplex",
+      "ranges": [
+        {
+          "startOffset": 18562,
+          "endOffset": 18752,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setPickTrayByPDFSize",
+      "ranges": [
+        {
+          "startOffset": 19475,
+          "endOffset": 19670,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setPrintPageRange",
+      "ranges": [
+        {
+          "startOffset": 20678,
+          "endOffset": 21228,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.setNumCopies",
+      "ranges": [
+        {
+          "startOffset": 21458,
+          "endOffset": 21742,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.fromDict",
+      "ranges": [
+        {
+          "startOffset": 21796,
+          "endOffset": 21863,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ViewerPreferences.create",
+      "ranges": [
+        {
+          "startOffset": 21915,
+          "endOffset": 22021,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "scriptId": "347",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/CustomFontSubsetEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3241,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 586,
+          "endOffset": 3112,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder",
+      "ranges": [
+        {
+          "startOffset": 667,
+          "endOffset": 1076,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 1112,
+          "endOffset": 1681,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder.encodeText",
+      "ranges": [
+        {
+          "startOffset": 1735,
+          "endOffset": 2344,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder.isCFF",
+      "ranges": [
+        {
+          "startOffset": 2393,
+          "endOffset": 2444,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder.glyphId",
+      "ranges": [
+        {
+          "startOffset": 2495,
+          "endOffset": 2578,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "CustomFontSubsetEmbedder.serializeFont",
+      "ranges": [
+        {
+          "startOffset": 2635,
+          "endOffset": 3072,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

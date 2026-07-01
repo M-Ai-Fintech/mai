@@ -1,0 +1,55 @@
+{
+  "scriptId": "280",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/base64.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3173,
+          "count": 1
+        },
+        {
+          "startOffset": 652,
+          "endOffset": 692,
+          "count": 64
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.encodeToBase64",
+      "ranges": [
+        {
+          "startOffset": 718,
+          "endOffset": 1274,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.decodeFromBase64",
+      "ranges": [
+        {
+          "startOffset": 1303,
+          "endOffset": 2152,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.decodeFromBase64DataUri",
+      "ranges": [
+        {
+          "startOffset": 2647,
+          "endOffset": 3137,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

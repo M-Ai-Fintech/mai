@@ -1,0 +1,72 @@
+{
+  "scriptId": "348",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/FileEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3654,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 484,
+          "endOffset": 897,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1008,
+          "endOffset": 3577,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "FileEmbedder",
+      "ranges": [
+        {
+          "startOffset": 1026,
+          "endOffset": 1234,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FileEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 1258,
+          "endOffset": 1410,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "FileEmbedder.embedIntoContext",
+      "ranges": [
+        {
+          "startOffset": 1458,
+          "endOffset": 3549,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "scriptId": "377",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroNonTerminal.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1392,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 294,
+          "endOffset": 1281,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroNonTerminal",
+      "ranges": [
+        {
+          "startOffset": 369,
+          "endOffset": 479,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroNonTerminal.addField",
+      "ranges": [
+        {
+          "startOffset": 524,
+          "endOffset": 668,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroNonTerminal.normalizedEntries",
+      "ranges": [
+        {
+          "startOffset": 723,
+          "endOffset": 945,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroNonTerminal.fromDict",
+      "ranges": [
+        {
+          "startOffset": 981,
+          "endOffset": 1059,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroNonTerminal.create",
+      "ranges": [
+        {
+          "startOffset": 1093,
+          "endOffset": 1247,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

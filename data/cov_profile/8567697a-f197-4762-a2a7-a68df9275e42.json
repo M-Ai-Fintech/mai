@@ -1,0 +1,137 @@
+{
+  "scriptId": "395",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/rotations.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3224,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 377,
+          "endOffset": 489,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.radians",
+      "ranges": [
+        {
+          "startOffset": 581,
+          "endOffset": 733,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.degrees",
+      "ranges": [
+        {
+          "startOffset": 753,
+          "endOffset": 905,
+          "count": 45
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.degreesToRadians",
+      "ranges": [
+        {
+          "startOffset": 1004,
+          "endOffset": 1058,
+          "count": 45
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.radiansToDegrees",
+      "ranges": [
+        {
+          "startOffset": 1087,
+          "endOffset": 1141,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.toRadians",
+      "ranges": [
+        {
+          "startOffset": 1182,
+          "endOffset": 1416,
+          "count": 45
+        },
+        {
+          "startOffset": 1241,
+          "endOffset": 1257,
+          "count": 0
+        },
+        {
+          "startOffset": 1349,
+          "endOffset": 1413,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.toDegrees",
+      "ranges": [
+        {
+          "startOffset": 1457,
+          "endOffset": 1691,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.reduceRotation",
+      "ranges": [
+        {
+          "startOffset": 1718,
+          "endOffset": 2073,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.adjustDimsForRotation",
+      "ranges": [
+        {
+          "startOffset": 2107,
+          "endOffset": 2402,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.rotateRectangle",
+      "ranges": [
+        {
+          "startOffset": 2430,
+          "endOffset": 3185,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

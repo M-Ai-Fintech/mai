@@ -1,0 +1,94 @@
+{
+  "scriptId": "397",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/text/layout.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 8793,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeFontSize",
+      "ranges": [
+        {
+          "startOffset": 360,
+          "endOffset": 1929,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "computeCombedFontSize",
+      "ranges": [
+        {
+          "startOffset": 1959,
+          "endOffset": 2639,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "lastIndexOfWhitespace",
+      "ranges": [
+        {
+          "startOffset": 2669,
+          "endOffset": 2824,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "splitOutLines",
+      "ranges": [
+        {
+          "startOffset": 2846,
+          "endOffset": 3775,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.layoutMultilineText",
+      "ranges": [
+        {
+          "startOffset": 3807,
+          "endOffset": 5942,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.layoutCombedText",
+      "ranges": [
+        {
+          "startOffset": 5971,
+          "endOffset": 7691,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.layoutSinglelineText",
+      "ranges": [
+        {
+          "startOffset": 7724,
+          "endOffset": 8757,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

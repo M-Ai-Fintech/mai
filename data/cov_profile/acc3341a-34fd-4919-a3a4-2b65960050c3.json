@@ -1,0 +1,325 @@
+{
+  "scriptId": "398",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/errors.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 8363,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 719,
+          "endOffset": 1135,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "EncryptedPDFError",
+      "ranges": [
+        {
+          "startOffset": 793,
+          "endOffset": 1103,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1291,
+          "endOffset": 1773,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "FontkitNotRegisteredError",
+      "ranges": [
+        {
+          "startOffset": 1373,
+          "endOffset": 1733,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1936,
+          "endOffset": 2458,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ForeignPageError",
+      "ranges": [
+        {
+          "startOffset": 2009,
+          "endOffset": 2427,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2619,
+          "endOffset": 2993,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "RemovePageFromEmptyDocumentError",
+      "ranges": [
+        {
+          "startOffset": 2708,
+          "endOffset": 2946,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3118,
+          "endOffset": 3439,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "NoSuchFieldError",
+      "ranges": [
+        {
+          "startOffset": 3191,
+          "endOffset": 3408,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3540,
+          "endOffset": 4276,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "UnexpectedFieldTypeError",
+      "ranges": [
+        {
+          "startOffset": 3621,
+          "endOffset": 4237,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4393,
+          "endOffset": 4751,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "MissingOnValueCheckError",
+      "ranges": [
+        {
+          "startOffset": 4474,
+          "endOffset": 4712,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4867,
+          "endOffset": 5213,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "FieldAlreadyExistsError",
+      "ranges": [
+        {
+          "startOffset": 4947,
+          "endOffset": 5175,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 5329,
+          "endOffset": 5680,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "InvalidFieldNamePartError",
+      "ranges": [
+        {
+          "startOffset": 5411,
+          "endOffset": 5640,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 5804,
+          "endOffset": 6181,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "FieldExistsAsNonTerminalError",
+      "ranges": [
+        {
+          "startOffset": 5890,
+          "endOffset": 6137,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 6306,
+          "endOffset": 6680,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "RichTextFieldReadError",
+      "ranges": [
+        {
+          "startOffset": 6385,
+          "endOffset": 6643,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 6790,
+          "endOffset": 7183,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "CombedTextLayoutError",
+      "ranges": [
+        {
+          "startOffset": 6868,
+          "endOffset": 7147,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7292,
+          "endOffset": 7710,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ExceededMaxLengthError",
+      "ranges": [
+        {
+          "startOffset": 7371,
+          "endOffset": 7673,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 7820,
+          "endOffset": 8264,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "InvalidMaxLengthError",
+      "ranges": [
+        {
+          "startOffset": 7898,
+          "endOffset": 8228,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

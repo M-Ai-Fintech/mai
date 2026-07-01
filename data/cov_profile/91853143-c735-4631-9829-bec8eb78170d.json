@@ -1,0 +1,116 @@
+{
+  "scriptId": "373",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroChoice.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5789,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 598,
+          "endOffset": 5685,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroChoice",
+      "ranges": [
+        {
+          "startOffset": 668,
+          "endOffset": 773,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.setValues",
+      "ranges": [
+        {
+          "startOffset": 814,
+          "endOffset": 1600,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.valuesAreValid",
+      "ranges": [
+        {
+          "startOffset": 1647,
+          "endOffset": 2200,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.updateSelectedIndices",
+      "ranges": [
+        {
+          "startOffset": 2254,
+          "endOffset": 2949,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.getValues",
+      "ranges": [
+        {
+          "startOffset": 2991,
+          "endOffset": 3561,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.Opt",
+      "ranges": [
+        {
+          "startOffset": 3597,
+          "endOffset": 3748,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.setOptions",
+      "ranges": [
+        {
+          "startOffset": 3791,
+          "endOffset": 4177,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroChoice.getOptions",
+      "ranges": [
+        {
+          "startOffset": 4220,
+          "endOffset": 5656,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

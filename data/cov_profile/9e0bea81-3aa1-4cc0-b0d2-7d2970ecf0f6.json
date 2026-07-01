@@ -1,0 +1,193 @@
+{
+  "scriptId": "338",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/writers/PDFStreamWriter.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 6835,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 977,
+          "endOffset": 6733,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFStreamWriter",
+      "ranges": [
+        {
+          "startOffset": 1049,
+          "endOffset": 1329,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFStreamWriter.computeBufferSize",
+      "ranges": [
+        {
+          "startOffset": 1380,
+          "endOffset": 6366,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1449,
+          "endOffset": 6358,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1793,
+          "endOffset": 6346,
+          "count": 20
+        },
+        {
+          "startOffset": 1865,
+          "endOffset": 2525,
+          "count": 1
+        },
+        {
+          "startOffset": 2546,
+          "endOffset": 3486,
+          "count": 8
+        },
+        {
+          "startOffset": 2596,
+          "endOffset": 2620,
+          "count": 1
+        },
+        {
+          "startOffset": 2620,
+          "endOffset": 2914,
+          "count": 7
+        },
+        {
+          "startOffset": 2915,
+          "endOffset": 2990,
+          "count": 6
+        },
+        {
+          "startOffset": 2991,
+          "endOffset": 3048,
+          "count": 6
+        },
+        {
+          "startOffset": 3098,
+          "endOffset": 3122,
+          "count": 6
+        },
+        {
+          "startOffset": 3122,
+          "endOffset": 3417,
+          "count": 1
+        },
+        {
+          "startOffset": 3417,
+          "endOffset": 3486,
+          "count": 0
+        },
+        {
+          "startOffset": 3507,
+          "endOffset": 3587,
+          "count": 0
+        },
+        {
+          "startOffset": 3608,
+          "endOffset": 3640,
+          "count": 1
+        },
+        {
+          "startOffset": 3661,
+          "endOffset": 4348,
+          "count": 6
+        },
+        {
+          "startOffset": 3843,
+          "endOffset": 3888,
+          "count": 5
+        },
+        {
+          "startOffset": 3890,
+          "endOffset": 4167,
+          "count": 1
+        },
+        {
+          "startOffset": 4369,
+          "endOffset": 4456,
+          "count": 7
+        },
+        {
+          "startOffset": 4477,
+          "endOffset": 4587,
+          "count": 1
+        },
+        {
+          "startOffset": 4608,
+          "endOffset": 5306,
+          "count": 2
+        },
+        {
+          "startOffset": 4658,
+          "endOffset": 5237,
+          "count": 1
+        },
+        {
+          "startOffset": 5237,
+          "endOffset": 5306,
+          "count": 0
+        },
+        {
+          "startOffset": 5327,
+          "endOffset": 5407,
+          "count": 0
+        },
+        {
+          "startOffset": 5428,
+          "endOffset": 5515,
+          "count": 1
+        },
+        {
+          "startOffset": 5536,
+          "endOffset": 6314,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFStreamWriter.forContext",
+      "ranges": [
+        {
+          "startOffset": 6401,
+          "endOffset": 6702,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

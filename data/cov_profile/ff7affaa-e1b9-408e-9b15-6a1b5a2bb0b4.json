@@ -1,0 +1,37 @@
+{
+  "scriptId": "387",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/syntax/Numeric.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1190,
+          "count": 1
+        },
+        {
+          "startOffset": 1060,
+          "endOffset": 1154,
+          "count": 256
+        },
+        {
+          "startOffset": 1112,
+          "endOffset": 1143,
+          "count": 246
+        },
+        {
+          "startOffset": 1144,
+          "endOffset": 1147,
+          "count": 13
+        },
+        {
+          "startOffset": 1148,
+          "endOffset": 1151,
+          "count": 243
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "scriptId": "291",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/utils/common.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2444,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "_has",
+      "ranges": [
+        {
+          "startOffset": 181,
+          "endOffset": 265,
+          "count": 37
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.assign",
+      "ranges": [
+        {
+          "startOffset": 284,
+          "endOffset": 703,
+          "count": 8
+        },
+        {
+          "startOffset": 413,
+          "endOffset": 686,
+          "count": 10
+        },
+        {
+          "startOffset": 466,
+          "endOffset": 479,
+          "count": 0
+        },
+        {
+          "startOffset": 517,
+          "endOffset": 582,
+          "count": 0
+        },
+        {
+          "startOffset": 610,
+          "endOffset": 682,
+          "count": 37
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.shrinkBuf",
+      "ranges": [
+        {
+          "startOffset": 768,
+          "endOffset": 924,
+          "count": 14
+        },
+        {
+          "startOffset": 818,
+          "endOffset": 833,
+          "count": 8
+        },
+        {
+          "startOffset": 833,
+          "endOffset": 887,
+          "count": 6
+        },
+        {
+          "startOffset": 887,
+          "endOffset": 923,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "arraySet",
+      "ranges": [
+        {
+          "startOffset": 956,
+          "endOffset": 1259,
+          "count": 22
+        },
+        {
+          "startOffset": 1132,
+          "endOffset": 1255,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "flattenChunks",
+      "ranges": [
+        {
+          "startOffset": 1321,
+          "endOffset": 1736,
+          "count": 6
+        },
+        {
+          "startOffset": 1470,
+          "endOffset": 1508,
+          "count": 14
+        },
+        {
+          "startOffset": 1623,
+          "endOffset": 1712,
+          "count": 14
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "arraySet",
+      "ranges": [
+        {
+          "startOffset": 1771,
+          "endOffset": 1912,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "flattenChunks",
+      "ranges": [
+        {
+          "startOffset": 1974,
+          "endOffset": 2037,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setTyped",
+      "ranges": [
+        {
+          "startOffset": 2113,
+          "endOffset": 2413,
+          "count": 1
+        },
+        {
+          "startOffset": 2279,
+          "endOffset": 2411,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

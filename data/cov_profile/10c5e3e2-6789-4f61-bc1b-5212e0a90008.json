@@ -1,0 +1,125 @@
+{
+  "scriptId": "273",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/colors.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3243,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 358,
+          "endOffset": 490,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.grayscale",
+      "ranges": [
+        {
+          "startOffset": 575,
+          "endOffset": 698,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.rgb",
+      "ranges": [
+        {
+          "startOffset": 714,
+          "endOffset": 953,
+          "count": 19
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.cmyk",
+      "ranges": [
+        {
+          "startOffset": 970,
+          "endOffset": 1293,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.setFillingColor",
+      "ranges": [
+        {
+          "startOffset": 1424,
+          "endOffset": 1825,
+          "count": 15
+        },
+        {
+          "startOffset": 1479,
+          "endOffset": 1529,
+          "count": 0
+        },
+        {
+          "startOffset": 1640,
+          "endOffset": 1822,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.setStrokingColor",
+      "ranges": [
+        {
+          "startOffset": 1873,
+          "endOffset": 2277,
+          "count": 3
+        },
+        {
+          "startOffset": 1928,
+          "endOffset": 1979,
+          "count": 0
+        },
+        {
+          "startOffset": 2091,
+          "endOffset": 2274,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.componentsToColor",
+      "ranges": [
+        {
+          "startOffset": 2326,
+          "endOffset": 2854,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.colorToComponents",
+      "ranges": [
+        {
+          "startOffset": 2903,
+          "endOffset": 3207,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

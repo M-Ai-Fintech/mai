@@ -1,0 +1,83 @@
+{
+  "scriptId": "369",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/annotation/BorderStyle.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1165,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 337,
+          "endOffset": 1090,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "BorderStyle",
+      "ranges": [
+        {
+          "startOffset": 355,
+          "endOffset": 415,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BorderStyle.W",
+      "ranges": [
+        {
+          "startOffset": 446,
+          "endOffset": 620,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BorderStyle.getWidth",
+      "ranges": [
+        {
+          "startOffset": 659,
+          "endOffset": 823,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BorderStyle.setWidth",
+      "ranges": [
+        {
+          "startOffset": 862,
+          "endOffset": 985,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "BorderStyle.fromDict",
+      "ranges": [
+        {
+          "startOffset": 1014,
+          "endOffset": 1063,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

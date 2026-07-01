@@ -1,0 +1,131 @@
+{
+  "scriptId": "288",
+  "url": "file:///home/luis/mai/node_modules/.deno/@pdf-lib+standard-fonts@1.0.0/node_modules/@pdf-lib/standard-fonts/lib/Font.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4584,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "__importDefault",
+      "ranges": [
+        {
+          "startOffset": 70,
+          "endOffset": 151,
+          "count": 14
+        },
+        {
+          "startOffset": 122,
+          "endOffset": 127,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 2572,
+          "endOffset": 3299,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 3407,
+          "endOffset": 4558,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Font",
+      "ranges": [
+        {
+          "startOffset": 3425,
+          "endOffset": 3761,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "Font.getWidthOfGlyph",
+      "ranges": [
+        {
+          "startOffset": 3500,
+          "endOffset": 3580,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Font.getXAxisKerningForPair",
+      "ranges": [
+        {
+          "startOffset": 3620,
+          "endOffset": 3754,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "Font.load",
+      "ranges": [
+        {
+          "startOffset": 3778,
+          "endOffset": 4538,
+          "count": 2
+        },
+        {
+          "startOffset": 3882,
+          "endOffset": 3900,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4095,
+          "endOffset": 4192,
+          "count": 630
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4253,
+          "endOffset": 4469,
+          "count": 5186
+        },
+        {
+          "startOffset": 4380,
+          "endOffset": 4396,
+          "count": 272
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

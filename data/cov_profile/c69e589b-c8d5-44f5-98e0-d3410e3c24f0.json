@@ -1,0 +1,158 @@
+{
+  "scriptId": "404",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFFont.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5746,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 351,
+          "endOffset": 5679,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFont",
+      "ranges": [
+        {
+          "startOffset": 369,
+          "endOffset": 902,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFont.encodeText",
+      "ranges": [
+        {
+          "startOffset": 1278,
+          "endOffset": 1430,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFont.widthOfTextAtSize",
+      "ranges": [
+        {
+          "startOffset": 1909,
+          "endOffset": 2102,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFFont.heightAtSize",
+      "ranges": [
+        {
+          "startOffset": 2639,
+          "endOffset": 3082,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFFont.sizeAtHeight",
+      "ranges": [
+        {
+          "startOffset": 3422,
+          "endOffset": 3560,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFFont.getCharacterSet",
+      "ranges": [
+        {
+          "startOffset": 3769,
+          "endOffset": 4006,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFFont.embed",
+      "ranges": [
+        {
+          "startOffset": 4372,
+          "endOffset": 5005,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4441,
+          "endOffset": 4997,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 4500,
+          "endOffset": 4985,
+          "count": 4
+        },
+        {
+          "startOffset": 4572,
+          "endOffset": 4754,
+          "count": 2
+        },
+        {
+          "startOffset": 4624,
+          "endOffset": 4648,
+          "count": 0
+        },
+        {
+          "startOffset": 4775,
+          "endOffset": 4902,
+          "count": 2
+        },
+        {
+          "startOffset": 4923,
+          "endOffset": 4953,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFFont.of",
+      "ranges": [
+        {
+          "startOffset": 5571,
+          "endOffset": 5656,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

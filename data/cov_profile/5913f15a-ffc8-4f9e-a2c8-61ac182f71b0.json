@@ -1,0 +1,157 @@
+{
+  "scriptId": "341",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/embedders/StandardFontEmbedder.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4472,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 550,
+          "endOffset": 4379,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StandardFontEmbedder",
+      "ranges": [
+        {
+          "startOffset": 568,
+          "endOffset": 1066,
+          "count": 2
+        },
+        {
+          "startOffset": 727,
+          "endOffset": 768,
+          "count": 0
+        },
+        {
+          "startOffset": 830,
+          "endOffset": 865,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StandardFontEmbedder.encodeText",
+      "ranges": [
+        {
+          "startOffset": 1311,
+          "endOffset": 1640,
+          "count": 15
+        },
+        {
+          "startOffset": 1495,
+          "endOffset": 1573,
+          "count": 733
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StandardFontEmbedder.widthOfTextAtSize",
+      "ranges": [
+        {
+          "startOffset": 1697,
+          "endOffset": 2191,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "StandardFontEmbedder.heightOfFontAtSize",
+      "ranges": [
+        {
+          "startOffset": 2249,
+          "endOffset": 2738,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "StandardFontEmbedder.sizeOfFontAtHeight",
+      "ranges": [
+        {
+          "startOffset": 2796,
+          "endOffset": 3066,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "StandardFontEmbedder.embedIntoContext",
+      "ranges": [
+        {
+          "startOffset": 3122,
+          "endOffset": 3590,
+          "count": 2
+        },
+        {
+          "startOffset": 3392,
+          "endOffset": 3403,
+          "count": 0
+        },
+        {
+          "startOffset": 3512,
+          "endOffset": 3584,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StandardFontEmbedder.widthOfGlyph",
+      "ranges": [
+        {
+          "startOffset": 3642,
+          "endOffset": 3788,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "StandardFontEmbedder.encodeTextAsGlyphs",
+      "ranges": [
+        {
+          "startOffset": 3846,
+          "endOffset": 4208,
+          "count": 15
+        },
+        {
+          "startOffset": 4027,
+          "endOffset": 4179,
+          "count": 733
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "StandardFontEmbedder.for",
+      "ranges": [
+        {
+          "startOffset": 4241,
+          "endOffset": 4343,
+          "count": 2
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

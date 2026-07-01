@@ -1,0 +1,171 @@
+{
+  "scriptId": "388",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/parser/ByteStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2184,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 353,
+          "endOffset": 2111,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ByteStream",
+      "ranges": [
+        {
+          "startOffset": 371,
+          "endOffset": 544,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.moveTo",
+      "ranges": [
+        {
+          "startOffset": 579,
+          "endOffset": 631,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.next",
+      "ranges": [
+        {
+          "startOffset": 665,
+          "endOffset": 922,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.assertNext",
+      "ranges": [
+        {
+          "startOffset": 962,
+          "endOffset": 1162,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.peek",
+      "ranges": [
+        {
+          "startOffset": 1196,
+          "endOffset": 1252,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.peekAhead",
+      "ranges": [
+        {
+          "startOffset": 1291,
+          "endOffset": 1360,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.peekAt",
+      "ranges": [
+        {
+          "startOffset": 1396,
+          "endOffset": 1456,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.done",
+      "ranges": [
+        {
+          "startOffset": 1490,
+          "endOffset": 1549,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.offset",
+      "ranges": [
+        {
+          "startOffset": 1585,
+          "endOffset": 1629,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.slice",
+      "ranges": [
+        {
+          "startOffset": 1664,
+          "endOffset": 1738,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.position",
+      "ranges": [
+        {
+          "startOffset": 1776,
+          "endOffset": 1870,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.of",
+      "ranges": [
+        {
+          "startOffset": 1892,
+          "endOffset": 1942,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ByteStream.fromPDFRawStream",
+      "ranges": [
+        {
+          "startOffset": 1978,
+          "endOffset": 2085,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

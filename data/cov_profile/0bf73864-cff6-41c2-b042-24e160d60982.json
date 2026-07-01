@@ -1,0 +1,37 @@
+{
+  "scriptId": "319",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/syntax/Irregular.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 580,
+          "count": 1
+        },
+        {
+          "startOffset": 384,
+          "endOffset": 491,
+          "count": 256
+        },
+        {
+          "startOffset": 448,
+          "endOffset": 480,
+          "count": 250
+        },
+        {
+          "startOffset": 481,
+          "endOffset": 484,
+          "count": 16
+        },
+        {
+          "startOffset": 485,
+          "endOffset": 488,
+          "count": 240
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

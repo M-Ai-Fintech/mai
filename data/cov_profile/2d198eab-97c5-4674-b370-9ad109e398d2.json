@@ -1,0 +1,116 @@
+{
+  "scriptId": "314",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFNumber.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1415,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 251,
+          "endOffset": 1325,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNumber",
+      "ranges": [
+        {
+          "startOffset": 317,
+          "endOffset": 513,
+          "count": 228
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNumber.asNumber",
+      "ranges": [
+        {
+          "startOffset": 549,
+          "endOffset": 601,
+          "count": 26
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNumber.value",
+      "ranges": [
+        {
+          "startOffset": 693,
+          "endOffset": 745,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNumber.clone",
+      "ranges": [
+        {
+          "startOffset": 779,
+          "endOffset": 845,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNumber.toString",
+      "ranges": [
+        {
+          "startOffset": 882,
+          "endOffset": 934,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFNumber.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 974,
+          "endOffset": 1033,
+          "count": 214
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNumber.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 1075,
+          "endOffset": 1230,
+          "count": 214
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFNumber.of",
+      "ranges": [
+        {
+          "startOffset": 1251,
+          "endOffset": 1300,
+          "count": 228
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

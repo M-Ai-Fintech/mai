@@ -1,0 +1,192 @@
+{
+  "scriptId": "283",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/utils/unicode.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 15074,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.utf8Encode",
+      "ranges": [
+        {
+          "startOffset": 4181,
+          "endOffset": 5794,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.utf16Encode",
+      "ranges": [
+        {
+          "startOffset": 8610,
+          "endOffset": 9417,
+          "count": 2
+        },
+        {
+          "startOffset": 8833,
+          "endOffset": 9378,
+          "count": 88
+        },
+        {
+          "startOffset": 9016,
+          "endOffset": 9372,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.isWithinBMP",
+      "ranges": [
+        {
+          "startOffset": 9721,
+          "endOffset": 9795,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.hasSurrogates",
+      "ranges": [
+        {
+          "startOffset": 10062,
+          "endOffset": 10145,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.highSurrogate",
+      "ranges": [
+        {
+          "startOffset": 10265,
+          "endOffset": 10352,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.lowSurrogate",
+      "ranges": [
+        {
+          "startOffset": 10471,
+          "endOffset": 10548,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 10566,
+          "endOffset": 10680,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.utf16Decode",
+      "ranges": [
+        {
+          "startOffset": 11254,
+          "endOffset": 12883,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "isHighSurrogate",
+      "ranges": [
+        {
+          "startOffset": 13097,
+          "endOffset": 13176,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "isLowSurrogate",
+      "ranges": [
+        {
+          "startOffset": 13388,
+          "endOffset": 13467,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "decodeValues",
+      "ranges": [
+        {
+          "startOffset": 13793,
+          "endOffset": 14235,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "readBOM",
+      "ranges": [
+        {
+          "startOffset": 14544,
+          "endOffset": 14716,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "hasUtf16BigEndianBOM",
+      "ranges": [
+        {
+          "startOffset": 14745,
+          "endOffset": 14816,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "hasUtf16LittleEndianBOM",
+      "ranges": [
+        {
+          "startOffset": 14848,
+          "endOffset": 14919,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.hasUtf16BOM",
+      "ranges": [
+        {
+          "startOffset": 14943,
+          "endOffset": 15037,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

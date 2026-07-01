@@ -1,0 +1,834 @@
+{
+  "scriptId": "401",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/PDFPage.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 61873,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 808,
+          "endOffset": 61806,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage",
+      "ranges": [
+        {
+          "startOffset": 826,
+          "endOffset": 1328,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.setRotation",
+      "ranges": [
+        {
+          "startOffset": 1757,
+          "endOffset": 1992,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getRotation",
+      "ranges": [
+        {
+          "startOffset": 2297,
+          "endOffset": 2425,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setSize",
+      "ranges": [
+        {
+          "startOffset": 4241,
+          "endOffset": 5451,
+          "count": 1
+        },
+        {
+          "startOffset": 4857,
+          "endOffset": 4905,
+          "count": 0
+        },
+        {
+          "startOffset": 4907,
+          "endOffset": 4986,
+          "count": 0
+        },
+        {
+          "startOffset": 5011,
+          "endOffset": 5060,
+          "count": 0
+        },
+        {
+          "startOffset": 5062,
+          "endOffset": 5142,
+          "count": 0
+        },
+        {
+          "startOffset": 5166,
+          "endOffset": 5214,
+          "count": 0
+        },
+        {
+          "startOffset": 5216,
+          "endOffset": 5295,
+          "count": 0
+        },
+        {
+          "startOffset": 5318,
+          "endOffset": 5365,
+          "count": 0
+        },
+        {
+          "startOffset": 5367,
+          "endOffset": 5445,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.setWidth",
+      "ranges": [
+        {
+          "startOffset": 5844,
+          "endOffset": 5974,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setHeight",
+      "ranges": [
+        {
+          "startOffset": 6377,
+          "endOffset": 6510,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setMediaBox",
+      "ranges": [
+        {
+          "startOffset": 7220,
+          "endOffset": 7594,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.setCropBox",
+      "ranges": [
+        {
+          "startOffset": 8287,
+          "endOffset": 8658,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setBleedBox",
+      "ranges": [
+        {
+          "startOffset": 9368,
+          "endOffset": 9742,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setTrimBox",
+      "ranges": [
+        {
+          "startOffset": 10435,
+          "endOffset": 10806,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setArtBox",
+      "ranges": [
+        {
+          "startOffset": 11482,
+          "endOffset": 11850,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getSize",
+      "ranges": [
+        {
+          "startOffset": 12184,
+          "endOffset": 12327,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getWidth",
+      "ranges": [
+        {
+          "startOffset": 12606,
+          "endOffset": 12662,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getHeight",
+      "ranges": [
+        {
+          "startOffset": 12946,
+          "endOffset": 13003,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getMediaBox",
+      "ranges": [
+        {
+          "startOffset": 13841,
+          "endOffset": 13944,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getCropBox",
+      "ranges": [
+        {
+          "startOffset": 14629,
+          "endOffset": 14854,
+          "count": 4
+        },
+        {
+          "startOffset": 14771,
+          "endOffset": 14794,
+          "count": 0
+        },
+        {
+          "startOffset": 14822,
+          "endOffset": 14826,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getBleedBox",
+      "ranges": [
+        {
+          "startOffset": 15634,
+          "endOffset": 15863,
+          "count": 1
+        },
+        {
+          "startOffset": 15780,
+          "endOffset": 15804,
+          "count": 0
+        },
+        {
+          "startOffset": 15832,
+          "endOffset": 15836,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getTrimBox",
+      "ranges": [
+        {
+          "startOffset": 16509,
+          "endOffset": 16733,
+          "count": 1
+        },
+        {
+          "startOffset": 16651,
+          "endOffset": 16674,
+          "count": 0
+        },
+        {
+          "startOffset": 16702,
+          "endOffset": 16706,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getArtBox",
+      "ranges": [
+        {
+          "startOffset": 17243,
+          "endOffset": 17462,
+          "count": 1
+        },
+        {
+          "startOffset": 17381,
+          "endOffset": 17403,
+          "count": 0
+        },
+        {
+          "startOffset": 17431,
+          "endOffset": 17435,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.translateContent",
+      "ranges": [
+        {
+          "startOffset": 18261,
+          "endOffset": 18790,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.scale",
+      "ranges": [
+        {
+          "startOffset": 19212,
+          "endOffset": 19462,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.scaleContent",
+      "ranges": [
+        {
+          "startOffset": 20191,
+          "endOffset": 20716,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.scaleAnnotations",
+      "ranges": [
+        {
+          "startOffset": 21411,
+          "endOffset": 21813,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.resetPosition",
+      "ranges": [
+        {
+          "startOffset": 22438,
+          "endOffset": 22535,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setFont",
+      "ranges": [
+        {
+          "startOffset": 23383,
+          "endOffset": 23681,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 24231,
+          "endOffset": 24352,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setFontColor",
+      "ranges": [
+        {
+          "startOffset": 25018,
+          "endOffset": 25153,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setLineHeight",
+      "ranges": [
+        {
+          "startOffset": 25799,
+          "endOffset": 25930,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getPosition",
+      "ranges": [
+        {
+          "startOffset": 26160,
+          "endOffset": 26220,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getX",
+      "ranges": [
+        {
+          "startOffset": 26437,
+          "endOffset": 26479,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.getY",
+      "ranges": [
+        {
+          "startOffset": 26696,
+          "endOffset": 26738,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.moveTo",
+      "ranges": [
+        {
+          "startOffset": 27289,
+          "endOffset": 27444,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.moveDown",
+      "ranges": [
+        {
+          "startOffset": 27915,
+          "endOffset": 28034,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.moveUp",
+      "ranges": [
+        {
+          "startOffset": 28499,
+          "endOffset": 28618,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.moveLeft",
+      "ranges": [
+        {
+          "startOffset": 29092,
+          "endOffset": 29211,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.moveRight",
+      "ranges": [
+        {
+          "startOffset": 29688,
+          "endOffset": 29807,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.pushOperators",
+      "ranges": [
+        {
+          "startOffset": 30576,
+          "endOffset": 30933,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawText",
+      "ranges": [
+        {
+          "startOffset": 32105,
+          "endOffset": 35340,
+          "count": 15
+        },
+        {
+          "startOffset": 32204,
+          "endOffset": 32221,
+          "count": 0
+        },
+        {
+          "startOffset": 33567,
+          "endOffset": 33583,
+          "count": 0
+        },
+        {
+          "startOffset": 33869,
+          "endOffset": 33944,
+          "count": 0
+        },
+        {
+          "startOffset": 34509,
+          "endOffset": 34525,
+          "count": 0
+        },
+        {
+          "startOffset": 34653,
+          "endOffset": 34657,
+          "count": 0
+        },
+        {
+          "startOffset": 34750,
+          "endOffset": 34754,
+          "count": 0
+        },
+        {
+          "startOffset": 34847,
+          "endOffset": 34851,
+          "count": 0
+        },
+        {
+          "startOffset": 34941,
+          "endOffset": 34949,
+          "count": 0
+        },
+        {
+          "startOffset": 35014,
+          "endOffset": 35022,
+          "count": 0
+        },
+        {
+          "startOffset": 35100,
+          "endOffset": 35104,
+          "count": 0
+        },
+        {
+          "startOffset": 35251,
+          "endOffset": 35273,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "textWidth",
+      "ranges": [
+        {
+          "startOffset": 33684,
+          "endOffset": 33747,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawImage",
+      "ranges": [
+        {
+          "startOffset": 36139,
+          "endOffset": 38252,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawPage",
+      "ranges": [
+        {
+          "startOffset": 39437,
+          "endOffset": 42054,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawSvgPath",
+      "ranges": [
+        {
+          "startOffset": 43075,
+          "endOffset": 45902,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawLine",
+      "ranges": [
+        {
+          "startOffset": 46320,
+          "endOffset": 48491,
+          "count": 3
+        },
+        {
+          "startOffset": 47736,
+          "endOffset": 47798,
+          "count": 0
+        },
+        {
+          "startOffset": 48067,
+          "endOffset": 48070,
+          "count": 0
+        },
+        {
+          "startOffset": 48143,
+          "endOffset": 48154,
+          "count": 0
+        },
+        {
+          "startOffset": 48230,
+          "endOffset": 48234,
+          "count": 0
+        },
+        {
+          "startOffset": 48322,
+          "endOffset": 48326,
+          "count": 0
+        },
+        {
+          "startOffset": 48410,
+          "endOffset": 48414,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.drawRectangle",
+      "ranges": [
+        {
+          "startOffset": 49055,
+          "endOffset": 52411,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawSquare",
+      "ranges": [
+        {
+          "startOffset": 52941,
+          "endOffset": 53219,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawEllipse",
+      "ranges": [
+        {
+          "startOffset": 53738,
+          "endOffset": 56699,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.drawCircle",
+      "ranges": [
+        {
+          "startOffset": 57192,
+          "endOffset": 57500,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.setOrEmbedFont",
+      "ranges": [
+        {
+          "startOffset": 57541,
+          "endOffset": 57902,
+          "count": 15
+        },
+        {
+          "startOffset": 57680,
+          "endOffset": 57721,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getFont",
+      "ranges": [
+        {
+          "startOffset": 57936,
+          "endOffset": 58174,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.resetFont",
+      "ranges": [
+        {
+          "startOffset": 58210,
+          "endOffset": 58294,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.getContentStream",
+      "ranges": [
+        {
+          "startOffset": 58337,
+          "endOffset": 58743,
+          "count": 18
+        },
+        {
+          "startOffset": 58481,
+          "endOffset": 58507,
+          "count": 17
+        },
+        {
+          "startOffset": 58507,
+          "endOffset": 58742,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.createContentStream",
+      "ranges": [
+        {
+          "startOffset": 58789,
+          "endOffset": 59093,
+          "count": 1
+        },
+        {
+          "startOffset": 58885,
+          "endOffset": 58939,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.maybeEmbedGraphicsState",
+      "ranges": [
+        {
+          "startOffset": 59143,
+          "endOffset": 59697,
+          "count": 18
+        },
+        {
+          "startOffset": 59431,
+          "endOffset": 59696,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFPage.scaleAnnot",
+      "ranges": [
+        {
+          "startOffset": 59734,
+          "endOffset": 60448,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.of",
+      "ranges": [
+        {
+          "startOffset": 60967,
+          "endOffset": 61052,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFPage.create",
+      "ranges": [
+        {
+          "startOffset": 61443,
+          "endOffset": 61783,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "scriptId": "326",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/operators/PDFOperator.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2258,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 331,
+          "endOffset": 2183,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFOperator",
+      "ranges": [
+        {
+          "startOffset": 349,
+          "endOffset": 447,
+          "count": 177
+        },
+        {
+          "startOffset": 435,
+          "endOffset": 440,
+          "count": 84
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFOperator.clone",
+      "ranges": [
+        {
+          "startOffset": 482,
+          "endOffset": 804,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOperator.toString",
+      "ranges": [
+        {
+          "startOffset": 843,
+          "endOffset": 1067,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFOperator.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 1109,
+          "endOffset": 1418,
+          "count": 177
+        },
+        {
+          "startOffset": 1213,
+          "endOffset": 1357,
+          "count": 231
+        },
+        {
+          "startOffset": 1309,
+          "endOffset": 1328,
+          "count": 228
+        },
+        {
+          "startOffset": 1329,
+          "endOffset": 1341,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFOperator.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 1462,
+          "endOffset": 2060,
+          "count": 177
+        },
+        {
+          "startOffset": 1594,
+          "endOffset": 1940,
+          "count": 231
+        },
+        {
+          "startOffset": 1686,
+          "endOffset": 1762,
+          "count": 228
+        },
+        {
+          "startOffset": 1762,
+          "endOffset": 1872,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFOperator.of",
+      "ranges": [
+        {
+          "startOffset": 2083,
+          "endOffset": 2156,
+          "count": 177
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

@@ -1,0 +1,347 @@
+{
+  "scriptId": "411",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFDropdown.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 25916,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1195,
+          "endOffset": 25823,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDropdown",
+      "ranges": [
+        {
+          "startOffset": 1263,
+          "endOffset": 1574,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.getOptions",
+      "ranges": [
+        {
+          "startOffset": 2031,
+          "endOffset": 2436,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.getSelected",
+      "ranges": [
+        {
+          "startOffset": 3313,
+          "endOffset": 3586,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.setOptions",
+      "ranges": [
+        {
+          "startOffset": 4226,
+          "endOffset": 4578,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.addOptions",
+      "ranges": [
+        {
+          "startOffset": 5161,
+          "endOffset": 5677,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.select",
+      "ranges": [
+        {
+          "startOffset": 8039,
+          "endOffset": 9118,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.clear",
+      "ranges": [
+        {
+          "startOffset": 9662,
+          "endOffset": 9747,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 10649,
+          "endOffset": 10804,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.isEditable",
+      "ranges": [
+        {
+          "startOffset": 11333,
+          "endOffset": 11420,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.enableEditing",
+      "ranges": [
+        {
+          "startOffset": 11964,
+          "endOffset": 12052,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.disableEditing",
+      "ranges": [
+        {
+          "startOffset": 12531,
+          "endOffset": 12620,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.isSorted",
+      "ranges": [
+        {
+          "startOffset": 13176,
+          "endOffset": 13263,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.enableSorting",
+      "ranges": [
+        {
+          "startOffset": 13624,
+          "endOffset": 13712,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.disableSorting",
+      "ranges": [
+        {
+          "startOffset": 14083,
+          "endOffset": 14172,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.isMultiselect",
+      "ranges": [
+        {
+          "startOffset": 14657,
+          "endOffset": 14751,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.enableMultiselect",
+      "ranges": [
+        {
+          "startOffset": 15043,
+          "endOffset": 15138,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.disableMultiselect",
+      "ranges": [
+        {
+          "startOffset": 15439,
+          "endOffset": 15535,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.isSpellChecked",
+      "ranges": [
+        {
+          "startOffset": 16142,
+          "endOffset": 16241,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.enableSpellChecking",
+      "ranges": [
+        {
+          "startOffset": 16531,
+          "endOffset": 16631,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.disableSpellChecking",
+      "ranges": [
+        {
+          "startOffset": 16930,
+          "endOffset": 17029,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.isSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 17766,
+          "endOffset": 17866,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.enableSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 18289,
+          "endOffset": 18390,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.disableSelectOnClick",
+      "ranges": [
+        {
+          "startOffset": 18760,
+          "endOffset": 18862,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.addToPage",
+      "ranges": [
+        {
+          "startOffset": 19823,
+          "endOffset": 21664,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 22124,
+          "endOffset": 22606,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 23112,
+          "endOffset": 23247,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 24051,
+          "endOffset": 24488,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 24816,
+          "endOffset": 25150,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDropdown.of",
+      "ranges": [
+        {
+          "startOffset": 25699,
+          "endOffset": 25796,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

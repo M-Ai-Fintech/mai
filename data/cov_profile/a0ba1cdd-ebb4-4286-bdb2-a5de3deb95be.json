@@ -1,0 +1,39 @@
+{
+  "scriptId": "354",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/decode.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 2818,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "decodeStream",
+      "ranges": [
+        {
+          "startOffset": 926,
+          "endOffset": 1955,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.decodePDFRawStream",
+      "ranges": [
+        {
+          "startOffset": 1986,
+          "endOffset": 2782,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

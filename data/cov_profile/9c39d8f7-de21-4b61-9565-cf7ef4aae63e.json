@@ -1,0 +1,286 @@
+{
+  "scriptId": "317",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFDict.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5746,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 406,
+          "endOffset": 5660,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict",
+      "ranges": [
+        {
+          "startOffset": 470,
+          "endOffset": 636,
+          "count": 13
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.keys",
+      "ranges": [
+        {
+          "startOffset": 666,
+          "endOffset": 730,
+          "count": 15
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.values",
+      "ranges": [
+        {
+          "startOffset": 763,
+          "endOffset": 829,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.entries",
+      "ranges": [
+        {
+          "startOffset": 863,
+          "endOffset": 930,
+          "count": 27
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.set",
+      "ranges": [
+        {
+          "startOffset": 960,
+          "endOffset": 1024,
+          "count": 57
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.get",
+      "ranges": [
+        {
+          "startOffset": 1054,
+          "endOffset": 1437,
+          "count": 296
+        },
+        {
+          "startOffset": 1250,
+          "endOffset": 1278,
+          "count": 47
+        },
+        {
+          "startOffset": 1359,
+          "endOffset": 1378,
+          "count": 0
+        },
+        {
+          "startOffset": 1392,
+          "endOffset": 1409,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.has",
+      "ranges": [
+        {
+          "startOffset": 1467,
+          "endOffset": 1596,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.lookupMaybe",
+      "ranges": [
+        {
+          "startOffset": 1634,
+          "endOffset": 2236,
+          "count": 84
+        },
+        {
+          "startOffset": 2158,
+          "endOffset": 2177,
+          "count": 0
+        },
+        {
+          "startOffset": 2191,
+          "endOffset": 2208,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.lookup",
+      "ranges": [
+        {
+          "startOffset": 2269,
+          "endOffset": 2866,
+          "count": 165
+        },
+        {
+          "startOffset": 2380,
+          "endOffset": 2434,
+          "count": 100
+        },
+        {
+          "startOffset": 2788,
+          "endOffset": 2807,
+          "count": 0
+        },
+        {
+          "startOffset": 2821,
+          "endOffset": 2838,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.delete",
+      "ranges": [
+        {
+          "startOffset": 2899,
+          "endOffset": 2959,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.asMap",
+      "ranges": [
+        {
+          "startOffset": 2991,
+          "endOffset": 3045,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.uniqueKey",
+      "ranges": [
+        {
+          "startOffset": 3152,
+          "endOffset": 3489,
+          "count": 15
+        },
+        {
+          "startOffset": 3197,
+          "endOffset": 3210,
+          "count": 0
+        },
+        {
+          "startOffset": 3373,
+          "endOffset": 3463,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.clone",
+      "ranges": [
+        {
+          "startOffset": 3521,
+          "endOffset": 3849,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.toString",
+      "ranges": [
+        {
+          "startOffset": 3884,
+          "endOffset": 4244,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFDict.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 4282,
+          "endOffset": 4588,
+          "count": 14
+        },
+        {
+          "startOffset": 4422,
+          "endOffset": 4561,
+          "count": 60
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 4628,
+          "endOffset": 5439,
+          "count": 13
+        },
+        {
+          "startOffset": 4966,
+          "endOffset": 5274,
+          "count": 56
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.withContext",
+      "ranges": [
+        {
+          "startOffset": 5467,
+          "endOffset": 5529,
+          "count": 10
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFDict.fromMapWithContext",
+      "ranges": [
+        {
+          "startOffset": 5564,
+          "endOffset": 5637,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

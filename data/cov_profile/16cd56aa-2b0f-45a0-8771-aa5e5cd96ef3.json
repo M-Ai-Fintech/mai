@@ -1,0 +1,61 @@
+{
+  "scriptId": "360",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/streams/LZWStream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 5461,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 453,
+          "endOffset": 5368,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "LZWStream",
+      "ranges": [
+        {
+          "startOffset": 519,
+          "endOffset": 1414,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "LZWStream.readBlock",
+      "ranges": [
+        {
+          "startOffset": 1451,
+          "endOffset": 4793,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "LZWStream.readBits",
+      "ranges": [
+        {
+          "startOffset": 4830,
+          "endOffset": 5343,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

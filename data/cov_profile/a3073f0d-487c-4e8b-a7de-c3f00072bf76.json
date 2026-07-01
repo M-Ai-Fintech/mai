@@ -1,0 +1,58 @@
+{
+  "scriptId": "260",
+  "url": "file:///home/luis/mai/src/engines/optimization/valuation/methods/book_value.ts",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 978,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "computeBookValue",
+      "ranges": [
+        {
+          "startOffset": 533,
+          "endOffset": 977,
+          "count": 4
+        },
+        {
+          "startOffset": 594,
+          "endOffset": 622,
+          "count": 3
+        },
+        {
+          "startOffset": 623,
+          "endOffset": 651,
+          "count": 3
+        },
+        {
+          "startOffset": 653,
+          "endOffset": 750,
+          "count": 1
+        },
+        {
+          "startOffset": 750,
+          "endOffset": 864,
+          "count": 3
+        },
+        {
+          "startOffset": 864,
+          "endOffset": 908,
+          "count": 1
+        },
+        {
+          "startOffset": 908,
+          "endOffset": 976,
+          "count": 3
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

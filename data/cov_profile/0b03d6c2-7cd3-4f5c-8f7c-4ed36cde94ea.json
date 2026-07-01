@@ -1,0 +1,48 @@
+{
+  "scriptId": "295",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/zlib/adler32.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1656,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "adler32",
+      "ranges": [
+        {
+          "startOffset": 1135,
+          "endOffset": 1627,
+          "count": 14
+        },
+        {
+          "startOffset": 1283,
+          "endOffset": 1593,
+          "count": 88
+        },
+        {
+          "startOffset": 1440,
+          "endOffset": 1446,
+          "count": 74
+        },
+        {
+          "startOffset": 1447,
+          "endOffset": 1452,
+          "count": 14
+        },
+        {
+          "startOffset": 1476,
+          "endOffset": 1541,
+          "count": 157112
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

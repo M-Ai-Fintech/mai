@@ -1,0 +1,241 @@
+{
+  "scriptId": "313",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/objects/PDFArray.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4621,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 385,
+          "endOffset": 4533,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray",
+      "ranges": [
+        {
+          "startOffset": 450,
+          "endOffset": 612,
+          "count": 9
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.size",
+      "ranges": [
+        {
+          "startOffset": 643,
+          "endOffset": 696,
+          "count": 21
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.push",
+      "ranges": [
+        {
+          "startOffset": 728,
+          "endOffset": 786,
+          "count": 19
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.insert",
+      "ranges": [
+        {
+          "startOffset": 820,
+          "endOffset": 897,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.indexOf",
+      "ranges": [
+        {
+          "startOffset": 932,
+          "endOffset": 1054,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.remove",
+      "ranges": [
+        {
+          "startOffset": 1088,
+          "endOffset": 1149,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.set",
+      "ranges": [
+        {
+          "startOffset": 1180,
+          "endOffset": 1244,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.get",
+      "ranges": [
+        {
+          "startOffset": 1275,
+          "endOffset": 1333,
+          "count": 46
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.lookupMaybe",
+      "ranges": [
+        {
+          "startOffset": 1372,
+          "endOffset": 1653,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.lookup",
+      "ranges": [
+        {
+          "startOffset": 1687,
+          "endOffset": 1963,
+          "count": 24
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.asRectangle",
+      "ranges": [
+        {
+          "startOffset": 2002,
+          "endOffset": 2629,
+          "count": 6
+        },
+        {
+          "startOffset": 2059,
+          "endOffset": 2119,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.asArray",
+      "ranges": [
+        {
+          "startOffset": 2664,
+          "endOffset": 2718,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.clone",
+      "ranges": [
+        {
+          "startOffset": 2751,
+          "endOffset": 2982,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.toString",
+      "ranges": [
+        {
+          "startOffset": 3018,
+          "endOffset": 3285,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.sizeInBytes",
+      "ranges": [
+        {
+          "startOffset": 3324,
+          "endOffset": 3514,
+          "count": 6
+        },
+        {
+          "startOffset": 3423,
+          "endOffset": 3487,
+          "count": 11
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.copyBytesInto",
+      "ranges": [
+        {
+          "startOffset": 3555,
+          "endOffset": 4050,
+          "count": 6
+        },
+        {
+          "startOffset": 3802,
+          "endOffset": 3938,
+          "count": 11
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFArray.scalePDFNumbers",
+      "ranges": [
+        {
+          "startOffset": 4093,
+          "endOffset": 4428,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFArray.withContext",
+      "ranges": [
+        {
+          "startOffset": 4457,
+          "endOffset": 4509,
+          "count": 9
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

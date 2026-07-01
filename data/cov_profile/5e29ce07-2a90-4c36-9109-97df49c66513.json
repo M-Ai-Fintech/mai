@@ -1,0 +1,61 @@
+{
+  "scriptId": "375",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroComboBox.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 960,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 255,
+          "endOffset": 854,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroComboBox",
+      "ranges": [
+        {
+          "startOffset": 327,
+          "endOffset": 434,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroComboBox.fromDict",
+      "ranges": [
+        {
+          "startOffset": 466,
+          "endOffset": 541,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroComboBox.create",
+      "ranges": [
+        {
+          "startOffset": 572,
+          "endOffset": 823,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

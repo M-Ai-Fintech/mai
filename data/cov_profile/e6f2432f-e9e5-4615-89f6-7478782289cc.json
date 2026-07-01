@@ -1,0 +1,116 @@
+{
+  "scriptId": "365",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/PDFAcroButton.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 4255,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 564,
+          "endOffset": 4151,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFAcroButton",
+      "ranges": [
+        {
+          "startOffset": 634,
+          "endOffset": 739,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.Opt",
+      "ranges": [
+        {
+          "startOffset": 774,
+          "endOffset": 925,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.setOpt",
+      "ranges": [
+        {
+          "startOffset": 964,
+          "endOffset": 1066,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.getExportValues",
+      "ranges": [
+        {
+          "startOffset": 1114,
+          "endOffset": 1650,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.removeExportValue",
+      "ranges": [
+        {
+          "startOffset": 1700,
+          "endOffset": 2209,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.normalizeExportValues",
+      "ranges": [
+        {
+          "startOffset": 2330,
+          "endOffset": 2953,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.addOpt",
+      "ranges": [
+        {
+          "startOffset": 3155,
+          "endOffset": 3840,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFAcroButton.addWidgetWithOpt",
+      "ranges": [
+        {
+          "startOffset": 3889,
+          "endOffset": 4122,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

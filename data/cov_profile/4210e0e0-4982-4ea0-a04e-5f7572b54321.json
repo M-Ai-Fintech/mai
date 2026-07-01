@@ -1,0 +1,72 @@
+{
+  "scriptId": "390",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/parser/PDFObjectStreamParser.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 3776,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 593,
+          "endOffset": 3656,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFObjectStreamParser",
+      "ranges": [
+        {
+          "startOffset": 671,
+          "endOffset": 1246,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectStreamParser.parseIntoContext",
+      "ranges": [
+        {
+          "startOffset": 1302,
+          "endOffset": 2944,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectStreamParser.parseOffsetsAndObjectNumbers",
+      "ranges": [
+        {
+          "startOffset": 3013,
+          "endOffset": 3472,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFObjectStreamParser.forStream",
+      "ranges": [
+        {
+          "startOffset": 3512,
+          "endOffset": 3619,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

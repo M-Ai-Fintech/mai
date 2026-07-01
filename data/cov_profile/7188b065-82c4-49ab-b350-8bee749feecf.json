@@ -1,0 +1,28 @@
+{
+  "scriptId": "299",
+  "url": "file:///home/luis/mai/node_modules/.deno/pako@1.0.11/node_modules/pako/lib/zlib/zstream.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 1811,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "ZStream",
+      "ranges": [
+        {
+          "startOffset": 976,
+          "endOffset": 1783,
+          "count": 6
+        }
+      ],
+      "isBlockCoverage": true
+    }
+  ]
+}

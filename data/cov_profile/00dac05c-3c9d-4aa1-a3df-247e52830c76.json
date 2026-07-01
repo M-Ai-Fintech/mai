@@ -1,0 +1,116 @@
+{
+  "scriptId": "378",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/core/acroform/utils.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 6068,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "exports.createPDFAcroFields",
+      "ranges": [
+        {
+          "startOffset": 1323,
+          "endOffset": 1812,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "exports.createPDFAcroField",
+      "ranges": [
+        {
+          "startOffset": 1843,
+          "endOffset": 2054,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "isNonTerminalAcroField",
+      "ranges": [
+        {
+          "startOffset": 2992,
+          "endOffset": 3412,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "createPDFAcroTerminal",
+      "ranges": [
+        {
+          "startOffset": 3442,
+          "endOffset": 4258,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "createPDFAcroButton",
+      "ranges": [
+        {
+          "startOffset": 4286,
+          "endOffset": 4965,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "createPDFAcroChoice",
+      "ranges": [
+        {
+          "startOffset": 4993,
+          "endOffset": 5529,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "flagIsSet",
+      "ranges": [
+        {
+          "startOffset": 5547,
+          "endOffset": 5606,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "getInheritableAttribute",
+      "ranges": [
+        {
+          "startOffset": 5638,
+          "endOffset": 5821,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "ascend",
+      "ranges": [
+        {
+          "startOffset": 5836,
+          "endOffset": 6033,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}

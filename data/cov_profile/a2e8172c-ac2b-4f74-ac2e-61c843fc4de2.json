@@ -1,0 +1,127 @@
+{
+  "scriptId": "400",
+  "url": "file:///home/luis/mai/node_modules/.deno/pdf-lib@1.17.1/node_modules/pdf-lib/cjs/api/form/PDFButton.js",
+  "functions": [
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 0,
+          "endOffset": 10888,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "",
+      "ranges": [
+        {
+          "startOffset": 1028,
+          "endOffset": 10799,
+          "count": 1
+        }
+      ],
+      "isBlockCoverage": true
+    },
+    {
+      "functionName": "PDFButton",
+      "ranges": [
+        {
+          "startOffset": 1094,
+          "endOffset": 1413,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.setImage",
+      "ranges": [
+        {
+          "startOffset": 1926,
+          "endOffset": 2403,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.setFontSize",
+      "ranges": [
+        {
+          "startOffset": 3291,
+          "endOffset": 3446,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.addToPage",
+      "ranges": [
+        {
+          "startOffset": 4418,
+          "endOffset": 6947,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.needsAppearancesUpdate",
+      "ranges": [
+        {
+          "startOffset": 7391,
+          "endOffset": 7873,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.defaultUpdateAppearances",
+      "ranges": [
+        {
+          "startOffset": 8365,
+          "endOffset": 8500,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.updateAppearances",
+      "ranges": [
+        {
+          "startOffset": 9354,
+          "endOffset": 9763,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.updateWidgetAppearance",
+      "ranges": [
+        {
+          "startOffset": 9814,
+          "endOffset": 10146,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    },
+    {
+      "functionName": "PDFButton.of",
+      "ranges": [
+        {
+          "startOffset": 10687,
+          "endOffset": 10774,
+          "count": 0
+        }
+      ],
+      "isBlockCoverage": false
+    }
+  ]
+}
