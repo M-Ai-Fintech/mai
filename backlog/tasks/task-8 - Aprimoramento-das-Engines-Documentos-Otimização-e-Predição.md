@@ -4,8 +4,11 @@ title: 'Aprimoramento das Engines: Documentos, Otimização e Predição'
 status: To Do
 assignee: []
 created_date: '2026-07-07 14:32'
+updated_date: '2026-07-07 21:58'
 labels: []
+milestone: m-4
 dependencies: []
+priority: medium
 ordinal: 8000
 ---
 

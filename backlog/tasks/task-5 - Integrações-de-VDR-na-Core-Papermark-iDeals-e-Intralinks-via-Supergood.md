@@ -4,8 +4,12 @@ title: 'Integrações de VDR na Core: Papermark, iDeals e Intralinks via Supergo
 status: To Do
 assignee: []
 created_date: '2026-07-07 14:32'
-labels: []
+updated_date: '2026-07-07 22:08'
+labels:
+  - Future
+milestone: m-5
 dependencies: []
+priority: low
 ordinal: 5000
 ---
 

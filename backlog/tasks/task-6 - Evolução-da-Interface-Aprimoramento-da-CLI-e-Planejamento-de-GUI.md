@@ -4,8 +4,11 @@ title: 'Evolução da Interface: Aprimoramento da CLI e Planejamento de GUI'
 status: To Do
 assignee: []
 created_date: '2026-07-07 14:32'
+updated_date: '2026-07-07 22:07'
 labels: []
+milestone: m-1
 dependencies: []
+priority: high
 ordinal: 6000
 ---
 

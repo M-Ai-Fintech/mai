@@ -4,8 +4,10 @@ title: Integração End-to-End e testes simulados de ponta a ponta
 status: To Do
 assignee: []
 created_date: '2026-07-07 14:05'
+updated_date: '2026-07-07 22:06'
 labels: []
 dependencies: []
+priority: low
 ordinal: 2000
 ---
 
