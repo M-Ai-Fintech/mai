@@ -11,6 +11,7 @@ labels:
 milestone: m-8
 dependencies: []
 priority: low
+estimate: 3d
 ordinal: 3000
 ---
 

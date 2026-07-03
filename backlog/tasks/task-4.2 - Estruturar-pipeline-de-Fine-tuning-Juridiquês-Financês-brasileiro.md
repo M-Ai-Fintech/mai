@@ -4,15 +4,47 @@ title: Estruturar pipeline de Fine-tuning (Juridiquês/Financês brasileiro)
 status: To Do
 assignee:
   - Luís Silva
-created_date: '2026-07-07 14:34'
-updated_date: '2026-07-08 02:21'
+created_date: '2026-07-08 02:25'
+updated_date: '2026-07-08 02:30'
 labels:
-  - Agentic Layer
-milestone: m-6
+  - agent
+  - ai
+  - poc
+milestone: m-7
 dependencies: []
 parent_task_id: TASK-4
 priority: medium
-ordinal: 10000
+ordinal: 11000
 ---
 
+## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Estruturar o pipeline de fine-tuning para LLMs (como Llama-3-8B-Instruct ou variantes focadas em português) para especialização nos jargões de M&A do mercado brasileiro ('juridiquês' e 'financês'). O pipeline deve abranger a definição do formato e schemas do dataset de treino, scripts em Python para treinamento via LoRA (PEFT/Hugging Face) executáveis em Google Colab/Vertex AI, validação dos dados de entrada, e diretrizes para exportação, quantização e integração dos pesos/adapters no runtime Deno via Hugging Face MCP Tool.
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Definir o schema padrão JSONL de instrução/prompt contendo casos de uso de due diligence brasileira (e.g., Cláusulas de Mudança de Controle, Tag-along, Normalização de EBITDA).
+- [ ] #2 Desenvolver script completo em Python (usando peft, transformers e trl) para fine-tuning LoRA adaptado para execução em ambiente de GPU (Google Colab/Vertex AI).
+- [ ] #3 Atualizar a classe FineTuningRegistry em Deno para expor os novos schemas de dados e o script completo de treinamento em Python.
+- [ ] #4 Definir o fluxo de exportação e carregamento dos adapters LoRA resultantes no Hugging Face MCP Tool para inferência das equipes agênticas de Due Diligence.
+<!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Modelagem do Dataset de Treino: Criar um schema JSONL com instruções, contexto (documentos de VDR fictícios) e saídas esperadas com termos brasileiros de M&A (e.g. tags tributárias, societárias e financeiras).
+2. Desenvolvimento do Script de Fine-tuning: Escrever 'scripts/fine_tuning_lora.py' contendo o setup do SFTTrainer da Hugging Face, parâmetros de LoRA (r=16, alpha=32, target_modules) e técnicas de quantização de 4/8 bits (bitsandbytes) para treinamento em GPUs gratuitas do Colab.
+3. Atualização do FineTuningRegistry: Integrar o script e as especificações na classe 'src/agent/fine_tuning.ts' para centralização e facilidade de acesso pelos agentes.
+4. Conexão com o Hugging Face MCP: Mapear a leitura do modelo fine-tunado na 'huggingFaceMcpTool' para permitir que o GeneralDueDiligenceAgent / FinancialRiskAgent usem as novas habilidades preditivas.
+5. Validação de Inferência Local: Escrever um teste simples de ponta a ponta que valide a resposta dos mocks com a carga fictícia do novo modelo.
+<!-- SECTION:PLAN:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Script de fine-tuning LoRA (Python/PEFT) funcional e validado sintaticamente.
+- [ ] #2 Conjunto mínimo de dados de treino simulado (JSONL) estruturado e disponível para testes.
+- [ ] #3 FineTuningRegistry atualizado na codebase e testado sem quebras de compilação.
+- [ ] #4 Documentação de integração/carregamento do adapter via Hugging Face MCP Tool concluída.
+<!-- DOD:END -->
