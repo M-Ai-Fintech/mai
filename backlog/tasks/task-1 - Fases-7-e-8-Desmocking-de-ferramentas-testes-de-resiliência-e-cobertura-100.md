@@ -2,8 +2,10 @@
 id: TASK-1
 title: 'Fases 7 e 8: Desmocking de ferramentas, testes de resiliência e cobertura 100%'
 status: Done
-assignee: []
+assignee:
+  - Luís Silva
 created_date: '2026-07-07 14:05'
+updated_date: '2026-07-08 01:37'
 labels: []
 dependencies: []
 ordinal: 1000

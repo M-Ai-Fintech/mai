@@ -2,10 +2,13 @@
 id: TASK-6
 title: 'Evolução da Interface: Aprimoramento da CLI e Planejamento de GUI'
 status: To Do
-assignee: []
+assignee:
+  - Luís Silva
 created_date: '2026-07-07 14:32'
-updated_date: '2026-07-07 22:07'
-labels: []
+updated_date: '2026-07-08 02:19'
+labels:
+  - CLI
+  - Frontend
 milestone: m-1
 dependencies: []
 priority: high

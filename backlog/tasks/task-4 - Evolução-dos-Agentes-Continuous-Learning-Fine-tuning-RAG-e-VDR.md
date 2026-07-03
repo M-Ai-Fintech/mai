@@ -2,11 +2,13 @@
 id: TASK-4
 title: 'Evolução dos Agentes: Continuous Learning, Fine-tuning, RAG e VDR'
 status: To Do
-assignee: []
+assignee:
+  - Luís Silva
 created_date: '2026-07-07 14:32'
-updated_date: '2026-07-07 22:02'
-labels: []
-milestone: m-2
+updated_date: '2026-07-08 02:20'
+labels:
+  - Agentic Layer
+milestone: m-6
 dependencies: []
 priority: medium
 ordinal: 4000

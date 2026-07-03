@@ -2,11 +2,14 @@
 id: TASK-7
 title: 'Evolução da Camada Core: APIs, Banco de Dados e Serviços'
 status: To Do
-assignee: []
+assignee:
+  - Luís Silva
 created_date: '2026-07-07 14:32'
-updated_date: '2026-07-07 22:05'
-labels: []
-milestone: m-3
+updated_date: '2026-07-08 02:20'
+labels:
+  - API
+  - Database
+milestone: m-6
 dependencies: []
 priority: high
 ordinal: 7000

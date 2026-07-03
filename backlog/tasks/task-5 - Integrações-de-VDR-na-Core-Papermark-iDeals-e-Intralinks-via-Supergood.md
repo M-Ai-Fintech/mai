@@ -2,12 +2,14 @@
 id: TASK-5
 title: 'Integrações de VDR na Core: Papermark, iDeals e Intralinks via Supergood'
 status: To Do
-assignee: []
+assignee:
+  - Luís Silva
 created_date: '2026-07-07 14:32'
-updated_date: '2026-07-07 22:08'
+updated_date: '2026-07-08 02:15'
 labels:
-  - Future
-milestone: m-5
+  - VDR
+  - API
+milestone: m-7
 dependencies: []
 priority: low
 ordinal: 5000

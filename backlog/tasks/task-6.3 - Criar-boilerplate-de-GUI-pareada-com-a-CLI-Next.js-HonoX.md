@@ -5,10 +5,10 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-07 14:35'
-updated_date: '2026-07-07 21:53'
+updated_date: '2026-07-08 02:16'
 labels:
-  - Future
-milestone: m-1
+  - Frontend
+milestone: m-7
 dependencies: []
 parent_task_id: TASK-6
 priority: low
