@@ -5,13 +5,14 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:42'
+updated_date: '2026-07-09 14:45'
 labels:
   - interface
   - cli
   - mvp
 milestone: m-1
-dependencies: []
+dependencies:
+  - MAI-6
 parent_task_id: MAI-6
 priority: high
 ordinal: 8000
@@ -20,79 +21,49 @@ ordinal: 8000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
-Refatorar a interface CLI para prover autocompletação (tab-completion)
-inteligente de comandos/argumentos no shell e inputs interativos
-autocompletáveis no menu/chat. Implementar uma camada de tratamento de erros
-avançada para higienizar logs de erro que possam conter chaves de API, segredos
-ou dados confidenciais de M&A (evitando vazamento de informações) e gerenciar de
-forma robusta falhas de infraestrutura (banco de dados Postgres, chamadas da API
-Gemini, erros de inferência ONNX) com códigos de saída CLI padronizados e
-gravação em log seguro de auditoria.
-
+Extensão da interface de linha de comando com suporte a autocompletar e um framework global para captura e higienização de erros. A CLI não deve vazar `stack traces` longos do Deno e deve censurar ativamente segredos. Tarefa dependente de MAI-6.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
-- [ ] #1 Deve gerar scripts de autocompletação no shell (bash/zsh/fish)
+- [ ] #1 Os prompts interativos na CLI (como CNPJ, setor de atuação e IDs de
       dinamicamente a partir dos comandos registrados (ex: kyb, predict,
       portfolio, negotiate, document, chat).
-- [ ] #2 Os prompts interativos na CLI (como CNPJ, setor de atuação e IDs de
+- [ ] #2 Centralizar o tratamento de erros em um manipulador global que
       deals) devem oferecer sugestões autocompletáveis e histórico local rápido.
-- [ ] #3 Centralizar o tratamento de erros em um manipulador global que
+- [ ] #3 Garantir que mensagens de erro mostradas na interface CLI sejam
       categorize exceções (ex: validação, dependência externa, falha de
       rede/API) e retorne códigos de saída (Exit Codes) adequados.
-- [ ] #4 Garantir que mensagens de erro mostradas na interface CLI sejam
+- [ ] #4 Gravar os detalhes de erros não tratados e stack traces originais em um
       higienizadas (sanitizadas), escondendo senhas, chaves de API, credenciais
       de banco e paths absolutos de sistema.
-- [ ] #5 Gravar os detalhes de erros não tratados e stack traces originais em um
       arquivo de log seguro (ex: `/logs/cli-errors.log`) para auditoria técnica.
 
+- [ ] #5 Disponibilização da geração de autocompletes (cli completions)
+- [ ] #6 Handlers globais que capturam erros e retornam Exit Codes
+- [ ] #7 Sanitização via Regex para remover padrões de API Key na saída de console
+- [ ] #8 Flag --debug reativa a impressão do stack trace completo
 <!-- AC:END -->
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-
-1. **Modelagem do CLI Parser**: Utilizar uma biblioteca robusta de parsing no
-   Deno (como o Cliffy ou Commander devidamente configurado) para estruturar os
-   comandos, subcomandos e argumentos, permitindo a autocompletação e help
-   dinâmicos.
-2. **Integração de CLI Completions**: Configurar uma ação ou comando
-   `completions` (ex: `deno task start completions zsh`) para despejar o script
-   de completion necessário para os usuários ativarem a tecla TAB.
-3. **Autocompletação em Prompts**: Atualizar os prompts de input manual do menu
-   para aceitar sugestões de histórico recente ou listas predefinidas (ex:
-   setores industriais comuns, CNPJs simulados ou IDs de deals cadastrados na
-   base).
-4. **Tratamento de Exceções e Higienização**: Criar um arquivo utilitário
-   `src/cli/errors.ts` que exporta a classe `CLIErrorHandler` e erros
-   especializados (`CLIValidationError`, `APIError`, etc.). Adicionar um
-   sanitizador regex para mascarar chaves e paths sensíveis do sistema de
-   arquivos antes de exibir os erros ao usuário.
-5. **Auditoria de Logs**: Garantir a escrita assíncrona em
-   `/logs/cli-errors.log` de forma segura (usando `Deno.writeTextFile` ou
-   similar) e verificar se o diretório de logs está configurado no `.gitignore`.
-6. **E2E e Unit Tests**: Escrever casos de teste no arquivo
-   `tests/e2e/cli.spec.ts` para testar os fluxos de erro (ex: simular falha na
-   API ou input inválido, checar código de saída CLI e mensagens limpas de erro
-   no stderr).
-
+1. Configurar módulo nativo de autocomplete do Cliffy para shells bash/zsh/fish.
+2. Criar `src/cli/errors.ts` exportando classes de Erros.
+3. Adicionar try-catch raiz no `main.ts` que formata exceções e sanitiza segredos.
 <!-- SECTION:PLAN:END -->
 
 ## Definition of Done
-
 <!-- DOD:BEGIN -->
-
-- [ ] #1 Refatoração concluída e CLI operando sem quebras nos fluxos interativos
+- [ ] #1 Testes automatizados garantindo a captura correta de erros e saída
       e de linha de comando.
-- [ ] #2 Testes automatizados garantindo a captura correta de erros e saída
+- [ ] #2 Script de autocompletação verificado e funcional nos shells
       segura no console.
-- [ ] #3 Script de autocompletação verificado e funcional nos shells
+- [ ] #3 Arquivos de log criados em diretório seguro e não versionados (inclusos
       especificados.
-- [ ] #4 Arquivos de log criados em diretório seguro e não versionados (inclusos
       no .gitignore).
 
+- [ ] #4 Erro intencional exibe mensagem tratada sem stacktrace
+- [ ] #5 Uso de --debug revela stack trace
+- [ ] #6 Chaves falsas forjadas no erro aparecem censuradas no log
 <!-- DOD:END -->

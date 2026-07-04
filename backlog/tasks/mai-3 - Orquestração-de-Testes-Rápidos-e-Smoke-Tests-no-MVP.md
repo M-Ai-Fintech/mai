@@ -1,11 +1,11 @@
 ---
 id: MAI-3
 title: Orquestração de Testes Rápidos e Smoke Tests no MVP
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:42'
+updated_date: '2026-07-09 14:58'
 labels:
   - testing
   - mvp
@@ -19,59 +19,56 @@ ordinal: 3000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
-Implementar uma suíte de testes rápidos (smoke tests) e comandos de
-autodiagnóstico no MVP. O objetivo é permitir que os desenvolvedores validem
-rapidamente o fluxo de ponta a ponta (Lifecycle de M&A) e a integridade da
-infraestrutura local (Postgres, variáveis de ambiente do Gemini, dependências
-WASM do solver HiGHS, gerador de PDF) de forma isolada, rápida (< 2 segundos) e
-sem realizar chamadas de rede ou processamento de inferência pesado
-(back-to-back/LLMs reais).
-
+Criação de um pipeline local de "Smoke Tests" capaz de validar a integridade da aplicação em menos de 2 segundos. Este processo simula o fluxo do `MADealLifecycle` offline, desabilitando chamadas reais à LLMs ou bancos de dados externos, visando dar feedback instantâneo ao desenvolvedor.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
-- [ ] #1 Tarefa deno: Existência de uma tarefa 'test:smoke' no deno.json que
+- [x] #1 Modo Diagnóstico na CLI: A CLI deve aceitar um novo comando ou flag
       execute apenas os testes rápidos com tempo < 2s.
-- [ ] #2 Modo Diagnóstico na CLI: A CLI deve aceitar um novo comando ou flag
+- [x] #2 Mocked Lifecycle: Simulação completa do fluxo do deal (MADealLifecycle)
       '--smoke' ou 'smoke' para verificar infraestrutura local.
-- [ ] #3 Mocked Lifecycle: Simulação completa do fluxo do deal (MADealLifecycle)
+- [x] #3 Offline First: Isolamento de rede garantindo execução total offline e
       com todas as transações de estado validadas.
-- [ ] #4 Offline First: Isolamento de rede garantindo execução total offline e
       sem depender de Postgres ativo.
 
+- [x] #4 Comando CLI nativo deno task test:smoke executa a bateria de testes críticos
+- [x] #5 Fluxo simulado (MADealLifecycle) executa sem depender do PostgreSQL ou rede
+- [x] #6 Flag --smoke na CLI imprime um diagnóstico da saúde da infraestrutura
 <!-- AC:END -->
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-
-1. Configurar a tarefa no deno.json adicionando o comando de test:smoke
-   filtrando pela tag [Smoke].
-2. Criar a Suíte de Smoke Test em tests/smoke.spec.ts cobrindo a simulação do
-   fluxo de deal de ponta a ponta.
-3. Implementar o comando smoke na CLI (src/cli/interface.ts) para realizar
-   diagnósticos rápidos de infraestrutura.
-4. Testar localmente e validar se o tempo de execução atende ao critério de <
-   2s.
-
+1. Configurar script `test:smoke` no `deno.json`.
+2. Criar `tests/smoke.spec.ts` contendo testes de fluxo de deal utilizando mocks estritos.
+3. Modificar a CLI para escutar o argumento `--smoke`, realizando um teste rápido de ping no banco e verificação do ambiente.
 <!-- SECTION:PLAN:END -->
 
 ## Definition of Done
-
 <!-- DOD:BEGIN -->
-
-- [ ] #1 O comando deno task test:smoke executa e passa com sucesso em menos de
+- [x] #1 A CLI responde ao comando smoke imprimindo um relatório de diagnóstico
       2 segundos.
-- [ ] #2 A CLI responde ao comando smoke imprimindo um relatório de diagnóstico
+- [x] #2 O fluxo completo do ciclo de vida M&A é coberto pelo smoke test sem
       formatado.
-- [ ] #3 O fluxo completo do ciclo de vida M&A é coberto pelo smoke test sem
+- [x] #3 Nenhum erro de tipo ou linter é gerado.
       dependências ativas de banco de dados ou rede.
-- [ ] #4 Nenhum erro de tipo ou linter é gerado.
-- [ ] #5 Documentação do comando de smoke test e diagnóstico adicionada ao
+- [x] #4 Documentação do comando de smoke test e diagnóstico adicionada ao
       README.md.
 
+- [x] #5 deno task test:smoke completa execução em < 2s
+- [x] #6 CLI responde graciosamente ao argumento --smoke com um relatório
+- [x] #7 Testes passando 100% isolados de rede e DB real
 <!-- DOD:END -->
