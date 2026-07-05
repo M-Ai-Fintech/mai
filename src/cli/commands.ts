@@ -2,6 +2,7 @@
 import { CompanyFinancialProfile, MLEngine } from "../engines/prediction/ml.ts";
 import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
+import { verifyRegistryTool } from "../agent/actions.ts";
 import solver from "npm:javascript-lp-solver";
 
 export interface TargetRawInput {
@@ -241,32 +242,21 @@ export class CLICommands {
     console.log(`[SourcingAndKYBAgent] Pesquisando registro e background para o CNPJ: ${cnpj}...`);
 
     try {
-      // Mock de verificação cadastral implementado localmente para eliminar acoplamento externo
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      const cleanCnpj = cnpj.replace(/\D/g, "");
-      const seed = parseInt(cleanCnpj.slice(-4)) || 1000;
-      const data = {
-        cnpj,
-        legalName: `Sociedade M&A Target ${seed} Ltda`,
-        tradeName: `Target Brand ${seed}`,
-        status: seed % 13 === 0 ? "SUSPENSA" : (seed % 17 === 0 ? "INATIVA" : "ATIVA"),
-        shareCapital: seed * 10000,
-        incorporationDate: new Date(2010 + (seed % 15), seed % 12, 1).toISOString().split("T")[0],
-        taxDebtsAmount: seed % 5 === 0 ? seed * 5000 : 0,
-      };
+      const result = await verifyRegistryTool.execute!({ cnpj }, {} as any);
+      const data = result.data;
 
-      console.log(`\nRazão Social:      ${data.legalName}`);
-      console.log(`Nome Fantasia:     ${data.tradeName}`);
-      console.log(`Situação:          ${data.status}`);
+      console.log(`\nRazão Social:      ${data.razaoSocial || data.name || "N/A"}`);
+      console.log(`Nome Fantasia:     ${data.nomeFantasia || data.name || "N/A"}`);
+      console.log(`Situação:          ${data.situacaoCadastral || "ATIVA"}`);
       console.log(
-        `Capital Social:    R$ ${data.shareCapital.toLocaleString()}`,
+        `Capital Social:    R$ ${(data.capitalSocial || 0).toLocaleString()}`,
       );
-      console.log(`Data de Fundação:  ${data.incorporationDate}`);
+      console.log(`Data de Fundação:  ${data.dataAbertura || data.created_at || "N/A"}`);
       console.log(
-        `Débitos Fiscais:   R$ ${data.taxDebtsAmount.toLocaleString()}`,
+        `Débitos Fiscais:   R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`,
       );
 
-      if (data.taxDebtsAmount > 0) {
+      if (data.taxDebtsAmount && data.taxDebtsAmount > 0) {
         console.log(
           `\n[AVISO] Débitos fiscais detectados! Isso pode impactar o valuation do ativo.`,
         );

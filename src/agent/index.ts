@@ -3,6 +3,18 @@
 // Todos os agentes executam exclusivamente com Gemini 3.1 Pro via @ai-sdk/google.
 // A variável de ambiente esperada é GOOGLE_GENERATIVE_AI_API_KEY.
 
+import { AIProvider } from "./ai_provider.ts";
+
+// Inicializa a configuração do provedor de IA (garantindo que se não houver chave não haverá crash em tempo de execução)
+const aiConfig = AIProvider.getApiKey();
+if (aiConfig.isFallback) {
+  // Define uma chave falsa temporária para que a biblioteca do Google não lance exceção durante a inicialização dos arquivos locais
+  Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", "mock-key-for-dry-run");
+} else if (aiConfig.key) {
+  // Garante que o SDK leia a chave certa
+  Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", aiConfig.key);
+}
+
 import { BrokerOrchestratorAgent, BrokerOrchestratorService } from "./agents/broker-orchestrator/index.ts";
 import { SourcingAndKYBAgent } from "./agents/sourcing-kyb/index.ts";
 import { GeneralDueDiligenceAgent } from "./agents/general-dd/index.ts";
@@ -51,15 +63,14 @@ ${context || "Nenhum contexto de RAG disponível no momento."}
 ${query}
 `;
 
-    const apiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY") ||
-      Deno.env.get("GOOGLE_API_KEY") ||
-      Deno.env.get("GEMINI_API_KEY");
-
-    if (!apiKey) {
-      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY ou GEMINI_API_KEY não configurada no ambiente. Não há fallback ou mocks ativos.");
+    // Re-checa fallback para evitar chamadas à API com chave falsa
+    if (aiConfig.isFallback) {
+      console.warn("[MOCK] Operação interceptada: Simulação de resposta do Broker Orchestrator.");
+      return `[DRY-RUN/MOCK] A chamada ao modelo Gemini foi interceptada pois não há chave de API (GEMINI_API_KEY) configurada. Prompt original enviado com ${prompt.length} caracteres.`;
     }
 
     const response = await brokerOrchestratorAgent.generate(prompt);
     return response.text || String(response);
   }
 }
+

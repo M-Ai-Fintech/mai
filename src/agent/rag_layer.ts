@@ -14,28 +14,45 @@ export class ClientSiloedRAG {
   /**
    * Initializes the silo for a given deal by loading and vectorizing VDR documents.
    */
-  public static async initializeSilo(dealId: string, _vdrDirectory: string): Promise<number> {
+  public static async initializeSilo(dealId: string, vdrDirectory: string): Promise<number> {
     console.log(`[RAG Silo] Initializing vector silo for Deal ${dealId}...`);
     
-    // Dados mockados inline para eliminar qualquer dependência de VDR externo
-    const docs = [
-      {
-        name: "DRE_Target_2025.txt",
-        contentSummary: "Demonstração de Resultados do Exercício (DRE) consolidada. EBITDA: 4500000. Receita: 15000000. Total Ativos: 20000000. Total Passivos: 12000000. Caixa Operacional: 3200000. Volatilidade Histórica: 0.12.",
-      },
-      {
-        name: "Estatuto_Social_Registrado.txt",
-        contentSummary: "Estatuto social arquivado na Junta Comercial. Contempla cláusula de Mudança de Controle (Change of Control) determinando aprovação unânime do conselho administrativo para aquisições hostis.",
-      },
-      {
-        name: "Folha_Pagamento_C_Level.txt",
-        contentSummary: "Detalhamento salarial e bônus de performance do quadro Executivo (CEO, CFO, CTO) com cláusulas de golden parachute de 12 meses.",
-      },
-      {
-        name: "Acordo_Acionistas_Target.txt",
-        contentSummary: "Contrato de acordo de acionistas estabelecendo direitos de tag-along de 100% e direito de preferência (Right of First Refusal).",
-      },
-    ];
+    let docs: Array<{ name: string; contentSummary: string }> = [];
+    
+    try {
+      for await (const entry of Deno.readDir(vdrDirectory)) {
+        if (entry.isFile && (entry.name.endsWith('.txt') || entry.name.endsWith('.md'))) {
+          const content = await Deno.readTextFile(`${vdrDirectory}/${entry.name}`);
+          docs.push({
+            name: entry.name,
+            contentSummary: content,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn(`[RAG Silo] Directory ${vdrDirectory} not found or empty, falling back to mock data...`);
+    }
+
+    if (docs.length === 0) {
+      docs = [
+        {
+          name: "DRE_Target_2025.txt",
+          contentSummary: "Demonstração de Resultados do Exercício (DRE) consolidada. EBITDA: 4500000. Receita: 15000000. Total Ativos: 20000000. Total Passivos: 12000000. Caixa Operacional: 3200000. Volatilidade Histórica: 0.12.",
+        },
+        {
+          name: "Estatuto_Social_Registrado.txt",
+          contentSummary: "Estatuto social arquivado na Junta Comercial. Contempla cláusula de Mudança de Controle (Change of Control) determinando aprovação unânime do conselho administrativo para aquisições hostis.",
+        },
+        {
+          name: "Folha_Pagamento_C_Level.txt",
+          contentSummary: "Detalhamento salarial e bônus de performance do quadro Executivo (CEO, CFO, CTO) com cláusulas de golden parachute de 12 meses.",
+        },
+        {
+          name: "Acordo_Acionistas_Target.txt",
+          contentSummary: "Contrato de acordo de acionistas estabelecendo direitos de tag-along de 100% e direito de preferência (Right of First Refusal).",
+        },
+      ];
+    }
     
     const records: VectorRecord[] = [];
     

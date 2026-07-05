@@ -1,5 +1,6 @@
 // src/agent/actions.ts
 import { createTool } from "@mastra/core/tools";
+import { AIProvider } from "./ai_provider.ts";
 import { z } from "zod";
 import { VDRIntegration, VDRService } from "./vdr_mock.ts";
 import { MLEngine } from "../engines/prediction/ml.ts";
@@ -629,9 +630,8 @@ export const geminiGoogleSearchTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const apiKey = Deno.env.get("GEMINI_API_KEY") ||
-      Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY") ||
-      Deno.env.get("GOOGLE_API_KEY");
+    const aiConfig = AIProvider.getApiKey();
+    const apiKey = aiConfig.key;
 
     if (!apiKey) {
       console.warn("geminiGoogleSearchTool - GEMINI_API_KEY não configurada. Usando fallback mocado.");
