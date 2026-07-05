@@ -1,9 +1,10 @@
-// src/cli/commands.ts
 import { CompanyFinancialProfile, MLEngine } from "../engines/prediction/ml.ts";
 import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 import { verifyRegistryTool } from "../agent/actions.ts";
 import solver from "npm:javascript-lp-solver";
+import { Table } from "@cliffy/table";
+import { Spinner } from "https://deno.land/std@0.224.0/cli/spinner.ts";
 
 export interface TargetRawInput {
   id: string;
@@ -239,39 +240,44 @@ export class CLICommands {
    */
   public static async checkRegistry(cnpj: string): Promise<void> {
     this.printHeader("Verificação Cadastral de KYB (SERPRO/Receita)");
-    console.log(`[SourcingAndKYBAgent] Pesquisando registro e background para o CNPJ: ${cnpj}...`);
+    const spinner = new Spinner({ message: `[SourcingAndKYBAgent] Pesquisando registro e background para o CNPJ: ${cnpj}...`, color: "cyan" });
+    spinner.start();
 
     try {
       const result = await verifyRegistryTool.execute!({ cnpj }, {} as any);
       const data = result.data;
+      spinner.stop();
 
-      console.log(`\nRazão Social:      ${data.razaoSocial || data.name || "N/A"}`);
-      console.log(`Nome Fantasia:     ${data.nomeFantasia || data.name || "N/A"}`);
-      console.log(`Situação:          ${data.situacaoCadastral || "ATIVA"}`);
-      console.log(
-        `Capital Social:    R$ ${(data.capitalSocial || 0).toLocaleString()}`,
-      );
-      console.log(`Data de Fundação:  ${data.dataAbertura || data.created_at || "N/A"}`);
-      console.log(
-        `Débitos Fiscais:   R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`,
-      );
+      new Table()
+        .header(["Campo", "Valor"])
+        .body([
+          ["Razão Social", data.razaoSocial || data.name || "N/A"],
+          ["Nome Fantasia", data.nomeFantasia || data.name || "N/A"],
+          ["Situação", data.situacaoCadastral || "ATIVA"],
+          ["Capital Social", `R$ ${(data.capitalSocial || 0).toLocaleString()}`],
+          ["Data de Fundação", data.dataAbertura || data.created_at || "N/A"],
+          ["Débitos Fiscais", `R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`]
+        ])
+        .padding(2)
+        .border(true)
+        .render();
 
       if (data.taxDebtsAmount && data.taxDebtsAmount > 0) {
-        console.log(
-          `\n[AVISO] Débitos fiscais detectados! Isso pode impactar o valuation do ativo.`,
-        );
+        console.log(`\n\x1b[31m[AVISO] Débitos fiscais detectados! Isso pode impactar o valuation do ativo.\x1b[0m`);
       } else {
-        console.log(`\n[OK] Registro limpo e em conformidade fiscal.`);
+        console.log(`\n\x1b[32m[OK] Registro limpo e em conformidade fiscal.\x1b[0m`);
       }
       console.log(`\n[SourcingAndKYBAgent - Análise Qualitativa e Cultural]`);
       console.log(`- Cultura Corporativa: Governança sólida, fit cultural alto com adquirente.`);
       console.log(`- Movimentações Passadas: Sem histórico de litígios societários graves.`);
       console.log(`- Perfil dos Negociadores: Board experiente no setor de atuação.`);
     } catch (err) {
+      spinner.stop();
       console.error(
-        "Erro na verificação cadastral:",
+        "\n\x1b[31mErro na verificação cadastral:\x1b[0m",
         err instanceof Error ? err.message : String(err),
       );
+      throw err;
     }
   }
 
@@ -289,7 +295,8 @@ export class CLICommands {
     sector: string;
   }): Promise<void> {
     this.printHeader(`Análise Preditiva de Risco: ${options.name}`);
-    console.log("[GeneralDueDiligenceAgent] Acionando subagente FinancialRiskAgent para inferência ONNX local quantizada...");
+    const spinner = new Spinner({ message: "[GeneralDueDiligenceAgent] Acionando subagente FinancialRiskAgent para inferência ONNX local quantizada...", color: "cyan" });
+    spinner.start();
 
     const profile: CompanyFinancialProfile = {
       name: options.name,
@@ -304,36 +311,35 @@ export class CLICommands {
 
     try {
       const report = await MLEngine.analyzeProfile(profile);
-      console.log(`\nClassificação do Risco de FCD: [${report.dcfRiskLabel}]`);
+      spinner.stop();
+      console.log(`\nClassificação do Risco de FCD: \x1b[33m[${report.dcfRiskLabel}]\x1b[0m`);
       console.log(
         `Status de Geração de Embeddings: ${
-          report.embeddingsGenerated ? "ATIVADO (Local)" : "DESATIVADO"
+          report.embeddingsGenerated ? "\x1b[32mATIVADO (Local)\x1b[0m" : "\x1b[31mDESATIVADO\x1b[0m"
         }`,
       );
       console.log("\nMétricas de Risco Calculadas:");
-      console.log(
-        `- Probabilidade de Insolvência: ${
-          (report.metrics.insolvencyRisk * 100).toFixed(2)
-        }%`,
-      );
-      console.log(
-        `- Probabilidade de Churn de Contratos: ${
-          (report.metrics.churnProbability * 100).toFixed(2)
-        }%`,
-      );
-      console.log(
-        `- Volatilidade Projetada do FCD: ${report.metrics.dcfVolatility}%`,
-      );
-      console.log(
-        `- Score de Resiliência de Sinergia (Indústria 4.0): ${report.metrics.industry4Score}/100`,
-      );
+      new Table()
+        .header(["Métrica", "Valor"])
+        .body([
+          ["Probabilidade de Insolvência", `${(report.metrics.insolvencyRisk * 100).toFixed(2)}%`],
+          ["Probabilidade de Churn de Contratos", `${(report.metrics.churnProbability * 100).toFixed(2)}%`],
+          ["Volatilidade Projetada do FCD", `${report.metrics.dcfVolatility}%`],
+          ["Score de Resiliência de Sinergia (Indústria 4.0)", `${report.metrics.industry4Score}/100`]
+        ])
+        .padding(2)
+        .border(true)
+        .render();
+
       console.log(`\n[GeneralDueDiligenceAgent - Parecer Subagente LegalDueDiligenceAgent]`);
       console.log(`- RAG VDR: Varredura concluída via Pub/Sub. Cláusulas de 'Change of Control' identificadas em 2 contratos comerciais chave.`);
     } catch (err) {
+      spinner.stop();
       console.error(
-        "Erro no processamento preditivo:",
+        "\n\x1b[31mErro no processamento preditivo:\x1b[0m",
         err instanceof Error ? err.message : String(err),
       );
+      throw err;
     }
   }
 
@@ -345,7 +351,6 @@ export class CLICommands {
     riskTolerance: number,
   ): Promise<void> {
     this.printHeader("Otimização de Portfólio de Aquisições (MILP)");
-    console.log("[DealMatchingAgent] Calculando alocação de capital e faixas flexíveis (valuation ranges)...");
 
     // Sample target pipeline for optimization
     const pipelineTargets: TargetRawInput[] = [
@@ -412,6 +417,9 @@ export class CLICommands {
       }%`,
     );
 
+    const spinner = new Spinner({ message: "[DealMatchingAgent] Calculando alocação de capital e faixas flexíveis (valuation ranges)...", color: "cyan" });
+    spinner.start();
+
     try {
       // Run prediction + solver optimization
       const res = await KYCValuationsCoordinator.evaluateAndOptimize(
@@ -423,8 +431,9 @@ export class CLICommands {
         },
       );
 
+      spinner.stop();
       console.log(
-        `\nSolução do Solver HiGHS: ${res.optimization.status.toUpperCase()}`,
+        `\nSolução do Solver HiGHS: \x1b[32m${res.optimization.status.toUpperCase()}\x1b[0m`,
       );
       console.log(`Sinergia Total Realizada: ${res.totalSynergy} pontos`);
       console.log(`Orçamento Alocado: $${res.totalCost}M de $${budget}M`);
@@ -435,23 +444,25 @@ export class CLICommands {
           " -> Nenhuma empresa atendeu aos critérios sob as restrições atuais.",
         );
       } else {
+        const table = new Table().header(["ID", "Nome da Empresa", "Faixa Sugerida", "Referência", "Risco"]).padding(2).border(true);
         res.optimization.selectedTargetIds.forEach((id) => {
           const target = pipelineTargets.find((t) => t.id === id);
           const risk = res.evaluatedProfiles[id].metrics.insolvencyRisk;
           const minVal = (target!.acquisitionCost * 0.9).toFixed(1);
           const maxVal = (target!.acquisitionCost * 1.15).toFixed(1);
-          console.log(
-            ` -> [${id}] ${target?.name} | Faixa Sugerida: $${minVal}M a $${maxVal}M (Referência: $${target?.acquisitionCost}M, Risco: ${
-              (risk * 100).toFixed(1)
-            }%)`,
-          );
+          table.push([
+            id, target?.name || "", `$${minVal}M a $${maxVal}M`, `$${target?.acquisitionCost}M`, `${(risk * 100).toFixed(1)}%`
+          ]);
         });
+        table.render();
       }
     } catch (err) {
+      spinner.stop();
       console.error(
-        "Erro na otimização de portfólio:",
+        "\n\x1b[31mErro na otimização de portfólio:\x1b[0m",
         err instanceof Error ? err.message : String(err),
       );
+      throw err;
     }
   }
 
@@ -544,6 +555,9 @@ export class CLICommands {
     console.log(`[LegalClosingAgent] Iniciando processo de fechamento (Closing) para o deal: ${options.target}...`);
     console.log(`[LegalClosingAgent] Verificando aprovação prévia dos termos finais... OK.`);
     
+    const spinner = new Spinner({ message: "Otimizando termos finais via algoritmo genético...", color: "cyan" });
+    spinner.start();
+
     // Fetch optimized terms using genetic algorithm
     const negotiation = TermSheetGeneticOptimizer.optimizeTermSheet({
       populationSize: 100,
@@ -554,6 +568,7 @@ export class CLICommands {
       minSellerReservationUtility: 0.3,
     });
     const proposal = negotiation.bestProposal;
+    spinner.stop();
 
     console.log("\n" + "=".repeat(60));
     console.log(" PREVIEW DO TERM SHEET EM MARKDOWN (CLI PREVIEWER)");
@@ -583,7 +598,9 @@ export class CLICommands {
 **[Status]** Termos validados pelas partes e prontos para assinatura digital.
 `);
     console.log("=".repeat(60) + "\n");
-    console.log("[LegalClosingAgent] Preview validado com sucesso. Iniciando compilação dos binários PDF e LaTeX...");
+    
+    const spinnerComp = new Spinner({ message: "[LegalClosingAgent] Preview validado. Compilando os binários PDF e LaTeX...", color: "cyan" });
+    spinnerComp.start();
 
     try {
       // 1. Generate LaTeX code
@@ -598,6 +615,7 @@ export class CLICommands {
       await Deno.mkdir("./term_sheets", { recursive: true });
       const texPath = options.output.replace(".pdf", ".tex");
       await Deno.writeTextFile(texPath, latex);
+      spinnerComp.stop();
       console.log(`[LaTeX] Código-fonte gerado em: \x1b[32m${texPath}\x1b[0m`);
 
       // 2. Generate PDF via pdf-lib
@@ -612,10 +630,12 @@ export class CLICommands {
         `[PDF] Documento PDF compilado e salvo em: \x1b[32m${options.output}\x1b[0m`,
       );
     } catch (err) {
+      spinnerComp.stop();
       console.error(
-        "Erro na geração do documento:",
+        "\n\x1b[31mErro na geração do documento:\x1b[0m",
         err instanceof Error ? err.message : String(err),
       );
+      throw err;
     }
   }
 }

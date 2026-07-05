@@ -4,6 +4,7 @@ import { assertEquals } from "@std/assert";
 const runCLI = async (args: string[]) => {
   const command = new Deno.Command(Deno.execPath(), {
     args: ["run", "--allow-all", "src/cli/interface.ts", ...args],
+    stdin: "null",
     stdout: "piped",
     stderr: "piped",
   });
@@ -19,8 +20,8 @@ Deno.test("E2E CLI - kyb command executes successfully", async () => {
   const { code, stdout } = await runCLI(["kyb", "12345678000199"]);
   assertEquals(code, 0);
   assertEquals(stdout.toUpperCase().includes("VERIFICAÇÃO CADASTRAL DE KYB (SERPRO/RECEITA)"), true);
-  assertEquals(stdout.includes("Situação:"), true);
-  assertEquals(stdout.includes("Razão Social:"), true);
+  assertEquals(stdout.includes("Situação"), true);
+  assertEquals(stdout.includes("Razão Social"), true);
 });
 
 Deno.test("E2E CLI - predict command executes successfully", async () => {
@@ -71,8 +72,8 @@ Deno.test("E2E CLI - document command generates PDF and LaTeX", async () => {
 });
 
 Deno.test("E2E CLI - invalid command shows help/error", async () => {
-  const { code, stdout } = await runCLI(["invalid_command_123"]);
+  const { code, stderr } = await runCLI(["invalid_command_123"]);
   // Depending on commander config it might exit with 0 or 1
-  assertEquals(stdout.includes("Comando desconhecido: invalid_command_123"), true);
+  assertEquals(stderr.includes('Unknown command "invalid_command_123"'), true);
 });
 
