@@ -1,11 +1,11 @@
 ---
 id: MAI-2
 title: Integração e Orquestração do Core no MVP
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 14:45'
+updated_date: '2026-07-09 15:14'
 labels:
   - core
   - integration
@@ -23,25 +23,27 @@ ordinal: 2000
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Uma suíte de smoke tests deve estar configurada e ser executada com
+- [x] #1 Uma suíte de smoke tests deve estar configurada e ser executada com
       src/agent/index.ts devem carregar e utilizar as chaves de API
       GOOGLE_GENERATIVE_AI_API_KEY ou GEMINI_API_KEY do ambiente para conexão
       com o Google AI Studio.
-- [ ] #2 Os endpoints das APIs e fluxos de dados locais devem estar conectados
+- [x] #2 Os endpoints das APIs e fluxos de dados locais devem estar conectados
       sucesso via deno task test, testando o barramento local LocalPubSubBus e
       as ferramentas integradas sem depender de APIs externas para validações
       básicas.
-- [ ] #3 Rotas da CLI interativa e comandos de linha de comando devem permitir a
+- [x] #3 Rotas da CLI interativa e comandos de linha de comando devem permitir a
       ao banco de dados Postgres, com mecanismos robustos de fallback que
       previnam quebras caso a conexão com a base de dados falhe.
       execução ponta a ponta de KYB, inferência ONNX, otimização MILP, algoritmo
       genético de Term Sheet e geração de PDFs/LaTeX.
 
-- [ ] #4 O arquivo principal (main.ts ou boot) instancia corretamente o DatabaseMemoryService, LocalPubSubBus, e o provedor de IA
-- [ ] #5 Lógica de fallback implementada: se o DB falhar, o core não trava
-- [ ] #6 Logs estruturados no console para indicar status de cada componente
-- [ ] #7 Documentação clara da arquitetura Core (REST e integração MCP) criada nos diretórios correspondentes
+- [x] #4 O arquivo principal (main.ts ou boot) instancia corretamente o DatabaseMemoryService, LocalPubSubBus, e o provedor de IA
+- [x] #5 Lógica de fallback implementada: se o DB falhar, o core não trava
+- [x] #6 Logs estruturados no console para indicar status de cada componente
+- [x] #7 Documentação clara da arquitetura Core (REST e integração MCP) criada nos diretórios correspondentes
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -54,17 +56,17 @@ ordinal: 2000
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 A inicialização e conexão com o Google AI Studio e modelos Gemini estão
+- [x] #1 A inicialização e conexão com o Google AI Studio e modelos Gemini estão
       ponta (E2E) estão passando localmente sem erros.
-- [ ] #2 O mecanismo de resiliência e fallback do PostgreSQL está verificado e
+- [x] #2 O mecanismo de resiliência e fallback do PostgreSQL está verificado e
       validadas, tratando erros de chave de API ausente de forma amigável.
-- [ ] #3 A documentação da API e as instruções dos agentes foram atualizadas nos
+- [x] #3 A documentação da API e as instruções dos agentes foram atualizadas nos
       coberto por testes no DatabaseMemoryService.
-- [ ] #4 Nenhum arquivo de backlog foi modificado manualmente sem o uso da CLI
+- [x] #4 Nenhum arquivo de backlog foi modificado manualmente sem o uso da CLI
       arquivos correspondentes se houver mudança de contrato.
       backlog.md.
 
-- [ ] #5 Executar deno task start exibe logs confirmando a subida dos pilares
-- [ ] #6 Arquitetura base para Injeção de Dependências devidamente documentada
-- [ ] #7 Arquivos markdown em /backlog/docs/ e /context/ cobrindo as definições da Core adicionados
+- [x] #5 Executar deno task start exibe logs confirmando a subida dos pilares
+- [x] #6 Arquitetura base para Injeção de Dependências devidamente documentada
+- [x] #7 Arquivos markdown em /backlog/docs/ e /context/ cobrindo as definições da Core adicionados
 <!-- DOD:END -->

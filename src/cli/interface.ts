@@ -36,7 +36,7 @@ function printMenu() {
 /**
  * Main command loop
  */
-async function main() {
+export async function main() {
   const args = Deno.args;
 
   if (args.length > 0) {
