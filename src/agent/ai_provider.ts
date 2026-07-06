@@ -24,11 +24,13 @@ export class AIProvider {
       }
     }
 
-    // Nenhuma chave encontrada: emitir mensagem de aviso clara e amigável.
-    console.warn("\n[AVISO] Nenhuma chave de API encontrada para o Google AI Studio/Gemini.");
-    console.warn("Verifique se as variáveis GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY estão definidas no seu ambiente ou no arquivo .env.");
-    console.warn("O sistema operará em modo DRY-RUN/FALLBACK (mock) e nenhuma requisição real à API será efetuada.\n");
-    console.warn("Para configurar sua chave, veja a documentação em: /context/google_ai_studio_setup.md ou /backlog/docs/google_ai_studio_setup.md\n");
+    if (Deno.args[0] !== "completions") {
+      // Nenhuma chave encontrada: emitir mensagem de aviso clara e amigável.
+      console.warn("\n[AVISO] Nenhuma chave de API encontrada para o Google AI Studio/Gemini.");
+      console.warn("Verifique se as variáveis GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY estão definidas no seu ambiente ou no arquivo .env.");
+      console.warn("O sistema operará em modo DRY-RUN/FALLBACK (mock) e nenhuma requisição real à API será efetuada.\n");
+      console.warn("Para configurar sua chave, veja a documentação em: /context/google_ai_studio_setup.md ou /backlog/docs/google_ai_studio_setup.md\n");
+    }
 
     return { key: null, isFallback: true };
   }

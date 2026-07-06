@@ -1,8 +1,9 @@
-import { Command } from "@cliffy/command";
+import { Command, CompletionsCommand } from "@cliffy/command";
 import { Select, Input } from "@cliffy/prompt";
 import { CLICommands } from "./commands.ts";
 import { CLIChat } from "./chat.ts";
 import { colors } from "@cliffy/ansi";
+import { CLIErrorHandler } from "./errors.ts";
 
 function printBanner() {
   console.log(colors.cyan(`
@@ -31,7 +32,11 @@ const kybCommand = new Command()
   .action(async (options, cnpj) => {
     let targetCnpj = cnpj;
     if (!targetCnpj) {
-      targetCnpj = isInteractive() ? await Input.prompt({ message: "Informe o CNPJ da empresa", default: "12345678000199" }) : "12345678000199";
+      targetCnpj = isInteractive() ? await Input.prompt({ 
+        message: "Informe o CNPJ da empresa", 
+        default: "12345678000199",
+        suggestions: ["12345678000199", "98765432000198", "00000000000191"]
+      }) : "12345678000199";
     }
     await CLICommands.checkRegistry(targetCnpj);
   });
@@ -40,7 +45,11 @@ const predictCommand = new Command()
   .description("Previsão de Risco e Insolvência (ONNX/Transformers)")
   .action(async () => {
     const name = isInteractive() ? await Input.prompt({ message: "Nome da Empresa Alvo", default: "Target Corp Ltda" }) : "Target Corp Ltda";
-    const sector = isInteractive() ? await Input.prompt({ message: "Setor Econômico", default: "SaaS / Fintech" }) : "SaaS / Fintech";
+    const sector = isInteractive() ? await Input.prompt({ 
+      message: "Setor Econômico", 
+      default: "SaaS / Fintech",
+      suggestions: ["SaaS / Fintech", "Varejo", "Indústria", "Agronegócio", "Saúde"]
+    }) : "SaaS / Fintech";
     const ebitdaStr = isInteractive() ? await Input.prompt({ message: "EBITDA anual ($)", default: "4500000" }) : "4500000";
     const revenueStr = isInteractive() ? await Input.prompt({ message: "Receita anual ($)", default: "15000000" }) : "15000000";
     const assetsStr = isInteractive() ? await Input.prompt({ message: "Total de Ativos ($)", default: "20000000" }) : "20000000";
@@ -95,7 +104,11 @@ const chatCommand = new Command()
   .arguments("[dealId:string]")
   .action(async (options, dealIdArg) => {
     let dealId = dealIdArg;
-    if (!dealId) dealId = isInteractive() ? await Input.prompt({ message: "Informe o ID do Deal para RAG isolado", default: "deal_alpha" }) : "deal_alpha";
+    if (!dealId) dealId = isInteractive() ? await Input.prompt({ 
+      message: "Informe o ID do Deal para RAG isolado", 
+      default: "deal_alpha",
+      suggestions: ["deal_alpha", "deal_beta", "deal_gamma", "deal_omega"]
+    }) : "deal_alpha";
     await CLIChat.startSession(dealId);
   });
 
@@ -153,6 +166,7 @@ const mainCommand = new Command()
   .command("document", documentCommand)
   .command("chat", chatCommand)
   .command("smoke", smokeCommand)
+  .command("completions", new CompletionsCommand())
   .command("interactive", interactiveCommand)
   .default("interactive")
   .action(async () => {
@@ -165,17 +179,8 @@ export async function main() {
   try {
     await mainCommand.parse(Deno.args);
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(colors.red(`\nErro fatal: ${error.message}`));
-      const isVerbose = Deno.args.includes("--verbose") || Deno.args.includes("-v");
-      const isDebug = Deno.args.includes("--debug") || Deno.args.includes("-d");
-      if (isVerbose || isDebug) {
-        console.error(colors.gray(error.stack || ""));
-      }
-    } else {
-      console.error(colors.red(`\nErro desconhecido: ${String(error)}`));
-    }
-    Deno.exit(1);
+    const isDebug = Deno.args.includes("--debug") || Deno.args.includes("-d");
+    await CLIErrorHandler.handleError(error, isDebug);
   }
 }
 

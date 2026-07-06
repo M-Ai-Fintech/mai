@@ -1,11 +1,11 @@
 ---
 id: MAI-7
 title: Autocompletes de comandos CLI e tratamento de erros avançado
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 14:45'
+updated_date: '2026-07-09 15:53'
 labels:
   - interface
   - cli

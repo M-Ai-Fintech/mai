@@ -11,3 +11,6 @@ term_sheets/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Logs
+data/logs/
