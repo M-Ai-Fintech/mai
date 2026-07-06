@@ -17,7 +17,11 @@ const runCLI = async (args: string[]) => {
 };
 
 Deno.test("E2E CLI - kyb command executes successfully", async () => {
-  const { code, stdout } = await runCLI(["kyb", "12345678000199"]);
+  const { code, stdout, stderr } = await runCLI(["kyb", "12345678000199"]);
+  if (code !== 0) {
+    console.log("TEST STDOUT:", stdout);
+    console.log("TEST STDERR:", stderr);
+  }
   assertEquals(code, 0);
   assertEquals(stdout.toUpperCase().includes("VERIFICAÇÃO CADASTRAL DE KYB (SERPRO/RECEITA)"), true);
   assertEquals(stdout.includes("Situação"), true);

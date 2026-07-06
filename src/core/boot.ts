@@ -14,11 +14,11 @@ export class AppBootstrapper {
 
     try {
       // 1. Initialize PubSub
-      this.pubsub = new LocalPubSubBus();
+      this.pubsub = LocalPubSubBus.getInstance();
       console.log("[Boot] LocalPubSubBus initialized.");
 
       // 2. Initialize Database with Fallback
-      this.db = new DatabaseMemoryService();
+      this.db = DatabaseMemoryService.getInstance();
       this.isDbConnected = await this.db.connect();
       if (!this.isDbConnected) {
         console.warn("[Boot] Running in Database Fallback mode (DB not available).");

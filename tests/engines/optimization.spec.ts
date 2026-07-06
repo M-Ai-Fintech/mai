@@ -1,6 +1,7 @@
 // tests/engines/optimization.spec.ts
 import { assertEquals, assertNotEquals, assertAlmostEquals } from "@std/assert";
-import { KYCValuationsCoordinator, TermSheetGeneticOptimizer } from "../../src/cli/commands.ts";
+import { TermSheetGeneticOptimizer } from "../../src/engines/optimization/genetic.ts";
+import { KYCValuationsCoordinator } from "../../src/engines/optimization/kyc/coordinator.ts";
 import { synergyPricingTool } from "../../src/agent/actions.ts";
 
 const sampleTargets = [
@@ -108,8 +109,8 @@ Deno.test("KYCValuationsCoordinator - Returns infeasible status when no targets 
 
 // --- 2. TERM SHEET GENETIC OPTIMIZER TESTS ---
 
-Deno.test("TermSheetGeneticOptimizer - Converges to valid proposal", () => {
-  const result = TermSheetGeneticOptimizer.optimizeTermSheet({
+Deno.test("TermSheetGeneticOptimizer - Converges to valid proposal", async () => {
+  const result = await TermSheetGeneticOptimizer.optimizeTermSheet({
     populationSize: 50,
     generations: 20,
     mutationRate: 0.1,

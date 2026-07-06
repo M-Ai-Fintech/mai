@@ -1,7 +1,5 @@
-// src/cli/chat.ts
-import { AgentOrchestrator } from "../agent/index.ts";
+import { AgentOrchestrator, BrokerOrchestratorService, ComplianceConflictError } from "../agent/index.ts";
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
-import { ContinuousLearningEngine } from "../agent/continuous_learning.ts";
 
 export class CLIChat {
   /**
@@ -66,8 +64,28 @@ export class CLIChat {
       const searchResults = await ClientSiloedRAG.querySilo(dealId, input, 2);
       const ragContext = searchResults.map(r => `[Do documento ${r.document}] ${r.text}`).join("\n");
 
-      // 3. Execute query on agent
-      const reply = await AgentOrchestrator.executeAgentQuery(dealId, input, ragContext);
+      // 3. Execute query on agent with Compliance Conflict detection
+      let reply: string;
+      try {
+        reply = await AgentOrchestrator.executeAgentQuery(dealId, input, ragContext);
+      } catch (err) {
+        if (err instanceof ComplianceConflictError) {
+          console.warn(`\n⚠️  [COMPLIANCE_CONFLICT] Conflito de conformidade fiduciária: ${err.message}`);
+          Deno.stdout.writeSync(new TextEncoder().encode("Deseja autorizar esta execução sob regime HITL (aprovação manual)? (s/n): "));
+          const bytes = Deno.stdin.readSync(buffer);
+          const approve = bytes ? decoder.decode(buffer.subarray(0, bytes)).trim().toLowerCase() : "";
+          if (approve === "s") {
+            console.log("🔓 Execução autorizada via HITL.");
+            reply = await AgentOrchestrator.executeAgentQuery(dealId, input, ragContext, true);
+          } else {
+            console.log("❌ Execução bloqueada por motivos de conformidade fiduciária.");
+            continue;
+          }
+        } else {
+          console.error("Erro durante a execução do agente:", err);
+          continue;
+        }
+      }
       
       console.log(`\n🤖 M&A Broker Agent >\n${reply}\n`);
     }
@@ -106,14 +124,46 @@ export class CLIChat {
       return;
     }
 
-    await ContinuousLearningEngine.recordCorrection({
+    const orchestratorService = new BrokerOrchestratorService();
+    const feedbackData: Record<string, any> = {
       dealId,
-      variableName: paramName as any,
+      variableName: paramName,
       originalValue,
       correctedValue,
       reason,
-    });
+      requiresHitlApproval: false,
+      hitlApproved: false,
+    };
+    const feedbackText = `The specialist corrected the ${paramName} from ${originalValue} to ${correctedValue} for deal ${dealId} because: ${reason}.`;
+    
+    const result = await orchestratorService.processUserCorrection(
+      "default_user",
+      "user_preference",
+      "adjustments",
+      feedbackData,
+      feedbackText
+    );
 
-    console.log("✅ Feedback registrado e salvo com sucesso! O agente incorporará esta diretriz nas próximas interações.");
+    if (result.conflict) {
+      console.log(`\n⚠️  [COMPLIANCE_CONFLICT] Conflito detectado: ${result.conflictReason}`);
+      const approve = askQuestion("Deseja forçar a gravação desta preferência mesmo sob conflito de conformidade (HITL)? (s/n): ");
+      if (approve.toLowerCase() !== "s") {
+        console.log("❌ Gravação cancelada pelo usuário devido ao conflito de conformidade.");
+        return;
+      }
+      
+      feedbackData.requiresHitlApproval = false;
+      feedbackData.hitlApproved = true;
+      await orchestratorService.processUserCorrection(
+        "default_user",
+        "user_preference",
+        "adjustments",
+        feedbackData,
+        feedbackText
+      );
+      console.log("✅ Feedback registrado e salvo com sucesso com aprovação HITL manual.");
+    } else {
+      console.log("✅ Feedback registrado e salvo com sucesso! O agente incorporará esta diretriz nas próximas interações.");
+    }
   }
 }

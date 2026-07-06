@@ -10,7 +10,7 @@ export class CLIError extends Error {
 export class CLIErrorHandler {
   private static logFilePath = "./data/logs/cli_errors.log";
 
-  public static async handleError(error: unknown, isDebug = false) {
+  public static async handleError(error: unknown, isDebug = false, exitProcess = true) {
     let message = "Ocorreu um erro desconhecido.";
     let stack = "";
 
@@ -26,13 +26,19 @@ export class CLIErrorHandler {
 
     await this.logToFile(sanitizedMessage, sanitizedStack);
 
-    console.error(colors.red(`\nErro fatal: ${sanitizedMessage}`));
+    if (exitProcess) {
+      console.error(colors.red(`\nErro fatal: ${sanitizedMessage}`));
+    } else {
+      console.error(colors.red(`\nErro: ${sanitizedMessage}`));
+    }
     
     if (isDebug) {
       console.error(colors.gray(sanitizedStack));
     }
 
-    Deno.exit(1);
+    if (exitProcess) {
+      Deno.exit(1);
+    }
   }
 
   private static sanitizeSecrets(text: string): string {

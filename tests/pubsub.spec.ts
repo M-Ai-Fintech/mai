@@ -1,19 +1,18 @@
-// tests/pubsub.spec.ts
 import { assertEquals, assertNotEquals } from "@std/assert";
 import {
-  LocalPubSubBus,
   googleCloudPubSubTool,
   mcpDatabaseTool,
   huggingFaceMcpTool,
   geminiGoogleSearchTool
 } from "../src/agent/actions.ts";
+import { LocalPubSubBus } from "../src/core/pubsub/LocalPubSubBus.ts";
 
 Deno.test("LocalPubSubBus - Publish and Subscribe real messaging flow", () => {
   const bus = LocalPubSubBus.getInstance();
   bus.clear();
 
   let receivedData: any = null;
-  bus.subscribe("test_topic", (data) => {
+  bus.subscribe("test_topic", (data: any) => {
     receivedData = data;
   });
 
@@ -30,7 +29,7 @@ Deno.test("googleCloudPubSubTool - Publishes and returns success and handles req
   bus.clear();
 
   let responseData: any = null;
-  bus.subscribe("vdr_requests_response", (data) => {
+  bus.subscribe("vdr_requests_response", (data: any) => {
     responseData = data;
   });
 

@@ -149,7 +149,12 @@ const interactiveCommand = new Command()
         Deno.exit(0);
       }
 
-      await mainCommand.parse([choice]);
+      try {
+        await mainCommand.parse([choice]);
+      } catch (error) {
+        const isDebug = Deno.args.includes("--debug") || Deno.args.includes("-d");
+        await CLIErrorHandler.handleError(error, isDebug, false);
+      }
     }
   });
 
