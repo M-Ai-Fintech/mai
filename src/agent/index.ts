@@ -3,16 +3,23 @@
 // Todos os agentes executam exclusivamente com Gemini 2.5 Flash via @ai-sdk/google.
 // A variável de ambiente esperada é GOOGLE_GENERATIVE_AI_API_KEY.
 
-import { brokerOrchestratorAgent, BrokerOrchestratorService } from "./agents/orchestrator.ts";
-import { sourcingAndKYBAgent } from "./agents/kyb_sourcing.ts";
-import {
-  generalDueDiligenceAgent,
-  financialRiskAgent,
-  legalDueDiligenceAgent,
-} from "./agents/due_diligence.ts";
-import { dealMatchingAgent } from "./agents/deal_matching.ts";
-import { negotiationAgent } from "./agents/negotiation.ts";
-import { legalClosingAgent } from "./agents/legal_closing.ts";
+import { BrokerOrchestratorAgent, BrokerOrchestratorService } from "./agents/broker-orchestrator/index.ts";
+import { SourcingAndKYBAgent } from "./agents/sourcing-kyb/index.ts";
+import { GeneralDueDiligenceAgent } from "./agents/general-dd/index.ts";
+import { FinancialRiskAgent } from "./agents/financial-risk/index.ts";
+import { LegalDueDiligenceAgent } from "./agents/legal-dd/index.ts";
+import { DealMatchingAgent } from "./agents/deal-matching/index.ts";
+import { NegotiationAgent } from "./agents/negotiation/index.ts";
+import { LegalClosingAgent } from "./agents/legal-closing/index.ts";
+
+const brokerOrchestratorAgent = BrokerOrchestratorAgent;
+const sourcingAndKYBAgent = SourcingAndKYBAgent;
+const generalDueDiligenceAgent = GeneralDueDiligenceAgent;
+const financialRiskAgent = FinancialRiskAgent;
+const legalDueDiligenceAgent = LegalDueDiligenceAgent;
+const dealMatchingAgent = DealMatchingAgent;
+const negotiationAgent = NegotiationAgent;
+const legalClosingAgent = LegalClosingAgent;
 
 export {
   brokerOrchestratorAgent,
