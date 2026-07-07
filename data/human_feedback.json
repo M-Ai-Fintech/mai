@@ -1,0 +1,34 @@
+[
+  {
+    "dealId": "unknown",
+    "variableName": "valuation",
+    "originalValue": 0,
+    "correctedValue": 0,
+    "reason": "Adjusting valuation slightly based on market multiples",
+    "timestamp": "2026-07-09T19:25:40.881Z"
+  },
+  {
+    "dealId": "unknown",
+    "variableName": "valuation",
+    "originalValue": 0,
+    "correctedValue": 0,
+    "reason": "Fiduciary Rule Conflict: LC 214/2025 requires mandatory retention and split payment processing.",
+    "timestamp": "2026-07-09T19:25:40.888Z"
+  },
+  {
+    "dealId": "unknown",
+    "variableName": "valuation",
+    "originalValue": 0,
+    "correctedValue": 0,
+    "reason": "Fiduciary Rule Conflict: Accounting norms require provisioning for probable contingencies.",
+    "timestamp": "2026-07-09T19:25:40.895Z"
+  },
+  {
+    "dealId": "deal_conflict_test",
+    "variableName": "valuation",
+    "originalValue": 0,
+    "correctedValue": 0,
+    "reason": "omitir contingência para fechar acordo rápido",
+    "timestamp": "2026-07-09T19:25:40.903Z"
+  }
+]

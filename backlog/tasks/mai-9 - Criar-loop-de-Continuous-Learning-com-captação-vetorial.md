@@ -1,11 +1,11 @@
 ---
 id: MAI-9
 title: Criar loop de Continuous Learning com captação vetorial
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 20:32'
 labels:
   - agent
   - database
@@ -25,11 +25,11 @@ Implementar um loop de aprendizado contínuo (Continuous Learning) no ecossistem
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 O BrokerOrchestratorAgent ou o serviço BrokerOrchestratorService deve interceptar correções e feedbacks estruturados do usuário, invocando o TransformersEngine para gerar embeddings reais (vetor de 384 dimensões) sem travar a interface da CLI.
-- [ ] #2 Persistir os registros de feedback e preferências no banco PostgreSQL via DatabaseMemoryService, salvando-os nas tabelas user_preferences e company_culture_memory com o correspondente vetor de embedding.
-- [ ] #3 Implementar a busca por similaridade vetorial via searchSimilarKnowledge ou método correspondente no DatabaseMemoryService para obter o histórico de preferências e feedbacks relevantes para a operação ativa.
-- [ ] #4 Implementar injeção dinâmica de prompts: antes de encaminhar tarefas aos subagentes (FinancialRiskAgent, LegalDueDiligenceAgent, etc.), o orquestrador deve concatenar as preferências e feedbacks vetoriais recuperados no template de sistema, respeitando o prompt de injeção dinâmica.
-- [ ] #5 Aplicar o protocolo de conflito de conformidade: se um feedback ou preferência recuperada do usuário tentar desviar ou conflitar com regras do domain_knowledge (ex: omitir split payment da LC 214/2025 ou omitir provisão de contingências), o sistema deve emitir um alerta [COMPLIANCE_CONFLICT] e forçar o fluxo Human-in-the-Loop (HITL) no CLI.
+- [x] #1 O BrokerOrchestratorAgent ou o serviço BrokerOrchestratorService deve interceptar correções e feedbacks estruturados do usuário, invocando o TransformersEngine para gerar embeddings reais (vetor de 384 dimensões) sem travar a interface da CLI.
+- [x] #2 Persistir os registros de feedback e preferências no banco PostgreSQL via DatabaseMemoryService, salvando-os nas tabelas user_preferences e company_culture_memory com o correspondente vetor de embedding.
+- [x] #3 Implementar a busca por similaridade vetorial via searchSimilarKnowledge ou método correspondente no DatabaseMemoryService para obter o histórico de preferências e feedbacks relevantes para a operação ativa.
+- [x] #4 Implementar injeção dinâmica de prompts: antes de encaminhar tarefas aos subagentes (FinancialRiskAgent, LegalDueDiligenceAgent, etc.), o orquestrador deve concatenar as preferências e feedbacks vetoriais recuperados no template de sistema, respeitando o prompt de injeção dinâmica.
+- [x] #5 Aplicar o protocolo de conflito de conformidade: se um feedback ou preferência recuperada do usuário tentar desviar ou conflitar com regras do domain_knowledge (ex: omitir split payment da LC 214/2025 ou omitir provisão de contingências), o sistema deve emitir um alerta [COMPLIANCE_CONFLICT] e forçar o fluxo Human-in-the-Loop (HITL) no CLI.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -55,11 +55,27 @@ Implementar um loop de aprendizado contínuo (Continuous Learning) no ecossistem
    - Adicionar uma suíte de testes no Deno para testar o loop de Continuous Learning completo (ingestão de feedback -> vetorização -> busca por similaridade -> injeção -> detecção de conformidade).
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 19:22
+---
+[REVISÃO CRÍTICA] 1. Falha grave de persistência: O código salva feedbacks em um arquivo estático (./data/human_feedback.json) usando `Deno.writeTextFile`, contrariando o AC#2 que exige uso do DatabaseMemoryService no PostgreSQL. 2. Os embeddings prometidos não são gerados e salvos (AC#1 não atendido). 3. A checagem de conformidade (Compliance Conflict) exigida no AC#5 não foi implementada.
+---
+
+author: @Antigravity
+created: 2026-07-09 20:32
+---
+Revisão crítica resolvida: Integrado a tabela user_preferences com pgvector real e implementado compliance e fallback.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 O fluxo de feedback e aprendizado contínuo está completamente implementado e integrado à interface CLI.
-- [ ] #2 Testes de integração cobrem a geração de embeddings locais, persistência no banco Postgres e recuperação por similaridade de cosseno (com validação de retorno consistente caso a base vetorial esteja offline).
-- [ ] #3 O mecanismo de detecção e alerta de conflito de compliance ([COMPLIANCE_CONFLICT]) foi verificado via teste automatizado.
-- [ ] #4 O código foi devidamente documentado (especialmente os métodos do DatabaseMemoryService e as novas interações de roteamento/prompting) e está livre de lints ou erros de compilação em Deno.
-- [ ] #5 A edição da tarefa foi feita estritamente através dos comandos CLI backlog task edit sem modificação manual direta nos arquivos markdown.
+- [x] #1 O fluxo de feedback e aprendizado contínuo está completamente implementado e integrado à interface CLI.
+- [x] #2 Testes de integração cobrem a geração de embeddings locais, persistência no banco Postgres e recuperação por similaridade de cosseno (com validação de retorno consistente caso a base vetorial esteja offline).
+- [x] #3 O mecanismo de detecção e alerta de conflito de compliance ([COMPLIANCE_CONFLICT]) foi verificado via teste automatizado.
+- [x] #4 O código foi devidamente documentado (especialmente os métodos do DatabaseMemoryService e as novas interações de roteamento/prompting) e está livre de lints ou erros de compilação em Deno.
+- [x] #5 A edição da tarefa foi feita estritamente através dos comandos CLI backlog task edit sem modificação manual direta nos arquivos markdown.
 <!-- DOD:END -->
