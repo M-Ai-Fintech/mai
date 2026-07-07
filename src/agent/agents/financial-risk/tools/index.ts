@@ -4,7 +4,8 @@ import {
   analyzeCompanyRisksTool,
   googleCloudPubSubTool,
   databaseMemoryServiceTool,
-  mcpDatabaseTool
+  mcpDatabaseTool,
+  vdrStructuredAccessTool
 } from "../../../actions.ts";
 
 export {
@@ -12,6 +13,6 @@ export {
   analyzeCompanyRisksTool,
   googleCloudPubSubTool,
   databaseMemoryServiceTool,
-  mcpDatabaseTool
+  mcpDatabaseTool,
+  vdrStructuredAccessTool
 };
-

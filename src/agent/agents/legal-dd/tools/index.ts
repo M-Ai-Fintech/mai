@@ -2,11 +2,13 @@
 import {
   googleCloudPubSubTool,
   mcpDatabaseTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  vdrStructuredAccessTool
 } from "../../../actions.ts";
 
 export {
   googleCloudPubSubTool,
   mcpDatabaseTool,
-  databaseMemoryServiceTool
+  databaseMemoryServiceTool,
+  vdrStructuredAccessTool
 };

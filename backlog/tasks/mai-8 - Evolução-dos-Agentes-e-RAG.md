@@ -1,11 +1,11 @@
 ---
 id: MAI-8
 title: Evolução dos Agentes e RAG
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 20:32'
 labels:
   - agent
   - ai
@@ -29,11 +29,11 @@ A evolução será dividida em quatro frentes principais:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A base PostgreSQL local deve ser atualizada com a extensão pgvector habilitada, e as tabelas user_preferences, domain_knowledge e company_culture_memory devem utilizar a coluna tipo vector(384) para armazenar embeddings gerados pelo modelo all-MiniLM-L6-v2, substituindo o tipo genérico REAL[].
-- [ ] #2 O motor de RAG (ClientSiloedRAG) deve ser refatorado para persistir chunks de documentos do VDR no banco de dados e realizar consultas semânticas restritas ao ID do Deal (isolamento fiduciário) utilizando a distância de cosseno (<=>) via pgvector.
-- [ ] #3 Novas ferramentas personalizadas do ADK (ex: search-vdr-tool e extract-vdr-metadata) devem ser expostas em src/agent/actions.ts e disponibilizadas para os subagentes de Due Diligence (GeneralDD, FinancialRisk, LegalDD) lerem e consultarem documentos de forma estruturada.
-- [ ] #4 O mecanismo de aprendizado contínuo (ContinuousLearningEngine) deve converter as justificativas das correções em embeddings vetoriais, armazenando-os como preferências do broker no Postgres, e recuperá-los semanticamente para injetar diretrizes dinâmicas (In-Context Learning) nos prompts do BrokerOrchestratorAgent.
-- [ ] #5 Deve ser disponibilizado um pipeline documentado de fine-tuning (LoRA) para o mercado brasileiro de M&A, contendo um script de extração/formatação de dados em JSONL (padrão Alpaca/ShareGPT) a partir das interações históricas e um notebook Jupyter configurado no Colab.
+- [x] #1 A base PostgreSQL local deve ser atualizada com a extensão pgvector habilitada, e as tabelas user_preferences, domain_knowledge e company_culture_memory devem utilizar a coluna tipo vector(384) para armazenar embeddings gerados pelo modelo all-MiniLM-L6-v2, substituindo o tipo genérico REAL[].
+- [x] #2 O motor de RAG (ClientSiloedRAG) deve ser refatorado para persistir chunks de documentos do VDR no banco de dados e realizar consultas semânticas restritas ao ID do Deal (isolamento fiduciário) utilizando a distância de cosseno (<=>) via pgvector.
+- [x] #3 Novas ferramentas personalizadas do ADK (ex: search-vdr-tool e extract-vdr-metadata) devem ser expostas em src/agent/actions.ts e disponibilizadas para os subagentes de Due Diligence (GeneralDD, FinancialRisk, LegalDD) lerem e consultarem documentos de forma estruturada.
+- [x] #4 O mecanismo de aprendizado contínuo (ContinuousLearningEngine) deve converter as justificativas das correções em embeddings vetoriais, armazenando-os como preferências do broker no Postgres, e recuperá-los semanticamente para injetar diretrizes dinâmicas (In-Context Learning) nos prompts do BrokerOrchestratorAgent.
+- [x] #5 Deve ser disponibilizado um pipeline documentado de fine-tuning (LoRA) para o mercado brasileiro de M&A, contendo um script de extração/formatação de dados em JSONL (padrão Alpaca/ShareGPT) a partir das interações históricas e um notebook Jupyter configurado no Colab.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -64,11 +64,27 @@ A evolução será dividida em quatro frentes principais:
    - Garantir 100% de cobertura nos módulos críticos do RAG local e testar fluxos de execução na CLI do middleware.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 19:22
+---
+[REVISÃO CRÍTICA] 1. A geração de embeddings reais na ferramenta huggingFaceMcpTool possui um try-catch silencioso que, em caso de erro, devolve um vetor hardcoded ([0.012, -0.045...]), iludindo a camada RAG e os agentes sobre a capacidade vetorial ativa. Isso compromete a confiabilidade das buscas semânticas.
+---
+
+author: @Antigravity
+created: 2026-07-09 20:32
+---
+Revisão crítica resolvida: Embedding real agora propaga exceção.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Migrações SQL criadas e aplicadas com sucesso no Postgres, habilitando pgvector e migrando colunas de embeddings para o tipo vector(384).
-- [ ] #2 Modificações de código TypeScript no DatabaseMemoryService (src/core/db/memory_service.ts) e ClientSiloedRAG (src/agent/rag_layer.ts) concluídas, testadas e livres de erros de compilação ou lints.
-- [ ] #3 Ferramentas de acesso estruturado de VDR devidamente registradas e validadas no ADK em src/agent/actions.ts.
-- [ ] #4 Scripts de exportação do dataset de fine-tuning integrados e script python de treino validado localmente ou no ambiente do Colab.
-- [ ] #5 Loop de feedback (Continuous Learning) funcionando de ponta a ponta com persistência vetorial real no Postgres e teste de fumaça da CLI executado sem erros.
+- [x] #1 Migrações SQL criadas e aplicadas com sucesso no Postgres, habilitando pgvector e migrando colunas de embeddings para o tipo vector(384).
+- [x] #2 Modificações de código TypeScript no DatabaseMemoryService (src/core/db/memory_service.ts) e ClientSiloedRAG (src/agent/rag_layer.ts) concluídas, testadas e livres de erros de compilação ou lints.
+- [x] #3 Ferramentas de acesso estruturado de VDR devidamente registradas e validadas no ADK em src/agent/actions.ts.
+- [x] #4 Scripts de exportação do dataset de fine-tuning integrados e script python de treino validado localmente ou no ambiente do Colab.
+- [x] #5 Loop de feedback (Continuous Learning) funcionando de ponta a ponta com persistência vetorial real no Postgres e teste de fumaça da CLI executado sem erros.
 <!-- DOD:END -->
