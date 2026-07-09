@@ -1,11 +1,11 @@
 ---
 id: MAI-13
 title: Integrações de VDR na Core
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 20:32'
 labels:
   - core
   - vdr
@@ -27,11 +27,11 @@ Desenvolver a integração da Core API com provedores de Virtual Data Room (VDR)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Definir a interface genérica VDRProvider e tipos estruturados (VDRWorkspace, VDRFolder, VDRDocument) em src/core/vdr/types.ts de forma extensível.
-- [ ] #2 Implementar o PapermarkVDRProvider suportando paginação, listagem de documentos/diretórios e download em lote utilizando autenticação via token pm_live_*.
-- [ ] #3 Implementar o SupergoodVDRProvider que mapeia e roteia as requisições para os conectores do iDeals e Intralinks através do proxy HTTP da Supergood.ai.
-- [ ] #4 Integrar os novos provedores com a classe ClientSiloedRAG em src/agent/rag_layer.ts, garantindo que documentos reais do VDR sejam processados, chunkados e vetorizados na inicialização do silo.
-- [ ] #5 Implementar testes unitários e de integração abrangentes com mocks de requisições HTTP (ex: com Deno mock ou nock) para os três provedores.
+- [x] #1 Definir a interface genérica VDRProvider e tipos estruturados (VDRWorkspace, VDRFolder, VDRDocument) em src/core/vdr/types.ts de forma extensível.
+- [x] #2 Implementar o PapermarkVDRProvider suportando paginação, listagem de documentos/diretórios e download em lote utilizando autenticação via token pm_live_*.
+- [x] #3 Implementar o SupergoodVDRProvider que mapeia e roteia as requisições para os conectores do iDeals e Intralinks através do proxy HTTP da Supergood.ai.
+- [x] #4 Integrar os novos provedores com a classe ClientSiloedRAG em src/agent/rag_layer.ts, garantindo que documentos reais do VDR sejam processados, chunkados e vetorizados na inicialização do silo.
+- [x] #5 Implementar testes unitários e de integração abrangentes com mocks de requisições HTTP (ex: com Deno mock ou nock) para os três provedores.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -59,11 +59,27 @@ Desenvolver a integração da Core API com provedores de Virtual Data Room (VDR)
 - Validar se o silo do RAG indexa corretamente os textos extraídos.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 19:22
+---
+[REVISÃO CRÍTICA] 1. O AC#4 está quebrado: Em `rag_layer.ts` (ClientSiloedRAG), a inicialização do silo para provedores externos (iDeals/Intralinks) APENAS moca o conteúdo com a string `Conteúdo extraído de [nome do arquivo]` ao invés de efetuar o download dos arquivos físicos e realizar o chunking/vetorização. Documentos reais não estão sendo indexados no PostgreSQL.
+---
+
+author: @Antigravity
+created: 2026-07-09 20:32
+---
+Revisão crítica resolvida: Implementado download real dos binários com conversão para texto no rag_layer.ts.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Interface abstrata de VDR projetada e implementada com suporte a múltiplos provedores em TypeScript (Deno/Mastra).
-- [ ] #2 Suporte completo e verificado para autenticação e download de arquivos em Papermark, iDeals e Intralinks.
-- [ ] #3 Integração validada com a camada RAG local do agente (sem expor documentos confidenciais fora dos silos locais).
-- [ ] #4 Variáveis de ambiente (como PAPERMARK_API_KEY e SUPERGOOD_API_KEY) documentadas no .env.example e validadas.
-- [ ] #5 Cobertura de testes para fluxo feliz de download e tratamento de erros (rate limit, expiração de token).
+- [x] #1 Interface abstrata de VDR projetada e implementada com suporte a múltiplos provedores em TypeScript (Deno/Mastra).
+- [x] #2 Suporte completo e verificado para autenticação e download de arquivos em Papermark, iDeals e Intralinks.
+- [x] #3 Integração validada com a camada RAG local do agente (sem expor documentos confidenciais fora dos silos locais).
+- [x] #4 Variáveis de ambiente (como PAPERMARK_API_KEY e SUPERGOOD_API_KEY) documentadas no .env.example e validadas.
+- [x] #5 Cobertura de testes para fluxo feliz de download e tratamento de erros (rate limit, expiração de token).
 <!-- DOD:END -->
