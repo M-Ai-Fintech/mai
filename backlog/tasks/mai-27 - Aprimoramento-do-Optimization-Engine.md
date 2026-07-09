@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:16'
+updated_date: '2026-07-09 21:35'
 labels:
   - engine
   - optimization
@@ -35,8 +35,6 @@ Currently both algorithms are duplicated in the CLI (`src/cli/commands.ts`) and 
 - [x] #6 CI pipeline must run lint, type‑check, and the full test suite with the new modules and fail on regression.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -60,6 +58,16 @@ Currently both algorithms are duplicated in the CLI (`src/cli/commands.ts`) and 
    - Extend the GitHub Actions workflow to include lint, type‑check, and coverage thresholds.
    - Add a benchmark script (`scripts/benchmark_optimization.ts`) to verify that the GA converges within the configured generation limit and that the MILP solves within 2 seconds for typical portfolio sizes.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 21:35
+---
+[REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o AC #1, AC #3 e DoD #2 falharam: A classe MILPOptimizer ainda existe de forma duplicada em src/agent/actions.ts (linha 31 a 121). A tool 'optimizePortfolioTool' não importa o novo módulo PortfolioSolver de kyc_valuation_solver.ts, ela utiliza a implementação antiga duplicada.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

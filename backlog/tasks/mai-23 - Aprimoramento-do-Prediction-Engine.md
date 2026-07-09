@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:11'
+updated_date: '2026-07-09 21:35'
 labels:
   - engine
   - prediction
@@ -40,13 +40,21 @@ Replace the current Z‑Score rule‑based prediction engine with a neural class
 - [ ] #15 Automated tests verify inference, tensor shapes, fallback behavior, and CLI end‑to‑end execution.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
 1. Run the Colab notebook scripts/colab_training_notebook.ipynb to train and export the quantized model. 2. Add scripts/export_model.ts to automate export. 3. Implement model loading, tensor mapping, inference, and fallback in src/engines/prediction/onnx.ts using @huggingface/transformers. 4. Update src/agent/actions.ts to call the new inference path from huggingFaceMcpTool and expose results to CLI. 5. Write unit tests in tests/engines/prediction.spec.ts covering success and fallback. 6. Add integration test for CLI analyzeRisk. 7. Update README.md and docs/prediction_engine.md with instructions. 8. Perform code review, merge PRs, and run full test suite.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 21:35
+---
+[REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o critério DoD #5 (atualizar documentação no repositório com instruções para treinamento/exportação e o arquivo docs/prediction_engine.md) não foi cumprido (o arquivo não existe e o README.md não possui as instruções detalhadas). 2. O código de inferência e testes unitários com fallback foram implementados corretamente, cumprindo os demais requisitos funcionais.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
