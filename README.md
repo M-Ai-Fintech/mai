@@ -106,3 +106,12 @@ deno task start
 * Para a especificação profunda da arquitetura, 7 agentes e infraestrutura GCP, consulte: 👉 **[context/architecture.md](file:///home/luis/mai/context/architecture.md)**
 * Para detalhes de integração com a IA da Google (AI Studio, Vertex AI, Colab e ADK SDK), consulte: 👉 **[AGENTS.md](file:///home/luis/mai/AGENTS.md)**
 * Para regras de valoração e precificação, consulte: 👉 **[context/valuation.md](file:///home/luis/mai/context/valuation.md)**
+
+
+### Cloud SQL e pg_vector
+Para ativar o suporte a busca vetorial no Cloud SQL, execute no console do banco de dados:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE INDEX IF NOT EXISTS idx_user_preferences_hnsw ON user_preferences USING hnsw (embedding vector_cosine_ops);
+```
+O código da aplicação já está otimizado para identificar a presença da extensão de forma resiliente.
