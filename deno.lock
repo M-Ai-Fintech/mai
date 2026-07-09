@@ -6,12 +6,15 @@
     "npm:@ai-sdk/google@*": "1.2.22_zod@3.25.76",
     "npm:@ai-sdk/google@1": "1.2.22_zod@3.25.76",
     "npm:@bubblyworld/highs-ts@^1.2.0": "1.2.0",
+    "npm:@huggingface/transformers@*": "4.2.0",
     "npm:@huggingface/transformers@^4.2.0": "4.2.0",
     "npm:@mastra/core@1": "1.42.0_zod@4.4.3",
     "npm:@types/pg@^8.11.4": "8.20.0",
     "npm:commander@^12.1.0": "12.1.0",
     "npm:genetic-search@1": "1.0.0",
     "npm:javascript-lp-solver@*": "1.0.3",
+    "npm:onnxruntime-node@*": "1.24.3",
+    "npm:onnxruntime-web@*": "1.26.0",
     "npm:pdf-lib@^1.17.1": "1.17.1",
     "npm:pg@^8.11.3": "8.22.0",
     "npm:zod@*": "4.4.3",
@@ -119,7 +122,7 @@
         "@huggingface/jinja",
         "@huggingface/tokenizers",
         "onnxruntime-node",
-        "onnxruntime-web",
+        "onnxruntime-web@1.26.0-dev.20260416-b7804b056c",
         "sharp"
       ]
     },
@@ -1411,6 +1414,9 @@
     "onnxruntime-common@1.24.3": {
       "integrity": "sha512-GeuPZO6U/LBJXvwdaqHbuUmoXiEdeCjWi/EG7Y1HNnDwJYuk6WUbNXpF6luSUY8yASul3cmUlLGrCCL1ZgVXqA=="
     },
+    "onnxruntime-common@1.26.0": {
+      "integrity": "sha512-qVyMR4lcWgbkc4getFV+GQijsTnbg/siteoqcDwa3sI/LxbrMSNw4ePyvCq/ymdQaRomCA7YuWmhzsswxvymdw=="
+    },
     "onnxruntime-node@1.24.3": {
       "integrity": "sha512-JH7+czbc8ALA819vlTgcV+Q214/+VjGeBHDjX81+ZCD0PCVCIFGFNtT0V4sXG/1JXypKPgScQcB3ij/hk3YnTg==",
       "dependencies": [
@@ -1420,6 +1426,17 @@
       ],
       "os": ["win32", "darwin", "linux"],
       "scripts": true
+    },
+    "onnxruntime-web@1.26.0": {
+      "integrity": "sha512-LbRr/8zZt2xilI2smrVQGGKINo0U46i8qJp+UXyMBGfqN7KjnH1BiwCwLwyNIVV4i9CKFv7Sf4PwLKWnT8/bEA==",
+      "dependencies": [
+        "flatbuffers",
+        "guid-typescript",
+        "long",
+        "onnxruntime-common@1.26.0",
+        "platform",
+        "protobufjs"
+      ]
     },
     "onnxruntime-web@1.26.0-dev.20260416-b7804b056c": {
       "integrity": "sha512-MD6Ss4GSpQBo6zqoJzyT9LRbKYs7x/JVN23FT24EcEvlqF4VuzPOeH6X38orZPKHQDbprn7K+SBpu0/mj2CQiw==",
@@ -2151,6 +2168,7 @@
     "https://deno.land/std@0.224.0/path/windows/resolve.ts": "8dae1dadfed9d46ff46cc337c9525c0c7d959fb400a6308f34595c45bdca1972",
     "https://deno.land/std@0.224.0/path/windows/to_file_url.ts": "40e560ee4854fe5a3d4d12976cef2f4e8914125c81b11f1108e127934ced502e",
     "https://deno.land/std@0.224.0/path/windows/to_namespaced_path.ts": "4ffa4fb6fae321448d5fe810b3ca741d84df4d7897e61ee29be961a6aac89a4c",
+    "https://deno.land/std@0.224.0/testing/asserts.ts": "d0cdbabadc49cc4247a50732ee0df1403fdcd0f95360294ad448ae8c240f3f5c",
     "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/ansi.ts": "481e382126922ff686dd664f4bae6bc44df44bc5ed883c0f5f8a8b3776e5a983",
     "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/ansi_escapes.ts": "193b3c3a4e520274bd8322ca4cab1c3ce38070bed1898cb2ade12a585dddd7c9",
     "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/chain.ts": "eca61b1b64cad7b9799490c12c7aa5538d0f63ac65a73ddb6acac8b35f0a5323",
