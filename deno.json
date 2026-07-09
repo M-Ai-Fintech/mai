@@ -4,7 +4,8 @@
     "test": "deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net",
     "test:smoke": "deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/smoke.spec.ts",
     "db:start": "docker compose up -d",
-    "db:stop": "docker compose down"
+    "db:stop": "docker compose down",
+    "db:setup": "deno run --allow-read --allow-env --allow-net src/core/db/setup.ts"
   },
   "imports": {
     "@mastra/core": "npm:@mastra/core@^1.0.0",
