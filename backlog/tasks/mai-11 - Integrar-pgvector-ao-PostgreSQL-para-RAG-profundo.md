@@ -1,11 +1,11 @@
 ---
 id: MAI-11
 title: Integrar pgvector ao PostgreSQL para RAG profundo
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 17:32'
 labels:
   - database
   - ai
@@ -32,11 +32,13 @@ Principais objetivos:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A extensão pgvector deve ser habilitada (CREATE EXTENSION IF NOT EXISTS vector;) na inicialização do banco de dados (schema.sql).
-- [ ] #2 Colunas 'embedding' em 'user_preferences', 'domain_knowledge' e 'company_culture_memory' devem usar o tipo vector(384) e possuir suporte a índices HNSW.
-- [ ] #3 Refatorar 'ClientSiloedRAG' para persistir e buscar os chunks de documentos do VDR na tabela 'vdr_document_chunks' do Postgres.
-- [ ] #4 Implementar tratamento de erros e fallbacks robustos (graceful degradation) para o caso do pgvector ou o banco estarem indisponíveis.
+- [x] #1 A extensão pgvector deve ser habilitada (CREATE EXTENSION IF NOT EXISTS vector;) na inicialização do banco de dados (schema.sql).
+- [x] #2 Colunas 'embedding' em 'user_preferences', 'domain_knowledge' e 'company_culture_memory' devem usar o tipo vector(384) e possuir suporte a índices HNSW.
+- [x] #3 Refatorar 'ClientSiloedRAG' para persistir e buscar os chunks de documentos do VDR na tabela 'vdr_document_chunks' do Postgres.
+- [x] #4 Implementar tratamento de erros e fallbacks robustos (graceful degradation) para o caso do pgvector ou o banco estarem indisponíveis.
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -62,8 +64,8 @@ Principais objetivos:
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 O schema.sql contém as diretivas de criação do pgvector e as novas estruturas de tabelas atualizadas.
-- [ ] #2 A classe DatabaseMemoryService e a camada RAG usam queries SQL nativas com o operador <=> para buscas de similaridade.
-- [ ] #3 Os testes em tests/core/memory_service.spec.ts passam com sucesso tratando fallbacks de banco de forma adequada.
-- [ ] #4 A CLI (chat.ts) consegue inicializar o VDR e realizar buscas semânticas persistidas no Postgres local.
+- [x] #1 O schema.sql contém as diretivas de criação do pgvector e as novas estruturas de tabelas atualizadas.
+- [x] #2 A classe DatabaseMemoryService e a camada RAG usam queries SQL nativas com o operador <=> para buscas de similaridade.
+- [x] #3 Os testes em tests/core/memory_service.spec.ts passam com sucesso tratando fallbacks de banco de forma adequada.
+- [x] #4 A CLI (chat.ts) consegue inicializar o VDR e realizar buscas semânticas persistidas no Postgres local.
 <!-- DOD:END -->

@@ -3,6 +3,7 @@
 -- Incluí tabelas operacionais de M&A e tabelas autônomas para o Database Memory Service.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ============================================================================
 -- 1. TABELAS DE DOMÍNIO E LOOKUP (TRANSAÇÃO E NEGÓCIOS)
@@ -165,7 +166,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id VARCHAR(255) NOT NULL UNIQUE, -- Identificador do usuário ou broker
     preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-    embedding REAL[], -- Preparação para futuro pg_vector: vector(1536)
+    embedding vector(384), -- Suporte ativo ao pgvector (MiniLM)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -174,7 +175,7 @@ CREATE TABLE IF NOT EXISTS domain_knowledge (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     category VARCHAR(100) NOT NULL, -- Ex: 'Legal Clauses', 'Valuation Multipliers'
     knowledge JSONB NOT NULL DEFAULT '{}'::jsonb,
-    embedding REAL[], -- Preparação para futuro pg_vector: vector(1536)
+    embedding vector(384), -- Suporte ativo ao pgvector (MiniLM)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -183,9 +184,19 @@ CREATE TABLE IF NOT EXISTS company_culture_memory (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id UUID REFERENCES business(id) ON DELETE CASCADE,
     culture_data JSONB NOT NULL DEFAULT '{}'::jsonb,
-    embedding REAL[], -- Preparação para futuro pg_vector: vector(1536)
+    embedding vector(384), -- Suporte ativo ao pgvector (MiniLM)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS vdr_document_chunks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    deal_id VARCHAR(255) NOT NULL,
+    document_name VARCHAR(255) NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    text_chunk TEXT NOT NULL,
+    embedding vector(384),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================================
@@ -212,3 +223,9 @@ CREATE INDEX IF NOT EXISTS idx_phase_history_data_gin ON phase_history USING gin
 CREATE INDEX IF NOT EXISTS idx_user_preferences_gin ON user_preferences USING gin (preferences);
 CREATE INDEX IF NOT EXISTS idx_domain_knowledge_gin ON domain_knowledge USING gin (knowledge);
 CREATE INDEX IF NOT EXISTS idx_company_culture_gin ON company_culture_memory USING gin (culture_data);
+
+-- Índices HNSW para busca vetorial de cosseno
+CREATE INDEX IF NOT EXISTS idx_user_preferences_hnsw ON user_preferences USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_domain_knowledge_hnsw ON domain_knowledge USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_company_culture_hnsw ON company_culture_memory USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_vdr_document_chunks_hnsw ON vdr_document_chunks USING hnsw (embedding vector_cosine_ops);
