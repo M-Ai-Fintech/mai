@@ -103,10 +103,14 @@ deno task start
 
 ## 📚 Documentação Adicional
 
-* Para a especificação profunda da arquitetura, 7 agentes e infraestrutura GCP, consulte: 👉 **[context/architecture.md](file:///home/luis/mai/context/architecture.md)**
-* Para detalhes de integração com a IA da Google (AI Studio, Vertex AI, Colab e ADK SDK), consulte: 👉 **[AGENTS.md](file:///home/luis/mai/AGENTS.md)**
-* Para regras de valoração e precificação, consulte: 👉 **[context/valuation.md](file:///home/luis/mai/context/valuation.md)**
-* Para detalhes sobre o motor preditivo ONNX, treinamento e inferência, consulte: 👉 **[docs/prediction_engine.md](file:///home/luis/mai/docs/prediction_engine.md)**
+* **Arquitetura Geral:** Consulte 👉 **[context/architecture.md](file:///home/luis/mai/context/architecture.md)**
+* **Integração Google AI & ADK:** Consulte 👉 **[AGENTS.md](file:///home/luis/mai/AGENTS.md)**
+* **Regras de Valuation e Precificação:** Consulte 👉 **[context/valuation.md](file:///home/luis/mai/context/valuation.md)**
+* **Otimizador de Portfólio (MILP):** Consulte 👉 **[context/optimization_portfolio_solver.md](file:///home/luis/mai/context/optimization_portfolio_solver.md)**
+* **Otimizador de Term Sheet (Algoritmo Genético):** Consulte 👉 **[context/term_sheet_genetic_optimizer.md](file:///home/luis/mai/context/term_sheet_genetic_optimizer.md)**
+* **Integração VDR & Supergood Proxy:** Consulte 👉 **[context/vdr_integration_supergood.md](file:///home/luis/mai/context/vdr_integration_supergood.md)**
+* **RAG Silado e Aprendizado Contínuo:** Consulte 👉 **[context/continuous_learning_and_rag.md](file:///home/luis/mai/context/continuous_learning_and_rag.md)**
+* **Motor Preditivo ONNX & Treinamento:** Consulte 👉 **[docs/prediction_engine.md](file:///home/luis/mai/docs/prediction_engine.md)**
 
 
 ### Cloud SQL e pg_vector
