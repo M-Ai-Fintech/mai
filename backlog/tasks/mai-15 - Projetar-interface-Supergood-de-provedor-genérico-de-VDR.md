@@ -1,11 +1,11 @@
 ---
 id: MAI-15
 title: Projetar interface Supergood de provedor genérico de VDR
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 17:30'
 labels:
   - core
   - vdr
@@ -25,12 +25,14 @@ Estruturar uma interface comum de abstração (provider pattern) integrando a pr
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Definir a interface TypeScript VDRProvider em src/core/vdr/provider.ts contendo assinaturas para listagem, download, upload e metadados de documentos.
-- [ ] #2 Implementar a classe BaseVDRProvider que intercepta chamadas de rede e as encapsula de forma a rotear por meio do host de proxy do Supergood, se configurado.
-- [ ] #3 Validar a estrutura de retorno do VDR (como listas de documentos e metadados) usando Zod schemas, garantindo a conformidade da resposta.
-- [ ] #4 Suportar um mecanismo de fallback local (mock/local mode) quando a URL do proxy do Supergood não for informada ou as variáveis de ambiente estiverem offline.
-- [ ] #5 Garantir cobertura de testes unitários para a injeção correta de cabeçalhos do Supergood (ex: x-supergood-api-key, etc.) e as rotas de redirecionamento.
+- [x] #1 Definir a interface TypeScript VDRProvider em src/core/vdr/provider.ts contendo assinaturas para listagem, download, upload e metadados de documentos.
+- [x] #2 Implementar a classe BaseVDRProvider que intercepta chamadas de rede e as encapsula de forma a rotear por meio do host de proxy do Supergood, se configurado.
+- [x] #3 Validar a estrutura de retorno do VDR (como listas de documentos e metadados) usando Zod schemas, garantindo a conformidade da resposta.
+- [x] #4 Suportar um mecanismo de fallback local (mock/local mode) quando a URL do proxy do Supergood não for informada ou as variáveis de ambiente estiverem offline.
+- [x] #5 Garantir cobertura de testes unitários para a injeção correta de cabeçalhos do Supergood (ex: x-supergood-api-key, etc.) e as rotas de redirecionamento.
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -44,8 +46,8 @@ Estruturar uma interface comum de abstração (provider pattern) integrando a pr
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Garantir 100% de tipagem estrita no módulo, sem o uso inadequado de type casts perigosos ou "any" nas assinaturas públicas.
-- [ ] #2 Nenhum segredo ou chave de acesso de APIs expostos de forma hardcoded no código ou nos testes.
-- [ ] #3 Os testes unitários devem cobrir no mínimo 85% das ramificações lógicas da classe BaseVDRProvider e executar com sucesso via Deno test.
-- [ ] #4 Documentação clara no código (JSDoc) sobre o papel do Supergood e como instanciar e parametrizar um provedor.
+- [x] #1 Garantir 100% de tipagem estrita no módulo, sem o uso inadequado de type casts perigosos ou "any" nas assinaturas públicas.
+- [x] #2 Nenhum segredo ou chave de acesso de APIs expostos de forma hardcoded no código ou nos testes.
+- [x] #3 Os testes unitários devem cobrir no mínimo 85% das ramificações lógicas da classe BaseVDRProvider e executar com sucesso via Deno test.
+- [x] #4 Documentação clara no código (JSDoc) sobre o papel do Supergood e como instanciar e parametrizar um provedor.
 <!-- DOD:END -->
