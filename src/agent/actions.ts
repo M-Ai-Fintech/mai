@@ -8,117 +8,10 @@ import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 import { DatabaseMemoryService } from "../core/db/memory_service.ts";
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 import { ONNXEngine } from "../engines/prediction/onnx.ts";
-import solver from "npm:javascript-lp-solver";
 import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
+import { PortfolioSolver } from "../engines/optimization/kyc/kyc_valuation_solver.ts";
 
 import { LocalPubSubBus } from "../core/pubsub/LocalPubSubBus.ts";
-
-
-interface TargetItem {
-  readonly id: string;
-  readonly name: string;
-  readonly synergyValue: number;
-  readonly acquisitionCost: number;
-  readonly kycRiskIndex: number;
-}
-
-interface PortfolioConfig {
-  readonly budgetLimit: number;
-  readonly riskToleranceLimit: number;
-  readonly mutualExclusions?: readonly [string, string][];
-}
-
-class MILPOptimizer {
-  public static optimizePortfolio(
-    targets: readonly TargetItem[],
-    config: PortfolioConfig,
-  ): Promise<{
-    selectedTargetIds: string[];
-    totalCostSpent: number;
-    totalSynergyAchieved: number;
-    status: string;
-  }> {
-    // Filter targets by individual KYC risk index tolerance limit
-    const eligibleTargets = targets.filter((t) => t.kycRiskIndex <= config.riskToleranceLimit);
-
-    if (eligibleTargets.length === 0) {
-      return Promise.resolve({
-        selectedTargetIds: [],
-        totalCostSpent: 0,
-        totalSynergyAchieved: 0,
-        status: "infeasible",
-      });
-    }
-
-    const variables: Record<string, any> = {};
-    const ints: Record<string, 1 | 0> = {};
-    const constraints: Record<string, any> = {
-      budget: { max: config.budgetLimit },
-    };
-
-    // Mutual exclusions constraints
-    if (config.mutualExclusions) {
-      config.mutualExclusions.forEach(([idA, idB], index) => {
-        constraints[`exclusion_${index}`] = { max: 1 };
-      });
-    }
-
-    eligibleTargets.forEach((t) => {
-      const varName = t.id;
-      const varDef: Record<string, number> = {
-        budget: t.acquisitionCost,
-        synergy: t.synergyValue,
-      };
-
-      // Add target binary constraints (x_i <= 1)
-      varDef[varName] = 1;
-      constraints[varName] = { max: 1 };
-
-      // Add mutual exclusion constraints
-      if (config.mutualExclusions) {
-        config.mutualExclusions.forEach(([idA, idB], index) => {
-          if (t.id === idA || t.id === idB) {
-            varDef[`exclusion_${index}`] = 1;
-          }
-        });
-      }
-
-      variables[varName] = varDef;
-      ints[varName] = 1;
-    });
-
-    const model = {
-      optimize: "synergy",
-      opType: "max" as const,
-      constraints,
-      variables,
-      ints,
-    };
-
-    const solution = solver.Solve(model) as any;
-
-    const selectedTargetIds: string[] = [];
-    let totalCostSpent = 0;
-    let totalSynergyAchieved = 0;
-
-    if (solution.feasible) {
-      eligibleTargets.forEach((t) => {
-        if (solution[t.id] === 1) {
-          selectedTargetIds.push(t.id);
-          totalCostSpent += t.acquisitionCost;
-          totalSynergyAchieved += t.synergyValue;
-        }
-      });
-    }
-
-    return Promise.resolve({
-      selectedTargetIds,
-      totalCostSpent,
-      totalSynergyAchieved,
-      status: solution.feasible ? "optimal" : "infeasible",
-    });
-  }
-}
 
 
 
@@ -180,19 +73,57 @@ export const optimizePortfolioTool = createTool({
         synergyValue: z.number(),
         acquisitionCost: z.number(),
         kycRiskIndex: z.number(),
+        ebitda: z.number().optional(),
+        revenue: z.number().optional(),
+        totalAssets: z.number().optional(),
+        totalLiabilities: z.number().optional(),
+        operatingCashFlow: z.number().optional(),
+        historicalVolatility: z.number().optional(),
+        businessSector: z.string().optional(),
+        taxDebtsAmount: z.number().optional(),
       }),
     ),
     budgetLimit: z.number(),
     riskToleranceLimit: z.number(),
+    taxDebtCap: z.number().optional(),
+    sectorAllocationCaps: z.record(z.string(), z.number()).optional(),
     mutualExclusions: z.array(z.tuple([z.string(), z.string()])).optional(),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const result = await MILPOptimizer.optimizePortfolio(input.targets, {
+    const solverTargets = input.targets.map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      synergyValue: t.synergyValue,
+      acquisitionCost: t.acquisitionCost,
+      ebitda: t.ebitda ?? 0,
+      revenue: t.revenue ?? 0,
+      totalAssets: t.totalAssets ?? 1,
+      totalLiabilities: t.totalLiabilities ?? 0,
+      operatingCashFlow: t.operatingCashFlow ?? 0,
+      historicalVolatility: t.historicalVolatility ?? t.kycRiskIndex,
+      businessSector: t.businessSector ?? "General",
+      taxDebtsAmount: t.taxDebtsAmount ?? 0,
+    }));
+
+    const criteria = {
       budgetLimit: input.budgetLimit,
       riskToleranceLimit: input.riskToleranceLimit,
+      taxDebtCap: input.taxDebtCap ?? Number.MAX_SAFE_INTEGER,
+      sectorAllocationCaps: input.sectorAllocationCaps,
       mutualExclusions: input.mutualExclusions,
-    });
+    };
+
+    const solverResult = await PortfolioSolver.evaluateAndOptimize(solverTargets, criteria);
+
+    const result = {
+      selectedTargetIds: solverResult.optimization.selectedTargetIds,
+      totalCostSpent: solverResult.totalCost,
+      totalSynergyAchieved: solverResult.totalSynergy,
+      status: solverResult.optimization.status,
+      evaluatedProfiles: solverResult.evaluatedProfiles,
+    };
+
     return { success: true, result };
   },
 });

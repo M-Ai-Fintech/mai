@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:35'
+updated_date: '2026-07-09 21:52'
 labels:
   - engine
   - prediction
@@ -53,6 +53,11 @@ author: Auditoria Técnica
 created: 2026-07-09 21:35
 ---
 [REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o critério DoD #5 (atualizar documentação no repositório com instruções para treinamento/exportação e o arquivo docs/prediction_engine.md) não foi cumprido (o arquivo não existe e o README.md não possui as instruções detalhadas). 2. O código de inferência e testes unitários com fallback foram implementados corretamente, cumprindo os demais requisitos funcionais.
+---
+
+created: 2026-07-09 21:52
+---
+Crítica resolvida: Documentação criada em docs/prediction_engine.md e README.md atualizado com as instruções detalhadas do pipeline ONNX.
 ---
 <!-- COMMENTS:END -->
 

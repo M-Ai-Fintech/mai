@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:35'
+updated_date: '2026-07-09 21:52'
 labels:
   - engine
   - optimization
@@ -66,6 +66,11 @@ author: Auditoria Técnica
 created: 2026-07-09 21:35
 ---
 [REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o AC #1, AC #3 e DoD #2 falharam: A classe MILPOptimizer ainda existe de forma duplicada em src/agent/actions.ts (linha 31 a 121). A tool 'optimizePortfolioTool' não importa o novo módulo PortfolioSolver de kyc_valuation_solver.ts, ela utiliza a implementação antiga duplicada.
+---
+
+created: 2026-07-09 21:52
+---
+Crítica resolvida: MILPOptimizer duplicado removido de actions.ts e tool optimizePortfolioTool integrada para usar o novo PortfolioSolver.
 ---
 <!-- COMMENTS:END -->
 

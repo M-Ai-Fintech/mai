@@ -106,6 +106,7 @@ deno task start
 * Para a especificação profunda da arquitetura, 7 agentes e infraestrutura GCP, consulte: 👉 **[context/architecture.md](file:///home/luis/mai/context/architecture.md)**
 * Para detalhes de integração com a IA da Google (AI Studio, Vertex AI, Colab e ADK SDK), consulte: 👉 **[AGENTS.md](file:///home/luis/mai/AGENTS.md)**
 * Para regras de valoração e precificação, consulte: 👉 **[context/valuation.md](file:///home/luis/mai/context/valuation.md)**
+* Para detalhes sobre o motor preditivo ONNX, treinamento e inferência, consulte: 👉 **[docs/prediction_engine.md](file:///home/luis/mai/docs/prediction_engine.md)**
 
 
 ### Cloud SQL e pg_vector
