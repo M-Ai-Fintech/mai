@@ -134,6 +134,68 @@ export class PDFGenerator {
     return await pdfDoc.save();
   }
   
+
+  /**
+   * Injects dynamic signatures and a corporate watermark into an existing PDF.
+   */
+  public static async injectSignaturesAndWatermark(pdfBytes: Uint8Array, buyerSignature: string, sellerSignature: string): Promise<Uint8Array> {
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pages = pdfDoc.getPages();
+    const fontHelvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontHelveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    
+    // Add watermark to all pages
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      page.drawText("CONFIDENCIAL - GAMA FUND", {
+        x: width / 2 - 150,
+        y: height / 2,
+        size: 30,
+        font: fontHelveticaBold,
+        color: rgb(0.9, 0.9, 0.9),
+      });
+    }
+
+    // Add signatures to the last page
+    const lastPage = pages[pages.length - 1];
+    const { width, height } = lastPage.getSize();
+    let currentY = 100;
+    
+    lastPage.drawLine({
+      start: { x: 50, y: currentY },
+      end: { x: 200, y: currentY },
+      thickness: 1,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+    
+    lastPage.drawLine({
+      start: { x: width - 200, y: currentY },
+      end: { x: width - 50, y: currentY },
+      thickness: 1,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+    
+    currentY -= 15;
+    
+    lastPage.drawText(`Assinatura: ${buyerSignature}`, {
+      x: 50,
+      y: currentY,
+      size: 9,
+      font: fontHelvetica,
+      color: rgb(0, 0, 0),
+    });
+    
+    lastPage.drawText(`Assinatura: ${sellerSignature}`, {
+      x: width - 200,
+      y: currentY,
+      size: 9,
+      font: fontHelvetica,
+      color: rgb(0, 0, 0),
+    });
+
+    return await pdfDoc.save();
+  }
+
   public static async writeTermSheetPDF(
     filePath: string,
     params: LaTeXDocumentParams
