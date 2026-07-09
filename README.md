@@ -115,3 +115,5 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE INDEX IF NOT EXISTS idx_user_preferences_hnsw ON user_preferences USING hnsw (embedding vector_cosine_ops);
 ```
 O código da aplicação já está otimizado para identificar a presença da extensão de forma resiliente.
+## Arquitetura de Orquestração
+Veja [docs/architecture.md](docs/architecture.md) para detalhes do fluxo Pub/Sub e persistência de checkpoints.

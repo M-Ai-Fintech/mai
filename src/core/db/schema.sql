@@ -156,7 +156,20 @@ CREATE TABLE IF NOT EXISTS phase_history (
 );
 
 -- ============================================================================
--- 5. TABELAS AUTÔNOMAS - DATABASE MEMORY SERVICE (COM PREPARAÇÃO PG_VECTOR)
+-- 5. TABELA DE CHECKPOINTS (PARA RECUPERAÇÃO DE FLUXO)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS flow_checkpoints (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID NOT NULL REFERENCES transaction(id) ON DELETE CASCADE,
+    agent_id VARCHAR(100) NOT NULL,
+    topic VARCHAR(255) NOT NULL,
+    state JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
+-- 6. TABELAS AUTÔNOMAS - DATABASE MEMORY SERVICE (COM PREPARAÇÃO PG_VECTOR)
 -- ============================================================================
 -- Nota arquitetural: Estas tabelas operam de forma autônoma para segregar
 -- o conhecimento de domínio e preferências do usuário do histórico operacional (phase_history).
@@ -217,6 +230,7 @@ CREATE INDEX IF NOT EXISTS idx_phase_history_tx ON phase_history(transaction_id)
 CREATE INDEX IF NOT EXISTS idx_phase_history_phase ON phase_history(phase_id);
 CREATE INDEX IF NOT EXISTS idx_phase_history_status ON phase_history(phase_status_id);
 CREATE INDEX IF NOT EXISTS idx_company_culture_biz ON company_culture_memory(business_id);
+CREATE INDEX IF NOT EXISTS idx_flow_checkpoints_tx ON flow_checkpoints(transaction_id);
 
 -- Índices GIN para buscas ultra-rápidas nos campos JSONB
 CREATE INDEX IF NOT EXISTS idx_phase_history_data_gin ON phase_history USING gin (data);

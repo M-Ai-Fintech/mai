@@ -560,4 +560,43 @@ export class DatabaseMemoryService {
       return similarityList.slice(0, limit);
     }
   }
+
+  /**
+   * Salva um checkpoint de fluxo de um agente
+   */
+  public async saveFlowCheckpoint(
+    transactionId: string,
+    agentId: string,
+    topic: string,
+    state: Record<string, unknown>
+  ): Promise<boolean> {
+    const sql = `
+      INSERT INTO flow_checkpoints (transaction_id, agent_id, topic, state)
+      VALUES ($1, $2, $3, $4);
+    `;
+    await this.query(sql, [transactionId, agentId, topic, JSON.stringify(state)]);
+    return true;
+  }
+
+  /**
+   * Busca o último checkpoint de um agente em uma transação
+   */
+  public async getLatestFlowCheckpoint(
+    transactionId: string,
+    agentId: string
+  ): Promise<Record<string, unknown> | null> {
+    const sql = `
+      SELECT state
+      FROM flow_checkpoints
+      WHERE transaction_id = $1 AND agent_id = $2
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `;
+    const res = await this.query(sql, [transactionId, agentId]);
+    if (res.rows && res.rows.length > 0) {
+      return res.rows[0].state;
+    }
+    return null;
+  }
+
 }
