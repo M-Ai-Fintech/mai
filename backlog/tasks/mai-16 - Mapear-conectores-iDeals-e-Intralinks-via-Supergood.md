@@ -1,11 +1,11 @@
 ---
 id: MAI-16
 title: Mapear conectores iDeals e Intralinks via Supergood
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 17:36'
 labels:
   - core
   - vdr
@@ -25,12 +25,14 @@ Desenvolver as classes adaptadoras de VDR IDealsVDRProvider e IntralinksVDRProvi
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Implementar a classe IDealsVDRProvider estendendo BaseVDRProvider para realizar a listagem de arquivos/diretórios e download de documentos do iDeals através do proxy do Supergood.
-- [ ] #2 Implementar a classe IntralinksVDRProvider estendendo BaseVDRProvider para realizar a listagem de arquivos/diretórios e download de documentos do Intralinks através do proxy do Supergood.
-- [ ] #3 Implementar mapeamento e tradução automática dos schemas de resposta originais do iDeals e Intralinks para a interface padronizada VDRDocument e VDRFolder usando Zod.
-- [ ] #4 Garantir suporte completo a tratamento de erros específicos (ex: autenticação expirada, rate limit da API) reportando erros amigáveis ao middleware.
-- [ ] #5 Incluir cobertura completa de testes unitários para ambos os provedores usando fixtures JSON de respostas reais/mockadas do Supergood e mockando as chamadas HTTP em tests/vdr_connectors.spec.ts.
+- [x] #1 Implementar a classe IDealsVDRProvider estendendo BaseVDRProvider para realizar a listagem de arquivos/diretórios e download de documentos do iDeals através do proxy do Supergood.
+- [x] #2 Implementar a classe IntralinksVDRProvider estendendo BaseVDRProvider para realizar a listagem de arquivos/diretórios e download de documentos do Intralinks através do proxy do Supergood.
+- [x] #3 Implementar mapeamento e tradução automática dos schemas de resposta originais do iDeals e Intralinks para a interface padronizada VDRDocument e VDRFolder usando Zod.
+- [x] #4 Garantir suporte completo a tratamento de erros específicos (ex: autenticação expirada, rate limit da API) reportando erros amigáveis ao middleware.
+- [x] #5 Incluir cobertura completa de testes unitários para ambos os provedores usando fixtures JSON de respostas reais/mockadas do Supergood e mockando as chamadas HTTP em tests/vdr_connectors.spec.ts.
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -44,8 +46,8 @@ Desenvolver as classes adaptadoras de VDR IDealsVDRProvider e IntralinksVDRProvi
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Ambos os provedores (IDealsVDRProvider e IntralinksVDRProvider) implementados com tipagem estrita no TypeScript/Deno.
-- [ ] #2 Credenciais e tokens de acesso (como SUPERGOOD_API_KEY) obtidos estritamente a partir de variáveis de ambiente no runtime, sem qualquer dado sensível hardcoded no código ou nos testes.
-- [ ] #3 Testes unitários cobrindo ao menos 85% da lógica de transformação e tratamento de erros dos novos conectores, executando com sucesso via deno test.
-- [ ] #4 Código-fonte documentado com JSDoc descrevendo a estrutura de rotas mapeadas via Supergood e as particularidades de cada provedor.
+- [x] #1 Ambos os provedores (IDealsVDRProvider e IntralinksVDRProvider) implementados com tipagem estrita no TypeScript/Deno.
+- [x] #2 Credenciais e tokens de acesso (como SUPERGOOD_API_KEY) obtidos estritamente a partir de variáveis de ambiente no runtime, sem qualquer dado sensível hardcoded no código ou nos testes.
+- [x] #3 Testes unitários cobrindo ao menos 85% da lógica de transformação e tratamento de erros dos novos conectores, executando com sucesso via deno test.
+- [x] #4 Código-fonte documentado com JSDoc descrevendo a estrutura de rotas mapeadas via Supergood e as particularidades de cada provedor.
 <!-- DOD:END -->

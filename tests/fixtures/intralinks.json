@@ -1,0 +1,21 @@
+{
+  "documents": [
+    {
+      "id": 201,
+      "name": "Q3_earnings.pdf",
+      "size": 2048000,
+      "mimeType": "application/pdf",
+      "parentId": 20,
+      "createdOn": "2026-02-01T10:00:00Z",
+      "modifiedOn": "2026-02-02T10:00:00Z"
+    },
+    {
+      "id": 202,
+      "name": "due_diligence_report.docx",
+      "size": 1500000,
+      "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "createdOn": "2026-02-01T11:00:00Z",
+      "modifiedOn": "2026-02-01T11:00:00Z"
+    }
+  ]
+}

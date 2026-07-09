@@ -1,0 +1,21 @@
+{
+  "files": [
+    {
+      "FileId": 101,
+      "FileName": "financial_report.pdf",
+      "FileSize": 1048576,
+      "MimeType": "application/pdf",
+      "FolderId": 10,
+      "CreationDate": "2026-01-01T10:00:00Z",
+      "LastModified": "2026-01-02T10:00:00Z"
+    },
+    {
+      "FileId": 102,
+      "FileName": "contracts.zip",
+      "FileSize": 5000000,
+      "MimeType": "application/zip",
+      "CreationDate": "2026-01-01T11:00:00Z",
+      "LastModified": "2026-01-01T11:00:00Z"
+    }
+  ]
+}
