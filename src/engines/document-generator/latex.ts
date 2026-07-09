@@ -91,4 +91,40 @@ Exceto pelas cláusulas de confidencialidade e exclusividade, este documento rep
 \\end{document}
 `;
   }
+
+  /**
+   * Compiles LaTeX source to PDF using a spawned pdflatex process,
+   * optimized for production with robust temp directory handling.
+   */
+  public static async compileToPDF(latexContent: string, outputFileName?: string): Promise<Uint8Array> {
+    const tempDir = await Deno.makeTempDir({ prefix: "latex_build_" });
+    const texFilePath = `${tempDir}/document.tex`;
+    const pdfFilePath = `${tempDir}/document.pdf`;
+
+    await Deno.writeTextFile(texFilePath, latexContent);
+
+    const command = new Deno.Command("pdflatex", {
+      args: ["-interaction=nonstopmode", "-halt-on-error", "-output-directory", tempDir, texFilePath],
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const { code, stdout, stderr } = await command.output();
+
+    if (code !== 0) {
+      const errorMsg = new TextDecoder().decode(stderr) || new TextDecoder().decode(stdout);
+      await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+      throw new Error(`LaTeX compilation failed: ${errorMsg}`);
+    }
+
+    const pdfBytes = await Deno.readFile(pdfFilePath);
+    
+    if (outputFileName) {
+      await Deno.writeFile(outputFileName, pdfBytes);
+    }
+
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+
+    return pdfBytes;
+  }
 }
