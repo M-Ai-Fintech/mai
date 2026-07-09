@@ -5,8 +5,9 @@ import { verifyRegistryTool } from "../agent/actions.ts";
 import { Table } from "@cliffy/table";
 import { Spinner } from "https://deno.land/std@0.224.0/cli/spinner.ts";
 import { DatabaseMemoryService } from "../core/db/DatabaseMemoryService.ts";
-import { TermSheetGeneticOptimizer } from "../engines/optimization/genetic.ts";
-import { KYCValuationsCoordinator, TargetRawInput } from "../engines/optimization/kyc/coordinator.ts";
+import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
+import { PortfolioSolver } from "../engines/optimization/kyc/index.ts";
+import { TargetRawInput } from "../engines/optimization/types.ts";
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
@@ -294,11 +295,12 @@ export class CLICommands {
 
     try {
       // Run prediction + solver optimization
-      const res = await KYCValuationsCoordinator.evaluateAndOptimize(
+      const res = await PortfolioSolver.evaluateAndOptimize(
         pipelineTargets,
         {
           budgetLimit: budget,
           riskToleranceLimit: riskTolerance,
+          taxDebtCap: 999999999, // default no cap for CLI demo
           mutualExclusions: [["T1", "T4"]], // Exclusive competitors
         },
       );
@@ -348,7 +350,7 @@ export class CLICommands {
     );
 
     try {
-      const resLiquidity = await TermSheetGeneticOptimizer.optimizeTermSheet({
+      const resLiquidity = await TermSheetOptimizer.run({
         populationSize: 100,
         generations: 40,
         mutationRate: 0.1,
@@ -358,7 +360,7 @@ export class CLICommands {
         preference: 'liquidity',
       });
 
-      const resBalanced = await TermSheetGeneticOptimizer.optimizeTermSheet({
+      const resBalanced = await TermSheetOptimizer.run({
         populationSize: 100,
         generations: 40,
         mutationRate: 0.1,
@@ -368,7 +370,7 @@ export class CLICommands {
         preference: 'balanced',
       });
 
-      const resRetention = await TermSheetGeneticOptimizer.optimizeTermSheet({
+      const resRetention = await TermSheetOptimizer.run({
         populationSize: 100,
         generations: 40,
         mutationRate: 0.1,
@@ -426,7 +428,7 @@ export class CLICommands {
     spinner.start();
 
     // Fetch optimized terms using genetic algorithm
-    const negotiation = await TermSheetGeneticOptimizer.optimizeTermSheet({
+    const negotiation = await TermSheetOptimizer.run({
       populationSize: 100,
       generations: 50,
       mutationRate: 0.1,
