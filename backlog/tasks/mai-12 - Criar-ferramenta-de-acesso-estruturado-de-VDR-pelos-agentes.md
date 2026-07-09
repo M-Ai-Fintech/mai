@@ -1,11 +1,11 @@
 ---
 id: MAI-12
 title: Criar ferramenta de acesso estruturado de VDR pelos agentes
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 20:32'
 labels:
   - agent
   - vdr
@@ -31,11 +31,11 @@ Principais Funcionalidades a Desenvolver:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Ferramenta Mastra Unificada: Implementar a ferramenta vdrStructuredAccessTool no arquivo src/agent/actions.ts com validação de tipos usando Zod para entrada e saída.
-- [ ] #2 Mapeamento de Tags e Pastas: As ações da ferramenta devem mapear os documentos do VDR às tags e diretórios definidos em vdr_directory_template.md.
-- [ ] #3 Integração com RAG Silo: A ação query_silo deve chamar ClientSiloedRAG.querySilo para pesquisar no banco de dados vetorial por similaridade de cosseno.
-- [ ] #4 Relatório de Auditoria de Completude: A ação audit_compliance deve varrer as pastas e verificar se todos os documentos essenciais (tributário, societário, financeiro, trabalhista) estão presentes ou sinalizar ausências como riscos e possíveis deal-breakers.
-- [ ] #5 Registro nos Agentes de Auditoria: A nova ferramenta deve ser exportada e registrada no GeneralDueDiligenceAgent (supervisor de DD) e nos agentes especialistas de backend (financial-risk, legal-dd).
+- [x] #1 Ferramenta Mastra Unificada: Implementar a ferramenta vdrStructuredAccessTool no arquivo src/agent/actions.ts com validação de tipos usando Zod para entrada e saída.
+- [x] #2 Mapeamento de Tags e Pastas: As ações da ferramenta devem mapear os documentos do VDR às tags e diretórios definidos em vdr_directory_template.md.
+- [x] #3 Integração com RAG Silo: A ação query_silo deve chamar ClientSiloedRAG.querySilo para pesquisar no banco de dados vetorial por similaridade de cosseno.
+- [x] #4 Relatório de Auditoria de Completude: A ação audit_compliance deve varrer as pastas e verificar se todos os documentos essenciais (tributário, societário, financeiro, trabalhista) estão presentes ou sinalizar ausências como riscos e possíveis deal-breakers.
+- [x] #5 Registro nos Agentes de Auditoria: A nova ferramenta deve ser exportada e registrada no GeneralDueDiligenceAgent (supervisor de DD) e nos agentes especialistas de backend (financial-risk, legal-dd).
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -52,11 +52,27 @@ Principais Funcionalidades a Desenvolver:
 5. **Passo 5 (Revisão e Clean Up):** Executar os testes via Deno (deno test) para garantir a integridade da suíte.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-09 19:22
+---
+[REVISÃO CRÍTICA] 1. A ferramenta `vdrStructuredAccessTool` engole falhas nas ações `read_file_content` e `query_silo`, retornando fallbacks silenciosos em formato de MOCK em vez de falhar graciosamente ou propagar o erro ao agente. Isso quebra o determinismo da Due Diligence e faz com que o agente tome decisões sobre documentos inexistentes.
+---
+
+author: @Antigravity
+created: 2026-07-09 20:32
+---
+Revisão crítica resolvida: Removidos mocks síncronos e adicionada propagação real de exceções nas ações de VDR.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 O arquivo src/agent/actions.ts possui a nova ferramenta vdrStructuredAccessTool devidamente implementada com Zod Schemas robustos.
-- [ ] #2 As ações da ferramenta realizam corretamente consultas ao mock/silo de dados do VDR.
-- [ ] #3 Escrita de testes unitários em Deno (tests/) para verificar o comportamento das quatro ações (list_files, read_file_content, query_silo, audit_compliance).
-- [ ] #4 Os agentes GeneralDueDiligenceAgent, FinancialRiskAgent e LegalDueDiligenceAgent foram configurados para receber e utilizar a nova ferramenta.
-- [ ] #5 Código limpo, testado localmente, livre de erros de compilação ou lints em TypeScript/Deno.
+- [x] #1 O arquivo src/agent/actions.ts possui a nova ferramenta vdrStructuredAccessTool devidamente implementada com Zod Schemas robustos.
+- [x] #2 As ações da ferramenta realizam corretamente consultas ao mock/silo de dados do VDR.
+- [x] #3 Escrita de testes unitários em Deno (tests/) para verificar o comportamento das quatro ações (list_files, read_file_content, query_silo, audit_compliance).
+- [x] #4 Os agentes GeneralDueDiligenceAgent, FinancialRiskAgent e LegalDueDiligenceAgent foram configurados para receber e utilizar a nova ferramenta.
+- [x] #5 Código limpo, testado localmente, livre de erros de compilação ou lints em TypeScript/Deno.
 <!-- DOD:END -->
