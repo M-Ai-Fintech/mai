@@ -56,10 +56,20 @@ export class DatabaseMemoryService {
 
   constructor(
     connectionString = Deno.env.get("DATABASE_URL") ||
-      "postgres://postgres:postgres@localhost:5432/mai"
+      "postgres://postgres:postgres@localhost:5432/mai",
   ) {
     this.pool = new Pool({
       connectionString,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 10000,
+    });
+    this.pool.on("error", (err) => {
+      console.error(
+        "Unexpected error on idle client in DatabaseMemoryService:",
+        err.message,
+      );
     });
   }
 
@@ -76,7 +86,7 @@ export class DatabaseMemoryService {
     } catch (error) {
       console.error(
         "Failed to connect to the database:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
       return false;
     }
@@ -85,8 +95,37 @@ export class DatabaseMemoryService {
   /**
    * Executa uma query SQL com suporte a parâmetros parametrizados.
    */
-  async query(text: string, params?: any[]) {
-    return await this.pool.query(text, params);
+  async query(text: string, params?: any[], retries = 3): Promise<any> {
+    let attempt = 0;
+    while (attempt <= retries) {
+      try {
+        return await this.pool.query(text, params);
+      } catch (error: any) {
+        // Códigos de erro transientes comuns do Postgres e falhas de rede (Node.js/pg)
+        const isTransient = [
+          "08000",
+          "08003",
+          "08006",
+          "57P01",
+          "ECONNRESET",
+          "ECONNREFUSED",
+        ].includes(error.code);
+        if (!isTransient || attempt === retries) {
+          throw error;
+        }
+        attempt++;
+        const delay = Math.min(
+          1000 * Math.pow(2, attempt) + Math.random() * 1000,
+          10000,
+        );
+        console.warn(
+          `Query failed (code: ${error.code}), retrying in ${
+            Math.round(delay)
+          }ms... (Attempt ${attempt}/${retries})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
   }
 
   /**
@@ -99,7 +138,9 @@ export class DatabaseMemoryService {
   /**
    * Obtém as preferências consolidadas de um usuário ou broker no banco de dados.
    */
-  public async getUserPreferences(userId: string): Promise<Record<string, unknown>> {
+  public async getUserPreferences(
+    userId: string,
+  ): Promise<Record<string, unknown>> {
     const sql = `
       SELECT preferences 
       FROM user_preferences 
@@ -135,14 +176,38 @@ export class DatabaseMemoryService {
           embedding = EXCLUDED.embedding,
           updated_at = CURRENT_TIMESTAMP;
     `;
-    await this.query(sql, [userId, JSON.stringify(preferences), embedding ? JSON.stringify(embedding) : null]);
+    await this.query(sql, [
+      userId,
+      JSON.stringify(preferences),
+      embedding ? JSON.stringify(embedding) : null,
+    ]);
     return true;
   }
 
   /**
    * Consulta o conhecimento de domínio geral cadastrado por categoria.
    */
-  public async getDomainKnowledge(category: string): Promise<DomainKnowledgeRecord[]> {
+  /**
+   * Consulta utilizando o operador de contenção GIN (@>) em JSONB.
+   */
+  public async searchDomainKnowledgeByJson(
+    filter: Record<string, unknown>,
+  ): Promise<DomainKnowledgeRecord[]> {
+    const sql = `
+      SELECT id, category, knowledge, created_at AS "createdAt", updated_at AS "updatedAt"
+      FROM domain_knowledge 
+      WHERE knowledge @> $1::jsonb;
+    `;
+    const res = await this.query(sql, [JSON.stringify(filter)]);
+    return res.rows as DomainKnowledgeRecord[];
+  }
+
+  /**
+   * Consulta o conhecimento de domínio geral cadastrado por categoria.
+   */
+  public async getDomainKnowledge(
+    category: string,
+  ): Promise<DomainKnowledgeRecord[]> {
     const sql = `
       SELECT id, category, knowledge, created_at AS "createdAt", updated_at AS "updatedAt"
       FROM domain_knowledge 
@@ -164,14 +229,20 @@ export class DatabaseMemoryService {
       INSERT INTO domain_knowledge (category, knowledge, embedding)
       VALUES ($1, $2, $3);
     `;
-    await this.query(sql, [category, JSON.stringify(knowledge), embedding ? JSON.stringify(embedding) : null]);
+    await this.query(sql, [
+      category,
+      JSON.stringify(knowledge),
+      embedding ? JSON.stringify(embedding) : null,
+    ]);
     return true;
   }
 
   /**
    * Consulta a memória da cultura organizacional de uma empresa alvo (business_id).
    */
-  public async getCompanyCultureMemory(businessId: string): Promise<CompanyCultureMemoryRecord[]> {
+  public async getCompanyCultureMemory(
+    businessId: string,
+  ): Promise<CompanyCultureMemoryRecord[]> {
     const sql = `
       SELECT id, business_id AS "businessId", culture_data AS "cultureData", created_at AS "createdAt", updated_at AS "updatedAt"
       FROM company_culture_memory 
@@ -193,7 +264,11 @@ export class DatabaseMemoryService {
       INSERT INTO company_culture_memory (business_id, culture_data, embedding)
       VALUES ($1, $2, $3);
     `;
-    await this.query(sql, [businessId, JSON.stringify(cultureData), embedding ? JSON.stringify(embedding) : null]);
+    await this.query(sql, [
+      businessId,
+      JSON.stringify(cultureData),
+      embedding ? JSON.stringify(embedding) : null,
+    ]);
     return true;
   }
 
@@ -205,7 +280,16 @@ export class DatabaseMemoryService {
   public async searchSimilarKnowledge(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<Array<{ id: string; category: string; knowledge: Record<string, unknown>; similarity: number }>> {
+  ): Promise<
+    Array<
+      {
+        id: string;
+        category: string;
+        knowledge: Record<string, unknown>;
+        similarity: number;
+      }
+    >
+  > {
     try {
       const sql = `
         SELECT id, category, knowledge, 1 - (embedding <=> $1::vector) AS similarity
@@ -214,12 +298,15 @@ export class DatabaseMemoryService {
         ORDER BY embedding <=> $1::vector
         LIMIT $2;
       `;
-      const res = await this.query(sql, [JSON.stringify(queryEmbedding), limit]);
+      const res = await this.query(sql, [
+        JSON.stringify(queryEmbedding),
+        limit,
+      ]);
       return res.rows;
     } catch (error) {
       console.warn(
         "[DatabaseMemoryService] pgvector query failed, running in-memory similarity fallback:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
 
       const allKnowledgeSql = `
@@ -228,12 +315,19 @@ export class DatabaseMemoryService {
         WHERE embedding IS NOT NULL;
       `;
       const res = await this.query(allKnowledgeSql);
-      const allRows = res.rows as Array<{ id: string; category: string; knowledge: Record<string, any>; embedding: number[] | string }>;
+      const allRows = res.rows as Array<
+        {
+          id: string;
+          category: string;
+          knowledge: Record<string, any>;
+          embedding: number[] | string;
+        }
+      >;
 
       const similarityList = allRows.map((row) => {
         let emb = row.embedding;
         if (typeof emb === "string") {
-          if (emb.startsWith('[')) emb = JSON.parse(emb);
+          if (emb.startsWith("[")) emb = JSON.parse(emb);
           else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
         }
         const sim = cosineSimilarity(queryEmbedding, emb as number[]);
@@ -256,7 +350,16 @@ export class DatabaseMemoryService {
   public async searchSimilarPreferences(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<Array<{ id: string; userId: string; preferences: Record<string, unknown>; similarity: number }>> {
+  ): Promise<
+    Array<
+      {
+        id: string;
+        userId: string;
+        preferences: Record<string, unknown>;
+        similarity: number;
+      }
+    >
+  > {
     try {
       const sql = `
         SELECT id, user_id AS "userId", preferences, 1 - (embedding <=> $1::vector) AS similarity
@@ -265,14 +368,17 @@ export class DatabaseMemoryService {
         ORDER BY embedding <=> $1::vector
         LIMIT $2;
       `;
-      const res = await this.query(sql, [JSON.stringify(queryEmbedding), limit]);
+      const res = await this.query(sql, [
+        JSON.stringify(queryEmbedding),
+        limit,
+      ]);
       return res.rows;
     } catch (error) {
       console.warn(
         "[DatabaseMemoryService] pgvector preferences search failed, running fallback:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
-      
+
       const sql = `
         SELECT id, user_id AS "userId", preferences, embedding
         FROM user_preferences
@@ -283,7 +389,7 @@ export class DatabaseMemoryService {
       const similarityList = rows.map((row) => {
         let emb = row.embedding;
         if (typeof emb === "string") {
-          if (emb.startsWith('[')) emb = JSON.parse(emb);
+          if (emb.startsWith("[")) emb = JSON.parse(emb);
           else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
         }
         return {
@@ -304,7 +410,16 @@ export class DatabaseMemoryService {
   public async searchSimilarCultureMemory(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<Array<{ id: string; businessId: string; cultureData: Record<string, unknown>; similarity: number }>> {
+  ): Promise<
+    Array<
+      {
+        id: string;
+        businessId: string;
+        cultureData: Record<string, unknown>;
+        similarity: number;
+      }
+    >
+  > {
     try {
       const sql = `
         SELECT id, business_id AS "businessId", culture_data AS "cultureData", 1 - (embedding <=> $1::vector) AS similarity
@@ -313,14 +428,17 @@ export class DatabaseMemoryService {
         ORDER BY embedding <=> $1::vector
         LIMIT $2;
       `;
-      const res = await this.query(sql, [JSON.stringify(queryEmbedding), limit]);
+      const res = await this.query(sql, [
+        JSON.stringify(queryEmbedding),
+        limit,
+      ]);
       return res.rows;
     } catch (error) {
       console.warn(
         "[DatabaseMemoryService] pgvector culture search failed, running fallback:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
-      
+
       const sql = `
         SELECT id, business_id AS "businessId", culture_data AS "cultureData", embedding
         FROM company_culture_memory
@@ -331,7 +449,7 @@ export class DatabaseMemoryService {
       const similarityList = rows.map((row) => {
         let emb = row.embedding;
         if (typeof emb === "string") {
-          if (emb.startsWith('[')) emb = JSON.parse(emb);
+          if (emb.startsWith("[")) emb = JSON.parse(emb);
           else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
         }
         return {
@@ -349,7 +467,10 @@ export class DatabaseMemoryService {
   /**
    * Executa uma consulta SQL genérica parametrizada no banco real.
    */
-  public async executeRawQuery<T>(sql: string, params?: unknown[]): Promise<T[]> {
+  public async executeRawQuery<T>(
+    sql: string,
+    params?: unknown[],
+  ): Promise<T[]> {
     const res = await this.query(sql, params as any[]);
     return res.rows as T[];
   }
@@ -362,13 +483,19 @@ export class DatabaseMemoryService {
     documentName: string,
     chunkIndex: number,
     textChunk: string,
-    embedding: number[]
+    embedding: number[],
   ): Promise<boolean> {
     const sql = `
       INSERT INTO vdr_document_chunks (deal_id, document_name, chunk_index, text_chunk, embedding)
       VALUES ($1, $2, $3, $4, $5);
     `;
-    await this.query(sql, [dealId, documentName, chunkIndex, textChunk, JSON.stringify(embedding)]);
+    await this.query(sql, [
+      dealId,
+      documentName,
+      chunkIndex,
+      textChunk,
+      JSON.stringify(embedding),
+    ]);
     return true;
   }
 
@@ -378,8 +505,17 @@ export class DatabaseMemoryService {
   public async searchVdrDocumentChunks(
     dealId: string,
     queryEmbedding: number[],
-    limit = 5
-  ): Promise<Array<{ documentName: string; chunkIndex: number; textChunk: string; similarity: number }>> {
+    limit = 5,
+  ): Promise<
+    Array<
+      {
+        documentName: string;
+        chunkIndex: number;
+        textChunk: string;
+        similarity: number;
+      }
+    >
+  > {
     try {
       const sql = `
         SELECT document_name AS "documentName", chunk_index AS "chunkIndex", text_chunk AS "textChunk", 1 - (embedding <=> $1::vector) AS similarity
@@ -388,14 +524,18 @@ export class DatabaseMemoryService {
         ORDER BY embedding <=> $1::vector
         LIMIT $3;
       `;
-      const res = await this.query(sql, [JSON.stringify(queryEmbedding), dealId, limit]);
+      const res = await this.query(sql, [
+        JSON.stringify(queryEmbedding),
+        dealId,
+        limit,
+      ]);
       return res.rows;
     } catch (error) {
       console.warn(
         "[DatabaseMemoryService] pgvector VDR search failed, running fallback:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
-      
+
       const sql = `
         SELECT document_name, chunk_index, text_chunk, embedding
         FROM vdr_document_chunks
@@ -406,7 +546,7 @@ export class DatabaseMemoryService {
       const similarityList = rows.map((row) => {
         let emb = row.embedding;
         if (typeof emb === "string") {
-          if (emb.startsWith('[')) emb = JSON.parse(emb);
+          if (emb.startsWith("[")) emb = JSON.parse(emb);
           else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
         }
         return {
