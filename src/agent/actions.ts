@@ -9,7 +9,7 @@ import { DatabaseMemoryService } from "../core/db/memory_service.ts";
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 import { ONNXEngine } from "../engines/prediction/onnx.ts";
 import solver from "npm:javascript-lp-solver";
-import { TermSheetGeneticOptimizer } from "../engines/optimization/genetic.ts";
+import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
 
 import { LocalPubSubBus } from "../core/pubsub/LocalPubSubBus.ts";
 
@@ -212,7 +212,7 @@ export const optimizeTermSheetTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const result = await TermSheetGeneticOptimizer.optimizeTermSheet({
+    const result = await TermSheetOptimizer.run({
       populationSize: input.populationSize ?? 100,
       generations: input.generations ?? 50,
       mutationRate: 0.1,

@@ -1,7 +1,7 @@
 // tests/engines/optimization.spec.ts
 import { assertEquals, assertNotEquals, assertAlmostEquals } from "@std/assert";
-import { TermSheetGeneticOptimizer } from "../../src/engines/optimization/genetic.ts";
-import { KYCValuationsCoordinator } from "../../src/engines/optimization/kyc/coordinator.ts";
+import { TermSheetOptimizer } from "../../src/engines/optimization/matching/index.ts";
+import { PortfolioSolver } from "../../src/engines/optimization/kyc/index.ts";
 import { synergyPricingTool } from "../../src/agent/actions.ts";
 
 const sampleTargets = [
@@ -17,6 +17,7 @@ const sampleTargets = [
     operatingCashFlow: 3,
     historicalVolatility: 0.1,
     businessSector: "SaaS",
+    taxDebtsAmount: 5,
   },
   {
     id: "target_2",
@@ -30,6 +31,7 @@ const sampleTargets = [
     operatingCashFlow: 4,
     historicalVolatility: 0.2,
     businessSector: "Fintech",
+    taxDebtsAmount: 50,
   },
   {
     id: "target_3",
@@ -43,61 +45,55 @@ const sampleTargets = [
     operatingCashFlow: 3.5,
     historicalVolatility: 0.4, // High risk target
     businessSector: "SaaS",
+    taxDebtsAmount: 10,
   },
 ];
 
-// --- 1. KYC VALUATIONS COORDINATOR (MILP) TESTS ---
+// --- 1. PORTFOLIO SOLVER (MILP) TESTS ---
 
-Deno.test("KYCValuationsCoordinator - Maximizes synergy under budget constraint", async () => {
-  const result = await KYCValuationsCoordinator.evaluateAndOptimize(sampleTargets, {
+Deno.test("PortfolioSolver - Maximizes synergy under budget constraint", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
     budgetLimit: 40,
     riskToleranceLimit: 0.5,
+    taxDebtCap: 100, // relaxed
   });
 
   assertEquals(result.optimization.status, "optimal");
-  // With budget 40, we can buy target_1 (cost 20, syn 50) and target_3 (cost 30, syn 70) -> exceeds budget (50).
-  // Or target_2 (cost 35, syn 80) -> total cost 35, total synergy 80.
-  // Or target_1 (cost 20, syn 50) -> total cost 20, total synergy 50.
-  // The optimal choice is target_2 alone (cost 35, synergy 80) since target_1 + target_3 exceeds 40.
-  // Let's verify it chose target_2
   assertEquals(result.optimization.selectedTargetIds, ["target_2"]);
   assertEquals(result.totalSynergy, 80);
   assertEquals(result.totalCost, 35);
 });
 
-Deno.test("KYCValuationsCoordinator - Filters high risk targets", async () => {
-  const result = await KYCValuationsCoordinator.evaluateAndOptimize(sampleTargets, {
+Deno.test("PortfolioSolver - Filters high risk targets", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
     budgetLimit: 100,
     riskToleranceLimit: 0.25, // target_3 is 0.4 so it's filtered out
+    taxDebtCap: 100,
   });
 
-  // target_3 has risk 0.4, which is > 0.25. It shouldn't be selected.
   assertEquals(result.optimization.selectedTargetIds.includes("target_3"), false);
-  // Both target_1 (20) and target_2 (35) fit in budget 100 and have risk <= 0.25.
   assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_2"].sort());
   assertEquals(result.totalSynergy, 130);
   assertEquals(result.totalCost, 55);
 });
 
-Deno.test("KYCValuationsCoordinator - Respects mutual exclusion constraints", async () => {
-  const result = await KYCValuationsCoordinator.evaluateAndOptimize(sampleTargets, {
+Deno.test("PortfolioSolver - Respects mutual exclusion constraints", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
     budgetLimit: 100,
     riskToleranceLimit: 0.5,
+    taxDebtCap: 100,
     mutualExclusions: [["target_1", "target_2"]], // A and B are mutually exclusive
   });
 
-  // Since A and B are mutually exclusive, the solver must pick between:
-  // - target_1 + target_3 (cost 50, synergy 50+70=120)
-  // - target_2 + target_3 (cost 65, synergy 80+70=150)
-  // Optimal is target_2 + target_3. target_1 should NOT be selected.
   assertEquals(result.optimization.selectedTargetIds.includes("target_1"), false);
   assertEquals(result.optimization.selectedTargetIds.sort(), ["target_2", "target_3"].sort());
 });
 
-Deno.test("KYCValuationsCoordinator - Returns infeasible status when no targets match risk criteria", async () => {
-  const result = await KYCValuationsCoordinator.evaluateAndOptimize(sampleTargets, {
+Deno.test("PortfolioSolver - Returns infeasible status when no targets match risk criteria", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
     budgetLimit: 100,
     riskToleranceLimit: 0.05, // too low, no targets eligible
+    taxDebtCap: 100,
   });
 
   assertEquals(result.optimization.status, "infeasible");
@@ -106,11 +102,36 @@ Deno.test("KYCValuationsCoordinator - Returns infeasible status when no targets 
   assertEquals(result.totalSynergy, 0);
 });
 
+Deno.test("PortfolioSolver - Respects tax debt cap", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
+    budgetLimit: 100,
+    riskToleranceLimit: 0.5,
+    taxDebtCap: 20, // target_2 has 50, so it will be excluded
+  });
+
+  assertEquals(result.optimization.selectedTargetIds.includes("target_2"), false);
+  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_3"].sort());
+});
+
+Deno.test("PortfolioSolver - Respects sector allocation caps", async () => {
+  const result = await PortfolioSolver.evaluateAndOptimize(sampleTargets, {
+    budgetLimit: 100,
+    riskToleranceLimit: 0.5,
+    taxDebtCap: 100,
+    sectorAllocationCaps: {
+      "SaaS": 25, // target_1 is 20, target_3 is 30. can't pick target_3, or both.
+    },
+  });
+
+  assertEquals(result.optimization.selectedTargetIds.includes("target_3"), false); // exceeds SaaS budget 25 alone
+  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_2"].sort());
+});
+
 
 // --- 2. TERM SHEET GENETIC OPTIMIZER TESTS ---
 
-Deno.test("TermSheetGeneticOptimizer - Converges to valid proposal", async () => {
-  const result = await TermSheetGeneticOptimizer.optimizeTermSheet({
+Deno.test("TermSheetOptimizer - Converges to valid proposal", async () => {
+  const result = await TermSheetOptimizer.run({
     populationSize: 50,
     generations: 20,
     mutationRate: 0.1,
@@ -146,18 +167,6 @@ Deno.test("synergyPricingTool - Calculates present value and purchase price corr
 
   assertEquals(executeResult.success, true);
   const data = executeResult;
-
-  // Let's manually calculate first year discounted net synergies:
-  // cost: 5 * (1 - 0.34) = 3.3
-  // revenue: 10 * (1 - 0.4) * (1 - 0.34) = 6 * 0.66 = 3.96
-  // integration: 2 * (1 - 0.34) = 1.32
-  // net first year = 3.3 + 3.96 - 1.32 = 5.94
-  // discounted first year = 5.94 / (1.10)^1 = 5.40
-  // discounted second year = 5.94 / 1.21 = 4.909
-  // discounted third year = 5.94 / 1.331 = 4.4627
-  // Total Net Synergy Value ~ 5.4 + 4.909 + 4.4627 = 14.772
-  // sellerPremium = 0.30 * 14.772 = 4.4316
-  // recommendedPurchasePrice = 100 + 4.4316 = 104.4316
 
   assertAlmostEquals(data.netSynergyValue, 14.772, 0.1);
   assertAlmostEquals(data.sellerPremium, 4.431, 0.1);

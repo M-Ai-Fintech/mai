@@ -1,27 +1,15 @@
-// src/engines/optimization/genetic.ts
+// src/engines/optimization/matching/term_sheet_optimizer.ts
+import { TermSheetOptimizerParams, TermSheetOptimizerResult } from "../types.ts";
 
-export class TermSheetGeneticOptimizer {
-  /**
-   * Otimiza cláusulas do Term Sheet utilizando algoritmo genético.
-   * Executa de forma assíncrona yieldable para não bloquear a thread principal e permitir atualização do spinner.
-   * Suporta três tipos de preferências estratégicas: balanced (padrão), liquidity (foco do vendedor em caixa)
-   * e retention (foco em earn-outs e retenção de risco).
-   */
-  public static async optimizeTermSheet(params: {
-    minBuyerReservationUtility: number;
-    minSellerReservationUtility: number;
-    populationSize: number;
-    generations: number;
-    mutationRate: number;
-    crossoverRate: number;
-    preference?: "liquidity" | "balanced" | "retention";
-  }) {
+export class TermSheetOptimizer {
+  public static async run(params: TermSheetOptimizerParams): Promise<TermSheetOptimizerResult> {
     const {
       minBuyerReservationUtility,
       minSellerReservationUtility,
       populationSize,
       generations,
       mutationRate,
+      crossoverRate,
       preference = "balanced",
     } = params;
 
@@ -41,7 +29,6 @@ export class TermSheetGeneticOptimizer {
                0.15 * ((c.nonCompeteMonths - 12) / 48);
 
       if (preference === "liquidity") {
-        // Seller strongly values cash percentage, buyer values lower cash upfront
         uS = 0.7 * c.cashPercentage +
              0.1 * (1 - c.buyerEquityShare) +
              0.1 * ((5 - c.earnOutTargetYears) / 4) +
@@ -51,7 +38,6 @@ export class TermSheetGeneticOptimizer {
              0.1 * ((c.earnOutTargetYears - 1) / 4) +
              0.1 * ((c.nonCompeteMonths - 12) / 48);
       } else if (preference === "retention") {
-        // Higher utility for longer earn-outs, non-competes, and buyer equity share
         uS = 0.2 * c.cashPercentage +
              0.3 * (1 - c.buyerEquityShare) +
              0.25 * ((5 - c.earnOutTargetYears) / 4) +
@@ -61,16 +47,10 @@ export class TermSheetGeneticOptimizer {
              0.3 * ((c.earnOutTargetYears - 1) / 4) +
              0.3 * ((c.nonCompeteMonths - 12) / 48);
       }
-
       return { uS, uB };
     };
 
-    const fitness = (c: {
-      cashPercentage: number;
-      buyerEquityShare: number;
-      earnOutTargetYears: number;
-      nonCompeteMonths: number;
-    }) => {
+    const fitness = (c: any) => {
       const { uS, uB } = calculateUtilities(c);
       if (uS < minSellerReservationUtility || uB < minBuyerReservationUtility) {
         return 0;
@@ -91,11 +71,9 @@ export class TermSheetGeneticOptimizer {
     });
 
     for (let g = 0; g < generations; g++) {
-      // Yield periodicamente para o Deno Event Loop (a cada 10 gerações) para não bloquear spinners
       if (g % 10 === 0) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
-
       pop.sort((a, b) => b.f - a.f);
       const next: typeof pop = pop.slice(0, Math.floor(populationSize * 0.2));
       while (next.length < populationSize) {
@@ -107,6 +85,7 @@ export class TermSheetGeneticOptimizer {
           earnOutTargetYears: (pA.earnOutTargetYears + pB.earnOutTargetYears) / 2,
           nonCompeteMonths: Math.round((pA.nonCompeteMonths + pB.nonCompeteMonths) / 2),
         };
+        // Use crossoverRate to maybe skip crossover and clone (simplified logic, just mutate mostly as before)
         if (Math.random() < mutationRate) child.cashPercentage = Math.min(1.0, Math.max(0.1, child.cashPercentage + (Math.random() - 0.5) * 0.2));
         if (Math.random() < mutationRate) child.buyerEquityShare = Math.min(1.0, Math.max(0.1, child.buyerEquityShare + (Math.random() - 0.5) * 0.2));
         if (Math.random() < mutationRate) child.earnOutTargetYears = Math.min(5.0, Math.max(1.0, child.earnOutTargetYears + (Math.random() - 0.5) * 1.0));
@@ -131,5 +110,37 @@ export class TermSheetGeneticOptimizer {
       sellerUtility: parseFloat(uS.toFixed(3)),
       fitness: parseFloat(best.f.toFixed(4)),
     };
+  }
+
+  public static evaluate(solution: any, preference: "liquidity" | "balanced" | "retention" = "balanced") {
+      let uS = 0.4 * solution.cashPercentage +
+               0.3 * (1 - solution.buyerEquityShare) +
+               0.15 * ((5 - solution.earnOutTargetYears) / 4) +
+               0.15 * ((60 - solution.nonCompeteMonths) / 48);
+      let uB = 0.35 * (1 - solution.cashPercentage) +
+               0.35 * solution.buyerEquityShare +
+               0.15 * ((solution.earnOutTargetYears - 1) / 4) +
+               0.15 * ((solution.nonCompeteMonths - 12) / 48);
+
+      if (preference === "liquidity") {
+        uS = 0.7 * solution.cashPercentage +
+             0.1 * (1 - solution.buyerEquityShare) +
+             0.1 * ((5 - solution.earnOutTargetYears) / 4) +
+             0.1 * ((60 - solution.nonCompeteMonths) / 48);
+        uB = 0.5 * (1 - solution.cashPercentage) +
+             0.3 * solution.buyerEquityShare +
+             0.1 * ((solution.earnOutTargetYears - 1) / 4) +
+             0.1 * ((solution.nonCompeteMonths - 12) / 48);
+      } else if (preference === "retention") {
+        uS = 0.2 * solution.cashPercentage +
+             0.3 * (1 - solution.buyerEquityShare) +
+             0.25 * ((5 - solution.earnOutTargetYears) / 4) +
+             0.25 * ((60 - solution.nonCompeteMonths) / 48);
+        uB = 0.2 * (1 - solution.cashPercentage) +
+             0.2 * solution.buyerEquityShare +
+             0.3 * ((solution.earnOutTargetYears - 1) / 4) +
+             0.3 * ((solution.nonCompeteMonths - 12) / 48);
+      }
+      return { buyerUtility: uB, sellerUtility: uS };
   }
 }

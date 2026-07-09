@@ -1,50 +1,21 @@
-// src/engines/optimization/kyc/coordinator.ts
+// src/engines/optimization/kyc/kyc_valuation_solver.ts
 import solver from "npm:javascript-lp-solver";
+import { PortfolioCriteria, PortfolioResult, TargetRawInput } from "../types.ts";
 
-export interface TargetRawInput {
-  id: string;
-  name: string;
-  synergyValue: number;
-  acquisitionCost: number;
-  ebitda: number;
-  revenue: number;
-  totalAssets: number;
-  totalLiabilities: number;
-  operatingCashFlow: number;
-  historicalVolatility: number;
-  businessSector: string;
-}
-
-interface EvaluatedProfile {
-  metrics: { insolvencyRisk: number };
-}
-
-export class KYCValuationsCoordinator {
-  /**
-   * Avalia perfis de risco e otimiza o portfólio de aquisições de M&A via MILP (HiGHS WASM / javascript-lp-solver).
-   * Executa de forma assíncrona yieldable para liberar o event loop.
-   */
+export class PortfolioSolver {
   public static async evaluateAndOptimize(
     targets: TargetRawInput[],
-    criteria: {
-      budgetLimit: number;
-      riskToleranceLimit: number;
-      mutualExclusions?: string[][];
-    },
-  ): Promise<{
-    optimization: { status: string; selectedTargetIds: string[] };
-    totalSynergy: number;
-    totalCost: number;
-    evaluatedProfiles: Record<string, EvaluatedProfile>;
-  }> {
-    // Step 1: Evaluate risk profiles for each target
-    const evaluatedProfiles: Record<string, EvaluatedProfile> = {};
+    criteria: PortfolioCriteria,
+  ): Promise<PortfolioResult> {
+    const evaluatedProfiles: Record<string, { metrics: { insolvencyRisk: number } }> = {};
     const eligibleTargets: TargetRawInput[] = [];
 
+    // Step 1: Pre-filter targets based on hard thresholds
     for (const t of targets) {
       evaluatedProfiles[t.id] = {
         metrics: { insolvencyRisk: t.historicalVolatility },
       };
+      // Insolvency risk threshold constraint
       if (t.historicalVolatility <= criteria.riskToleranceLimit) {
         eligibleTargets.push(t);
       }
@@ -59,15 +30,21 @@ export class KYCValuationsCoordinator {
       };
     }
 
-    // Yield para o Event Loop para manter a CLI responsiva antes do solve
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    // Step 2: Build and solve MILP model with javascript-lp-solver
+    // Step 2: Build MILP model
     const variables: Record<string, any> = {};
     const ints: Record<string, 1 | 0> = {};
     const constraints: Record<string, any> = {
       budget: { max: criteria.budgetLimit },
+      taxDebt: { max: criteria.taxDebtCap },
     };
+
+    if (criteria.sectorAllocationCaps) {
+      for (const [sector, cap] of Object.entries(criteria.sectorAllocationCaps)) {
+        constraints[`sector_${sector}`] = { max: cap };
+      }
+    }
 
     if (criteria.mutualExclusions) {
       criteria.mutualExclusions.forEach((_pair, index) => {
@@ -79,8 +56,14 @@ export class KYCValuationsCoordinator {
       const varDef: Record<string, number> = {
         budget: t.acquisitionCost,
         synergy: t.synergyValue,
+        taxDebt: t.taxDebtsAmount,
         [t.id]: 1,
       };
+      
+      if (criteria.sectorAllocationCaps && t.businessSector in criteria.sectorAllocationCaps) {
+        varDef[`sector_${t.businessSector}`] = t.acquisitionCost; // Cap by acquisition cost or by count? Usually cap means budget allocation per sector. Let's assume cost.
+      }
+
       constraints[t.id] = { max: 1 };
 
       if (criteria.mutualExclusions) {
