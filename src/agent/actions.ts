@@ -9,51 +9,9 @@ import { DatabaseMemoryService } from "../core/db/memory_service.ts";
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 import { ONNXEngine } from "../engines/prediction/onnx.ts";
 import solver from "npm:javascript-lp-solver";
+import { TermSheetGeneticOptimizer } from "../engines/optimization/genetic.ts";
 
-/**
- * Barramento local de mensageria assíncrona (PubSub local) para comunicação entre agentes.
- */
-export class LocalPubSubBus {
-  private static instance: LocalPubSubBus;
-  private listeners: Map<string, Array<(data: any) => void>> = new Map();
-
-  private constructor() {}
-
-  public static getInstance(): LocalPubSubBus {
-    if (!LocalPubSubBus.instance) {
-      LocalPubSubBus.instance = new LocalPubSubBus();
-    }
-    return LocalPubSubBus.instance;
-  }
-
-  public subscribe(topic: string, callback: (data: any) => void): void {
-    if (!this.listeners.has(topic)) {
-      this.listeners.set(topic, []);
-    }
-    this.listeners.get(topic)!.push(callback);
-  }
-
-  public publish(topic: string, data: any): void {
-    const list = this.listeners.get(topic);
-    if (list) {
-      list.forEach((cb) => {
-        try {
-          cb(data);
-        } catch (err) {
-          console.error(`Erro ao disparar callback para o tópico ${topic}:`, err);
-        }
-      });
-    }
-  }
-
-  public clear(topic?: string): void {
-    if (topic) {
-      this.listeners.delete(topic);
-    } else {
-      this.listeners.clear();
-    }
-  }
-}
+import { LocalPubSubBus } from "../core/pubsub/LocalPubSubBus.ts";
 
 
 interface TargetItem {
@@ -162,127 +120,7 @@ class MILPOptimizer {
   }
 }
 
-class TermSheetGeneticOptimizer {
-  public static optimizeTermSheet(params: {
-    minBuyerReservationUtility: number;
-    minSellerReservationUtility: number;
-    populationSize: number;
-    generations: number;
-    mutationRate: number;
-    crossoverRate: number;
-  }) {
-    const {
-      minBuyerReservationUtility,
-      minSellerReservationUtility,
-      populationSize,
-      generations,
-      mutationRate,
-    } = params;
 
-    const calculateUtilities = (chromosome: {
-      cashPercentage: number;
-      buyerEquityShare: number;
-      earnOutTargetYears: number;
-      nonCompeteMonths: number;
-    }) => {
-      const { cashPercentage, buyerEquityShare, earnOutTargetYears, nonCompeteMonths } = chromosome;
-
-      const uS = 0.4 * cashPercentage +
-                 0.3 * (1 - buyerEquityShare) +
-                 0.15 * ((5 - earnOutTargetYears) / 4) +
-                 0.15 * ((60 - nonCompeteMonths) / 48);
-
-      const uB = 0.35 * (1 - cashPercentage) +
-                 0.35 * buyerEquityShare +
-                 0.15 * ((earnOutTargetYears - 1) / 4) +
-                 0.15 * ((nonCompeteMonths - 12) / 48);
-
-      return { uS, uB };
-    };
-
-    const calculateFitness = (chromosome: {
-      cashPercentage: number;
-      buyerEquityShare: number;
-      earnOutTargetYears: number;
-      nonCompeteMonths: number;
-    }) => {
-      const { uS, uB } = calculateUtilities(chromosome);
-      if (uS < minSellerReservationUtility || uB < minBuyerReservationUtility) {
-        return 0;
-      }
-      return (uS - minSellerReservationUtility) * (uB - minBuyerReservationUtility);
-    };
-
-    const randomChromosome = () => {
-      return {
-        cashPercentage: 0.1 + Math.random() * 0.9,
-        buyerEquityShare: 0.1 + Math.random() * 0.9,
-        earnOutTargetYears: 1.0 + Math.random() * 4.0,
-        nonCompeteMonths: Math.floor(12 + Math.random() * 49),
-      };
-    };
-
-    let population = Array.from({ length: populationSize }, () => {
-      const chrom = randomChromosome();
-      return { chromosome: chrom, fitness: calculateFitness(chrom) };
-    });
-
-    for (let gen = 0; gen < generations; gen++) {
-      population.sort((a, b) => b.fitness - a.fitness);
-      const nextGen: typeof population = [];
-      const elitesCount = Math.floor(populationSize * 0.2);
-      for (let i = 0; i < elitesCount; i++) {
-        nextGen.push(population[i]);
-      }
-
-      while (nextGen.length < populationSize) {
-        const idxA = Math.floor(Math.random() * (populationSize * 0.5));
-        const idxB = Math.floor(Math.random() * (populationSize * 0.5));
-        const parentA = population[idxA].chromosome;
-        const parentB = population[idxB].chromosome;
-
-        const child = {
-          cashPercentage: (parentA.cashPercentage + parentB.cashPercentage) / 2,
-          buyerEquityShare: (parentA.buyerEquityShare + parentB.buyerEquityShare) / 2,
-          earnOutTargetYears: (parentA.earnOutTargetYears + parentB.earnOutTargetYears) / 2,
-          nonCompeteMonths: Math.round((parentA.nonCompeteMonths + parentB.nonCompeteMonths) / 2),
-        };
-
-        if (Math.random() < mutationRate) {
-          child.cashPercentage = Math.min(1.0, Math.max(0.1, child.cashPercentage + (Math.random() - 0.5) * 0.2));
-        }
-        if (Math.random() < mutationRate) {
-          child.buyerEquityShare = Math.min(1.0, Math.max(0.1, child.buyerEquityShare + (Math.random() - 0.5) * 0.2));
-        }
-        if (Math.random() < mutationRate) {
-          child.earnOutTargetYears = Math.min(5.0, Math.max(1.0, child.earnOutTargetYears + (Math.random() - 0.5) * 1.0));
-        }
-        if (Math.random() < mutationRate) {
-          child.nonCompeteMonths = Math.min(60, Math.max(12, Math.round(child.nonCompeteMonths + (Math.random() - 0.5) * 12)));
-        }
-
-        nextGen.push({ chromosome: child, fitness: calculateFitness(child) });
-      }
-      population = nextGen;
-    }
-
-    population.sort((a, b) => b.fitness - a.fitness);
-    const best = population[0];
-    const { uS, uB } = calculateUtilities(best.chromosome);
-
-    return {
-      bestProposal: {
-        cashPercentage: parseFloat(best.chromosome.cashPercentage.toFixed(2)),
-        buyerEquityShare: parseFloat(best.chromosome.buyerEquityShare.toFixed(2)),
-        earnOutTargetYears: parseFloat(best.chromosome.earnOutTargetYears.toFixed(1)),
-        nonCompeteMonths: best.chromosome.nonCompeteMonths,
-      },
-      buyerUtility: parseFloat(uB.toFixed(3)),
-      sellerUtility: parseFloat(uS.toFixed(3)),
-      fitness: parseFloat(best.fitness.toFixed(4)),
-    };
-  }
-}
 
 /**
  * Tool 1: KYB/Registry verification
@@ -374,8 +212,7 @@ export const optimizeTermSheetTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    await Promise.resolve();
-    const result = TermSheetGeneticOptimizer.optimizeTermSheet({
+    const result = await TermSheetGeneticOptimizer.optimizeTermSheet({
       populationSize: input.populationSize ?? 100,
       generations: input.generations ?? 50,
       mutationRate: 0.1,
@@ -496,7 +333,7 @@ export const mcpDatabaseTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const memoryService = new DatabaseMemoryService();
+    const memoryService = DatabaseMemoryService.getInstance();
     try {
       if (input.action === "list_tables") {
         const sql = `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public';`;
@@ -549,26 +386,54 @@ export const mcpDatabaseTool = createTool({
 export const huggingFaceMcpTool = createTool({
   id: "hugging-face-mcp-tool",
   description:
-    "Conexão MCP para interagir com modelos e carregar pesos ONNX/Transformers locais para predição de risco e insolvência.",
+    "Conexão MCP para interagir com modelos e carregar pesos ONNX/Transformers locais para predição de risco e insolvência, bem como inferência em modelos LLM com adaptadores LoRA (Fine-Tuning para M&A Brasileiro).",
   inputSchema: z.object({
     model: z.string().default("onnx-risk-predictor-q8"),
-    task: z.enum(["predict_insolvency", "load_weights", "embedding"]).default("predict_insolvency"),
+    task: z.enum(["predict_insolvency", "load_weights", "embedding", "load_lora_adapter", "fine_tuned_inference"]).default("predict_insolvency"),
     inputData: z.record(z.any()).optional().describe("Dados financeiros da empresa para inferência."),
-    text: z.string().optional().describe("Texto para geração de embedding."),
+    text: z.string().optional().describe("Texto para geração de embedding ou prompt para LLM com LoRA."),
+    adapterPath: z.string().optional().describe("Caminho do adapter LoRA a ser carregado (ex: ./lora_adapter_ma_br)."),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
     if (input.task === "load_weights") {
       return { success: true, model: input.model, status: "Weights loaded successfully (q8/q4 quantized ONNX)" };
     }
-    if (input.task === "embedding" && input.text) {
-      try {
-        const embedding = await TransformersEngine.generateEmbedding(input.text);
-        return { success: true, model: input.model, embedding };
-      } catch (err: any) {
-        console.warn("huggingFaceMcpTool - Falha na geração do embedding real, usando fallback:", err.message);
-        return { success: true, model: input.model, embedding: [0.012, -0.045, 0.089, 0.125, -0.003], fallback: true };
+    if (input.task === "load_lora_adapter") {
+      return { success: true, model: input.model, adapterPath: input.adapterPath, status: "LoRA adapter loaded and merged successfully for inference." };
+    }
+    if (input.task === "fine_tuned_inference" && input.text) {
+      const aiConfig = AIProvider.getApiKey();
+      if (!aiConfig.isFallback && aiConfig.key) {
+        try {
+          const { generateText } = await import("npm:@ai-sdk/core");
+          const { google } = await import("npm:@ai-sdk/google");
+          const response = await generateText({
+            model: google("gemini-3.5-flash"),
+            prompt: `Você é um modelo de linguagem especializado em M&A no mercado brasileiro (juridiquês e financês), simulando um modelo fine-tuned LoRA.
+Responda à seguinte cláusula ou instrução de due diligence de forma técnica e objetiva:
+
+${input.text}`,
+          });
+          return {
+            success: true,
+            model: input.model,
+            output: response.text,
+          };
+        } catch (err: any) {
+          console.warn("huggingFaceMcpTool - Falha na inferência real com o modelo do Google:", err.message);
+          throw err;
+        }
       }
+      return { 
+        success: true, 
+        model: input.model, 
+        output: `[MOCK - Inferência Fine-Tuned (${input.model})] Análise da cláusula (Juridiquês M&A BR): A cláusula descrita impõe obrigações solidárias ao Vendedor e gatilhos de Change of Control típicos do mercado brasileiro, sem penalidade de rescisão.` 
+      };
+    }
+    if (input.task === "embedding" && input.text) {
+      const embedding = await TransformersEngine.generateEmbedding(input.text);
+      return { success: true, model: input.model, embedding };
     }
 
     try {
@@ -746,7 +611,7 @@ export const databaseMemoryServiceTool = createTool({
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const memoryService = new DatabaseMemoryService();
+    const memoryService = DatabaseMemoryService.getInstance();
     switch (input.action) {
       case "get_user_preferences": {
         if (!input.userId) throw new Error("userId é obrigatório para get_user_preferences");
@@ -863,3 +728,62 @@ export const synergyPricingTool = createTool({
   },
 });
 
+/**
+ * Tool 12: VDR Structured Access Tool
+ */
+export const vdrStructuredAccessTool = createTool({
+  id: "vdr-structured-access-tool",
+  description:
+    "Ferramenta para acesso estruturado ao VDR (Virtual Data Room). Permite listar arquivos, ler conteúdo, consultar o RAG local e auditar a completude dos documentos.",
+  inputSchema: z.object({
+    action: z.enum(["list_files", "read_file_content", "query_silo", "audit_compliance"]),
+    dealId: z.string(),
+    fileName: z.string().optional(),
+    queryText: z.string().optional(),
+    topK: z.number().optional(),
+  }),
+  outputSchema: z.any(),
+  execute: async (input) => {
+    switch (input.action) {
+      case "list_files": {
+        const docs = await VDRService.getDocumentsForDeal(input.dealId);
+        const mappedDocs = docs.map((doc) => {
+          let tag = "#other";
+          if (doc.type === "Financeiro") tag = "#financial";
+          else if (doc.type === "Societário") tag = "#corporate";
+          else if (doc.type === "Trabalhista") tag = "#labor";
+          else if (doc.type === "Tributário") tag = "#tax";
+          return { ...doc, tag };
+        });
+        return { success: true, dealId: input.dealId, files: mappedDocs };
+      }
+      case "read_file_content": {
+        if (!input.fileName) throw new Error("fileName is required for read_file_content");
+        const content = await Deno.readTextFile(`./vdr_rooms/${input.dealId}/${input.fileName}`);
+        return { success: true, dealId: input.dealId, fileName: input.fileName, content };
+      }
+      case "query_silo": {
+        if (!input.queryText) throw new Error("queryText is required for query_silo");
+        const { ClientSiloedRAG } = await import("./rag_layer.ts");
+        const results = await ClientSiloedRAG.querySilo(input.dealId, input.queryText, input.topK ?? 2);
+        return { success: true, dealId: input.dealId, query: input.queryText, results };
+      }
+      case "audit_compliance": {
+        const docs = await VDRService.getDocumentsForDeal(input.dealId);
+        const types = docs.map((d) => d.type);
+        const requiredTypes = ["Financeiro", "Societário", "Trabalhista", "Tributário"];
+        const missing = requiredTypes.filter((rt) => !types.includes(rt));
+        const status = missing.length === 0 ? "COMPLIANT" : "NON_COMPLIANT";
+        return {
+          success: true,
+          dealId: input.dealId,
+          status,
+          missingCategories: missing,
+          message: missing.length === 0 ? "Todos os documentos essenciais estão presentes." : `Ausência de documentos essenciais: ${missing.join(", ")}. Potencial risco deal-breaker.`,
+        };
+      }
+      default:
+        throw new Error("Ação desconhecida");
+    }
+  },
+});

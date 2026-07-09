@@ -19,7 +19,7 @@ export class AIProvider {
 
     for (const envVar of keysToTry) {
       const key = Deno.env.get(envVar);
-      if (key && key.trim() !== "") {
+      if (key && key.trim() !== "" && key.trim() !== "mock-key-for-dry-run") {
         return { key: key.trim(), isFallback: false };
       }
     }

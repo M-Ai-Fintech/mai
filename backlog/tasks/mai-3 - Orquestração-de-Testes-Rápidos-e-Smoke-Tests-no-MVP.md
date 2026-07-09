@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 14:58'
+updated_date: '2026-07-09 17:21'
 labels:
   - testing
   - mvp
@@ -37,18 +37,6 @@ Criação de um pipeline local de "Smoke Tests" capaz de validar a integridade d
 - [x] #6 Flag --smoke na CLI imprime um diagnóstico da saúde da infraestrutura
 <!-- AC:END -->
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -56,6 +44,24 @@ Criação de um pipeline local de "Smoke Tests" capaz de validar a integridade d
 2. Criar `tests/smoke.spec.ts` contendo testes de fluxo de deal utilizando mocks estritos.
 3. Modificar a CLI para escutar o argumento `--smoke`, realizando um teste rápido de ping no banco e verificação do ambiente.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Antigravity (Gemini)
+created: 2026-07-09 16:37
+---
+[REVISÃO CRÍTICA - MAI-3]
+1. Teste de Fumaça Superficial: O teste 'tests/smoke.spec.ts' valida unicamente a máquina de estados síncrona do deal em memória ('MADealLifecycle'). Ele não exercita o PubSub local, banco de dados Postgres ou o 'TransformersEngine', o que mascara possíveis problemas graves de runtime e de carregamento de dependências locais offline.
+2. Diagnóstico Estático de Saúde: O comando CLI 'smoke' não realiza nenhuma verificação ou ping de integridade ativa. Ele apenas cospe logs estáticos fixos no console ('Ambiente OK', 'Rede OK'), fornecendo um falso senso de conformidade da infraestrutura de desenvolvimento local.
+---
+
+author: Antigravity
+created: 2026-07-09 17:21
+---
+[SANEAMENTO] Testes de fumaça e unitários expandidos e corrigidos. A suíte completa agora valida o carregamento assíncrono dos pesos ONNX/Transformers locais, teste real de conexões e fallback automático do Postgres, além do fluxo real e assíncrono de mensageria Pub/Sub.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

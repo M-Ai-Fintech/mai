@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 15:14'
+updated_date: '2026-07-09 17:21'
 labels:
   - core
   - integration
@@ -43,8 +43,6 @@ ordinal: 2000
 - [x] #7 Documentação clara da arquitetura Core (REST e integração MCP) criada nos diretórios correspondentes
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -53,6 +51,24 @@ ordinal: 2000
 3. Tratamento de exceções globais durante a inicialização (try/catch na rotina de boot).
 4. Criar documentação técnica em `/backlog/docs/` e `/context/` cobrindo a implementação da Core (REST e MCP).
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Antigravity (Gemini)
+created: 2026-07-09 16:37
+---
+[REVISÃO CRÍTICA - MAI-2]
+1. Injeção de Dependências Fictícia: Embora a tarefa declare uma arquitetura de injeção de dependências (DI), o que foi implementado em 'src/core/boot.ts' são propriedades estáticas. Pior, as classes operacionais nos agentes e mocks instanciam localmente 'new DatabaseMemoryService()' em vez de reutilizar a conexão estática do bootstrapper, gerando múltiplos pools de conexão concorrentes e contornando a verificação do bootstrapper.
+2. Propagação Silenciosa de Erros: Falhas críticas na inicialização do DB ou PubSub no bootstrap são engolidas por um try/catch simples. A CLI continua a subir normalmente, gerando falhas em cascata posteriores difíceis de rastrear.
+---
+
+author: Antigravity
+created: 2026-07-09 17:21
+---
+[SANEAMENTO] Injeção de dependências fictícia corrigida com Singletons (DatabaseMemoryService e LocalPubSubBus) no bootstrap e nas ferramentas operacionais, removendo conexões concorrentes órfãs. Melhorado tratamento e logging de falhas de banco de dados e Pub/Sub.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

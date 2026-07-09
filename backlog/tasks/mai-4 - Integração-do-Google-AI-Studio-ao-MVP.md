@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 14:59'
+updated_date: '2026-07-09 17:21'
 labels:
   - agent
   - ai
@@ -48,8 +48,6 @@ Garantir que a SDK de IA do projeto acesse o Google AI Studio corretamente de fo
 - [x] #8 Documentação gerada explicando o passo a passo de acesso e criação da chave no Google AI Studio
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -59,6 +57,24 @@ Garantir que a SDK de IA do projeto acesse o Google AI Studio corretamente de fo
 4. Emitir alerta instruindo o usuário caso a chave falte.
 5. Criar documentação em `/backlog/docs/` e `/context/` sobre como gerar e configurar a API Key no Google AI Studio.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Antigravity (Gemini)
+created: 2026-07-09 16:37
+---
+[REVISÃO CRÍTICA - MAI-4]
+1. Patch com Chave Falsa no Ambiente: O arquivo 'src/agent/index.ts' injeta 'mock-key-for-dry-run' no Deno.env para contornar a inicialização da biblioteca Mastra/Google na ausência de chaves de API. Contudo, essa interceptação só é tratada manualmente em 'AgentOrchestrator.executeAgentQuery'.
+2. Falhas não Tratadas nos Agentes Mastra: Qualquer subcomando da CLI ou chamada direta aos outros agentes instanciados de forma independente tentará disparar chamadas de API reais do Google usando a chave falsa e falhará com HTTP 400/401, em vez de passar por um fallback amigável de dry-run.
+---
+
+author: Antigravity
+created: 2026-07-09 17:21
+---
+[SANEAMENTO] Implementado monkeypatching global em Agent.prototype.generate e Agent.prototype.stream na inicialização de agentes no ponto de entrada src/agent/index.ts, garantindo a interceptação graciosa de todas as chamadas a agentes da biblioteca Mastra em modo dry-run quando nenhuma chave Gemini estiver disponível. AIProvider.getApiKey agora detecta 'mock-key-for-dry-run' e o trata de forma unificada como fallback.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

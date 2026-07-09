@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 15:00'
+updated_date: '2026-07-09 17:22'
 labels:
   - core
   - api
@@ -35,8 +35,6 @@ Refatoração inicial de mocks. Como não temos um VDR real configurado, o foco 
 - [x] #8 Arquitetura e escopo desses Mocks documentados claramente em /backlog/docs para desenvolvedores
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -45,6 +43,24 @@ Refatoração inicial de mocks. Como não temos um VDR real configurado, o foco 
 3. Atualizar a integração de KYB para simular a query SQL na tabela `business`.
 4. Documentar a arquitetura de Mocks localmente.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Antigravity (Gemini)
+created: 2026-07-09 16:37
+---
+[REVISÃO CRÍTICA - MAI-5]
+1. Simulações Hardcoded na CLI disfarçadas de Agentes: Os outputs dos comandos 'checkRegistry' (KYB), 'analyzeRisk' (Risco Financeiro) e 'optimizeTermSheet' (Negotiation) trazem trechos qualitativos estáticos (ex: 'Governança sólida, fit cultural alto', passivos e Change of Control do RAG) em instruções de console.log rígidas na CLI. O processamento dinâmico por agentes de IA ou RAG é mascarado na interface por essas strings hardcoded.
+2. Pipeline de Alvos Rígido: O otimizador de portfólio consome um array 'pipelineTargets' declarado inline dentro de 'src/cli/commands.ts'. O sistema não lê os deals e empresas de forma dinâmica a partir da tabela 'business' do Postgres real, impedindo testes com novos alvos.
+---
+
+author: Antigravity
+created: 2026-07-09 17:22
+---
+[SANEAMENTO] Removidas simulações hardcoded da CLI. O comando checkRegistry agora busca a cultura societária dinamicamente do banco de dados na tabela company_culture_memory; o comando analyzeRisk inicializa ClientSiloedRAG e busca cláusulas de Change of Control no VDR local; o comando optimizePortfolio carrega targets via queries SQL reais da tabela business com fallback robusto.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

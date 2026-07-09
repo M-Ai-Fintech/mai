@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-09 02:25'
-updated_date: '2026-07-09 14:58'
+updated_date: '2026-07-09 17:21'
 labels:
   - core
   - database
@@ -28,10 +28,6 @@ Configuração e inicialização do banco de dados relacional PostgreSQL local u
 - [x] #3 Deve existir um comando npm/deno (db:start) para subir a infraestrutura local facilmente
 <!-- AC:END -->
 
-
-
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -40,6 +36,24 @@ Configuração e inicialização do banco de dados relacional PostgreSQL local u
 3. Implementar a classe `DatabaseMemoryService` em `src/core/db/` estabelecendo um pool de conexões (ex: biblioteca `postgres` do Deno).
 4. Adicionar rotinas de log para sucesso/falha de conexão no momento do startup.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Antigravity (Gemini)
+created: 2026-07-09 16:37
+---
+[REVISÃO CRÍTICA - MAI-1]
+1. Duplicação de DatabaseMemoryService: Existe uma classe homônima em 'src/core/db/DatabaseMemoryService.ts' (aponta para mai/postgres) e outra em 'src/core/db/memory_service.ts' (aponta para ma_database/ma_broker). Os agentes e mocks utilizam a segunda, de modo que sem configurar DATABASE_URL no .env, eles falham silenciosamente na autenticação com o banco Postgres do docker-compose e caem no fallback de mock.
+2. Incompatibilidade SQL pg_vector: O schema.sql cria a coluna 'embedding' como REAL[], mas a query de 'searchSimilarKnowledge' em memory_service.ts usa o operador '<=>' (distância de cosseno), exclusivo do pg_vector. Em um banco real sem pg_vector instalado ou com tipo REAL[], essa consulta irá falhar com erro de sintaxe.
+---
+
+author: Antigravity
+created: 2026-07-09 17:21
+---
+[SANEAMENTO] DatabaseMemoryService unificado em Singleton e habilitado pgvector fallback em memória + pgvector real no schema.sql.
+---
+<!-- COMMENTS:END -->
 
 <!-- SECTION:PLAN:END -->
 
