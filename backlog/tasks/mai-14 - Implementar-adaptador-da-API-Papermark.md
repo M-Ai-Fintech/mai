@@ -1,11 +1,11 @@
 ---
 id: MAI-14
 title: Implementar adaptador da API Papermark
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-09 17:36'
 labels:
   - core
   - vdr
@@ -25,11 +25,13 @@ Criar um adaptador de integração direta com a API REST do Papermark para lista
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Criar a classe PapermarkAdapter em src/core/vdr/papermark.ts para encapsular as chamadas HTTP para os endpoints da API Papermark.
-- [ ] #2 Configurar autenticação usando a variável de ambiente PAPERMARK_API_KEY com suporte a fallback de URL customizada via PAPERMARK_API_URL.
-- [ ] #3 Implementar o método downloadBatch(dealId: string, dataRoomId: string) para baixar arquivos do Data Room do Papermark para ./vdr_rooms/[dealId]/ organizando-os de acordo com o template de diretórios.
-- [ ] #4 Criar testes unitários em tests/core/papermark.spec.ts com mock completo das requisições REST da API do Papermark.
+- [x] #1 Criar a classe PapermarkAdapter em src/core/vdr/papermark.ts para encapsular as chamadas HTTP para os endpoints da API Papermark.
+- [x] #2 Configurar autenticação usando a variável de ambiente PAPERMARK_API_KEY com suporte a fallback de URL customizada via PAPERMARK_API_URL.
+- [x] #3 Implementar o método downloadBatch(dealId: string, dataRoomId: string) para baixar arquivos do Data Room do Papermark para ./vdr_rooms/[dealId]/ organizando-os de acordo com o template de diretórios.
+- [x] #4 Criar testes unitários em tests/core/papermark.spec.ts com mock completo das requisições REST da API do Papermark.
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -43,8 +45,8 @@ Criar um adaptador de integração direta com a API REST do Papermark para lista
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Todos os testes unitários em tests/core/papermark.spec.ts passando via deno test.
-- [ ] #2 Código em TypeScript compilando sob strict mode e sem avisos no deno lint.
-- [ ] #3 Ausência de credenciais e chaves expostas no código-fonte.
-- [ ] #4 Variáveis de ambiente (PAPERMARK_API_KEY, PAPERMARK_API_URL) documentadas no README.md ou .env.example.
+- [x] #1 Todos os testes unitários em tests/core/papermark.spec.ts passando via deno test.
+- [x] #2 Código em TypeScript compilando sob strict mode e sem avisos no deno lint.
+- [x] #3 Ausência de credenciais e chaves expostas no código-fonte.
+- [x] #4 Variáveis de ambiente (PAPERMARK_API_KEY, PAPERMARK_API_URL) documentadas no README.md ou .env.example.
 <!-- DOD:END -->
