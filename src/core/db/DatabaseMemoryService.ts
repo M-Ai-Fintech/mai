@@ -45,6 +45,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 
 export class DatabaseMemoryService {
   private static instance: DatabaseMemoryService | null = null;
+  protected isDbAvailable: boolean | null = null;
   protected pool: pg.Pool;
 
   public static getInstance(): DatabaseMemoryService {
@@ -82,12 +83,14 @@ export class DatabaseMemoryService {
       const client = await this.pool.connect();
       console.log("Database connected successfully.");
       client.release();
+      this.isDbAvailable = true;
       return true;
     } catch (error) {
       console.error(
         "Failed to connect to the database:",
         error instanceof Error ? error.message : String(error),
       );
+      this.isDbAvailable = false;
       return false;
     }
   }
@@ -96,10 +99,15 @@ export class DatabaseMemoryService {
    * Executa uma query SQL com suporte a parâmetros parametrizados.
    */
   async query(text: string, params?: any[], retries = 3): Promise<any> {
+    if (this.isDbAvailable === false) {
+      throw new Error("Database connection is unavailable (cached offline state).");
+    }
     let attempt = 0;
     while (attempt <= retries) {
       try {
-        return await this.pool.query(text, params);
+        const result = await this.pool.query(text, params);
+        this.isDbAvailable = true;
+        return result;
       } catch (error: any) {
         // Códigos de erro transientes comuns do Postgres e falhas de rede (Node.js/pg)
         const isTransient = [
@@ -110,6 +118,9 @@ export class DatabaseMemoryService {
           "ECONNRESET",
           "ECONNREFUSED",
         ].includes(error.code);
+        if (error.code === "ECONNREFUSED") {
+          this.isDbAvailable = false;
+        }
         if (!isTransient || attempt === retries) {
           throw error;
         }
