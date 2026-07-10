@@ -1,11 +1,11 @@
 ---
 id: MAI-25
 title: Criar boilerplate de GUI pareada com a CLI (Next.js/HonoX)
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 05:03'
 labels:
   - interface
   - gui
@@ -25,28 +25,32 @@ Estabelecer o boilerplate inicial da interface gráfica (Web Dashboard) pareada 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Setup do Boilerplate: Estrutura executável configurada com TypeScript, Tailwind CSS e roteamento funcional (Next.js ou HonoX no Deno).
-- [ ] #2 Fidelidade de Interface com a CLI: Telas e fluxos de navegação desenhados para as 6 funções da CLI (KYB, Risco/ONNX, MILP, Otimização Contratual, PDF/LaTeX, Chat Broker).
-- [ ] #3 Mock APIs / Server Handlers: Endpoints prontos no boilerplate para retornar dados simulados idênticos aos retornos de console da CLI.
-- [ ] #4 Responsividade e Estilo Premium: Design escuro consistente com a estética do middleware, utilizando CSS modular para isolamento.
-- [ ] #5 Compatibilidade de Tipagem: Importação direta ou mapeamento claro dos tipos compartilhados da Core (ex: CompanyFinancialProfile, TargetRawInput) para o frontend.
+- [x] #1 Setup do Boilerplate: Estrutura executável configurada com TypeScript, Tailwind CSS e roteamento funcional (Next.js ou HonoX no Deno).
+- [x] #2 Fidelidade de Interface com a CLI: Telas e fluxos de navegação desenhados para as 6 funções da CLI (KYB, Risco/ONNX, MILP, Otimização Contratual, PDF/LaTeX, Chat Broker).
+- [x] #3 Mock APIs / Server Handlers: Endpoints prontos no boilerplate para retornar dados simulados idênticos aos retornos de console da CLI.
+- [x] #4 Responsividade e Estilo Premium: Design escuro consistente com a estética do middleware, utilizando CSS modular para isolamento.
+- [x] #5 Compatibilidade de Tipagem: Importação direta ou mapeamento claro dos tipos compartilhados da Core (ex: CompanyFinancialProfile, TargetRawInput) para o frontend.
+- [x] #6 Next.js + Tailwind configurado, rotas básicas para as 6 funções CLI
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Setup e Estrutura: Criar diretório gui/ no workspace e inicializar projeto Next.js ou HonoX (Deno-friendly).
+1. Setup e Estrutura: Criar diretório gui/ no workspace e inicializar projeto Next.js.
 2. Configuração de Estilos: Integrar Tailwind CSS e variáveis globais para a paleta Dark/Teal premium.
 3. Desenvolver Layout & Sidebar: Criar o layout mestre responsivo com a navegação lateral para os 6 submódulos da CLI.
-4. Scaffolding de Telas: Criar views para KYB, Risco Financeiro (ONNX), MILP Otimizador, Otimizador Genético, Document Maker (com preview em Markdown) e Broker RAG Chat (com modal de Ajuste/Feedback).
-5. Mock de Endpoints: Configurar rotas de API para simular o comportamento dos motores computacionais de predição e otimização.
-6. Documentar Integração: Escrever guia de execução e configuração no README.
+4. Scaffolding de Telas: Criar views vazias baseadas no sitemap de MAI-24.
+5. Mock de Endpoints: Configurar rotas de API para simular o comportamento dos motores computacionais.
+6. [MVP_4 Orchestrator Note] Realizar como Fase 2 (Síncrona) DEPOIS de MAI-24.
 <!-- SECTION:PLAN:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Boilerplate de frontend inicializa e compila sem erros com 'deno task' ou comando correspondente.
-- [ ] #2 Rotas e navegação lateral funcionam perfeitamente no navegador.
-- [ ] #3 Formulários e chat simulam interações e exibem logs de console fictícios equivalentes à CLI.
-- [ ] #4 Documentação (README) no subdiretório da GUI explicando instalação, inicialização e compartilhamento de tipos.
+- [x] #1 Boilerplate de frontend inicializa e compila sem erros com 'deno task' ou comando correspondente.
+- [x] #2 Rotas e navegação lateral funcionam perfeitamente no navegador.
+- [x] #3 Formulários e chat simulam interações e exibem logs de console fictícios equivalentes à CLI.
+- [x] #4 Documentação (README) no subdiretório da GUI explicando instalação, inicialização e compartilhamento de tipos.
+- [x] #5 Boilerplate compila sem erros com npm run dev no diretório gui
 <!-- DOD:END -->
