@@ -237,6 +237,21 @@ sob uma arquitetura resiliente:
    ```
 2. **Node.js & npm** (para a interface web GUI): Certifique-se de que o Node.js
    está instalado.
+3. **Docker & Docker Compose** (para gerenciar o banco de dados PostgreSQL local).
+
+---
+
+### 🗄️ 0. Inicializando e Configurando o Banco de Dados (PostgreSQL)
+
+Antes de inicializar qualquer serviço, certifique-se de que o banco local está ativo e estruturado:
+
+```bash
+# Inicia a instância local do Postgres via Docker Compose
+deno task db:start
+
+# Executa as migrações, cria as tabelas e configura o schema
+deno task db:setup
+```
 
 ---
 
