@@ -45,7 +45,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 
 export class DatabaseMemoryService {
   private static instance: DatabaseMemoryService | null = null;
-  private pool: pg.Pool;
+  protected pool: pg.Pool;
 
   public static getInstance(): DatabaseMemoryService {
     if (!DatabaseMemoryService.instance) {

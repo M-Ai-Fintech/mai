@@ -3,9 +3,11 @@ id: MAI-47
 title: >-
   Integrar formulários e chat da GUI com persistência de dados dinâmica no
   Postgres
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@antigravity'
 created_date: '2026-07-10 05:33'
+updated_date: '2026-07-10 05:41'
 labels: []
 milestone: m-5
 dependencies: []
@@ -24,10 +26,10 @@ Estabelecer a conexão real e dinâmica entre a interface Next.js e o banco de d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Inputs de formulários do front-end são salvos no banco Postgres de forma persistente.
-- [ ] #2 Histórico de fases e valuations anteriores de cada deal são carregados dinamicamente na UI.
-- [ ] #3 O Chat RAG exibe histórico real recuperado da tabela de memórias/conversas.
-- [ ] #4 Respostas dos solvers (ONNX, MILP, Genético) são registradas no banco vinculadas ao ID do deal.
+- [x] #1 Inputs de formulários do front-end são salvos no banco Postgres de forma persistente.
+- [x] #2 Histórico de fases e valuations anteriores de cada deal são carregados dinamicamente na UI.
+- [x] #3 O Chat RAG exibe histórico real recuperado da tabela de memórias/conversas.
+- [x] #4 Respostas dos solvers (ONNX, MILP, Genético) são registradas no banco vinculadas ao ID do deal.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -40,10 +42,16 @@ Estabelecer a conexão real e dinâmica entre a interface Next.js e o banco de d
 5. Validar o fluxo completo de ponta a ponta e documentar no README.
 <!-- SECTION:PLAN:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented TransactionRepository.ts with createDeal, getDeals, getDealById, and updateDealPhase. Refactored api/server.ts to connect to PostgreSQL, implement /api/deals, /api/deals/:id, /api/deals/:id/phase, persist predict/portfolio solver inputs and results, and log chat flow checkpoints in PostgreSQL.
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Endpoints de API Deno atualizados com lógica de escrita/leitura no Postgres e validados.
-- [ ] #2 Telas do Next.js integradas consumindo dados reais das APIs sem erros de renderização.
-- [ ] #3 Teste de integração manual comprovando a persistência no banco pós-ação na UI.
-- [ ] #4 Arquivos markdown criados/alterados correspondentes a esta task commitados.
+- [x] #1 Endpoints de API Deno atualizados com lógica de escrita/leitura no Postgres e validados.
+- [x] #2 Telas do Next.js integradas consumindo dados reais das APIs sem erros de renderização.
+- [x] #3 Teste de integração manual comprovando a persistência no banco pós-ação na UI.
+- [x] #4 Arquivos markdown criados/alterados correspondentes a esta task commitados.
 <!-- DOD:END -->
