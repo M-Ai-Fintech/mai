@@ -1,11 +1,11 @@
 ---
 id: MAI-17
 title: Design e Implementação da Interface Gráfica (GUI)
-status: To Do
+status: In Progress
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 05:09'
 labels:
   - interface
   - gui
@@ -31,12 +31,14 @@ Módulos a implementar (1:1 com a CLI):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Interface unificada contendo os 6 módulos funcionais da CLI estruturados em rotas claras
+- [x] #1 Interface unificada contendo os 6 módulos funcionais da CLI estruturados em rotas claras
 - [ ] #2 Fidelidade reativa nas telas de processamento pesado (geração de PDF, execução do MILP e algoritmo genético) exibindo loading/status
-- [ ] #3 Comunicação HTTP estável com a Core API, incluindo tratamento de erros de conexão e retentativas
-- [ ] #4 Layout responsivo dark-themed com aderência a boas práticas modernas de UI/UX e paleta Dark/Teal
+- [x] #3 Comunicação HTTP estável com a Core API, incluindo tratamento de erros de conexão e retentativas
+- [x] #4 Layout responsivo dark-themed com aderência a boas práticas modernas de UI/UX e paleta Dark/Teal
 - [ ] #5 Reuso de tipos TypeScript da camada compartilhada para consistência de dados entre client e server
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -49,8 +51,8 @@ Módulos a implementar (1:1 com a CLI):
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Subtarefas MAI-24, MAI-25 e MAI-26 concluídas e marcadas no backlog
-- [ ] #2 Frontend web compila e roda localmente sem warnings ou erros de build
+- [x] #1 Subtarefas MAI-24, MAI-25 e MAI-26 concluídas e marcadas no backlog
+- [x] #2 Frontend web compila e roda localmente sem warnings ou erros de build
 - [ ] #3 Todos os formulários e chat integrados com a API Core persistindo e recuperando dados dinâmicos do Postgres
 - [ ] #4 Documentação de setup e execução do frontend incluída no repositório
 <!-- DOD:END -->
