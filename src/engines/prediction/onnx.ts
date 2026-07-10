@@ -115,9 +115,9 @@ export class ONNXEngine {
     try {
       const res = await onnxInfer(arr);
       return { insolvencyRisk: res.distressProbability, zScore: res.zScoreLabel };
-    } catch (e) {
-      // Fallback if model not loaded or error
-      return { insolvencyRisk: 0.14, zScore: ZScoreLabel.Safe };
+    } catch (e: any) {
+      console.error(`[ONNX] Session error or not initialized: ${e.message}`);
+      throw e;
     }
   }
 }

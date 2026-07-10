@@ -2,6 +2,7 @@
 import { DatabaseMemoryService } from "./db/DatabaseMemoryService.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
 import { LocalPubSubBus } from "./pubsub/LocalPubSubBus.ts";
+import { loadOnnxModel } from "../engines/prediction/onnx.ts";
 
 export class AppBootstrapper {
   public static db: DatabaseMemoryService;
@@ -31,6 +32,20 @@ export class AppBootstrapper {
         console.log("[Boot] AI Provider / Gemini running in Mock/Fallback mode.");
       } else {
         console.log("[Boot] AI Provider / Gemini connected successfully.");
+      }
+
+      // 4. Initialize ONNX Engine
+      try {
+        const modelPath = "models/ma_classifier_q8.onnx";
+        const fileInfo = await Deno.stat(modelPath);
+        if (fileInfo.isFile) {
+          await loadOnnxModel(modelPath);
+          console.log("[Boot] ONNX Model loaded successfully.");
+        } else {
+          console.warn("[Boot] ONNX Model path is not a file. PredictionEngine will fail.");
+        }
+      } catch (e: any) {
+        console.error(`[Boot] Warning: ONNX Model not found or failed to load: ${e.message}`);
       }
 
       console.log("[Boot] All Core Components initialized successfully.\n");
