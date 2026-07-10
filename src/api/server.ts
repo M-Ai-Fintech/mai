@@ -315,3 +315,7 @@ export function startServer() {
     }
   });
 }
+
+if (import.meta.main) {
+  startServer();
+}
