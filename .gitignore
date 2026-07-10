@@ -19,3 +19,10 @@ data/logs/
 .venv_torch/
 venv/
 .venv/
+
+# Benchmarks
+bench/
+
+# Raw ML models and artifacts
+models/ma_classifier.onnx
+models/ma_classifier.onnx.data
