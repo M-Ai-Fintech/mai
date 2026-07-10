@@ -134,22 +134,29 @@ export const optimizePortfolioTool = createTool({
 export const optimizeTermSheetTool = createTool({
   id: "optimize-term-sheet-tool",
   description:
-    "Executa um algoritmo genético de negociação bilateral para encontrar as melhores cláusulas do Term Sheet (Equity, Cash, Earn-out e Non-compete).",
+    "Executa um algoritmo genético de negociação bilateral para encontrar as melhores cláusulas do Term Sheet (Equity, Cash, Earn-out e Escrow).",
   inputSchema: z.object({
-    minBuyerReservationUtility: z.number().optional(),
-    minSellerReservationUtility: z.number().optional(),
+    valuationMin: z.number().default(10_000_000),
+    valuationMax: z.number().default(50_000_000),
+    preferences: z.object({
+      cash: z.number().default(0.4),
+      equity: z.number().default(0.3),
+      earnOut: z.number().default(0.2),
+      escrow: z.number().default(0.1),
+    }).optional(),
     populationSize: z.number().optional(),
     generations: z.number().optional(),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
-    const result = await TermSheetOptimizer.run({
+    const { optimizeDeal } = await import("../engines/optimization/genetic.ts");
+    const result = optimizeDeal({
+      valuationMin: input.valuationMin,
+      valuationMax: input.valuationMax,
+      preferences: input.preferences ?? { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 }
+    }, {
       populationSize: input.populationSize ?? 100,
-      generations: input.generations ?? 50,
-      mutationRate: 0.1,
-      crossoverRate: 0.8,
-      minBuyerReservationUtility: input.minBuyerReservationUtility ?? 0.3,
-      minSellerReservationUtility: input.minSellerReservationUtility ?? 0.3,
+      generations: input.generations ?? 50
     });
     return { success: true, result };
   },
