@@ -139,6 +139,10 @@ deno task start
 * **Otimizador de Term Sheet (Algoritmo Genético):** Consulte 👉 **[context/term_sheet_genetic_optimizer.md](file:///home/luis/mai/context/term_sheet_genetic_optimizer.md)**
 * **Integração VDR & Supergood Proxy:** Consulte 👉 **[context/vdr_integration_supergood.md](file:///home/luis/mai/context/vdr_integration_supergood.md)**
 * **RAG Silado e Aprendizado Contínuo:** Consulte 👉 **[context/continuous_learning_and_rag.md](file:///home/luis/mai/context/continuous_learning_and_rag.md)**
+* **Interface Gráfica Next.js & API:** Consulte 👉 **[context/nextjs_gui_and_api.md](file:///home/luis/mai/context/nextjs_gui_and_api.md)**
+* **Inicialização e Runtime ONNX (WASM):** Consulte 👉 **[context/onnx_bootstrapper.md](file:///home/luis/mai/context/onnx_bootstrapper.md)**
+* **Otimização de Negociação com Restrições:** Consulte 👉 **[context/constraint_negotiation_api.md](file:///home/luis/mai/context/constraint_negotiation_api.md)**
+* **Padrão Singleton do Banco de Dados:** Consulte 👉 **[context/database_memory_singleton.md](file:///home/luis/mai/context/database_memory_singleton.md)**
 * **Motor Preditivo ONNX & Treinamento:** Consulte 👉 **[docs/prediction_engine.md](file:///home/luis/mai/docs/prediction_engine.md)**
 
 
