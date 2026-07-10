@@ -104,6 +104,46 @@ graph TD
 - **Legal Summary**: Análise jurídica via RAG baseada em documentos locais.
 - **Closing Preview**: Markdown estruturado exibido ao usuário com os termos finais antes da geração do PDF.
 
+## 📖 Sumário do Conhecimento Adicional
+
+Para permitir uma compreensão imediata das especificidades técnicas do middleware antes de abrir o código-fonte, todo o conhecimento apontado como adicional está sintetizado abaixo:
+
+### 1. Arquitetura e Evolução GCP (`context/architecture.md`)
+Descreve a estrutura do MVP monolítico Deno/TypeScript com mensageria assíncrona (PubSub local) e o plano de evolução corporativa na GCP. Na produção, o Core API e os Motores rodarão no **Cloud Run**, orquestrados via **Cloud Pub/Sub**, com armazenamento fiduciário no **Cloud Storage**, inteligência na **Vertex AI/BigQuery** e banco em **Cloud SQL (PostgreSQL)** com pool de réplicas e suporte a busca vetorial.
+
+### 2. Integração Google AI & ADK (`AGENTS.md`)
+Especifica a orquestração dos 7 agentes (BrokerOrchestrator, KybSourcing, GeneralDD, FinancialRisk, LegalDD, DealMatching, Negotiation, LegalClosing) construída sob o framework Mastra. Define as 5 ferramentas centrais integradas ao ecossistema (Google Search com grounding, MCP PostgreSQL, Hugging Face Transformers local, barramento Pub/Sub local e serviço de memória de preferências).
+
+### 3. Regras de Valuation (`context/valuation.md`)
+Estabelece a lógica financeira de cálculo do valuation corporativo sob 6 métodos puramente determinísticos: *Book Value* (patrimonial líquido tangível), *Discounted Cash Flow (DCF)* (fluxos de caixa descontados pelo custo de capital), *Market Capitalization* (valor acionário público), *Enterprise Value (EV)* (estrutura total de capital: dívida + equity - caixa), *EBITDA Multiples* (múltiplo operacional EV/EBITDA) e *Growing Perpetuity* (perpetuidade crescente de dividendos/JCP). 
+
+### 4. Otimizador de Portfólio MILP (`context/optimization_portfolio_solver.md`)
+Detalha o resolvedor de cesta de aquisições utilizando programação linear inteira mista (MILP) via `javascript-lp-solver`. O modelo matemático maximiza a sinergia total sob restrições binárias de seleção ($x_i \in \{0, 1\}$), limites estritos de orçamento global, tetos fiscais globais (tax debts), alocações setoriais específicas e matriz de exclusão mútua concorrencial.
+
+### 5. Otimizador de Term Sheet Genético (`context/term_sheet_genetic_optimizer.md`)
+Explica a evolução de propostas através de algoritmo genético para encontrar o Equilíbrio de Nash. O "cromossomo" modela 4 genes (percentual de caixa, participação societária, anos de earn-out e meses de não-concorrência). O fitness maximiza o produto dos excedentes de utilidade em relação às utilidades reserva sob 3 perfis de preferência (*Balanced*, *Liquidity*, *Retention*).
+
+### 6. Integração VDR & Supergood Proxy (`context/vdr_integration_supergood.md`)
+Apresenta o ecossistema de Virtual Data Rooms. O `BaseVDRProvider` padroniza operações de listagem, metadados, download e upload de arquivos sob conectores do Papermark, iDeals e Intralinks. O tráfego HTTP é roteado de forma transparente por meio do proxy fiduciário **Supergood** para auditoria, cache e segurança de endpoints.
+
+### 7. RAG Silado e Aprendizado Contínuo (`context/continuous_learning_and_rag.md`)
+Especifica o isolamento de informações de clientes (`ClientSiloedRAG`) filtradas estritamente por ID de transação para evitar vazamento de dados confidenciais de due diligence. Descreve o `ContinuousLearningEngine` que capta o feedback do usuário, gera embeddings e os armazena no PostgreSQL para busca semântica via indexação HNSW no `pgvector`.
+
+### 8. Interface Gráfica Next.js (`context/nextjs_gui_and_api.md`)
+Detalha a estrutura da interface web React rodando em Next.js. O painel inclui a visualização de engines e chat com agentes agendadores. A integração com o backend Deno (porta `8000`) ocorre via `ApiClient` com retentativas exponenciais e sanitização contra vazamento de caminhos do Linux local, além de streaming de respostas SSE em tempo real.
+
+### 9. Runtime ONNX & WASM (`context/onnx_bootstrapper.md`)
+Especifica a inicialização prévia da sessão WASM do `ma_classifier_q8.onnx` pelo `AppBootstrapper` em tempo de boot. Em tempo de inferência, o vetor de dados é processado por uma MLP profunda, gerando probabilidades de estresse financeiro. Esse score é convertido matematicamente de forma inversa na escala clássica de zonas de risco Altman Z-Score.
+
+### 10. Negociação com Restrições CP (`context/constraint_negotiation_api.md`)
+Detalha o motor de negociação fiduciária híbrido. Ele submete os cromossomos gerados pelo Algoritmo Genético à programação por restrições (CP), aplicando filtros impeditivos de governança (`KycConstraint`), alavancagem de dívida (`LeverageConstraint`) e fluxo mínimo de pagamento (`CoverageConstraint`). Aplica deduplicação de Manhattan para manter 3 opções distintas de Term Sheet.
+
+### 11. Padrão Singleton do Banco (`context/database_memory_singleton.md`)
+Descreve a restrição estrutural imposta ao `DatabaseMemoryService` para garantir pool único de conexão no PostgreSQL. A instanciação é privada e exposta apenas via `getInstance()`, compartilhada de forma transparente entre CLI, servidores HTTP e agentes em execução concorrente para evitar leaks e timeouts.
+
+### 12. Treinamento da Rede ONNX (`docs/prediction_engine.md`)
+Explica o pipeline de treino em PyTorch da rede classificadora feedforward executado em GPU no Google Colab, com posterior compilação de grafo ONNX e quantização para 8-bits para ganho de performance e leveza no Deno WASM.
+
 ---
 
 ## 🚀 Como Executar
