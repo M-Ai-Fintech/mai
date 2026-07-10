@@ -141,6 +141,25 @@ export const ApiClient = {
     return res.json();
   },
 
+  async getDeals() {
+    const res = await fetchWithRetry(`${BASE_URL}/api/deals`);
+    return res.json();
+  },
+
+  async getDealById(id: string) {
+    const res = await fetchWithRetry(`${BASE_URL}/api/deals/${id}`);
+    return res.json();
+  },
+
+  async updateDealPhase(id: string, phaseId: string) {
+    const res = await fetchWithRetry(`${BASE_URL}/api/deals/${id}/phase`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phaseName: phaseId, phaseId, statusName: "In Progress" })
+    });
+    return res.json();
+  },
+
   // Streaming/SSE for chat
   chatStream(dealId: string, query: string, onMessage: (msg: string) => void, onError: (err: any) => void) {
     try {
