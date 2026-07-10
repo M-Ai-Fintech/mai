@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@antigravity'
 created_date: '2026-07-10 05:33'
-updated_date: '2026-07-10 05:41'
+updated_date: '2026-07-10 05:42'
 labels: []
 milestone: m-5
 dependencies: []
@@ -41,6 +41,12 @@ Estabelecer a conexão real e dinâmica entre a interface Next.js e o banco de d
 4. Configurar a listagem de deals do Dashboard para ler diretamente do banco.
 5. Validar o fluxo completo de ponta a ponta e documentar no README.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented Fase 2.1 and 2.2 of MAI-47: Integrated GUI frontend (api-client, page, deal detail page) with the Core API / PostgreSQL, verified successful Turbopack production compilation, and committed changes with the specific Git rule.
+<!-- SECTION:NOTES:END -->
 
 ## Final Summary
 

@@ -1,11 +1,11 @@
 ---
 id: MAI-17
 title: Design e Implementação da Interface Gráfica (GUI)
-status: In Progress
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 05:09'
+updated_date: '2026-07-10 05:55'
 labels:
   - interface
   - gui
@@ -53,6 +53,6 @@ Módulos a implementar (1:1 com a CLI):
 <!-- DOD:BEGIN -->
 - [x] #1 Subtarefas MAI-24, MAI-25 e MAI-26 concluídas e marcadas no backlog
 - [x] #2 Frontend web compila e roda localmente sem warnings ou erros de build
-- [ ] #3 Todos os formulários e chat integrados com a API Core persistindo e recuperando dados dinâmicos do Postgres
+- [x] #3 Todos os formulários e chat integrados com a API Core persistindo e recuperando dados dinâmicos do Postgres
 - [ ] #4 Documentação de setup e execução do frontend incluída no repositório
 <!-- DOD:END -->
