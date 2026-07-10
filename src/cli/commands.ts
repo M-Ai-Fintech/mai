@@ -8,6 +8,7 @@ import { DatabaseMemoryService } from "../core/db/DatabaseMemoryService.ts";
 import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
 import { PortfolioSolver } from "../engines/optimization/kyc/index.ts";
 import { TargetRawInput } from "../engines/optimization/types.ts";
+import { optimizeWithConstraints, KycConstraint, LeverageConstraint, CoverageConstraint } from "../engines/optimization/index.ts";
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
@@ -355,57 +356,88 @@ export class CLICommands {
     );
 
     try {
-      const resLiquidity = await TermSheetOptimizer.run({
-        populationSize: 100,
-        generations: 40,
-        mutationRate: 0.1,
-        crossoverRate: 0.8,
-        minBuyerReservationUtility: 0.2,
-        minSellerReservationUtility: 0.2,
-        preference: 'liquidity',
+      const constraints = [
+        new KycConstraint(),
+        new LeverageConstraint(4.0),
+        new CoverageConstraint(2.5),
+      ];
+      const kyc = { kycBlocked: false, sanctionMatch: false, pepExposure: false };
+      const financial = { ebitda: 5.0, debt: 15.0, interestExpense: 1.0 };
+
+      const resLiquidity = optimizeWithConstraints({
+        profile: {
+          valuationMin: 80,
+          valuationMax: 120,
+          preferences: { cash: 0.7, equity: 0.1, earnOut: 0.1, escrow: 0.1 }
+        },
+        kyc,
+        financial,
+        constraints,
+        geneticConfig: { populationSize: 100, generations: 40 }
       });
 
-      const resBalanced = await TermSheetOptimizer.run({
-        populationSize: 100,
-        generations: 40,
-        mutationRate: 0.1,
-        crossoverRate: 0.8,
-        minBuyerReservationUtility: 0.25,
-        minSellerReservationUtility: 0.25,
-        preference: 'balanced',
+      const resBalanced = optimizeWithConstraints({
+        profile: {
+          valuationMin: 80,
+          valuationMax: 120,
+          preferences: { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 }
+        },
+        kyc,
+        financial,
+        constraints,
+        geneticConfig: { populationSize: 100, generations: 40 }
       });
 
-      const resRetention = await TermSheetOptimizer.run({
-        populationSize: 100,
-        generations: 40,
-        mutationRate: 0.1,
-        crossoverRate: 0.8,
-        minBuyerReservationUtility: 0.2,
-        minSellerReservationUtility: 0.2,
-        preference: 'retention',
+      const resRetention = optimizeWithConstraints({
+        profile: {
+          valuationMin: 80,
+          valuationMax: 120,
+          preferences: { cash: 0.2, equity: 0.2, earnOut: 0.5, escrow: 0.1 }
+        },
+        kyc,
+        financial,
+        constraints,
+        geneticConfig: { populationSize: 100, generations: 40 }
       });
 
+      const bestLiquidity = resLiquidity[0];
       console.log("\n--- [Alternativa 1: Conservadora / Foco em Liquidez] ---");
-      console.log(`- Composição de Caixa Upfront:       ${(resLiquidity.bestProposal.cashPercentage * 100).toFixed(2)}%`);
-      console.log(`- Composição de Ações (Equity Roll):  ${((1 - resLiquidity.bestProposal.cashPercentage) * 100).toFixed(2)}%`);
-      console.log(`- Duração das Metas de Earn-out:     ${resLiquidity.bestProposal.earnOutTargetYears.toFixed(2)} anos`);
-      console.log(`- Restrição de Não-Competência:     ${resLiquidity.bestProposal.nonCompeteMonths} meses`);
-      console.log(`- Indicador de Acordo (Nash):        ${resLiquidity.fitness.toFixed(5)}`);
+      if (bestLiquidity) {
+        console.log(`- Valuation Sugerido:                $${bestLiquidity.valuation.toFixed(2)}M`);
+        console.log(`- Composição de Caixa Upfront:       ${(bestLiquidity.cashPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Ações (Equity Roll):  ${(bestLiquidity.equityPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Earn-out:            ${(bestLiquidity.earnOutPercentage * 100).toFixed(2)}%`);
+        console.log(`- Retenção em Escrow:                ${(bestLiquidity.escrowPercentage * 100).toFixed(2)}%`);
+        console.log(`- Indicador de Acordo (Fitness):     ${bestLiquidity.fitness.toFixed(5)}`);
+      } else {
+        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+      }
 
+      const bestBalanced = resBalanced[0];
       console.log("\n--- [Alternativa 2: Balanceada / Padrão Otimizado] ---");
-      console.log(`- Composição de Caixa Upfront:       ${(resBalanced.bestProposal.cashPercentage * 100).toFixed(2)}%`);
-      console.log(`- Composição de Ações (Equity Roll):  ${((1 - resBalanced.bestProposal.cashPercentage) * 100).toFixed(2)}%`);
-      console.log(`- Participação Adquirente pós-deal:  ${(resBalanced.bestProposal.buyerEquityShare * 100).toFixed(2)}%`);
-      console.log(`- Duração das Metas de Earn-out:     ${resBalanced.bestProposal.earnOutTargetYears.toFixed(2)} anos`);
-      console.log(`- Restrição de Não-Competência:     ${resBalanced.bestProposal.nonCompeteMonths} meses`);
-      console.log(`- Indicador de Acordo (Nash):        ${resBalanced.fitness.toFixed(5)}`);
+      if (bestBalanced) {
+        console.log(`- Valuation Sugerido:                $${bestBalanced.valuation.toFixed(2)}M`);
+        console.log(`- Composição de Caixa Upfront:       ${(bestBalanced.cashPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Ações (Equity Roll):  ${(bestBalanced.equityPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Earn-out:            ${(bestBalanced.earnOutPercentage * 100).toFixed(2)}%`);
+        console.log(`- Retenção em Escrow:                ${(bestBalanced.escrowPercentage * 100).toFixed(2)}%`);
+        console.log(`- Indicador de Acordo (Fitness):     ${bestBalanced.fitness.toFixed(5)}`);
+      } else {
+        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+      }
 
+      const bestRetention = resRetention[0];
       console.log("\n--- [Alternativa 3: Oportunidade com Retenção de Risco] ---");
-      console.log(`- Composição de Caixa Upfront:       ${(resRetention.bestProposal.cashPercentage * 100).toFixed(2)}%`);
-      console.log(`- Composição de Ações (Equity Roll):  ${((1 - resRetention.bestProposal.cashPercentage) * 100).toFixed(2)}%`);
-      console.log(`- Duração das Metas de Earn-out:     ${resRetention.bestProposal.earnOutTargetYears.toFixed(2)} anos`);
-      console.log(`- Restrição de Não-Competência:     ${resRetention.bestProposal.nonCompeteMonths} meses`);
-      console.log(`- Indicador de Acordo (Nash):        ${resRetention.fitness.toFixed(5)}`);
+      if (bestRetention) {
+        console.log(`- Valuation Sugerido:                $${bestRetention.valuation.toFixed(2)}M`);
+        console.log(`- Composição de Caixa Upfront:       ${(bestRetention.cashPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Ações (Equity Roll):  ${(bestRetention.equityPercentage * 100).toFixed(2)}%`);
+        console.log(`- Composição de Earn-out:            ${(bestRetention.earnOutPercentage * 100).toFixed(2)}%`);
+        console.log(`- Retenção em Escrow:                ${(bestRetention.escrowPercentage * 100).toFixed(2)}%`);
+        console.log(`- Indicador de Acordo (Fitness):     ${bestRetention.fitness.toFixed(5)}`);
+      } else {
+        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+      }
 
     } catch (err) {
       console.error(

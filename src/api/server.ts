@@ -2,6 +2,7 @@ import { verifyRegistryTool } from "../agent/actions.ts";
 import { MLEngine, CompanyFinancialProfile } from "../engines/prediction/ml.ts";
 import { PortfolioSolver } from "../engines/optimization/kyc/index.ts";
 import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
+import { optimizeWithConstraints, KycConstraint, LeverageConstraint, CoverageConstraint } from "../engines/optimization/index.ts";
 import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
@@ -162,14 +163,36 @@ export function startServer() {
       }
 
       if (req.method === "POST" && url.pathname === "/api/negotiate") {
-        const res = await TermSheetOptimizer.run({
-          populationSize: 10,
-          generations: 10,
-          mutationRate: 0.1,
-          crossoverRate: 0.8,
-          minBuyerReservationUtility: 0.2,
-          minSellerReservationUtility: 0.2,
+        let body: any = {};
+        try {
+          body = await req.json();
+        } catch {
+          // fallback to defaults if no body
+        }
+
+        const profile = {
+          valuationMin: body.valuationMin ?? 80,
+          valuationMax: body.valuationMax ?? 120,
+          preferences: body.preferences ?? { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 }
+        };
+
+        const kyc = body.kyc ?? { kycBlocked: false, sanctionMatch: false, pepExposure: false };
+        const financial = body.financial ?? { ebitda: 5.0, debt: 15.0, interestExpense: 1.0 };
+
+        const constraints = [
+          new KycConstraint(),
+          new LeverageConstraint(body.maxLeverage ?? 4.0),
+          new CoverageConstraint(body.minCoverage ?? 2.5)
+        ];
+
+        const res = optimizeWithConstraints({
+          profile,
+          kyc,
+          financial,
+          constraints,
+          geneticConfig: body.geneticConfig ?? { populationSize: 100, generations: 40 }
         });
+
         const resHeaders = new Headers(headers);
         resHeaders.set("Content-Type", "application/json");
         return new Response(JSON.stringify(res), { headers: resHeaders });

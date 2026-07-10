@@ -191,6 +191,8 @@ const mainCommand = new Command()
 
 export async function main() {
   try {
+    const { AppBootstrapper } = await import("../core/boot.ts");
+    await AppBootstrapper.bootstrap();
     await mainCommand.parse(Deno.args);
   } catch (error) {
     const isDebug = Deno.args.includes("--debug") || Deno.args.includes("-d");
