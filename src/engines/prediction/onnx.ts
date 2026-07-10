@@ -1,98 +1,88 @@
+import { env } from 'npm:@huggingface/transformers';
+import * as ort from 'npm:onnxruntime-web';
+import { z } from 'zod';
 
-import { env, Tensor } from 'npm:@huggingface/transformers';
-
-export interface ONNXModelInput {
-  ebitda: number;
-  revenue: number;
-  totalAssets: number;
-  totalLiabilities: number;
-  operatingCashFlow: number;
-  historicalVolatility: number;
+// Configuração do backend WASM para rodar em Deno
+if (env.backends?.onnx?.wasm) {
+  env.backends.onnx.wasm.numThreads = 1;
 }
 
-export interface ONNXPredictionResult {
-  insolvencyRisk: number; // 0 to 1
-  churnProbability: number; // 0 to 1
-  dcfVolatility: number; // percentage
-  industry4Score: number; // general fitness score
+export enum ZScoreLabel {
+  Safe = 'Safe',
+  Grey = 'Grey',
+  Distress = 'Distress',
 }
 
-export class ONNXEngine {
-  private static session: any = null;
+export type OnnxInput = Float32Array;
 
-  private static async getSession(modelPath: string) {
-    if (this.session) return this.session;
-    try {
-      const ortDirect = await import('npm:onnxruntime-web');
-      if (ortDirect && ortDirect.InferenceSession) {
-         this.session = await ortDirect.InferenceSession.create(modelPath);
-         return this.session;
-      }
-      throw new Error('InferenceSession not found');
-    } catch (e: any) {
-      console.warn('ONNXEngine - Failed to load ONNX model:', e.message);
-      return null;
-    }
+export interface OnnxOutput {
+  distressProbability: number;
+  zScoreLabel: ZScoreLabel;
+}
+
+const InputSchema = z.instanceof(Float32Array).refine((arr) => arr.length > 0, {
+  message: 'Input array must not be empty',
+});
+
+let session: ort.InferenceSession | null = null;
+
+export async function loadOnnxModel(path: string): Promise<void> {
+  try {
+    session = await ort.InferenceSession.create(path);
+  } catch (error: any) {
+    throw new Error(`Failed to load ONNX model via WASM: ${error.message}`);
+  }
+}
+
+export function validateInput(input: OnnxInput): void {
+  InputSchema.parse(input);
+}
+
+export async function onnxInfer(input: OnnxInput): Promise<OnnxOutput> {
+  validateInput(input);
+
+  if (!session) {
+    throw new Error('ONNX model not loaded. Call loadOnnxModel() first.');
   }
 
-  public static async runModelInference(
-    input: ONNXModelInput,
-    modelPath = 'models/ma_classifier_q8.onnx'
-  ): Promise<ONNXPredictionResult> {
-    const session = await this.getSession(modelPath);
+  // Ensure tensor shape is correct for the model. We assume shape [1, N]
+  const tensor = new ort.Tensor('float32', input, [1, input.length]);
+  
+  const inputName = session.inputNames[0];
+  const feeds: Record<string, ort.Tensor> = {};
+  feeds[inputName] = tensor;
 
-    if (!session) {
-      return this.simulateInference(input);
-    }
+  const results = await session.run(feeds);
+  
+  const outputName = session.outputNames[0];
+  const outputTensor = results[outputName];
+  const data = outputTensor.data as Float32Array;
+  
+  let distressProbability = data[0];
+  if (typeof distressProbability !== 'number' || isNaN(distressProbability)) {
+     distressProbability = 0;
+  }
+  
+  // Cap to avoid Infinity in Z-Score calculation
+  distressProbability = Math.max(1e-7, Math.min(1 - 1e-7, distressProbability));
 
-    try {
-      const { Tensor } = await import('npm:onnxruntime-web');
-      const tensor = new Tensor('float32', [
-        input.ebitda,
-        input.revenue,
-        input.totalAssets,
-        input.totalLiabilities,
-        input.operatingCashFlow,
-        input.historicalVolatility
-      ], [1, 6]);
+  // Compute pseudo Z-Score based on inverse logic:
+  // distressProbability = 1 / (1 + exp(Z - 2)) => Z = 2 + ln((1 - P) / P)
+  const zScore = 2 + Math.log((1 - distressProbability) / distressProbability);
 
-      const results = await session.run({ financials: tensor });
-      const outputTensor = results.predictions;
-      const data = outputTensor.data;
-
-      return {
-        insolvencyRisk: parseFloat(data[0].toFixed(4)),
-        churnProbability: parseFloat(data[1].toFixed(4)),
-        dcfVolatility: parseFloat((data[2] * 100).toFixed(2)),
-        industry4Score: parseFloat((data[3] * 100).toFixed(2)),
-      };
-    } catch (e: any) {
-      console.warn('ONNXEngine - Inference failed, using fallback:', e.message);
-      return this.simulateInference(input);
-    }
+  let zScoreLabel = ZScoreLabel.Safe;
+  if (zScore < 1.81) {
+    zScoreLabel = ZScoreLabel.Distress;
+  } else if (zScore < 2.99) {
+    zScoreLabel = ZScoreLabel.Grey;
   }
 
-  private static simulateInference(input: ONNXModelInput): ONNXPredictionResult {
-    const totalAssets = input.totalAssets || 1;
-    const workingCapital = input.revenue * 0.15;
-    const retainedEarnings = input.ebitda * 2;
-    const x1 = workingCapital / totalAssets;
-    const x2 = retainedEarnings / totalAssets;
-    const x3 = input.ebitda / totalAssets;
-    const x4 = input.revenue / totalAssets;
-    const zScore = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4;
-    const insolvencyRisk = 1 / (1 + Math.exp(zScore - 2));
-    const leverage = input.totalLiabilities / totalAssets;
-    const churnBase = leverage * 0.4 + (input.operatingCashFlow < 0 ? 0.3 : 0.0) + (input.historicalVolatility * 0.5);
-    const churnProbability = Math.min(Math.max(churnBase, 0.02), 0.98);
-    const dcfVolatility = Math.min(Math.max(input.historicalVolatility * 1.2 + (leverage * 5), 2), 65);
-    const industry4Score = Math.max(10, Math.min(100, 100 - (insolvencyRisk * 50) - (churnProbability * 30)));
+  return {
+    distressProbability,
+    zScoreLabel,
+  };
+}
 
-    return {
-      insolvencyRisk: parseFloat(insolvencyRisk.toFixed(4)),
-      churnProbability: parseFloat(churnProbability.toFixed(4)),
-      dcfVolatility: parseFloat(dcfVolatility.toFixed(2)),
-      industry4Score: parseFloat(industry4Score.toFixed(2)),
-    };
-  }
+export function resetSession() {
+  session = null;
 }

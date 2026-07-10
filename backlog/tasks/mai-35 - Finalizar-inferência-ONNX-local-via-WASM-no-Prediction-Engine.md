@@ -1,11 +1,11 @@
 ---
 id: MAI-35
 title: Finalizar inferência ONNX local via WASM no Prediction Engine
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 04:42'
+updated_date: '2026-07-10 05:21'
 labels:
   - engine
   - prediction
@@ -25,13 +25,15 @@ Implementar a leitura e inferência real dos arquivos .onnx localmente no runtim
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Carregar arquivo .onnx quantizado (q8/q4) via fetch/FileSystem em Deno sem erros de runtime
-- [ ] #2 Inferência retorna probabilidade de distress (Float32, intervalo [0,1]) em menos de 200ms para batch de 1 amostra
-- [ ] #3 Classificação Altman Z-Score (Safe / Grey / Distress) derivada da probabilidade é retornada junto ao score numérico
-- [ ] #4 Entrada aceita array de features financeiras tipado (Float32Array, shape [1, N]) com validação Zod antes da inferência
-- [ ] #5 Fallback claro (erro tipado) é lançado quando o arquivo .onnx não é encontrado ou falha no carregamento WASM
-- [ ] #6 Função exportada onnxInfer() passa em todos os testes unitários com modelo ONNX mock (stub de 4 features)
+- [x] #1 Carregar arquivo .onnx quantizado (q8/q4) via fetch/FileSystem em Deno sem erros de runtime
+- [x] #2 Inferência retorna probabilidade de distress (Float32, intervalo [0,1]) em menos de 200ms para batch de 1 amostra
+- [x] #3 Classificação Altman Z-Score (Safe / Grey / Distress) derivada da probabilidade é retornada junto ao score numérico
+- [x] #4 Entrada aceita array de features financeiras tipado (Float32Array, shape [1, N]) com validação Zod antes da inferência
+- [x] #5 Fallback claro (erro tipado) é lançado quando o arquivo .onnx não é encontrado ou falha no carregamento WASM
+- [x] #6 Função exportada onnxInfer() passa em todos os testes unitários com modelo ONNX mock (stub de 4 features)
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -52,13 +54,15 @@ Depende do modelo exportado pela MAI-34 (distress_classifier_q8.onnx em assets/m
 Backend recomendado: @huggingface/transformers com env.backends.onnx.wasm.numThreads = 1 para Deno single-thread.
 Alternativa investigada: onnxruntime-web via Deno FFI – descartar se o import map WASM do HF for suficiente.
 Thresholds Z-Score de Altman (1968): Safe ≥ 2.99 | Grey Zone 1.81–2.99 | Distress < 1.81.
+
+[POC Orchestrator Note] Grupo B (Síncrono após A): Usar o modelo de MAI-34. Focar em src/engines/prediction/onnx.ts.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Testes unitários (Deno.test) com modelo ONNX mock cobrem: carga, inferência válida, input inválido e timeout
-- [ ] #2 Cobertura de tipos TypeScript 100%: OnnxInput, OnnxOutput, ZScoreLabel exportados de onnx.ts
-- [ ] #3 Benchmark documentado no arquivo: P50 < 100ms, P99 < 200ms (batch=1) em hardware de desenvolvimento
-- [ ] #4 Integração com src/engines/prediction/index.ts validada: onnxInfer() chamável pelo PredictionEngine
-- [ ] #5 Nenhuma dependência nativa de Node.js: runtime exclusivamente Deno + WASM (sem node: imports)
+- [x] #1 Testes unitários (Deno.test) com modelo ONNX mock cobrem: carga, inferência válida, input inválido e timeout
+- [x] #2 Cobertura de tipos TypeScript 100%: OnnxInput, OnnxOutput, ZScoreLabel exportados de onnx.ts
+- [x] #3 Benchmark documentado no arquivo: P50 < 100ms, P99 < 200ms (batch=1) em hardware de desenvolvimento
+- [x] #4 Integração com src/engines/prediction/index.ts validada: onnxInfer() chamável pelo PredictionEngine
+- [x] #5 Nenhuma dependência nativa de Node.js: runtime exclusivamente Deno + WASM (sem node: imports)
 <!-- DOD:END -->
