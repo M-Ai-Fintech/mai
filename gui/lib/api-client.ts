@@ -23,7 +23,22 @@ export const portfolioSchema = z.object({
   riskTolerance: z.number()
 });
 
-export const negotiateSchema = z.object({}); // No args for simple demo
+export const negotiateSchema = z.object({
+  valuationMin: z.number().optional(),
+  valuationMax: z.number().optional(),
+  preferences: z.object({
+    cash: z.number(),
+    equity: z.number(),
+    earnOut: z.number(),
+    escrow: z.number()
+  }).optional(),
+  maxLeverage: z.number().optional(),
+  minCoverage: z.number().optional(),
+  geneticConfig: z.object({
+    populationSize: z.number(),
+    generations: z.number()
+  }).optional()
+});
 
 export const documentSchema = z.object({
   buyer: z.string(),
@@ -123,10 +138,11 @@ export const ApiClient = {
   },
 
   async optimizeTermSheet(data: z.infer<typeof negotiateSchema> = {}) {
+    const validated = negotiateSchema.parse(data);
     const res = await fetchWithRetry(`${BASE_URL}/api/negotiate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(validated)
     });
     return res.json();
   },
