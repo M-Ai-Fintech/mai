@@ -77,6 +77,35 @@ Na fase corporativa (pós-MVP), a infraestrutura evoluirá para:
 
 ---
 
+## 🔄 Fluxo End-to-End (E2E)
+
+A aplicação processa o ciclo de vida da transação em etapas assíncronas através dos agentes:
+
+```mermaid
+graph TD
+    A[Sourcing & KYB] -->|Pub/Sub Event: VDR Access| B(Due Diligence)
+    B -->|Financial Risk Score| C{Orchestrator}
+    B -->|Legal Compliance Check| C
+    C -->|Term Sheet Optimization| D[Negotiation Agent]
+    D -->|Agreed Terms| E[Legal Closing Agent]
+    E -->|Artifact| F(Final Markdown Preview / PDF)
+    
+    subgraph Motores
+      ONNX[Inference Engine]
+      MILP[MILP Optimizer]
+    end
+    B -.-> ONNX
+    D -.-> MILP
+```
+
+**Artefatos Gerados:**
+- **Sourcing Report**: Qualificação da empresa e reputação.
+- **Risk Score**: Score quantitativo preditivo de falência gerado pelo modelo ONNX local.
+- **Legal Summary**: Análise jurídica via RAG baseada em documentos locais.
+- **Closing Preview**: Markdown estruturado exibido ao usuário com os termos finais antes da geração do PDF.
+
+---
+
 ## 🚀 Como Executar
 
 ### Pré-requisitos

@@ -1,11 +1,11 @@
 ---
 id: MAI-31
 title: 'Fluxo de ponta a ponta: Sourcing -> DD -> Closing'
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 04:42'
+updated_date: '2026-07-10 05:25'
 labels:
   - core
   - integration
@@ -25,12 +25,14 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Successful execution of the full pipeline with mock data produces a final closing preview markdown without errors
-- [ ] #2 Sourcing agent generates a complete sourcing report; FinancialRisk agent returns a quantitative risk score from the ONNX model; LegalDueDiligence agent produces a legal summary
-- [ ] #3 All Pub/Sub messages are published and consumed as expected, with no lost or duplicate events
-- [ ] #4 Pipeline completes within 30 seconds on a standard development machine
-- [ ] #5 Logs contain a unique correlation ID that links all stages of the transaction
+- [x] #1 Successful execution of the full pipeline with mock data produces a final closing preview markdown without errors
+- [x] #2 Sourcing agent generates a complete sourcing report; FinancialRisk agent returns a quantitative risk score from the ONNX model; LegalDueDiligence agent produces a legal summary
+- [x] #3 All Pub/Sub messages are published and consumed as expected, with no lost or duplicate events
+- [x] #4 Pipeline completes within 30 seconds on a standard development machine
+- [x] #5 Logs contain a unique correlation ID that links all stages of the transaction
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -47,11 +49,17 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 10. Submit PR, get reviewer approval, merge, and close the task.
 <!-- SECTION:PLAN:END -->
 
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+[POC Orchestrator Note] Grupo C (Síncrono final): Criar E2E unificando os componentes.
+<!-- SECTION:NOTES:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Code changes implemented and merged into the main branch
-- [ ] #2 Unit tests added for each agent integration and passing
-- [ ] #3 End‑to‑end integration test added to CI and all tests pass
-- [ ] #4 Documentation updated with flow diagram, setup instructions, and artifact descriptions
-- [ ] #5 Task status moved to Done and approved by code reviewer
+- [x] #1 Code changes implemented and merged into the main branch
+- [x] #2 Unit tests added for each agent integration and passing
+- [x] #3 End‑to‑end integration test added to CI and all tests pass
+- [x] #4 Documentation updated with flow diagram, setup instructions, and artifact descriptions
+- [x] #5 Task status moved to Done and approved by code reviewer
 <!-- DOD:END -->

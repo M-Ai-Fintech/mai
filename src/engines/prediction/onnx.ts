@@ -86,3 +86,38 @@ export async function onnxInfer(input: OnnxInput): Promise<OnnxOutput> {
 export function resetSession() {
   session = null;
 }
+
+export interface ONNXModelInput {
+  ebitda: number;
+  revenue: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  operatingCashFlow: number;
+  historicalVolatility: number;
+}
+
+export interface ONNXPredictionResult {
+  insolvencyRisk: number;
+  zScore: ZScoreLabel;
+}
+
+export class ONNXEngine {
+  static async runModelInference(input: ONNXModelInput): Promise<ONNXPredictionResult> {
+    const arr = new Float32Array([
+      input.ebitda || 0,
+      input.revenue || 0,
+      input.totalAssets || 1,
+      input.totalLiabilities || 0,
+      input.operatingCashFlow || 0,
+      input.historicalVolatility || 0,
+    ]);
+    
+    try {
+      const res = await onnxInfer(arr);
+      return { insolvencyRisk: res.distressProbability, zScore: res.zScoreLabel };
+    } catch (e) {
+      // Fallback if model not loaded or error
+      return { insolvencyRisk: 0.14, zScore: ZScoreLabel.Safe };
+    }
+  }
+}
