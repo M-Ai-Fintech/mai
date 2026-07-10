@@ -1,11 +1,11 @@
 ---
 id: MAI-24
 title: Desenhar wireframes e rotas para Dashboard Web
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 05:00'
 labels:
   - interface
   - gui
@@ -25,26 +25,31 @@ Definir a arquitetura de páginas, navegação e protótipo visual (wireframes) 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Projetar a estrutura de navegação e wireframes textuais/Mermaid das 5 telas principais (Dashboard, Detalhes do Deal, Motores Computacionais, Chat RAG, Configurações).
-- [ ] #2 Mapear as rotas de front-end dinâmicas com parâmetros de deal (ex: /deals/[id]/dd).
-- [ ] #3 Definir as rotas de API HTTP necessárias para suportar a reatividade da interface (operações de lifecycle, RAG e execução de motores).
-- [ ] #4 Alinhar o fluxo de dados da interface com o esquema de banco de dados schema.sql (transaction, phase_history, user_preferences, etc.).
+- [x] #1 Projetar a estrutura de navegação e wireframes textuais/Mermaid das 5 telas principais (Dashboard, Detalhes do Deal, Motores Computacionais, Chat RAG, Configurações).
+- [x] #2 Mapear as rotas de front-end dinâmicas com parâmetros de deal (ex: /deals/[id]/dd).
+- [x] #3 Definir as rotas de API HTTP necessárias para suportar a reatividade da interface (operações de lifecycle, RAG e execução de motores).
+- [x] #4 Alinhar o fluxo de dados da interface com o esquema de banco de dados schema.sql (transaction, phase_history, user_preferences, etc.).
+- [x] #5 Documentar sitemap, mock de API payloads e wireframes via Mermaid
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Levantar requisitos funcionais a partir da CLI interativa (CNPJ check, ONNX predição, MILP otimização, genética de term sheets, LaTeX/PDF) e do schema.sql.
+1. Ler requisitos funcionais a partir da CLI interativa (CNPJ check, ONNX predição, MILP otimização, genética de term sheets, LaTeX/PDF) e do schema.sql.
 2. Definir o sitemap e a hierarquia de páginas (rotas front-end).
 3. Elaborar os wireframes em formato textual estruturado e diagramas Mermaid.
 4. Mapear os contratos de API REST (endpoints, payloads, e status de retorno).
 5. Compilar as especificações em backlog/docs/gui-wireframes-routes.md.
+6. [MVP_4 Orchestrator Note] Realizar como Fase 1 (Síncrona) antes de MAI-25.
 <!-- SECTION:PLAN:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Documento contendo wireframes e rotas salvo em backlog/docs/gui-wireframes-routes.md.
-- [ ] #2 Validação de conformidade das rotas de API com o ciclo de vida de transações MADealLifecycle.
-- [ ] #3 Especificação de payloads JSON e validações Zod documentadas para todos os endpoints mapeados.
-- [ ] #4 Documento revisado e aprovado para servir de guia na implementação do boilerplate (MAI-25).
+- [x] #1 Documento contendo wireframes e rotas salvo em backlog/docs/gui-wireframes-routes.md.
+- [x] #2 Validação de conformidade das rotas de API com o ciclo de vida de transações MADealLifecycle.
+- [x] #3 Especificação de payloads JSON e validações Zod documentadas para todos os endpoints mapeados.
+- [x] #4 Documento revisado e aprovado para servir de guia na implementação do boilerplate (MAI-25).
+- [x] #5 Arquivo backlog/docs/gui-wireframes-routes.md criado e populado adequadamente
 <!-- DOD:END -->
