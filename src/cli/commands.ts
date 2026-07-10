@@ -214,6 +214,7 @@ export class CLICommands {
             operatingCashFlow: 1500000 + (idx * 400000),
             historicalVolatility: 0.10 + (idx * 0.04) % 0.30,
             businessSector: r.sector || "Tecnologia",
+            taxDebtsAmount: 0,
           };
         });
         dbLoaded = true;
@@ -238,6 +239,7 @@ export class CLICommands {
           operatingCashFlow: 2500000,
           historicalVolatility: 0.14,
           businessSector: "Tecnologia",
+            taxDebtsAmount: 0,
         },
         {
           id: "T2",
@@ -251,6 +253,7 @@ export class CLICommands {
           operatingCashFlow: 1800000,
           historicalVolatility: 0.10,
           businessSector: "Logística",
+            taxDebtsAmount: 0,
         },
         {
           id: "T3",
@@ -264,6 +267,7 @@ export class CLICommands {
           operatingCashFlow: 4000000,
           historicalVolatility: 0.18,
           businessSector: "Infraestrutura",
+            taxDebtsAmount: 0,
         },
         {
           id: "T4",
@@ -277,6 +281,7 @@ export class CLICommands {
           operatingCashFlow: 600000,
           historicalVolatility: 0.22,
           businessSector: "Comércio",
+            taxDebtsAmount: 0,
         },
       ];
     }

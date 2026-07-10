@@ -171,6 +171,15 @@ const mainCommand = new Command()
   .command("document", documentCommand)
   .command("chat", chatCommand)
   .command("smoke", smokeCommand)
+  .command("serve", new Command()
+    .description("Start the Core API Server")
+    .action(async () => {
+      const { startServer } = await import("../api/server.ts");
+      startServer();
+      // Keep process alive
+      await new Promise(() => {});
+    })
+  )
   .command("completions", new CompletionsCommand())
   .command("interactive", interactiveCommand)
   .default("interactive")

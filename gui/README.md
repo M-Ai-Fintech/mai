@@ -35,3 +35,12 @@ npm run start
 
 ## Tipagem (Compatibilidade)
 No futuro, os tipos do back-end (`Transaction`, `CompanyFinancialProfile`, `TargetRawInput`) poderão ser compartilhados diretamente ou sincronizados no subdiretório de `types`. Por enquanto, as respostas das rotas em `app/api/...` foram mockadas respeitando a estrutura acordada nos wireframes.
+
+## Environment Variables
+
+Create a `.env.local` file with the following variables:
+
+```env
+NEXT_PUBLIC_CORE_API_URL=http://localhost:8000
+```
+
