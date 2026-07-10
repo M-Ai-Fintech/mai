@@ -6,7 +6,7 @@ export class VDRIntegration {
     console.log(`[VDR Mock] Querying KYB registry for CNPJ: ${cnpj}`);
     
     try {
-      const db = new DatabaseMemoryService();
+      const db = DatabaseMemoryService.getInstance();
       const sql = `SELECT * FROM business WHERE cnpj = $1 LIMIT 1`;
       const result = await db.executeRawQuery<{ id: string, name: string, cnpj: string, sector: string, origin_country: string, created_at: string }>(sql, [cnpj]);
       

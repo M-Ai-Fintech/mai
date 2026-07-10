@@ -24,7 +24,7 @@ export class BrokerOrchestratorService {
   private memoryService: DatabaseMemoryService;
 
   constructor() {
-    this.memoryService = new DatabaseMemoryService();
+    this.memoryService = DatabaseMemoryService.getInstance();
   }
 
   /**
