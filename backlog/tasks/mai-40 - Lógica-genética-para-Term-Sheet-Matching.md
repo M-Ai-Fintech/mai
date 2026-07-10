@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 05:17'
+updated_date: '2026-07-10 06:04'
 labels:
   - engine
   - optimization
@@ -33,8 +33,6 @@ Validar a convergência do algoritmo genético sob faixas flexíveis de valuatio
 - [x] #6 A integração com o NegotiationAgent recebe o array de alternativas e exibe cada opção corretamente via CLI sem erros de validação Zod
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -54,6 +52,16 @@ Referências úteis: NSGA-II para otimização multi-objetivo caso seja necessá
 
 [POC Orchestrator Note] Grupo A (Paralelo): Focar apenas na genética base em src/engines/optimization/genetic.ts.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Duplicação Crítica de Lógica: Há dois algoritmos genéticos separados e incompatíveis no código: src/engines/optimization/genetic.ts (que atua sobre valuation, cash, equity, earn-out, escrow) e term_sheet_optimizer.ts (que opera sobre cashPercentage, buyerEquityShare, earnOutTargetYears, nonCompeteMonths). 2. Motor Inutilizado em Produção: O algoritmo desenvolvido sob a tarefa MAI-40 (genetic.ts) só é chamado no test runner e na tool Mastra, enquanto a CLI e a API Server continuam utilizando o term_sheet_optimizer.ts antigo. A lógica de convergência otimizada não está de fato integrada no fluxo real do middleware.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

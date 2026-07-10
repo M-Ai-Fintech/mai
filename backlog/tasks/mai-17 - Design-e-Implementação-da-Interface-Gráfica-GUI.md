@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 05:55'
+updated_date: '2026-07-10 06:04'
 labels:
   - interface
   - gui
@@ -38,8 +38,6 @@ Módulos a implementar (1:1 com a CLI):
 - [ ] #5 Reuso de tipos TypeScript da camada compartilhada para consistência de dados entre client e server
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -48,6 +46,16 @@ Módulos a implementar (1:1 com a CLI):
 3. Integração Cliente HTTP (MAI-26): Desenvolver a camada de serviços frontend conectada com os endpoints do Core API, consumindo os motores de predição, otimização e geração de documentos de forma assíncrona/reativa.
 4. Testes e Ajustes Finais: Validar fluxos de ponta a ponta com dados reais do Postgres e VDR, testando responsividade e tratamento de erros de rede.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Falha de Reatividade: Os formulários e views cruciais (EnginesPage e ChatPage) são componentes estáticos (Server Components) sem manipulação de estado, hooks de rede ou ações reais (os botões não possuem onClick). 2. Falha de Reuso de Tipos: Conforme documentado no próprio README.md da GUI, os tipos TS do backend não são compartilhados com o frontend; em vez disso, foram usados mocks estáticos/locais. 3. Backlog Desalinhado: A tarefa foi dada como 'Done', mas os critérios AC #2 e AC #5 continuam desmarcados como não finalizados.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

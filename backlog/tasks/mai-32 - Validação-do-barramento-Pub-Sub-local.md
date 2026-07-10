@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 05:16'
+updated_date: '2026-07-10 06:04'
 labels:
   - core
   - integration
@@ -37,8 +37,6 @@ Validate the local Pub/Sub bus ensuring reliable asynchronous event routing betw
 - [ ] #10 Comprehensive unit and integration tests in tests/pubsub.spec.ts pass successfully via Deno test runner.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -50,6 +48,16 @@ Validate the local Pub/Sub bus ensuring reliable asynchronous event routing betw
 <!-- SECTION:NOTES:BEGIN -->
 [POC Orchestrator Note] Grupo A (Paralelo): Focar estritamente em src/agent/actions.ts e tests/pubsub.spec.ts.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Negligência de Backlog: A tarefa foi marcada como 'Done', mas os critérios AC #2 a #10 e DoD #2 a #11 foram deixados inteiramente desmarcados ([ ]). 2. Dependência de FFI: O teste unitário requer explicitamente a flag --allow-ffi devido ao uso de onnxruntime-node, o que viola o DoD de nenhuma dependência nativa Node.js em ambiente Deno para o motor.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

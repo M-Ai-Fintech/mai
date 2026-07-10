@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 05:25'
+updated_date: '2026-07-10 06:04'
 labels:
   - core
   - integration
@@ -32,8 +32,6 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 - [x] #5 Logs contain a unique correlation ID that links all stages of the transaction
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -54,6 +52,16 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 <!-- SECTION:NOTES:BEGIN -->
 [POC Orchestrator Note] Grupo C (Síncrono final): Criar E2E unificando os componentes.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Teste de Integração Mocado: O teste e2e/flow.test.ts faz monkeypatch de DatabaseMemoryService.prototype.query para retornar dados mocados, impossibilitando a validação real da integração com o banco. 2. Fallbacks de IA Silenciosos: Sem GEMINI_API_KEY configurada, os agentes rodam inteiramente com fallbacks e respostas mockadas estáticas interceptadas de forma transparente, o que mascara se os agentes funcionam corretamente com prompts reais em um fluxo E2E.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 05:07'
+updated_date: '2026-07-10 06:04'
 labels:
   - interface
   - gui
@@ -33,8 +33,6 @@ Implementar a camada de cliente HTTP (SDK/API Client) na interface gráfica (Das
 - [x] #6 CORS no Deno, API Client no frontend, Error Interceptors com retry de 10s
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -43,6 +41,16 @@ Implementar a camada de cliente HTTP (SDK/API Client) na interface gráfica (Das
 3. Mapear contratos de tipos (Zod) e implementar métodos para as APIs dos 6 motores M&A.
 4. [MVP_4 Orchestrator Note] Realizar como Fase 3 (Síncrona) DEPOIS de MAI-25.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Integração Incompleta: O cliente HTTP gui/lib/api-client.ts foi criado, mas as telas de chat e engines da GUI não o utilizam, permanecendo como elementos puramente visuais e estáticos sem comunicação real com a Core API.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

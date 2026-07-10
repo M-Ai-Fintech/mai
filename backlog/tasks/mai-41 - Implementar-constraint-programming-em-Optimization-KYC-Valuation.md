@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 05:20'
+updated_date: '2026-07-10 06:04'
 labels:
   - engine
   - optimization
@@ -33,8 +33,6 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 - [x] #6 O solver processa um conjunto de 100 candidatos em menos de 200 ms (benchmark local, Deno).
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -52,6 +50,16 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 [POC Orchestrator Note] Grupo B (Síncrono após A): Basear-se em MAI-40. Focar em constraints.ts e index.ts.
 <!-- SECTION:NOTES:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Isolamento Completo da Lógica de Restrições: A função optimizeWithConstraints() que faz a filtragem de KYC e limites de alavancagem financeira sobre a saída do GA (constraints.ts) nunca é chamada pela CLI ou pela Core API de produção. A lógica é testada apenas em seu próprio arquivo de testes (constraints_test.ts). Em tempo de execução real, nenhuma restrição de PEP/OFAC ou alavancagem financeira é aplicada.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [x] #1 Arquivo `src/engines/optimization/constraints.ts` implementado com pelo menos 4 tipos de restrição distintos (KYC, alavancagem, cobertura, valuation floor).
@@ -61,8 +69,6 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 - [x] #5 Documentação inline (JSDoc) descrevendo parâmetros, unidades e referências regulatórias de cada restrição.
 - [x] #6 PR aprovado e tarefa movida para `Done` no Backlog.md.
 <!-- DOD:END -->
-
-
 
 ## Notes
 

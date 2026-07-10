@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@antigravity'
 created_date: '2026-07-10 05:33'
-updated_date: '2026-07-10 05:42'
+updated_date: '2026-07-10 06:04'
 labels: []
 milestone: m-5
 dependencies: []
@@ -47,6 +47,16 @@ Estabelecer a conexão real e dinâmica entre a interface Next.js e o banco de d
 <!-- SECTION:NOTES:BEGIN -->
 Implemented Fase 2.1 and 2.2 of MAI-47: Integrated GUI frontend (api-client, page, deal detail page) with the Core API / PostgreSQL, verified successful Turbopack production compilation, and committed changes with the specific Git rule.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Integração Incompleta na GUI: Embora os endpoints do backend tenham sido implementados no TransactionRepository e conectados na API, as views da GUI para Engines e Chat são totalmente estáticas, impossibilitando que inputs de formulários de solvers e histórico de chats RAG reais sejam disparados ou persistidos dinamicamente via interface web.
+---
+<!-- COMMENTS:END -->
 
 ## Final Summary
 

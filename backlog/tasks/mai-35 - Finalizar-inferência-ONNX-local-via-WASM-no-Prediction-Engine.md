@@ -5,7 +5,7 @@ status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 05:21'
+updated_date: '2026-07-10 06:04'
 labels:
   - engine
   - prediction
@@ -33,8 +33,6 @@ Implementar a leitura e inferência real dos arquivos .onnx localmente no runtim
 - [x] #6 Função exportada onnxInfer() passa em todos os testes unitários com modelo ONNX mock (stub de 4 features)
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -57,6 +55,16 @@ Thresholds Z-Score de Altman (1968): Safe ≥ 2.99 | Grey Zone 1.81–2.99 | Dis
 
 [POC Orchestrator Note] Grupo B (Síncrono após A): Usar o modelo de MAI-34. Focar em src/engines/prediction/onnx.ts.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: Auditoria Técnica
+created: 2026-07-10 06:04
+---
+[REVISÃO CRÍTICA] 1. Falha de Inicialização em Produção: O método loadOnnxModel nunca é inicializado no setup de produção (AppBootstrapper ou api/server.ts). Como consequência, as inferências em execução (MLEngine) falham silenciosamente na carga do modelo e retornam o valor de fallback mockado (0.14 / Safe), inviabilizando a execução do modelo real no runtime. 2. Tratamento de Erro Omisso nos Testes: O teste de inferência com modelo real em prediction.spec.ts engole erros silenciosamente no bloco try-catch ('Model loading skipped'), fazendo com que o teste passe mesmo se o arquivo ONNX estiver ausente ou corrompido.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
