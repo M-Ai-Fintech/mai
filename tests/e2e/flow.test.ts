@@ -18,35 +18,37 @@ import {
 import { LocalPubSubBus } from "../../src/core/pubsub/LocalPubSubBus.ts";
 import { DatabaseMemoryService } from "../../src/core/db/DatabaseMemoryService.ts";
 
-// Mock DatabaseMemoryService to avoid ECONNREFUSED in CI without DB
-const originalQuery = DatabaseMemoryService.prototype.query;
-DatabaseMemoryService.prototype.query = async function (text: string, params?: any[]) {
-  if (text.includes("user_preferences")) {
-    return { rows: [{ preferences: { defaultValuationMethod: "DCF" } }] };
-  } else if (text.includes("flow_checkpoints")) {
-    return { rows: [{ state: { step: "mocked" } }] };
-  }
-  return { rows: [] };
-};
-
 Deno.test("M&A E2E Flow: Sourcing -> DD -> Closing", async (t) => {
   const dealId = crypto.randomUUID();
   const correlationId = `corr_${crypto.randomUUID()}`;
   
+  // Check if database is actually connected
+  const dbService = DatabaseMemoryService.getInstance();
+  const isDbConnected = await dbService.connect();
+  if (!isDbConnected) {
+    console.log("[E2E Flow Test] Database is offline, DB-related steps will be ignored.");
+  }
+
+  const hasApiKey = !!(Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"));
+  
   // 1. Database Memory Service Tool
-  await t.step("Save preferences in Database Memory Service", async () => {
-    const memResult = await databaseMemoryServiceTool.execute!({
-      action: "save_user_preferences",
-      userId: "broker_123",
-      data: { preferCash: true, riskTolerance: "medium" },
-    }, { runId: "test" } as any);
-    assertEquals(memResult.success, true);
-    
-    const memFetch = await databaseMemoryServiceTool.execute!({
-      action: "get_user_preferences",
-      userId: "broker_123",
-    }, { runId: "test" } as any);
-    assertEquals(memFetch.success, true);
+  await t.step({
+    name: "Save preferences in Database Memory Service",
+    ignore: !isDbConnected,
+    fn: async () => {
+      const memResult = await databaseMemoryServiceTool.execute!({
+        action: "save_user_preferences",
+        userId: "broker_123",
+        data: { preferCash: true, riskTolerance: "medium" },
+      }, { runId: "test" } as any);
+      assertEquals(memResult.success, true);
+      
+      const memFetch = await databaseMemoryServiceTool.execute!({
+        action: "get_user_preferences",
+        userId: "broker_123",
+      }, { runId: "test" } as any);
+      assertEquals(memFetch.success, true);
+    }
   });
 
   // 2. Pub/Sub and VDR Access
@@ -90,7 +92,9 @@ Deno.test("M&A E2E Flow: Sourcing -> DD -> Closing", async (t) => {
   await t.step("Sourcing Agent generates report", async () => {
     const response = await sourcingAndKYBAgent.generate(`Generate a sourcing report for deal ${dealId} with correlation ID ${correlationId}`);
     assertExists(response.text);
-    assert(response.text.includes("MOCK") || response.text.length > 0);
+    if (!hasApiKey) {
+      assert(response.text.includes("[DRY-RUN/MOCK]"), "Should use fallback when API key is missing");
+    }
   });
 
   // 5. ONNX Engine via HuggingFace MCP
@@ -115,6 +119,9 @@ Deno.test("M&A E2E Flow: Sourcing -> DD -> Closing", async (t) => {
   await t.step("Financial Risk Agent generates score", async () => {
     const response = await financialRiskAgent.generate(`Evaluate financial risk for deal ${dealId}. Correlation ID: ${correlationId}`);
     assertExists(response.text);
+    if (!hasApiKey) {
+      assert(response.text.includes("[DRY-RUN/MOCK]"), "Should use fallback when API key is missing");
+    }
   });
 
   // 7. Legal DD Agent and VDR Structured Access
@@ -127,17 +134,26 @@ Deno.test("M&A E2E Flow: Sourcing -> DD -> Closing", async (t) => {
     
     const response = await legalDueDiligenceAgent.generate(`Perform legal DD for deal ${dealId}. Correlation ID: ${correlationId}`);
     assertExists(response.text);
+    if (!hasApiKey) {
+      assert(response.text.includes("[DRY-RUN/MOCK]"), "Should use fallback when API key is missing");
+    }
   });
 
   // 8. Legal Closing Agent
   await t.step("Legal Closing Agent generates markdown preview", async () => {
     const response = await legalClosingAgent.generate(`Generate final closing preview markdown for deal ${dealId}. Correlation ID: ${correlationId}`);
     assertExists(response.text);
+    if (!hasApiKey) {
+      assert(response.text.includes("[DRY-RUN/MOCK]"), "Should use fallback when API key is missing");
+    }
   });
   
   // 9. Check Orchestrator
   await t.step("AgentOrchestrator execution", async () => {
     const response = await AgentOrchestrator.executeAgentQuery(dealId, "What is the status of the deal?", "Context data");
     assertExists(response);
+    if (!hasApiKey) {
+      assert(response.includes("[DRY-RUN/MOCK]"), "Should use fallback when API key is missing");
+    }
   });
 });
