@@ -239,6 +239,16 @@ export const googleCloudPubSubTool = createTool({
       });
       return { success: true, messageId: mockMessageId, action: input.action, dealId: input.dealId, documents };
     }
+
+    if (input.action === "trigger_engine" && input.dealId) {
+      bus.publish(`${input.topic}_response`, {
+        ...messagePayload,
+        status: "success",
+        result: `Engine triggered successfully for ${input.dealId}`,
+      });
+      return { success: true, messageId: mockMessageId, action: input.action, dealId: input.dealId, message: "Engine triggered successfully" };
+    }
+
     return {
       success: true,
       messageId: mockMessageId,

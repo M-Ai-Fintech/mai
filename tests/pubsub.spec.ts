@@ -7,21 +7,76 @@ import {
 } from "../src/agent/actions.ts";
 import { LocalPubSubBus } from "../src/core/pubsub/LocalPubSubBus.ts";
 
-Deno.test("LocalPubSubBus - Publish and Subscribe real messaging flow", () => {
+Deno.test("LocalPubSubBus - Publish and Subscribe real messaging flow", async () => {
   const bus = LocalPubSubBus.getInstance();
   bus.clear();
 
-  let receivedData: any = null;
+  let receivedData1: any = null;
+  let receivedData2: any = null;
+
   bus.subscribe("test_topic", (data: any) => {
-    receivedData = data;
+    receivedData1 = data;
+  });
+
+  bus.subscribe("test_topic", (data: any) => {
+    receivedData2 = data;
   });
 
   const payload = { hello: "world", test: true };
   bus.publish("test_topic", payload);
 
+  // Wait for async delivery
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  assertNotEquals(receivedData1, null);
+  assertEquals(receivedData1.hello, "world");
+  assertEquals(receivedData1.test, true);
+
+  assertNotEquals(receivedData2, null);
+  assertEquals(receivedData2.hello, "world");
+  assertEquals(receivedData2.test, true);
+});
+
+Deno.test("LocalPubSubBus - Error isolation", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+
+  let receivedData: any = null;
+
+  bus.subscribe("error_topic", () => {
+    throw new Error("Simulated failure");
+  });
+
+  bus.subscribe("error_topic", (data: any) => {
+    receivedData = data;
+  });
+
+  bus.publish("error_topic", { success: true });
+
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
   assertNotEquals(receivedData, null);
-  assertEquals(receivedData.hello, "world");
-  assertEquals(receivedData.test, true);
+  assertEquals(receivedData.success, true);
+});
+
+Deno.test("LocalPubSubBus - Cleanup and memory leak prevention", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+
+  let count = 0;
+  bus.subscribe("clean_topic", () => {
+    count++;
+  });
+
+  bus.publish("clean_topic", { test: 1 });
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assertEquals(count, 1);
+
+  bus.clear("clean_topic");
+
+  bus.publish("clean_topic", { test: 2 });
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assertEquals(count, 1); // should not increment because listener was cleared
 });
 
 Deno.test("googleCloudPubSubTool - Publishes and returns success and handles request_vdr_access", async () => {
@@ -51,6 +106,32 @@ Deno.test("googleCloudPubSubTool - Publishes and returns success and handles req
   assertNotEquals(responseData, null);
   assertEquals(responseData.status, "success");
   assertEquals(responseData.requester, "LegalDueDiligenceAgent");
+});
+
+Deno.test("googleCloudPubSubTool - Handles trigger_engine action", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+
+  let responseData: any = null;
+  bus.subscribe("engine_requests_response", (data: any) => {
+    responseData = data;
+  });
+
+  const result = await googleCloudPubSubTool.execute!({
+    topic: "engine_requests",
+    action: "trigger_engine",
+    dealId: "deal_2",
+  }, {} as any);
+
+  assertEquals(result.success, true);
+  assertEquals(result.action, "trigger_engine");
+  assertEquals(result.dealId, "deal_2");
+
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  assertNotEquals(responseData, null);
+  assertEquals(responseData.status, "success");
+  assertEquals(responseData.result, "Engine triggered successfully for deal_2");
 });
 
 Deno.test("mcpDatabaseTool - Runs tables and schema commands with graceful fallback", async () => {
