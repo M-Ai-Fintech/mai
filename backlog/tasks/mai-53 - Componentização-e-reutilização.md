@@ -1,10 +1,10 @@
 ---
 id: MAI-53
 title: Biblioteca de Componentes Reutilizáveis (Design System Mastercard)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-07-14 05:32'
-updated_date: '2026-07-14 15:35'
+updated_date: '2026-07-14 16:04'
 labels:
   - GUI
   - components
@@ -38,15 +38,17 @@ Componentes a implementar (em ordem de prioridade):
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Todos os componentes atômicos implementados com tipagem TypeScript forte (props interface exportada)
-- [ ] #2 Todos os componentes de formulário implementados com suporte a validação e estados (error, disabled, loading)
-- [ ] #3 Componentes compostos (Card, Navigation, Sidebar, TopBar, Footer, Modal, Table) implementados e responsivos nos 4 breakpoints
-- [ ] #4 Arquitetura dos componentes projetada para servir como blocos de construção tanto para telas estáticas (MAI-51, MAI-50, MAI-52) quanto para renderização dinâmica no motor de UI Generativa (MAI-57)
-- [ ] #5 Todos os componentes prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
-- [ ] #6 Cada componente possui: arquivo .tsx isolado, .stories.tsx funcional, .mdx documentado seguindo o template de MAI-59
-- [ ] #7 Todos os componentes consomem exclusivamente design tokens (zero valores hardcoded)
-- [ ] #8 Componentes de feedback (Toast, EmptyState, Skeleton) implementados para UX profissional
+- [x] #1 Todos os componentes atômicos implementados com tipagem TypeScript forte (props interface exportada)
+- [x] #2 Todos os componentes de formulário implementados com suporte a validação e estados (error, disabled, loading)
+- [x] #3 Componentes compostos (Card, Navigation, Sidebar, TopBar, Footer, Modal, Table) implementados e responsivos nos 4 breakpoints
+- [x] #4 Arquitetura dos componentes projetada para servir como blocos de construção tanto para telas estáticas (MAI-51, MAI-50, MAI-52) quanto para renderização dinâmica no motor de UI Generativa (MAI-57)
+- [x] #5 Todos os componentes prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
+- [x] #6 Cada componente possui: arquivo .tsx isolado, .stories.tsx funcional, .mdx documentado seguindo o template de MAI-59
+- [x] #7 Todos os componentes consomem exclusivamente design tokens (zero valores hardcoded)
+- [x] #8 Componentes de feedback (Toast, EmptyState, Skeleton) implementados para UX profissional
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -56,11 +58,11 @@ Componentes a implementar (em ordem de prioridade):
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 npm run storybook renderiza todos os componentes sem erros
-- [ ] #2 npm run build compila sem erros com todos os componentes
-- [ ] #3 Protótipos de todos os componentes validados e aprovados no Stitch MCP pelo PO
-- [ ] #4 Componentes validados como desacoplados e compatíveis com a infraestrutura de UI Generativa (MAI-57)
-- [ ] #5 Cada componente tem ao menos 2 variantes demonstradas no Storybook
-- [ ] #6 Zero warnings de acessibilidade (WCAG 2.1 AA) nos componentes interativos
-- [ ] #7 Code review completado com foco em reutilização e consistência com Design System
+- [x] #1 npm run storybook renderiza todos os componentes sem erros
+- [x] #2 npm run build compila sem erros com todos os componentes
+- [x] #3 Protótipos de todos os componentes validados e aprovados no Stitch MCP pelo PO
+- [x] #4 Componentes validados como desacoplados e compatíveis com a infraestrutura de UI Generativa (MAI-57)
+- [x] #5 Cada componente tem ao menos 2 variantes demonstradas no Storybook
+- [x] #6 Zero warnings de acessibilidade (WCAG 2.1 AA) nos componentes interativos
+- [x] #7 Code review completado com foco em reutilização e consistência com Design System
 <!-- DOD:END -->

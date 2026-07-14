@@ -4,27 +4,24 @@
 
 ---
 
-## 1. Princípios de Composição e Layout
+## 1. Princípios de Composição e Layout (Inspiração Mastercard + Benchmark Dealroom.net)
 
-### 1.1 Editorial Canvas & Atmosfera
-- **Superfície Base**: Toda tela deve utilizar o fundo **Canvas Cream** (`--color-canvas-cream` / `#F3F0EE`). O branco puro (`#FFFFFF`) é proibido como fundo de página e reservado estritamente para elementos flutuantes (Navigation Pill, Modais, Cards elevados e Satellite CTAs).
-- **Ritmo de Superfície**: Alterne entre 3 níveis de profundidade tátil:
-  1. *Base*: Canvas Cream (`#F3F0EE`)
-  2. *Elevado*: Lifted Cream (`#FCFBFA`) para seções aninhadas ou painéis secundários.
-  3. *Rodapé / Contraste Dark*: Ink Black (`#141413`) para o rodapé ou áreas de fechamento estratégico.
+### 1.1 Editorial Canvas, Maior Contraste & Referência Dealroom.net
+- **Benchmark Visual & Produto**: O produto final visa a densidade e sofisticação de plataformas M&A líderes como o **[Dealroom.net](https://dealroom.net/)**, combinando gestão de pipeline financeira com elegância editorial.
+- **Superfície Base & Contraste Elevado**: O fundo base é **Canvas Cream** (`#F3F0EE`). Para elevar o contraste com cartões brancos (`#FFFFFF`), utilize bordas sutis de alta definição (`1px solid rgba(20,20,19,0.08)`) e sombras de nível 1/2 para separação clara.
+- **Alinhamento à Esquerda (Left-Aligned por Padrão)**: Mantenha todo texto, títulos, rótulos e listas alinhados à esquerda por padrão (leitura natural). O alinhamento centralizado deve ser usado com extema parcimônia (apenas em avatares e badges isolados).
 
-### 1.2 Formas e Radii Extremos
-- NUNCA utilize cantos de 90° afiados ou border-radii genéricos de 8px/12px para containers principais.
-- **Hierarquia de Radii**:
-  - `20px` (`--radius-button`): Botões primários Ink Pill e cards utilitários médios.
-  - `24px` (`--radius-consent`): Botões de confirmação/consentimento e balões de diálogo.
-  - `40px` (`--radius-stadium`): Molduras de mídias hero, containers de seções amplas.
-  - `50%` (`--radius-circle`): Imagens de perfil/serviços, botões circulares e satellite micro-CTAs.
-  - `999px` (`--radius-pill`): Navbar flutuante, tags de categoria e seletores de rodapé.
+### 1.2 Regras de Formas e Radii
+- **Containers e Cards Geral**: Diferente dos elementos pílula, containers gerais e cards funcionais de dados usam **radii pequenos** (6px a 12px) para preservar a densidade de informação financeira estilo Dealroom.
+- **Exceções Pílula/Circulares**: Radii grandes/pílula (`20px`, `999px`, `50%`) são reservados exclusivamente para:
+  - Botões primários (`20px`)
+  - Floating Nav Pill (`999px`)
+  - Chips/Tags e Badges (`999px`)
+  - Retratos e Satellite Micro-CTAs (`50%`)
 
-### 1.3 Asimetria e Trajetória Orbital
-- Retratos de serviços e cards circulares não devem ficar alinhados em grades rígidas e simétricas. Utilize dispostos assimétricos.
-- Conecte cards circulares através de **Linhas Orbitais** finas (1px) na cor `Light Signal Orange` (`#F37338`) para sugerir fluidez e constelação de funcionalidades.
+### 1.3 Uso da Cor Laranja (Signal Orange) & Mídias
+- **Ícones em Superfície Laranja**: Sempre que um card, badge ou container possuir fundo laranja (`Signal Orange` ou `Light Signal Orange`), o ícone interno e o texto OBRIGATORIAMENTE devem ser em **Branco puro** (`#FFFFFF`) para alto contraste.
+- **Imagens**: Utilize exclusivamente imagens gratuitas do **Unsplash** (ex: `https://images.unsplash.com/...`) para fotografias de executivos, empresas e assets visuais.
 
 ---
 

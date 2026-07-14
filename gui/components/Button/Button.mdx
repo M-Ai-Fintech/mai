@@ -1,0 +1,38 @@
+import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs";
+import { Button } from "./Button";
+
+<Meta title="Components/Atomic/Button" />
+
+# Button
+
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
+> **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
+
+## Overview
+O componente **Button** é o elemento atômico primário para interações e CTAs no sistema M&Ai. Ele suporta a estética de pílula Ink Black (`20px radius`) para ações principais, a variação de consentimento Signal Orange (`#CF4500` com texto/ícone em branco puro obrigatório) e o Satellite Micro-CTA circular.
+
+---
+
+## Props API
+
+<Controls />
+
+---
+
+## Diretrizes de Uso & Do's and Don'ts
+
+### Quando usar
+- **Primary Ink Pill**: Para CTAs principais na página ("Explorar Deal", "Ver Análise").
+- **Consent Signal Orange**: Para ações de compliance, aceite de termos ou confirmação legal.
+- **Satellite CTA**: Dockado na borda de cartões circulares de serviços.
+
+### Quando NÃO usar
+- Não utilize o Signal Orange em botões primários de marketing padrão.
+- Não remova o raio de curvatura de 20px dos botões de pílula.
+
+---
+
+## Acessibilidade (WCAG 2.1 AA)
+
+- **Touch Target**: Mínimo garantido de **44x44px** (variante `md`) e **48x48px** (`lg`/`satellite`).
+- **Navegação via Teclado**: Anel de foco visível ativado em `focus-visible`.

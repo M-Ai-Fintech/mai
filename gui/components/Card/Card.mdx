@@ -1,0 +1,29 @@
+import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs";
+import { Card } from "./Card";
+
+<Meta title="Components/Composites/Card" />
+
+# Card
+
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
+> **Benchmark Inspiracional**: [Dealroom.net](https://dealroom.net/)  
+> **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
+
+## Overview
+O componente **Card** é o container estrutural primário para exibição de métricas, transações de M&A e painéis da plataforma. Seguindo os princípios refinados do PO e o benchmark do Dealroom.net:
+- **Radii Pequenos (8px)** por padrão para maximizar a densidade de dados financeiros.
+- **Alto Contraste Branco (`#FFFFFF`)** sobre o fundo cream (`#F3F0EE`).
+- **Alinhamento à Esquerda (`left-aligned`)** padrão.
+- **Branco Puro Obrigatório (`#FFFFFF`)** para ícones e textos dentro de cards de variante laranja (`Signal Orange`).
+
+---
+
+## Props API
+
+<Controls />
+
+---
+
+## Acessibilidade (WCAG 2.1 AA)
+
+- Contraste texto/fundo auditado (13.2:1 para cards brancos padrão, e texto branco em fundo laranja).
