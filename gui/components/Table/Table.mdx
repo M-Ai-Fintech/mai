@@ -1,0 +1,23 @@
+import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Table } from "./Table";
+
+<Meta title="Components/Composites/Table" />
+
+# Table
+
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
+> **Benchmark Alignment**: [Dealroom.net](https://dealroom.net/) High-Density Table Layout
+
+## Overview
+O componente **Table** é a tabela financeira modularizada em subcomponentes desacoplados (`Table`, `TableHead`, `TableRow`, `TableCell`, `TablePagination`).
+
+### Funcionalidades Específicas
+- **Elipse de Texto (`truncate text-ellipsis`)**: Textos longos são cortados com elipse sem quebrar linha.
+- **Linhas e Hover**: Cores alternadas (`odd:bg-canvas-cream/20 even:bg-white`), separadores visíveis em `Dust Taupe` e transição de destaque no hover (`hover:bg-lifted-cream`).
+- **Seletor Dinâmico de Paginação**: Suporte a escolha de itens por página (`10, 25, 50, 100`).
+
+---
+
+## Props API
+
+<Controls />
