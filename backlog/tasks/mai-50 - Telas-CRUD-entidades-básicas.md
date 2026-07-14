@@ -1,11 +1,11 @@
 ---
 id: MAI-50
 title: 'Telas de CRUD: Gestão de Clientes, Deals e Time'
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:21'
-updated_date: '2026-07-14 15:35'
+updated_date: '2026-07-14 16:11'
 labels:
   - GUI
   - crud
@@ -31,15 +31,17 @@ Cada formulário deve incluir validação client-side rica (Zod/React Hook Form)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Telas de CRUD prototipadas no Stitch MCP e aprovadas pelo PO antes de qualquer codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
-- [ ] #2 Telas construídas inteiramente a partir dos componentes reutilizáveis da MAI-53 (Table, FormField, Input, Button, Modal, Skeleton)
-- [ ] #3 Tela de Gestão de Clientes: listagem (tabela paginada), formulário de criação/edição (dados cadastrais, tipo buyer/seller, setor)
-- [ ] #4 Tela de Gestão de Deals: listagem, formulário de criação/edição (título, valuation range, fase atual, cliente associado)
-- [ ] #5 Tela de Gestão de Time: listagem de membros, formulário para adicionar/editar permissões (RBAC) e papéis nos deals
-- [ ] #6 Validação client-side implementada para todos os formulários (campos obrigatórios, formatos de email/moeda)
-- [ ] #7 Feedback visual de sucesso/erro (toasts da MAI-53) em todas as operações de mutação
-- [ ] #8 Skeleton loaders da MAI-53 implementados para as listagens durante o fetch inicial
+- [x] #1 Telas de CRUD prototipadas no Stitch MCP e aprovadas pelo PO antes de qualquer codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
+- [x] #2 Telas construídas inteiramente a partir dos componentes reutilizáveis da MAI-53 (Table, FormField, Input, Button, Modal, Skeleton)
+- [x] #3 Tela de Gestão de Clientes: listagem (tabela paginada), formulário de criação/edição (dados cadastrais, tipo buyer/seller, setor)
+- [x] #4 Tela de Gestão de Deals: listagem, formulário de criação/edição (título, valuation range, fase atual, cliente associado)
+- [x] #5 Tela de Gestão de Time: listagem de membros, formulário para adicionar/editar permissões (RBAC) e papéis nos deals
+- [x] #6 Validação client-side implementada para todos os formulários (campos obrigatórios, formatos de email/moeda)
+- [x] #7 Feedback visual de sucesso/erro (toasts da MAI-53) em todas as operações de mutação
+- [x] #8 Skeleton loaders da MAI-53 implementados para as listagens durante o fetch inicial
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -49,8 +51,8 @@ Cada formulário deve incluir validação client-side rica (Zod/React Hook Form)
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Protótipos das telas de CRUD aprovados no Stitch MCP pelo PO
-- [ ] #2 Operações de CRUD testadas e compostas utilizando componentes da biblioteca MAI-53 integrando com endpoints da API
-- [ ] #3 Componentes de form complexos documentados no Storybook
-- [ ] #4 Telas responsivas (tabelas com scroll horizontal em mobile, forms colapsam para 1 coluna)
+- [x] #1 Protótipos das telas de CRUD aprovados no Stitch MCP pelo PO
+- [x] #2 Operações de CRUD testadas e compostas utilizando componentes da biblioteca MAI-53 integrando com endpoints da API
+- [x] #3 Componentes de form complexos documentados no Storybook
+- [x] #4 Telas responsivas (tabelas com scroll horizontal em mobile, forms colapsam para 1 coluna)
 <!-- DOD:END -->
