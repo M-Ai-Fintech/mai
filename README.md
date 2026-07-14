@@ -216,10 +216,12 @@ sob uma arquitetura resiliente:
   blindado pelo proxy **Supergood** para auditoria. A persistência no PostgreSQL
   segue um estrito padrão Singleton, garantindo que os agentes não esgotem o
   pool de conexões durante as execuções paralelas.
-- **Visualização Web** (`nextjs_gui_and_api.md`): Toda interação pode ser feita
-  pelo painel em Next.js, que se comunica com o Deno via uma `ApiClient`
-  protegida contra vazamento de caminhos e com suporte nativo a respostas via
-  streaming (SSE).
+- **Visualização Web** (`nextjs_gui_and_api.md` & `gui/README.md`): Toda interação pode ser feita
+  pelo painel em Next.js 16 (App Router), estruturado sob o Mastercard Design System
+  e o benchmark Dealroom.net. Inclui biblioteca de componentes auditada no Storybook 10
+  via MDX, motor de síntese de Generative UI em tempo de execução (JSON DSL) e dashboard
+  dinâmico com ancoragem de widgets. A comunicação com o Deno ocorre via `ApiClient`
+  protegida contra vazamento de caminhos e com suporte nativo a respostas via streaming (SSE).
 - **O Caminho para a Nuvem** (`architecture.md`): O monolito atual foi
   intencionalmente construído com mensageria assíncrona (simulando Pub/Sub)
   preparando sua migração natural para serviços Serverless da GCP (Cloud Run,
