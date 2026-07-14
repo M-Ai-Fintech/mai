@@ -1,0 +1,24 @@
+import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Avatar } from "./Avatar";
+
+<Meta title="Components/Atomic/Avatar" />
+
+# Avatar
+
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
+> **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
+
+## Overview
+O componente **Avatar** é a foto de perfil circular (`50% radius`) utilizada em cartões de transação, avatares de bankers, contrapartes de M&A e listas de cowork. Utiliza imagens gratuitas do Unsplash ou fallback de iniciais em letras maiúsculas.
+
+---
+
+## Props API
+
+<Controls />
+
+---
+
+## Diretrizes de Acessibilidade (WCAG 2.1 AA)
+- Sempre inclui atributo `alt` na tag de imagem.
+- Tamanho mínimo `md` garante **44x44px** de área de toque.
