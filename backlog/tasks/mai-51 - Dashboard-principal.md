@@ -1,11 +1,11 @@
 ---
 id: MAI-51
 title: Dashboard Principal com Multi-View e Filtros Contextuais
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:26'
-updated_date: '2026-07-14 15:35'
+updated_date: '2026-07-14 16:09'
 labels:
   - GUI
   - dashboard
@@ -34,18 +34,20 @@ Toda a tela deve ser prototipada no Stitch MCP seguindo rigorosamente o fluxo St
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Layout e views do dashboard prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
-- [ ] #2 Implementação construída inteiramente utilizando a biblioteca de componentes reutilizáveis da MAI-53
-- [ ] #3 View Board/Kanban: deals exibidos como cards arrastáveis organizados por fase (Sourcing, DD, Negotiation, Closing, etc.)
-- [ ] #4 View Table: listagem tabular de deals com colunas sortáveis (título, cliente, valuation, fase, responsável, última atualização)
-- [ ] #5 View Timeline: visualização temporal do pipeline com marcos e deadlines por deal
-- [ ] #6 Filtros contextuais funcionais: por fase (labels), por cliente (business), por responsável (assignee)
-- [ ] #7 Widget de chatbot integrado: resumo de último contexto do BrokerOrchestratorAgent, com link para tela de chat completa
-- [ ] #8 Inbox de notificações: lista de eventos recentes (mudanças de fase, novos documentos, mensagens de agentes)
-- [ ] #9 POV switching: alternância entre visão Instituição (todos os deals), Banker (meus deals), Cliente (deal específico)
-- [ ] #10 Cowork panel: visualização de times e papéis atribuídos a cada deal
-- [ ] #11 Todas as views consomem dados reais da API backend Deno via ApiClient (GET /api/deals)
+- [x] #1 Layout e views do dashboard prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
+- [x] #2 Implementação construída inteiramente utilizando a biblioteca de componentes reutilizáveis da MAI-53
+- [x] #3 View Board/Kanban: deals exibidos como cards arrastáveis organizados por fase (Sourcing, DD, Negotiation, Closing, etc.)
+- [x] #4 View Table: listagem tabular de deals com colunas sortáveis (título, cliente, valuation, fase, responsável, última atualização)
+- [x] #5 View Timeline: visualização temporal do pipeline com marcos e deadlines por deal
+- [x] #6 Filtros contextuais funcionais: por fase (labels), por cliente (business), por responsável (assignee)
+- [x] #7 Widget de chatbot integrado: resumo de último contexto do BrokerOrchestratorAgent, com link para tela de chat completa
+- [x] #8 Inbox de notificações: lista de eventos recentes (mudanças de fase, novos documentos, mensagens de agentes)
+- [x] #9 POV switching: alternância entre visão Instituição (todos os deals), Banker (meus deals), Cliente (deal específico)
+- [x] #10 Cowork panel: visualização de times e papéis atribuídos a cada deal
+- [x] #11 Todas as views consomem dados reais da API backend Deno via ApiClient (GET /api/deals)
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -55,10 +57,10 @@ Toda a tela deve ser prototipada no Stitch MCP seguindo rigorosamente o fluxo St
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Protótipo completo das 3 views aprovado pelo PO no Stitch MCP
-- [ ] #2 As 3 views renderizam corretamente utilizando os componentes base da MAI-53 com dados mockados E com dados da API
-- [ ] #3 Transição entre views é suave (sem reload de página)
-- [ ] #4 Filtros persistem entre mudanças de view
-- [ ] #5 Responsivo nos 4 breakpoints do DESIGN.md
+- [x] #1 Protótipo completo das 3 views aprovado pelo PO no Stitch MCP
+- [x] #2 As 3 views renderizam corretamente utilizando os componentes base da MAI-53 com dados mockados E com dados da API
+- [x] #3 Transição entre views é suave (sem reload de página)
+- [x] #4 Filtros persistem entre mudanças de view
+- [x] #5 Responsivo nos 4 breakpoints do DESIGN.md
 - [ ] #6 Componentes específicos do dashboard documentados com stories no Storybook
 <!-- DOD:END -->
