@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:14'
-updated_date: '2026-07-14 15:48'
+updated_date: '2026-07-14 15:51'
 labels:
   - GUI
   - epic
@@ -52,7 +52,7 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Fluxo completo de navegação do usuário (Banker/Advisor) documentado como user flow diagram, cobrindo: login → dashboard → deal detail → chat agêntico → engines → closing
-- [ ] #2 Storybook configurado e rodando localmente com suporte a MDX, documentando cada componente isoladamente com props, variantes e exemplos de uso
+- [x] #2 Storybook configurado e rodando localmente com suporte a MDX, documentando cada componente isoladamente com props, variantes e exemplos de uso
 - [x] #3 Design Tokens exportados como variáveis CSS/Tailwind a partir de gui/DESIGN.md (cores, tipografia, espaçamento, border-radius, sombras)
 - [ ] #4 Biblioteca de componentes reutilizáveis implementada (Buttons, Cards, Inputs, Navigation, Footer, Modals) seguindo fielmente o Design System Mastercard
 - [ ] #5 Dashboard principal implementado com 3 views alternáveis (Board/Kanban, Table, Timeline) e filtros por fase, cliente e responsável
@@ -61,9 +61,11 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 - [x] #8 Design Guidelines documentadas em gui/DESIGN_GUIDELINES.md cobrindo padrões de uso, acessibilidade, responsividade e Do's/Don'ts
 - [ ] #9 Toda tela e componente novo passou pelo fluxo Stitch-First: prototipado → variantes → aprovação PO → implementação
 - [ ] #10 Dynamic Dashboard: usuário final pode customizar a disposição de widgets/cards do dashboard arrastando e reorganizando views
-- [ ] #11 MDX documentation completa para cada componente no Storybook, incluindo props API, código de exemplo e design rationale
+- [x] #11 MDX documentation completa para cada componente no Storybook, incluindo props API, código de exemplo e design rationale
 - [x] #12 Design System carregado e ativo no Stitch MCP a partir de gui/DESIGN.md, servindo como fonte de verdade para todos os protótipos da milestone
 <!-- AC:END -->
+
+
 
 
 
