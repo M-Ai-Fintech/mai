@@ -1,11 +1,11 @@
 ---
 id: MAI-54
 title: Setup e Configuração do Storybook com Suporte a Next.js e Tailwind
-status: To Do
+status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:32'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:50'
 labels:
   - GUI
   - storybook
@@ -29,14 +29,16 @@ Instalar e configurar o Storybook 9+ no diretório gui/ com suporte a Next.js 16
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Storybook 9+ instalado e rodando via npm run storybook sem erros no diretório gui/
-- [ ] #2 Configuração compatível com Next.js 16 App Router, React 19 e Tailwind CSS v4
-- [ ] #3 Addon @storybook/addon-docs configurado com suporte a MDX para documentação inline
-- [ ] #4 Design tokens de MAI-58 carregados corretamente no ambiente do Storybook (cores e tipografia visíveis)
-- [ ] #5 Pelo menos um componente de exemplo (Button) criado com story e MDX funcional para validar o setup
-- [ ] #6 Script npm run storybook adicionado ao package.json do gui/
-- [ ] #7 Estrutura de pastas definida e documentada: gui/components/{Name}/{Name}.tsx + .stories.tsx + .mdx
+- [x] #1 Storybook 9+ instalado e rodando via npm run storybook sem erros no diretório gui/
+- [x] #2 Configuração compatível com Next.js 16 App Router, React 19 e Tailwind CSS v4
+- [x] #3 Addon @storybook/addon-docs configurado com suporte a MDX para documentação inline
+- [x] #4 Design tokens de MAI-58 carregados corretamente no ambiente do Storybook (cores e tipografia visíveis)
+- [x] #5 Pelo menos um componente de exemplo (Button) criado com story e MDX funcional para validar o setup
+- [x] #6 Script npm run storybook adicionado ao package.json do gui/
+- [x] #7 Estrutura de pastas definida e documentada: gui/components/{Name}/{Name}.tsx + .stories.tsx + .mdx
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -46,9 +48,9 @@ Instalar e configurar o Storybook 9+ no diretório gui/ com suporte a Next.js 16
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 npm run storybook inicia sem erros e renderiza o componente Button de exemplo
-- [ ] #2 MDX documentation renderiza corretamente com props table, código de exemplo e texto descritivo
-- [ ] #3 Hot-reload funcional — mudanças no componente refletem instantaneamente no Storybook
-- [ ] #4 .storybook/ configurado e commitado no repositório
-- [ ] #5 README do gui/ atualizado com instruções de como rodar o Storybook
+- [x] #1 npm run storybook inicia sem erros e renderiza o componente Button de exemplo
+- [x] #2 MDX documentation renderiza corretamente com props table, código de exemplo e texto descritivo
+- [x] #3 Hot-reload funcional — mudanças no componente refletem instantaneamente no Storybook
+- [x] #4 .storybook/ configurado e commitado no repositório
+- [x] #5 README do gui/ atualizado com instruções de como rodar o Storybook
 <!-- DOD:END -->
