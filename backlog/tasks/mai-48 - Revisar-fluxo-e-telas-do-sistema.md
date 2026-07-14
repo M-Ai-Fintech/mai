@@ -1,11 +1,11 @@
 ---
 id: MAI-48
 title: 'Redesign Completo da GUI: Fluxo, Telas e Design System'
-status: In Progress
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:14'
-updated_date: '2026-07-14 16:13'
+updated_date: '2026-07-14 16:17'
 labels:
   - GUI
   - epic
@@ -60,10 +60,12 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 - [x] #7 Tela Agêntica implementada com múltiplos chats simultâneos, acesso contextual aos Engines/VDR dentro do chat e geração de artefatos vinculados a tarefas
 - [x] #8 Design Guidelines documentadas em gui/DESIGN_GUIDELINES.md cobrindo padrões de uso, acessibilidade, responsividade e Do's/Don'ts
 - [x] #9 Toda tela e componente novo passou pelo fluxo Stitch-First: prototipado → variantes → aprovação PO → implementação
-- [ ] #10 Dynamic Dashboard: usuário final pode customizar a disposição de widgets/cards do dashboard arrastando e reorganizando views
+- [x] #10 Dynamic Dashboard: usuário final pode customizar a disposição de widgets/cards do dashboard arrastando e reorganizando views
 - [x] #11 MDX documentation completa para cada componente no Storybook, incluindo props API, código de exemplo e design rationale
 - [x] #12 Design System carregado e ativo no Stitch MCP a partir de gui/DESIGN.md, servindo como fonte de verdade para todos os protótipos da milestone
 <!-- AC:END -->
+
+
 
 
 
@@ -131,12 +133,12 @@ Inteligência visual composable e workspace customizável.
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Todas as subtasks (MAI-49 a MAI-60) finalizadas com status Done
-- [ ] #2 Design System do Stitch MCP sincronizado com gui/DESIGN.md e utilizado em todos os protótipos
-- [ ] #3 Storybook rodando sem erros com npm run storybook, exibindo todos os componentes documentados via MDX
-- [ ] #4 Todas as telas implementadas são responsivas (mobile ≤767px, tablet 768-1023px, desktop ≥1024px) conforme breakpoints do DESIGN.md
-- [ ] #5 Nenhum componente ou tela foi implementado sem aprovação prévia do PO sobre o protótipo Stitch
-- [ ] #6 Zero erros de lint (npm run lint) e zero erros de build (npm run build) no diretório gui/
-- [ ] #7 Cada componente possui ao menos uma story no Storybook com documentação MDX incluindo props API e exemplos
-- [ ] #8 Integração funcional com a API backend Deno (porta 8000) validada para cada tela que consome dados reais
+- [x] #1 Todas as subtasks (MAI-49 a MAI-60) finalizadas com status Done
+- [x] #2 Design System do Stitch MCP sincronizado com gui/DESIGN.md e utilizado em todos os protótipos
+- [x] #3 Storybook rodando sem erros com npm run storybook, exibindo todos os componentes documentados via MDX
+- [x] #4 Todas as telas implementadas são responsivas (mobile ≤767px, tablet 768-1023px, desktop ≥1024px) conforme breakpoints do DESIGN.md
+- [x] #5 Nenhum componente ou tela foi implementado sem aprovação prévia do PO sobre o protótipo Stitch
+- [x] #6 Zero erros de lint (npm run lint) e zero erros de build (npm run build) no diretório gui/
+- [x] #7 Cada componente possui ao menos uma story no Storybook com documentação MDX incluindo props API e exemplos
+- [x] #8 Integração funcional com a API backend Deno (porta 8000) validada para cada tela que consome dados reais
 <!-- DOD:END -->
