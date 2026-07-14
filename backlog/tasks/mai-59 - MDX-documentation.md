@@ -1,11 +1,11 @@
 ---
 id: MAI-59
 title: Template e Padrão de Documentação MDX para Componentes
-status: To Do
+status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:34'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:51'
 labels:
   - GUI
   - documentation
@@ -29,12 +29,14 @@ Definir e implementar o template padrão de documentação MDX para componentes 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Template MDX padrão criado em gui/components/_template/ComponentTemplate.mdx com todas as seções obrigatórias
-- [ ] #2 Seções obrigatórias definidas: Overview, Props API (auto-generated), Variants, Usage Guidelines, Accessibility, Design System Reference
-- [ ] #3 Auto-geração da tabela de props funcionando via @storybook/addon-docs (ArgsTable)
-- [ ] #4 Pelo menos 2 componentes existentes documentados seguindo o template (ex: Button e um segundo)
-- [ ] #5 Checklist de documentação MDX adicionada como item padrão na DoD de todo componente futuro
+- [x] #1 Template MDX padrão criado em gui/components/_template/ComponentTemplate.mdx com todas as seções obrigatórias
+- [x] #2 Seções obrigatórias definidas: Overview, Props API (auto-generated), Variants, Usage Guidelines, Accessibility, Design System Reference
+- [x] #3 Auto-geração da tabela de props funcionando via @storybook/addon-docs (ArgsTable)
+- [x] #4 Pelo menos 2 componentes existentes documentados seguindo o template (ex: Button e um segundo)
+- [x] #5 Checklist de documentação MDX adicionada como item padrão na DoD de todo componente futuro
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -44,7 +46,7 @@ Definir e implementar o template padrão de documentação MDX para componentes 
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Template validado por renderização no Storybook sem erros
-- [ ] #2 Guia de contribuição atualizado explicando como usar o template MDX
-- [ ] #3 Consistência entre o template MDX e os Design Guidelines (MAI-56)
+- [x] #1 Template validado por renderização no Storybook sem erros
+- [x] #2 Guia de contribuição atualizado explicando como usar o template MDX
+- [x] #3 Consistência entre o template MDX e os Design Guidelines (MAI-56)
 <!-- DOD:END -->
