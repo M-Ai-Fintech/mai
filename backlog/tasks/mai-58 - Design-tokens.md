@@ -1,11 +1,11 @@
 ---
 id: MAI-58
 title: Extração e Codificação de Design Tokens (CSS + Tailwind)
-status: To Do
+status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:34'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:42'
 labels:
   - GUI
   - design-system
@@ -29,12 +29,14 @@ Extrair as especificações formais do Design System (MAI-55 - 'O QUÊ') e codif
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Arquivo gui/tokens/design-tokens.css criado com CSS custom properties para todas as categorias (cores, tipografia, espaçamento, radius, sombras)
-- [ ] #2 Configuração do Tailwind CSS v4 estendida com os tokens customizados (theme extend ou @theme em CSS)
-- [ ] #3 Escala de espaçamento baseada em 8px (8/16/24/32/48/64/96/128) disponível como classes utilitárias
-- [ ] #4 Tokens de cor incluem roles semânticos (--color-surface-primary, --color-text-primary, --color-accent-signal, etc.)
-- [ ] #5 Tokens de tipografia respeitam os 5 níveis da hierarquia do DESIGN.md (H1 64px a Eyebrow 14px)
+- [x] #1 Arquivo gui/tokens/design-tokens.css criado com CSS custom properties para todas as categorias (cores, tipografia, espaçamento, radius, sombras)
+- [x] #2 Configuração do Tailwind CSS v4 estendida com os tokens customizados (theme extend ou @theme em CSS)
+- [x] #3 Escala de espaçamento baseada em 8px (8/16/24/32/48/64/96/128) disponível como classes utilitárias
+- [x] #4 Tokens de cor incluem roles semânticos (--color-surface-primary, --color-text-primary, --color-accent-signal, etc.)
+- [x] #5 Tokens de tipografia respeitam os 5 níveis da hierarquia do DESIGN.md (H1 64px a Eyebrow 14px)
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -44,8 +46,8 @@ Extrair as especificações formais do Design System (MAI-55 - 'O QUÊ') e codif
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Zero valores hardcoded de cor, tamanho ou espaçamento nos componentes — todos devem consumir tokens
-- [ ] #2 globals.css atualizado para importar os tokens
-- [ ] #3 Tailwind config estendida e validada com npm run build sem erros
-- [ ] #4 Documentação dos tokens disponível (pode ser inline no próprio arquivo CSS ou em um MDX separado)
+- [x] #1 Zero valores hardcoded de cor, tamanho ou espaçamento nos componentes — todos devem consumir tokens
+- [x] #2 globals.css atualizado para importar os tokens
+- [x] #3 Tailwind config estendida e validada com npm run build sem erros
+- [x] #4 Documentação dos tokens disponível (pode ser inline no próprio arquivo CSS ou em um MDX separado)
 <!-- DOD:END -->

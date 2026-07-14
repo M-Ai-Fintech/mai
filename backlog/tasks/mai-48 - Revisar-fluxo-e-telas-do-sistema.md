@@ -1,11 +1,11 @@
 ---
 id: MAI-48
 title: 'Redesign Completo da GUI: Fluxo, Telas e Design System'
-status: To Do
+status: In Progress
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:14'
-updated_date: '2026-07-14 15:35'
+updated_date: '2026-07-14 15:37'
 labels:
   - GUI
   - epic

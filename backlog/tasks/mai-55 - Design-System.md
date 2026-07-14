@@ -1,11 +1,11 @@
 ---
 id: MAI-55
 title: Configuração e Codificação do Design System Mastercard
-status: To Do
+status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:33'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:41'
 labels:
   - GUI
   - design-system
@@ -27,12 +27,14 @@ Definir e consolidar o Design System Mastercard no projeto, atuando exclusivamen
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Design System carregado com sucesso no Stitch MCP via create_design_system_from_design_md usando gui/DESIGN.md
-- [ ] #2 Paleta de cores completa (Canvas Cream, Ink Black, Signal Orange, etc.) validada visualmente nos protótipos Stitch
-- [ ] #3 Tipografia configurada com Sofia Sans (Google Fonts) respeitando a hierarquia de pesos: 450 (body), 500 (headlines), 700 (eyebrow)
-- [ ] #4 Escala de border-radius do Design System (20px, 40px, 50%, 999px) corretamente aplicada nos componentes Stitch
-- [ ] #5 Sistema de sombras (Level 0-3) e profundidade documentado e testável nos protótipos
+- [x] #1 Design System carregado com sucesso no Stitch MCP via create_design_system_from_design_md usando gui/DESIGN.md
+- [x] #2 Paleta de cores completa (Canvas Cream, Ink Black, Signal Orange, etc.) validada visualmente nos protótipos Stitch
+- [x] #3 Tipografia configurada com Sofia Sans (Google Fonts) respeitando a hierarquia de pesos: 450 (body), 500 (headlines), 700 (eyebrow)
+- [x] #4 Escala de border-radius do Design System (20px, 40px, 50%, 999px) corretamente aplicada nos componentes Stitch
+- [x] #5 Sistema de sombras (Level 0-3) e profundidade documentado e testável nos protótipos
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -42,8 +44,8 @@ Definir e consolidar o Design System Mastercard no projeto, atuando exclusivamen
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Projeto Stitch criado e Design System carregado sem erros
-- [ ] #2 Pelo menos um protótipo de teste gerado no Stitch utilizando o DS carregado para validação visual
-- [ ] #3 Sofia Sans importada e configurada no gui/app/layout.tsx via next/font/google
-- [ ] #4 Documento gui/DESIGN.md revisado e versionado como fonte de verdade oficial
+- [x] #1 Projeto Stitch criado e Design System carregado sem erros
+- [x] #2 Pelo menos um protótipo de teste gerado no Stitch utilizando o DS carregado para validação visual
+- [x] #3 Sofia Sans importada e configurada no gui/app/layout.tsx via next/font/google
+- [x] #4 Documento gui/DESIGN.md revisado e versionado como fonte de verdade oficial
 <!-- DOD:END -->

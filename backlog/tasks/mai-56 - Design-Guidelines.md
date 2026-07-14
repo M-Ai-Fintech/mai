@@ -1,11 +1,11 @@
 ---
 id: MAI-56
 title: Documentação de Design Guidelines e Padrões de Uso
-status: To Do
+status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:33'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:42'
 labels:
   - GUI
   - design-system
@@ -29,12 +29,14 @@ Criar a documentação prática de Design Guidelines (gui/DESIGN_GUIDELINES.md) 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Arquivo gui/DESIGN_GUIDELINES.md criado com seções para: Princípios de Layout, Acessibilidade, Responsividade, Hierarquia Visual, Do's & Don'ts, e Convenções de Código
-- [ ] #2 Seção de Acessibilidade cobre: contraste mínimo (WCAG 2.1 AA), tamanhos de touch target (≥44px), foco visível, labels em formulários e alt text
-- [ ] #3 Seção de Responsividade documenta o comportamento de cada componente principal nos 4 breakpoints (mobile, tablet, desktop, wide)
-- [ ] #4 Do's & Don'ts incluem pelo menos 10 regras extraídas do DESIGN.md seção 7
-- [ ] #5 Convenções de nomenclatura para arquivos, componentes e props documentadas
+- [x] #1 Arquivo gui/DESIGN_GUIDELINES.md criado com seções para: Princípios de Layout, Acessibilidade, Responsividade, Hierarquia Visual, Do's & Don'ts, e Convenções de Código
+- [x] #2 Seção de Acessibilidade cobre: contraste mínimo (WCAG 2.1 AA), tamanhos de touch target (≥44px), foco visível, labels em formulários e alt text
+- [x] #3 Seção de Responsividade documenta o comportamento de cada componente principal nos 4 breakpoints (mobile, tablet, desktop, wide)
+- [x] #4 Do's & Don'ts incluem pelo menos 10 regras extraídas do DESIGN.md seção 7
+- [x] #5 Convenções de nomenclatura para arquivos, componentes e props documentadas
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -44,8 +46,8 @@ Criar a documentação prática de Design Guidelines (gui/DESIGN_GUIDELINES.md) 
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Documento revisado pelo PO para clareza e completude
-- [ ] #2 Linkado como referência no README do gui/
-- [ ] #3 Consistente com os tokens definidos em MAI-58
-- [ ] #4 Sem contradições com gui/DESIGN.md
+- [x] #1 Documento revisado pelo PO para clareza e completude
+- [x] #2 Linkado como referência no README do gui/
+- [x] #3 Consistente com os tokens definidos em MAI-58
+- [x] #4 Sem contradições com gui/DESIGN.md
 <!-- DOD:END -->

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@300;400;450;500;600;700;800;900&display=swap');
+@import "../tokens/design-tokens.css";
 @import "tailwindcss";
 
 :root {

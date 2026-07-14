@@ -1,7 +1,13 @@
 # M&A Low-Touch Middleware GUI
 
-Este diretório contém o boilerplate do Web Dashboard construído com Next.js e Tailwind CSS (Premium Dark/Teal Theme).
-Ele foi projetado para ser uma interface gráfica pareada 1:1 com a CLI do middleware de M&A.
+Este diretório contém o Web Dashboard construído com Next.js 16, React 19 e Tailwind CSS v4, adotando a linguagem visual do **Mastercard Editorial Design System**.
+Ele foi projetado para ser a interface primária e substituto oficial da CLI para interação com o middleware de M&A.
+
+## 🎨 Documentação de Design
+
+- **Design System ("O QUÊ")**: [DESIGN.md](file:///home/luis/mai/gui/DESIGN.md) — Especificação técnica dos tokens visuais, paleta de cores, tipografia (Sofia Sans) e radii.
+- **Design Guidelines ("COMO E QUANDO")**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md) — Regras de aplicação, composição de layout, diretrizes de acessibilidade (WCAG 2.1 AA) e matriz de Do's & Don'ts.
+- **Design Tokens**: `tokens/design-tokens.css` — Contrato de código de CSS Custom Properties e estática Tailwind.
 
 ## Inicialização
 
