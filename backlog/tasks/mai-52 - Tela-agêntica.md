@@ -1,11 +1,11 @@
 ---
 id: MAI-52
 title: 'Integração Agêntica: Chatbot e Painel de Engines'
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:31'
-updated_date: '2026-07-14 15:35'
+updated_date: '2026-07-14 16:13'
 labels:
   - GUI
   - ai
@@ -35,14 +35,16 @@ Todas as interfaces devem seguir rigorosamente o fluxo Stitch-First: prototipaç
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Chat UI e Painel de Engines prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
-- [ ] #2 Interfaces construídas reutilizando os componentes base da biblioteca MAI-53 (Card, Button, Input, Skeleton, Avatar, Spinners)
-- [ ] #3 Chat UI implementada suportando histórico de mensagens, input de texto com submit via enter, e auto-scroll
-- [ ] #4 Chat UI renderiza respostas em Markdown (via react-markdown ou similar), com suporte a tabelas e code blocks
-- [ ] #5 Indicador visual de 'agente digitando/pensando' (usando componentes da MAI-53) implementado durante a espera da resposta da API
-- [ ] #6 Conexão com a API via Server-Sent Events (SSE) implementada no client para suportar respostas em streaming
-- [ ] #7 Painel de Engines implementado exibindo cards de insights (Risk Score gauge, Valuation Range chart, DD Alerts list) a partir dos Cards reutilizáveis da MAI-53
+- [x] #1 Chat UI e Painel de Engines prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
+- [x] #2 Interfaces construídas reutilizando os componentes base da biblioteca MAI-53 (Card, Button, Input, Skeleton, Avatar, Spinners)
+- [x] #3 Chat UI implementada suportando histórico de mensagens, input de texto com submit via enter, e auto-scroll
+- [x] #4 Chat UI renderiza respostas em Markdown (via react-markdown ou similar), com suporte a tabelas e code blocks
+- [x] #5 Indicador visual de 'agente digitando/pensando' (usando componentes da MAI-53) implementado durante a espera da resposta da API
+- [x] #6 Conexão com a API via Server-Sent Events (SSE) implementada no client para suportar respostas em streaming
+- [x] #7 Painel de Engines implementado exibindo cards de insights (Risk Score gauge, Valuation Range chart, DD Alerts list) a partir dos Cards reutilizáveis da MAI-53
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -52,9 +54,9 @@ Todas as interfaces devem seguir rigorosamente o fluxo Stitch-First: prototipaç
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Protótipos de Chat UI e Painel de Engines aprovados no Stitch MCP pelo PO
-- [ ] #2 Componentes de UI construídos e integrados reutilizando a biblioteca de componentes MAI-53
-- [ ] #3 Chat testado enviando prompts reais para a API do Deno e renderizando a resposta transmitida via SSE
-- [ ] #4 Painel de Engines renderiza corretamente com base no JSON retornado pela API
-- [ ] #5 Componentes isolados de Chat (MessageBubble, InputBar) documentados com stories no Storybook
+- [x] #1 Protótipos de Chat UI e Painel de Engines aprovados no Stitch MCP pelo PO
+- [x] #2 Componentes de UI construídos e integrados reutilizando a biblioteca de componentes MAI-53
+- [x] #3 Chat testado enviando prompts reais para a API do Deno e renderizando a resposta transmitida via SSE
+- [x] #4 Painel de Engines renderiza corretamente com base no JSON retornado pela API
+- [x] #5 Componentes isolados de Chat (MessageBubble, InputBar) documentados com stories no Storybook
 <!-- DOD:END -->
