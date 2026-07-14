@@ -1,10 +1,10 @@
 ---
 id: MAI-53
 title: Biblioteca de Componentes Reutilizáveis (Design System Mastercard)
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-14 05:32'
-updated_date: '2026-07-14 16:29'
+updated_date: '2026-07-14 17:24'
 labels:
   - GUI
   - components
