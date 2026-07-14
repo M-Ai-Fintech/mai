@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:14'
-updated_date: '2026-07-14 16:09'
+updated_date: '2026-07-14 16:11'
 labels:
   - GUI
   - epic
@@ -56,7 +56,7 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 - [x] #3 Design Tokens exportados como variáveis CSS/Tailwind a partir de gui/DESIGN.md (cores, tipografia, espaçamento, border-radius, sombras)
 - [x] #4 Biblioteca de componentes reutilizáveis implementada (Buttons, Cards, Inputs, Navigation, Footer, Modals) seguindo fielmente o Design System Mastercard
 - [x] #5 Dashboard principal implementado com 3 views alternáveis (Board/Kanban, Table, Timeline) e filtros por fase, cliente e responsável
-- [ ] #6 Telas CRUD funcionais para as entidades: Usuários, Clientes (Business), Deals (Transactions), Instituição e Tarefas
+- [x] #6 Telas CRUD funcionais para as entidades: Usuários, Clientes (Business), Deals (Transactions), Instituição e Tarefas
 - [ ] #7 Tela Agêntica implementada com múltiplos chats simultâneos, acesso contextual aos Engines/VDR dentro do chat e geração de artefatos vinculados a tarefas
 - [x] #8 Design Guidelines documentadas em gui/DESIGN_GUIDELINES.md cobrindo padrões de uso, acessibilidade, responsividade e Do's/Don'ts
 - [ ] #9 Toda tela e componente novo passou pelo fluxo Stitch-First: prototipado → variantes → aprovação PO → implementação
@@ -64,6 +64,8 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 - [x] #11 MDX documentation completa para cada componente no Storybook, incluindo props API, código de exemplo e design rationale
 - [x] #12 Design System carregado e ativo no Stitch MCP a partir de gui/DESIGN.md, servindo como fonte de verdade para todos os protótipos da milestone
 <!-- AC:END -->
+
+
 
 
 
