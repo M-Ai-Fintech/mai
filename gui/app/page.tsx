@@ -6,6 +6,7 @@ import { ApiClient } from "@/lib/api-client";
 import { Card } from "@/components/Card/Card";
 import { Button } from "@/components/Button/Button";
 import { Badge } from "@/components/Badge/Badge";
+import { GenerativeUIRenderer, GenerativeUISchema } from "@/lib/generative-ui-engine";
 
 export default function DashboardPage() {
   const [deals, setDeals] = useState<any[]>([]);
@@ -14,6 +15,11 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhaseFilter, setSelectedPhaseFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
+  const [isEditLayoutMode, setIsEditLayoutMode] = useState(false);
+
+  // Dynamic Anchored Generative UI Widgets (MAI-60 + MAI-57)
+  const [anchoredWidgets, setAnchoredWidgets] = useState<GenerativeUISchema[]>([]);
+
   const [newDeal, setNewDeal] = useState({
     title: "",
     type: "Acquisition",
@@ -62,6 +68,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDeals();
+
+    // Load anchored generative widgets from localStorage (MAI-60 + MAI-57)
+    try {
+      const saved = JSON.parse(localStorage.getItem("mai_anchored_widgets") || "[]");
+      setAnchoredWidgets(saved);
+    } catch {
+      setAnchoredWidgets([]);
+    }
   }, []);
 
   const handleCreateDeal = async (e: React.FormEvent) => {
@@ -98,6 +112,18 @@ export default function DashboardPage() {
     }
   };
 
+  const removeAnchoredWidget = (index: number) => {
+    const updated = anchoredWidgets.filter((_, i) => i !== index);
+    setAnchoredWidgets(updated);
+    localStorage.setItem("mai_anchored_widgets", JSON.stringify(updated));
+  };
+
+  const resetDashboardLayout = () => {
+    setAnchoredWidgets([]);
+    localStorage.removeItem("mai_anchored_widgets");
+    setIsEditLayoutMode(false);
+  };
+
   const getColumnForPhase = (currentPhase: string) => {
     const phase = (currentPhase || "Sourcing & KYB").toLowerCase();
     if (phase.includes("sourcing") || phase.includes("kyb")) {
@@ -128,7 +154,6 @@ export default function DashboardPage() {
 
   const columns = ["Sourcing & KYB", "Due Diligence", "Negotiation", "Closed"];
 
-  // Filter deals
   const filteredDeals = deals.filter((deal) => {
     const matchesSearch =
       deal.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -139,7 +164,6 @@ export default function DashboardPage() {
     return matchesSearch && matchesPhase;
   });
 
-  // KPIs
   const totalDealsCount = filteredDeals.length;
   const totalVolume = filteredDeals.reduce(
     (acc, deal) => acc + Number(deal.targetValuation || 0),
@@ -154,26 +178,42 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto text-left">
-      {/* Header */}
+      {/* Header with Layout Mode Controls */}
       <header className="mb-8 flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
             <p className="text-xs font-bold text-slate-gray uppercase tracking-wider">
-              M&A PIPELINE DASHBOARD (DEALROOM BENCHMARK)
+              DASHBOARD DINÂMICO & CUSTOMIZÁVEL (MAI-60 + DEALROOM BENCHMARK)
             </p>
           </div>
           <h1 className="text-3xl font-medium text-ink-black tracking-tight">
-            Gestão de Transações
+            Workspace de Transações
           </h1>
           <p className="text-slate-gray mt-1 text-sm">
-            Visão financeira de alto contraste pareada 1:1 com o middleware agêntico
+            Grid reorganizável com suporte a ancoragem de componentes sintetizados em runtime (Generative UI)
           </p>
         </div>
 
-        <Button variant="primary" onClick={() => setShowModal(true)}>
-          + Novo Deal
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={isEditLayoutMode ? "consent" : "secondary"}
+            size="sm"
+            onClick={() => setIsEditLayoutMode(!isEditLayoutMode)}
+          >
+            {isEditLayoutMode ? "✓ Concluir Edição" : "⚙ Customizar Layout"}
+          </Button>
+
+          {isEditLayoutMode && (
+            <Button variant="secondary" size="sm" onClick={resetDashboardLayout}>
+              Resetar Padrão
+            </Button>
+          )}
+
+          <Button variant="primary" onClick={() => setShowModal(true)}>
+            + Novo Deal
+          </Button>
+        </div>
       </header>
 
       {/* KPI Cards Grid - High Contrast White 8px Radius Cards */}
@@ -213,9 +253,41 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* ANCHORED GENERATIVE UI WIDGETS SECTION (MAI-60 + MAI-57) */}
+      {anchoredWidgets.length > 0 && (
+        <section className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-ink-black flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
+              Widgets Sintetizados Ancorados (Generative UI)
+            </h2>
+            <Link href="/generative-ui">
+              <Button variant="secondary" size="sm">
+                + Sintetizar Novo Widget
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {anchoredWidgets.map((schema, index) => (
+              <Card key={index} variant="default" padding="md" className="relative">
+                {isEditLayoutMode && (
+                  <button
+                    onClick={() => removeAnchoredWidget(index)}
+                    className="absolute top-3 right-3 text-xs bg-signal-orange text-white rounded-full px-2 py-0.5 font-bold cursor-pointer hover:bg-red-700"
+                  >
+                    Desancorar ✕
+                  </button>
+                )}
+                <GenerativeUIRenderer schema={schema} />
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Controls & View Switcher Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-4 rounded-lg border border-ink-black/10 shadow-level-1">
-        {/* Search Input */}
         <div className="relative min-w-[280px]">
           <input
             type="text"
@@ -226,7 +298,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Phase Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
           <button
             onClick={() => setSelectedPhaseFilter("all")}
@@ -253,7 +324,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* View Selector (Kanban / Table / Timeline) */}
         <div className="inline-flex bg-canvas-cream p-1 rounded-full border border-dust-taupe">
           <button
             onClick={() => setView("kanban")}
