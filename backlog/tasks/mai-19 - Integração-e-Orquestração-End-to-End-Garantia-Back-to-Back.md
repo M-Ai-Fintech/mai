@@ -1,11 +1,11 @@
 ---
 id: MAI-19
 title: Integração e Orquestração End-to-End (Garantia Back-to-Back)
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 13:44'
 labels:
   - core
   - integration

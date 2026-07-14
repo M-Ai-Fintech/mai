@@ -133,150 +133,164 @@ export default function EnginesPage({ params }: { params: Promise<{ id: string }
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Engines & Due Diligence</h1>
-        <p className="text-slate-400 mt-2">Motores preditivos e otimização para o deal {id}</p>
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
+          <p className="text-xs font-bold text-slate-gray uppercase tracking-wider">M&A ANALYTICS ENGINE</p>
+        </div>
+        <h1 className="text-4xl font-medium text-ink-black tracking-tight">Engines & Due Diligence</h1>
+        <p className="text-slate-gray mt-1 text-sm">Motores preditivos e otimização para o deal: <span className="font-semibold text-ink-black">{id}</span></p>
       </header>
 
-      <div className="mb-6 flex gap-4 border-b border-dark-border pb-4">
-        <Link href={`/deals/${id}`} className="text-slate-400 hover:text-slate-200 pb-4">
+      <div className="mb-6 flex gap-6 border-b border-dark-border pb-4">
+        <Link href={`/deals/${id}`} className="text-slate-gray hover:text-ink-black font-semibold pb-4">
           Overview / Sourcing
         </Link>
-        <Link href={`/deals/${id}/engines`} className="text-teal-400 font-semibold border-b-2 border-teal-400 pb-4 -mb-[17px]">
+        <Link href={`/deals/${id}/engines`} className="text-ink-black font-bold border-b-2 border-ink-black pb-4 -mb-[17px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-signal-orange"></span>
           Due Diligence & Engines
         </Link>
-        <Link href={`/deals/${id}/chat`} className="text-slate-400 hover:text-slate-200 pb-4">
+        <Link href={`/deals/${id}/chat`} className="text-slate-gray hover:text-ink-black font-semibold pb-4">
           RAG Orchestrator
         </Link>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* ONNX Card */}
-        <div className="bg-dark-surface p-6 rounded-lg border border-dark-border flex flex-col justify-between">
+        <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border flex flex-col justify-between shadow-[0_24px_48px_rgba(0,0,0,0.04)] min-h-[550px]">
           <div>
-            <h2 className="text-xl font-semibold mb-2 text-yellow-400">ONNX Financial Risk Engine</h2>
-            <p className="text-xs text-slate-400 mb-6">Executa o modelo preditivo WASM em C++/Rust exportado pelo Google Colab.</p>
+            <h2 className="text-xl font-medium mb-2 text-ink-black flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
+              ONNX Financial Risk Engine
+            </h2>
+            <p className="text-xs text-slate-gray mb-6 leading-relaxed">Executa o modelo preditivo WASM em C++/Rust exportado pelo Google Colab.</p>
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Empresa Alvo</label>
-                <input type="text" value={onnxInput.name} onChange={e => setOnnxInput(p => ({ ...p, name: e.target.value }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Empresa Alvo</label>
+                <input type="text" value={onnxInput.name} onChange={e => setOnnxInput(p => ({ ...p, name: e.target.value }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Setor</label>
-                <input type="text" value={onnxInput.sector} onChange={e => setOnnxInput(p => ({ ...p, sector: e.target.value }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Setor</label>
+                <input type="text" value={onnxInput.sector} onChange={e => setOnnxInput(p => ({ ...p, sector: e.target.value }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">EBITDA ($)</label>
-                  <input type="number" value={onnxInput.ebitda} onChange={e => setOnnxInput(p => ({ ...p, ebitda: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">EBITDA ($)</label>
+                  <input type="number" value={onnxInput.ebitda} onChange={e => setOnnxInput(p => ({ ...p, ebitda: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Receita ($)</label>
-                  <input type="number" value={onnxInput.revenue} onChange={e => setOnnxInput(p => ({ ...p, revenue: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Ativos ($)</label>
-                  <input type="number" value={onnxInput.assets} onChange={e => setOnnxInput(p => ({ ...p, assets: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Passivos ($)</label>
-                  <input type="number" value={onnxInput.liabilities} onChange={e => setOnnxInput(p => ({ ...p, liabilities: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Receita ($)</label>
+                  <input type="number" value={onnxInput.revenue} onChange={e => setOnnxInput(p => ({ ...p, revenue: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Caixa Op ($)</label>
-                  <input type="number" value={onnxInput.cashflow} onChange={e => setOnnxInput(p => ({ ...p, cashflow: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Ativos ($)</label>
+                  <input type="number" value={onnxInput.assets} onChange={e => setOnnxInput(p => ({ ...p, assets: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Volatilidade (0-1)</label>
-                  <input type="number" step="0.01" value={onnxInput.volatility} onChange={e => setOnnxInput(p => ({ ...p, volatility: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Passivos ($)</label>
+                  <input type="number" value={onnxInput.liabilities} onChange={e => setOnnxInput(p => ({ ...p, liabilities: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Caixa Op ($)</label>
+                  <input type="number" value={onnxInput.cashflow} onChange={e => setOnnxInput(p => ({ ...p, cashflow: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Volatilidade (0-1)</label>
+                  <input type="number" step="0.01" value={onnxInput.volatility} onChange={e => setOnnxInput(p => ({ ...p, volatility: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
               </div>
             </div>
           </div>
-          <button onClick={handleRunONNX} disabled={loading.onnx} className="w-full py-3 bg-yellow-600/20 text-yellow-400 border border-yellow-600/50 rounded-md font-semibold hover:bg-yellow-600/30 disabled:opacity-50 transition-colors">
+          <button onClick={handleRunONNX} disabled={loading.onnx} className="w-full py-3 bg-ink-black hover:bg-slate-800 text-canvas-cream rounded-full font-bold shadow-md disabled:opacity-50 transition-colors cursor-pointer">
             {loading.onnx ? "Running Inference..." : "Run Prediction"}
           </button>
         </div>
 
         {/* MILP Card */}
-        <div className="bg-dark-surface p-6 rounded-lg border border-dark-border flex flex-col justify-between">
+        <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border flex flex-col justify-between shadow-[0_24px_48px_rgba(0,0,0,0.04)] min-h-[550px]">
           <div>
-            <h2 className="text-xl font-semibold mb-2 text-cyan-accent">MILP Valuation Optimizer</h2>
-            <p className="text-xs text-slate-400 mb-6">Otimizador de portfólio e valuation usando restrições lineares (Highs).</p>
+            <h2 className="text-xl font-medium mb-2 text-ink-black flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
+              MILP Valuation Optimizer
+            </h2>
+            <p className="text-xs text-slate-gray mb-6 leading-relaxed">Otimizador de portfólio e valuation usando restrições lineares (Highs).</p>
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Max Capital Allocation ($M)</label>
-                <input type="number" value={milpInput.budget} onChange={e => setMilpInput(p => ({ ...p, budget: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Max Capital Allocation ($M)</label>
+                <input type="number" value={milpInput.budget} onChange={e => setMilpInput(p => ({ ...p, budget: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Risk Tolerance Limit (0.0 to 1.0)</label>
-                <input type="number" step="0.05" value={milpInput.riskTolerance} onChange={e => setMilpInput(p => ({ ...p, riskTolerance: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Risk Tolerance Limit (0.0 to 1.0)</label>
+                <input type="number" step="0.05" value={milpInput.riskTolerance} onChange={e => setMilpInput(p => ({ ...p, riskTolerance: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
               </div>
             </div>
           </div>
-          <button onClick={handleRunMILP} disabled={loading.milp} className="w-full py-3 bg-cyan-600/20 text-cyan-400 border border-cyan-600/50 rounded-md font-semibold hover:bg-cyan-600/30 disabled:opacity-50 transition-colors">
+          <button onClick={handleRunMILP} disabled={loading.milp} className="w-full py-3 bg-ink-black hover:bg-slate-800 text-canvas-cream rounded-full font-bold shadow-md disabled:opacity-50 transition-colors cursor-pointer">
             {loading.milp ? "Optimizing Portfolio..." : "Run Optimization"}
           </button>
         </div>
 
         {/* GA Card */}
-        <div className="bg-dark-surface p-6 rounded-lg border border-dark-border flex flex-col justify-between">
+        <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border flex flex-col justify-between shadow-[0_24px_48px_rgba(0,0,0,0.04)] min-h-[550px]">
           <div>
-            <h2 className="text-xl font-semibold mb-2 text-teal-accent">GA Clause & Constraints Optimizer</h2>
-            <p className="text-xs text-slate-400 mb-6">Otimizador de Term Sheet por Algoritmo Genético refinado por constraints.</p>
+            <h2 className="text-xl font-medium mb-2 text-ink-black flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
+              GA Clause & Constraints Optimizer
+            </h2>
+            <p className="text-xs text-slate-gray mb-6 leading-relaxed">Otimizador de Term Sheet por Algoritmo Genético refinado por constraints.</p>
             
             <div className="space-y-4 mb-6">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Val Min ($M)</label>
-                  <input type="number" value={gaInput.valuationMin} onChange={e => setGaInput(p => ({ ...p, valuationMin: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Val Min ($M)</label>
+                  <input type="number" value={gaInput.valuationMin} onChange={e => setGaInput(p => ({ ...p, valuationMin: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Val Max ($M)</label>
-                  <input type="number" value={gaInput.valuationMax} onChange={e => setGaInput(p => ({ ...p, valuationMax: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Max Alavancagem</label>
-                  <input type="number" step="0.5" value={gaInput.maxLeverage} onChange={e => setGaInput(p => ({ ...p, maxLeverage: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Min Cobertura</label>
-                  <input type="number" step="0.5" value={gaInput.minCoverage} onChange={e => setGaInput(p => ({ ...p, minCoverage: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Val Max ($M)</label>
+                  <input type="number" value={gaInput.valuationMax} onChange={e => setGaInput(p => ({ ...p, valuationMax: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Pref. Caixa (0-1)</label>
-                  <input type="number" step="0.1" value={gaInput.cash} onChange={e => setGaInput(p => ({ ...p, cash: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Max Alavancagem</label>
+                  <input type="number" step="0.5" value={gaInput.maxLeverage} onChange={e => setGaInput(p => ({ ...p, maxLeverage: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Pref. Ações (0-1)</label>
-                  <input type="number" step="0.1" value={gaInput.equity} onChange={e => setGaInput(p => ({ ...p, equity: Number(e.target.value) }))} className="w-full bg-slate-900 border border-dark-border rounded px-3 py-2 text-sm text-slate-200" />
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Min Cobertura</label>
+                  <input type="number" step="0.5" value={gaInput.minCoverage} onChange={e => setGaInput(p => ({ ...p, minCoverage: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Pref. Caixa (0-1)</label>
+                  <input type="number" step="0.1" value={gaInput.cash} onChange={e => setGaInput(p => ({ ...p, cash: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-gray uppercase mb-1 px-1">Pref. Ações (0-1)</label>
+                  <input type="number" step="0.1" value={gaInput.equity} onChange={e => setGaInput(p => ({ ...p, equity: Number(e.target.value) }))} className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange" />
                 </div>
               </div>
             </div>
           </div>
-          <button onClick={handleRunGA} disabled={loading.ga} className="w-full py-3 bg-teal-600/20 text-teal-400 border border-teal-600/50 rounded-md font-semibold hover:bg-teal-600/30 disabled:opacity-50 transition-colors">
+          <button onClick={handleRunGA} disabled={loading.ga} className="w-full py-3 bg-ink-black hover:bg-slate-800 text-canvas-cream rounded-full font-bold shadow-md disabled:opacity-50 transition-colors cursor-pointer">
             {loading.ga ? "Evolving Clauses..." : "Run Clause Optimizer"}
           </button>
         </div>
       </div>
       
       {/* Console area */}
-      <div className="mt-8 bg-black/85 border border-dark-border rounded-lg p-6 font-mono text-xs text-slate-400 h-64 overflow-y-auto">
-        <div className="text-teal-400 mb-2">// Engine Console Output</div>
+      <div className="mt-8 bg-ink-black border border-dark-border rounded-[40px] p-8 font-mono text-xs text-canvas-cream h-64 overflow-y-auto shadow-md">
+        <div className="text-light-signal-orange mb-2 font-bold">// Console de Execução dos Motores</div>
         <div>{`> Ready to execute engines for deal: ${id}...`}</div>
         {consoleLogs.map((log, idx) => (
-          <div key={idx} className="mt-1">{log}</div>
+          <div key={idx} className="mt-1 opacity-90">{log}</div>
         ))}
       </div>
     </div>

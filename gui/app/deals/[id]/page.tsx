@@ -150,25 +150,26 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
       <header className="mb-8 flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+            <span className="w-2.5 h-2.5 rounded-full bg-signal-orange"></span>
+            <h1 className="text-4xl font-medium text-ink-black tracking-tight">
               {deal.title}
             </h1>
-            <span className="px-3 py-1 bg-teal-accent/15 text-teal-400 text-xs rounded-full font-bold border border-teal-accent/20">
+            <span className="px-3 py-1 bg-ink-black text-canvas-cream text-xs rounded-full font-bold">
               {deal.status || "Ativo"}
             </span>
           </div>
-          <p className="text-slate-400">Code: {deal.code} | Data Room & Pipeline Overview</p>
+          <p className="text-slate-gray text-sm">Code: {deal.code} | Data Room & Pipeline Overview</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleSyncVdr}
-            className="px-4 py-2.5 bg-dark-surface hover:bg-slate-800 text-slate-200 border border-dark-border rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer"
+            className="px-5 py-2.5 bg-white border border-dark-border text-ink-black rounded-full text-sm font-semibold hover:bg-canvas-cream transition-all duration-200 cursor-pointer"
           >
             Sincronizar VDR
           </button>
           <button
             onClick={() => setShowPhaseModal(true)}
-            className="px-4 py-2.5 bg-teal-accent hover:bg-teal-accent-hover text-slate-900 font-bold rounded-lg text-sm shadow-md transition-all duration-200 cursor-pointer"
+            className="px-5 py-2.5 bg-ink-black hover:bg-slate-800 text-canvas-cream font-bold rounded-full text-sm shadow-md transition-all duration-200 cursor-pointer"
           >
             Mover Fase
           </button>
@@ -177,13 +178,14 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Internal Page Tabs */}
       <div className="mb-8 flex gap-6 border-b border-dark-border pb-4">
-        <Link href={`/deals/${id}`} className="text-teal-400 font-bold border-b-2 border-teal-400 pb-4.5 -mb-[18px] transition-colors">
+        <Link href={`/deals/${id}`} className="text-ink-black font-bold border-b-2 border-ink-black pb-4.5 -mb-[18px] transition-colors flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-signal-orange"></span>
           Overview / Sourcing
         </Link>
-        <Link href={`/deals/${id}/engines`} className="text-slate-400 hover:text-slate-200 font-semibold pb-4 transition-colors">
+        <Link href={`/deals/${id}/engines`} className="text-slate-gray hover:text-ink-black font-semibold pb-4 transition-colors">
           Due Diligence & Motores
         </Link>
-        <Link href={`/deals/${id}/chat`} className="text-slate-400 hover:text-slate-200 font-semibold pb-4 transition-colors">
+        <Link href={`/deals/${id}/chat`} className="text-slate-gray hover:text-ink-black font-semibold pb-4 transition-colors">
           RAG Chat
         </Link>
       </div>
@@ -191,74 +193,76 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Deal Info Section */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-dark-surface p-6 rounded-xl border border-dark-border/80 shadow-md">
-            <h2 className="text-xl font-bold mb-5 text-teal-accent border-b border-dark-border/60 pb-3">
+          <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
+            <h2 className="text-xl font-medium mb-5 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
               Dados Gerais & Informações do Target (KYB)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">Razão Social / Nome</span>
-                <span className="font-semibold text-slate-200">{deal.business?.name || deal.title}</span>
+                <span className="text-slate-gray">Razão Social / Nome</span>
+                <span className="font-semibold text-ink-black">{deal.business?.name || deal.title}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">CNPJ / Registro</span>
-                <span className="font-semibold text-slate-200">{deal.business?.cnpj || "Não informado"}</span>
+                <span className="text-slate-gray">CNPJ / Registro</span>
+                <span className="font-semibold text-ink-black font-mono">{deal.business?.cnpj || "Não informado"}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">Setor de Atuação</span>
-                <span className="font-semibold text-slate-200">{deal.business?.sector || "Não cadastrado"}</span>
+                <span className="text-slate-gray">Setor de Atuação</span>
+                <span className="font-semibold text-ink-black">{deal.business?.sector || "Não cadastrado"}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">País de Origem</span>
-                <span className="font-semibold text-slate-200">{deal.business?.originCountry || "Brasil"}</span>
+                <span className="text-slate-gray">País de Origem</span>
+                <span className="font-semibold text-ink-black">{deal.business?.originCountry || "Brasil"}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">Valuation Alvo</span>
-                <span className="font-semibold text-cyan-400 font-mono">
+                <span className="text-slate-gray">Valuation Alvo</span>
+                <span className="font-semibold text-ink-black font-mono">
                   {deal.targetValuation 
                     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: deal.currency || 'BRL' }).format(deal.targetValuation)
                     : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2">
-                <span className="text-slate-400">Estratégia do M&A</span>
-                <span className="font-semibold text-slate-200">{deal.strategy || "Não especificada"}</span>
+                <span className="text-slate-gray">Estratégia do M&A</span>
+                <span className="font-semibold text-ink-black">{deal.strategy || "Não especificada"}</span>
               </div>
               <div className="flex justify-between border-b border-dark-border/40 pb-2 md:col-span-2">
-                <span className="text-slate-400">Tipo de Transação</span>
-                <span className="font-semibold text-slate-200">{deal.type || "Acquisition"}</span>
+                <span className="text-slate-gray">Tipo de Transação</span>
+                <span className="font-semibold text-ink-black">{deal.type || "Acquisition"}</span>
               </div>
             </div>
           </div>
 
           {/* Financial Structure box if populated */}
           {deal.financial_structure && (
-            <div className="bg-dark-surface p-6 rounded-xl border border-dark-border/80 shadow-md">
-              <h2 className="text-xl font-bold mb-4 text-cyan-accent border-b border-dark-border/60 pb-3">
+            <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
+              <h2 className="text-xl font-medium mb-4 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
                 Estrutura de Pagamento Proposta
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-dark-border/40">
-                  <div className="text-xs text-slate-400 mb-1">Cash / À Vista</div>
-                  <div className="text-lg font-bold text-slate-100 font-mono">
+                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                  <div className="text-xs text-slate-gray mb-1">Cash / À Vista</div>
+                  <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.cashPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-dark-border/40">
-                  <div className="text-xs text-slate-400 mb-1">Equity / Ações</div>
-                  <div className="text-lg font-bold text-slate-100 font-mono">
+                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                  <div className="text-xs text-slate-gray mb-1">Equity / Ações</div>
+                  <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.equityPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-dark-border/40">
-                  <div className="text-xs text-slate-400 mb-1">Earn-Out / Performance</div>
-                  <div className="text-lg font-bold text-slate-100 font-mono">
+                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                  <div className="text-xs text-slate-gray mb-1">Earn-Out / Performance</div>
+                  <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.earnOutPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-dark-border/40">
-                  <div className="text-xs text-slate-400 mb-1">Escrow / Retido</div>
-                  <div className="text-lg font-bold text-slate-100 font-mono">
+                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                  <div className="text-xs text-slate-gray mb-1">Escrow / Retido</div>
+                  <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.escrowPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
@@ -268,8 +272,9 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Timeline Section */}
-        <div className="bg-dark-surface p-6 rounded-xl border border-dark-border/80 shadow-md">
-          <h2 className="text-xl font-bold mb-6 text-cyan-accent border-b border-dark-border/60 pb-3">
+        <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
+          <h2 className="text-xl font-medium mb-6 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
             Histórico de Fases
           </h2>
           <div className="relative pl-6 border-l-2 border-dark-border space-y-6">
@@ -286,22 +291,22 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
                     {/* Timeline Node Icon */}
                     <span className={`absolute -left-[31px] top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                       isActive 
-                        ? 'bg-teal-accent border-teal-accent animate-pulse' 
+                        ? 'bg-ink-black border-ink-black animate-pulse' 
                         : isCompleted 
-                        ? 'bg-slate-900 border-teal-500' 
-                        : 'bg-slate-900 border-slate-700'
+                        ? 'bg-canvas-cream border-light-signal-orange' 
+                        : 'bg-canvas-cream border-slate-gray'
                     }`}>
                       {isCompleted && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-teal-500"></span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-light-signal-orange"></span>
                       )}
                     </span>
                     
                     <div>
-                      <p className={`text-sm font-bold ${isActive ? 'text-teal-400' : 'text-slate-200'}`}>
+                      <p className={`text-sm font-bold ${isActive ? 'text-light-signal-orange' : 'text-ink-black'}`}>
                         {ph.phaseName}
                       </p>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">{dateStr}</div>
-                      <p className="text-xs text-slate-400 mt-1.5">
+                      <div className="text-[10px] text-slate-gray font-mono mt-0.5">{dateStr}</div>
+                      <p className="text-xs text-slate-gray mt-1.5 leading-relaxed">
                         {ph.comments || (isCompleted ? "Fase concluída com sucesso." : "Fase operacional ativa.")}
                       </p>
                     </div>
@@ -309,7 +314,7 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
                 );
               })
             ) : (
-              <div className="text-slate-600 text-xs italic py-4">
+              <div className="text-slate-gray/60 text-xs italic py-4">
                 Nenhum histórico operacional encontrado.
               </div>
             )}
@@ -319,17 +324,17 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Move Phase Modal */}
       {showPhaseModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-dark-surface border border-dark-border rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in duration-200">
-            <h3 className="text-xl font-bold text-foreground mb-4">Avançar Fase da Transação</h3>
+        <div className="fixed inset-0 bg-ink-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-lifted-cream border border-dark-border rounded-[40px] w-full max-w-md p-8 shadow-[0_32px_64px_rgba(0,0,0,0.12)] animate-in fade-in duration-200">
+            <h3 className="text-xl font-medium text-ink-black mb-5">Avançar Fase da Transação</h3>
             
             <form onSubmit={handleMovePhase} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nova Fase Alvo</label>
+                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1 px-1">Nova Fase Alvo</label>
                 <select
                   value={selectedPhase}
                   onChange={(e) => setSelectedPhase(e.target.value)}
-                  className="w-full bg-slate-900 border border-dark-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-teal-accent text-sm"
+                  className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2.5 text-ink-black focus:outline-none focus:border-light-signal-orange text-sm appearance-none"
                 >
                   {allPhases.map((phase) => (
                     <option key={phase} value={phase}>{phase}</option>
@@ -338,28 +343,28 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Comentários / Notas da Transição</label>
+                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1 px-1">Comentários / Notas da Transição</label>
                 <textarea
                   placeholder="Ex: Documentos verificados, partindo para auditoria técnica..."
                   value={phaseComments}
                   onChange={(e) => setPhaseComments(e.target.value)}
                   rows={3}
-                  className="w-full bg-slate-900 border border-dark-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:border-teal-accent text-sm"
+                  className="w-full bg-canvas-cream border border-dark-border rounded-[20px] px-4 py-2.5 text-ink-black focus:outline-none focus:border-light-signal-orange text-sm"
                 ></textarea>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-4 border-t border-dark-border/40">
                 <button
                   type="button"
                   onClick={() => setShowPhaseModal(false)}
-                  className="px-4 py-2 border border-dark-border hover:bg-slate-800 text-slate-300 rounded-lg text-sm transition-colors cursor-pointer"
+                  className="px-5 py-2.5 border border-dark-border hover:bg-canvas-cream text-slate-gray rounded-full text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={movingPhase}
-                  className="px-4 py-2 bg-teal-accent hover:bg-teal-accent-hover text-slate-900 font-semibold rounded-lg text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 bg-ink-black hover:bg-slate-800 text-canvas-cream font-semibold rounded-full text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {movingPhase ? "Processando..." : "Confirmar Mudança"}
                 </button>

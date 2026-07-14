@@ -1,19 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@300;400;450;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a; /* Slate 900 */
-  --foreground: #f8fafc; /* Slate 50 */
+  --background: #F3F0EE; /* Canvas Cream */
+  --foreground: #141413; /* Ink Black */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-teal-accent: #14b8a6;
-  --color-teal-accent-hover: #0d9488;
-  --color-cyan-accent: #06b6d4;
-  --color-dark-surface: #1e293b; /* Slate 800 */
-  --color-dark-border: #334155; /* Slate 700 */
-  --font-sans: var(--font-geist-sans);
+  
+  /* Mastercard specific theme colors */
+  --color-canvas-cream: #F3F0EE;
+  --color-lifted-cream: #FCFBFA;
+  --color-ink-black: #141413;
+  --color-signal-orange: #CF4500;
+  --color-light-signal-orange: #F37338;
+  --color-clay-brown: #9A3A0A;
+  --color-slate-gray: #696969;
+  
+  /* Map older/existing layout variable names to the new palette to preserve functionality */
+  --color-dark-surface: #FCFBFA; /* Lifted Cream */
+  --color-dark-border: #D1CDC7; /* Dust Taupe */
+  --color-teal-accent: #141413; /* Ink Black for primary buttons */
+  --color-teal-accent-hover: #262627; /* Charcoal */
+  --color-cyan-accent: #F37338; /* Light Signal Orange */
+  
+  /* Overwrite Slate palette to fit the cream-editorial design */
+  --color-slate-950: #E8E2DA; /* Darker cream for overlays / watermarks */
+  --color-slate-900: #F3F0EE; /* Canvas Cream */
+  --color-slate-800: #FCFBFA; /* Lifted Cream */
+  --color-slate-700: #D1CDC7; /* Dust Taupe */
+  --color-slate-600: #696969; /* Slate Gray */
+  --color-slate-500: #555555;
+  --color-slate-400: #262627; /* Charcoal */
+  --color-slate-300: #141413; /* Ink Black */
+  --color-slate-200: #141413; /* Ink Black */
+  --color-slate-100: #141413; /* Ink Black */
+  
+  /* Fonts */
+  --font-sans: 'Sofia Sans', var(--font-geist-sans), Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -21,6 +47,24 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 450; /* Mastercard signature weight */
   margin: 0;
   padding: 0;
 }
+
+/* Mastercard helper utilities for orbital trajectories and ghost headlines */
+.ghost-watermark {
+  color: #E8E2DA;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+.orbital-line {
+  border-color: #F37338;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+}
+

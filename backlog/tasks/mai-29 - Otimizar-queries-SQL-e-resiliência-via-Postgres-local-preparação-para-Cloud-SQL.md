@@ -3,11 +3,11 @@ id: MAI-29
 title: >-
   Otimizar queries SQL e resiliência via Postgres local (preparação para Cloud
   SQL)
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 13:44'
 labels:
   - core
   - database

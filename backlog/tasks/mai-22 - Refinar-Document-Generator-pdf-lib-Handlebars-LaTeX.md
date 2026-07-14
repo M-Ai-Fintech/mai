@@ -1,11 +1,11 @@
 ---
 id: MAI-22
 title: Refinar Document Generator (pdf-lib + Handlebars + LaTeX)
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:01'
+updated_date: '2026-07-10 13:44'
 labels:
   - engine
   - document

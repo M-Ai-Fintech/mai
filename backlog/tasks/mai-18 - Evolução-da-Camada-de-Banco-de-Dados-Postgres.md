@@ -1,11 +1,11 @@
 ---
 id: MAI-18
 title: Evolução da Camada de Banco de Dados Postgres
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 13:44'
 labels:
   - core
   - database

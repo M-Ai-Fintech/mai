@@ -1,15 +1,15 @@
 ---
 id: MAI-30
 title: Evolução do Document Generator Engine
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 04:43'
+updated_date: '2026-07-10 13:45'
 labels:
   - engine
   - document
-milestone: m-6
+milestone: m-3
 dependencies: []
 priority: low
 ordinal: 34000

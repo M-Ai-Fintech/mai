@@ -1,11 +1,11 @@
 ---
 id: MAI-28
 title: Modelagem de tabelas e indexação do Postgres local
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 04:41'
+updated_date: '2026-07-10 13:44'
 labels:
   - core
   - database

@@ -93,34 +93,39 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   return (
     <div className="p-8 h-screen flex flex-col">
       <header className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-foreground">Broker Orchestrator Chat</h1>
-        <p className="text-slate-400 mt-2">
-          RAG Contextual e interação com agentes para o deal: <span className="text-teal-400 font-semibold">{deal?.title || id}</span> ({deal?.code || "Loading..."})
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
+          <p className="text-xs font-bold text-slate-gray uppercase tracking-wider">M&A WORKFLOW AGENT</p>
+        </div>
+        <h1 className="text-4xl font-medium text-ink-black tracking-tight">Broker Orchestrator Chat</h1>
+        <p className="text-slate-gray mt-1 text-sm">
+          RAG Contextual e interação com agentes para o deal: <span className="text-light-signal-orange font-semibold">{deal?.title || id}</span> ({deal?.code || "Loading..."})
         </p>
       </header>
 
-      <div className="mb-6 flex gap-4 border-b border-dark-border pb-4 shrink-0">
-        <Link href={`/deals/${id}`} className="text-slate-400 hover:text-slate-200 pb-4">
+      <div className="mb-6 flex gap-6 border-b border-dark-border pb-4 shrink-0">
+        <Link href={`/deals/${id}`} className="text-slate-gray hover:text-ink-black font-semibold pb-4">
           Overview / Sourcing
         </Link>
-        <Link href={`/deals/${id}/engines`} className="text-slate-400 hover:text-slate-200 pb-4">
+        <Link href={`/deals/${id}/engines`} className="text-slate-gray hover:text-ink-black font-semibold pb-4">
           Due Diligence & Engines
         </Link>
-        <Link href={`/deals/${id}/chat`} className="text-teal-400 font-semibold border-b-2 border-teal-400 pb-4 -mb-[17px]">
+        <Link href={`/deals/${id}/chat`} className="text-ink-black font-bold border-b-2 border-ink-black pb-4 -mb-[17px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-signal-orange"></span>
           RAG Orchestrator
         </Link>
       </div>
 
       <div className="flex-1 min-h-0 flex gap-6">
-        <div className="flex-1 flex flex-col bg-dark-surface border border-dark-border rounded-lg overflow-hidden">
+        <div className="flex-1 flex flex-col bg-lifted-cream border border-dark-border rounded-[40px] overflow-hidden shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((msg, index) => (
-              <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${msg.role === 'user' ? 'bg-teal-600 text-white' : 'bg-slate-700 text-teal-400'}`}>
+              <div key={index} className={`flex gap-3.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${msg.role === 'user' ? 'bg-ink-black text-canvas-cream' : 'bg-light-signal-orange text-white'}`}>
                   {msg.role === 'user' ? 'USER' : 'BO'}
                 </div>
-                <div className={`rounded-lg p-3 text-sm text-slate-200 max-w-[80%] border ${msg.role === 'user' ? 'bg-cyan-900/40 border-cyan-800' : 'bg-slate-800 border-slate-700 whitespace-pre-line'}`}>
+                <div className={`rounded-[20px] p-4 text-sm text-ink-black max-w-[80%] border ${msg.role === 'user' ? 'bg-canvas-cream border-dark-border' : 'bg-white border-dark-border whitespace-pre-line'}`}>
                   {msg.text}
                 </div>
               </div>
@@ -129,7 +134,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           {/* Input Panel */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t border-dark-border bg-slate-900/50">
+          <form onSubmit={handleSendMessage} className="p-5 border-t border-dark-border bg-canvas-cream/50">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -137,12 +142,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 onChange={e => setInputValue(e.target.value)}
                 disabled={isLoading}
                 placeholder={isLoading ? "Aguardando resposta do Broker Orchestrator..." : "Digite uma pergunta ou instrução de negociação..."}
-                className="flex-1 bg-slate-900 border border-dark-border rounded-md px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-teal-400 disabled:opacity-50"
+                className="flex-1 bg-white border border-dark-border rounded-full px-5 py-3 text-sm text-ink-black focus:outline-none focus:border-light-signal-orange disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 disabled:text-slate-500 rounded-md text-sm font-semibold transition-colors shrink-0"
+                className="px-6 py-3 bg-ink-black hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 rounded-full text-sm font-semibold text-canvas-cream transition-all shrink-0 cursor-pointer"
               >
                 {isLoading ? "Processando" : "Enviar"}
               </button>
@@ -151,32 +156,42 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Side Panel: Context info */}
-        <div className="w-80 shrink-0 bg-dark-surface border border-dark-border rounded-lg p-4 flex flex-col justify-between">
+        <div className="w-80 shrink-0 bg-lifted-cream border border-dark-border rounded-[40px] p-6 flex flex-col justify-between shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
           <div>
-            <h3 className="font-semibold text-teal-accent mb-4 border-b border-dark-border pb-2">Deal Context</h3>
-            <div className="space-y-4 text-sm text-slate-300">
+            <h3 className="font-semibold text-ink-black mb-4 border-b border-dark-border pb-2 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-signal-orange"></span>
+              Contexto do Deal
+            </h3>
+            <div className="space-y-4 text-sm text-slate-gray">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase">Active Agents</p>
+                <p className="text-xs font-bold text-slate-gray uppercase tracking-wider mb-2">Agentes Ativos</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-xs text-teal-400">BrokerOrchestrator</span>
-                  <span className="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-xs">FinancialRisk</span>
-                  <span className="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-xs">LegalDueDiligence</span>
-                  <span className="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-xs">Negotiation</span>
+                  <span className="px-3 py-1 bg-canvas-cream rounded-full border border-dark-border text-xs text-ink-black font-semibold">BrokerOrchestrator</span>
+                  <span className="px-3 py-1 bg-canvas-cream rounded-full border border-dark-border text-xs text-slate-gray">FinancialRisk</span>
+                  <span className="px-3 py-1 bg-canvas-cream rounded-full border border-dark-border text-xs text-slate-gray">LegalDueDiligence</span>
+                  <span className="px-3 py-1 bg-canvas-cream rounded-full border border-dark-border text-xs text-slate-gray">Negotiation</span>
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase mt-4">VDR References</p>
-                <ul className="mt-2 space-y-1">
-                  <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> contrato_social.pdf</li>
-                  <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> demonstrativo_financeiro.xlsx</li>
-                  <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> kyb_report.json</li>
+                <p className="text-xs font-bold text-slate-gray uppercase tracking-wider mt-5 mb-2">Referências do VDR</p>
+                <ul className="mt-2 space-y-2 text-xs">
+                  <li className="flex items-center gap-2 font-medium text-ink-black">
+                    <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span> contrato_social.pdf
+                  </li>
+                  <li className="flex items-center gap-2 font-medium text-ink-black">
+                    <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span> demonstrativo_financeiro.xlsx
+                  </li>
+                  <li className="flex items-center gap-2 font-medium text-ink-black">
+                    <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span> kyb_report.json
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
           
-          <div className="text-center p-2 bg-teal-950/20 border border-teal-900/50 rounded-md">
-            <span className="text-[10px] uppercase font-bold text-teal-400 tracking-wide">VDR Connected</span>
+          <div className="text-center p-2.5 bg-canvas-cream border border-dark-border rounded-full flex items-center justify-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[10px] uppercase font-bold text-ink-black tracking-wider">VDR Conectado</span>
           </div>
         </div>
       </div>
