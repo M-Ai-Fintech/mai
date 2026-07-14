@@ -1,11 +1,11 @@
 ---
 id: MAI-49
 title: Definir Fluxo de Navegação e Arquitetura de Rotas da Aplicação
-status: To Do
+status: Done
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:17'
-updated_date: '2026-07-14 15:34'
+updated_date: '2026-07-14 15:52'
 labels:
   - GUI
   - ux
@@ -36,12 +36,14 @@ O fluxo deve cobrir as seguintes jornadas:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Diagrama de user flow criado documentando a jornada principal completa (login -> closing) com todas as ramificações
-- [ ] #2 Hierarquia de rotas do Next.js App Router definida e documentada (ex: /dashboard, /deals/[id], /deals/[id]/chat, /deals/[id]/engines, /settings, /clients, /inbox)
-- [ ] #3 Layout base (shell) prototipado no Stitch MCP seguindo o fluxo Stitch-first (prototipar -> aprovar com PO -> codificar): sidebar fixa com navegação principal, topbar contextual com breadcrumbs e ações, área de conteúdo dinâmica
-- [ ] #4 Suporte a POV switching (Instituição, Banker, Cliente) documentado no fluxo com indicação de quais rotas e componentes mudam por perspectiva
-- [ ] #5 Protótipo do layout base aprovado no Stitch MCP pelo PO antes do início da codificação dos componentes
+- [x] #1 Diagrama de user flow criado documentando a jornada principal completa (login -> closing) com todas as ramificações
+- [x] #2 Hierarquia de rotas do Next.js App Router definida e documentada (ex: /dashboard, /deals/[id], /deals/[id]/chat, /deals/[id]/engines, /settings, /clients, /inbox)
+- [x] #3 Layout base (shell) prototipado no Stitch MCP seguindo o fluxo Stitch-first (prototipar -> aprovar com PO -> codificar): sidebar fixa com navegação principal, topbar contextual com breadcrumbs e ações, área de conteúdo dinâmica
+- [x] #4 Suporte a POV switching (Instituição, Banker, Cliente) documentado no fluxo com indicação de quais rotas e componentes mudam por perspectiva
+- [x] #5 Protótipo do layout base aprovado no Stitch MCP pelo PO antes do início da codificação dos componentes
 <!-- AC:END -->
+
+
 
 ## Implementation Plan
 
@@ -51,8 +53,8 @@ O fluxo deve cobrir as seguintes jornadas:
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 User flow diagram salvo em gui/docs/user-flow.md (ou como imagem em gui/docs/)
-- [ ] #2 Estrutura de rotas implementada no Next.js App Router com páginas placeholder
-- [ ] #3 Layout base (shell) implementado como componente após prototipação e aprovação prévia no Stitch MCP pelo PO
-- [ ] #4 Documento de fluxo e protótipo no Stitch MCP revisados e aprovados pelo PO
+- [x] #1 User flow diagram salvo em gui/docs/user-flow.md (ou como imagem em gui/docs/)
+- [x] #2 Estrutura de rotas implementada no Next.js App Router com páginas placeholder
+- [x] #3 Layout base (shell) implementado como componente após prototipação e aprovação prévia no Stitch MCP pelo PO
+- [x] #4 Documento de fluxo e protótipo no Stitch MCP revisados e aprovados pelo PO
 <!-- DOD:END -->
