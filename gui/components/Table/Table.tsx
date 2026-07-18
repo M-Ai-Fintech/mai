@@ -3,10 +3,10 @@ import { Button } from "../Button/Button";
 
 // Main Table Container
 export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-export const Table: React.FC<TableProps> = ({ children, className = "", ...props }) => {
+export const Table: React.FC<TableProps> = ({ children = null, className = "", ...props }) => {
   return (
     <div className="w-full overflow-x-auto border border-dust-taupe/60 rounded-lg bg-white shadow-level-1 text-left">
       <table className={`w-full text-left border-collapse text-sm ${className}`} {...props}>

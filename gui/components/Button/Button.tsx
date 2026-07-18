@@ -22,7 +22,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     // Base styles: left-aligned content by default, focus ring for accessibility (WCAG 2.1 AA)
     let baseStyles =
-      "inline-flex items-center justify-start font-sans font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-black disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+      "inline-flex items-center justify-center font-sans font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ink-black disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
     // Size variations
     const sizeStyles = {

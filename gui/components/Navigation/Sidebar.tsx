@@ -16,6 +16,8 @@ export interface SidebarProps {
   groups?: NavGroup[];
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const defaultNavGroups: NavGroup[] = [
@@ -51,6 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   groups = defaultNavGroups,
   isCollapsed = false,
   onToggleCollapse,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const pathname = usePathname();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
@@ -62,11 +66,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside
-      className={`h-screen sticky top-0 bg-ink-black text-canvas-cream border-r border-ink-black/20 flex flex-col justify-between transition-all duration-300 z-30 select-none text-left ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
-    >
+    <>
+      {/* Backdrop for Mobile */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-ink-black/60 backdrop-blur-sm md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      <aside
+        className={`h-screen sticky top-0 bg-ink-black text-canvas-cream border-r border-ink-black/20 flex flex-col justify-between transition-all duration-300 z-50 select-none text-left ${
+          isCollapsed ? "w-20" : "w-64"
+        } ${
+          isMobileOpen
+            ? "fixed inset-y-0 left-0 translate-x-0"
+            : "max-md:-translate-x-full max-md:fixed max-md:inset-y-0 max-md:left-0"
+        }`}
+      >
       {/* Brand Header */}
       <div className="p-5 border-b border-dust-taupe/20 flex justify-between items-center">
         {!isCollapsed && (
@@ -156,5 +173,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
     </aside>
-  );
+  </>
+);
 };

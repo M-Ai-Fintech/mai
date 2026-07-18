@@ -18,6 +18,35 @@ const sampleDeals = [
   { id: "3", title: "Omega Logistics & Supply Chain Latam", code: "OL-2026-SUPPLY-CHAIN", valuation: "R$ 80.000.000,00", phase: "Negotiation", updated: "10/07/2026" },
 ];
 
+export const Default: Story = {
+  render: () => (
+    <Table>
+      <TableHead>
+        <TableRow isHeader>
+          <TableCell isHeader>Empresa Target</TableCell>
+          <TableCell isHeader>Código</TableCell>
+          <TableCell isHeader>Valuation Alvo</TableCell>
+          <TableCell isHeader>Fase</TableCell>
+        </TableRow>
+      </TableHead>
+      <tbody>
+        <TableRow>
+          <TableCell className="font-semibold text-ink-black">TechCorp Financial Services S.A.</TableCell>
+          <TableCell className="text-slate-gray">TC-2026</TableCell>
+          <TableCell className="font-bold text-ink-black">R$ 150.000.000,00</TableCell>
+          <TableCell><Badge variant="default">Sourcing & KYB</Badge></TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell className="font-semibold text-ink-black">Alpha Tech Inovações em IA e Nuvem</TableCell>
+          <TableCell className="text-slate-gray">AT-2026</TableCell>
+          <TableCell className="font-bold text-ink-black">R$ 45.000.000,00</TableCell>
+          <TableCell><Badge variant="default">Due Diligence</Badge></TableCell>
+        </TableRow>
+      </tbody>
+    </Table>
+  ),
+};
+
 export const FinancialTableInteractive: Story = {
   render: () => {
     const [currentPage, setCurrentPage] = useState(1);
