@@ -22,18 +22,18 @@ export interface SidebarProps {
 
 const defaultNavGroups: NavGroup[] = [
   {
-    title: "PRINCIPAL",
+    title: "MAIN",
     items: [
       { label: "Dashboard", href: "/" },
-      { label: "Clientes", href: "/clients" },
+      { label: "Clients", href: "/clients" },
       { label: "Generative UI Studio", href: "/generative-ui", badge: "NEW" },
     ],
   },
   {
-    title: "DEALS & OPERAÇÕES",
+    title: "DEALS & OPERATIONS",
     items: [
       {
-        label: "Transações Ativas",
+        label: "Active Transactions",
         href: "/",
         subItems: [
           { label: "Sourcing & KYB", href: "/#sourcing" },
@@ -44,8 +44,8 @@ const defaultNavGroups: NavGroup[] = [
     ],
   },
   {
-    title: "SISTEMA",
-    items: [{ label: "Configurações", href: "/settings" }],
+    title: "SYSTEM",
+    items: [{ label: "Settings", href: "/settings" }],
   },
 ];
 
@@ -58,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({
-    "Transações Ativas": true,
+    "Active Transactions": true,
   });
 
   const toggleSubmenu = (label: string) => {

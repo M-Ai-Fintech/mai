@@ -1,29 +1,33 @@
 import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
 import { Card } from "./Card";
 
-<Meta title="Components/Composites/Card" />
+<Meta title="Components/Composites/Card" component={Card} />
 
 # Card
 
-> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
-> **Benchmark Inspiracional**: [Dealroom.net](https://dealroom.net/)  
-> **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Card** é o container estrutural primário para exibição de métricas, transações de M&A e painéis da plataforma. Seguindo os princípios refinados do PO e o benchmark do Dealroom.net:
-- **Radii Pequenos (8px)** por padrão para maximizar a densidade de dados financeiros.
-- **Alto Contraste Branco (`#FFFFFF`)** sobre o fundo cream (`#F3F0EE`).
-- **Alinhamento à Esquerda (`left-aligned`)** padrão.
-- **Branco Puro Obrigatório (`#FFFFFF`)** para ícones e textos dentro de cards de variante laranja (`Signal Orange`).
-
----
+The **Card** component is the primary structural container for displaying metrics, M&A transactions, and platform dashboards. Following the refined principles and the Dealroom.net benchmark:
+- **Small Radii (8px)** by default to maximize financial data density.
+- **High Contrast White (`#FFFFFF`)** on the cream background (`#F3F0EE`).
+- **Left-aligned** by default.
+- **Mandatory Pure White (`#FFFFFF`)** for icons and text inside orange variant cards (`Signal Orange`).
 
 ## Props API
 
 <Controls />
 
----
+## Usage Guidelines
+- **Do**: Use the default high-contrast white card for most content, metrics, and standard information.
+- **Do**: Use the \`orange\` variant exclusively for critical alerts or actions requiring immediate attention (e.g., Compliance/KYB pending).
+- **Don't**: Use the \`dark\` or \`raised\` variants redundantly; reserve \`raised\` for nested elements and \`dark\` for hero/footer sections.
+- **Don't**: Change the text color inside the \`orange\` card; it must remain pure white.
 
-## Acessibilidade (WCAG 2.1 AA)
-
-- Contraste texto/fundo auditado (13.2:1 para cards brancos padrão, e texto branco em fundo laranja).
+## Variants
+The Card component supports the following variants:
+- **Default**: High contrast white surface on canvas cream.
+- **Raised**: Lifted cream surface for nested structured elements.
+- **Dark**: Ink Black dark surface.
+- **Orange**: Signal Orange background with forced white text/icons.
+- **Portrait**: Circular portrait exception (aspect square, 50% radius).

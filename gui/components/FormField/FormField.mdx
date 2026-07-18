@@ -9,10 +9,23 @@ import { FormField } from "./FormField";
 > **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
 
 ## Overview
-O componente **FormField** empacota rótulos padronizados em caixa alta (`uppercase text-xs font-bold text-slate-gray`), suporte a asterisco de obrigatoriedade, campo de entrada e mensagens de validação de erro em vermelho/orange.
-
----
+The **FormField** component wraps standard uppercase labels (`uppercase text-xs font-bold text-slate-gray`), supports an asterisk for required fields, contains an input field, and displays validation error messages in red/orange.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+
+**Do's**:
+- Use to wrap all form inputs (Input, Textarea, Select) to ensure consistent label and error styling.
+- Provide clear and concise labels.
+- Use the `hint` prop to give users extra context about the expected input.
+
+**Don'ts**:
+- Do not use inline styles for the label or error messages; rely on the component's built-in styling.
+- Avoid passing multiple input components into a single `FormField` unless they are conceptually one field (e.g., a compound input).
+
+## Variants
+- **Standard**: Displays label, optional hint, and the child input component.
+- **With Error**: Replaces the hint with a prominent validation error message in red.

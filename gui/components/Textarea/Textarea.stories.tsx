@@ -14,7 +14,7 @@ type Story = StoryObj<typeof Textarea>;
 
 export const Default: Story = {
   args: {
-    placeholder: "Descreva a cultura corporativa e diretrizes do comprador...",
+    placeholder: "Describe the corporate culture and buyer guidelines...",
     rows: 4,
   },
 };

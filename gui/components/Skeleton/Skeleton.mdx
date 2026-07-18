@@ -8,10 +8,16 @@ import { Skeleton } from "./Skeleton";
 > **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Skeleton** renderiza placeholders animados em pulso (`animate-pulse`) para prevenir saltações de layout (*Cumulative Layout Shift - CLS*) enquanto os dados são obtidos do backend.
-
----
+The **Skeleton** component renders animated pulse placeholders (`animate-pulse`) to prevent Cumulative Layout Shift (CLS) while data is being fetched from the backend.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+- **Do**: Use to represent the rough structure of content that is loading.
+- **Do**: Match the shape and size of the content it replaces.
+- **Don't**: Use for very fast loading states where a simple spinner suffices.
+
+## Variants
+Supports `text`, `circular`, and `rectangular` variants.

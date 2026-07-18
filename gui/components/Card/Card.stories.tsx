@@ -36,8 +36,8 @@ export const SignalOrangeCard: Story = {
     variant: "orange",
     children: (
       <div>
-        <h3 className="text-lg font-medium text-white mb-1">Ação de Compliance Requerida</h3>
-        <p className="text-sm text-white/90">Pendência de validação de documentos KYB</p>
+        <h3 className="text-lg font-medium text-white mb-1">Compliance Action Required</h3>
+        <p className="text-sm text-white/90">Pending KYB document validation</p>
       </div>
     ),
   },

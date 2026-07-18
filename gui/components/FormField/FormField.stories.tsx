@@ -12,18 +12,18 @@ type Story = StoryObj<typeof FormField>;
 
 export const Standard: Story = {
   args: {
-    label: "Razão Social do Cliente",
+    label: "Client Legal Name",
     required: true,
-    hint: "Conforme registrado na Receita Federal / SERPRO",
-    children: <Input placeholder="Ex: TechCorp Capital Ltda" />,
+    hint: "As registered with the IRS / Tax Authority",
+    children: <Input placeholder="Ex: TechCorp Capital LLC" />,
   },
 };
 
 export const ValidationError: Story = {
   args: {
-    label: "Valuation Alvo (BRL)",
+    label: "Target Valuation (USD)",
     required: true,
-    error: "Valuation deve ser superior a R$ 1.000.000,00",
+    error: "Valuation must be greater than $1,000,000.00",
     children: <Input value="500000" hasError />,
   },
 };

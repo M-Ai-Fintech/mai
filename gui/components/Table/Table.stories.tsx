@@ -57,7 +57,7 @@ export const FinancialTableInteractive: Story = {
         <Table>
           <TableHead>
             <TableRow isHeader>
-              <TableCell isHeader>Transação / Nome da Empresa Target</TableCell>
+              <TableCell isHeader>Transação / Name da Empresa Target</TableCell>
               <TableCell isHeader>Código Interno</TableCell>
               <TableCell isHeader>Valuation Alvo</TableCell>
               <TableCell isHeader>Fase Atual</TableCell>

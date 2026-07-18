@@ -22,21 +22,21 @@ type Story = StoryObj<typeof Button>;
 export const PrimaryInkPill: Story = {
   args: {
     variant: "primary",
-    children: "Explorar Deal",
+    children: "Explore Deal",
   },
 };
 
 export const SecondaryOutlined: Story = {
   args: {
     variant: "secondary",
-    children: "Ver Detalhes",
+    children: "View Details",
   },
 };
 
 export const ConsentSignalOrange: Story = {
   args: {
     variant: "consent",
-    children: "Aceitar Termos",
+    children: "Accept Terms",
   },
 };
 

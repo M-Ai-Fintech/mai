@@ -8,10 +8,16 @@ import { EmptyState } from "./EmptyState";
 > **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **EmptyState** renderiza quadros limpos para indicar ausência de resultados.
-
----
+The **EmptyState** component renders a clean placeholder to indicate the absence of results or data.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+- **Do**: Provide a clear title indicating what is missing.
+- **Do**: Include a helpful description and optionally an action button to resolve the state.
+- **Don't**: Overuse action buttons if the user cannot take an immediate action.
+
+## Variants
+Default empty state for tables, lists, or pipeline phases with no data.

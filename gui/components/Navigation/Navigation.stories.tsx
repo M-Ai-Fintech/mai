@@ -27,9 +27,9 @@ export const CompleteNavigationSuite: Story = {
           />
           <main className="p-6 flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto space-y-6">
-              <h1 className="text-2xl font-bold text-ink-black">Dashboard Principal</h1>
+              <h1 className="text-2xl font-bold text-ink-black">Main Dashboard</h1>
               <p className="text-slate-gray">
-                Este é um mockup do layout responsivo. Redimensione a janela (ou use a aba responsiva do Storybook) para testar o comportamento do menu hambúrguer em telas &lt; 768px.
+                This is a mockup of the responsive layout. Resize the window (or use the Storybook responsive tab) to test the hamburger menu behavior on viewports &lt; 768px.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (

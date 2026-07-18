@@ -9,7 +9,7 @@ import { Button } from "./Button";
 > **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
 
 ## Overview
-O componente **Button** é o elemento atômico primário para interações e CTAs no sistema M&Ai. Ele suporta a estética de pílula Ink Black (`20px radius`) para ações principais, a variação de consentimento Signal Orange (`#CF4500` com texto/ícone em branco puro obrigatório) e o Satellite Micro-CTA circular.
+The **Button** component is the primary atomic element for interactions and CTAs in the M&Ai system. It supports the Ink Black pill aesthetic (`20px radius`) for primary actions, the Signal Orange consent variation (`#CF4500` with mandatory pure white text/icon), and the circular Satellite Micro-CTA.
 
 ---
 
@@ -19,20 +19,20 @@ O componente **Button** é o elemento atômico primário para interações e CTA
 
 ---
 
-## Diretrizes de Uso & Do's and Don'ts
+## Usage Guidelines
 
-### Quando usar
-- **Primary Ink Pill**: Para CTAs principais na página ("Explorar Deal", "Ver Análise").
-- **Consent Signal Orange**: Para ações de compliance, aceite de termos ou confirmação legal.
-- **Satellite CTA**: Dockado na borda de cartões circulares de serviços.
+### Do's
+- **Primary Ink Pill**: Use for main on-page CTAs ("Explore Deal", "View Analysis").
+- **Consent Signal Orange**: Use for compliance actions, terms acceptance, or legal confirmation.
+- **Satellite CTA**: Dock at the edge of circular service cards.
 
-### Quando NÃO usar
-- Não utilize o Signal Orange em botões primários de marketing padrão.
-- Não remova o raio de curvatura de 20px dos botões de pílula.
+### Don'ts
+- Do not use Signal Orange on standard marketing primary buttons.
+- Do not remove the 20px border radius from pill buttons.
 
 ---
 
-## Acessibilidade (WCAG 2.1 AA)
+## Accessibility (WCAG 2.1 AA)
 
-- **Touch Target**: Mínimo garantido de **44x44px** (variante `md`) e **48x48px** (`lg`/`satellite`).
-- **Navegação via Teclado**: Anel de foco visível ativado em `focus-visible`.
+- **Touch Target**: Guaranteed minimum of **44x44px** (`md` variant) and **48x48px** (`lg`/`satellite`).
+- **Keyboard Navigation**: Visible focus ring activated on `focus-visible`.

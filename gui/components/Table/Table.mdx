@@ -1,23 +1,29 @@
 import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
 import { Table } from "./Table";
 
-<Meta title="Components/Composites/Table" />
+<Meta title="Components/Composites/Table" component={Table} />
 
 # Table
 
-> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
-> **Benchmark Alignment**: [Dealroom.net](https://dealroom.net/) High-Density Table Layout
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Table** é a tabela financeira modularizada em subcomponentes desacoplados (`Table`, `TableHead`, `TableRow`, `TableCell`, `TablePagination`).
-
-### Funcionalidades Específicas
-- **Elipse de Texto (`truncate text-ellipsis`)**: Textos longos são cortados com elipse sem quebrar linha.
-- **Linhas e Hover**: Cores alternadas (`odd:bg-canvas-cream/20 even:bg-white`), separadores visíveis em `Dust Taupe` e transição de destaque no hover (`hover:bg-lifted-cream`).
-- **Seletor Dinâmico de Paginação**: Suporte a escolha de itens por página (`10, 25, 50, 100`).
-
----
+The **Table** component is a dense, data-rich layout element essential for M&A deal matching, due diligence tracking, and financial metrics. It provides structured row-based presentation, pagination controls, and crisp contrast (alternating row backgrounds) to ensure readability of dense financial data.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+- **Do**: Use tables for displaying large datasets, financial metrics, and lists of transactions.
+- **Do**: Ensure text is left-aligned to align with Dealroom.net benchmark and improve readability.
+- **Don't**: Overcomplicate tables with too many columns; use horizontal scrolling only when absolutely necessary.
+- **Don't**: Use tables for simple layout structuring; use CSS Grid or Flexbox instead.
+
+## Variants
+The Table component is composed of multiple sub-components:
+- **Table**: The main wrapper.
+- **TableHead**: The header row with distinct styling.
+- **TableRow**: Individual rows with alternating background colors.
+- **TableCell**: Individual cells with truncation support.
+- **TablePagination**: A built-in footer component for pagination controls.

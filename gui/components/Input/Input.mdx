@@ -5,14 +5,27 @@ import { Input } from "./Input";
 
 # Input
 
-> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))  
-> **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
+> **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Input** é o campo de entrada de texto com suporte a variante retangular de 8px radius para formulários padrão e variante de pílula (`999px radius`) em fundo cream para barras de pesquisa.
-
----
+The **Input** component is a text entry field that supports an 8px radius rectangular variant for standard forms and a pill variant (`999px radius`) on a cream background for search bars.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+
+**Do's**:
+- Use the `default` variant for standard data entry forms.
+- Use the `pill` variant specifically for search bars or prominent global filters.
+- Provide clear and concise placeholder text.
+
+**Don'ts**:
+- Do not use the `pill` variant in dense data entry grids.
+- Do not overload the input with too many icons.
+
+## Variants
+- **Default**: Standard 8px radius border for high-density forms.
+- **Pill**: 999px radius for search bars.
+- **With Error**: Red border state to indicate validation errors.

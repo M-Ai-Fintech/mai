@@ -8,10 +8,24 @@ import { Checkbox } from "./Checkbox";
 > **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Checkbox** oferece seleção múltipla com realce em Signal Orange.
-
----
+The **Checkbox** component offers multiple selection capabilities with a Signal Orange highlight when checked.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+
+**Do's**:
+- Use when the user can select multiple options from a list.
+- Use for single opt-in confirmations (e.g., agreeing to terms).
+- Always provide a clear, descriptive label.
+
+**Don'ts**:
+- Do not use for mutually exclusive choices (use `Radio` instead).
+- Avoid long, multi-line labels if possible.
+
+## Variants
+- **Default**: Standard unselected state.
+- **Checked**: Signal Orange fill with a checkmark.
+- **Disabled**: Greyed out, unclickable state.

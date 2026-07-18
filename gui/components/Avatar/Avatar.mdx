@@ -9,7 +9,7 @@ import { Avatar } from "./Avatar";
 > **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
 
 ## Overview
-O componente **Avatar** é a foto de perfil circular (`50% radius`) utilizada em cartões de transação, avatares de bankers, contrapartes de M&A e listas de cowork. Utiliza imagens gratuitas do Unsplash ou fallback de iniciais em letras maiúsculas.
+The **Avatar** component is a circular profile picture (`50% radius`) used in transaction cards, banker avatars, M&A counterparts, and co-worker lists. It uses free images from Unsplash or uppercase initials as a fallback.
 
 ---
 
@@ -19,6 +19,18 @@ O componente **Avatar** é a foto de perfil circular (`50% radius`) utilizada em
 
 ---
 
-## Diretrizes de Acessibilidade (WCAG 2.1 AA)
-- Sempre inclui atributo `alt` na tag de imagem.
-- Tamanho mínimo `md` garante **44x44px** de área de toque.
+## Usage Guidelines
+
+### Do's
+- Always include the `alt` attribute for accessibility.
+- Use `md` as the default size to guarantee a 44x44px touch target (WCAG 2.1 AA).
+
+### Don'ts
+- Do not use images that are not profile pictures or logos.
+- Do not make the radius square.
+
+---
+
+## Variants
+- **With Image**: Displays the user's profile picture.
+- **With Initials Fallback**: Displays the user's initials when an image is not available.

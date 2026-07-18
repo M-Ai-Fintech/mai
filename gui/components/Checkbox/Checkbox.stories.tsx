@@ -11,7 +11,7 @@ type Story = StoryObj<typeof Checkbox>;
 
 export const Default: Story = {
   args: {
-    label: "Concordo com os termos do NDA e governança de dados",
+    label: "I agree with the NDA terms and data governance",
     checked: true,
   },
 };

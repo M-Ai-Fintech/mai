@@ -11,7 +11,7 @@ type Story = StoryObj<typeof Radio>;
 
 export const Default: Story = {
   args: {
-    label: "Pagamento 100% à Vista (Cash upfront)",
+    label: "100% Upfront Payment (Cash upfront)",
     name: "payment_structure",
     checked: true,
   },

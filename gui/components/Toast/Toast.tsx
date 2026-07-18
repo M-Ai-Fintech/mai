@@ -33,7 +33,7 @@ export const Toast: React.FC<ToastProps> = ({
         <button
           onClick={onClose}
           className="text-white/80 hover:text-white text-base leading-none cursor-pointer p-0.5"
-          aria-label="Fechar notificação"
+          aria-label="Close notification"
         >
           ✕
         </button>

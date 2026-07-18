@@ -8,10 +8,23 @@ import { Textarea } from "./Textarea";
 > **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **Textarea** é a caixa de entrada multilinha utilizada em termos de negociação e resumos agênticos.
-
----
+The **Textarea** component is a multi-line input box used for negotiation terms and agent summaries.
 
 ## Props API
 
 <Controls />
+
+## Usage Guidelines
+
+**Do's**:
+- Use for long-form content, such as negotiation terms or detailed descriptions.
+- Allow vertical resizing if the content could be exceptionally long.
+- Use placeholder text to give users an example of expected input.
+
+**Don'ts**:
+- Do not use for short, single-line inputs (use the `Input` component instead).
+- Do not disable resizing unless specifically required by the layout.
+
+## Variants
+- **Default**: Standard multi-line input.
+- **With Error**: Highlights the field with a red border for validation errors.

@@ -25,6 +25,6 @@ export const Default: Story = {
 export const SignalOrange: Story = {
   args: {
     variant: "orange",
-    children: "• ALERTA KYB",
+    children: "• KYB ALERT",
   },
 };

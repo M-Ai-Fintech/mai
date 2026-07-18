@@ -22,7 +22,7 @@ export const Default: Story = {
     ),
     footer: (
       <>
-        <Button variant="secondary" size="sm">Cancelar</Button>
+        <Button variant="secondary" size="sm">Cancel</Button>
         <Button variant="primary" size="sm">Submeter Proposta</Button>
       </>
     ),

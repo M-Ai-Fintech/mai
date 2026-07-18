@@ -11,7 +11,7 @@ export interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
-  breadcrumbs = [{ label: "Workspace", href: "/" }, { label: "Transações" }],
+  breadcrumbs = [{ label: "Workspace", href: "/" }, { label: "Transactions" }],
   currentPov = "Banker",
   onPovChange,
   onToggleMobileMenu,
@@ -23,7 +23,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={onToggleMobileMenu}
           className="md:hidden p-2 text-ink-black rounded-lg hover:bg-canvas-cream focus:outline-none cursor-pointer"
-          aria-label="Abrir menu mobile"
+          aria-label="Open mobile menu"
         >
           ☰
         </button>
@@ -56,8 +56,8 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="bg-transparent text-ink-black font-bold focus:outline-none cursor-pointer text-xs"
           >
             <option value="Banker">Banker</option>
-            <option value="Institution">Instituição</option>
-            <option value="Client">Cliente</option>
+            <option value="Institution">Institution</option>
+            <option value="Client">Client</option>
           </select>
         </div>
 

@@ -17,16 +17,16 @@ type Story = StoryObj<typeof Toast>;
 
 export const SuccessNotification: Story = {
   args: {
-    title: "Documento Assinado com Sucesso",
-    message: "Term Sheet de Acquisition gravado no VDR fiduciário.",
+    title: "Document Successfully Signed",
+    message: "Acquisition Term Sheet recorded in the fiduciary VDR.",
     variant: "success",
   },
 };
 
 export const WarningNotification: Story = {
   args: {
-    title: "Alerta de Insolvência Preditiva",
-    message: "Modelo ONNX identificou indicador de risco moderado.",
+    title: "Predictive Insolvency Alert",
+    message: "ONNX model identified a moderate risk indicator.",
     variant: "warning",
   },
 };

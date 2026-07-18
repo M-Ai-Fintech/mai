@@ -9,10 +9,30 @@ import { Badge } from "./Badge";
 > **Usage Guidelines**: [DESIGN_GUIDELINES.md](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md)
 
 ## Overview
-O componente **Badge** é a tag em formato pílula utilizada para denotar categorias, estados de transação M&A e alertas de compliance. 
+The **Badge** component is a pill-shaped tag used to denote categories, M&A transaction states, and compliance alerts.
 
 ---
 
 ## Props API
 
 <Controls />
+
+---
+
+## Usage Guidelines
+
+### Do's
+- Use badges to highlight status (e.g., Sourcing, Due Diligence).
+- Keep text short and uppercase.
+
+### Don'ts
+- Do not use badges as clickable interactive elements (use Buttons instead).
+- Do not overload a single view with too many badges.
+
+---
+
+## Variants
+- **Default**: Standard state.
+- **Orange**: Signal Orange badge for alerts and KYB warnings.
+- **Dark**: Dark theme badge.
+- **Outline**: Outlined transparent badge.

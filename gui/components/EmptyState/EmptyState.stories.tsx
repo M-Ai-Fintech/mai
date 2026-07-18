@@ -11,9 +11,9 @@ type Story = StoryObj<typeof EmptyState>;
 
 export const Default: Story = {
   args: {
-    title: "Nenhuma Transação Encontrada",
-    description: "Não existem deals cadastrados nesta fase do pipeline ou com os filtros selecionados.",
-    actionLabel: "+ Criar Transação M&A",
-    onAction: () => alert("Criar Deal"),
+    title: "No Transactions Found",
+    description: "There are no deals registered in this pipeline phase or with the selected filters.",
+    actionLabel: "+ Create M&A Transaction",
+    onAction: () => alert("Create Deal"),
   },
 };

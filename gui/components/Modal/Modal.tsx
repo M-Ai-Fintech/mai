@@ -65,7 +65,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            aria-label="Fechar modal"
+            aria-label="Close modal"
             className="text-slate-gray hover:text-ink-black text-xl leading-none cursor-pointer p-1 rounded hover:bg-dust-taupe/20 transition-colors"
           >
             ✕
@@ -85,7 +85,7 @@ export const Modal: React.FC<ModalProps> = ({
         ) : (
           <div className="p-4 px-6 border-t border-dust-taupe/40 bg-canvas-cream/20 flex justify-end gap-3">
             <Button variant="secondary" size="sm" onClick={onClose}>
-              Fechar
+              Close
             </Button>
           </div>
         )}

@@ -21,21 +21,21 @@ type Story = StoryObj<typeof Input>;
 export const DefaultInput: Story = {
   args: {
     variant: "default",
-    placeholder: "Digite o nome da empresa target...",
+    placeholder: "Enter target company name...",
   },
 };
 
 export const SearchPill: Story = {
   args: {
     variant: "pill",
-    placeholder: "Buscar transações M&A...",
+    placeholder: "Search M&A transactions...",
   },
 };
 
 export const WithError: Story = {
   args: {
     variant: "default",
-    value: "dados_invalidos",
+    value: "invalid_data",
     hasError: true,
   },
 };

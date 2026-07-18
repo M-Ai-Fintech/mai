@@ -1,66 +1,66 @@
-# Design Guidelines & Padrões de Aplicação (Mastercard Editorial System)
+# Design Guidelines & Application Patterns (Mastercard Editorial System)
 
-> **Importante**: Este documento estabelece o **"COMO E QUANDO"** — as regras prescritivas de aplicação, layout, composição e comportamento para os desenvolvedores e para a engine de **UI Generativa** (MAI-57). Ele complementa o [Design System (gui/DESIGN.md)](file:///home/luis/mai/gui/DESIGN.md), que define a especificação técnica formal dos ativos e tokens visuais (o **"O QUÊ"**).
+> **Important**: This document establishes the **"HOW AND WHEN"** — the prescriptive application, layout, composition, and behavioral rules for developers and for the **Generative UI engine** (MAI-57). It complements the [Design System (gui/DESIGN.md)](file:///home/luis/mai/gui/DESIGN.md), which defines the formal technical specification of visual assets and tokens (the **"WHAT"**).
 
 ---
 
-## 1. Princípios de Composição e Layout (Inspiração Mastercard + Benchmark Dealroom.net)
+## 1. Composition Principles & Layout (Mastercard Inspiration + Dealroom.net Benchmark)
 
-### 1.1 Editorial Canvas, Maior Contraste & Referência Dealroom.net
-- **Benchmark Visual & Produto**: O produto final visa a densidade e sofisticação de plataformas M&A líderes como o **[Dealroom.net](https://dealroom.net/)**, combinando gestão de pipeline financeira com elegância editorial.
-- **Superfície Base & Contraste Elevado**: O fundo base é **Canvas Cream** (`#F3F0EE`). Para elevar o contraste com cartões brancos (`#FFFFFF`), utilize bordas sutis de alta definição (`1px solid rgba(20,20,19,0.08)`) e sombras de nível 1/2 para separação clara.
-- **Alinhamento à Esquerda (Left-Aligned por Padrão)**: Mantenha todo texto, títulos, rótulos e listas alinhados à esquerda por padrão (leitura natural). O alinhamento centralizado deve ser usado com extema parcimônia (apenas em avatares e badges isolados).
+### 1.1 Editorial Canvas, High Contrast & Dealroom.net Benchmark
+- **Visual & Product Benchmark**: The final product aims for the density and sophistication of leading M&A platforms such as **[Dealroom.net](https://dealroom.net/)**, combining financial pipeline management with editorial elegance.
+- **Base Surface & High Contrast**: The base background is **Canvas Cream** (`#F3F0EE`). To elevate contrast with white cards (`#FFFFFF`), use subtle high-definition borders (`1px solid rgba(20,20,19,0.08)`) and level 1/2 shadows for clear separation.
+- **Left-Aligned by Default**: Keep all text, headings, labels, and lists left-aligned by default (natural reading flow). Center alignment should be used with extreme restraint (only in isolated avatars and badges).
 
-### 1.2 Regras de Formas e Radii
-- **Containers e Cards Geral**: Diferente dos elementos pílula, containers gerais e cards funcionais de dados usam **radii pequenos** (6px a 12px) para preservar a densidade de informação financeira estilo Dealroom.
-- **Exceções Pílula/Circulares**: Radii grandes/pílula (`20px`, `999px`, `50%`) são reservados exclusivamente para:
-  - Botões primários (`20px`)
+### 1.2 Shapes & Radius Rules
+- **General Containers and Cards**: Unlike pill elements, general containers and functional data cards use **small radii** (6px to 12px) to preserve Dealroom-style financial information density.
+- **Pill / Circular Exceptions**: Large pill radii (`20px`, `999px`, `50%`) are strictly reserved for:
+  - Primary buttons (`20px`)
   - Floating Nav Pill (`999px`)
-  - Chips/Tags e Badges (`999px`)
-  - Retratos e Satellite Micro-CTAs (`50%`)
+  - Chips/Tags and Badges (`999px`)
+  - Portraits and Satellite Micro-CTAs (`50%`)
 
-### 1.3 Uso da Cor Laranja (Signal Orange) & Mídias
-- **Ícones em Superfície Laranja**: Sempre que um card, badge ou container possuir fundo laranja (`Signal Orange` ou `Light Signal Orange`), o ícone interno e o texto OBRIGATORIAMENTE devem ser em **Branco puro** (`#FFFFFF`) para alto contraste.
-- **Imagens**: Utilize exclusivamente imagens gratuitas do **Unsplash** (ex: `https://images.unsplash.com/...`) para fotografias de executivos, empresas e assets visuais.
-
----
-
-## 2. Acessibilidade Universal (WCAG 2.1 AA)
-
-Toda interface gerada por desenvolvedores ou por UI Generativa DEVE respeitar os critérios de acessibilidade:
-
-### 2.1 Contraste de Cores
-- **Texto Normal (<24px)**: Contraste mínimo de **4.5:1** contra o fundo. Texto principal em `Ink Black` (`#141413`) sobre `Canvas Cream` (`#F3F0EE`) garante 13.2:1.
-- **Texto Grande (≥24px ou ≥18px Bold)**: Contraste mínimo de **3.0:1**.
-- **Elementos Interativos & Ícones**: Contraste mínimo de **3.0:1** com a superfície adjacente.
-
-### 2.2 Alvos de Toque (Touch Targets)
-- Nenhum elemento clicável/interativo deve possuir área de toque inferior a **44×44px** em qualquer breakpoint.
-- Botões da nav flutuante e satellite CTAs devem ter dimensão efetiva de **48px a 60px**.
-
-### 2.3 Foco Visível & Leitores de Tela (ARIA)
-- Todo elemento interativo deve exibir um anel de foco bem definido ao navegar via teclado (`focus-visible:ring-2 focus-visible:ring-ink-black`).
-- Botões que utilizam apenas ícones (ex: Satellite CTA circular ou busca) OBRIGATORIAMENTE exigem atributo `aria-label` descritivo.
+### 1.3 Signal Orange Usage & Media
+- **Icons on Orange Surfaces**: Whenever a card, badge, or container has an orange background (`Signal Orange` or `Light Signal Orange`), the internal icon and text MUST be **Pure White** (`#FFFFFF`) for high contrast.
+- **Media**: Use exclusively free images from **Unsplash** (e.g., `https://images.unsplash.com/...`) for photography of executives, companies, and visual assets.
 
 ---
 
-## 3. Comportamento Responsivo por Breakpoint
+## 2. Universal Accessibility (WCAG 2.1 AA)
 
-| Breakpoint | Faixa de Largura | Comportamento e Adaptação de Layout |
+Every interface generated by developers or by Generative UI MUST adhere to accessibility criteria:
+
+### 2.1 Color Contrast
+- **Normal Text (<24px)**: Minimum contrast ratio of **4.5:1** against background. Main text in `Ink Black` (`#141413`) over `Canvas Cream` (`#F3F0EE`) guarantees 13.2:1.
+- **Large Text (≥24px or ≥18px Bold)**: Minimum contrast ratio of **3.0:1**.
+- **Interactive Elements & Icons**: Minimum contrast ratio of **3.0:1** with adjacent surface.
+
+### 2.2 Touch Targets
+- No clickable/interactive element should have a touch target area below **44×44px** on any breakpoint.
+- Floating nav buttons and satellite CTAs must have an effective dimension of **48px to 60px**.
+
+### 2.3 Visible Focus & Screen Readers (ARIA)
+- Every interactive element must display a well-defined focus ring when navigating via keyboard (`focus-visible:ring-2 focus-visible:ring-ink-black`).
+- Icon-only buttons (e.g., circular Satellite CTA or search) MANDATORILY require a descriptive `aria-label` attribute.
+
+---
+
+## 3. Responsive Behavior by Breakpoint
+
+| Breakpoint | Width Range | Layout Adaptation & Behavior |
 |---|---|---|
-| **Mobile** | $\le 767\text{px}$ | Navbar colapsa para formato compacto (Logo + Hamburger + Busca); retração de 2 para 1 coluna; H1 reduz de 64px para 40px; remoção de linhas orbitais decorativas. |
-| **Tablet** | $768\text{px} \dots 1023\text{px}$ | Navbar exibe links truncados; retratos de serviços organizam-se em 2 colunas; espaçamento vertical de seções ajusta para 64px. |
-| **Desktop** | $1024\text{px} \dots 1439\text{px}$ | Navbar flutuante completa com 5 links principais; disposição assimétrica completa de retratos circulares com linhas orbitais decorativas ativas. |
-| **Wide** | $\ge 1440\text{px}$ | Container capado em max-width de 1280px centralizado com margens simétricas; expansão das linhas orbitais decorativas. |
+| **Mobile** | $\le 767\text{px}$ | Navbar collapses to compact drawer (Logo + Hamburger + Search); grid reflows from multi-column to 1 column; H1 scales down from 64px to 40px; decorative orbital lines hidden. |
+| **Tablet** | $768\text{px} \dots 1023\text{px}$ | Navbar displays truncated links; service portraits arrange in 2 columns; vertical section spacing adjusts to 64px. |
+| **Desktop** | $1024\text{px} \dots 1439\text{px}$ | Full floating navbar with primary links; complete asymmetric arrangement of circular portraits with active orbital lines. |
+| **Wide** | $\ge 1440\text{px}$ | Container capped at max-width 1280px centered with symmetrical margins; expansion of orbital lines. |
 
 ---
 
-## 4. Hierarquia Visual & Uso de Tokens Semânticos
+## 4. Visual Hierarchy & Semantic Tokens Usage
 
-Ao construir componentes em React ou gerar DSL de UI Generativa, consuma exclusivamente os tokens semânticos:
+When building React components or generating Generative UI DSL, consume semantic tokens exclusively:
 
 ```css
-/* Exemplo de aplicação correta de tokens semânticos */
+/* Example of correct semantic token application */
 .card-container {
   background-color: var(--color-surface-raised);
   color: var(--color-text-primary);
@@ -72,36 +72,36 @@ Ao construir componentes em React ou gerar DSL de UI Generativa, consuma exclusi
 
 ---
 
-## 5. Matriz de Do's & Don'ts
+## 5. Do's & Don'ts Matrix
 
-| Prática | Status | Justificativa / Regra |
+| Practice | Status | Rule / Rationale |
 |---|---|---|
-| Usar Canvas Cream (`#F3F0EE`) como fundo padrão de página | **DO** | Garante o tom editorial aquecido característico da marca. |
-| Usar fundo Branco puro (`#FFFFFF`) na página inteira | **DON'T** | Torna a interface estéril e quebra a identidade do sistema. |
-| Botões primários com fundo Ink Black (`#141413`) e texto Canvas Cream | **DO** | Proporciona alto contraste e sofisticação tátil. |
-| Usar Signal Orange (`#CF4500`) em botões de marketing padrão | **DON'T** | Reservado exclusivamente para consentimento de cookies, aviso legal e privacidade. |
-| Formatar a tipografia do corpo com peso 450 (`font-weight: 450`) | **DO** | Peso assinatura do MarkForMC/Sofia Sans que traz suavidade à leitura. |
-| Usar fontes serifadas ou fontes de terceiros não autorizadas | **DON'T** | O sistema é estritamente de fonte única (Sofia Sans / MarkForMC). |
-| Aplicar border-radius de 20px em botões e 40px em containers hero | **DO** | Respeita a escala intencional de curvas extremas do sistema. |
-| Usar cantos arredondados padrão de 8px ou 12px | **DON'T** | Border-radii intermediários parecem genéricos e desalinhados. |
-| Acoplar Satellite CTAs circulares em imagens de perfil | **DO** | Cria o elemento visual icônico de satélite em órbita. |
-| Utilizar sombras duras e escuras (`drop-shadow` forte) | **DON'T** | As sombras devem ser difusas, leves e atmosféricas (Level 1 ou 2). |
-| Aplicar uppercase e tracking em rótulos Eyebrow (14px +4% tracking) | **DO** | Destaca a categoria da seção de forma elegante. |
-| Usar caixa alta (uppercase) em títulos H1, H2 ou parágrafos | **DON'T** | Provoca poluição visual e quebra o tom editorial. |
+| Use Canvas Cream (`#F3F0EE`) as default page background | **DO** | Ensures the signature warm editorial tone of the brand. |
+| Use pure White background (`#FFFFFF`) for the entire page | **DON'T** | Makes the UI sterile and breaks system identity. |
+| Primary buttons with Ink Black (`#141413`) fill and Canvas Cream text | **DO** | Provides high contrast and tactile sophistication. |
+| Use Signal Orange (`#CF4500`) on standard marketing buttons | **DON'T** | Reserved exclusively for cookie consent, legal notices, and compliance actions. |
+| Format body typography with 450 weight (`font-weight: 450`) | **DO** | Signature weight of MarkForMC / Sofia Sans providing reading smoothness. |
+| Use serif fonts or unauthorized third-party fonts | **DON'T** | System strictly follows single font family (Sofia Sans / MarkForMC). |
+| Apply 20px border-radius to buttons and 40px to hero containers | **DO** | Respects intentional scale of extreme curves. |
+| Use generic 8px or 12px rounded corners everywhere | **DON'T** | Intermediate border radii look unaligned with brand identity. |
+| Anchor circular Satellite CTAs over profile images | **DO** | Creates iconic orbiting satellite visual element. |
+| Use hard dark drop-shadows | **DON'T** | Shadows must be diffused, ambient, and light (Level 1 or 2). |
+| Apply uppercase and tracking on Eyebrow labels (14px +4% tracking) | **DO** | Elegantly highlights section category. |
+| Use ALL CAPS on H1, H2 headings or body paragraphs | **DON'T** | Causes visual noise and breaks editorial flow. |
 
 ---
 
-## 6. Convenções de Código e Nomenclatura
+## 6. Code & Naming Conventions
 
-- **Componentes React**: PascalCase (`Button.tsx`, `NavigationPill.tsx`, `ServiceCard.tsx`).
-- **Arquivos de Estilo / Tokens**: kebab-case (`design-tokens.css`, `globals.css`).
-- **Interfaces de Props**: Nome do componente + `Props` (ex: `interface ButtonProps`).
-- **Storybook**: Localizado junto ao componente (`Button.stories.tsx` e `Button.mdx`).
+- **React Components**: PascalCase (`Button.tsx`, `NavigationPill.tsx`, `ServiceCard.tsx`).
+- **Style / Token Files**: kebab-case (`design-tokens.css`, `globals.css`).
+- **Props Interfaces**: Component Name + `Props` (e.g., `interface ButtonProps`).
+- **Storybook**: Co-located with component (`Button.stories.tsx` and `Button.mdx`).
 
 ---
 
-## 7. Diretrizes para Engenharia de Prompt em UI Generativa (MAI-57)
+## 7. Directives for Generative UI Prompt Engineering (MAI-57)
 
-Quando os Agentes de IA forem instruídos a sintetizar esquemas de interface (JSON DSL) para o usuário final, a seguinte diretiva deve ser injetada no contexto do modelo:
+When AI Agents are instructed to synthesize UI schemas (JSON DSL) for end-users, inject the following directive into context:
 
-> *"Sintetize a interface utilizando estritamente a biblioteca de componentes registrada (MAI-53). Todo fundo de tela deve ser `--color-canvas-cream`. O container principal deve usar radii de 40px (`--radius-stadium`) ou pills de 999px. Botões de ação primária devem ser no tom Ink Black com texto cream. Mantenha os alvos de toque em no mínimo 44px e aplique a tipografia em hierarquia rigorosa H1/H2/Eyebrow."*
+> *"Synthesize interface strictly using registered component library (MAI-53). All screen backgrounds must be `--color-canvas-cream`. Main container must use 40px radii (`--radius-stadium`) or 999px pills. Primary action buttons must be Ink Black with cream text. Maintain touch targets at minimum 44px and apply typography in strict H1/H2/Eyebrow hierarchy."*

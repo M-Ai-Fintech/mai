@@ -26,11 +26,11 @@ export const Spinner: React.FC<SpinnerProps> = ({
   return (
     <div
       role="status"
-      aria-label="Carregando"
+      aria-label="Loading"
       className={`inline-block rounded-full animate-spin ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
       {...props}
     >
-      <span className="sr-only">Carregando...</span>
+      <span className="sr-only">Loading...</span>
     </div>
   );
 };
