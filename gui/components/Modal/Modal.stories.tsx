@@ -32,16 +32,32 @@ export const Default: Story = {
     ),
   },
   play: async ({ canvasElement, args }) => {
-    // The Modal uses a React Portal or is rendered at the root usually,
-    // but in Storybook it's sometimes bound to the canvasElement root.
-    // For a11y & existence checks, we query the document body to find the dialog.
     const body = canvasElement.ownerDocument.body;
     const dialog = await within(body).findByRole("dialog");
     await expect(dialog).toBeInTheDocument();
     
     // Check if close button works
-    const closeBtn = await within(dialog).findByRole("button", { name: /✕/ });
+    const closeBtn = await within(dialog).findByRole("button", { name: /Close modal/i });
     await userEvent.click(closeBtn);
     await expect(args.onClose).toHaveBeenCalled();
+
+    // Check Escape key
+    await userEvent.keyboard('{Escape}');
+    await expect(args.onClose).toHaveBeenCalledTimes(2);
+
+    // To hit unmount coverage we might need a story that doesn't render it open, but we'll try this first.
+  },
+};
+
+export const ClosedModal: Story = {
+  args: {
+    isOpen: false,
+    title: "Closed Modal",
+    children: "This shouldn't be visible.",
+  },
+  play: async ({ canvasElement }) => {
+    const body = canvasElement.ownerDocument.body;
+    const dialog = body.querySelector('[role="dialog"]');
+    await expect(dialog).toBeNull();
   },
 };

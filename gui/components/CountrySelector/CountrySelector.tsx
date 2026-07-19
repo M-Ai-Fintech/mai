@@ -75,6 +75,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
             : "bg-white text-ink-black border-dust-taupe/60 hover:border-ink-black shadow-sm"
         }`}
         aria-expanded={isOpen}
+        aria-label={`Current country is ${current.name}. Click to change.`}
       >
         <Icon name={current.flagIcon} size="md" />
         <span>{current.name}</span>
@@ -97,7 +98,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
           }`}
         >
           <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-dust-taupe">
-            Selecionar Região & Moeda
+            Select Region & Currency
           </div>
           {COUNTRIES.map((option) => {
             const isSelected = option.code === current.code;

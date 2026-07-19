@@ -18,6 +18,15 @@ const config: StorybookConfig = {
   "framework": "@storybook/nextjs-vite",
   "staticDirs": [
     "../public"
-  ]
+  ],
+  async viteFinal(config) {
+    if (config.server) {
+      config.server.watch = {
+        ...config.server.watch,
+        ignored: ['**/.next/**', '**/node_modules/**', '**/storybook-static/**', '**/app/**']
+      };
+    }
+    return config;
+  }
 };
 export default config;

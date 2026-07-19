@@ -37,4 +37,29 @@ export const FallbackPreview: Story = {
       </div>
     );
   },
+  play: async ({ canvasElement }) => {
+    const { within, userEvent } = await import("@storybook/test");
+    const canvas = within(canvasElement);
+    const button = await canvas.findByRole("button", { name: /Simular Exceção/i });
+    await userEvent.click(button);
+    
+    const details = await canvas.findByText(/Technical Error Details/i);
+    await userEvent.click(details);
+    
+    // Toggle details off
+    await userEvent.click(details);
+    
+    const tryAgain = await canvas.findByRole("button", { name: /Try Again/i });
+    await userEvent.click(tryAgain);
+  }
+};
+
+export const CustomFallback: Story = {
+  render: () => {
+    return (
+      <ErrorBoundary fallback={<div data-testid="custom-error">Custom Error Triggered</div>}>
+        <BuggyComponent />
+      </ErrorBoundary>
+    );
+  }
 };

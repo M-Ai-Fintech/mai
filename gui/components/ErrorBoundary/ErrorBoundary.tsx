@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary capturou uma exceção não tratada:", error, errorInfo);
+    console.error("ErrorBoundary caught an unhandled exception:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -64,10 +64,10 @@ export class ErrorBoundary extends Component<
 
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-ink-black">
-                Ocorreu uma exceção na interface
+                An interface exception occurred
               </h3>
               <p className="text-xs text-slate-gray">
-                A camada de execução encontrou um erro inesperado ao processar os dados deste módulo.
+                The execution layer encountered an unexpected error while processing data for this module.
               </p>
             </div>
 
@@ -77,7 +77,7 @@ export class ErrorBoundary extends Component<
                   onClick={this.toggleDetails}
                   className="flex items-center justify-between text-xs font-bold text-ink-black cursor-pointer"
                 >
-                  <span>Detalhes Técnicos do Erro</span>
+                  <span>Technical Error Details</span>
                   <Icon
                     name="chevronDown"
                     size="sm"
@@ -98,7 +98,7 @@ export class ErrorBoundary extends Component<
 
             <div className="flex gap-3 justify-center pt-2">
               <Button variant="primary" size="md" onClick={this.handleReset}>
-                Tentar Novamente
+                Try Again
               </Button>
             </div>
           </div>

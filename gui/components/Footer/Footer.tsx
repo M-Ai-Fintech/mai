@@ -24,7 +24,7 @@ export const Footer: React.FC<FooterProps> = ({
               M&Ai Fintech
             </span>
           </div>
-          <p className="text-xs text-dust-taupe leading-relaxed">
+          <p className="text-xs text-canvas-cream/80 leading-relaxed">
             Middleware inteligente de M&A low-touch orquestrado por ecossistema agêntico Deno + ADK e motor neural ONNX.
           </p>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[10px] font-mono text-canvas-cream">
@@ -38,7 +38,7 @@ export const Footer: React.FC<FooterProps> = ({
           <h4 className="text-xs font-bold text-white uppercase tracking-widest">
             Soluções M&A
           </h4>
-          <ul className="space-y-2 text-xs text-dust-taupe">
+          <ul className="space-y-2 text-xs text-canvas-cream/80">
             <li>
               <Link href="/#sourcing" className="hover:text-white transition-colors">
                 Sourcing & Validação Receita/KYB
@@ -72,7 +72,7 @@ export const Footer: React.FC<FooterProps> = ({
           <h4 className="text-xs font-bold text-white uppercase tracking-widest">
             Recursos & Docs
           </h4>
-          <ul className="space-y-2 text-xs text-dust-taupe">
+          <ul className="space-y-2 text-xs text-canvas-cream/80">
             <li>
               <Link href="/docs/api" className="hover:text-white transition-colors">
                 Documentação da Core API
@@ -101,7 +101,7 @@ export const Footer: React.FC<FooterProps> = ({
           <h4 className="text-xs font-bold text-white uppercase tracking-widest">
             Governança & Suporte
           </h4>
-          <p className="text-xs text-dust-taupe">
+          <p className="text-xs text-canvas-cream/80">
             Projetado de acordo com as diretrizes de conformidade bancária e privacidade LGPD/GDPR.
           </p>
           <div className="pt-2">
@@ -118,7 +118,7 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
 
       {/* Bottom Utility Bar */}
-      <div className="max-w-7xl mx-auto pt-6 border-t border-dust-taupe/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-dust-taupe/70">
+      <div className="max-w-7xl mx-auto pt-6 border-t border-dust-taupe/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-canvas-cream/70">
         <div>
           M&Ai Fintech Inc. © {new Date().getFullYear()} — Todos os direitos reservados.
         </div>

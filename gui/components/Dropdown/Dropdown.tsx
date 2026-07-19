@@ -24,7 +24,7 @@ export interface DropdownProps {
 export const Dropdown: React.FC<DropdownProps> = ({
   options,
   value,
-  placeholder = "Selecione uma opção...",
+  placeholder = "Select an option...",
   onChange,
   searchable = false,
   multiSelect = false,
@@ -150,7 +150,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               <div className="mb-2 p-1 border-b border-dust-taupe/30">
                 <input
                   type="text"
-                  placeholder="Pesquisar opção..."
+                  placeholder="Search option..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full text-xs p-2 rounded-lg bg-canvas-cream border border-dust-taupe/40 focus:outline-none focus:border-ink-black"
@@ -160,7 +160,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
             {filteredOptions.length === 0 ? (
               <div className="p-3 text-xs text-slate-gray text-center">
-                Nenhuma opção encontrada
+                No option found
               </div>
             ) : (
               filteredOptions.map((opt) => {

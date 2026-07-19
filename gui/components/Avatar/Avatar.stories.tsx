@@ -29,3 +29,7 @@ export const WithInitialsFallback: Story = {
     fallback: "LS",
   },
 };
+
+export const DefaultAvatar: Story = {
+  args: {},
+};

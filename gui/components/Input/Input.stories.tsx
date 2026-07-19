@@ -22,6 +22,7 @@ export const DefaultInput: Story = {
   args: {
     variant: "default",
     placeholder: "Enter target company name...",
+    "aria-label": "Target company name input",
   },
 };
 
@@ -29,6 +30,7 @@ export const SearchPill: Story = {
   args: {
     variant: "pill",
     placeholder: "Search M&A transactions...",
+    "aria-label": "Search transactions",
   },
 };
 
@@ -37,5 +39,13 @@ export const WithError: Story = {
     variant: "default",
     value: "invalid_data",
     hasError: true,
+    "aria-label": "Invalid data input",
+  },
+};
+
+export const WithIcon: Story = {
+  args: {
+    icon: <span>🔍</span>,
+    placeholder: "Search with icon...",
   },
 };

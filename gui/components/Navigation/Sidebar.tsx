@@ -76,6 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
+        aria-label="Main Navigation"
         className={`h-screen sticky top-0 bg-ink-black text-canvas-cream border-r border-ink-black/20 flex flex-col justify-between transition-all duration-300 z-50 select-none text-left ${
           isCollapsed ? "w-20" : "w-64"
         } ${
@@ -96,6 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
         <button
           onClick={onToggleCollapse}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="text-dust-taupe hover:text-white p-1 rounded transition-colors text-xs cursor-pointer"
         >
           {isCollapsed ? "➔" : "◀"}

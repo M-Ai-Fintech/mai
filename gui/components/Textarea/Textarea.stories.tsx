@@ -18,3 +18,19 @@ export const Default: Story = {
     rows: 4,
   },
 };
+
+export const WithError: Story = {
+  args: {
+    placeholder: "Required field...",
+    rows: 4,
+    hasError: true,
+  },
+};
+
+export const Disabled: Story = {
+  args: {
+    placeholder: "Cannot edit this...",
+    rows: 4,
+    disabled: true,
+  },
+};

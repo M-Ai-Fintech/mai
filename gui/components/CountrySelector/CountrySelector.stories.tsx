@@ -33,6 +33,24 @@ export const DarkFooterPill: Story = {
       </div>
     );
   },
+  play: async ({ canvasElement }) => {
+    const { within, userEvent, expect } = await import("@storybook/test");
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: /Current country is/i });
+    
+    // Open dropdown
+    await userEvent.click(button);
+    
+    // Select US
+    const usOption = await canvas.findByText("United States");
+    await userEvent.click(usOption);
+    
+    // Open dropdown again
+    await userEvent.click(button);
+    
+    // Click outside to close
+    await userEvent.click(canvasElement);
+  }
 };
 
 export const LightSurfacePill: Story = {
@@ -41,9 +59,9 @@ export const LightSurfacePill: Story = {
 
     return (
       <div className="p-8 bg-canvas-cream border border-dust-taupe/40 rounded-xl flex items-center justify-between">
-        <span className="text-ink-black text-xs font-medium">
-          Selecione o idioma & jurisdição fiduciária do VDR:
-        </span>
+        <p className="text-sm font-bold text-ink-black mb-3">
+          Select the language & fiduciary jurisdiction of the VDR:
+        </p>
         <CountrySelector
           selectedCountry={selected}
           onChange={(opt) => setSelected(opt.code)}
@@ -52,4 +70,26 @@ export const LightSurfacePill: Story = {
       </div>
     );
   },
+  play: async ({ canvasElement }) => {
+    const { within, userEvent } = await import("@storybook/test");
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: /Current country is/i });
+    
+    // Open dropdown
+    await userEvent.click(button);
+    
+    // Select Brasil
+    const brOption = await canvas.findByText("Brasil");
+    await userEvent.click(brOption);
+  }
+};
+
+export const InvalidCountry: Story = {
+  render: () => {
+    return (
+      <CountrySelector
+        selectedCountry={"XYZ" as any}
+      />
+    );
+  }
 };

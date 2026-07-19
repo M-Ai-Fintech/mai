@@ -42,3 +42,37 @@ export const SignalOrangeCard: Story = {
     ),
   },
 };
+
+export const RaisedCard: Story = {
+  args: {
+    variant: "raised",
+    padding: "sm",
+    children: <div>Raised small card</div>,
+  },
+};
+
+export const DefaultCard: Story = {
+  render: () => <Card>Default Card</Card>,
+};
+
+export const WithoutProps: Story = {
+  args: {
+    children: "No Props Passed",
+  }
+};
+
+export const DarkCard: Story = {
+  args: {
+    variant: "dark",
+    padding: "none",
+    children: <div>Dark no padding</div>,
+  },
+};
+
+export const PortraitCard: Story = {
+  args: {
+    variant: "portrait",
+    padding: "lg",
+    children: <div>Portrait lg</div>,
+  },
+};

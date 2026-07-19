@@ -9,7 +9,8 @@
     "lint": "eslint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test-storybook": "test-storybook --coverage"
+    "test-storybook": "test-storybook --coverage --maxWorkers=1 --testTimeout=60000",
+    "test-storybook:update": "test-storybook --updateSnapshot --maxWorkers=1 --testTimeout=60000"
   },
   "dependencies": {
     "next": "16.2.10",
@@ -28,6 +29,7 @@
     "@storybook/test": "^8.6.15",
     "@storybook/test-runner": "^0.24.4",
     "@tailwindcss/postcss": "^4",
+    "@types/jest-image-snapshot": "^6.4.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -37,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "eslint-plugin-storybook": "^10.5.0",
+    "jest-image-snapshot": "^6.5.2",
     "playwright": "^1.61.1",
     "storybook": "^10.5.0",
     "tailwindcss": "^4",

@@ -29,3 +29,11 @@ export const CardPlaceholder: Story = {
     </div>
   ),
 };
+
+export const FullPropsCoverage: Story = {
+  render: () => (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="custom-class" style={{ color: 'red' }} />
+    </div>
+  ),
+};

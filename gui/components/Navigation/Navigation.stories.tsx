@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { userEvent, within } from "@storybook/test";
 import React, { useState } from "react";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
@@ -46,4 +47,37 @@ export const CompleteNavigationSuite: Story = {
       </div>
     );
   },
+  play: async ({ canvasElement }) => {
+    // TopBar interactions
+    const topBarSelect = canvasElement.querySelector('select[aria-label="Select POV"]') as HTMLSelectElement;
+    if (topBarSelect) {
+      await userEvent.selectOptions(topBarSelect, 'Institution');
+    }
+
+    // Sidebar interactions
+    const body = canvasElement.ownerDocument.body;
+    // Open Mobile Menu to trigger toggle
+    const mobileMenuBtn = canvasElement.querySelector('button[aria-label="Open mobile menu"]') as HTMLButtonElement;
+    if (mobileMenuBtn) {
+      await userEvent.click(mobileMenuBtn);
+    }
+
+    // Click on Active Transactions which has subitems
+    const activeTransactions = within(canvasElement).getByText('Active Transactions');
+    if (activeTransactions) {
+      await userEvent.click(activeTransactions);
+    }
+  },
+};
+
+export const FullCoverageSidebar: StoryObj<typeof Sidebar> = {
+  render: () => <Sidebar isCollapsed={true} isMobileOpen={false} />
+};
+
+export const FullCoverageTopBar: StoryObj<typeof TopBar> = {
+  render: () => <TopBar currentPov={undefined} breadcrumbs={[{ label: "NoHref" }]} />
+};
+
+export const FullCoverageSidebar2: StoryObj<typeof Sidebar> = {
+  render: () => <Sidebar isCollapsed={false} isMobileOpen={true} />
 };

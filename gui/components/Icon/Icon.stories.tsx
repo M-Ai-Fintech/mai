@@ -42,7 +42,7 @@ export const Default: Story = {
   args: {
     name: "search",
     size: "md",
-    color: "currentColor",
+    color: "#141413",
   },
 };
 
@@ -83,4 +83,17 @@ export const Sizes: Story = {
       </div>
     </div>
   ),
+};
+
+export const CustomSizeAndUnknown: Story = {
+  render: () => (
+    <div className="flex gap-4 p-4">
+      <Icon name="search" size={48} />
+      <Icon name={"unknown" as any} size={"unknown" as any} />
+    </div>
+  ),
+};
+
+export const FullCoverageIcon: Story = {
+  args: { name: "search", className: "extra", color: "red" }
 };

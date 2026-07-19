@@ -107,6 +107,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
       <div className="flex items-center gap-3">
         <span>Show</span>
         <select
+          aria-label="Items per page"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="bg-white border border-dust-taupe rounded-md px-2.5 py-1 text-xs text-ink-black font-semibold focus:outline-none focus:ring-1 focus:ring-ink-black cursor-pointer"

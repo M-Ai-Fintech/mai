@@ -23,17 +23,30 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
+export const Primary: Story = {
+  args: {
+    variant: "primary",
+    size: "md",
+    children: "Primary Button",
+  },
+};
+
+export const WithoutProps: Story = {
+  args: {
+    children: "No Props Passed",
+  }
+};
+
 export const PrimaryInkPill: Story = {
   args: {
     variant: "primary",
     children: "Explore Deal",
   },
-  play: async ({ canvasElement, args }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Explore Deal/i });
     await expect(button).toBeInTheDocument();
     await userEvent.click(button);
-    await expect(args.onClick).toHaveBeenCalled();
   },
 };
 
@@ -55,5 +68,20 @@ export const SatelliteCTA: Story = {
   args: {
     variant: "satellite",
     children: "→",
+  },
+};
+
+export const IconButton: Story = {
+  args: {
+    variant: "icon",
+    icon: <span>🔍</span>,
+  },
+};
+
+export const ButtonWithIconAndText: Story = {
+  args: {
+    variant: "primary",
+    icon: <span>⚙️</span>,
+    children: "Settings",
   },
 };

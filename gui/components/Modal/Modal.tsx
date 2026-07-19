@@ -46,6 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       aria-modal="true"
       role="dialog"
+      aria-label={title}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-black/40 backdrop-blur-sm animate-fade-in text-left"
       onClick={onClose}
     >

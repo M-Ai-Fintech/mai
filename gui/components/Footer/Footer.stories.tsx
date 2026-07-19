@@ -22,3 +22,7 @@ export const CompleteFooter: Story = {
     );
   },
 };
+
+export const DefaultFooter: Story = {
+  args: {},
+};

@@ -32,3 +32,32 @@ export const InkBlack: Story = {
     variant: "dark",
   },
 };
+
+export const CreamLarge: Story = {
+  args: {
+    size: "lg",
+    variant: "cream",
+    className: "custom-spinner",
+    "data-testid": "spinner-test",
+  },
+};
+
+export const SmallOrange: Story = {
+  args: {
+    size: "sm",
+    variant: "orange",
+  },
+};
+
+export const FullCoverageSpinner: Story = {
+  render: () => (
+    <div>
+      <Spinner size="sm" />
+      <Spinner size="lg" color="white" />
+    </div>
+  )
+};
+
+export const FullCoverageSpinner2: Story = {
+  render: () => <Spinner size={undefined} color={undefined} />
+};

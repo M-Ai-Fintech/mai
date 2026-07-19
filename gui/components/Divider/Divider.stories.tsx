@@ -32,3 +32,7 @@ export const Dashed: Story = {
     spacing: "md",
   },
 };
+
+export const DefaultDivider: Story = {
+  args: {},
+};

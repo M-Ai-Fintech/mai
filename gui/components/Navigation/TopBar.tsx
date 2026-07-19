@@ -30,7 +30,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-gray">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-gray">
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={idx}>
               {idx > 0 && <span className="text-dust-taupe">/</span>}
@@ -52,6 +52,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="flex items-center gap-1.5 sm:gap-2 bg-canvas-cream px-2.5 sm:px-3 py-1.5 rounded-full border border-dust-taupe/60 text-xs">
           <span className="text-slate-gray font-semibold hidden xs:inline">POV:</span>
           <select
+            aria-label="Select POV"
             value={currentPov}
             onChange={(e) => onPovChange && onPovChange(e.target.value as any)}
             className="bg-transparent text-ink-black font-bold focus:outline-none cursor-pointer text-xs"

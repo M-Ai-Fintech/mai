@@ -30,3 +30,18 @@ export const WarningNotification: Story = {
     variant: "warning",
   },
 };
+
+export const ErrorNotification: Story = {
+  args: {
+    title: "Error",
+    message: "Something went wrong.",
+    variant: "error",
+  },
+};
+
+export const InfoNotification: Story = {
+  args: {
+    title: "Info",
+    message: "Just some info.",
+  },
+};

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "@storybook/test";
 import React, { useState } from "react";
 import { Table, TableHead, TableRow, TableCell, TablePagination } from "./Table";
 import { Badge } from "../Badge/Badge";
@@ -89,4 +90,39 @@ export const FinancialTableInteractive: Story = {
       </div>
     );
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    
+    // Change page size
+    const select = canvas.getByRole("combobox", { name: "Items per page" });
+    await userEvent.selectOptions(select, "25");
+    
+    // Click Next Page
+    const nextBtn = canvas.getByRole("button", { name: "Next" });
+    await userEvent.click(nextBtn);
+    
+    // Click Prev Page
+    const prevBtn = canvas.getByRole("button", { name: "Previous" });
+    await userEvent.click(prevBtn);
+  },
+};
+
+export const FullCoverageTable: Story = {
+  render: () => (
+    <Table className="extra">
+      <TablePagination 
+        currentPage={0} 
+        totalPages={0} 
+        totalItems={0} 
+        pageSize={0} 
+        onPageChange={() => {}} 
+        onPageSizeChange={() => {}} 
+        pageSizeOptions={undefined} 
+      />
+    </Table>
+  )
+};
+
+export const FullCoverageTable2: Story = {
+  render: () => <Table children={undefined} />
 };
