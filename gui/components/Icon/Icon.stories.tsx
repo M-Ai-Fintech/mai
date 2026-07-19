@@ -38,6 +38,14 @@ const allIconNames: IconName[] = [
   "flagUS",
 ];
 
+export const Default: Story = {
+  args: {
+    name: "search",
+    size: "md",
+    color: "currentColor",
+  },
+};
+
 export const AllIconsGrid: Story = {
   render: () => (
     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 p-4">
