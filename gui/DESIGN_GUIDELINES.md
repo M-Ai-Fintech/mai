@@ -105,3 +105,16 @@ When building React components or generating Generative UI DSL, consume semantic
 When AI Agents are instructed to synthesize UI schemas (JSON DSL) for end-users, inject the following directive into context:
 
 > *"Synthesize interface strictly using registered component library (MAI-53). All screen backgrounds must be `--color-canvas-cream`. Main container must use 40px radii (`--radius-stadium`) or 999px pills. Primary action buttons must be Ink Black with cream text. Maintain touch targets at minimum 44px and apply typography in strict H1/H2/Eyebrow hierarchy."*
+
+
+## 8. Screen Composition Rules
+
+When prototyping screens or synthesizing UI in runtime, strictly combine existing components in these patterns:
+
+- **Dashboard Page**: Sidebar + TopBar + Card(KPI summary ×3) + Tabs(view-switcher) + Table(deal items) + Badge(phase status).
+- **CRUD Page (e.g. Clients)**: Sidebar + TopBar + Search Input(pill) + Button(primary) + Table(list) + TablePagination + Modal(create/edit form) + FormField(s) + Input/Dropdown.
+- **Deal Detail Page**: Sidebar + TopBar + Card(header) + Tabs(sections) + Badge(status) + Accordion(phase history timeline) + Modal(move phase).
+- **Deal Chat Page**: Sidebar + TopBar + Card(chat area) + Card(agent context) + Input(pill for prompt) + Button(primary) + Avatar(messages) + Spinner(loading).
+- **Deal Engines Page**: Sidebar + TopBar + Card(engine ×3) + FormField(s) + Input/Dropdown + Button(consent for execution) + Badge(engine status) + Card(dark console output).
+- **Generative UI Studio**: Sidebar + TopBar + Input(pill prompt) + Card(presets) + Badge + Card(live preview) + Accordion(JSON inspector).
+- **Settings Page**: Sidebar + TopBar + Card(preferences) + Card(memory/culture) + Dropdown + FormField + Accordion(knowledge list) + Button(save).
