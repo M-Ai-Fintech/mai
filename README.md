@@ -8,6 +8,29 @@ O projeto combina a produtividade e a segurança do TypeScript no ecossistema
 Deno com motores de alta performance (WASM / ONNX) e uma avançada camada
 agêntica suportada pelo ADK e framework Mastra.
 
+## Estado atual do MVP_6
+
+O MVP_6 inclui uma interface web funcional e coerente, construída a partir do
+contrato visual Mastercard Editorial do projeto Stitch
+`1310231555884111730`. As famílias implementadas são:
+
+- pipeline de deals em Board, Table e Detail;
+- CRUD reutilizável de entidades Buyer, Seller, Target e Institution;
+- workspace agêntico com histórico, streaming SSE, reconexão, citações e runs;
+- dashboard customizável com widgets versionados.
+
+O adaptador de contratos do MVP_6 em `src/api/mvp_routes.ts` usa armazenamento
+em memória durante o processo. Portanto, os dados dessas telas são reiniciados
+quando a API é reiniciada. A arquitetura PostgreSQL descrita abaixo continua
+sendo a persistência do domínio e o destino de evolução, mas não deve ser
+confundida com persistência definitiva de todas as rotas do protótipo.
+
+O prompt Stitch único e seu mapa de estados estão validados, porém a geração no
+Stitch ainda é parcial: foram materializadas oito telas representativas, não
+todas as variações nomeadas em 2560×1440. A implementação local e a geração do
+Stitch são acompanhadas separadamente para não declarar como concluído um
+artefato visual incompleto.
+
 ---
 
 ## 📐 Estrutura do Projeto
@@ -19,6 +42,13 @@ motor de regras, banco de dados e inteligência agêntica (Deno).
 .
 ├── gui/                    # Dashboard Web (Next.js / React 19 / Tailwind CSS)
 └── src/                    # Backend API, Motores e Agentes (Deno)
+    ├── api/                # API MVP_6 com fachadas estáveis e módulos por domínio
+    │   ├── contracts.ts    # Barrel público para api/contracts/
+    │   ├── mvp_store.ts    # Fachada pública para api/store/
+    │   ├── mvp_routes.ts   # Orquestrador público para api/routes/
+    │   ├── contracts/      # DTOs e envelopes por domínio
+    │   ├── store/          # Repositórios in-memory por domínio
+    │   └── routes/         # Handlers HTTP/SSE ordenados por domínio
     ├── agent/              # Camada agêntica (ADK TypeScript / Mastra)
     │   ├── agents/         # Definição dos 7 Agentes de M&A
     │   ├── workflows/      # Pipelines determinísticos e validação Zod
@@ -216,12 +246,12 @@ sob uma arquitetura resiliente:
   blindado pelo proxy **Supergood** para auditoria. A persistência no PostgreSQL
   segue um estrito padrão Singleton, garantindo que os agentes não esgotem o
   pool de conexões durante as execuções paralelas.
-- **Visualização Web** (`nextjs_gui_and_api.md` & `gui/README.md`): Toda interação pode ser feita
-  pelo painel em Next.js 16 (App Router), estruturado sob o Mastercard Design System
-  e o benchmark Dealroom.net. Inclui biblioteca de componentes auditada no Storybook 10
-  via MDX, motor de síntese de Generative UI em tempo de execução (JSON DSL) e dashboard
-  dinâmico com ancoragem de widgets. A comunicação com o Deno ocorre via `ApiClient`
-  protegida contra vazamento de caminhos e com suporte nativo a respostas via streaming (SSE).
+- **Visualização Web** (`context/nextjs_gui_and_api.md` e `gui/README.md`): o
+  painel Next.js 16 usa um shell único e componentes Mastercard Editorial. As
+  rotas `/`, `/deals`, `/deals/:id`, `/entities`, `/entities/:id`,
+  `/deals/:id/chat` e `/dashboard/custom` compartilham contratos tipados no
+  `ApiClient`. O Next.js encaminha `/api/*` à API Deno por rewrite configurado
+  por `MAI_API_BASE_URL`, inclusive o streaming SSE do workspace agêntico.
 - **O Caminho para a Nuvem** (`architecture.md`): O monolito atual foi
   intencionalmente construído com mensageria assíncrona (simulando Pub/Sub)
   preparando sua migração natural para serviços Serverless da GCP (Cloud Run,
@@ -282,6 +312,10 @@ npm run dev
 
 Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
 
+Por padrão, o Next.js encaminha chamadas para `http://127.0.0.1:8000`. Para
+usar outra origem da API, defina `MAI_API_BASE_URL` antes de iniciar ou compilar
+a GUI.
+
 ---
 
 ### 💻 2. Inicializando a Interface CLI (Legada / Alternativa)
@@ -307,29 +341,34 @@ deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow
 ## 📚 Documentação Adicional
 
 - **Arquitetura Geral:** Consulte 👉
-  **[context/architecture.md](file:///home/luis/mai/context/architecture.md)**
+  **[context/architecture.md](context/architecture.md)**
 - **Integração Google AI & ADK:** Consulte 👉
-  **[AGENTS.md](file:///home/luis/mai/AGENTS.md)**
+  **[AGENTS.md](AGENTS.md)**
 - **Regras de Valuation e Precificação:** Consulte 👉
-  **[context/valuation.md](file:///home/luis/mai/context/valuation.md)**
+  **[context/valuation.md](context/valuation.md)**
 - **Otimizador de Portfólio (MILP):** Consulte 👉
-  **[context/optimization_portfolio_solver.md](file:///home/luis/mai/context/optimization_portfolio_solver.md)**
+  **[context/optimization_portfolio_solver.md](context/optimization_portfolio_solver.md)**
 - **Otimizador de Term Sheet (Algoritmo Genético):** Consulte 👉
-  **[context/term_sheet_genetic_optimizer.md](file:///home/luis/mai/context/term_sheet_genetic_optimizer.md)**
+  **[context/term_sheet_genetic_optimizer.md](context/term_sheet_genetic_optimizer.md)**
 - **Integração VDR & Supergood Proxy:** Consulte 👉
-  **[context/vdr_integration_supergood.md](file:///home/luis/mai/context/vdr_integration_supergood.md)**
+  **[context/vdr_integration_supergood.md](context/vdr_integration_supergood.md)**
 - **RAG Silado e Aprendizado Contínuo:** Consulte 👉
-  **[context/continuous_learning_and_rag.md](file:///home/luis/mai/context/continuous_learning_and_rag.md)**
+  **[context/continuous_learning_and_rag.md](context/continuous_learning_and_rag.md)**
 - **Interface Gráfica Next.js & API:** Consulte 👉
-  **[context/nextjs_gui_and_api.md](file:///home/luis/mai/context/nextjs_gui_and_api.md)**
+  **[context/nextjs_gui_and_api.md](context/nextjs_gui_and_api.md)**
+- **Contrato de componentes Stitch:** Consulte 👉
+  **[gui/docs/stitch-component-version-contract.md](gui/docs/stitch-component-version-contract.md)**
+- **Prompt mestre e mapa de estados:** Consulte 👉
+  **[gui/docs/stitch-master-prototype-prompt.md](gui/docs/stitch-master-prototype-prompt.md)** e
+  **[gui/docs/prototype-state-map.md](gui/docs/prototype-state-map.md)**
 - **Inicialização e Runtime ONNX (WASM):** Consulte 👉
-  **[context/onnx_bootstrapper.md](file:///home/luis/mai/context/onnx_bootstrapper.md)**
+  **[context/onnx_bootstrapper.md](context/onnx_bootstrapper.md)**
 - **Otimização de Negociação com Restrições:** Consulte 👉
-  **[context/constraint_negotiation_api.md](file:///home/luis/mai/context/constraint_negotiation_api.md)**
+  **[context/constraint_negotiation_api.md](context/constraint_negotiation_api.md)**
 - **Padrão Singleton do Banco de Dados:** Consulte 👉
-  **[context/database_memory_singleton.md](file:///home/luis/mai/context/database_memory_singleton.md)**
+  **[context/database_memory_singleton.md](context/database_memory_singleton.md)**
 - **Motor Preditivo ONNX & Treinamento:** Consulte 👉
-  **[docs/prediction_engine.md](file:///home/luis/mai/docs/prediction_engine.md)**
+  **[docs/prediction_engine.md](docs/prediction_engine.md)**
 
 ### Cloud SQL e pg_vector
 

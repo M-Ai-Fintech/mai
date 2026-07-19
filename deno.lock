@@ -13,6 +13,7 @@
     "npm:commander@^12.1.0": "12.1.0",
     "npm:genetic-search@1": "1.0.0",
     "npm:javascript-lp-solver@*": "1.0.3",
+    "npm:javascript-lp-solver@1.0.3": "1.0.3",
     "npm:onnxruntime-node@*": "1.24.3",
     "npm:onnxruntime-web@*": "1.26.0",
     "npm:pdf-lib@^1.17.1": "1.17.1",
@@ -2299,6 +2300,7 @@
       "npm:@types/pg@^8.11.4",
       "npm:commander@^12.1.0",
       "npm:genetic-search@1",
+      "npm:javascript-lp-solver@1.0.3",
       "npm:pdf-lib@^1.17.1",
       "npm:pg@^8.11.3",
       "npm:zod@^3.23.8"

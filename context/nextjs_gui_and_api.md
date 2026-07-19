@@ -1,52 +1,106 @@
-# Interface Gráfica Next.js (GUI) & Integração com a API Deno
-## Especificação Técnica da Camada de Frontend e Rotas de Integração
+# GUI Next.js e API Deno — contexto do MVP_6
 
-O sistema evoluiu de uma interface puramente CLI para incluir um painel de controle web completo desenvolvido em **Next.js** (localizado no diretório `gui/`). Esta interface se conecta diretamente com a API do middleware rodando no Deno (porta `8000`).
+Este documento é a referência de runtime para as quatro famílias de tela do
+MVP_6. O frontend fica em `gui/`; os contratos, store e roteador do adaptador
+ficam em `src/api/contracts.ts`, `src/api/mvp_store.ts` e
+`src/api/mvp_routes.ts`.
 
----
+As três entradas são fachadas públicas e devem permanecer estáveis:
 
-## 1. Estrutura do App Next.js (`gui/`)
+```text
+src/api/
+├── contracts.ts       # reexporta contracts/index.ts
+├── contracts/         # DTOs e envelopes por domínio
+├── mvp_store.ts       # compõe repositórios e preserva a API MvpStore
+├── store/             # estado, seed, erros e repositórios por domínio
+├── mvp_routes.ts      # aplica handlers na ordem de precedência
+└── routes/            # handlers, helpers e dependências injetáveis
+```
 
-O frontend é construído utilizando React 19, TypeScript e o App Router do Next.js.
+Consumidores externos e testes de integração importam somente as fachadas. Os
+módulos internos podem evoluir sem alterar os caminhos públicos. Novos handlers
+devem ser inseridos conscientemente no array ordenado de `mvp_routes.ts`, pois a
+precedência de matching faz parte do comportamento HTTP.
 
-### Estrutura de Diretórios de Rotas (`gui/app/`)
-* **`/`**: **Dashboard Principal Multi-View** (Kanban, Tabela, Timeline), filtros por fase/busca e ancoragem de widgets sintetizados via Generative UI (MAI-60).
-* **`/clients`**: **Telas CRUD de Entidades** (listagem paginada e modal de cadastro de clientes Buyers/Sellers com validação).
-* **`/settings`**: Tela de configurações gerais, incluindo preferências de negociação globais e credenciais dos VDRs.
-* **`/generative-ui`**: **Generative UI Synthesis Studio** (Motor de síntese de interfaces em runtime a partir de esquemas JSON DSL / Component Schema gerados por agentes).
-* **`/deals`**: Listagem de transações ativas de M&A.
-* **`/deals/[id]`**: Painel principal e visão 360° de uma transação específica.
-  * **`/deals/[id]/chat`**: Interface de chat interativa em tempo real com o `BrokerOrchestratorAgent` via Server-Sent Events (SSE).
-  * **`/deals/[id]/engines`**: Painel de visualização e controle dos motores computacionais (Previsão de Risco ONNX, Otimização MILP e Algoritmo Genético de Term Sheets).
+## 1. Fluxo de requisição
 
-### Componentes de Cliente Interativos & Generative UI Engine
-- **Biblioteca de Componentes (MAI-53)**: Componentes atômicos (`Button`, `Badge`) e compostos (`Card`) fortemente tipados em TypeScript, com radii de 8px de alto contraste sobre Canvas Cream (`#F3F0EE`), alinhamento à esquerda por padrão e ícones brancos em fundos laranja.
-- **Storybook 10 & MDX (MAI-54/59)**: Ambiente isolado de desenvolvimento e documentação funcional em `npm run storybook`.
-- **Generative UI Engine (MAI-57)**: Parser e Factory React em [`gui/lib/generative-ui-engine.tsx`](file:///home/luis/mai/gui/lib/generative-ui-engine.tsx) que interpreta JSON DSL gerado pelos agentes e sintetiza componentes React sob as regras das [`gui/DESIGN_GUIDELINES.md`](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md).
-- **Dashboard Dinâmico (MAI-60)**: Interface de workspace customizável permitindo ancorar widgets sintetizados do Generative UI diretamente na página principal `/`.
+```mermaid
+flowchart LR
+  Browser[Browser] --> Next[Next.js App Router]
+  Next -->|beforeFiles rewrite /api/*| Deno[Deno API :8000]
+  Deno --> Contracts[Contratos Zod]
+  Contracts --> Store[MvpStore em memória]
+  Deno --> Agents[Agentes e engines]
+```
 
----
+O browser chama apenas caminhos relativos `/api/*`. `gui/next.config.ts` usa
+`MAI_API_BASE_URL`, com padrão `http://127.0.0.1:8000`, para encaminhá-los ao
+Deno. Isso evita misturar URLs internas nos componentes e garante que o novo
+adaptador tenha precedência sobre route handlers legados do Next.js.
 
-## 2. A Classe `ApiClient` (`gui/lib/api-client.ts`)
+## 2. Famílias e rotas verificadas
 
-A comunicação entre a GUI (Next.js) e o backend (Deno) é centralizada no helper `ApiClient`.
+- Dashboard/deals: `/`, `/deals`, `/deals/[id]`.
+- Entity CRUD: `/entities`, `/entities?role=...`, `/entities/[id]`.
+- Agentic workspace: `/deals/[id]/chat`.
+- Custom dashboard: `/dashboard/custom`.
+- Compatibilidade: `/clients` redireciona para `/entities`.
 
-### Funcionalidades Resilientes Integradas
-* **Timeout e Tentativas Exponenciais (`fetchWithRetry`):** As chamadas HTTP contam com 3 tentativas de reenvio automáticas usando *exponential backoff* e limite de tempo de 10 segundos para mitigar instabilidades de rede.
-* **Sanitização de Caminhos Internos (`sanitizeErrorMessage`):** Evita que caminhos absolutos do sistema Linux (ex: `/home/luis/...`) ou stack traces de erro internos do backend sejam exibidos no console ou na interface do usuário final, limpando as mensagens antes de lançar a exceção.
+Todas usam `AppShell`, Sidebar de 256px/80px, TopBar de 72px e os mesmos tokens
+Mastercard Editorial. Loading, empty, error, modal, validation, success e os
+estados de interação relevantes preservam a geometria da família.
 
----
+## 3. Contratos HTTP do MVP_6
 
-## 3. Endpoints da API Backend Deno (`src/api/server.ts`)
+Todos os erros usam envelope estável com `error.code`, `error.message` e erros
+de campo opcionais. Listas usam `data` e `meta`; recursos usam `data`.
 
-O servidor de API roda nativamente em Deno na porta `8000` (`Deno.serve`) e provê suporte a CORS de forma global.
+| Domínio | Endpoints |
+| --- | --- |
+| Entities | `GET/POST /api/entities`; `GET/PATCH/DELETE /api/entities/:id` |
+| Team | `GET /api/team-members`; `GET/PUT /api/deals/:id/team-assignments` |
+| Deals | `GET/POST /api/deals`; `GET/PATCH/DELETE /api/deals/:id`; `POST /api/deals/:id/phase-transitions` |
+| Chat | `GET/POST /api/deals/:id/chat/threads`; `GET .../messages`; `POST .../stream` |
+| Engines/VDR | `GET/POST /api/deals/:id/engine-runs`; `GET .../vdr-documents`; `POST .../documents` |
+| Notifications | `GET /api/notifications`; `PATCH /api/notifications/:id` |
+| Layout | `GET/PUT/DELETE /api/users/me/dashboard-layouts/:slug` |
 
-### Lista de Endpoints Operacionais
-1. **`POST /api/kyb`:** Invoca a ferramenta de validação tributária cadastral (Receita/SERPRO) para CNPJs informados.
-2. **`POST /api/predict`:** Executa a inferência de risco de insolvência no motor preditivo ML (`MLEngine.analyzeProfile`) e persiste os resultados em banco na tabela de conhecimento de domínio.
-3. **`POST /api/portfolio`:** Executa o resolvedor MILP (`PortfolioSolver.evaluateAndOptimize`) para selecionar alvos com base em orçamentos e tolerâncias de risco.
-4. **`POST /api/negotiate`:** Aciona a otimização de termos de negociação sob restrições (`optimizeWithConstraints`).
-5. **`POST /api/document`:** Dispara a geração física do documento final em PDF (`PDFGenerator.writeTermSheetPDF`).
-6. **`GET/POST /api/deals`:** Listagem e criação de novas transações na tabela `transaction`.
-7. **`POST /api/deals/:id/phase`:** Avança a fase da transação e registra o checkpoint.
-8. **`GET /api/chat` (Server-Sent Events):** Endpoint de streaming focado no chat. Retorna uma conexão SSE (`text/event-stream`) que envia as respostas do `BrokerOrchestratorAgent` em chunks conforme elas são processadas, armazenando o log de conversa na tabela de checkpoints.
+Updates de deals, entidades, assignments e layouts usam versão otimista. Um
+conflito preserva a edição local e oferece recarga explícita; o cliente nunca
+sobrescreve silenciosamente.
+
+## 4. Streaming agêntico
+
+O chat usa `POST` com resposta `text/event-stream`; texto de prompt nunca é
+colocado na URL. Os eventos tipados cobrem mensagem aceita, deltas, início/fim
+de tool, citações, conclusão e falha. O cliente mantém `clientMessageId` e
+`Last-Event-ID` durante reconexões limitadas, permite abortar a resposta e não
+transforma uma falha em sucesso.
+
+## 5. Persistência e limites
+
+- `MvpStore` é em memória e reinicia com o processo da API.
+- A integração PostgreSQL do domínio continua existente, mas ainda não é a
+  persistência dessas novas rotas do protótipo.
+- Autenticação e autorização estão fora do MVP_6.
+- Team Activity do custom dashboard é conteúdo somente de protótipo. O tipo de
+  widget `agent_entry` não implica um contrato de feed persistente.
+- Sem chave Gemini, os agentes executam em modo DRY-RUN/FALLBACK.
+- Downloads VDR retornam metadados/URLs controlados e nunca caminhos do servidor.
+
+## 6. Verificação de referência
+
+O gate final validou build de produção, TypeScript, lint dos arquivos alterados,
+29 testes frontend, 25 testes de API, 12 testes de otimização, prompt Stitch e
+oito rotas em produção a 2560×1440 sem erros de console.
+
+Os testes de API espelham a estrutura modular em `tests/api/contracts/`,
+`tests/api/store/` e `tests/api/routes/`, com fixtures comuns em
+`tests/api/support/`. O gate da modularização preserva os 25 casos originais.
+
+Consulte também:
+
+- `gui/docs/stitch-component-version-contract.md`
+- `gui/docs/backend-capability-matrix.md`
+- `gui/docs/stitch-master-prototype-prompt.md`
+- `gui/docs/prototype-state-map.md`

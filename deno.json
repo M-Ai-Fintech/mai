@@ -14,6 +14,7 @@
     "@ai-sdk/google": "npm:@ai-sdk/google@^1.0.0",
     "@bubblyworld/highs-ts": "npm:@bubblyworld/highs-ts@^1.2.0",
     "genetic-search": "npm:genetic-search@^1.0.0",
+    "javascript-lp-solver": "npm:javascript-lp-solver@1.0.3",
     "pdf-lib": "npm:pdf-lib@^1.17.1",
     "zod": "npm:zod@^3.23.8",
     "@huggingface/transformers": "npm:@huggingface/transformers@^4.2.0",
