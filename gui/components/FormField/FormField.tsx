@@ -24,8 +24,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
 
-  const childWithProps = React.isValidElement(children)
-    ? React.cloneElement(children as React.ReactElement, {
+  const childWithProps = React.isValidElement<Record<string, unknown>>(children)
+    ? React.cloneElement(children, {
         id,
         "aria-describedby": `${hint ? hintId : ""} ${error ? errorId : ""}`.trim() || undefined,
         "aria-invalid": !!error,

@@ -1,81 +1,71 @@
-import React from "react";
+"use client";
+
 import Link from "next/link";
+import React from "react";
 import { Avatar } from "../Avatar/Avatar";
 import { Badge } from "../Badge/Badge";
 import { CountrySelector } from "../CountrySelector/CountrySelector";
 
+export type Pov = "Institution" | "Banker" | "Client";
+
 export interface TopBarProps {
   breadcrumbs?: { label: string; href?: string }[];
-  currentPov?: "Institution" | "Banker" | "Client";
-  onPovChange?: (pov: "Institution" | "Banker" | "Client") => void;
+  currentPov?: Pov;
+  onPovChange?: (pov: Pov) => void;
   onToggleMobileMenu?: () => void;
 }
 
+const povOptions: Pov[] = ["Banker", "Institution", "Client"];
+
 export const TopBar: React.FC<TopBarProps> = ({
-  breadcrumbs = [{ label: "Workspace", href: "/" }, { label: "Transactions" }],
+  breadcrumbs = [{ label: "Home", href: "/" }, { label: "Dashboard" }],
   currentPov = "Banker",
   onPovChange,
   onToggleMobileMenu,
-}) => {
-  return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-dust-taupe/40 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm text-left">
-      <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Trigger */}
-        <button
-          onClick={onToggleMobileMenu}
-          className="md:hidden p-2 text-ink-black rounded-lg hover:bg-canvas-cream focus:outline-none cursor-pointer"
-          aria-label="Open mobile menu"
-        >
-          ☰
-        </button>
+}) => (
+  <header className="sticky top-0 z-40 flex h-[72px] w-full items-center justify-between border-b border-dust-taupe/60 bg-white/95 px-5 backdrop-blur-md lg:px-8">
+    <div className="flex min-w-0 items-center gap-3">
+      <button
+        type="button"
+        onClick={onToggleMobileMenu}
+        className="grid h-10 w-10 place-items-center rounded-full hover:bg-canvas-cream md:hidden"
+        aria-label="Open mobile menu"
+      >
+        <span className="font-label text-xs font-bold">Menu</span>
+      </button>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 font-label text-xs text-slate-gray">
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={`${crumb.label}-${index}`}>
+            {index > 0 && <span aria-hidden="true">/</span>}
+            {crumb.href ? (
+              <Link href={crumb.href} className="truncate hover:text-ink-black">{crumb.label}</Link>
+            ) : (
+              <span className="truncate font-bold text-ink-black">{crumb.label}</span>
+            )}
+          </React.Fragment>
+        ))}
+      </nav>
+    </div>
 
-        {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-gray">
-          {breadcrumbs.map((crumb, idx) => (
-            <React.Fragment key={idx}>
-              {idx > 0 && <span className="text-dust-taupe">/</span>}
-              {crumb.href ? (
-                <Link href={crumb.href} className="hover:text-ink-black transition-colors">
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="text-ink-black font-bold truncate max-w-[120px] sm:max-w-none">{crumb.label}</span>
-              )}
-            </React.Fragment>
-          ))}
-        </nav>
-      </div>
-
-      {/* Right Controls */}
-      <div className="flex items-center gap-2 sm:gap-4">
-        {/* POV Switching Badge */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-canvas-cream px-2.5 sm:px-3 py-1.5 rounded-full border border-dust-taupe/60 text-xs">
-          <span className="text-slate-gray font-semibold hidden xs:inline">POV:</span>
-          <select
-            aria-label="Select POV"
-            value={currentPov}
-            onChange={(e) => onPovChange && onPovChange(e.target.value as any)}
-            className="bg-transparent text-ink-black font-bold focus:outline-none cursor-pointer text-xs"
+    <div className="flex items-center gap-2 lg:gap-3">
+      <div aria-label="Point of view" className="hidden rounded-full bg-canvas-cream p-1 sm:flex">
+        {povOptions.map((pov) => (
+          <button
+            type="button"
+            key={pov}
+            aria-pressed={currentPov === pov}
+            onClick={() => onPovChange?.(pov)}
+            className={`min-h-11 rounded-full px-3 font-label text-xs font-bold transition-colors ${
+              currentPov === pov ? "bg-ink-black text-canvas-cream" : "text-slate-gray hover:text-ink-black"
+            }`}
           >
-            <option value="Banker">Banker</option>
-            <option value="Institution">Institution</option>
-            <option value="Client">Client</option>
-          </select>
-        </div>
-
-        <div className="hidden sm:inline-flex">
-          <CountrySelector />
-        </div>
-
-        <div className="hidden sm:inline-flex">
-          <Badge variant="orange">• ONNX ON</Badge>
-        </div>
-
-        <Avatar
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
-          size="sm"
-        />
+            {pov}
+          </button>
+        ))}
       </div>
-    </header>
-  );
-};
+      <div className="hidden xl:block"><CountrySelector variant="light" /></div>
+      <div className="hidden lg:block"><Badge variant="outline">ONNX online</Badge></div>
+      <Avatar size="sm" fallback="AC" aria-label="Ana Costa" />
+    </div>
+  </header>
+);

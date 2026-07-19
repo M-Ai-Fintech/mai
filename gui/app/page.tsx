@@ -1,436 +1,615 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ApiClient } from "@/lib/api-client";
-import { Card } from "@/components/Card/Card";
-import { Button } from "@/components/Button/Button";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Avatar } from "@/components/Avatar/Avatar";
 import { Badge } from "@/components/Badge/Badge";
-import { Table, TableHead, TableRow, TableCell } from "@/components/Table/Table";
-import { Tabs } from "@/components/Tabs/Tabs";
+import { Button } from "@/components/Button/Button";
+import { Card } from "@/components/Card/Card";
 import { Dropdown } from "@/components/Dropdown/Dropdown";
+import { EmptyState } from "@/components/EmptyState/EmptyState";
+import { FormField } from "@/components/FormField/FormField";
+import { Icon } from "@/components/Icon/Icon";
 import { Input } from "@/components/Input/Input";
 import { Modal } from "@/components/Modal/Modal";
-import { FormField } from "@/components/FormField/FormField";
-import { GenerativeUIRenderer, GenerativeUISchema } from "@/lib/generative-ui-engine";
+import { Skeleton } from "@/components/Skeleton/Skeleton";
+import {
+  Table,
+  TableCell,
+  TableHead,
+  TablePagination,
+  TableRow,
+} from "@/components/Table/Table";
+import { Tabs } from "@/components/Tabs/Tabs";
+import { Toast } from "@/components/Toast/Toast";
+import { Textarea } from "@/components/Textarea/Textarea";
+import {
+  DASHBOARD_PHASES,
+  EMPTY_DEAL_DRAFT,
+  formatMoneyRange,
+  groupDealsByPhase,
+  PHASE_LABELS,
+  toDealCreate,
+  validateDealDraft,
+  type DashboardPhase,
+  type DashboardView,
+  type DealDraft,
+  type DealDraftErrors,
+} from "@/components/screens/dashboard/dashboard-model";
+import { parseDashboardRouteState } from "@/components/screens/dashboard/dashboard-route-state";
+import {
+  APIError,
+  ApiClient,
+  type DealListQuery,
+  type DealSummary,
+  type EntitySummary,
+  type TeamMember,
+} from "@/lib/api-client";
+
+interface DashboardToast {
+  title: string;
+  message: string;
+  variant: "success" | "error";
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
+}
+
+function LoadingBoard({ view }: { view: DashboardView }) {
+  if (view === "table") {
+    return (
+      <Card variant="default" padding="none" aria-label="Loading deals">
+        <div className="space-y-3 p-5">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="grid grid-cols-6 gap-4 border-b border-dust-taupe/40 py-3">
+              <Skeleton className="col-span-2" />
+              <Skeleton />
+              <Skeleton />
+              <Skeleton />
+              <Skeleton />
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-4" aria-label="Loading deals">
+      {DASHBOARD_PHASES.map((phase) => (
+        <Card key={phase} variant="raised" padding="sm">
+          <Skeleton width="55%" />
+          <div className="mt-5 space-y-3">
+            <Skeleton variant="rectangular" height={150} />
+            <Skeleton variant="rectangular" height={150} />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function DealCard({ deal }: { deal: DealSummary }) {
+  return (
+    <Link href={`/deals/${deal.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-black">
+      <Card variant="default" padding="sm" className="min-h-[156px]">
+        <div className="flex items-start justify-between gap-3">
+          <Badge variant="orange">{PHASE_LABELS[deal.currentPhase]}</Badge>
+          <Avatar
+            src={deal.leadAdvisor?.avatarUrl ?? undefined}
+            fallback={initials(deal.leadAdvisor?.displayName ?? "Unassigned")}
+            alt={deal.leadAdvisor?.displayName ?? "Unassigned advisor"}
+            size="sm"
+          />
+        </div>
+        <p className="mt-4 font-label text-[10px] font-bold uppercase tracking-wider text-slate-gray">{deal.code}</p>
+        <h3 className="mt-1 text-base font-semibold text-ink-black">{deal.title}</h3>
+        <p className="mt-1 text-xs text-slate-gray">{deal.target.legalName}</p>
+        <p className="mt-3 text-sm font-semibold text-ink-black">{formatMoneyRange(deal)}</p>
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-gray"><span>{deal.leadAdvisor?.displayName ?? "Unassigned"}</span><span>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(deal.updatedAt))}</span></div>
+      </Card>
+    </Link>
+  );
+}
 
 export default function DashboardPage() {
-  const [deals, setDeals] = useState<any[]>([]);
+  const router = useRouter();
+  const [deals, setDeals] = useState<DealSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"kanban" | "table" | "timeline">("kanban");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPhaseFilter, setSelectedPhaseFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
-  const [isEditLayoutMode, setIsEditLayoutMode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<DashboardView>("kanban");
+  const [searchDraft, setSearchDraft] = useState("");
+  const [search, setSearch] = useState("");
+  const [phase, setPhase] = useState<"all" | DashboardPhase>("all");
+  const [status, setStatus] = useState<"all" | "active" | "completed" | "archived">("active");
+  const [assigneeId, setAssigneeId] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const [anchoredWidgets, setAnchoredWidgets] = useState<GenerativeUISchema[]>([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [draft, setDraft] = useState<DealDraft>(EMPTY_DEAL_DRAFT);
+  const [draftErrors, setDraftErrors] = useState<DealDraftErrors>({});
+  const [targets, setTargets] = useState<EntitySummary[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [toast, setToast] = useState<DashboardToast | null>(null);
+  const handledRouteState = useRef(false);
 
-  const [newDeal, setNewDeal] = useState({
-    title: "",
-    type: "Acquisition",
-    strategy: "Horizontal Integration",
-    targetValuation: 10000000,
-  });
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(searchDraft.trim());
+      setPage(1);
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [searchDraft]);
 
-  const loadDeals = async () => {
+  const loadDeals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const query: DealListQuery = {
+      page,
+      pageSize,
+      search: search || undefined,
+      phase: phase === "all" ? undefined : phase,
+      assigneeId: assigneeId === "all" ? undefined : assigneeId,
+      status: status === "all" ? undefined : status,
+      sort: "-updatedAt",
+    };
+
     try {
-      const data = await ApiClient.getDeals();
-      setDeals(data);
-    } catch (err) {
-      console.error("Failed to load deals, utilizing fallback:", err);
-      setDeals([
-        {
-          id: "sample-deal",
-          title: "TechCorp Acquisition",
-          code: "TC-2026",
-          targetValuation: 150000000,
-          currency: "BRL",
-          status: "Active",
-          type: "Acquisition",
-          strategy: "Horizontal Integration",
-          currentPhase: "Sourcing & KYB",
-          currentPhaseStatus: "Pending KYB",
-          updatedAt: "2026-07-14",
-        },
-        {
-          id: "alpha-deal",
-          title: "Alpha Tech S.A.",
-          code: "AT-2026",
-          targetValuation: 45000000,
-          currency: "BRL",
-          status: "Active",
-          type: "Acquisition",
-          strategy: "Horizontal Integration",
-          currentPhase: "Deep Due Diligence",
-          currentPhaseStatus: "In Progress",
-          updatedAt: "2026-07-12",
-        },
-      ]);
+      const response = await ApiClient.listDeals(query);
+      setDeals(response.data);
+      setTotal(response.meta.total);
+      setTotalPages(response.meta.totalPages);
+    } catch (cause) {
+      setDeals([]);
+      setError(cause instanceof Error ? cause.message : "The deal pipeline could not be loaded.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [assigneeId, page, pageSize, phase, search, status]);
 
   useEffect(() => {
-    loadDeals();
+    const timeout = window.setTimeout(() => void loadDeals(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadDeals]);
+
+  const groupedDeals = useMemo(() => groupDealsByPhase(deals), [deals]);
+  const advisors = useMemo(() => {
+    const unique = new Map<string, DealSummary["leadAdvisor"]>();
+    deals.forEach((deal) => {
+      if (deal.leadAdvisor) unique.set(deal.leadAdvisor.id, deal.leadAdvisor);
+    });
+    return Array.from(unique.values()).filter((advisor) => advisor !== null);
+  }, [deals]);
+  const filtersActive = Boolean(search || phase !== "all" || status !== "active" || assigneeId !== "all");
+
+  const resetFilters = () => {
+    setSearchDraft("");
+    setSearch("");
+    setPhase("all");
+    setStatus("active");
+    setAssigneeId("all");
+    setPage(1);
+  };
+
+  const openCreate = useCallback(async () => {
+    setIsCreateOpen(true);
+    setDraft(EMPTY_DEAL_DRAFT);
+    setDraftErrors({});
+    setOptionsError(null);
+    setOptionsLoading(true);
     try {
-      const saved = JSON.parse(localStorage.getItem("mai_anchored_widgets") || "[]");
-      setAnchoredWidgets(saved);
-    } catch {
-      setAnchoredWidgets([]);
+      const [entityPage, teamPage] = await Promise.all([
+        ApiClient.listEntities({ page: 1, pageSize: 100, role: "target" }),
+        ApiClient.listTeamMembers({ page: 1, pageSize: 100 }),
+      ]);
+      setTargets(entityPage.data);
+      setTeamMembers(teamPage.data.filter((member) => member.active));
+    } catch (cause) {
+      setOptionsError(cause instanceof Error ? cause.message : "Deal form options could not be loaded.");
+    } finally {
+      setOptionsLoading(false);
     }
   }, []);
 
-  const handleCreateDeal = async () => {
-    if (!newDeal.title.trim()) return;
+  useEffect(() => {
+    if (handledRouteState.current) return;
+    handledRouteState.current = true;
+    const timer = window.setTimeout(() => {
+      const routeState = parseDashboardRouteState(window.location.search);
 
-    try {
-      const BASE_URL = process.env.NEXT_PUBLIC_CORE_API_URL || "http://localhost:8000";
-      const res = await fetch(`${BASE_URL}/api/deals`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newDeal,
-          code: "DEAL_" + Math.random().toString(36).substring(2, 7).toUpperCase(),
-          status: "Active",
-        }),
-      });
-
-      if (res.ok) {
-        setShowModal(false);
-        setNewDeal({
-          title: "",
-          type: "Acquisition",
-          strategy: "Horizontal Integration",
-          targetValuation: 10000000,
+      if (routeState.notice === "phase-transitioned") {
+        setToast({
+          title: "Deal moved",
+          message: "The deal phase transition was saved.",
+          variant: "success",
         });
-        await loadDeals();
-      } else {
-        alert("Falha ao criar deal");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Erro de conexão ao criar transação");
+      if (routeState.createDeal) void openCreate();
+      if (routeState.createDeal || routeState.notice) {
+        router.replace("/", { scroll: false });
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [openCreate, router]);
+
+  const submitCreate = async () => {
+    const clientErrors = validateDealDraft(draft);
+    setDraftErrors(clientErrors);
+    if (Object.keys(clientErrors).length > 0) {
+      setToast({ title: "Review required fields", message: "Correct the highlighted deal fields and submit again.", variant: "error" });
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const code = `DEAL-${Date.now().toString(36).toUpperCase()}`;
+      await ApiClient.createDeal(toDealCreate(draft, code));
+      setIsCreateOpen(false);
+      setToast({
+        title: "Deal created",
+        message: `${draft.title.trim()} was added to Sourcing.`,
+        variant: "success",
+      });
+      await loadDeals();
+    } catch (cause) {
+      if (cause instanceof APIError && cause.fieldErrors) {
+        const serverErrors = Object.fromEntries(
+          Object.entries(cause.fieldErrors).map(([field, messages]) => [field, messages[0]]),
+        ) as DealDraftErrors;
+        setDraftErrors(serverErrors);
+      } else {
+        setToast({
+          title: "Deal not created",
+          message: cause instanceof Error ? cause.message : "Try again.",
+          variant: "error",
+        });
+      }
+    } finally {
+      setCreating(false);
     }
   };
 
-  const removeAnchoredWidget = (index: number) => {
-    const updated = anchoredWidgets.filter((_, i) => i !== index);
-    setAnchoredWidgets(updated);
-    localStorage.setItem("mai_anchored_widgets", JSON.stringify(updated));
-  };
-
-  const getColumnForPhase = (currentPhase: string) => {
-    const phase = (currentPhase || "Sourcing & KYB").toLowerCase();
-    if (phase.includes("sourcing") || phase.includes("kyb")) return "Sourcing & KYB";
-    if (phase.includes("diligence") || phase.includes("dd") || phase.includes("nda") || phase.includes("valuation") || phase.includes("loi")) return "Due Diligence";
-    if (phase.includes("negotiation") || phase.includes("negociação")) return "Negotiation";
-    if (phase.includes("close") || phase.includes("closing") || phase.includes("closed") || phase.includes("concluído")) return "Closed";
-    return "Sourcing & KYB";
-  };
-
-  const columns = ["Sourcing & KYB", "Due Diligence", "Negotiation", "Closed"];
-
-  const filteredDeals = deals.filter((deal) => {
-    const matchesSearch =
-      deal.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deal.code?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPhase =
-      selectedPhaseFilter === "all" ||
-      getColumnForPhase(deal.currentPhase) === selectedPhaseFilter;
-    return matchesSearch && matchesPhase;
-  });
-
-  const totalDealsCount = filteredDeals.length;
-  const totalVolume = filteredDeals.reduce(
-    (acc, deal) => acc + Number(deal.targetValuation || 0),
-    0
-  );
-  const formattedVolume = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(totalVolume);
-
   return (
-    <div className="p-8 max-w-7xl mx-auto text-left">
-      <header className="mb-8 flex justify-between items-center">
+    <div className="space-y-8 p-8">
+      <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
-            <p className="text-xs font-bold text-slate-gray uppercase tracking-wider">
-              DASHBOARD DINÂMICO
-            </p>
-          </div>
-          <h1 className="text-3xl font-medium text-ink-black tracking-tight">
-            Workspace de Transações
-          </h1>
-          <p className="text-slate-gray mt-1 text-sm">
-            Grid reorganizável com suporte a ancoragem de componentes (Generative UI)
-          </p>
+          <p className="text-xs font-bold uppercase tracking-wider text-signal-orange">Executive pipeline</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink-black">M&amp;A Pipeline</h1>
+          <p className="mt-1 text-sm text-slate-gray">Monitor active mandates from sourcing through closing.</p>
         </div>
+        <Button variant="primary" size="md" onClick={() => void openCreate()} disabled={loading}>
+          Create Deal
+        </Button>
+      </section>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant={isEditLayoutMode ? "consent" : "secondary"}
-            size="sm"
-            onClick={() => setIsEditLayoutMode(!isEditLayoutMode)}
-          >
-            {isEditLayoutMode ? "✓ Concluir Edição" : "⚙ Customizar Layout"}
-          </Button>
-
-          {isEditLayoutMode && (
-            <Button variant="secondary" size="sm" onClick={() => { setAnchoredWidgets([]); localStorage.removeItem("mai_anchored_widgets"); setIsEditLayoutMode(false); }}>
-              Resetar Padrão
-            </Button>
-          )}
-
-          <Button variant="primary" onClick={() => setShowModal(true)}>
-            + Novo Deal
-          </Button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card variant="default">
-          <Badge variant="default" className="mb-2">• CARTEIRA ATIVA</Badge>
-          <p className="text-xs text-slate-gray uppercase font-semibold">Total de Transações</p>
-          <p className="text-3xl font-bold text-ink-black mt-1">{totalDealsCount}</p>
-        </Card>
-
-        <Card variant="default">
-          <Badge variant="default" className="mb-2">• PIPELINE VOLUME</Badge>
-          <p className="text-xs text-slate-gray uppercase font-semibold">Volume Acumulado</p>
-          <p className="text-3xl font-bold text-ink-black mt-1">{formattedVolume}</p>
-        </Card>
-
-        <Card variant="orange">
-          <Badge variant="dark" className="mb-2">• AVALIAÇÃO DE RISCO</Badge>
-          <p className="text-xs text-white/90 uppercase font-semibold">Status do Agente ONNX</p>
-          <p className="text-3xl font-bold text-white mt-1">Moderado</p>
-        </Card>
-      </div>
-
-      {anchoredWidgets.length > 0 && (
-        <section className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-ink-black flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
-              Widgets Sintetizados Ancorados (Generative UI)
-            </h2>
-            <Link href="/generative-ui">
-              <Button variant="secondary" size="sm">+ Sintetizar Novo Widget</Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {anchoredWidgets.map((schema, index) => (
-              <Card key={index} variant="default" padding="md" className="relative">
-                {isEditLayoutMode && (
-                  <button
-                    onClick={() => removeAnchoredWidget(index)}
-                    className="absolute top-3 right-3 text-xs bg-signal-orange text-white rounded-full px-2 py-0.5 font-bold cursor-pointer hover:bg-red-700"
-                  >
-                    Desancorar ✕
-                  </button>
-                )}
-                <GenerativeUIRenderer schema={schema} />
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-4 rounded-lg border border-ink-black/10 shadow-level-1">
-        <div className="relative min-w-[280px]">
-          <Input 
-            placeholder="Buscar por nome ou código..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+      <Card variant="default" padding="sm" className="flex flex-wrap items-center justify-between gap-4 overflow-visible">
+        <Tabs
+          tabs={[
+            { id: "kanban", label: "Board", count: total },
+            { id: "table", label: "Table" },
+          ]}
+          activeTab={view}
+          onChange={(nextView) => nextView === "table" ? router.push("/deals") : setView(nextView as DashboardView)}
+        />
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-6 md:grid-cols-2 xl:max-w-[1180px] xl:grid-cols-4">
+          <Input
+            variant="pill"
+            icon={<Icon name="search" size="sm" />}
+            value={searchDraft}
+            onChange={(event) => setSearchDraft(event.target.value)}
+            placeholder="Search deals or targets"
+            aria-label="Search deals or targets"
+            disabled={loading}
           />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto min-w-[200px]">
           <Dropdown
+            value={phase}
+            placeholder="All stages"
             options={[
-              { value: "all", label: "Todas as Fases" },
-              { value: "Sourcing & KYB", label: "Sourcing & KYB" },
-              { value: "Due Diligence", label: "Due Diligence" },
-              { value: "Negotiation", label: "Negotiation" },
-              { value: "Closed", label: "Closed" }
+              { value: "all", label: "All Stages" },
+              ...DASHBOARD_PHASES.map((item) => ({ value: item, label: PHASE_LABELS[item] })),
             ]}
-            value={selectedPhaseFilter}
-            onChange={(val) => setSelectedPhaseFilter(val as string)}
+            onChange={(value) => {
+              setPhase(value as "all" | DashboardPhase);
+              setPage(1);
+            }}
+            disabled={loading}
+          />
+          <Dropdown
+            value={status}
+            placeholder="All statuses"
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "active", label: "Active" },
+              { value: "completed", label: "Completed" },
+              { value: "archived", label: "Archived" },
+            ]}
+            onChange={(value) => { setStatus(value as typeof status); setPage(1); }}
+            disabled={loading}
+          />
+          <Dropdown
+            value={assigneeId}
+            placeholder="All assignees"
+            options={[
+              { value: "all", label: "All Assignees" },
+              ...advisors.map((advisor) => ({ value: advisor.id, label: advisor.displayName })),
+            ]}
+            onChange={(value) => {
+              setAssigneeId(value as string);
+              setPage(1);
+            }}
+            disabled={loading}
           />
         </div>
+      </Card>
 
-        <div>
-          <Tabs 
-            activeTab={view}
-            onChange={(id) => setView(id as "kanban"|"table"|"timeline")}
-            tabs={[
-              { id: "kanban", label: "Kanban" },
-              { id: "table", label: "Tabela" },
-              { id: "timeline", label: "Timeline" }
-            ]}
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <main className="min-w-0 xl:col-span-9">
+          {loading ? (
+            <LoadingBoard view={view} />
+          ) : error ? (
+            <Card variant="raised" className="flex min-h-[300px] flex-col items-center justify-center text-center">
+              <Icon name="alert" size="xl" className="text-signal-orange" />
+              <h2 className="mt-4 text-lg font-semibold text-ink-black">Pipeline unavailable</h2>
+              <p className="mt-1 max-w-md text-sm text-slate-gray">{error}</p>
+              <Button className="mt-5" variant="primary" onClick={() => void loadDeals()}>
+                Retry
+              </Button>
+              <Button className="mt-3" variant="secondary" onClick={() => router.push("/")}>Return to dashboard</Button>
+            </Card>
+          ) : deals.length === 0 ? (
+            <EmptyState
+              title="No deals found"
+              description={
+                filtersActive
+                  ? "No active deals match the current search and filters."
+                  : "Create the first mandate to start building the pipeline."
+              }
+              actionLabel={filtersActive ? "Reset Filters" : "Create Deal"}
+              onAction={filtersActive ? resetFilters : () => void openCreate()}
+              icon={<Icon name={filtersActive ? "filter" : "fileText"} size="lg" />}
+            />
+          ) : view === "table" ? (
+            <Card variant="default" padding="none">
+              <Table aria-label="Active deals">
+                <TableHead>
+                  <TableRow isHeader>
+                    <TableCell isHeader>Deal / Target</TableCell>
+                    <TableCell isHeader>Stage</TableCell>
+                    <TableCell isHeader>Valuation</TableCell>
+                    <TableCell isHeader>Lead Advisor</TableCell>
+                    <TableCell isHeader>Updated</TableCell>
+                  </TableRow>
+                </TableHead>
+                <tbody>
+                  {deals.map((deal) => (
+                    <TableRow key={deal.id}>
+                      <TableCell>
+                        <Link href={`/deals/${deal.id}`} className="font-semibold text-ink-black hover:underline">
+                          {deal.title}
+                        </Link>
+                        <span className="ml-2 text-xs text-slate-gray">{deal.target.legalName}</span>
+                      </TableCell>
+                      <TableCell><Badge variant="orange">{PHASE_LABELS[deal.currentPhase]}</Badge></TableCell>
+                      <TableCell>{formatMoneyRange(deal)}</TableCell>
+                      <TableCell>{deal.leadAdvisor?.displayName ?? "Unassigned"}</TableCell>
+                      <TableCell>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(deal.updatedAt))}</TableCell>
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+              <TablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(nextSize) => {
+                  setPageSize(nextSize);
+                  setPage(1);
+                }}
+              />
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              {DASHBOARD_PHASES.map((columnPhase) => (
+                <Card key={columnPhase} variant="raised" padding="sm" className="overflow-visible">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-semibold text-ink-black">{PHASE_LABELS[columnPhase]}</h2>
+                    <Badge variant="dark">{groupedDeals[columnPhase].length}</Badge>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {groupedDeals[columnPhase].length > 0 ? (
+                      groupedDeals[columnPhase].map((deal) => <DealCard key={deal.id} deal={deal} />)
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-dust-taupe p-5 text-center text-xs text-slate-gray">
+                        No deals in this stage
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </main>
+
+        <aside className="space-y-6 xl:col-span-3">
+          <Card variant="dark">
+            <Badge variant="orange">BrokerOrchestrator</Badge>
+            <h2 className="mt-4 text-lg font-semibold">Deal intelligence</h2>
+            <p className="mt-2 text-sm text-canvas-cream/75">
+              Review the selected mandate with the orchestrator and its specialist agents.
+            </p>
+            {deals[0] ? (
+              <Button
+                className="mt-5"
+                variant="secondary"
+                size="sm"
+                onClick={() => router.push(`/deals/${deals[0].id}/chat`)}
+              >
+                Open Agent Chat
+              </Button>
+            ) : (
+              <Button className="mt-5" variant="secondary" size="sm" disabled>Open Agent Chat</Button>
+            )}
+          </Card>
+          <Card variant="default">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-gray">Current result</p>
+            <p className="mt-3 text-3xl font-semibold text-ink-black">{total}</p>
+            <p className="mt-1 text-sm text-slate-gray">active deals across the filtered pipeline</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {phase !== "all" && <Badge variant="outline">{PHASE_LABELS[phase]}</Badge>}
+              {search && <Badge variant="default">Search active</Badge>}
+              {!filtersActive && <Badge variant="default">All active deals</Badge>}
+            </div>
+          </Card>
+        </aside>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20 text-slate-gray font-medium">
-          Carregando transações M&A...
-        </div>
-      ) : (
-        <>
-          {view === "kanban" && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {columns.map((colName) => {
-                const colDeals = filteredDeals.filter(
-                  (d) => getColumnForPhase(d.currentPhase) === colName
-                );
-                return (
-                  <div key={colName} className="bg-canvas-cream/60 p-4 rounded-lg border border-ink-black/10 min-h-[420px] flex flex-col">
-                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-dust-taupe">
-                      <h3 className="text-xs font-bold text-slate-gray uppercase tracking-wider">{colName}</h3>
-                      <Badge variant="dark">{colDeals.length}</Badge>
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      {colDeals.length > 0 ? (
-                        colDeals.map((deal) => (
-                          <Link key={deal.id} href={`/deals/${deal.id}`}>
-                            <Card variant="default" padding="sm" className="hover:border-ink-black transition-all cursor-pointer mb-3">
-                              <div className="font-semibold text-ink-black text-sm mb-1">{deal.title}</div>
-                              <p className="text-xs text-slate-gray mb-3">Code: {deal.code}</p>
-                              <div className="flex justify-between items-center pt-2 border-t border-dust-taupe/30">
-                                <span className="text-xs font-bold text-ink-black">R$ {(deal.targetValuation / 1000000).toFixed(1)}M</span>
-                                <Badge variant="default">{deal.currentPhaseStatus || "Ativo"}</Badge>
-                              </div>
-                            </Card>
-                          </Link>
-                        ))
-                      ) : (
-                        <div className="text-slate-gray/60 text-xs italic py-10 text-center">Nenhum deal nesta fase</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+      <Modal
+        isOpen={isCreateOpen}
+        onClose={() => !creating && setIsCreateOpen(false)}
+        title="Create Deal"
+        subtitle="Add a new mandate to the sourcing pipeline."
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
+            <Button variant="primary" onClick={() => void submitCreate()} disabled={creating || optionsLoading || Boolean(optionsError)}>
+              {creating ? "Creating…" : "Create Deal"}
+            </Button>
+          </>
+        }
+      >
+        {optionsLoading ? (
+          <div className="space-y-5" aria-label="Loading deal form">
+            <Skeleton />
+            <Skeleton variant="rectangular" height={44} />
+            <Skeleton />
+            <Skeleton variant="rectangular" height={44} />
+            <Skeleton variant="rectangular" height={96} />
+          </div>
+        ) : optionsError ? (
+          <Card variant="raised">
+            <div className="flex items-start gap-3">
+              <Icon name="alert" className="mt-0.5 text-signal-orange" />
+              <div>
+                <h3 className="font-semibold">Form options unavailable</h3>
+                <p className="mt-1 text-xs text-slate-gray">{optionsError}</p>
+                <Button className="mt-4" variant="secondary" size="sm" onClick={() => void openCreate()}>Retry</Button>
+              </div>
             </div>
-          )}
-
-          {view === "table" && (
-            <Table>
-              <TableHead>
-                <TableRow isHeader>
-                  <TableCell isHeader>Transação / Código</TableCell>
-                  <TableCell isHeader>Tipo & Estratégia</TableCell>
-                  <TableCell isHeader>Valuation Alvo</TableCell>
-                  <TableCell isHeader>Fase Atual</TableCell>
-                  <TableCell isHeader>Ação</TableCell>
-                </TableRow>
-              </TableHead>
-              <tbody>
-                {filteredDeals.map((deal) => (
-                  <TableRow key={deal.id}>
-                    <TableCell>
-                      <div className="font-semibold text-ink-black">{deal.title}</div>
-                      <div className="text-xs text-slate-gray">{deal.code}</div>
-                    </TableCell>
-                    <TableCell className="text-slate-gray">
-                      {deal.type} • {deal.strategy}
-                    </TableCell>
-                    <TableCell className="font-bold text-ink-black">
-                      R$ {(deal.targetValuation / 1000000).toFixed(1)}M
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="default">{deal.currentPhase}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/deals/${deal.id}`}>
-                        <Button variant="secondary" size="sm">Detalhes</Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
-          )}
-
-          {view === "timeline" && (
-            <Card variant="default" padding="lg" className="space-y-6">
-              <h3 className="text-lg font-medium text-ink-black border-b border-dust-taupe/30 pb-3">Cronograma de Transações M&A</h3>
-              {filteredDeals.map((deal) => (
-                <div key={deal.id} className="flex gap-4 items-start border-l-2 border-signal-orange pl-4 py-2">
-                  <div>
-                    <Badge variant="orange" className="mb-1">{deal.currentPhase}</Badge>
-                    <h4 className="text-base font-semibold text-ink-black">{deal.title}</h4>
-                    <p className="text-xs text-slate-gray">Valuation: R$ {(deal.targetValuation / 1000000).toFixed(1)}M — Última atualização: {deal.updatedAt || "Hoje"}</p>
-                  </div>
-                </div>
-              ))}
-            </Card>
-          )}
-        </>
-      )}
-
-      {showModal && (
-        <Modal 
-          isOpen={showModal} 
-          onClose={() => setShowModal(false)}
-          title="Nova Transação M&A"
-          subtitle="Cadastre um novo target de aquisição"
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-              <Button variant="primary" onClick={handleCreateDeal}>Criar Deal</Button>
-            </>
-          }
-        >
-          <div className="space-y-4">
-            <FormField label="Título do Deal / Target" required>
-              <Input 
-                placeholder="Ex: TechCorp Solutions"
-                value={newDeal.title}
-                onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <FormField label="Deal Title" required error={draftErrors.title} className="md:col-span-2">
+              <Input
+                autoFocus
+                value={draft.title}
+                hasError={Boolean(draftErrors.title)}
+                onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Project Horizon"
               />
             </FormField>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Tipo">
-                <Dropdown 
-                  options={[
-                    { value: "Acquisition", label: "Acquisition" },
-                    { value: "Merger", label: "Merger" },
-                    { value: "Joint Venture", label: "Joint Venture" }
-                  ]}
-                  value={newDeal.type}
-                  onChange={(val) => setNewDeal({ ...newDeal, type: val as string })}
-                />
-              </FormField>
-              <FormField label="Estratégia">
-                <Dropdown 
-                  options={[
-                    { value: "Horizontal Integration", label: "Horizontal Integration" },
-                    { value: "Vertical Integration", label: "Vertical Integration" },
-                    { value: "Diversification", label: "Diversification" }
-                  ]}
-                  value={newDeal.strategy}
-                  onChange={(val) => setNewDeal({ ...newDeal, strategy: val as string })}
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Valuation Alvo Estimado">
-              <Input 
+            <FormField label="Deal Type" required error={draftErrors.dealType}>
+              <Dropdown
+                value={draft.dealType}
+                options={[
+                  { value: "buy_side", label: "Buy-side" },
+                  { value: "sell_side", label: "Sell-side" },
+                ]}
+                onChange={(value) => setDraft((current) => ({ ...current, dealType: value as DealDraft["dealType"] }))}
+              />
+            </FormField>
+            <FormField label="Target Entity" required error={draftErrors.targetId} hint={targets.length === 0 ? "Create a target entity before creating a deal." : undefined}>
+              <Dropdown
+                searchable
+                value={draft.targetId}
+                placeholder="Select target"
+                error={draftErrors.targetId}
+                options={targets.map((target) => ({ value: target.id, label: target.legalName }))}
+                onChange={(value) => setDraft((current) => ({ ...current, targetId: value as string }))}
+                disabled={targets.length === 0}
+              />
+            </FormField>
+            <FormField label="Phase" required hint="New mandates enter the sequential workflow in Sourcing.">
+              <Dropdown
+                value={draft.phase}
+                options={[{ value: "sourcing", label: "Sourcing" }]}
+                onChange={() => undefined}
+                disabled
+              />
+            </FormField>
+            <FormField label="Currency" required>
+              <Dropdown
+                value={draft.currency}
+                options={["BRL", "USD", "EUR"].map((currency) => ({ value: currency, label: currency }))}
+                onChange={(value) => setDraft((current) => ({ ...current, currency: value as DealDraft["currency"] }))}
+              />
+            </FormField>
+            <FormField label="Lead Advisor" hint="Optional">
+              <Dropdown
+                searchable
+                value={draft.leadAdvisorId}
+                placeholder="Unassigned"
+                options={[
+                  { value: "", label: "Unassigned" },
+                  ...teamMembers.map((member) => ({ value: member.id, label: member.displayName })),
+                ]}
+                onChange={(value) => setDraft((current) => ({ ...current, leadAdvisorId: value as string }))}
+              />
+            </FormField>
+            <FormField label="Valuation Minimum" required error={draftErrors.valuationMin}>
+              <Input
                 type="number"
-                value={newDeal.targetValuation}
-                onChange={(e) => setNewDeal({ ...newDeal, targetValuation: Number(e.target.value) })}
+                min="0"
+                step="0.01"
+                value={draft.valuationMin}
+                hasError={Boolean(draftErrors.valuationMin)}
+                onChange={(event) => setDraft((current) => ({ ...current, valuationMin: event.target.value }))}
+              />
+            </FormField>
+            <FormField label="Valuation Maximum" required error={draftErrors.valuationMax}>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={draft.valuationMax}
+                hasError={Boolean(draftErrors.valuationMax)}
+                onChange={(event) => setDraft((current) => ({ ...current, valuationMax: event.target.value }))}
+              />
+            </FormField>
+            <FormField label="Internal Note" hint="Optional; visible only to the deal team." className="md:col-span-2">
+              <Textarea
+                value={draft.internalNote}
+                onChange={(event) => setDraft((current) => ({ ...current, internalNote: event.target.value }))}
+                placeholder="Add sourcing context or initial constraints."
               />
             </FormField>
           </div>
-        </Modal>
+        )}
+      </Modal>
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60]">
+          <Toast
+            title={toast.title}
+            message={toast.message}
+            variant={toast.variant}
+            onClose={() => setToast(null)}
+          />
+        </div>
       )}
     </div>
   );

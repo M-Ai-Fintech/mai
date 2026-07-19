@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Button } from "../Button/Button";
+import { Icon } from "../Icon/Icon";
 
 export interface ModalProps {
   isOpen: boolean;
@@ -67,9 +68,9 @@ export const Modal: React.FC<ModalProps> = ({
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="text-slate-gray hover:text-ink-black text-xl leading-none cursor-pointer p-1 rounded hover:bg-dust-taupe/20 transition-colors"
+            className="grid h-11 w-11 place-items-center rounded-full text-slate-gray hover:bg-dust-taupe/20 hover:text-ink-black transition-colors"
           >
-            ✕
+            <Icon name="close" size="md" />
           </button>
         </div>
 

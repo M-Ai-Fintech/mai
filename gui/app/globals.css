@@ -39,17 +39,21 @@
   --color-slate-100: #141413; /* Ink Black */
   
   /* Fonts */
-  --font-sans: 'Sofia Sans', var(--font-geist-sans), Arial, sans-serif;
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plus-jakarta-sans), Arial, sans-serif;
+  --font-label: var(--font-public-sans), Arial, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  font-weight: 450; /* Mastercard signature weight */
+  font-weight: 400;
   margin: 0;
   padding: 0;
+}
+
+.font-label {
+  font-family: var(--font-label);
 }
 
 /* Mastercard helper utilities for orbital trajectories and ghost headlines */
@@ -67,4 +71,3 @@ body {
   position: absolute;
   pointer-events: none;
 }
-

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "validate:stitch-prompt": "node scripts/validate-stitch-master-prompt.mjs",
     "test-storybook": "test-storybook --coverage --maxWorkers=1 --testTimeout=60000",
     "test-storybook:update": "test-storybook --updateSnapshot --maxWorkers=1 --testTimeout=60000"
   },

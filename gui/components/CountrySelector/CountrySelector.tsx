@@ -37,7 +37,10 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
 
   useEffect(() => {
     const found = COUNTRIES.find((c) => c.code === selectedCountry);
-    if (found) setCurrent(found);
+    const timer = window.setTimeout(() => {
+      if (found) setCurrent(found);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [selectedCountry]);
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full border text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-signal-orange ${
+        className={`inline-flex min-h-11 items-center gap-2.5 px-4 py-2 rounded-full border text-xs font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-signal-orange ${
           isDark
             ? "bg-ink-black text-canvas-cream border-dust-taupe/30 hover:border-canvas-cream/60"
             : "bg-white text-ink-black border-dust-taupe/60 hover:border-ink-black shadow-sm"
@@ -106,7 +109,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
               <button
                 key={option.code}
                 onClick={() => handleSelect(option)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                className={`flex min-h-11 w-full items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                   isSelected
                     ? "bg-signal-orange text-white font-bold"
                     : isDark

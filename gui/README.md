@@ -1,65 +1,95 @@
-# M&A Low-Touch Middleware Web GUI (Milestone MVP_6)
+# M&Ai Web GUI — MVP_6
 
-Este diretório contém o Web Dashboard do M&Ai construído com **Next.js 16 (App Router)**, **React 19** e **Tailwind CSS v4**, adotando a estética do **Mastercard Editorial Design System** combinada ao rigor de densidade financeira do benchmark **[Dealroom.net](https://dealroom.net/)**.
+Interface oficial do M&Ai em Next.js 16, React 19 e Tailwind CSS v4. O produto
+usa o sistema Mastercard Editorial do projeto Stitch `1310231555884111730` e
+reutiliza a biblioteca local de componentes, sem criar uma linguagem visual por
+rota.
 
-Ele é a interface web oficial da aplicação, substituindo a CLI para interação visual com os agentes ADK, VDR e motores analíticos.
+## Rotas implementadas
 
----
+| Rota | Função |
+| --- | --- |
+| `/` | Pipeline em Board, com filtros, criação e estados de loading/empty/error |
+| `/deals` | Tabela paginada do mesmo pipeline |
+| `/deals/[id]` | Detalhe, edição, archive e transição de fase do deal |
+| `/entities` | CRUD reutilizável por role: buyer, seller, target e institution |
+| `/entities/[id]` | Detalhe, edição versionada e archive da entidade |
+| `/clients` | Redirect de compatibilidade para `/entities` |
+| `/deals/[id]/chat` | Workspace agêntico com histórico, SSE, reconexão, citações e engines |
+| `/dashboard/custom` | Layout de widgets com add, reorder, resize, remove, reset e save |
 
-## 🎨 Documentação de Design & Prototipagem Stitch-First
+As rotas legadas `/deals/[id]/engines`, `/generative-ui` e `/settings` ainda
+existem no App Router, mas não fazem parte das quatro famílias verificadas no
+gate visual do MVP_6.
 
-- **Design System ("O QUÊ")**: [`DESIGN.md`](file:///home/luis/mai/gui/DESIGN.md) — Especificação técnica dos tokens visuais, paleta de cores (Canvas Cream, Ink Black, Signal Orange), tipografia (Sofia Sans) e escala de radii.
-- **Design Guidelines ("COMO E QUANDO")**: [`DESIGN_GUIDELINES.md`](file:///home/luis/mai/gui/DESIGN_GUIDELINES.md) — Diretrizes prescritivas de layout, acessibilidade (WCAG 2.1 AA), alinhamento à esquerda por padrão, regras de radii de 8px para containers/tabelas e matriz de Do's & Don'ts.
-- **Design Tokens**: `tokens/design-tokens.css` — Variáveis CSS customizadas integradas ao Tailwind CSS v4.
-- **Fluxo Inegociável Stitch-First**: Todo componente e tela foi previamente prototipado e aprovado no **Stitch MCP** (Projeto `1310231555884111730` / Asset `assets/6617072512575356605`) antes da codificação em React.
+## Design e Stitch
 
----
+Fontes de verdade do protótipo:
 
-## 📚 Componentes & Documentação Isolada (Storybook 10 + MDX)
+- [Contrato de componentes](docs/stitch-component-version-contract.md)
+- [Prompt mestre único](docs/stitch-master-prototype-prompt.md)
+- [Mapa de rotas, estados e contratos](docs/prototype-state-map.md)
+- [Matriz de capacidade do backend](docs/backend-capability-matrix.md)
 
-Cada componente reside em `components/{ComponentName}/` contendo a implementação TypeScript (`.tsx`), histórias do Storybook (`.stories.tsx`) e documentação padronizada (`.mdx` baseada no template em [`components/_template/ComponentTemplate.mdx`](file:///home/luis/mai/gui/components/_template/ComponentTemplate.mdx)).
+O prompt referencia exatamente 23 showcases aprovados e quatro famílias de
+tela. A geração Stitch permanece parcial: oito telas representativas foram
+geradas, com alturas entre 2048 e 2144px, em vez de todas as variações exatas de
+2560×1440. A GUI local não depende dessas telas parciais em runtime.
 
-### Como Executar o Storybook:
-```bash
-cd gui
-npm run storybook
+## Integração com a API
+
+`lib/api-client.ts` contém os contratos tipados e valida as respostas com Zod.
+O rewrite `beforeFiles` de `next.config.ts` encaminha `/api/*` para:
+
+```env
+MAI_API_BASE_URL=http://127.0.0.1:8000
 ```
-Acesse [http://localhost:6006](http://localhost:6006) para interagir com a biblioteca de componentes.
 
----
+O valor acima é o padrão e pode ser omitido no desenvolvimento local. Não use
+`NEXT_PUBLIC_CORE_API_URL`: o proxy é resolvido no servidor Next.js.
 
-## 🖥️ Estrutura Completa de Rotas (Next.js App Router)
+O adaptador MVP_6 da API é mock-backed e mantém dados em memória. Reiniciar o
+processo Deno restaura os dados iniciais. Autenticação e autorização não fazem
+parte deste milestone. Sem `GEMINI_API_KEY`, a camada agêntica opera em modo
+DRY-RUN/FALLBACK.
 
-- `/`: **Dashboard Principal Multi-View** (Kanban/Board, Tabela, Timeline), filtros por fase e busca, e ancoragem de widgets generativos.
-- `/clients`: **Telas CRUD de Entidades** (Listagem e cadastro de clientes Buyers/Sellers).
-- `/deals/[id]`: **Visão 360° da Transação** e status de Due Diligence / Sourcing.
-- `/deals/[id]/chat`: **Workspace Agêntico RAG** (streaming SSE com o BrokerOrchestratorAgent).
-- `/deals/[id]/engines`: **Painel de Motores Analíticos** (Predição de Risco ONNX, Otimização MILP e Algoritmo Genético de Term Sheets).
-- `/generative-ui`: **Generative UI Studio** (Síntese de interfaces dinâmicas em tempo de execução via JSON DSL / Component Schema gerados por agentes).
-- `/settings`: Configurações globais e preferências do usuário.
+## Executar
 
----
+Em um terminal, na raiz do repositório:
 
-## ⚡ Inicialização do Servidor de Desenvolvimento
+```bash
+deno task api:start
+```
+
+Em outro terminal:
 
 ```bash
 cd gui
 npm install
 npm run dev
 ```
-Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
 
-## 📦 Build de Produção
+Acesse `http://localhost:3000`.
+
+## Verificação
 
 ```bash
 cd gui
+npx tsc --noEmit
+npx vitest run --config vitest.unit.config.ts
+npm run validate:stitch-prompt
 npm run build
-npm run start
 ```
 
-## 🔐 Variáveis de Ambiente (`.env.local`)
+Testes de contrato da API:
 
-```env
-NEXT_PUBLIC_CORE_API_URL=http://localhost:8000
+```bash
+deno test --allow-env --allow-read --allow-write --allow-net \
+  tests/api/contracts.spec.ts \
+  tests/api/mvp_store.spec.ts \
+  tests/api/mvp_routes.spec.ts
 ```
 
+O Storybook continua disponível com `npm run storybook`. O lint completo também
+varre rotas e artefatos legados; para o gate MVP_6, use o escopo dos arquivos
+alterados até que a dívida técnica legada seja tratada separadamente.

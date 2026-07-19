@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import { Sofia_Sans, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Public_Sans } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Navigation/Sidebar";
-import { TopBar } from "@/components/Navigation/TopBar";
+import { AppShell } from "@/components/Navigation/AppShell";
 
-const sofiaSans = Sofia_Sans({
-  variable: "--font-sofia-sans",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
 });
 
@@ -28,17 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${sofiaSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${plusJakartaSans.variable} ${publicSans.variable} bg-background font-sans text-foreground antialiased`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 ml-64 flex flex-col min-h-screen">
-            <TopBar />
-            <main className="flex-1 overflow-y-auto bg-canvas-cream pb-12">
-              {children}
-            </main>
-          </div>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

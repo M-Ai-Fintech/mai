@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "@storybook/test";
 import React, { useState } from "react";
 import { TopBar } from "./TopBar";
@@ -55,7 +55,6 @@ export const CompleteNavigationSuite: Story = {
     }
 
     // Sidebar interactions
-    const body = canvasElement.ownerDocument.body;
     // Open Mobile Menu to trigger toggle
     const mobileMenuBtn = canvasElement.querySelector('button[aria-label="Open mobile menu"]') as HTMLButtonElement;
     if (mobileMenuBtn) {

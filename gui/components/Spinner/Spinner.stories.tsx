@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Spinner } from "./Spinner";
 
 const meta: Meta<typeof Spinner> = {
@@ -38,7 +38,6 @@ export const CreamLarge: Story = {
     size: "lg",
     variant: "cream",
     className: "custom-spinner",
-    "data-testid": "spinner-test",
   },
 };
 

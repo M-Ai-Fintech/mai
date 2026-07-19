@@ -23,7 +23,7 @@ export const Tabs: React.FC<TabsProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`inline-flex items-center p-1 bg-canvas-cream border border-dust-taupe/60 rounded-full select-none ${className}`}>
+    <div data-variant={variant} className={`inline-flex items-center p-1 bg-canvas-cream border border-dust-taupe/60 rounded-full select-none ${className}`}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -31,7 +31,7 @@ export const Tabs: React.FC<TabsProps> = ({
             key={tab.id}
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all duration-150 cursor-pointer rounded-full min-h-[36px] ${
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all duration-150 cursor-pointer rounded-full min-h-[44px] ${
               isActive
                 ? "bg-ink-black text-canvas-cream shadow-sm"
                 : "text-slate-gray hover:text-ink-black hover:bg-white/50"

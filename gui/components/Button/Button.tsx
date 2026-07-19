@@ -26,7 +26,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Size variations
     const sizeStyles = {
-      sm: "text-xs px-3 py-1.5 min-h-[36px]",
+      sm: "text-xs px-3 py-1.5 min-h-[44px]",
       md: "text-sm px-5 py-2 min-h-[44px]", // >=44px touch target (WCAG)
       lg: "text-base px-6 py-3 min-h-[48px]",
     };
