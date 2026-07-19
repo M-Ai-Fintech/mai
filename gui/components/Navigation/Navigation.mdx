@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as NavigationStories from "./Navigation.stories";
 import { Sidebar } from "./Sidebar";
 
-<Meta title="Components/Composites/Navigation" />
+<Meta of={NavigationStories} />
 
 # Navigation Suite (TopBar & Sidebar)
 
@@ -9,6 +10,8 @@ import { Sidebar } from "./Sidebar";
 
 ## Overview
 The **Navigation Suite** combines the contextual `TopBar` (breadcrumbs, POV selector) and the retractable `Sidebar` with layered submenus.
+
+<Primary />
 
 ## Props API
 

@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as TextareaStories from "./Textarea.stories";
 import { Textarea } from "./Textarea";
 
-<Meta title="Components/Forms/Textarea" />
+<Meta of={TextareaStories} />
 
 # Textarea
 
@@ -9,6 +10,8 @@ import { Textarea } from "./Textarea";
 
 ## Overview
 The **Textarea** component is a multi-line input box used for negotiation terms and agent summaries.
+
+<Primary />
 
 ## Props API
 

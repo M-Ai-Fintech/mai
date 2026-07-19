@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as AvatarStories from "./Avatar.stories";
 import { Avatar } from "./Avatar";
 
-<Meta title="Components/Atomic/Avatar" />
+<Meta of={AvatarStories} />
 
 # Avatar
 
@@ -12,6 +13,8 @@ import { Avatar } from "./Avatar";
 The **Avatar** component is a circular profile picture (`50% radius`) used in transaction cards, banker avatars, M&A counterparts, and co-worker lists. It uses free images from Unsplash or uppercase initials as a fallback.
 
 ---
+
+<Primary />
 
 ## Props API
 

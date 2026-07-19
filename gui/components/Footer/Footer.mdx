@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as FooterStories from "./Footer.stories";
 import { Footer } from "./Footer";
 
-<Meta title="Components/Composites/Footer" />
+<Meta of={FooterStories} />
 
 # Footer
 
@@ -11,6 +12,8 @@ import { Footer } from "./Footer";
 O componente **Footer** implementa o rodapé institucional em tom Ink Black (#141413) com 4 colunas organizadas por tópicos, links fiduciários e seletor regional integrado (**CountrySelector** com suporte a Brasil 🇧🇷, Espanha 🇪🇸 e EUA 🇺🇸).
 
 ---
+
+<Primary />
 
 ## Props API
 

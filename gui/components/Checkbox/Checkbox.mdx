@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as CheckboxStories from "./Checkbox.stories";
 import { Checkbox } from "./Checkbox";
 
-<Meta title="Components/Forms/Checkbox" />
+<Meta of={CheckboxStories} />
 
 # Checkbox
 
@@ -9,6 +10,8 @@ import { Checkbox } from "./Checkbox";
 
 ## Overview
 The **Checkbox** component offers multiple selection capabilities with a Signal Orange highlight when checked.
+
+<Primary />
 
 ## Props API
 

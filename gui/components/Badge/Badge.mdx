@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as BadgeStories from "./Badge.stories";
 import { Badge } from "./Badge";
 
-<Meta title="Components/Atomic/Badge" />
+<Meta of={BadgeStories} />
 
 # Badge
 
@@ -12,6 +13,8 @@ import { Badge } from "./Badge";
 The **Badge** component is a pill-shaped tag used to denote categories, M&A transaction states, and compliance alerts.
 
 ---
+
+<Primary />
 
 ## Props API
 

@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as EmptyStateStories from "./EmptyState.stories";
 import { EmptyState } from "./EmptyState";
 
-<Meta title="Components/Feedback/EmptyState" />
+<Meta of={EmptyStateStories} />
 
 # EmptyState
 
@@ -9,6 +10,8 @@ import { EmptyState } from "./EmptyState";
 
 ## Overview
 The **EmptyState** component renders a clean placeholder to indicate the absence of results or data.
+
+<Primary />
 
 ## Props API
 

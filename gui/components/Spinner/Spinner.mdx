@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as SpinnerStories from "./Spinner.stories";
 import { Spinner } from "./Spinner";
 
-<Meta title="Components/Atomic/Spinner" />
+<Meta of={SpinnerStories} />
 
 # Spinner
 
@@ -12,6 +13,8 @@ import { Spinner } from "./Spinner";
 The **Spinner** component is the atomic element for indicating asynchronous progress and the 'thinking' state of ADK agents.
 
 ---
+
+<Primary />
 
 ## Props API
 

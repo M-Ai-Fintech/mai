@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as AccordionStories from "./Accordion.stories";
 import { Accordion } from "./Accordion";
 
-<Meta title="Components/Composites/Accordion" />
+<Meta of={AccordionStories} />
 
 # Accordion
 
@@ -11,6 +12,8 @@ import { Accordion } from "./Accordion";
 O componente **Accordion** expande e colapsa dados complexos com animação fluida, indicando seções ativas através do acento Signal Orange (#CF4500).
 
 ---
+
+<Primary />
 
 ## Props API
 

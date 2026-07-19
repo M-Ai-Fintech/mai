@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as SkeletonStories from "./Skeleton.stories";
 import { Skeleton } from "./Skeleton";
 
-<Meta title="Components/Feedback/Skeleton" />
+<Meta of={SkeletonStories} />
 
 # Skeleton
 
@@ -9,6 +10,8 @@ import { Skeleton } from "./Skeleton";
 
 ## Overview
 The **Skeleton** component renders animated pulse placeholders (`animate-pulse`) to prevent Cumulative Layout Shift (CLS) while data is being fetched from the backend.
+
+<Primary />
 
 ## Props API
 

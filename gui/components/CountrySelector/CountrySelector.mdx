@@ -1,16 +1,19 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as CountrySelectorStories from "./CountrySelector.stories";
 import { CountrySelector } from "./CountrySelector";
 
-<Meta title="Components/Forms/CountrySelector" />
+<Meta of={CountrySelectorStories} />
 
 # CountrySelector
 
 > **Design System Reference**: Mastercard Editorial System ([DESIGN.md](file:///home/luis/mai/gui/DESIGN.md))
 
 ## Overview
-O componente **CountrySelector** permite alternar entre os países e moedas de operação suportados pela plataforma: **Brasil 🇧🇷 (BRL R$)**, **Espanha 🇪🇸 (EUR €)** e **Estados Unidos 🇺🇸 (USD $)**.
+The **CountrySelector** component allows toggling between the countries and currencies supported by the platform: **Brazil 🇧🇷 (BRL R$)**, **Spain 🇪🇸 (EUR €)** and **United States 🇺🇸 (USD $)**.
 
 ---
+
+<Primary />
 
 ## Props API
 

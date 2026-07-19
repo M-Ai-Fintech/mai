@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as InputStories from "./Input.stories";
 import { Input } from "./Input";
 
-<Meta title="Components/Forms/Input" />
+<Meta of={InputStories} />
 
 # Input
 
@@ -9,6 +10,8 @@ import { Input } from "./Input";
 
 ## Overview
 The **Input** component is a text entry field that supports an 8px radius rectangular variant for standard forms and a pill variant (`999px radius`) on a cream background for search bars.
+
+<Primary />
 
 ## Props API
 

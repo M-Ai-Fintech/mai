@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as DividerStories from "./Divider.stories";
 import { Divider } from "./Divider";
 
-<Meta title="Components/Atomic/Divider" />
+<Meta of={DividerStories} />
 
 # Divider
 
@@ -12,6 +13,8 @@ import { Divider } from "./Divider";
 The **Divider** component is a subtle horizontal separating line used in containers and tables to structure content visually.
 
 ---
+
+<Primary />
 
 ## Props API
 

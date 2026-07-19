@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as ToastStories from "./Toast.stories";
 import { Toast } from "./Toast";
 
-<Meta title="Components/Feedback/Toast" />
+<Meta of={ToastStories} />
 
 # Toast
 
@@ -9,6 +10,8 @@ import { Toast } from "./Toast";
 
 ## Overview
 The **Toast** component provides floating notifications for asynchronous feedback from APIs and the 7 ADK agents.
+
+<Primary />
 
 ## Props API
 

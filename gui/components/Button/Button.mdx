@@ -1,7 +1,8 @@
-import { Meta, Story, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import { Meta, Primary, Controls, Story, Canvas } from "@storybook/addon-docs/blocks";
+import * as ButtonStories from "./Button.stories";
 import { Button } from "./Button";
 
-<Meta title="Components/Atomic/Button" />
+<Meta of={ButtonStories} />
 
 # Button
 
@@ -12,6 +13,8 @@ import { Button } from "./Button";
 The **Button** component is the primary atomic element for interactions and CTAs in the M&Ai system. It supports the Ink Black pill aesthetic (`20px radius`) for primary actions, the Signal Orange consent variation (`#CF4500` with mandatory pure white text/icon), and the circular Satellite Micro-CTA.
 
 ---
+
+<Primary />
 
 ## Props API
 
