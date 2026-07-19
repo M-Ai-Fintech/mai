@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, fn, userEvent, within } from "@storybook/test";
 import { Button } from "./Button";
 
 const meta: Meta<typeof Button> = {
@@ -14,6 +15,9 @@ const meta: Meta<typeof Button> = {
       options: ["sm", "md", "lg"],
     },
   },
+  args: {
+    onClick: fn(),
+  },
 };
 
 export default meta;
@@ -23,6 +27,13 @@ export const PrimaryInkPill: Story = {
   args: {
     variant: "primary",
     children: "Explore Deal",
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: /Explore Deal/i });
+    await expect(button).toBeInTheDocument();
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalled();
   },
 };
 

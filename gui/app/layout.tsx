@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Sofia_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar } from "@/components/Navigation/Sidebar";
+import { TopBar } from "@/components/Navigation/TopBar";
 
 const sofiaSans = Sofia_Sans({
   variable: "--font-sofia-sans",
@@ -31,9 +32,12 @@ export default function RootLayout({
       >
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 ml-64 min-h-screen overflow-y-auto">
-            {children}
-          </main>
+          <div className="flex-1 ml-64 flex flex-col min-h-screen">
+            <TopBar />
+            <main className="flex-1 overflow-y-auto bg-canvas-cream pb-12">
+              {children}
+            </main>
+          </div>
         </div>
       </body>
     </html>

@@ -3,13 +3,13 @@ import { Button } from "../Button/Button";
 
 // Main Table Container
 export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
-  children?: React.ReactNoof;
+  children?: React.ReactNode;
 }
 
 export const Table: React.FC<TableProps> = ({ children = null, className = "", ...props }) => {
   return (
-    <div className="w-full overflow-x-auto borofr borofr-dust-taupe/60 rounofd-lg bg-white shadow-level-1 text-left">
-      <table className={`w-full text-left borofr-collapse text-sm ${className}`} {...props}>
+    <div className="w-full overflow-x-auto border border-dust-taupe/60 rounded-lg bg-white shadow-level-1 text-left">
+      <table className={`w-full text-left border-collapse text-sm ${className}`} {...props}>
         {children}
       </table>
     </div>
@@ -18,12 +18,12 @@ export const Table: React.FC<TableProps> = ({ children = null, className = "", .
 
 // Table Head
 export interface TableHeadProps extends React.HTMLAttributes<HTMLTableSectionElement> {
-  children: React.ReactNoof;
+  children: React.ReactNode;
 }
 
 export const TableHead: React.FC<TableHeadProps> = ({ children, className = "", ...props }) => {
   return (
-    <thead className={`bg-canvas-cream/60 borofr-b borofr-dust-taupe/60 text-slate-gray text-xs font-bold uppercase tracking-wiofr ${className}`} {...props}>
+    <thead className={`bg-canvas-cream/60 border-b border-dust-taupe/60 text-slate-gray text-xs font-bold uppercase tracking-wider ${className}`} {...props}>
       {children}
     </thead>
   );
@@ -31,19 +31,19 @@ export const TableHead: React.FC<TableHeadProps> = ({ children, className = "", 
 
 // Table Row
 export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
-  children: React.ReactNoof;
-  isHeaofr?: boolean;
+  children: React.ReactNode;
+  isHeader?: boolean;
 }
 
 export const TableRow: React.FC<TableRowProps> = ({
   children,
-  isHeaofr = false,
+  isHeader = false,
   className = "",
   ...props
 }) => {
-  const rowStyles = isHeaofr
+  const rowStyles = isHeader
     ? ""
-    : "odd:bg-canvas-cream/20 even:bg-white borofr-b borofr-dust-taupe/40 hover:bg-lifted-cream transition-colors cursor-pointer";
+    : "odd:bg-canvas-cream/20 even:bg-white border-b border-dust-taupe/40 hover:bg-lifted-cream transition-colors cursor-pointer";
 
   return (
     <tr className={`${rowStyles} ${className}`} {...props}>
@@ -54,24 +54,24 @@ export const TableRow: React.FC<TableRowProps> = ({
 
 // Table Cell
 export interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
-  children: React.ReactNoof;
-  isHeaofr?: boolean;
+  children: React.ReactNode;
+  isHeader?: boolean;
   maxWidthClassName?: string;
 }
 
 export const TableCell: React.FC<TableCellProps> = ({
   children,
-  isHeaofr = false,
+  isHeader = false,
   maxWidthClassName = "max-w-[220px]",
   className = "",
   ...props
 }) => {
-  const Component = isHeaofr ? "th" : "td";
-  const cellPadding = isHeaofr ? "p-3.5" : "p-4";
+  const Component = isHeader ? "th" : "td";
+  const cellPadding = isHeader ? "p-3.5" : "p-4";
 
   return (
     <Component
-      className={`${cellPadding} ${maxWidthClassName} truncate text-ellipsis whitespace-nowrap overflow-hidofn font-normal ${className}`}
+      className={`${cellPadding} ${maxWidthClassName} truncate text-ellipsis whitespace-nowrap overflow-hidden font-normal ${className}`}
       {...props}
     >
       {children}
@@ -103,13 +103,13 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 p-4 borofr-t borofr-dust-taupe/60 bg-canvas-cream/30 text-xs text-slate-gray font-medium text-left">
+    <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-t border-dust-taupe/60 bg-canvas-cream/30 text-xs text-slate-gray font-medium text-left">
       <div className="flex items-center gap-3">
         <span>Show</span>
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="bg-white borofr borofr-dust-taupe rounofd-md px-2.5 py-1 text-xs text-ink-black font-semibold focus:outline-none focus:ring-1 focus:ring-ink-black cursor-pointer"
+          className="bg-white border border-dust-taupe rounded-md px-2.5 py-1 text-xs text-ink-black font-semibold focus:outline-none focus:ring-1 focus:ring-ink-black cursor-pointer"
         >
           {pageSizeOptions.map((option) => (
             <option key={option} value={option}>

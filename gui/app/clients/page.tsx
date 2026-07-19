@@ -4,6 +4,11 @@ import { useState } from "react";
 import { Card } from "@/components/Card/Card";
 import { Button } from "@/components/Button/Button";
 import { Badge } from "@/components/Badge/Badge";
+import { Table, TableHead, TableRow, TableCell } from "@/components/Table/Table";
+import { Modal } from "@/components/Modal/Modal";
+import { Input } from "@/components/Input/Input";
+import { Dropdown } from "@/components/Dropdown/Dropdown";
+import { FormField } from "@/components/FormField/FormField";
 
 interface ClientEntity {
   id: string;
@@ -56,8 +61,7 @@ export default function ClientsPage() {
     status: "Active",
   });
 
-  const handleAddClient = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddClient = () => {
     if (!newClient.name.trim()) return;
 
     const created: ClientEntity = {
@@ -111,12 +115,10 @@ export default function ClientsPage() {
       {/* Control Bar */}
       <div className="flex items-center justify-between gap-4 mb-6 bg-white p-4 rounded-lg border border-ink-black/10 shadow-level-1">
         <div className="relative min-w-[320px]">
-          <input
-            type="text"
+          <Input
             placeholder="Buscar por cliente, setor ou e-mail..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-canvas-cream border border-dust-taupe rounded-full px-4 py-2 text-sm text-ink-black focus:outline-none focus:ring-2 focus:ring-ink-black"
           />
         </div>
         <div className="text-xs font-bold text-slate-gray uppercase">
@@ -124,128 +126,103 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* High Contrast White Table (8px radius) */}
-      <Card variant="default" padding="none">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-dust-taupe bg-canvas-cream/50 text-slate-gray text-xs font-bold uppercase tracking-wider">
-              <th className="p-4">Razão Social / Nome</th>
-              <th className="p-4">Perfil</th>
-              <th className="p-4">Setor de Atuação</th>
-              <th className="p-4">Contatos</th>
-              <th className="p-4">Deals Ativos</th>
-              <th className="p-4">Status KYB</th>
-              <th className="p-4">Ação</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-dust-taupe/40 text-sm">
-            {filteredClients.map((client) => (
-              <tr key={client.id} className="hover:bg-lifted-cream transition-colors">
-                <td className="p-4 font-semibold text-ink-black">{client.name}</td>
-                <td className="p-4">
-                  <Badge variant={client.type === "Buyer" ? "dark" : "outline"}>
-                    {client.type}
-                  </Badge>
-                </td>
-                <td className="p-4 text-slate-gray">{client.sector}</td>
-                <td className="p-4 text-xs text-slate-gray">{client.contactEmail}</td>
-                <td className="p-4 font-bold text-ink-black">{client.activeDealsCount} deals</td>
-                <td className="p-4">
-                  <Badge variant={client.status === "Active" ? "default" : "orange"}>
-                    {client.status}
-                  </Badge>
-                </td>
-                <td className="p-4">
-                  <Button variant="secondary" size="sm">
-                    Editar
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      {/* High Contrast White Table */}
+      <Table>
+        <TableHead>
+          <TableRow isHeader>
+            <TableCell isHeader>Razão Social / Nome</TableCell>
+            <TableCell isHeader>Perfil</TableCell>
+            <TableCell isHeader>Setor de Atuação</TableCell>
+            <TableCell isHeader>Contatos</TableCell>
+            <TableCell isHeader>Deals Ativos</TableCell>
+            <TableCell isHeader>Status KYB</TableCell>
+            <TableCell isHeader>Ação</TableCell>
+          </TableRow>
+        </TableHead>
+        <tbody>
+          {filteredClients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell className="font-semibold text-ink-black">{client.name}</TableCell>
+              <TableCell>
+                <Badge variant={client.type === "Buyer" ? "dark" : "outline"}>
+                  {client.type}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-slate-gray">{client.sector}</TableCell>
+              <TableCell className="text-xs text-slate-gray">{client.contactEmail}</TableCell>
+              <TableCell className="font-bold text-ink-black">{client.activeDealsCount} deals</TableCell>
+              <TableCell>
+                <Badge variant={client.status === "Active" ? "default" : "orange"}>
+                  {client.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Button variant="secondary" size="sm">
+                  Editar
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </tbody>
+      </Table>
 
       {/* Creation Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-ink-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <Card variant="default" padding="lg" className="w-full max-w-md shadow-level-3">
-            <h3 className="text-xl font-medium text-ink-black mb-5">
-              Cadastrar Novo Cliente
-            </h3>
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title="Cadastrar Novo Cliente"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleAddClient}>
+                Salvar Cliente
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <FormField label="Nome / Razão Social" required>
+              <Input
+                placeholder="Ex: Nexus Capital Group"
+                value={newClient.name}
+                onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+              />
+            </FormField>
 
-            <form onSubmit={handleAddClient} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1">
-                  Nome / Razão Social
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Nexus Capital Group"
-                  value={newClient.name}
-                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  className="w-full bg-canvas-cream border border-dust-taupe rounded-lg px-4 py-2.5 text-ink-black focus:outline-none focus:ring-2 focus:ring-ink-black text-sm"
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Tipo de Perfil">
+                <Dropdown
+                  options={[
+                    { value: "Buyer", label: "Comprador (Buyer)" },
+                    { value: "Seller", label: "Vendedor (Seller)" }
+                  ]}
+                  value={newClient.type}
+                  onChange={(val) => setNewClient({ ...newClient, type: val as "Buyer" | "Seller" })}
                 />
-              </div>
+              </FormField>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1">
-                    Tipo de Perfil
-                  </label>
-                  <select
-                    value={newClient.type}
-                    onChange={(e) =>
-                      setNewClient({ ...newClient, type: e.target.value as "Buyer" | "Seller" })
-                    }
-                    className="w-full bg-canvas-cream border border-dust-taupe rounded-lg px-4 py-2.5 text-ink-black text-sm"
-                  >
-                    <option value="Buyer">Comprador (Buyer)</option>
-                    <option value="Seller">Vendedor (Seller)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1">
-                    Setor
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Fintech"
-                    value={newClient.sector}
-                    onChange={(e) => setNewClient({ ...newClient, sector: e.target.value })}
-                    className="w-full bg-canvas-cream border border-dust-taupe rounded-lg px-4 py-2.5 text-ink-black focus:outline-none focus:ring-2 focus:ring-ink-black text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1">
-                  E-mail de Contato
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="contato@empresa.com"
-                  value={newClient.contactEmail}
-                  onChange={(e) => setNewClient({ ...newClient, contactEmail: e.target.value })}
-                  className="w-full bg-canvas-cream border border-dust-taupe rounded-lg px-4 py-2.5 text-ink-black focus:outline-none focus:ring-2 focus:ring-ink-black text-sm"
+              <FormField label="Setor" required>
+                <Input
+                  placeholder="Ex: Fintech"
+                  value={newClient.sector}
+                  onChange={(e) => setNewClient({ ...newClient, sector: e.target.value })}
                 />
-              </div>
+              </FormField>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-dust-taupe">
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" variant="primary">
-                  Salvar Cliente
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
+            <FormField label="E-mail de Contato" required>
+              <Input
+                type="email"
+                placeholder="contato@empresa.com"
+                value={newClient.contactEmail}
+                onChange={(e) => setNewClient({ ...newClient, contactEmail: e.target.value })}
+              />
+            </FormField>
+          </div>
+        </Modal>
       )}
     </div>
   );

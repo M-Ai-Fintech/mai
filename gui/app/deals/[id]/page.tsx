@@ -3,6 +3,12 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { ApiClient } from "@/lib/api-client";
+import { Button } from "@/components/Button/Button";
+import { Badge } from "@/components/Badge/Badge";
+import { Card } from "@/components/Card/Card";
+import { Modal } from "@/components/Modal/Modal";
+import { Dropdown } from "@/components/Dropdown/Dropdown";
+import { FormField } from "@/components/FormField/FormField";
 
 export default function DealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -67,8 +73,7 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
     loadDealData();
   }, [id]);
 
-  const handleMovePhase = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMovePhase = async () => {
     setMovingPhase(true);
     try {
       // Modify phase of the deal
@@ -117,8 +122,8 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[80vh] text-teal-accent">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-accent mr-3"></div>
+      <div className="flex justify-center items-center h-[80vh] text-signal-orange">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-signal-orange mr-3"></div>
         Carregando detalhes do deal...
       </div>
     );
@@ -126,9 +131,9 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
 
   if (!deal) {
     return (
-      <div className="p-8 text-center text-rose-400">
+      <div className="p-8 text-center text-red-500">
         <p>Transação não encontrada.</p>
-        <Link href="/" className="mt-4 inline-block text-teal-accent hover:underline">
+        <Link href="/" className="mt-4 inline-block text-ink-black hover:underline font-bold">
           Voltar ao Dashboard
         </Link>
       </div>
@@ -137,16 +142,16 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
 
   // Predefined phases list for selection
   const allPhases = [
-    "Sourcing & KYB",
-    "NDA & Initial DD",
-    "Valuation & LOI",
-    "Deep Due Diligence",
-    "Negotiation",
-    "Closing"
+    { value: "Sourcing & KYB", label: "Sourcing & KYB" },
+    { value: "NDA & Initial DD", label: "NDA & Initial DD" },
+    { value: "Valuation & LOI", label: "Valuation & LOI" },
+    { value: "Deep Due Diligence", label: "Deep Due Diligence" },
+    { value: "Negotiation", label: "Negotiation" },
+    { value: "Closing", label: "Closing" }
   ];
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto text-left">
       <header className="mb-8 flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -154,30 +159,24 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
             <h1 className="text-4xl font-medium text-ink-black tracking-tight">
               {deal.title}
             </h1>
-            <span className="px-3 py-1 bg-ink-black text-canvas-cream text-xs rounded-full font-bold">
+            <Badge variant="dark">
               {deal.status || "Ativo"}
-            </span>
+            </Badge>
           </div>
           <p className="text-slate-gray text-sm">Code: {deal.code} | Data Room & Pipeline Overview</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleSyncVdr}
-            className="px-5 py-2.5 bg-white border border-dark-border text-ink-black rounded-full text-sm font-semibold hover:bg-canvas-cream transition-all duration-200 cursor-pointer"
-          >
+          <Button variant="secondary" onClick={handleSyncVdr}>
             Sincronizar VDR
-          </button>
-          <button
-            onClick={() => setShowPhaseModal(true)}
-            className="px-5 py-2.5 bg-ink-black hover:bg-slate-800 text-canvas-cream font-bold rounded-full text-sm shadow-md transition-all duration-200 cursor-pointer"
-          >
+          </Button>
+          <Button variant="primary" onClick={() => setShowPhaseModal(true)}>
             Mover Fase
-          </button>
+          </Button>
         </div>
       </header>
 
       {/* Internal Page Tabs */}
-      <div className="mb-8 flex gap-6 border-b border-dark-border pb-4">
+      <div className="mb-8 flex gap-6 border-b border-dust-taupe/40 pb-4">
         <Link href={`/deals/${id}`} className="text-ink-black font-bold border-b-2 border-ink-black pb-4.5 -mb-[18px] transition-colors flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-signal-orange"></span>
           Overview / Sourcing
@@ -193,29 +192,29 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Deal Info Section */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
-            <h2 className="text-xl font-medium mb-5 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
+          <Card variant="default" padding="lg">
+            <h2 className="text-xl font-medium mb-5 text-ink-black border-b border-dust-taupe/60 pb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
               Dados Gerais & Informações do Target (KYB)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">Razão Social / Nome</span>
                 <span className="font-semibold text-ink-black">{deal.business?.name || deal.title}</span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">CNPJ / Registro</span>
                 <span className="font-semibold text-ink-black font-mono">{deal.business?.cnpj || "Não informado"}</span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">Setor de Atuação</span>
                 <span className="font-semibold text-ink-black">{deal.business?.sector || "Não cadastrado"}</span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">País de Origem</span>
                 <span className="font-semibold text-ink-black">{deal.business?.originCountry || "Brasil"}</span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">Valuation Alvo</span>
                 <span className="font-semibold text-ink-black font-mono">
                   {deal.targetValuation 
@@ -223,61 +222,61 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
                     : "N/A"}
                 </span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2">
                 <span className="text-slate-gray">Estratégia do M&A</span>
                 <span className="font-semibold text-ink-black">{deal.strategy || "Não especificada"}</span>
               </div>
-              <div className="flex justify-between border-b border-dark-border/40 pb-2 md:col-span-2">
+              <div className="flex justify-between border-b border-dust-taupe/40 pb-2 md:col-span-2">
                 <span className="text-slate-gray">Tipo de Transação</span>
                 <span className="font-semibold text-ink-black">{deal.type || "Acquisition"}</span>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Financial Structure box if populated */}
           {deal.financial_structure && (
-            <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
-              <h2 className="text-xl font-medium mb-4 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-light-signal-orange"></span>
+            <Card variant="default" padding="lg">
+              <h2 className="text-xl font-medium mb-4 text-ink-black border-b border-dust-taupe/60 pb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
                 Estrutura de Pagamento Proposta
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                <div className="bg-canvas-cream/50 p-4 rounded-xl border border-dust-taupe/40">
                   <div className="text-xs text-slate-gray mb-1">Cash / À Vista</div>
                   <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.cashPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                <div className="bg-canvas-cream/50 p-4 rounded-xl border border-dust-taupe/40">
                   <div className="text-xs text-slate-gray mb-1">Equity / Ações</div>
                   <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.equityPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                <div className="bg-canvas-cream/50 p-4 rounded-xl border border-dust-taupe/40">
                   <div className="text-xs text-slate-gray mb-1">Earn-Out / Performance</div>
                   <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.earnOutPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
-                <div className="bg-canvas-cream/50 p-4 rounded-[20px] border border-dark-border/40">
+                <div className="bg-canvas-cream/50 p-4 rounded-xl border border-dust-taupe/40">
                   <div className="text-xs text-slate-gray mb-1">Escrow / Retido</div>
                   <div className="text-lg font-bold text-ink-black font-mono">
                     {Number(deal.financial_structure.escrowPercentage * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
         {/* Timeline Section */}
-        <div className="bg-lifted-cream p-8 rounded-[40px] border border-dark-border shadow-[0_24px_48px_rgba(0,0,0,0.04)]">
-          <h2 className="text-xl font-medium mb-6 text-ink-black border-b border-dark-border/60 pb-3 flex items-center gap-2">
+        <Card variant="default" padding="lg">
+          <h2 className="text-xl font-medium mb-6 text-ink-black border-b border-dust-taupe/60 pb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
             Histórico de Fases
           </h2>
-          <div className="relative pl-6 border-l-2 border-dark-border space-y-6">
+          <div className="relative pl-6 border-l-2 border-dust-taupe/40 space-y-6">
             {deal.phase_history && deal.phase_history.length > 0 ? (
               deal.phase_history.map((ph: any, idx: number) => {
                 const isCompleted = ph.completedAt || ph.statusName === "Completed";
@@ -293,16 +292,16 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
                       isActive 
                         ? 'bg-ink-black border-ink-black animate-pulse' 
                         : isCompleted 
-                        ? 'bg-canvas-cream border-light-signal-orange' 
+                        ? 'bg-canvas-cream border-signal-orange' 
                         : 'bg-canvas-cream border-slate-gray'
                     }`}>
                       {isCompleted && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-light-signal-orange"></span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-signal-orange"></span>
                       )}
                     </span>
                     
                     <div>
-                      <p className={`text-sm font-bold ${isActive ? 'text-light-signal-orange' : 'text-ink-black'}`}>
+                      <p className={`text-sm font-bold ${isActive ? 'text-signal-orange' : 'text-ink-black'}`}>
                         {ph.phaseName}
                       </p>
                       <div className="text-[10px] text-slate-gray font-mono mt-0.5">{dateStr}</div>
@@ -319,59 +318,50 @@ export default function DealPage({ params }: { params: Promise<{ id: string }> }
               </div>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Move Phase Modal */}
       {showPhaseModal && (
-        <div className="fixed inset-0 bg-ink-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-lifted-cream border border-dark-border rounded-[40px] w-full max-w-md p-8 shadow-[0_32px_64px_rgba(0,0,0,0.12)] animate-in fade-in duration-200">
-            <h3 className="text-xl font-medium text-ink-black mb-5">Avançar Fase da Transação</h3>
-            
-            <form onSubmit={handleMovePhase} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1 px-1">Nova Fase Alvo</label>
-                <select
-                  value={selectedPhase}
-                  onChange={(e) => setSelectedPhase(e.target.value)}
-                  className="w-full bg-canvas-cream border border-dark-border rounded-full px-4 py-2.5 text-ink-black focus:outline-none focus:border-light-signal-orange text-sm appearance-none"
-                >
-                  {allPhases.map((phase) => (
-                    <option key={phase} value={phase}>{phase}</option>
-                  ))}
-                </select>
-              </div>
+        <Modal
+          isOpen={showPhaseModal}
+          onClose={() => setShowPhaseModal(false)}
+          title="Avançar Fase da Transação"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowPhaseModal(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="primary" 
+                disabled={movingPhase} 
+                onClick={handleMovePhase}
+              >
+                {movingPhase ? "Processando..." : "Confirmar Mudança"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <FormField label="Nova Fase Alvo">
+              <Dropdown
+                options={allPhases}
+                value={selectedPhase}
+                onChange={(val) => setSelectedPhase(val as string)}
+              />
+            </FormField>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-gray uppercase tracking-wider mb-1 px-1">Comentários / Notas da Transição</label>
-                <textarea
-                  placeholder="Ex: Documentos verificados, partindo para auditoria técnica..."
-                  value={phaseComments}
-                  onChange={(e) => setPhaseComments(e.target.value)}
-                  rows={3}
-                  className="w-full bg-canvas-cream border border-dark-border rounded-[20px] px-4 py-2.5 text-ink-black focus:outline-none focus:border-light-signal-orange text-sm"
-                ></textarea>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-dark-border/40">
-                <button
-                  type="button"
-                  onClick={() => setShowPhaseModal(false)}
-                  className="px-5 py-2.5 border border-dark-border hover:bg-canvas-cream text-slate-gray rounded-full text-sm font-semibold transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={movingPhase}
-                  className="px-5 py-2.5 bg-ink-black hover:bg-slate-800 text-canvas-cream font-semibold rounded-full text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {movingPhase ? "Processando..." : "Confirmar Mudança"}
-                </button>
-              </div>
-            </form>
+            <FormField label="Comentários / Notas da Transição">
+              <textarea
+                placeholder="Ex: Documentos verificados, partindo para auditoria técnica..."
+                value={phaseComments}
+                onChange={(e) => setPhaseComments(e.target.value)}
+                rows={3}
+                className="w-full bg-white border border-dust-taupe/40 rounded-lg px-4 py-2 text-sm text-ink-black focus:outline-none focus:border-ink-black transition-colors"
+              />
+            </FormField>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

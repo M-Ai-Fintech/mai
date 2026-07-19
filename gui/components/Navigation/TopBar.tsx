@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Avatar } from "../Avatar/Avatar";
 import { Badge } from "../Badge/Badge";
+import { CountrySelector } from "../CountrySelector/CountrySelector";
 
 export interface TopBarProps {
   breadcrumbs?: { label: string; href?: string }[];
@@ -59,6 +60,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             <option value="Institution">Institution</option>
             <option value="Client">Client</option>
           </select>
+        </div>
+
+        <div className="hidden sm:inline-flex">
+          <CountrySelector />
         </div>
 
         <div className="hidden sm:inline-flex">
