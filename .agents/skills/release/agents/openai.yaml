@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release"
+  short_description: "Close a Backlog task and announce release"
+  default_prompt: "Use $release to finish and announce this MAI release."

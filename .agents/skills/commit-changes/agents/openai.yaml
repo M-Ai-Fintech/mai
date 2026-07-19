@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Changes"
+  short_description: "Create focused one-line Git commits"
+  default_prompt: "Use $commit-changes to inspect and commit the current changes."

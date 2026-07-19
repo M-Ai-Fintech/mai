@@ -1,0 +1,4 @@
+interface:
+  display_name: "Caveman"
+  short_description: "Resposta técnica ultracurta e precisa"
+  default_prompt: "Use $caveman to answer this request tersely."
