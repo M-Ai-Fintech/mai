@@ -78,6 +78,8 @@ cd gui
 npx tsc --noEmit
 npx vitest run --config vitest.unit.config.ts
 npm run validate:stitch-prompt
+npm run validate:storybook-docs
+npm run test-storybook -- --run
 npm run build
 ```
 
@@ -90,6 +92,11 @@ deno test --allow-env --allow-read --allow-write --allow-net \
   tests/api/mvp_routes.spec.ts
 ```
 
-O Storybook continua disponível com `npm run storybook`. O lint completo também
-varre rotas e artefatos legados; para o gate MVP_6, use o escopo dos arquivos
-alterados até que a dívida técnica legada seja tratada separadamente.
+O Storybook continua disponível em `http://localhost:6006` com
+`npm run storybook`. Antes de publicar alterações em componentes, execute
+`npm run validate:storybook-docs`; o check garante que cada página MDX referencia
+explicitamente seu arquivo `.stories.tsx`, requisito do indexador do Storybook 10.
+Os testes de interação usam o addon Vitest: `npm run test-storybook -- --run`.
+O lint completo também varre rotas e artefatos legados; para o gate MVP_6, use o
+escopo dos arquivos alterados até que a dívida técnica legada seja tratada
+separadamente.

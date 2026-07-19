@@ -34,7 +34,9 @@ export function breadcrumbsForPath(pathname: string): Breadcrumb[] {
   return [{ label: "Home", href: "/" }, { label: "Workspace" }];
 }
 
-export function navigationItemIsActive(pathname: string, href: string) {
+export function navigationItemIsActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+
   const path = href.split("#")[0];
   if (href === "/") return pathname === "/";
   if (href === "/deals") return pathname === "/deals" || /^\/deals\/[^/]+$/.test(pathname);

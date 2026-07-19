@@ -30,6 +30,7 @@ describe("shared navigation model", () => {
   });
 
   it("keeps root exact while supporting route-family active navigation", () => {
+    expect(navigationItemIsActive(null, "/")).toBe(false);
     expect(navigationItemIsActive("/", "/")).toBe(true);
     expect(navigationItemIsActive("/clients", "/")).toBe(false);
     expect(navigationItemIsActive("/clients/one", "/clients")).toBe(true);

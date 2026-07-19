@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "@storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { Table, TableHead, TableRow, TableCell, TablePagination } from "./Table";
 import { Badge } from "../Badge/Badge";
@@ -109,7 +109,8 @@ export const FinancialTableInteractive: Story = {
 
 export const FullCoverageTable: Story = {
   render: () => (
-    <Table className="extra">
+    <>
+      <Table className="extra" />
       <TablePagination 
         currentPage={0} 
         totalPages={0} 
@@ -119,7 +120,7 @@ export const FullCoverageTable: Story = {
         onPageSizeChange={() => {}} 
         pageSizeOptions={undefined} 
       />
-    </Table>
+    </>
   )
 };
 

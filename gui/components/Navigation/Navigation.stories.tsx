@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { userEvent, within } from "@storybook/test";
+import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
@@ -61,11 +61,9 @@ export const CompleteNavigationSuite: Story = {
       await userEvent.click(mobileMenuBtn);
     }
 
-    // Click on Active Transactions which has subitems
-    const activeTransactions = within(canvasElement).getByText('Active Transactions');
-    if (activeTransactions) {
-      await userEvent.click(activeTransactions);
-    }
+    // Click a rendered navigation item to exercise link interaction.
+    const dealsLink = within(canvasElement).getByRole("link", { name: "Deals" });
+    await userEvent.click(dealsLink);
   },
 };
 

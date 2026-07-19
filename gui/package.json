@@ -9,9 +9,10 @@
     "lint": "eslint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
     "validate:stitch-prompt": "node scripts/validate-stitch-master-prompt.mjs",
-    "test-storybook": "test-storybook --coverage --maxWorkers=1 --testTimeout=60000",
-    "test-storybook:update": "test-storybook --updateSnapshot --maxWorkers=1 --testTimeout=60000"
+    "test-storybook": "vitest --project=storybook",
+    "test-storybook:update": "vitest --project=storybook --update"
   },
   "dependencies": {
     "next": "16.2.10",
@@ -22,13 +23,10 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
     "@storybook/addon-a11y": "^10.5.0",
-    "@storybook/addon-coverage": "^3.0.2",
     "@storybook/addon-docs": "^10.5.0",
     "@storybook/addon-mcp": "^0.7.0",
     "@storybook/addon-vitest": "^10.5.0",
     "@storybook/nextjs-vite": "^10.5.0",
-    "@storybook/test": "^8.6.15",
-    "@storybook/test-runner": "^0.24.4",
     "@tailwindcss/postcss": "^4",
     "@types/jest-image-snapshot": "^6.4.1",
     "@types/node": "^20",

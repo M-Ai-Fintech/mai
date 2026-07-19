@@ -34,7 +34,7 @@ export const DarkFooterPill: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent, expect } = await import("@storybook/test");
+    const { within, userEvent, expect } = await import("storybook/test");
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
     
@@ -71,7 +71,7 @@ export const LightSurfacePill: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("@storybook/test");
+    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
     
