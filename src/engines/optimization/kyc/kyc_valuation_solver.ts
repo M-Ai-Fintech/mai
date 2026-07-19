@@ -1,13 +1,24 @@
 // src/engines/optimization/kyc/kyc_valuation_solver.ts
-import solver from "npm:javascript-lp-solver";
-import { PortfolioCriteria, PortfolioResult, TargetRawInput } from "../types.ts";
+import solver, {
+  type ConstraintBound,
+  type Model,
+  type VariableCoefficients,
+} from "javascript-lp-solver";
+import {
+  PortfolioCriteria,
+  PortfolioResult,
+  TargetRawInput,
+} from "../types.ts";
 
 export class PortfolioSolver {
   public static async evaluateAndOptimize(
     targets: TargetRawInput[],
     criteria: PortfolioCriteria,
   ): Promise<PortfolioResult> {
-    const evaluatedProfiles: Record<string, { metrics: { insolvencyRisk: number } }> = {};
+    const evaluatedProfiles: Record<
+      string,
+      { metrics: { insolvencyRisk: number } }
+    > = {};
     const eligibleTargets: TargetRawInput[] = [];
 
     // Step 1: Pre-filter targets based on hard thresholds
@@ -33,15 +44,17 @@ export class PortfolioSolver {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Step 2: Build MILP model
-    const variables: Record<string, any> = {};
+    const variables: Record<string, VariableCoefficients> = {};
     const ints: Record<string, 1 | 0> = {};
-    const constraints: Record<string, any> = {
+    const constraints: Record<string, ConstraintBound> = {
       budget: { max: criteria.budgetLimit },
       taxDebt: { max: criteria.taxDebtCap },
     };
 
     if (criteria.sectorAllocationCaps) {
-      for (const [sector, cap] of Object.entries(criteria.sectorAllocationCaps)) {
+      for (
+        const [sector, cap] of Object.entries(criteria.sectorAllocationCaps)
+      ) {
         constraints[`sector_${sector}`] = { max: cap };
       }
     }
@@ -59,8 +72,11 @@ export class PortfolioSolver {
         taxDebt: t.taxDebtsAmount,
         [t.id]: 1,
       };
-      
-      if (criteria.sectorAllocationCaps && t.businessSector in criteria.sectorAllocationCaps) {
+
+      if (
+        criteria.sectorAllocationCaps &&
+        t.businessSector in criteria.sectorAllocationCaps
+      ) {
         varDef[`sector_${t.businessSector}`] = t.acquisitionCost; // Cap by acquisition cost or by count? Usually cap means budget allocation per sector. Let's assume cost.
       }
 
@@ -78,7 +94,7 @@ export class PortfolioSolver {
       ints[t.id] = 1;
     });
 
-    const model = {
+    const model: Model = {
       optimize: "synergy",
       opType: "max" as const,
       constraints,
@@ -86,7 +102,12 @@ export class PortfolioSolver {
       ints,
     };
 
-    const solution = solver.Solve(model) as any;
+    const typedSolver = solver as unknown as {
+      Solve(input: Model): Record<string, number | boolean> & {
+        feasible: boolean;
+      };
+    };
+    const solution = typedSolver.Solve(model);
 
     const selectedTargetIds: string[] = [];
     let totalSynergy = 0;
