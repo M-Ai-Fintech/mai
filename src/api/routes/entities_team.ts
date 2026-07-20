@@ -31,6 +31,16 @@ const entityWrite = z.object({
   primaryAdvisorId: uuid.nullable(),
 }).strict();
 
+
+const targetDossierPatch = z.object({
+  executiveSummary: z.string().optional(),
+  corporateStructure: z.string().optional(),
+  financialHealth: z.string().optional(),
+  litigationRisks: z.string().optional(),
+  marketPosition: z.string().optional(),
+  version: z.number().int().positive().optional(),
+}).strict();
+
 const entityPatch = entityWrite.partial().extend({
   version: z.number().int().positive(),
 }).strict();
@@ -82,6 +92,18 @@ export async function handleEntitiesAndTeamRoutes(
       return jsonSuccess(store.archiveEntity(id, version));
     }
     return methodNotAllowed(["GET", "PATCH", "DELETE"]);
+  }
+
+
+  const dossierMatch = path.match(/^\/api\/entities\/([^/]+)\/dossier$/);
+  if (dossierMatch) {
+    const id = validateId(decodeURIComponent(dossierMatch[1]), "entityId");
+    if (method === "GET") return jsonSuccess(store.getDossier(id));
+    if (method === "PUT") {
+      const patch = targetDossierPatch.parse(await bodyAsJson(request));
+      return jsonSuccess(store.updateDossier(id, patch));
+    }
+    return methodNotAllowed(["GET", "PUT"]);
   }
 
   if (path === "/api/team-members") {

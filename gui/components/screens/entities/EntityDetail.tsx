@@ -20,6 +20,7 @@ import { Toast } from "@/components/Toast/Toast";
 import { Checkbox } from "@/components/Checkbox/Checkbox";
 import { CountrySelector, type CountryCode } from "@/components/CountrySelector/CountrySelector";
 import { usePageBreadcrumbs } from "@/components/Navigation/AppShell";
+import { TargetDossier } from "./TargetDossier";
 import {
   entityToForm,
   firstEntityErrorField,
@@ -191,6 +192,7 @@ export function EntityDetail({ entityId }: { entityId: string }) {
         </Card>
         <div className="col-span-4 space-y-6">
           <Card><Badge variant="default">Primary advisor</Badge><div className="mt-5 flex items-center gap-3"><Avatar size="lg" src={advisor?.avatarUrl ?? undefined} fallback={advisor?.displayName ?? "UA"} /><div><p className="text-lg font-bold">{advisor?.displayName ?? "Unassigned"}</p><p className="text-xs text-slate-gray">{advisor?.role ?? "Available after team synchronization"}</p></div></div></Card>
+          <TargetDossier entityId={entity.id} />
           <Card><div className="flex items-center justify-between"><Badge variant="default">Related deals</Badge><Badge variant="outline">{relatedDeals.length}</Badge></div><div className="mt-4 space-y-3">{relatedDeals.length ? relatedDeals.map((deal) => <div key={deal.id} className="flex items-center justify-between gap-3 border-b border-dust-taupe/60 pb-3"><div><p className="text-sm font-bold">{deal.title}</p><p className="text-xs text-slate-gray">{deal.code}</p></div><Link href={`/deals/${deal.id}`}><Button variant="secondary" size="sm">Open</Button></Link></div>) : <p className="text-sm text-slate-gray">No related deals.</p>}</div></Card>
         </div>
       </div>

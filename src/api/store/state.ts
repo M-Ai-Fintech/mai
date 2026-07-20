@@ -5,6 +5,7 @@ import {
   StoredChatMessage,
   StoredChatThread,
   StoredEngineRun,
+  Dossier,
 } from "./types.ts";
 
 export class MvpStoreState {
@@ -19,6 +20,7 @@ export class MvpStoreState {
   readonly engineRuns = new Map<string, StoredEngineRun[]>();
   readonly notifications = new Map<string, Notification>();
   readonly layouts = new Map<string, DashboardLayout>();
+  readonly dossiers = new Map<string, Dossier>();
 
   now(): string {
     const timestamp = new Date(Date.UTC(2026, 6, 19, 12, 0, this.clockTick));

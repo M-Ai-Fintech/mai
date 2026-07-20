@@ -27,7 +27,7 @@ import {
 import { ChatRepository } from "./store/chat.ts";
 import { DealRepository } from "./store/deals.ts";
 import { EngineRepository } from "./store/engines.ts";
-import { EntityListQuery, EntityRepository } from "./store/entities.ts";
+import { EntityListQuery, EntityRepository, DossierRepository } from "./store/entities.ts";
 import { DashboardLayoutRepository } from "./store/layouts.ts";
 import {
   NotificationListQuery,
@@ -53,6 +53,8 @@ export { MvpStoreError } from "./store/error.ts";
 export type { MvpStoreErrorCode } from "./store/error.ts";
 export { MVP_SEED_IDS } from "./store/seed_ids.ts";
 export type {
+  Dossier,
+  DossierPatch,
   AgentId,
   CursorPage,
   EngineName,
@@ -70,6 +72,7 @@ export class MvpStore {
   private readonly state = new MvpStoreState();
   private readonly deals = new DealRepository(this.state);
   private readonly entities = new EntityRepository(this.state);
+  private readonly dossiers = new DossierRepository(this.state);
   private readonly team = new TeamRepository(this.state);
   private readonly chat = new ChatRepository(this.state);
   private readonly engines = new EngineRepository(this.state);
@@ -125,6 +128,14 @@ export class MvpStore {
 
   archiveEntity(id: string, version?: number): Entity {
     return this.entities.archive(id, version);
+  }
+
+  getDossier(entityId: string) {
+    return this.dossiers.get(entityId);
+  }
+
+  updateDossier(entityId: string, patch: any) {
+    return this.dossiers.update(entityId, patch);
   }
 
   listTeamMembers(query: TeamMemberListQuery = {}): Page<TeamMember> {

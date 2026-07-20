@@ -10,8 +10,10 @@ import {
   EngineKind,
   EngineRun,
   EntityDetail,
+  TargetDossier,
   TeamMember,
   UpdateEntityRequest,
+  UpdateTargetDossierRequest,
 } from "../contracts.ts";
 
 export type Entity = EntityDetail;
@@ -19,6 +21,8 @@ export type EntityInput = CreateEntityRequest;
 export type EntityPatch = UpdateEntityRequest;
 export type TeamAssignmentInput = DealTeamAssignmentInput;
 export type TeamAssignment = DealTeamAssignment;
+export type Dossier = TargetDossier;
+export type DossierPatch = UpdateTargetDossierRequest;
 
 export type AgentId =
   | "BrokerOrchestratorAgent"

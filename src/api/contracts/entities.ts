@@ -64,3 +64,15 @@ export interface TeamMember {
 export interface TeamMemberListQuery extends PageQuery {
   role?: string;
 }
+
+export interface TargetDossier extends VersionedResource {
+  entityId: UUID;
+  executiveSummary: string;
+  corporateStructure: string;
+  financialHealth: string;
+  litigationRisks: string;
+  marketPosition: string;
+  lastUpdated: ISODateTime;
+}
+
+export type UpdateTargetDossierRequest = Partial<Omit<TargetDossier, "entityId" | "lastUpdated">> & VersionedResource;

@@ -159,6 +159,28 @@ export const entitySummarySchema = z.object({
 export const entityDetailSchema = entitySummarySchema.extend({
   createdAt: timestampSchema,
 });
+
+export const targetDossierSchema = z.object({
+  entityId: idSchema,
+  executiveSummary: z.string(),
+  corporateStructure: z.string(),
+  financialHealth: z.string(),
+  litigationRisks: z.string(),
+  marketPosition: z.string(),
+  lastUpdated: timestampSchema,
+  version: z.number().int().positive(),
+});
+
+export const updateTargetDossierSchema = z.object({
+  executiveSummary: z.string().optional(),
+  corporateStructure: z.string().optional(),
+  financialHealth: z.string().optional(),
+  litigationRisks: z.string().optional(),
+  marketPosition: z.string().optional(),
+  version: z.number().int().positive(),
+});
+export type TargetDossier = z.infer<typeof targetDossierSchema>;
+
 export const entityWriteSchema = z.object({
   legalName: z.string().trim().min(1),
   taxId: z.string().trim().min(1),
@@ -919,6 +941,24 @@ export const ApiClient = {
 
   async listEntities(query: EntityListQuery = {}): Promise<Page<EntitySummary>> {
     return request(withQuery("/api/entities", query), createPageSchema(entitySummarySchema));
+  },
+
+
+  async getTargetDossier(entityId: string): Promise<TargetDossier> {
+    const response = await request(
+      `/api/entities/${pathSegment(entityId)}/dossier`,
+      createEnvelopeSchema(targetDossierSchema)
+    );
+    return response.data;
+  },
+  async updateTargetDossier(entityId: string, data: z.infer<typeof updateTargetDossierSchema>, signal?: AbortSignal): Promise<TargetDossier> {
+    const body = updateTargetDossierSchema.parse(data);
+    const response = await request(
+      `/api/entities/${pathSegment(entityId)}/dossier`,
+      createEnvelopeSchema(targetDossierSchema),
+      jsonOptions("PUT", body, signal)
+    );
+    return response.data;
   },
 
   async getEntityById(id: string): Promise<z.infer<typeof entityDetailSchema>> {

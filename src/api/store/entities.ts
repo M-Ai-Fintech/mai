@@ -2,7 +2,7 @@ import { EntityRole, KybStatus } from "../contracts.ts";
 import { assertAdvisor, getEntity } from "./accessors.ts";
 import { MvpStoreError } from "./error.ts";
 import { MvpStoreState } from "./state.ts";
-import { Entity, EntityInput, EntityPatch, ListQuery, Page } from "./types.ts";
+import { Entity, EntityInput, EntityPatch, ListQuery, Page, Dossier, DossierPatch } from "./types.ts";
 import { clone, normalizedSearch, normalizedTaxId, pageOf } from "./utils.ts";
 
 export interface EntityListQuery extends ListQuery {
@@ -127,6 +127,52 @@ export class EntityRepository {
         409,
         { taxId: ["Tax ID must be unique"] },
       );
+    }
+  }
+}
+
+
+export class DossierRepository {
+  constructor(private readonly state: MvpStoreState) {}
+
+  get(entityId: string): Dossier {
+    this.assertEntity(entityId);
+    let dossier = this.state.dossiers.get(entityId);
+    if (!dossier) {
+      dossier = {
+        entityId,
+        executiveSummary: "",
+        corporateStructure: "",
+        financialHealth: "",
+        litigationRisks: "",
+        marketPosition: "",
+        version: 1,
+        lastUpdated: this.state.now(),
+      };
+      this.state.dossiers.set(entityId, dossier);
+    }
+    return clone(dossier);
+  }
+
+  update(entityId: string, patch: DossierPatch): Dossier {
+    const current = this.get(entityId);
+    if (patch.version !== undefined && patch.version !== current.version) {
+      throw new MvpStoreError("RESOURCE_VERSION_CONFLICT", "Dossier version is stale", 409);
+    }
+    const { version: _expectedVersion, ...changes } = patch;
+    const updated: Dossier = {
+      ...current,
+      ...clone(changes),
+      version: current.version + 1,
+      lastUpdated: this.state.now(),
+    };
+    this.state.dossiers.set(entityId, updated);
+    return clone(updated);
+  }
+
+  private assertEntity(id: string): void {
+    if (!this.state.entities.has(id)) {
+      throw new MvpStoreError("ENTITY_NOT_FOUND", "Entity not found", 404);
     }
   }
 }
