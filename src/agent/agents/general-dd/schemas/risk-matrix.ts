@@ -1,19 +1,12 @@
 import { z } from "zod";
+import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
 
 export const riskmatrixSchema = z.object({
   dealId: z.string().describe("Identificador único do deal/transação."),
   risks: z.array(
     z.object({
       id: z.string().describe("Identificador do risco auditado."),
-      category: z.enum([
-        "financial",
-        "tax",
-        "legal",
-        "labor",
-        "operational",
-        "tech",
-        "environmental"
-      ]).describe("Categoria principal do risco."),
+      category: domainAreaSchema.describe("Categoria principal do risco."),
       description: z.string().describe("Detalhamento literal do risco ou passivo contingente encontrado."),
       severity: z.enum(["low", "medium", "high", "critical"]).describe("Gravidade do impacto do risco."),
       probability: z.enum(["low", "medium", "high"]).describe("Probabilidade de materialização do passivo."),

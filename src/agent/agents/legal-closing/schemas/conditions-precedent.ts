@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
 
 export const conditionsprecedentSchema = z.object({
   dealId: z.string().describe("Identificador único do deal/transação."),
@@ -6,16 +7,7 @@ export const conditionsprecedentSchema = z.object({
     z.object({
       id: z.string().describe("Identificador único da Condição Precedente."),
       description: z.string().describe("Detalhamento literal do evento ou validação exigida (ex: Aprovação no CADE)."),
-      category: z.enum([
-        "regulatory",
-        "corporate",
-        "financial",
-        "tax",
-        "labor",
-        "operational",
-        "legal",
-        "third-party-consent"
-      ]).describe("Categoria regulatória ou operacional da Condição Precedente."),
+      category: domainAreaSchema.describe("Categoria regulatória ou operacional da Condição Precedente."),
       responsibleParty: z.enum(["buyer", "seller", "mutual"]).describe("Parte contratante responsável pelo cumprimento da CP."),
       status: z.enum(["pending", "fulfilled", "waived"]).describe("Estado atual de cumprimento da CP."),
       deadline: z.string().optional().describe("Data limite para cumprimento no formato ISO (YYYY-MM-DD) ou prazo contratual."),
