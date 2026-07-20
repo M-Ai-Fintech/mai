@@ -15,16 +15,16 @@ export class VDRIntegration {
         const row = result[0];
         return {
           cnpj: row.cnpj,
-          razaoSocial: row.name,
-          nomeFantasia: row.name,
-          situacaoCadastral: "ATIVA",
-          dataAbertura: row.created_at,
-          capitalSocial: 1000000.0,
-          naturezaJuridica: "Sociedade Anônima",
-          qsa: [{ nome: "Database Founder", qualificacao: "Sócio" }],
-          cndFederal: "VALIDA",
-          cndTrabalhista: "VALIDA",
-          trabalhoEscravo: "NADA CONSTA",
+          legalName: row.name,
+          tradeName: row.name,
+          registrationStatus: "ATIVA",
+          foundingDate: row.created_at,
+          shareCapital: 1000000.0,
+          legalEntity: "Sociedade Anônima",
+          shareholders: [{ name: "Database Founder", role: "Sócio" }],
+          federalClearance: "VALIDA",
+          laborClearance: "VALIDA",
+          slaveLaborList: "NADA CONSTA",
           ceis: "NADA CONSTA",
           taxDebtsAmount: 0
         };
@@ -36,19 +36,19 @@ export class VDRIntegration {
     // Retorna dados fictícios de cadastro para simular o SERPRO / Receita Federal
     return {
       cnpj,
-      razaoSocial: "Target Acquisition Ltda",
-      nomeFantasia: "Target M&A Partner",
-      situacaoCadastral: "ATIVA",
-      dataAbertura: "2015-06-15",
-      capitalSocial: 5000000.0,
-      naturezaJuridica: "Sociedade Empresária Limitada",
-      qsa: [
-        { nome: "Carlos Henrique Silva", qualificacao: "Sócio-Administrador" },
-        { nome: "Ana Paula Souza", qualificacao: "Sócio" }
+      legalName: "Target Acquisition Ltda",
+      tradeName: "Target M&A Partner",
+      registrationStatus: "ATIVA",
+      foundingDate: "2015-06-15",
+      shareCapital: 5000000.0,
+      legalEntity: "Sociedade Empresária Limitada",
+      shareholders: [
+        { name: "Carlos Henrique Silva", role: "Sócio-Administrador" },
+        { name: "Ana Paula Souza", role: "Sócio" }
       ],
-      cndFederal: "VALIDA",
-      cndTrabalhista: "VALIDA",
-      trabalhoEscravo: "NADA CONSTA",
+      federalClearance: "VALIDA",
+      laborClearance: "VALIDA",
+      slaveLaborList: "NADA CONSTA",
       ceis: "NADA CONSTA",
       taxDebtsAmount: 0
     };

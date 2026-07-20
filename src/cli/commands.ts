@@ -39,11 +39,11 @@ export class CLICommands {
       new Table()
         .header(["Campo", "Valor"])
         .body([
-          ["Razão Social", data.razaoSocial || data.name || "N/A"],
-          ["Nome Fantasia", data.nomeFantasia || data.name || "N/A"],
-          ["Situação", data.situacaoCadastral || "ATIVA"],
-          ["Capital Social", `R$ ${(data.capitalSocial || 0).toLocaleString()}`],
-          ["Data de Fundação", data.dataAbertura || data.created_at || "N/A"],
+          ["Razão Social", data.legalName || data.name || "N/A"],
+          ["Nome Fantasia", data.tradeName || data.name || "N/A"],
+          ["Situação", data.registrationStatus || "ATIVA"],
+          ["Capital Social", `R$ ${(data.shareCapital || 0).toLocaleString()}`],
+          ["Data de Fundação", data.foundingDate || data.created_at || "N/A"],
           ["Débitos Fiscais", `R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`]
         ])
         .padding(2)
@@ -77,7 +77,7 @@ export class CLICommands {
         console.log(`- Perfil dos Negociadores: ${c.negotiatorProfile || c.negotiators || 'Board experiente no setor de atuação.'}`);
       } else {
         if (!aiConfig.isFallback) {
-          const query = `Faça uma análise de sourcing qualitativa e cultural em português de exatas 3 linhas (uma para 'Cultura Corporativa', uma para 'Movimentações Passadas', uma para 'Perfil dos Negociadores') para a empresa ${data.razaoSocial || 'Target'}.`;
+          const query = `Faça uma análise de sourcing qualitativa e cultural em português de exatas 3 linhas (uma para 'Cultura Corporativa', uma para 'Movimentações Passadas', uma para 'Perfil dos Negociadores') para a empresa ${data.legalName || 'Target'}.`;
           const reply = await AgentOrchestrator.executeAgentQuery("kyb_temp", query);
           console.log(reply);
         } else {
