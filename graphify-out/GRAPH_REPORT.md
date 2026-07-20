@@ -1,15 +1,15 @@
-# Graph Report - .  (2026-07-20)
+# Graph Report - /home/luis/mai  (2026-07-20)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
 
 ## Summary
-- 1750 nodes · 3794 edges · 115 communities (90 shown, 25 thin omitted)
+- 1750 nodes · 3794 edges · 114 communities (89 shown, 25 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 37 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a9c039af`
+- Built from commit: `ea5c3aa2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -107,7 +107,7 @@
 - Community 90
 - Community 91
 - Community 92
-- Community 93
+- Community 94
 - Community 95
 - Community 96
 - Community 97
@@ -125,7 +125,6 @@
 - Community 109
 - Community 110
 - Community 111
-- Community 112
 
 ## God Nodes (most connected - your core abstractions)
 1. `clone()` - 40 edges
@@ -154,7 +153,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (115 total, 25 thin omitted)
+## Communities (114 total, 25 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
@@ -194,67 +193,67 @@ Nodes (16): src::api_contracts_chatcitation, src::api_contracts_chatmessage, src
 
 ### Community 9 - "Community 9"
 Cohesion: 0.14
-Nodes (8): ChatMessage, ChatThread, MvpStore, ChatRepository, AgentId, CursorPage, StoredChatMessage, StoredChatThread
+Nodes (19): analyzeCompanyRisksTool, databaseMemoryServiceTool, geminiGoogleSearchTool, generatePdfTermSheetTool, googleCloudPubSubTool, huggingFaceMcpTool, mcpDatabaseTool, optimizePortfolioTool (+11 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.11
-Nodes (7): BrokerOrchestratorService, ContinuousLearningEngine, src::agent_index_brokerorchestratorservice, ClientSiloedRAG, VDRIntegration, CLIChat, CLICommands
+Cohesion: 0.14
+Nodes (8): ChatMessage, ChatThread, MvpStore, ChatRepository, AgentId, CursorPage, StoredChatMessage, StoredChatThread
 
 ### Community 11 - "Community 11"
+Cohesion: 0.11
+Nodes (6): BrokerOrchestratorService, ContinuousLearningEngine, src::agent_index_brokerorchestratorservice, ClientSiloedRAG, CLIChat, CLICommands
+
+### Community 12 - "Community 12"
 Cohesion: 0.08
 Nodes (22): Accordion(), AccordionItemData, AccordionProps, Dropdown(), Input, InputProps, AgentId, AgenticWorkspaceProps (+14 more)
 
-### Community 12 - "Community 12"
+### Community 13 - "Community 13"
 Cohesion: 0.14
 Nodes (19): src::api_contracts_createdealrequest, src::api_contracts_deallistquery, CreateDealRequest, DealDetail, DealListQuery, DealSummary, TransitionDealPhaseRequest, UpdateDealRequest (+11 more)
 
-### Community 13 - "Community 13"
+### Community 14 - "Community 14"
 Cohesion: 0.09
 Nodes (23): kpiOptions, ScreenState, ToastState, widgetOptions, Default, FinancialTableInteractive, FullCoverageTable, FullCoverageTable2 (+15 more)
 
-### Community 14 - "Community 14"
+### Community 15 - "Community 15"
 Cohesion: 0.16
 Nodes (16): EntityRole, KybStatus, TeamMember, assertAdvisor(), EntityListQuery, EntityRepository, TeamMemberListQuery, Entity (+8 more)
 
-### Community 15 - "Community 15"
+### Community 16 - "Community 16"
 Cohesion: 0.07
 Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+20 more)
 
-### Community 16 - "Community 16"
-Cohesion: 0.12
-Nodes (22): ChatCitation, src::api_contracts_enginekind, EngineKind, GeneratedDocumentType, src::api_contracts_generateddocument, src::api_contracts_generateddocumenttype, jsonError(), src::api_contracts_jsonerror (+14 more)
-
 ### Community 17 - "Community 17"
-Cohesion: 0.16
-Nodes (24): src::api_contracts_chatstreamevent, src::api_contracts_dashboardwidgettype, jsonSuccess(), parseBooleanQuery(), src::api_contracts_jsonsuccess, agentId, createChatStreamResponse(), createThread (+16 more)
-
-### Community 18 - "Community 18"
 Cohesion: 0.12
 Nodes (19): brokerOrchestratorAgent, DealMatchingAgent, instructions, FinancialRiskAgent, instructions, GeneralDueDiligenceAgent, instructions, instructions (+11 more)
 
+### Community 18 - "Community 18"
+Cohesion: 0.12
+Nodes (22): ChatCitation, src::api_contracts_enginekind, EngineKind, GeneratedDocumentType, src::api_contracts_generateddocument, src::api_contracts_generateddocumenttype, jsonError(), src::api_contracts_jsonerror (+14 more)
+
 ### Community 19 - "Community 19"
+Cohesion: 0.16
+Nodes (24): src::api_contracts_chatstreamevent, src::api_contracts_dashboardwidgettype, jsonSuccess(), parseBooleanQuery(), src::api_contracts_jsonsuccess, agentId, createChatStreamResponse(), createThread (+16 more)
+
+### Community 20 - "Community 20"
 Cohesion: 0.12
 Nodes (18): verifyRegistryTool, AIProvider, AgentOrchestrator, startServer(), withMvpHeaders(), src::engines_optimization_index_coverageconstraint, src::engines_optimization_index_kycconstraint, src::engines_optimization_index_leverageconstraint (+10 more)
 
-### Community 20 - "Community 20"
+### Community 21 - "Community 21"
 Cohesion: 0.11
 Nodes (20): DealPage(), draftFromDeal(), EditDraft, EditErrors, formatDate(), initials(), internalNote(), ToastState (+12 more)
 
-### Community 21 - "Community 21"
+### Community 22 - "Community 22"
 Cohesion: 0.18
 Nodes (15): Badge(), BadgeProps, Button, ButtonProps, Card, CardProps, EmptyStateProps, ErrorBoundaryProps (+7 more)
 
-### Community 22 - "Community 22"
+### Community 23 - "Community 23"
 Cohesion: 0.12
 Nodes (17): COUNTRIES, CountryOption, CountrySelector(), CountrySelectorProps, DarkFooterPill, InvalidCountry, LightSurfacePill, meta (+9 more)
 
-### Community 23 - "Community 23"
+### Community 24 - "Community 24"
 Cohesion: 0.15
 Nodes (15): addDashboardWidget(), DashboardWidget, DashboardWidgetType, moveDashboardWidget(), reflowDashboardWidgets(), removeDashboardWidget(), resizeDashboardWidget(), first (+7 more)
-
-### Community 24 - "Community 24"
-Cohesion: 0.26
-Nodes (12): analyzeCompanyRisksTool, databaseMemoryServiceTool, geminiGoogleSearchTool, generatePdfTermSheetTool, googleCloudPubSubTool, huggingFaceMcpTool, mcpDatabaseTool, optimizePortfolioTool (+4 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.14
@@ -333,174 +332,170 @@ Cohesion: 0.15
 Nodes (12): next, dependencies, next, react, react-dom, zod, name, private (+4 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.27
-Nodes (6): instructions, HumanFeedback, VDRService, src::core_db_memory_service_databasememoryservice, TransformersEngine, src::ref_huggingface_transformers
-
-### Community 47 - "Community 47"
 Cohesion: 0.15
 Nodes (12): src::api_contracts_currency, src::api_contracts_dealtype, assignmentSide, assignmentWrite, dealPatch, dealPhase, dealStatus, dealWrite (+4 more)
 
-### Community 48 - "Community 48"
+### Community 47 - "Community 47"
 Cohesion: 0.17
 Nodes (5): CompanyCultureMemoryRecord, DomainKnowledgeRecord, UserPreferencesRecord, TransactionRepository, src::ref_pg
 
-### Community 49 - "Community 49"
+### Community 48 - "Community 48"
 Cohesion: 0.27
 Nodes (9): IconName, breadcrumbsForPath(), navigationItemIsActive(), PRODUCT_NAVIGATION, defaultNavGroups, NavGroup, Sidebar(), SidebarProps (+1 more)
 
-### Community 50 - "Community 50"
+### Community 49 - "Community 49"
 Cohesion: 0.18
 Nodes (10): ButtonWithIconAndText, ConsentSignalOrange, IconButton, meta, Primary, PrimaryInkPill, SatelliteCTA, SecondaryOutlined (+2 more)
 
-### Community 51 - "Community 51"
+### Community 50 - "Community 50"
 Cohesion: 0.18
 Nodes (10): DisabledDropdown, EmptyAndErrorDropdown, InvalidValueMulti, InvalidValueSingle, meta, sampleOptions, SearchableAndMultiSelect, SingleSelect (+2 more)
 
-### Community 52 - "Community 52"
+### Community 51 - "Community 51"
 Cohesion: 0.18
 Nodes (11): scripts, build, build-storybook, dev, lint, start, storybook, test-storybook (+3 more)
 
-### Community 53 - "Community 53"
+### Community 52 - "Community 52"
 Cohesion: 0.18
 Nodes (9): tests::home_luis_mai_src_agent_actions_vdrstructuredaccesstool, tests::home_luis_mai_src_core_vdr_providers_ideals_idealsvdrprovider, tests::home_luis_mai_src_core_vdr_providers_ideals_ts, tests::home_luis_mai_src_core_vdr_providers_intralinks_intralinksvdrprovider, tests::home_luis_mai_src_core_vdr_providers_intralinks_ts, tests::ref_https_deno_land_std_0_224_0_assert_mod_ts, idealsFixture, intralinksFixture (+1 more)
 
-### Community 54 - "Community 54"
+### Community 53 - "Community 53"
 Cohesion: 0.29
 Nodes (8): expectStoreError(), newEntity(), tests::home_luis_mai_src_api_contracts_assignmentside, tests::home_luis_mai_src_api_contracts_entityrole, tests::home_luis_mai_src_api_contracts_kybstatus, tests::home_luis_mai_src_api_contracts_ts, tests::home_luis_mai_src_api_mvp_store_entityinput, tests::home_luis_mai_src_api_mvp_store_mvpstoreerror
 
-### Community 55 - "Community 55"
+### Community 54 - "Community 54"
 Cohesion: 0.18
 Nodes (9): tests::home_luis_mai_src_cli_errors_clierrorhandler, tests::home_luis_mai_src_cli_errors_ts, tests::home_luis_mai_src_core_vdr_mock_mockvdrprovider, tests::home_luis_mai_src_core_vdr_mock_ts, tests::home_luis_mai_src_core_vdr_provider_basevdrprovider, tests::home_luis_mai_src_core_vdr_provider_ts, tests::home_luis_mai_src_core_vdr_types_ts, tests::home_luis_mai_src_core_vdr_types_vdrdocument (+1 more)
 
-### Community 56 - "Community 56"
+### Community 55 - "Community 55"
 Cohesion: 0.18
 Nodes (10): tests::home_luis_mai_src_agent_agents_broker_orchestrator_index_brokerorchestratorservice, tests::home_luis_mai_src_agent_agents_broker_orchestrator_index_ts, tests::home_luis_mai_src_agent_index_agentorchestrator, tests::home_luis_mai_src_agent_index_complianceconflicterror, tests::home_luis_mai_src_agent_rag_layer_clientsiloedrag, tests::home_luis_mai_src_agent_rag_layer_ts, tests::home_luis_mai_src_core_db_memory_service_databasememoryservice, tests::home_luis_mai_src_core_db_memory_service_ts (+2 more)
 
-### Community 57 - "Community 57"
+### Community 56 - "Community 56"
 Cohesion: 0.29
 Nodes (8): tests::home_luis_mai_src_agent_actions_databasememoryservicetool, tests::home_luis_mai_src_agent_actions_geminigooglesearchtool, tests::home_luis_mai_src_agent_actions_googlecloudpubsubtool, tests::home_luis_mai_src_agent_actions_huggingfacemcptool, tests::home_luis_mai_src_agent_actions_mcpdatabasetool, tests::home_luis_mai_src_agent_actions_ts, tests::home_luis_mai_src_core_pubsub_localpubsubbus_localpubsubbus, tests::home_luis_mai_src_core_pubsub_localpubsubbus_ts
 
-### Community 58 - "Community 58"
+### Community 57 - "Community 57"
 Cohesion: 0.20
 Nodes (7): metadata, plusJakartaSans, publicSans, AppShell(), nextConfig, gui::ref_next, gui::ref_next_font_google
 
-### Community 59 - "Community 59"
+### Community 58 - "Community 58"
 Cohesion: 0.20
 Nodes (9): DarkBadge, Default, DefaultBadge, meta, OutlineBadge, SignalOrange, Story, WithIconBadge (+1 more)
 
-### Community 60 - "Community 60"
+### Community 59 - "Community 59"
 Cohesion: 0.20
 Nodes (9): DarkCard, DefaultCard, DefaultHighContrast, meta, PortraitCard, RaisedCard, SignalOrangeCard, Story (+1 more)
 
-### Community 61 - "Community 61"
+### Community 60 - "Community 60"
 Cohesion: 0.42
 Nodes (5): main(), AppBootstrapper, bootAndRun(), runE2EFlow(), simulateAgent()
 
-### Community 62 - "Community 62"
+### Community 61 - "Community 61"
 Cohesion: 0.20
 Nodes (9): tests::home_luis_mai_src_agent_index_brokerorchestratoragent, tests::home_luis_mai_src_agent_index_dealmatchingagent, tests::home_luis_mai_src_agent_index_financialriskagent, tests::home_luis_mai_src_agent_index_generalduediligenceagent, tests::home_luis_mai_src_agent_index_legalclosingagent, tests::home_luis_mai_src_agent_index_legalduediligenceagent, tests::home_luis_mai_src_agent_index_negotiationagent, tests::home_luis_mai_src_agent_index_sourcingandkybagent (+1 more)
 
-### Community 63 - "Community 63"
+### Community 62 - "Community 62"
 Cohesion: 0.22
 Nodes (7): Default, meta, Story, Default, meta, Story, gui::ref_storybook_react
 
-### Community 64 - "Community 64"
+### Community 63 - "Community 63"
 Cohesion: 0.22
 Nodes (8): allIconNames, AllIconsGrid, CustomSizeAndUnknown, Default, FullCoverageIcon, meta, Sizes, Story
 
-### Community 65 - "Community 65"
+### Community 64 - "Community 64"
 Cohesion: 0.31
 Nodes (7): tests::home_luis_mai_src_api_contracts_chatstreamevent, tests::home_luis_mai_src_api_contracts_currency, tests::home_luis_mai_src_api_contracts_dashboardwidgettype, tests::home_luis_mai_src_api_contracts_dealphase, tests::home_luis_mai_src_api_contracts_dealstatus, tests::home_luis_mai_src_api_contracts_dealsummary, tests::home_luis_mai_src_api_contracts_dealtype
 
-### Community 66 - "Community 66"
+### Community 65 - "Community 65"
 Cohesion: 0.25
 Nodes (7): BorderedAccordion, DefaultPropsAccordion, meta, MultiExpandAccordion, PlainAccordion, sampleItems, Story
 
-### Community 67 - "Community 67"
+### Community 66 - "Community 66"
 Cohesion: 0.29
 Nodes (6): Avatar(), AvatarProps, povOptions, TopBarProps, gui::home_luis_mai_gui_components_avatar_avatar_stories_tsx, gui::ref_next_link
 
-### Community 68 - "Community 68"
+### Community 67 - "Community 67"
 Cohesion: 0.25
 Nodes (7): DefaultFormField, meta, NonElementChildren, RequiredField, Standard, Story, ValidationError
 
-### Community 69 - "Community 69"
+### Community 68 - "Community 68"
 Cohesion: 0.25
 Nodes (7): CompleteNavigationSuite, FullCoverageSidebar, FullCoverageSidebar2, FullCoverageTopBar, meta, Story, TopBar()
 
-### Community 70 - "Community 70"
+### Community 69 - "Community 69"
 Cohesion: 0.43
 Nodes (4): DashboardLayoutRepository, defaultWidgets(), seedStore(), clone()
 
-### Community 71 - "Community 71"
+### Community 70 - "Community 70"
 Cohesion: 0.29
 Nodes (4): DealHistoryEntry, MADeal, MADealLifecycle, MADealState
 
-### Community 72 - "Community 72"
+### Community 71 - "Community 71"
 Cohesion: 0.29
 Nodes (6): Footer(), CompleteFooter, DefaultFooter, meta, Story, gui::home_luis_mai_gui_components_footer_footer_stories_tsx
 
-### Community 73 - "Community 73"
+### Community 72 - "Community 72"
 Cohesion: 0.29
 Nodes (6): DefaultInput, meta, SearchPill, Story, WithError, WithIcon
 
-### Community 74 - "Community 74"
+### Community 73 - "Community 73"
 Cohesion: 0.33
 Nodes (5): Radio, RadioProps, Default, meta, Story
 
-### Community 75 - "Community 75"
+### Community 74 - "Community 74"
 Cohesion: 0.29
 Nodes (6): ErrorNotification, InfoNotification, meta, Story, SuccessNotification, WarningNotification
 
-### Community 76 - "Community 76"
+### Community 75 - "Community 75"
 Cohesion: 0.29
 Nodes (5): gui::home_luis_mai_gui_app_globals_css, gui::home_luis_mai_gui_tokens_design_tokens_css, gui::ref_storybook_nextjs_vite, config, preview
 
-### Community 77 - "Community 77"
+### Community 76 - "Community 76"
 Cohesion: 0.33
 Nodes (7): apiErrorFromResponse(), fetchWithRetry(), parseResponse(), request(), requestSignal(), sanitizeErrorMessage(), withQuery()
 
-### Community 78 - "Community 78"
+### Community 77 - "Community 77"
 Cohesion: 0.29
 Nodes (6): sampleParams, sampleProposal, tests::home_luis_mai_src_engines_document_generator_latex_latexgenerator, tests::home_luis_mai_src_engines_document_generator_latex_ts, tests::home_luis_mai_src_engines_document_generator_pdf_pdfgenerator, tests::home_luis_mai_src_engines_document_generator_pdf_ts
 
-### Community 79 - "Community 79"
+### Community 78 - "Community 78"
 Cohesion: 0.29
 Nodes (6): sampleTargets, tests::home_luis_mai_src_agent_actions_synergypricingtool, tests::home_luis_mai_src_engines_optimization_kyc_index_portfoliosolver, tests::home_luis_mai_src_engines_optimization_kyc_index_ts, tests::home_luis_mai_src_engines_optimization_matching_index_termsheetoptimizer, tests::home_luis_mai_src_engines_optimization_matching_index_ts
 
-### Community 80 - "Community 80"
+### Community 79 - "Community 79"
 Cohesion: 0.29
 Nodes (6): tests::home_luis_mai_src_engines_prediction_onnx_loadonnxmodel, tests::home_luis_mai_src_engines_prediction_onnx_onnxengine, tests::home_luis_mai_src_engines_prediction_onnx_onnxmodelinput, tests::home_luis_mai_src_engines_prediction_onnx_resetsession, tests::home_luis_mai_src_engines_prediction_onnx_ts, tests::ref_https_deno_land_std_0_224_0_testing_asserts_ts
 
-### Community 81 - "Community 81"
+### Community 80 - "Community 80"
 Cohesion: 0.29
 Nodes (6): tests::home_luis_mai_src_agent_agents_deal_matching_schemas_valuation_ts, tests::home_luis_mai_src_agent_agents_deal_matching_schemas_valuation_valuationschema, tests::home_luis_mai_src_agent_agents_general_dd_schemas_risk_matrix_riskmatrixschema, tests::home_luis_mai_src_agent_agents_general_dd_schemas_risk_matrix_ts, tests::home_luis_mai_src_agent_agents_negotiation_schemas_nash_equilibrium_nashequilibriumschema, tests::home_luis_mai_src_agent_agents_negotiation_schemas_nash_equilibrium_ts
 
-### Community 82 - "Community 82"
+### Community 81 - "Community 81"
 Cohesion: 0.33
 Nodes (5): DefaultAvatar, meta, Story, WithImage, WithInitialsFallback
 
-### Community 83 - "Community 83"
+### Community 82 - "Community 82"
 Cohesion: 0.33
 Nodes (5): Dashed, DefaultDivider, meta, Solid, Story
 
-### Community 84 - "Community 84"
+### Community 83 - "Community 83"
 Cohesion: 0.33
 Nodes (5): BreadcrumbOverride, PageBreadcrumbsContext, usePageBreadcrumbs(), Breadcrumb, Pov
 
-### Community 85 - "Community 85"
+### Community 84 - "Community 84"
 Cohesion: 0.33
 Nodes (5): Default, Disabled, meta, Story, WithError
 
-### Community 86 - "Community 86"
+### Community 85 - "Community 85"
 Cohesion: 0.33
 Nodes (5): eslintConfig, gui::ref_eslint_config, gui::ref_eslint_config_next_core_web_vitals, gui::ref_eslint_config_next_typescript, gui::ref_eslint_plugin_storybook
 
-### Community 87 - "Community 87"
+### Community 86 - "Community 86"
 Cohesion: 0.33
 Nodes (5): tests::home_luis_mai_src_api_contracts_jsonerror, tests::home_luis_mai_src_api_contracts_jsonlistsuccess, tests::home_luis_mai_src_api_contracts_jsonsuccess, tests::home_luis_mai_src_api_contracts_parsebooleanquery, tests::home_luis_mai_src_api_contracts_parsepaginationquery
 
-### Community 89 - "Community 89"
+### Community 88 - "Community 88"
 Cohesion: 0.40
 Nodes (4): CardPlaceholder, FullPropsCoverage, meta, Story
 
@@ -512,9 +507,9 @@ Nodes (4): CardPlaceholder, FullPropsCoverage, meta, Story
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FormField()` connect `Community 20` to `Community 68`, `Community 5`, `Community 7`, `Community 11`, `Community 45`, `Community 13`?**
+- **Why does `FormField()` connect `Community 21` to `Community 67`, `Community 5`, `Community 7`, `Community 12`, `Community 45`, `Community 14`?**
   _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `react` connect `Community 45` to `Community 20`?**
+- **Why does `react` connect `Community 45` to `Community 21`?**
   _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **What connects `instructions`, `inputSchema`, `memorySchema` to the rest of the system?**
   _496 weakly-connected nodes found - possible documentation gaps or missing edges._

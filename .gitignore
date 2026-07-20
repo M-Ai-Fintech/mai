@@ -8,6 +8,12 @@ node_modules/
 # Generated outputs
 term_sheets/
 
+# Graphify: keep only the shared root graph artifacts
+**/graphify-out/*
+!graphify-out/graph.json
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/graph.html
+
 # OS specific files
 .DS_Store
 Thumbs.db

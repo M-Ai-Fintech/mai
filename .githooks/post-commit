@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+[ "${GRAPHIFY_SKIP_HOOK:-0}" = "1" ] && exit 0
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+CHANGED=$(git -C "$ROOT" diff-tree --no-commit-id --name-only -r HEAD)
+
+case "$(printf '%s\n' "$CHANGED")" in
+    *"src/"*|*"gui/"*|*"tests/"*)
+        exec "$ROOT/scripts/graphify-merged-rebuild.sh"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
