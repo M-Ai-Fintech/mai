@@ -396,10 +396,10 @@ ${input.text}`,
       };
       
       const metrics = await ONNXEngine.runModelInference(modelInput);
-      let riskLevel = "Low";
-      if (metrics.insolvencyRisk > 0.8) riskLevel = "Critical";
-      else if (metrics.insolvencyRisk > 0.5) riskLevel = "High";
-      else if (metrics.insolvencyRisk > 0.25) riskLevel = "Medium";
+      let riskLevel = "low";
+      if (metrics.insolvencyRisk > 0.8) riskLevel = "critical";
+      else if (metrics.insolvencyRisk > 0.5) riskLevel = "high";
+      else if (metrics.insolvencyRisk > 0.25) riskLevel = "medium";
 
       return {
         success: true,
@@ -419,7 +419,7 @@ ${input.text}`,
         model: input.model,
         prediction: {
           insolvencyRiskScore: 0.14,
-          riskLevel: "Low",
+          riskLevel: "low",
           confidence: 0.96,
           details: "Inferência executada via Hugging Face MCP com modelo ONNX (Fallback).",
         },

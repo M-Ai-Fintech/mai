@@ -3,7 +3,7 @@ import { z } from "zod";
 export const contingencySchema = z.object({
   contingencyTitle: z.string().describe("Título resumido do processo civil, trabalhista ou fiscal."),
   category: z.enum(["Civil", "Labor", "Tax", "Regulatory", "Environmental"]).describe("Categoria jurídica do passivo."),
-  severity: z.enum(["Low", "Medium", "High", "Critical"]).describe("Severidade estimada do risco legal."),
+  severity: z.enum(["low", "medium", "high", "critical"]).describe("Severidade estimada do risco legal."),
   legalBasis: z.string().describe("Dispositivo legal violado ou tese jurídica aplicável (ex: Art. 2 da CLT)."),
   probabilityOfLoss: z.enum(["Probable", "Possible", "Remote"]).describe("Probabilidade de perda do processo (classificação CPC 25)."),
   estimatedFinancialImpact: z.number().describe("Estimativa de impacto financeiro direto em milhões."),
