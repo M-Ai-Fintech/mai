@@ -1,4 +1,4 @@
-# Graph Report - /home/luis/mai  (2026-07-21)
+# Graph Report - /home/luis/mai  (2026-07-22)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d49c722a`
+- Built from commit: `80c82489`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -201,7 +201,6 @@
 - DatabaseMemoryService.spec.ts
 - instructions.md
 - AGENTS.md
-- @chromatic-com/storybook
 - eslint-config-next
 - eslint-plugin-storybook
 - jest-image-snapshot
@@ -217,6 +216,7 @@
 - @types/react-dom
 - typescript
 - vitest
+- @vitest/browser-playwright
 - @vitest/coverage-v8
 - postcss.config.mjs
 - spa-outline-template.md
@@ -409,7 +409,7 @@ Nodes (13): addDashboardWidget(), DashboardWidget, DashboardWidgetType, moveDash
 
 ### Community 40 - "devDependencies"
 Cohesion: 0.12
-Nodes (17): axe-playwright, eslint, devDependencies, axe-playwright, eslint, @storybook/addon-mcp, @storybook/addon-vitest, tailwindcss (+9 more)
+Nodes (17): axe-playwright, @chromatic-com/storybook, eslint, devDependencies, axe-playwright, @chromatic-com/storybook, eslint, @storybook/addon-mcp (+9 more)
 
 ### Community 41 - "2. Directory Index"
 Cohesion: 0.12

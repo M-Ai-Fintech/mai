@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-22 06:59'
-updated_date: '2026-07-22 07:07'
+updated_date: '2026-07-22 07:18'
 labels:
   - skills
   - agent-workflow
@@ -72,6 +72,8 @@ Establish a compact, English-first local skill system that reliably routes MAI w
 
 <!-- SECTION:NOTES:BEGIN -->
 Implemented on branch chore/MAI-86-agent-skills. Validated eight local skill manifests, all phase/reference files, required front-matter delimiters, deleted-skill absence, and absence of inherited QA/Slack/Mongo/Aprova references. `git diff --check` passed. Backlog MCP was interrogated directly: server backlog.md 1.47.1 exposes task, milestone, document, DoD, and workflow tools. Implementation is ready for owner review; no commit, push, or PR was created without explicit remote-mutation authorization.
+
+Committed 9417ccd and pushed branch chore/MAI-86-agent-skills to origin. Draft PR creation is blocked: the GitHub connector returned 404 for M-Ai-Fintech/MVP and `gh auth status` reports the active token invalid. Branch compare URL: https://github.com/M-Ai-Fintech/MVP/pull/new/chore/MAI-86-agent-skills.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

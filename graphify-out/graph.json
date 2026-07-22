@@ -25255,7 +25255,7 @@
       "repo": "gui",
       "local_id": "lib_api_client_apierror_constructor",
       "id": "gui::lib_api_client_apierror_constructor",
-      "community": 192,
+      "community": 191,
       "community_name": ".constructor",
       "norm_label": ".constructor()"
     },
@@ -25268,7 +25268,7 @@
       "repo": "gui",
       "local_id": "lib_api_client_kindforstatus",
       "id": "gui::lib_api_client_kindforstatus",
-      "community": 192,
+      "community": 191,
       "community_name": ".constructor",
       "norm_label": "kindforstatus()"
     },
@@ -25918,8 +25918,8 @@
       "repo": "gui",
       "local_id": "package_devdependencies_chromatic_com_storybook",
       "id": "gui::package_devdependencies_chromatic_com_storybook",
-      "community": 188,
-      "community_name": "@chromatic-com/storybook",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@chromatic-com/storybook"
     },
     {
@@ -25931,8 +25931,8 @@
       "repo": "gui",
       "local_id": "chromatic_com_storybook",
       "id": "gui::chromatic_com_storybook",
-      "community": 188,
-      "community_name": "@chromatic-com/storybook",
+      "community": 40,
+      "community_name": "devDependencies",
       "norm_label": "@chromatic-com/storybook"
     },
     {
@@ -25944,7 +25944,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_storybook_addon_a11y",
       "id": "gui::package_devdependencies_storybook_addon_a11y",
-      "community": 195,
+      "community": 194,
       "community_name": "@storybook/addon-a11y",
       "norm_label": "@storybook/addon-a11y"
     },
@@ -25957,7 +25957,7 @@
       "repo": "gui",
       "local_id": "storybook_addon_a11y",
       "id": "gui::storybook_addon_a11y",
-      "community": 195,
+      "community": 194,
       "community_name": "@storybook/addon-a11y",
       "norm_label": "@storybook/addon-a11y"
     },
@@ -25970,7 +25970,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_storybook_addon_docs",
       "id": "gui::package_devdependencies_storybook_addon_docs",
-      "community": 196,
+      "community": 195,
       "community_name": "@storybook/addon-docs",
       "norm_label": "@storybook/addon-docs"
     },
@@ -25983,7 +25983,7 @@
       "repo": "gui",
       "local_id": "storybook_addon_docs",
       "id": "gui::storybook_addon_docs",
-      "community": 196,
+      "community": 195,
       "community_name": "@storybook/addon-docs",
       "norm_label": "@storybook/addon-docs"
     },
@@ -26048,7 +26048,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_storybook_nextjs_vite",
       "id": "gui::package_devdependencies_storybook_nextjs_vite",
-      "community": 197,
+      "community": 196,
       "community_name": "@storybook/nextjs-vite",
       "norm_label": "@storybook/nextjs-vite"
     },
@@ -26061,7 +26061,7 @@
       "repo": "gui",
       "local_id": "storybook_nextjs_vite",
       "id": "gui::storybook_nextjs_vite",
-      "community": 197,
+      "community": 196,
       "community_name": "@storybook/nextjs-vite",
       "norm_label": "@storybook/nextjs-vite"
     },
@@ -26100,7 +26100,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_types_jest_image_snapshot",
       "id": "gui::package_devdependencies_types_jest_image_snapshot",
-      "community": 198,
+      "community": 197,
       "community_name": "@types/jest-image-snapshot",
       "norm_label": "@types/jest-image-snapshot"
     },
@@ -26113,7 +26113,7 @@
       "repo": "gui",
       "local_id": "types_jest_image_snapshot",
       "id": "gui::types_jest_image_snapshot",
-      "community": 198,
+      "community": 197,
       "community_name": "@types/jest-image-snapshot",
       "norm_label": "@types/jest-image-snapshot"
     },
@@ -26126,7 +26126,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_types_node",
       "id": "gui::package_devdependencies_types_node",
-      "community": 199,
+      "community": 198,
       "community_name": "@types/node",
       "norm_label": "@types/node"
     },
@@ -26139,7 +26139,7 @@
       "repo": "gui",
       "local_id": "types_node",
       "id": "gui::types_node",
-      "community": 199,
+      "community": 198,
       "community_name": "@types/node",
       "norm_label": "@types/node"
     },
@@ -26152,7 +26152,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_types_react",
       "id": "gui::package_devdependencies_types_react",
-      "community": 200,
+      "community": 199,
       "community_name": "@types/react",
       "norm_label": "@types/react"
     },
@@ -26165,7 +26165,7 @@
       "repo": "gui",
       "local_id": "types_react",
       "id": "gui::types_react",
-      "community": 200,
+      "community": 199,
       "community_name": "@types/react",
       "norm_label": "@types/react"
     },
@@ -26178,7 +26178,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_types_react_dom",
       "id": "gui::package_devdependencies_types_react_dom",
-      "community": 201,
+      "community": 200,
       "community_name": "@types/react-dom",
       "norm_label": "@types/react-dom"
     },
@@ -26191,7 +26191,7 @@
       "repo": "gui",
       "local_id": "types_react_dom",
       "id": "gui::types_react_dom",
-      "community": 201,
+      "community": 200,
       "community_name": "@types/react-dom",
       "norm_label": "@types/react-dom"
     },
@@ -26204,8 +26204,8 @@
       "repo": "gui",
       "local_id": "package_devdependencies_vitest_browser_playwright",
       "id": "gui::package_devdependencies_vitest_browser_playwright",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 203,
+      "community_name": "@vitest/browser-playwright",
       "norm_label": "@vitest/browser-playwright"
     },
     {
@@ -26217,8 +26217,8 @@
       "repo": "gui",
       "local_id": "vitest_browser_playwright",
       "id": "gui::vitest_browser_playwright",
-      "community": 40,
-      "community_name": "devDependencies",
+      "community": 203,
+      "community_name": "@vitest/browser-playwright",
       "norm_label": "@vitest/browser-playwright"
     },
     {
@@ -26308,7 +26308,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_eslint_config_next",
       "id": "gui::package_devdependencies_eslint_config_next",
-      "community": 189,
+      "community": 188,
       "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
@@ -26321,7 +26321,7 @@
       "repo": "gui",
       "local_id": "eslint_config_next",
       "id": "gui::eslint_config_next",
-      "community": 189,
+      "community": 188,
       "community_name": "eslint-config-next",
       "norm_label": "eslint-config-next"
     },
@@ -26334,7 +26334,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_eslint_plugin_storybook",
       "id": "gui::package_devdependencies_eslint_plugin_storybook",
-      "community": 190,
+      "community": 189,
       "community_name": "eslint-plugin-storybook",
       "norm_label": "eslint-plugin-storybook"
     },
@@ -26347,7 +26347,7 @@
       "repo": "gui",
       "local_id": "eslint_plugin_storybook",
       "id": "gui::eslint_plugin_storybook",
-      "community": 190,
+      "community": 189,
       "community_name": "eslint-plugin-storybook",
       "norm_label": "eslint-plugin-storybook"
     },
@@ -26360,7 +26360,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_jest_image_snapshot",
       "id": "gui::package_devdependencies_jest_image_snapshot",
-      "community": 191,
+      "community": 190,
       "community_name": "jest-image-snapshot",
       "norm_label": "jest-image-snapshot"
     },
@@ -26373,7 +26373,7 @@
       "repo": "gui",
       "local_id": "jest_image_snapshot",
       "id": "gui::jest_image_snapshot",
-      "community": 191,
+      "community": 190,
       "community_name": "jest-image-snapshot",
       "norm_label": "jest-image-snapshot"
     },
@@ -26386,7 +26386,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_playwright",
       "id": "gui::package_devdependencies_playwright",
-      "community": 193,
+      "community": 192,
       "community_name": "playwright",
       "norm_label": "playwright"
     },
@@ -26399,7 +26399,7 @@
       "repo": "gui",
       "local_id": "playwright",
       "id": "gui::playwright",
-      "community": 193,
+      "community": 192,
       "community_name": "playwright",
       "norm_label": "playwright"
     },
@@ -26412,7 +26412,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_storybook",
       "id": "gui::package_devdependencies_storybook",
-      "community": 194,
+      "community": 193,
       "community_name": "storybook",
       "norm_label": "storybook"
     },
@@ -26425,7 +26425,7 @@
       "repo": "gui",
       "local_id": "storybook",
       "id": "gui::storybook",
-      "community": 194,
+      "community": 193,
       "community_name": "storybook",
       "norm_label": "storybook"
     },
@@ -26464,7 +26464,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_typescript",
       "id": "gui::package_devdependencies_typescript",
-      "community": 202,
+      "community": 201,
       "community_name": "typescript",
       "norm_label": "typescript"
     },
@@ -26477,7 +26477,7 @@
       "repo": "gui",
       "local_id": "typescript",
       "id": "gui::typescript",
-      "community": 202,
+      "community": 201,
       "community_name": "typescript",
       "norm_label": "typescript"
     },
@@ -26516,7 +26516,7 @@
       "repo": "gui",
       "local_id": "package_devdependencies_vitest",
       "id": "gui::package_devdependencies_vitest",
-      "community": 203,
+      "community": 202,
       "community_name": "vitest",
       "norm_label": "vitest"
     },
@@ -26529,7 +26529,7 @@
       "repo": "gui",
       "local_id": "vitest",
       "id": "gui::vitest",
-      "community": 203,
+      "community": 202,
       "community_name": "vitest",
       "norm_label": "vitest"
     },
@@ -85444,5 +85444,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d49c722ae9fc51261d0dfb805adb5017d68df734"
+  "built_at_commit": "80c82489a2c9061415043276be773868a94dfb9a"
 }
