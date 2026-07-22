@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Selection"
+  short_description: "Choose Codex or Antigravity for an MAI phase"
+  default_prompt: "Use $model-selection to route this MAI phase."

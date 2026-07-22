@@ -1,4 +1,4 @@
 interface:
-  display_name: "Wrap Up"
-  short_description: "Summarize worktree and session state"
-  default_prompt: "Use $wrap-up to give a terse end-of-session handoff."
+  display_name: "Wrap Up MAI"
+  short_description: "Create a concise MAI session handoff"
+  default_prompt: "Use $wrap-up for this MAI session."

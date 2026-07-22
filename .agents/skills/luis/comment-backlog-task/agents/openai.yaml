@@ -1,4 +1,0 @@
-interface:
-  display_name: "Comment Backlog Task"
-  short_description: "Write QA comments for Backlog tasks"
-  default_prompt: "Use $comment-backlog-task to add a QA comment to this task."
