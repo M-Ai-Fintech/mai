@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, userEvent } from "storybook/test";
 import React, { useState } from "react";
 import { CountrySelector, COUNTRIES } from "./CountrySelector";
 
@@ -34,7 +35,6 @@ export const DarkFooterPill: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent, expect } = await import("storybook/test");
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
     
@@ -71,7 +71,6 @@ export const LightSurfacePill: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
     

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, userEvent } from "storybook/test";
 import React, { useState } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Button } from "../Button/Button";
@@ -38,7 +39,6 @@ export const FallbackPreview: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const button = await canvas.findByRole("button", { name: /Simular Exceção/i });
     await userEvent.click(button);

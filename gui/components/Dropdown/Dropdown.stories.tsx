@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, userEvent } from "storybook/test";
 import React, { useState } from "react";
 import { Dropdown } from "./Dropdown";
 
@@ -36,7 +37,6 @@ export const SingleSelect: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
@@ -79,7 +79,6 @@ export const SearchableAndMultiSelect: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
@@ -116,7 +115,6 @@ export const EmptyAndErrorDropdown: Story = {
     error: "Required",
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
@@ -129,7 +127,6 @@ export const Uncontrolled: Story = {
     options: sampleOptions,
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);

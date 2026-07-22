@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, userEvent } from "storybook/test";
 import React from "react";
 import { Accordion } from "./Accordion";
 
@@ -52,7 +53,6 @@ export const PlainAccordion: Story = {
     defaultOpenIds: ["1"],
   },
   play: async ({ canvasElement }) => {
-    const { within, userEvent } = await import("storybook/test");
     const canvas = within(canvasElement);
     // Click un-opened item to open
     const target = canvas.getByText("Valuation & Otimização Genética de Term Sheet");
@@ -73,7 +73,6 @@ export const BorderedAccordion: Story = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    const { within, userEvent, expect } = await import("storybook/test");
     const canvas = within(canvasElement);
     const buttons = await canvas.findAllByRole("button");
     await userEvent.click(buttons[0]);
@@ -89,7 +88,6 @@ export const MultiExpandAccordion: Story = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    const { within, userEvent, expect } = await import("storybook/test");
     const canvas = within(canvasElement);
     const buttons = await canvas.findAllByRole("button");
     // Click third accordion to open it
