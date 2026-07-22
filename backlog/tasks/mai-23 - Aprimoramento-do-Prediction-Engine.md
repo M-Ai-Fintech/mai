@@ -1,15 +1,16 @@
 ---
 id: MAI-23
 title: Aprimoramento do Prediction Engine
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-09 21:52'
+updated_date: '2026-07-22 05:28'
 labels:
   - engine
   - prediction
-milestone: m-3
+  - revalidation
+milestone: m-11
 dependencies: []
 priority: medium
 ordinal: 28000
@@ -23,10 +24,10 @@ Replace the current Z‑Score rule‑based prediction engine with a neural class
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 O motor preditivo ("src/engines/prediction/onnx.ts") deve carregar e rodar inferências reais usando o arquivo "models/ma_classifier_q8.onnx" via WebAssembly (ONNX Runtime via "@huggingface/transformers").
-- [x] #2 Mapear corretamente os 6 campos de "ONNXModelInput" para o tensor de entrada "[batch_size, 6]" e mapear as 4 saídas do tensor "[batch_size, 4]" de volta para os campos de "ONNXPredictionResult".
-- [x] #3 Deve haver resiliência com Fallback Automático: caso o arquivo do modelo ONNX não exista na pasta "models/" ou a inicialização falhe, o sistema deve logar um aviso e executar a fórmula matemática simulada.
-- [x] #4 O CLI ("analyzeRisk") e a ferramenta "huggingFaceMcpTool" em "src/agent/actions.ts" devem ser integrados para acionar a inferência ONNX real e exibir os resultados preditivos formatados.
+- [ ] #1 O motor preditivo ("src/engines/prediction/onnx.ts") deve carregar e rodar inferências reais usando o arquivo "models/ma_classifier_q8.onnx" via WebAssembly (ONNX Runtime via "@huggingface/transformers").
+- [ ] #2 Mapear corretamente os 6 campos de "ONNXModelInput" para o tensor de entrada "[batch_size, 6]" e mapear as 4 saídas do tensor "[batch_size, 4]" de volta para os campos de "ONNXPredictionResult".
+- [ ] #3 Deve haver resiliência com Fallback Automático: caso o arquivo do modelo ONNX não exista na pasta "models/" ou a inicialização falhe, o sistema deve logar um aviso e executar a fórmula matemática simulada.
+- [ ] #4 O CLI ("analyzeRisk") e a ferramenta "huggingFaceMcpTool" em "src/agent/actions.ts" devem ser integrados para acionar a inferência ONNX real e exibir os resultados preditivos formatados.
 - [ ] #5 Implementar testes unitários automatizados cobrindo a inferência ONNX real e o comportamento do fallback seguro quando o modelo é simulado ou ausente.
 - [ ] #6 The engine loads  via ONNX Runtime and produces correct inference results for valid input data.
 - [ ] #7 Input mapping correctly transforms the six  fields into a  float tensor and output mapping extracts the four scores into  fields.
@@ -59,15 +60,21 @@ created: 2026-07-09 21:52
 ---
 Crítica resolvida: Documentação criada em docs/prediction_engine.md e README.md atualizado com as instruções detalhadas do pipeline ONNX.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Only part of the prediction-engine criteria is implemented: runtime mapping consumes only the first of four ONNX outputs, integrity verification is unconditional, and fallback semantics are inconsistent. Reopen for the complete contract.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Ambas as sub-tarefas ("MAI-34" e "MAI-35") estarem concluídas, revisadas e com pull requests integrados.
-- [x] #2 O arquivo do modelo quantizado "ma_classifier_q8.onnx" estar disponível no diretório "models/" na raiz do projeto.
-- [x] #3 Testes unitários cobrindo o "ONNXEngine" implementados e passando com sucesso via "deno task test".
-- [x] #4 Interface de linha de comando CLI (opção 2 de "deno task start") executando de ponta a ponta sem erros de runtime usando o modelo real.
-- [x] #5 Documentação atualizada no repositório instruindo como rodar o treinamento e atualizar o modelo.
+- [ ] #1 Ambas as sub-tarefas ("MAI-34" e "MAI-35") estarem concluídas, revisadas e com pull requests integrados.
+- [ ] #2 O arquivo do modelo quantizado "ma_classifier_q8.onnx" estar disponível no diretório "models/" na raiz do projeto.
+- [ ] #3 Testes unitários cobrindo o "ONNXEngine" implementados e passando com sucesso via "deno task test".
+- [ ] #4 Interface de linha de comando CLI (opção 2 de "deno task start") executando de ponta a ponta sem erros de runtime usando o modelo real.
+- [ ] #5 Documentação atualizada no repositório instruindo como rodar o treinamento e atualizar o modelo.
 - [ ] #6 Both subtasks MAI-34 (model export) and MAI-35 (Deno/WASM inference) are completed, code‑reviewed, and merged.
 - [ ] #7 Quantized ONNX model  is present in the repository under  and checked into version control.
 - [ ] #8 All unit tests for  pass () with 100% coverage of inference and fallback paths.

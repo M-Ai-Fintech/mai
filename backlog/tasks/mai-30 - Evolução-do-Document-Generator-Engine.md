@@ -1,15 +1,16 @@
 ---
 id: MAI-30
 title: Evolução do Document Generator Engine
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 13:45'
+updated_date: '2026-07-22 05:29'
 labels:
   - engine
   - document
-milestone: m-3
+  - revalidation
+milestone: m-11
 dependencies: []
 priority: low
 ordinal: 34000
@@ -65,6 +66,16 @@ Escrever testes de integração para cada tipo de documento. Obter validação d
 - Motor de documentos: src/engines/document/
 - Integração VDR: src/agent/context/ via Pub/Sub
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The document engine currently produces a simple Term Sheet, while the task claims multiple document types, templates, preview, workflow validation, i18n, and long-form PDF/A output. Reopen and split if necessary.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

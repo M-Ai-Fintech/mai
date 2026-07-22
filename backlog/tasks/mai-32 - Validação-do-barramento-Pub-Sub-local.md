@@ -1,16 +1,17 @@
 ---
 id: MAI-32
 title: Validação do barramento Pub/Sub local
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:29'
 labels:
   - core
   - integration
   - poc
-milestone: m-5
+  - revalidation
+milestone: m-13
 dependencies: []
 parent_task_id: MAI-19
 priority: low
@@ -25,7 +26,7 @@ Validate the local Pub/Sub bus ensuring reliable asynchronous event routing betw
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 O singleton LocalPubSubBus deve suportar múltiplos listeners registrados simultaneamente para o mesmo tópico e garantir que todos recebam os dados publicados de forma concorrente.
+- [ ] #1 O singleton LocalPubSubBus deve suportar múltiplos listeners registrados simultaneamente para o mesmo tópico e garantir que todos recebam os dados publicados de forma concorrente.
 - [ ] #2 A ferramenta googleCloudPubSubTool deve suportar as ações definidas (request_vdr_access, publish_event, trigger_engine) e disparar de forma assíncrona as respostas correspondentes no formato correto (ex: topic_response).
 - [ ] #3 O isolamento de falhas deve ser garantido: se o callback de um listener lançar um erro, isso não deve impedir a execução dos demais callbacks registrados no mesmo tópico.
 - [ ] #4 O método de limpeza (clear) do barramento deve permitir remover ouvintes de um tópico específico ou resetar todos os tópicos de forma determinística para evitar vazamentos de memória (memory leaks) e poluição entre testes.
@@ -57,11 +58,17 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Negligência de Backlog: A tarefa foi marcada como 'Done', mas os critérios AC #2 a #10 e DoD #2 a #11 foram deixados inteiramente desmarcados ([ ]). 2. Dependência de FFI: O teste unitário requer explicitamente a flag --allow-ffi devido ao uso de onnxruntime-node, o que viola o DoD de nenhuma dependência nativa Node.js em ambiente Deno para o motor.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Only one of ten acceptance criteria is checked. The local bus works as an in-process primitive, but the agent tool simulates integration outcomes and does not prove the claimed lifecycle. Reopen with explicit local scope and complete tests.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Implementação das funcionalidades principais do LocalPubSubBus e tratamento de erros testados e aprovados.
+- [ ] #1 Implementação das funcionalidades principais do LocalPubSubBus e tratamento de erros testados e aprovados.
 - [ ] #2 Cobertura de testes unitários para múltiplos ouvintes, tratamento de exceções nos ouvintes e métodos de cleanup (clear).
 - [ ] #3 Verificação do fluxo assíncrono simulando a requisição e resposta de acesso ao VDR via ferramenta googleCloudPubSubTool.
 - [ ] #4 Suite de testes executando com sucesso com o comando /home/luis/.deno/bin/deno test.

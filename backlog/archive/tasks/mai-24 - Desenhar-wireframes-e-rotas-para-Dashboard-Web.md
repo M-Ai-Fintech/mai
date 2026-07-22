@@ -1,15 +1,16 @@
 ---
 id: MAI-24
 title: Desenhar wireframes e rotas para Dashboard Web
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:30'
 labels:
   - interface
   - gui
   - poc
+  - superseded
 milestone: m-4
 dependencies: []
 parent_task_id: MAI-17
@@ -50,6 +51,12 @@ author: Auditoria Técnica
 created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Conformidade Geral: A tarefa foi devidamente executada, mapeando rotas e payloads JSON Zod e salvando as especificações em backlog/docs/gui-wireframes-routes.md. Nenhuma inconsistência encontrada.
+---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded as an active product specification. The legacy wireframe document will be inventoried and dispositioned by MAI-84; current banker-workspace behavior is tracked by rebaselined GUI tasks.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
 ---
 <!-- COMMENTS:END -->
 

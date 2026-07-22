@@ -1,15 +1,16 @@
 ---
 id: MAI-18
 title: Evolução da Camada de Banco de Dados Postgres
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 13:44'
+updated_date: '2026-07-22 05:28'
 labels:
   - core
   - database
-milestone: m-3
+  - revalidation
+milestone: m-9
 dependencies: []
 priority: medium
 ordinal: 22000
@@ -38,6 +39,16 @@ Coordenar a evolução e otimização da camada de banco de dados PostgreSQL do 
 3. **Validação da Busca por Similaridade & RAG:** Assegurar que o método searchSimilarKnowledge esteja apto a consultar embeddings por similaridade de cosseno (REAL[] / vector).
 4. **Testes & Handoff:** Executar testes unitários locais e atualizar a documentação sobre conexões com banco local e Cloud SQL futuro.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: All acceptance and DoD items remain unchecked, and the current API state is in-memory rather than real PostgreSQL persistence. Reopen to define and prove the intended Postgres boundary.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

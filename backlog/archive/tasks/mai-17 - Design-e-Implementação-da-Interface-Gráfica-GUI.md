@@ -1,14 +1,15 @@
 ---
 id: MAI-17
 title: Design e Implementação da Interface Gráfica (GUI)
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:30'
 labels:
   - interface
   - gui
+  - superseded
 milestone: m-4
 dependencies: []
 priority: medium
@@ -54,6 +55,12 @@ author: Auditoria Técnica
 created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Falha de Reatividade: Os formulários e views cruciais (EnginesPage e ChatPage) são componentes estáticos (Server Components) sem manipulação de estado, hooks de rede ou ações reais (os botões não possuem onClick). 2. Falha de Reuso de Tipos: Conforme documentado no próprio README.md da GUI, os tipos TS do backend não são compartilhados com o frontend; em vez disso, foram usados mocks estáticos/locais. 3. Backlog Desalinhado: A tarefa foi dada como 'Done', mas os critérios AC #2 e AC #5 continuam desmarcados como não finalizados.
+---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by the later banker-workspace rebuild and current GUI architecture. Its broad GUI completion claim no longer describes the product and should not be reopened as one oversized task.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
 ---
 <!-- COMMENTS:END -->
 

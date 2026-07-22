@@ -1,16 +1,17 @@
 ---
 id: MAI-11
 title: Integrar pgvector ao PostgreSQL para RAG profundo
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 17:32'
+updated_date: '2026-07-22 05:28'
 labels:
   - database
   - ai
   - poc
-milestone: m-2
+  - revalidation
+milestone: m-9
 dependencies: []
 parent_task_id: MAI-8
 priority: low
@@ -32,13 +33,11 @@ Principais objetivos:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 A extensão pgvector deve ser habilitada (CREATE EXTENSION IF NOT EXISTS vector;) na inicialização do banco de dados (schema.sql).
-- [x] #2 Colunas 'embedding' em 'user_preferences', 'domain_knowledge' e 'company_culture_memory' devem usar o tipo vector(384) e possuir suporte a índices HNSW.
-- [x] #3 Refatorar 'ClientSiloedRAG' para persistir e buscar os chunks de documentos do VDR na tabela 'vdr_document_chunks' do Postgres.
-- [x] #4 Implementar tratamento de erros e fallbacks robustos (graceful degradation) para o caso do pgvector ou o banco estarem indisponíveis.
+- [ ] #1 A extensão pgvector deve ser habilitada (CREATE EXTENSION IF NOT EXISTS vector;) na inicialização do banco de dados (schema.sql).
+- [ ] #2 Colunas 'embedding' em 'user_preferences', 'domain_knowledge' e 'company_culture_memory' devem usar o tipo vector(384) e possuir suporte a índices HNSW.
+- [ ] #3 Refatorar 'ClientSiloedRAG' para persistir e buscar os chunks de documentos do VDR na tabela 'vdr_document_chunks' do Postgres.
+- [ ] #4 Implementar tratamento de erros e fallbacks robustos (graceful degradation) para o caso do pgvector ou o banco estarem indisponíveis.
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
@@ -62,10 +61,20 @@ Principais objetivos:
    - Criar script/teste rápido de fumaça de busca vetorial local e atualizar testes existentes.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: pgvector behavior is not proven against PostgreSQL: tests pass via in-memory fallback after database connection failure. Reopen until schema, vector operators, migrations, persistence, and similarity queries pass against a real local database.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 O schema.sql contém as diretivas de criação do pgvector e as novas estruturas de tabelas atualizadas.
-- [x] #2 A classe DatabaseMemoryService e a camada RAG usam queries SQL nativas com o operador <=> para buscas de similaridade.
-- [x] #3 Os testes em tests/core/memory_service.spec.ts passam com sucesso tratando fallbacks de banco de forma adequada.
-- [x] #4 A CLI (chat.ts) consegue inicializar o VDR e realizar buscas semânticas persistidas no Postgres local.
+- [ ] #1 O schema.sql contém as diretivas de criação do pgvector e as novas estruturas de tabelas atualizadas.
+- [ ] #2 A classe DatabaseMemoryService e a camada RAG usam queries SQL nativas com o operador <=> para buscas de similaridade.
+- [ ] #3 Os testes em tests/core/memory_service.spec.ts passam com sucesso tratando fallbacks de banco de forma adequada.
+- [ ] #4 A CLI (chat.ts) consegue inicializar o VDR e realizar buscas semânticas persistidas no Postgres local.
 <!-- DOD:END -->

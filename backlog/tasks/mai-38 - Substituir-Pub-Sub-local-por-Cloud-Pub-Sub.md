@@ -5,12 +5,12 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 03:03'
-updated_date: '2026-07-14 04:55'
+updated_date: '2026-07-22 05:30'
 labels:
   - cloud
   - integration
   - enterprise
-milestone: m-8
+milestone: m-15
 dependencies: []
 parent_task_id: MAI-33
 priority: low

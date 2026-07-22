@@ -1,15 +1,16 @@
 ---
 id: MAI-65
 title: Audit backend support for prototype functionality
-status: Done
+status: To Do
 assignee: []
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-19 14:48'
+updated_date: '2026-07-22 05:30'
 labels:
   - backend
   - api
   - GUI
   - stitch
+  - superseded
 milestone: m-6
 dependencies: []
 references:
@@ -49,6 +50,16 @@ Check the Deno backend, Next API routes, ApiClient, repositories, and persistenc
 <!-- SECTION:NOTES:BEGIN -->
 Investigation traced each UI-to-client-to-route-to-persistence flow. Deals, chat, and engines are partial; entities, team, notifications, and server-backed dashboard layouts are missing. Frozen DTO and endpoint contracts define what MAI-66 may prototype and what MAI-67 must implement. Validation: file evidence checked with rg; git diff --check passed; artifact is non-empty.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by the current repository-wide rebaseline. The claimed backend capability matrix artifact is absent, so this historical audit is not reproducible evidence.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Final Summary
 

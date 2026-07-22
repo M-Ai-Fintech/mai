@@ -1,16 +1,17 @@
 ---
 id: MAI-69
 title: Verify coherent prototype implementation against Stitch
-status: Done
+status: To Do
 assignee:
   - '@codex'
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-19 16:35'
+updated_date: '2026-07-22 05:30'
 labels:
   - QA
   - GUI
   - stitch
   - verification
+  - superseded
 milestone: m-6
 dependencies:
   - MAI-67
@@ -54,6 +55,16 @@ QA handoff (final verification): Runtime production sweep at 2560x1440 returned 
 
 Final correction: frontend unit total is 29/29 after breadcrumb and assistant-response regression coverage. Independent final static audit PASS with no remaining master-contract blockers. Post-fix production sweep repeated all eight route checks at 2560x1440 with zero console/page errors; entity list normalized to country=BR and detail rendered the actual legal-name breadcrumb.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by MAI-79. The original Stitch verification depends on missing handoff artifacts and cannot be reproduced as a definitive Done gate.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Final Summary
 

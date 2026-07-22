@@ -1,16 +1,17 @@
 ---
 id: MAI-5
 title: Implementação e Desmocking Inicial de APIs locais
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 17:22'
+updated_date: '2026-07-22 05:28'
 labels:
   - core
   - api
   - mvp
-milestone: m-1
+  - revalidation
+milestone: m-10
 dependencies: []
 parent_task_id: MAI-2
 priority: medium
@@ -25,14 +26,14 @@ Refatoração inicial de mocks. Como não temos um VDR real configurado, o foco 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 ClientSiloedRAG.initializeSilo deve escanear a pasta física do VDR para extrair, chunkar e gerar embeddings dos arquivos de texto (.txt, .md), caindo de volta nos dados mockados originais apenas se o diretório estiver ausente ou vazio.
-- [x] #2 VDRIntegration.queryKYBRegistry deve realizar buscas na tabela 'business' do Postgres via DatabaseMemoryService/raw query, simulando o comportamento real e retornando dados cadastrais reais quando disponíveis.
-- [x] #3 O comando de CLI 'checkRegistry' em 'src/cli/commands.ts' deve ser refatorado para utilizar o 'verifyRegistryTool' central da camada agêntica em vez de declarar lógica de mock duplicada inline.
-- [x] #4 A suite de testes (deno task test) deve continuar passando com sucesso, garantindo compatibilidade retroativa e cobertura do desmocking.
-- [x] #5 VDRService.getDocumentsForDeal utiliza dados/arquivos no diretório de teste designado (file system local)
-- [x] #6 ClientSiloedRAG varre o diretório mockado e lê arquivos dinamicamente
-- [x] #7 Mock de KYB busca dados na tabela local do DatabaseMemoryService
-- [x] #8 Arquitetura e escopo desses Mocks documentados claramente em /backlog/docs para desenvolvedores
+- [ ] #1 ClientSiloedRAG.initializeSilo deve escanear a pasta física do VDR para extrair, chunkar e gerar embeddings dos arquivos de texto (.txt, .md), caindo de volta nos dados mockados originais apenas se o diretório estiver ausente ou vazio.
+- [ ] #2 VDRIntegration.queryKYBRegistry deve realizar buscas na tabela 'business' do Postgres via DatabaseMemoryService/raw query, simulando o comportamento real e retornando dados cadastrais reais quando disponíveis.
+- [ ] #3 O comando de CLI 'checkRegistry' em 'src/cli/commands.ts' deve ser refatorado para utilizar o 'verifyRegistryTool' central da camada agêntica em vez de declarar lógica de mock duplicada inline.
+- [ ] #4 A suite de testes (deno task test) deve continuar passando com sucesso, garantindo compatibilidade retroativa e cobertura do desmocking.
+- [ ] #5 VDRService.getDocumentsForDeal utiliza dados/arquivos no diretório de teste designado (file system local)
+- [ ] #6 ClientSiloedRAG varre o diretório mockado e lê arquivos dinamicamente
+- [ ] #7 Mock de KYB busca dados na tabela local do DatabaseMemoryService
+- [ ] #8 Arquitetura e escopo desses Mocks documentados claramente em /backlog/docs para desenvolvedores
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -60,13 +61,19 @@ created: 2026-07-09 17:22
 ---
 [SANEAMENTO] Removidas simulações hardcoded da CLI. O comando checkRegistry agora busca a cultura societária dinamicamente do banco de dados na tabela company_culture_memory; o comando analyzeRisk inicializa ClientSiloedRAG e busca cláusulas de Change of Control no VDR local; o comando optimizePortfolio carrega targets via queries SQL reais da tabela business com fallback robusto.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The task explicitly allowed structured mocks, but the claimed desmocking remains materially incomplete: KYB and VDR payloads are hardcoded and RAG silently falls back to in-memory fixtures. Rebaseline this work under the Papermark MVP integration.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Tratamento de exceções e fallbacks testados para cenários de diretório VDR inexistente ou Postgres offline.
-- [x] #2 Execução bem-sucedida do comando 'deno task test' sem regressões.
-- [x] #3 Os contratos de envio/recebimento de dados estão respeitados, mesmo consumindo mocks estruturados
-- [x] #4 Aplicação consegue ler um novo arquivo apenas adicionando-o na pasta local e rodando o comando
-- [x] #5 Documentação adicionada ao repositório explicando os dados mockados
+- [ ] #1 Tratamento de exceções e fallbacks testados para cenários de diretório VDR inexistente ou Postgres offline.
+- [ ] #2 Execução bem-sucedida do comando 'deno task test' sem regressões.
+- [ ] #3 Os contratos de envio/recebimento de dados estão respeitados, mesmo consumindo mocks estruturados
+- [ ] #4 Aplicação consegue ler um novo arquivo apenas adicionando-o na pasta local e rodando o comando
+- [ ] #5 Documentação adicionada ao repositório explicando os dados mockados
 <!-- DOD:END -->

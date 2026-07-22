@@ -4,15 +4,14 @@ title: Implement backend contracts required by GUI prototype
 status: Done
 assignee: []
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-19 15:30'
+updated_date: '2026-07-22 05:55'
 labels:
   - backend
   - api
   - GUI
-milestone: m-6
-dependencies:
-  - MAI-65
-  - MAI-66
+  - revalidated
+milestone: m-12
+dependencies: []
 references:
   - src/api/server.ts
   - gui/lib/api-client.ts
@@ -65,8 +64,25 @@ Implemented stable shared DTO/envelope contracts, deterministic mock-backed MVP 
 Validation: 25 Deno API contract/store/route tests passed; 5 Vitest ApiClient tests passed; deno check src/api/server.ts passed; 8 optimization regression tests passed with declared read/env/FFI permissions; live HTTP smoke tests returned 200 for deals, entities, and custom layout with stable envelopes and persistence headers. Full GUI tsc remains gated only by the two pre-existing FormField and Spinner story type defects tracked in MAI-68.
 <!-- SECTION:NOTES:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:30
+---
+## Done revalidation — 2026-07-22\n\nDone is preserved because the task explicitly scopes the deliverable as a mock-backed in-memory GUI prototype. The modular API contracts and injected operation routes pass 25/25 focused API tests. This does not claim real PostgreSQL, engines, VDR, documents, or LLM execution.
+---
+<!-- COMMENTS:END -->
+
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
 Implemented and integrated the backend/API-client contract required by the coherent prototype: typed deal and entity CRUD, team assignments, phase transitions, chat streaming, engine history, safe VDR/document metadata, notifications, and versioned dashboard layouts. Verified at store, route, client, engine-regression, server-typecheck, and live HTTP levels.
 <!-- SECTION:FINAL_SUMMARY:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [x] #1 The mock-backed in-memory boundary is explicit in task and developer documentation
+- [x] #2 All focused API contract, route, and store tests pass
+- [x] #3 No result from the prototype defaults is represented as a real external integration
+<!-- DOD:END -->

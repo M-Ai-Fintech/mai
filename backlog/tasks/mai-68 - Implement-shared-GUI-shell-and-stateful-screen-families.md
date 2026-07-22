@@ -5,15 +5,15 @@ status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-19 15:51'
+updated_date: '2026-07-22 05:55'
 labels:
   - frontend
   - GUI
   - components
   - prototype
-milestone: m-6
+  - revalidated
+milestone: m-12
 dependencies:
-  - MAI-66
   - MAI-67
 references:
   - gui/app
@@ -81,8 +81,25 @@ Advisor fidelity review removed unsupported chart/progress/drag/attachment/spinn
 Validation: production Next.js build passed for 14 routes; TypeScript passed; focused ESLint passed across every modified frontend route/component/client; 21 Vitest tests passed; single Stitch prompt validator passed (1 prompt, 4 families, 23 references); 25 backend contract/store/route tests and server type-check passed; git diff --check passed. Repository-wide lint remains separately noisy in untouched legacy pages/stories and generated storybook-static output, so the task gate uses the complete modified-file lint scope.
 <!-- SECTION:NOTES:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:30
+---
+## Done revalidation — 2026-07-22\n\nDone is preserved because the task explicitly delivers stateful screen families for the coherent prototype. GUI unit tests pass 29/29 and the production build succeeds. This does not prove real engines, VDR, persistence, or LLM behavior.
+---
+<!-- COMMENTS:END -->
+
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
 Implemented one shared Mastercard Editorial app shell and four contract-backed stateful screen families: deal dashboard, reusable role-based entity CRUD/detail, agentic chat/analytics, and versioned custom dashboard. All families reuse MAI-53 components and include their loading, empty, error, modal, validation, success, and interaction states. Verified with production build, scoped lint, TypeScript, 21 frontend tests, 25 backend tests, and the unified Stitch prompt validator.
 <!-- SECTION:FINAL_SUMMARY:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [x] #1 The prototype boundary and mock-backed API dependency are explicit
+- [x] #2 All focused GUI unit tests and the production build pass
+- [x] #3 Screens do not claim that prototype fixtures are verified external integrations
+<!-- DOD:END -->

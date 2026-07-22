@@ -1,16 +1,17 @@
 ---
 id: MAI-35
 title: Finalizar inferência ONNX local via WASM no Prediction Engine
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:29'
 labels:
   - engine
   - prediction
   - poc
-milestone: m-5
+  - revalidation
+milestone: m-11
 dependencies: []
 parent_task_id: MAI-23
 priority: medium
@@ -25,12 +26,12 @@ Implementar a leitura e inferência real dos arquivos .onnx localmente no runtim
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Carregar arquivo .onnx quantizado (q8/q4) via fetch/FileSystem em Deno sem erros de runtime
-- [x] #2 Inferência retorna probabilidade de distress (Float32, intervalo [0,1]) em menos de 200ms para batch de 1 amostra
-- [x] #3 Classificação Altman Z-Score (Safe / Grey / Distress) derivada da probabilidade é retornada junto ao score numérico
-- [x] #4 Entrada aceita array de features financeiras tipado (Float32Array, shape [1, N]) com validação Zod antes da inferência
-- [x] #5 Fallback claro (erro tipado) é lançado quando o arquivo .onnx não é encontrado ou falha no carregamento WASM
-- [x] #6 Função exportada onnxInfer() passa em todos os testes unitários com modelo ONNX mock (stub de 4 features)
+- [ ] #1 Carregar arquivo .onnx quantizado (q8/q4) via fetch/FileSystem em Deno sem erros de runtime
+- [ ] #2 Inferência retorna probabilidade de distress (Float32, intervalo [0,1]) em menos de 200ms para batch de 1 amostra
+- [ ] #3 Classificação Altman Z-Score (Safe / Grey / Distress) derivada da probabilidade é retornada junto ao score numérico
+- [ ] #4 Entrada aceita array de features financeiras tipado (Float32Array, shape [1, N]) com validação Zod antes da inferência
+- [ ] #5 Fallback claro (erro tipado) é lançado quando o arquivo .onnx não é encontrado ou falha no carregamento WASM
+- [ ] #6 Função exportada onnxInfer() passa em todos os testes unitários com modelo ONNX mock (stub de 4 features)
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -64,13 +65,19 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Falha de Inicialização em Produção: O método loadOnnxModel nunca é inicializado no setup de produção (AppBootstrapper ou api/server.ts). Como consequência, as inferências em execução (MLEngine) falham silenciosamente na carga do modelo e retornam o valor de fallback mockado (0.14 / Safe), inviabilizando a execução do modelo real no runtime. 2. Tratamento de Erro Omisso nos Testes: O teste de inferência com modelo real em prediction.spec.ts engole erros silenciosamente no bloco try-catch ('Model loading skipped'), fazendo com que o teste passe mesmo se o arquivo ONNX estiver ausente ou corrompido.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Direct ONNX tests pass, but API startup does not initialize the model session through AppBootstrapper. Reopen until inference works from the real API/agent entry point, not only an isolated test.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Testes unitários (Deno.test) com modelo ONNX mock cobrem: carga, inferência válida, input inválido e timeout
-- [x] #2 Cobertura de tipos TypeScript 100%: OnnxInput, OnnxOutput, ZScoreLabel exportados de onnx.ts
-- [x] #3 Benchmark documentado no arquivo: P50 < 100ms, P99 < 200ms (batch=1) em hardware de desenvolvimento
-- [x] #4 Integração com src/engines/prediction/index.ts validada: onnxInfer() chamável pelo PredictionEngine
-- [x] #5 Nenhuma dependência nativa de Node.js: runtime exclusivamente Deno + WASM (sem node: imports)
+- [ ] #1 Testes unitários (Deno.test) com modelo ONNX mock cobrem: carga, inferência válida, input inválido e timeout
+- [ ] #2 Cobertura de tipos TypeScript 100%: OnnxInput, OnnxOutput, ZScoreLabel exportados de onnx.ts
+- [ ] #3 Benchmark documentado no arquivo: P50 < 100ms, P99 < 200ms (batch=1) em hardware de desenvolvimento
+- [ ] #4 Integração com src/engines/prediction/index.ts validada: onnxInfer() chamável pelo PredictionEngine
+- [ ] #5 Nenhuma dependência nativa de Node.js: runtime exclusivamente Deno + WASM (sem node: imports)
 <!-- DOD:END -->

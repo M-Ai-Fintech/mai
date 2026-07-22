@@ -1,16 +1,17 @@
 ---
 id: MAI-40
 title: Lógica genética para Term Sheet Matching
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:29'
 labels:
   - engine
   - optimization
   - poc
-milestone: m-5
+  - revalidation
+milestone: m-11
 dependencies: []
 parent_task_id: MAI-27
 priority: medium
@@ -25,12 +26,12 @@ Validar a convergência do algoritmo genético sob faixas flexíveis de valuatio
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 O algoritmo genético converge em menos de 10 gerações para os casos de teste padrão (perfis pré-definidos de comprador/vendedor)
-- [x] #2 A função de fitness penaliza corretamente estruturas que excedem os limites de valuation informados no perfil de entrada
-- [x] #3 O motor retorna no mínimo 3 alternativas de term sheet ranqueadas por score de fitness, cobrindo ao menos 2 modalidades distintas (ex.: Cash + Equity, Earn-out, Escrow)
-- [x] #4 Alternativas geradas não repetem a mesma combinação de modalidade/percentual entre si (diversidade genética garantida)
-- [x] #5 O tempo de execução para uma população de 100 indivíduos e 10 gerações é inferior a 500 ms em hardware de referência
-- [x] #6 A integração com o NegotiationAgent recebe o array de alternativas e exibe cada opção corretamente via CLI sem erros de validação Zod
+- [ ] #1 O algoritmo genético converge em menos de 10 gerações para os casos de teste padrão (perfis pré-definidos de comprador/vendedor)
+- [ ] #2 A função de fitness penaliza corretamente estruturas que excedem os limites de valuation informados no perfil de entrada
+- [ ] #3 O motor retorna no mínimo 3 alternativas de term sheet ranqueadas por score de fitness, cobrindo ao menos 2 modalidades distintas (ex.: Cash + Equity, Earn-out, Escrow)
+- [ ] #4 Alternativas geradas não repetem a mesma combinação de modalidade/percentual entre si (diversidade genética garantida)
+- [ ] #5 O tempo de execução para uma população de 100 indivíduos e 10 gerações é inferior a 500 ms em hardware de referência
+- [ ] #6 A integração com o NegotiationAgent recebe o array de alternativas e exibe cada opção corretamente via CLI sem erros de validação Zod
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -61,13 +62,19 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Duplicação Crítica de Lógica: Há dois algoritmos genéticos separados e incompatíveis no código: src/engines/optimization/genetic.ts (que atua sobre valuation, cash, equity, earn-out, escrow) e term_sheet_optimizer.ts (que opera sobre cashPercentage, buyerEquityShare, earnOutTargetYears, nonCompeteMonths). 2. Motor Inutilizado em Produção: O algoritmo desenvolvido sob a tarefa MAI-40 (genetic.ts) só é chamado no test runner e na tool Mastra, enquanto a CLI e a API Server continuam utilizando o term_sheet_optimizer.ts antigo. A lógica de convergência otimizada não está de fato integrada no fluxo real do middleware.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The genetic implementation has a failing tournament-selection test that the canonical suite excludes. Reopen until selection semantics are deterministic or correctly specified and every colocated test is part of the gate.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Implementação completa em src/engines/optimization/genetic.ts com tipagem TypeScript estrita (sem any)
-- [x] #2 Cobertura de testes unitários ≥ 80 % sobre as funções principais: initialPopulation, crossover, mutate, evaluate, select
-- [x] #3 Benchmark de convergência documentado: arquivo de resultados gerado automaticamente pelo test runner (ex.: bench/ga-convergence.json)
-- [x] #4 Integração smoke-tested: o NegotiationAgent consome o output do GA e loga as 3+ alternativas sem erros no fluxo E2E básico
-- [x] #5 PR revisado e aprovado com pelo menos um comentário de code-review abordando a estratégia de seleção escolhida (torneio, roleta etc.)
+- [ ] #1 Implementação completa em src/engines/optimization/genetic.ts com tipagem TypeScript estrita (sem any)
+- [ ] #2 Cobertura de testes unitários ≥ 80 % sobre as funções principais: initialPopulation, crossover, mutate, evaluate, select
+- [ ] #3 Benchmark de convergência documentado: arquivo de resultados gerado automaticamente pelo test runner (ex.: bench/ga-convergence.json)
+- [ ] #4 Integração smoke-tested: o NegotiationAgent consome o output do GA e loga as 3+ alternativas sem erros no fluxo E2E básico
+- [ ] #5 PR revisado e aprovado com pelo menos um comentário de code-review abordando a estratégia de seleção escolhida (torneio, roleta etc.)
 <!-- DOD:END -->

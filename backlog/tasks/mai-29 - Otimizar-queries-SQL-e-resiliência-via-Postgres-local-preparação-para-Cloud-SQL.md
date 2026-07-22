@@ -3,16 +3,17 @@ id: MAI-29
 title: >-
   Otimizar queries SQL e resiliência via Postgres local (preparação para Cloud
   SQL)
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 13:44'
+updated_date: '2026-07-22 05:29'
 labels:
   - core
   - database
   - poc
-milestone: m-3
+  - revalidation
+milestone: m-9
 dependencies: []
 parent_task_id: MAI-18
 priority: medium
@@ -59,6 +60,16 @@ Componentes Críticos:
 5. Testes e Validação:
    - Atualizar a suíte de testes tests/core/memory_service.spec.ts para testar os cenários de pool, tratamento de erro de conexão e retentativas automáticas.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Resilience and query optimization are unverified: all criteria are unchecked and the DatabaseMemoryService retry test fails. Reopen with real Postgres integration and measurable query evidence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

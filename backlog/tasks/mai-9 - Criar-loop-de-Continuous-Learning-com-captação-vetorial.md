@@ -1,16 +1,17 @@
 ---
 id: MAI-9
 title: Criar loop de Continuous Learning com captação vetorial
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 20:32'
+updated_date: '2026-07-22 05:28'
 labels:
   - agent
   - database
   - poc
-milestone: m-2
+  - revalidation
+milestone: m-13
 dependencies: []
 parent_task_id: MAI-8
 priority: medium
@@ -25,11 +26,11 @@ Implementar um loop de aprendizado contínuo (Continuous Learning) no ecossistem
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 O BrokerOrchestratorAgent ou o serviço BrokerOrchestratorService deve interceptar correções e feedbacks estruturados do usuário, invocando o TransformersEngine para gerar embeddings reais (vetor de 384 dimensões) sem travar a interface da CLI.
-- [x] #2 Persistir os registros de feedback e preferências no banco PostgreSQL via DatabaseMemoryService, salvando-os nas tabelas user_preferences e company_culture_memory com o correspondente vetor de embedding.
-- [x] #3 Implementar a busca por similaridade vetorial via searchSimilarKnowledge ou método correspondente no DatabaseMemoryService para obter o histórico de preferências e feedbacks relevantes para a operação ativa.
-- [x] #4 Implementar injeção dinâmica de prompts: antes de encaminhar tarefas aos subagentes (FinancialRiskAgent, LegalDueDiligenceAgent, etc.), o orquestrador deve concatenar as preferências e feedbacks vetoriais recuperados no template de sistema, respeitando o prompt de injeção dinâmica.
-- [x] #5 Aplicar o protocolo de conflito de conformidade: se um feedback ou preferência recuperada do usuário tentar desviar ou conflitar com regras do domain_knowledge (ex: omitir split payment da LC 214/2025 ou omitir provisão de contingências), o sistema deve emitir um alerta [COMPLIANCE_CONFLICT] e forçar o fluxo Human-in-the-Loop (HITL) no CLI.
+- [ ] #1 O BrokerOrchestratorAgent ou o serviço BrokerOrchestratorService deve interceptar correções e feedbacks estruturados do usuário, invocando o TransformersEngine para gerar embeddings reais (vetor de 384 dimensões) sem travar a interface da CLI.
+- [ ] #2 Persistir os registros de feedback e preferências no banco PostgreSQL via DatabaseMemoryService, salvando-os nas tabelas user_preferences e company_culture_memory com o correspondente vetor de embedding.
+- [ ] #3 Implementar a busca por similaridade vetorial via searchSimilarKnowledge ou método correspondente no DatabaseMemoryService para obter o histórico de preferências e feedbacks relevantes para a operação ativa.
+- [ ] #4 Implementar injeção dinâmica de prompts: antes de encaminhar tarefas aos subagentes (FinancialRiskAgent, LegalDueDiligenceAgent, etc.), o orquestrador deve concatenar as preferências e feedbacks vetoriais recuperados no template de sistema, respeitando o prompt de injeção dinâmica.
+- [ ] #5 Aplicar o protocolo de conflito de conformidade: se um feedback ou preferência recuperada do usuário tentar desviar ou conflitar com regras do domain_knowledge (ex: omitir split payment da LC 214/2025 ou omitir provisão de contingências), o sistema deve emitir um alerta [COMPLIANCE_CONFLICT] e forçar o fluxo Human-in-the-Loop (HITL) no CLI.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -69,13 +70,19 @@ created: 2026-07-09 20:32
 ---
 Revisão crítica resolvida: Integrado a tabela user_preferences com pgvector real e implementado compliance e fallback.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Continuous-learning tests currently fail through the Broker model mismatch; user/deal identity remains defaulted and company culture is still treated as memory contrary to the Target Dossier decision. Reopen for governed persistence and retrieval.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 O fluxo de feedback e aprendizado contínuo está completamente implementado e integrado à interface CLI.
-- [x] #2 Testes de integração cobrem a geração de embeddings locais, persistência no banco Postgres e recuperação por similaridade de cosseno (com validação de retorno consistente caso a base vetorial esteja offline).
-- [x] #3 O mecanismo de detecção e alerta de conflito de compliance ([COMPLIANCE_CONFLICT]) foi verificado via teste automatizado.
-- [x] #4 O código foi devidamente documentado (especialmente os métodos do DatabaseMemoryService e as novas interações de roteamento/prompting) e está livre de lints ou erros de compilação em Deno.
-- [x] #5 A edição da tarefa foi feita estritamente através dos comandos CLI backlog task edit sem modificação manual direta nos arquivos markdown.
+- [ ] #1 O fluxo de feedback e aprendizado contínuo está completamente implementado e integrado à interface CLI.
+- [ ] #2 Testes de integração cobrem a geração de embeddings locais, persistência no banco Postgres e recuperação por similaridade de cosseno (com validação de retorno consistente caso a base vetorial esteja offline).
+- [ ] #3 O mecanismo de detecção e alerta de conflito de compliance ([COMPLIANCE_CONFLICT]) foi verificado via teste automatizado.
+- [ ] #4 O código foi devidamente documentado (especialmente os métodos do DatabaseMemoryService e as novas interações de roteamento/prompting) e está livre de lints ou erros de compilação em Deno.
+- [ ] #5 A edição da tarefa foi feita estritamente através dos comandos CLI backlog task edit sem modificação manual direta nos arquivos markdown.
 <!-- DOD:END -->

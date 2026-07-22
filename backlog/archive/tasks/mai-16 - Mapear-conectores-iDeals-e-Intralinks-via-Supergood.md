@@ -1,15 +1,16 @@
 ---
 id: MAI-16
 title: Mapear conectores iDeals e Intralinks via Supergood
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 17:36'
+updated_date: '2026-07-22 05:30'
 labels:
   - core
   - vdr
   - poc
+  - superseded
 milestone: m-2
 dependencies: []
 parent_task_id: MAI-13
@@ -32,8 +33,6 @@ Desenvolver as classes adaptadoras de VDR IDealsVDRProvider e IntralinksVDRProvi
 - [x] #5 Incluir cobertura completa de testes unitários para ambos os provedores usando fixtures JSON de respostas reais/mockadas do Supergood e mockando as chamadas HTTP em tests/vdr_connectors.spec.ts.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -43,6 +42,16 @@ Desenvolver as classes adaptadoras de VDR IDealsVDRProvider e IntralinksVDRProvi
 4. Implementação de Fixtures e Testes Unitários: Criar arquivos de fixtures JSON em tests/fixtures/ representando as respostas de iDeals e Intralinks. Escrever testes em tests/vdr_connectors.spec.ts cobrindo o fluxo feliz de mapeamento de metadados, download de binários, além de fluxos de erro (erros 4xx/5xx).
 5. Integração na Camada RAG: Habilitar o carregamento dinâmico dos novos conectores na inicialização de silos em src/agent/rag_layer.ts.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by MAI-81 and MAI-82. The existing iDeals/Intralinks work is fetch-mocked mapping with assumed provider values and cannot represent a completed integration.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

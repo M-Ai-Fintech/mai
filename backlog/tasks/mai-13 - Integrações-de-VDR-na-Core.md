@@ -1,16 +1,18 @@
 ---
 id: MAI-13
 title: Integrações de VDR na Core
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 20:32'
+updated_date: '2026-07-22 05:28'
 labels:
   - core
   - vdr
-milestone: m-2
-dependencies: []
+  - revalidation
+milestone: m-10
+dependencies:
+  - MAI-80
 priority: medium
 ordinal: 14000
 ---
@@ -27,11 +29,13 @@ Desenvolver a integração da Core API com provedores de Virtual Data Room (VDR)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Definir a interface genérica VDRProvider e tipos estruturados (VDRWorkspace, VDRFolder, VDRDocument) em src/core/vdr/types.ts de forma extensível.
-- [x] #2 Implementar o PapermarkVDRProvider suportando paginação, listagem de documentos/diretórios e download em lote utilizando autenticação via token pm_live_*.
-- [x] #3 Implementar o SupergoodVDRProvider que mapeia e roteia as requisições para os conectores do iDeals e Intralinks através do proxy HTTP da Supergood.ai.
-- [x] #4 Integrar os novos provedores com a classe ClientSiloedRAG em src/agent/rag_layer.ts, garantindo que documentos reais do VDR sejam processados, chunkados e vetorizados na inicialização do silo.
-- [x] #5 Implementar testes unitários e de integração abrangentes com mocks de requisições HTTP (ex: com Deno mock ou nock) para os três provedores.
+- [ ] #1 Definir a interface genérica VDRProvider e tipos estruturados (VDRWorkspace, VDRFolder, VDRDocument) em src/core/vdr/types.ts de forma extensível.
+- [ ] #2 Implementar o PapermarkVDRProvider suportando paginação, listagem de documentos/diretórios e download em lote utilizando autenticação via token pm_live_*.
+- [ ] #3 Implementar o SupergoodVDRProvider que mapeia e roteia as requisições para os conectores do iDeals e Intralinks através do proxy HTTP da Supergood.ai.
+- [ ] #4 Integrar os novos provedores com a classe ClientSiloedRAG em src/agent/rag_layer.ts, garantindo que documentos reais do VDR sejam processados, chunkados e vetorizados na inicialização do silo.
+- [ ] #5 Implementar testes unitários e de integração abrangentes com mocks de requisições HTTP (ex: com Deno mock ou nock) para os três provedores.
+- [ ] #6 Papermark is the sole enabled MVP VDR and all other providers are disabled unless explicitly configured
+- [ ] #7 Provider failures and fallback state cannot be represented as successful real VDR operations
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -73,13 +77,19 @@ created: 2026-07-09 20:32
 ---
 Revisão crítica resolvida: Implementado download real dos binários com conversão para texto no rag_layer.ts.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The Core has provider interfaces and mocks, not a carefully implemented real VDR integration. Reopen with Papermark as the sole MVP VDR and make mock/fallback state explicit and non-successful.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Interface abstrata de VDR projetada e implementada com suporte a múltiplos provedores em TypeScript (Deno/Mastra).
-- [x] #2 Suporte completo e verificado para autenticação e download de arquivos em Papermark, iDeals e Intralinks.
-- [x] #3 Integração validada com a camada RAG local do agente (sem expor documentos confidenciais fora dos silos locais).
-- [x] #4 Variáveis de ambiente (como PAPERMARK_API_KEY e SUPERGOOD_API_KEY) documentadas no .env.example e validadas.
-- [x] #5 Cobertura de testes para fluxo feliz de download e tratamento de erros (rate limit, expiração de token).
+- [ ] #1 Interface abstrata de VDR projetada e implementada com suporte a múltiplos provedores em TypeScript (Deno/Mastra).
+- [ ] #2 Suporte completo e verificado para autenticação e download de arquivos em Papermark, iDeals e Intralinks.
+- [ ] #3 Integração validada com a camada RAG local do agente (sem expor documentos confidenciais fora dos silos locais).
+- [ ] #4 Variáveis de ambiente (como PAPERMARK_API_KEY e SUPERGOOD_API_KEY) documentadas no .env.example e validadas.
+- [ ] #5 Cobertura de testes para fluxo feliz de download e tratamento de erros (rate limit, expiração de token).
 <!-- DOD:END -->

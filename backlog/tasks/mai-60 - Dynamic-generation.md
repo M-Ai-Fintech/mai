@@ -1,17 +1,18 @@
 ---
 id: MAI-60
 title: 'Dashboard Dinâmico: Customização de Layout e Ancoragem de Widgets Generativos'
-status: Done
+status: To Do
 assignee: []
 created_date: '2026-07-14 05:35'
-updated_date: '2026-07-14 16:17'
+updated_date: '2026-07-22 05:29'
 labels:
   - GUI
   - dashboard
   - dynamic
   - drag-and-drop
   - innovation
-milestone: m-6
+  - revalidation
+milestone: m-12
 dependencies:
   - MAI-51
   - MAI-57
@@ -36,16 +37,14 @@ A configuração do layout (disposição, tamanhos, widgets nativos e widgets ge
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Grid layout customizável com drag-and-drop de widgets no dashboard
-- [x] #2 Widgets disponíveis: KPI cards (deals ativos, valor total pipeline, taxa de conversão), gráfico de pipeline, lista de deals recentes, inbox resumido, activity feed da equipe
-- [x] #3 Usuário pode adicionar, remover e redimensionar widgets
-- [x] #4 Configuração de layout persistida por usuário (localStorage) e restaurada ao recarregar
-- [x] #5 Layout padrão (default) disponível como fallback e opção de reset
-- [x] #6 Responsivo: grid colapsa graciosamente para mobile (stack vertical)
-- [x] #7 Protótipo aprovado pelo PO no Stitch
+- [ ] #1 Grid layout customizável com drag-and-drop de widgets no dashboard
+- [ ] #2 Widgets disponíveis: KPI cards (deals ativos, valor total pipeline, taxa de conversão), gráfico de pipeline, lista de deals recentes, inbox resumido, activity feed da equipe
+- [ ] #3 Usuário pode adicionar, remover e redimensionar widgets
+- [ ] #4 Configuração de layout persistida por usuário (localStorage) e restaurada ao recarregar
+- [ ] #5 Layout padrão (default) disponível como fallback e opção de reset
+- [ ] #6 Responsivo: grid colapsa graciosamente para mobile (stack vertical)
+- [ ] #7 Protótipo aprovado pelo PO no Stitch
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
@@ -60,11 +59,21 @@ A configuração do layout (disposição, tamanhos, widgets nativos e widgets ge
 8. Criar documentação e stories no Storybook.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The dashboard supports basic button-based layout changes but not claimed drag-and-drop or generative-widget anchoring; the localStorage anchor has no consumer. Reopen for a complete integration.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Drag-and-drop funcional sem bugs visuais (sem overlap, snap-to-grid)
-- [x] #2 Persistência de layout funcional com localStorage
-- [x] #3 Reset para layout padrão funcional
-- [x] #4 Responsivo nos 4 breakpoints
-- [x] #5 Stories no Storybook para os componentes de drag-and-drop grid
+- [ ] #1 Drag-and-drop funcional sem bugs visuais (sem overlap, snap-to-grid)
+- [ ] #2 Persistência de layout funcional com localStorage
+- [ ] #3 Reset para layout padrão funcional
+- [ ] #4 Responsivo nos 4 breakpoints
+- [ ] #5 Stories no Storybook para os componentes de drag-and-drop grid
 <!-- DOD:END -->

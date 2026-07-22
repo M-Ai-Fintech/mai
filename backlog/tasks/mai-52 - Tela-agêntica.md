@@ -1,20 +1,22 @@
 ---
 id: MAI-52
 title: 'Integração Agêntica: Chatbot e Painel de Engines'
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:31'
-updated_date: '2026-07-14 16:13'
+updated_date: '2026-07-22 05:56'
 labels:
   - GUI
   - ai
   - integration
   - stitch
-milestone: m-6
+  - revalidation
+milestone: m-12
 dependencies:
-  - MAI-53
-  - MAI-49
+  - MAI-4
+  - MAI-26
+  - MAI-85
 references:
   - gui/DESIGN.md
   - src/api/server.ts
@@ -35,16 +37,14 @@ Todas as interfaces devem seguir rigorosamente o fluxo Stitch-First: prototipaç
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Chat UI e Painel de Engines prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
-- [x] #2 Interfaces construídas reutilizando os componentes base da biblioteca MAI-53 (Card, Button, Input, Skeleton, Avatar, Spinners)
-- [x] #3 Chat UI implementada suportando histórico de mensagens, input de texto com submit via enter, e auto-scroll
-- [x] #4 Chat UI renderiza respostas em Markdown (via react-markdown ou similar), com suporte a tabelas e code blocks
-- [x] #5 Indicador visual de 'agente digitando/pensando' (usando componentes da MAI-53) implementado durante a espera da resposta da API
-- [x] #6 Conexão com a API via Server-Sent Events (SSE) implementada no client para suportar respostas em streaming
-- [x] #7 Painel de Engines implementado exibindo cards de insights (Risk Score gauge, Valuation Range chart, DD Alerts list) a partir dos Cards reutilizáveis da MAI-53
+- [ ] #1 Chat UI e Painel de Engines prototipados no Stitch MCP e aprovados pelo PO antes da codificação (fluxo Stitch-First: prototipar no Stitch MCP -> aprovação PO -> código)
+- [ ] #2 Interfaces construídas reutilizando os componentes base da biblioteca MAI-53 (Card, Button, Input, Skeleton, Avatar, Spinners)
+- [ ] #3 Chat UI implementada suportando histórico de mensagens, input de texto com submit via enter, e auto-scroll
+- [ ] #4 Chat UI renderiza respostas em Markdown (via react-markdown ou similar), com suporte a tabelas e code blocks
+- [ ] #5 Indicador visual de 'agente digitando/pensando' (usando componentes da MAI-53) implementado durante a espera da resposta da API
+- [ ] #6 Conexão com a API via Server-Sent Events (SSE) implementada no client para suportar respostas em streaming
+- [ ] #7 Painel de Engines implementado exibindo cards de insights (Risk Score gauge, Valuation Range chart, DD Alerts list) a partir dos Cards reutilizáveis da MAI-53
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
@@ -52,11 +52,27 @@ Todas as interfaces devem seguir rigorosamente o fluxo Stitch-First: prototipaç
 1. Prototipar Chat UI e Painel de Engines no Stitch MCP. 2. Obter aprovação do PO. 3. Implementar componentes de Chat (ChatWindow, Message, InputArea) estendendo os componentes da MAI-53. 4. Implementar renderizador de Markdown no chat. 5. Integrar SSE no frontend para receber stream de texto. 6. Implementar layout do Painel de Engines reutilizando componentes de Card da MAI-53. 7. Conectar o Painel com os endpoints de insights da API.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The agentic screen only executes the Broker; engine outputs and VDR documents are defaults, streaming is artificial, citations remain empty, and tool traces are not emitted. Reopen for truthful integrated behavior.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: @codex
+created: 2026-07-22 05:31
+---
+## Gemini incident dependency\n\nAgentic chat depends on MAI-4 for compatible live Gemini execution and MAI-26 for Browser -> Next.js -> Core transport. The existing artificial stream, empty citations, absent tool traces, and Broker-only routing remain part of this task.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Protótipos de Chat UI e Painel de Engines aprovados no Stitch MCP pelo PO
-- [x] #2 Componentes de UI construídos e integrados reutilizando a biblioteca de componentes MAI-53
-- [x] #3 Chat testado enviando prompts reais para a API do Deno e renderizando a resposta transmitida via SSE
-- [x] #4 Painel de Engines renderiza corretamente com base no JSON retornado pela API
-- [x] #5 Componentes isolados de Chat (MessageBubble, InputBar) documentados com stories no Storybook
+- [ ] #1 Protótipos de Chat UI e Painel de Engines aprovados no Stitch MCP pelo PO
+- [ ] #2 Componentes de UI construídos e integrados reutilizando a biblioteca de componentes MAI-53
+- [ ] #3 Chat testado enviando prompts reais para a API do Deno e renderizando a resposta transmitida via SSE
+- [ ] #4 Painel de Engines renderiza corretamente com base no JSON retornado pela API
+- [ ] #5 Componentes isolados de Chat (MessageBubble, InputBar) documentados com stories no Storybook
 <!-- DOD:END -->

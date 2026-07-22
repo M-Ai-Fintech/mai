@@ -1,17 +1,18 @@
 ---
 id: MAI-63
 title: Rebuild coherent Stitch-first GUI prototype
-status: In Progress
+status: To Do
 assignee: []
 created_date: '2026-07-19 06:50'
-updated_date: '2026-07-19 16:40'
+updated_date: '2026-07-22 05:55'
 labels:
   - GUI
   - stitch
   - prototype
   - backend
   - frontend
-milestone: m-6
+  - superseded
+milestone: m-12
 dependencies: []
 references:
   - gui/DESIGN.md
@@ -50,3 +51,13 @@ Rework the M&Ai GUI prototype from a clean Stitch component-library baseline. Th
 <!-- SECTION:NOTES:BEGIN -->
 Documentation synchronized after the MVP_6 implementation and QA gate. README.md, gui/README.md, context/nextjs_gui_and_api.md, and gui/docs/user-flow.md now describe the canonical routes, Next.js API rewrite, typed contracts, SSE/reconnect states, optimistic versions, in-memory persistence boundary, authentication/Gemini limits, and the still-partial Stitch generation. Relative links and prompt validation pass.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:55
+---
+Supersession decision — 2026-07-22: Stitch repeatedly failed to generate screens that followed the design system, so it never produced a usable or reviewable prototype. This task is superseded by MAI-85, which moves final design-system and screen work to Figma or an equivalently capable tool. Obsolete Stitch artifacts and scripts are evaluated under MAI-83.
+---
+<!-- COMMENTS:END -->

@@ -3,12 +3,13 @@ id: MAI-77
 title: >-
   Unify Risk, Contingency, and Conditions Precedent categories under a single
   Domain Area taxonomy
-status: Done
+status: To Do
 assignee: []
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-20 19:28'
-labels: []
-milestone: m-7
+updated_date: '2026-07-22 05:29'
+labels:
+  - revalidation
+milestone: m-14
 dependencies: []
 priority: high
 ordinal: 69000
@@ -29,6 +30,13 @@ Three separate category lists exist for essentially the same domain areas: risk-
 - [ ] #5 Old disjoint category enums are removed from all three schema files
 - [ ] #6 All agents that produce or consume these schemas are updated to use the new shared type
 <!-- AC:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Every applicable acceptance criterion is checked with current evidence
+- [ ] #2 All focused tests and the repository-wide verification gate pass
+- [ ] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
+<!-- DOD:END -->
 
 ## Comments
 
@@ -64,5 +72,11 @@ Unificação da taxonomia de domínios entre Riscos (Risk Matrix), Passivos (Con
 ### O que validar
 
 - Valide as exibições no fluxo CLI de `negotiate` e extrato de Risco.
+---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: A shared DomainArea appears to exist, but every acceptance criterion is unchecked and all producers/consumers have not been verified. Reopen for exhaustive schema and agent contract tests.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->

@@ -1,15 +1,16 @@
 ---
 id: MAI-15
 title: Projetar interface Supergood de provedor genérico de VDR
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 17:30'
+updated_date: '2026-07-22 05:30'
 labels:
   - core
   - vdr
   - poc
+  - superseded
 milestone: m-2
 dependencies: []
 parent_task_id: MAI-13
@@ -32,8 +33,6 @@ Estruturar uma interface comum de abstração (provider pattern) integrando a pr
 - [x] #5 Garantir cobertura de testes unitários para a injeção correta de cabeçalhos do Supergood (ex: x-supergood-api-key, etc.) e as rotas de redirecionamento.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -43,6 +42,16 @@ Estruturar uma interface comum de abstração (provider pattern) integrando a pr
 4. **Implementação de Mock Provider para Testes**: Desenvolver o `MockVDRProvider` que estende a classe base e retorna dados sintéticos estruturados sem efetuar requisições reais à rede.
 5. **Criação de Testes Unitários**: Escrever testes unitários em `tests/vdr_provider.spec.ts` (usando Deno/TS) para validar a construção de cabeçalhos de proxy do Supergood, o fallback local e o tratamento de erros HTTP.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by the decision to support only local Papermark in the MVP (MAI-80) and to track real provider implementations independently in MAI-81 and MAI-82. The generic Supergood design remains historical context, not a completed production capability.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

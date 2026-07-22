@@ -1,16 +1,17 @@
 ---
 id: MAI-48
 title: 'Redesign Completo da GUI: Fluxo, Telas e Design System'
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:14'
-updated_date: '2026-07-14 17:24'
+updated_date: '2026-07-22 05:30'
 labels:
   - GUI
   - epic
   - design-system
   - stitch
+  - superseded
 milestone: m-6
 dependencies: []
 references:
@@ -65,22 +66,6 @@ Nenhuma implementação de código desta milestone pode ser iniciada sem que o d
 - [x] #12 Design System carregado e ativo no Stitch MCP a partir de gui/DESIGN.md, servindo como fonte de verdade para todos os protótipos da milestone
 <!-- AC:END -->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -130,6 +115,16 @@ Inteligência visual composable e workspace customizável.
 - Fase 3 → bloqueia Fase 4 e 5 (componentes codificados são consumidos pelas telas e pelo motor de Generative UI)
 - Fase 4 e 5 → compõem o produto final responsivo e composable.
 <!-- SECTION:PLAN:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by the later Stitch-first prototype/rebuild tasks MAI-63 and MAI-66 and the Banker Workspace milestone. Keeping both redesign epics active would duplicate scope.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

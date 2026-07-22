@@ -1,15 +1,16 @@
 ---
 id: MAI-64
 title: Map Stitch component showcases to local component APIs
-status: Done
+status: To Do
 assignee: []
 created_date: '2026-07-19 06:52'
-updated_date: '2026-07-19 14:48'
+updated_date: '2026-07-22 05:30'
 labels:
   - GUI
   - stitch
   - design-system
   - components
+  - superseded
 milestone: m-6
 dependencies: []
 references:
@@ -49,6 +50,16 @@ Create the version contract between the clean Stitch component showcases and the
 <!-- SECTION:NOTES:BEGIN -->
 Investigation found Stitch asset Mastercard Editorial version 3 and local GUI 0.1.0 are not the same component version. Visible Stitch showcases are the visual authority for MAI-66; local TypeScript APIs remain the executable boundary to reconcile in MAI-68. Stitch lists 23 approved visible references; hidden deleted-screen instances remain only as unapproved project metadata. Validation: live Stitch project/screens/design-system queried; git diff --check passed; artifact is non-empty.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by MAI-83 and MAI-84. The claimed Stitch component contract artifact is absent and its README link is broken; the obsolete validator will be reviewed under the code-rot safety workflow.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->
 
 ## Final Summary
 

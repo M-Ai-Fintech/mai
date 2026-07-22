@@ -5,11 +5,11 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-14 04:55'
+updated_date: '2026-07-22 05:30'
 labels:
   - cloud
   - infrastructure
-milestone: m-8
+milestone: m-15
 dependencies: []
 priority: low
 ordinal: 38000

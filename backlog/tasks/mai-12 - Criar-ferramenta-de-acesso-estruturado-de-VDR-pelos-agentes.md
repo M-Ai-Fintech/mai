@@ -1,17 +1,19 @@
 ---
 id: MAI-12
 title: Criar ferramenta de acesso estruturado de VDR pelos agentes
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 20:32'
+updated_date: '2026-07-22 05:28'
 labels:
   - agent
   - vdr
   - poc
-milestone: m-2
-dependencies: []
+  - revalidation
+milestone: m-10
+dependencies:
+  - MAI-80
 parent_task_id: MAI-8
 priority: low
 ordinal: 13000
@@ -31,11 +33,12 @@ Principais Funcionalidades a Desenvolver:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Ferramenta Mastra Unificada: Implementar a ferramenta vdrStructuredAccessTool no arquivo src/agent/actions.ts com validação de tipos usando Zod para entrada e saída.
-- [x] #2 Mapeamento de Tags e Pastas: As ações da ferramenta devem mapear os documentos do VDR às tags e diretórios definidos em vdr_directory_template.md.
-- [x] #3 Integração com RAG Silo: A ação query_silo deve chamar ClientSiloedRAG.querySilo para pesquisar no banco de dados vetorial por similaridade de cosseno.
-- [x] #4 Relatório de Auditoria de Completude: A ação audit_compliance deve varrer as pastas e verificar se todos os documentos essenciais (tributário, societário, financeiro, trabalhista) estão presentes ou sinalizar ausências como riscos e possíveis deal-breakers.
-- [x] #5 Registro nos Agentes de Auditoria: A nova ferramenta deve ser exportada e registrada no GeneralDueDiligenceAgent (supervisor de DD) e nos agentes especialistas de backend (financial-risk, legal-dd).
+- [ ] #1 Ferramenta Mastra Unificada: Implementar a ferramenta vdrStructuredAccessTool no arquivo src/agent/actions.ts com validação de tipos usando Zod para entrada e saída.
+- [ ] #2 Mapeamento de Tags e Pastas: As ações da ferramenta devem mapear os documentos do VDR às tags e diretórios definidos em vdr_directory_template.md.
+- [ ] #3 Integração com RAG Silo: A ação query_silo deve chamar ClientSiloedRAG.querySilo para pesquisar no banco de dados vetorial por similaridade de cosseno.
+- [ ] #4 Relatório de Auditoria de Completude: A ação audit_compliance deve varrer as pastas e verificar se todos os documentos essenciais (tributário, societário, financeiro, trabalhista) estão presentes ou sinalizar ausências como riscos e possíveis deal-breakers.
+- [ ] #5 Registro nos Agentes de Auditoria: A nova ferramenta deve ser exportada e registrada no GeneralDueDiligenceAgent (supervisor de DD) e nos agentes especialistas de backend (financial-risk, legal-dd).
+- [ ] #6 The structured VDR tool passes live integration tests against the local Papermark provider without mock or in-memory fallback
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -66,13 +69,19 @@ created: 2026-07-09 20:32
 ---
 Revisão crítica resolvida: Removidos mocks síncronos e adicionada propagação real de exceções nas ações de VDR.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Structured VDR tests pass only through the hardcoded VDR and in-memory RAG fallbacks. Reopen and validate the same agent operations against the live local Papermark provider.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 O arquivo src/agent/actions.ts possui a nova ferramenta vdrStructuredAccessTool devidamente implementada com Zod Schemas robustos.
-- [x] #2 As ações da ferramenta realizam corretamente consultas ao mock/silo de dados do VDR.
-- [x] #3 Escrita de testes unitários em Deno (tests/) para verificar o comportamento das quatro ações (list_files, read_file_content, query_silo, audit_compliance).
-- [x] #4 Os agentes GeneralDueDiligenceAgent, FinancialRiskAgent e LegalDueDiligenceAgent foram configurados para receber e utilizar a nova ferramenta.
-- [x] #5 Código limpo, testado localmente, livre de erros de compilação ou lints em TypeScript/Deno.
+- [ ] #1 O arquivo src/agent/actions.ts possui a nova ferramenta vdrStructuredAccessTool devidamente implementada com Zod Schemas robustos.
+- [ ] #2 As ações da ferramenta realizam corretamente consultas ao mock/silo de dados do VDR.
+- [ ] #3 Escrita de testes unitários em Deno (tests/) para verificar o comportamento das quatro ações (list_files, read_file_content, query_silo, audit_compliance).
+- [ ] #4 Os agentes GeneralDueDiligenceAgent, FinancialRiskAgent e LegalDueDiligenceAgent foram configurados para receber e utilizar a nova ferramenta.
+- [ ] #5 Código limpo, testado localmente, livre de erros de compilação ou lints em TypeScript/Deno.
 <!-- DOD:END -->

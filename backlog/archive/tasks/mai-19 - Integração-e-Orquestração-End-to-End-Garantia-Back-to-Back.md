@@ -1,14 +1,15 @@
 ---
 id: MAI-19
 title: Integração e Orquestração End-to-End (Garantia Back-to-Back)
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 13:44'
+updated_date: '2026-07-22 05:30'
 labels:
   - core
   - integration
+  - superseded
 milestone: m-3
 dependencies: []
 priority: medium
@@ -45,3 +46,13 @@ ordinal: 25000
 4. **Teste de integração** – escrever script de end‑to‑end que simula um ciclo completo e verifica logs e checkpoints.
 5. **Documentação** – atualizar `docs/architecture.md` e README com diagramas de fluxo.
 6. **CI/Entrega** – garantir que o pipeline execute lint, type‑check, testes e gere cobertura.
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline disposition — 2026-07-22\n\nSuperseded by the rebaselined Agentic Deal Lifecycle milestone and MAI-31. The broad back-to-back claim has no independently verifiable acceptance contract.\n\nThis task is archived as superseded rather than treated as completed. Any remaining required outcome is tracked by the referenced replacement task or milestone.
+---
+<!-- COMMENTS:END -->

@@ -1,16 +1,17 @@
 ---
 id: MAI-31
 title: 'Fluxo de ponta a ponta: Sourcing -> DD -> Closing'
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:29'
 labels:
   - core
   - integration
   - poc
-milestone: m-5
+  - revalidation
+milestone: m-13
 dependencies: []
 parent_task_id: MAI-19
 priority: medium
@@ -25,11 +26,11 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Successful execution of the full pipeline with mock data produces a final closing preview markdown without errors
-- [x] #2 Sourcing agent generates a complete sourcing report; FinancialRisk agent returns a quantitative risk score from the ONNX model; LegalDueDiligence agent produces a legal summary
-- [x] #3 All Pub/Sub messages are published and consumed as expected, with no lost or duplicate events
-- [x] #4 Pipeline completes within 30 seconds on a standard development machine
-- [x] #5 Logs contain a unique correlation ID that links all stages of the transaction
+- [ ] #1 Successful execution of the full pipeline with mock data produces a final closing preview markdown without errors
+- [ ] #2 Sourcing agent generates a complete sourcing report; FinancialRisk agent returns a quantitative risk score from the ONNX model; LegalDueDiligence agent produces a legal summary
+- [ ] #3 All Pub/Sub messages are published and consumed as expected, with no lost or duplicate events
+- [ ] #4 Pipeline completes within 30 seconds on a standard development machine
+- [ ] #5 Logs contain a unique correlation ID that links all stages of the transaction
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -61,13 +62,19 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Teste de Integração Mocado: O teste e2e/flow.test.ts faz monkeypatch de DatabaseMemoryService.prototype.query para retornar dados mocados, impossibilitando a validação real da integração com o banco. 2. Fallbacks de IA Silenciosos: Sem GEMINI_API_KEY configurada, os agentes rodam inteiramente com fallbacks e respostas mockadas estáticas interceptadas de forma transparente, o que mascara se os agentes funcionam corretamente com prompts reais em um fluxo E2E.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The purported end-to-end flow manually invokes simulated stages and accepts mock results; the current CLI KYB E2E test also fails. Reopen for an orchestrated banker flow with real dependency boundaries.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Code changes implemented and merged into the main branch
-- [x] #2 Unit tests added for each agent integration and passing
-- [x] #3 End‑to‑end integration test added to CI and all tests pass
-- [x] #4 Documentation updated with flow diagram, setup instructions, and artifact descriptions
-- [x] #5 Task status moved to Done and approved by code reviewer
+- [ ] #1 Code changes implemented and merged into the main branch
+- [ ] #2 Unit tests added for each agent integration and passing
+- [ ] #3 End‑to‑end integration test added to CI and all tests pass
+- [ ] #4 Documentation updated with flow diagram, setup instructions, and artifact descriptions
+- [ ] #5 Task status moved to Done and approved by code reviewer
 <!-- DOD:END -->

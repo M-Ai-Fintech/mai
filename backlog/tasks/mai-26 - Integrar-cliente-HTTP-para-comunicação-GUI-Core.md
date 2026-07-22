@@ -1,16 +1,17 @@
 ---
 id: MAI-26
 title: Integrar cliente HTTP para comunicação GUI-Core
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:31'
 labels:
   - interface
   - gui
   - poc
-milestone: m-4
+  - revalidation
+milestone: m-12
 dependencies: []
 parent_task_id: MAI-17
 priority: low
@@ -25,12 +26,14 @@ Implementar a camada de cliente HTTP (SDK/API Client) na interface gráfica (Das
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Configurar baseURL dinâmica do cliente HTTP com variáveis de ambiente do frontend (ex: NEXT_PUBLIC_CORE_API_URL).
-- [x] #2 Implementar tipagem estrita (TypeScript/Zod) para entradas/saídas de todos os endpoints dos motores computacionais (KYB, Predict, Portfolio, TermSheet, Document e Chat).
-- [x] #3 Implementar interceptores de erro com lógica de retry exponencial e timeout limite de 10s, reportando erros amigáveis ao usuário.
-- [x] #4 Estabelecer conexões resilientes para chat em tempo real via streaming (Server-Sent Events) ou polling para respostas longas de agentes.
-- [x] #5 Configurar cabeçalhos CORS no servidor Deno backend para aceitar requisições de origem da GUI local de desenvolvimento.
-- [x] #6 CORS no Deno, API Client no frontend, Error Interceptors com retry de 10s
+- [ ] #1 Configurar baseURL dinâmica do cliente HTTP com variáveis de ambiente do frontend (ex: NEXT_PUBLIC_CORE_API_URL).
+- [ ] #2 Implementar tipagem estrita (TypeScript/Zod) para entradas/saídas de todos os endpoints dos motores computacionais (KYB, Predict, Portfolio, TermSheet, Document e Chat).
+- [ ] #3 Implementar interceptores de erro com lógica de retry exponencial e timeout limite de 10s, reportando erros amigáveis ao usuário.
+- [ ] #4 Estabelecer conexões resilientes para chat em tempo real via streaming (Server-Sent Events) ou polling para respostas longas de agentes.
+- [ ] #5 Configurar cabeçalhos CORS no servidor Deno backend para aceitar requisições de origem da GUI local de desenvolvimento.
+- [ ] #6 CORS no Deno, API Client no frontend, Error Interceptors com retry de 10s
+- [ ] #7 Browser API calls use relative /api URLs and the Next.js server-only rewrite is the single transport boundary
+- [ ] #8 An end-to-end test proves Browser -> Next.js proxy -> Deno Core for chat and at least one non-chat operation
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -50,14 +53,26 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Integração Incompleta: O cliente HTTP gui/lib/api-client.ts foi criado, mas as telas de chat e engines da GUI não o utilizam, permanecendo como elementos puramente visuais e estáticos sem comunicação real com a Core API.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The browser client constructs absolute http://localhost:8000 URLs, bypassing the documented Next.js proxy and server-only MAI_API_BASE_URL. Reopen to use relative /api routes and prove Browser -> Next -> Core transport.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: @codex
+created: 2026-07-22 05:31
+---
+## Gemini incident ownership\n\nNo separate bug task was created. This task owns the frontend transport root cause: absolute browser URLs bypass the Next.js rewrite and server-only MAI_API_BASE_URL. MAI-4 owns the independent Mastra/AI SDK provider incompatibility. Both must pass end-to-end verification before MAI-52 can complete.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Cliente HTTP implementado em modulo centralizado do frontend (ex: src/gui/lib/api-client.ts) e coberto por testes unitários.
-- [x] #2 Rotas do Deno backend com suporte a CORS validadas e testadas localmente.
-- [x] #3 Higienização de logs de erros do cliente frontend implementada para mascarar paths internos e credenciais.
-- [x] #4 Deno lint e npm run lint (ou equivalentes de linter) executados sem warnings ou erros.
-- [x] #5 Documentação de configuração de variáveis de ambiente do cliente adicionada ao README.md ou .env.example.
-- [x] #6 api-client.ts criado, Deno Core backend permitindo origem localhost
+- [ ] #1 Cliente HTTP implementado em modulo centralizado do frontend (ex: src/gui/lib/api-client.ts) e coberto por testes unitários.
+- [ ] #2 Rotas do Deno backend com suporte a CORS validadas e testadas localmente.
+- [ ] #3 Higienização de logs de erros do cliente frontend implementada para mascarar paths internos e credenciais.
+- [ ] #4 Deno lint e npm run lint (ou equivalentes de linter) executados sem warnings ou erros.
+- [ ] #5 Documentação de configuração de variáveis de ambiente do cliente adicionada ao README.md ou .env.example.
+- [ ] #6 api-client.ts criado, Deno Core backend permitindo origem localhost
 <!-- DOD:END -->

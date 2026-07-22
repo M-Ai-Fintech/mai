@@ -1,15 +1,16 @@
 ---
 id: MAI-8
 title: Evolução dos Agentes e RAG
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 20:32'
+updated_date: '2026-07-22 05:28'
 labels:
   - agent
   - ai
-milestone: m-2
+  - revalidation
+milestone: m-13
 dependencies: []
 priority: medium
 ordinal: 9000
@@ -29,11 +30,11 @@ A evolução será dividida em quatro frentes principais:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 A base PostgreSQL local deve ser atualizada com a extensão pgvector habilitada, e as tabelas user_preferences, domain_knowledge e company_culture_memory devem utilizar a coluna tipo vector(384) para armazenar embeddings gerados pelo modelo all-MiniLM-L6-v2, substituindo o tipo genérico REAL[].
-- [x] #2 O motor de RAG (ClientSiloedRAG) deve ser refatorado para persistir chunks de documentos do VDR no banco de dados e realizar consultas semânticas restritas ao ID do Deal (isolamento fiduciário) utilizando a distância de cosseno (<=>) via pgvector.
-- [x] #3 Novas ferramentas personalizadas do ADK (ex: search-vdr-tool e extract-vdr-metadata) devem ser expostas em src/agent/actions.ts e disponibilizadas para os subagentes de Due Diligence (GeneralDD, FinancialRisk, LegalDD) lerem e consultarem documentos de forma estruturada.
-- [x] #4 O mecanismo de aprendizado contínuo (ContinuousLearningEngine) deve converter as justificativas das correções em embeddings vetoriais, armazenando-os como preferências do broker no Postgres, e recuperá-los semanticamente para injetar diretrizes dinâmicas (In-Context Learning) nos prompts do BrokerOrchestratorAgent.
-- [x] #5 Deve ser disponibilizado um pipeline documentado de fine-tuning (LoRA) para o mercado brasileiro de M&A, contendo um script de extração/formatação de dados em JSONL (padrão Alpaca/ShareGPT) a partir das interações históricas e um notebook Jupyter configurado no Colab.
+- [ ] #1 A base PostgreSQL local deve ser atualizada com a extensão pgvector habilitada, e as tabelas user_preferences, domain_knowledge e company_culture_memory devem utilizar a coluna tipo vector(384) para armazenar embeddings gerados pelo modelo all-MiniLM-L6-v2, substituindo o tipo genérico REAL[].
+- [ ] #2 O motor de RAG (ClientSiloedRAG) deve ser refatorado para persistir chunks de documentos do VDR no banco de dados e realizar consultas semânticas restritas ao ID do Deal (isolamento fiduciário) utilizando a distância de cosseno (<=>) via pgvector.
+- [ ] #3 Novas ferramentas personalizadas do ADK (ex: search-vdr-tool e extract-vdr-metadata) devem ser expostas em src/agent/actions.ts e disponibilizadas para os subagentes de Due Diligence (GeneralDD, FinancialRisk, LegalDD) lerem e consultarem documentos de forma estruturada.
+- [ ] #4 O mecanismo de aprendizado contínuo (ContinuousLearningEngine) deve converter as justificativas das correções em embeddings vetoriais, armazenando-os como preferências do broker no Postgres, e recuperá-los semanticamente para injetar diretrizes dinâmicas (In-Context Learning) nos prompts do BrokerOrchestratorAgent.
+- [ ] #5 Deve ser disponibilizado um pipeline documentado de fine-tuning (LoRA) para o mercado brasileiro de M&A, contendo um script de extração/formatação de dados em JSONL (padrão Alpaca/ShareGPT) a partir das interações históricas e um notebook Jupyter configurado no Colab.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -78,13 +79,19 @@ created: 2026-07-09 20:32
 ---
 Revisão crítica resolvida: Embedding real agora propaga exceção.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The advertised agent evolution is not implemented as orchestration: the runtime always calls the Broker, specialist routing/delegation is absent, and RAG commonly falls back to mocks. Reopen around real agent boundaries and evidence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Migrações SQL criadas e aplicadas com sucesso no Postgres, habilitando pgvector e migrando colunas de embeddings para o tipo vector(384).
-- [x] #2 Modificações de código TypeScript no DatabaseMemoryService (src/core/db/memory_service.ts) e ClientSiloedRAG (src/agent/rag_layer.ts) concluídas, testadas e livres de erros de compilação ou lints.
-- [x] #3 Ferramentas de acesso estruturado de VDR devidamente registradas e validadas no ADK em src/agent/actions.ts.
-- [x] #4 Scripts de exportação do dataset de fine-tuning integrados e script python de treino validado localmente ou no ambiente do Colab.
-- [x] #5 Loop de feedback (Continuous Learning) funcionando de ponta a ponta com persistência vetorial real no Postgres e teste de fumaça da CLI executado sem erros.
+- [ ] #1 Migrações SQL criadas e aplicadas com sucesso no Postgres, habilitando pgvector e migrando colunas de embeddings para o tipo vector(384).
+- [ ] #2 Modificações de código TypeScript no DatabaseMemoryService (src/core/db/memory_service.ts) e ClientSiloedRAG (src/agent/rag_layer.ts) concluídas, testadas e livres de erros de compilação ou lints.
+- [ ] #3 Ferramentas de acesso estruturado de VDR devidamente registradas e validadas no ADK em src/agent/actions.ts.
+- [ ] #4 Scripts de exportação do dataset de fine-tuning integrados e script python de treino validado localmente ou no ambiente do Colab.
+- [ ] #5 Loop de feedback (Continuous Learning) funcionando de ponta a ponta com persistência vetorial real no Postgres e teste de fumaça da CLI executado sem erros.
 <!-- DOD:END -->

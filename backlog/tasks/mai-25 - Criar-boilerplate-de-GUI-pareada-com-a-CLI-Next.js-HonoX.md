@@ -1,16 +1,17 @@
 ---
 id: MAI-25
 title: Criar boilerplate de GUI pareada com a CLI (Next.js/HonoX)
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:28'
 labels:
   - interface
   - gui
   - poc
-milestone: m-4
+  - revalidation
+milestone: m-12
 dependencies: []
 parent_task_id: MAI-17
 priority: low
@@ -25,12 +26,12 @@ Estabelecer o boilerplate inicial da interface gráfica (Web Dashboard) pareada 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Setup do Boilerplate: Estrutura executável configurada com TypeScript, Tailwind CSS e roteamento funcional (Next.js ou HonoX no Deno).
-- [x] #2 Fidelidade de Interface com a CLI: Telas e fluxos de navegação desenhados para as 6 funções da CLI (KYB, Risco/ONNX, MILP, Otimização Contratual, PDF/LaTeX, Chat Broker).
-- [x] #3 Mock APIs / Server Handlers: Endpoints prontos no boilerplate para retornar dados simulados idênticos aos retornos de console da CLI.
-- [x] #4 Responsividade e Estilo Premium: Design escuro consistente com a estética do middleware, utilizando CSS modular para isolamento.
-- [x] #5 Compatibilidade de Tipagem: Importação direta ou mapeamento claro dos tipos compartilhados da Core (ex: CompanyFinancialProfile, TargetRawInput) para o frontend.
-- [x] #6 Next.js + Tailwind configurado, rotas básicas para as 6 funções CLI
+- [ ] #1 Setup do Boilerplate: Estrutura executável configurada com TypeScript, Tailwind CSS e roteamento funcional (Next.js ou HonoX no Deno).
+- [ ] #2 Fidelidade de Interface com a CLI: Telas e fluxos de navegação desenhados para as 6 funções da CLI (KYB, Risco/ONNX, MILP, Otimização Contratual, PDF/LaTeX, Chat Broker).
+- [ ] #3 Mock APIs / Server Handlers: Endpoints prontos no boilerplate para retornar dados simulados idênticos aos retornos de console da CLI.
+- [ ] #4 Responsividade e Estilo Premium: Design escuro consistente com a estética do middleware, utilizando CSS modular para isolamento.
+- [ ] #5 Compatibilidade de Tipagem: Importação direta ou mapeamento claro dos tipos compartilhados da Core (ex: CompanyFinancialProfile, TargetRawInput) para o frontend.
+- [ ] #6 Next.js + Tailwind configurado, rotas básicas para as 6 funções CLI
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -52,13 +53,19 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Falsa conformidade: O critério AC #5 'Compatibilidade de Tipagem' foi marcado como feito, mas conforme documentado no README da GUI, o compartilhamento direto de tipos TS com a Core (Deno) não foi implementado, utilizando-se apenas mocks baseados na estrutura acordada.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The Next.js boilerplate builds, but the claimed paired GUI/CLI contract and shared Core types are not established. Reopen or explicitly narrow the scope to a shell-only prototype with corresponding tests.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Boilerplate de frontend inicializa e compila sem erros com 'deno task' ou comando correspondente.
-- [x] #2 Rotas e navegação lateral funcionam perfeitamente no navegador.
-- [x] #3 Formulários e chat simulam interações e exibem logs de console fictícios equivalentes à CLI.
-- [x] #4 Documentação (README) no subdiretório da GUI explicando instalação, inicialização e compartilhamento de tipos.
-- [x] #5 Boilerplate compila sem erros com npm run dev no diretório gui
+- [ ] #1 Boilerplate de frontend inicializa e compila sem erros com 'deno task' ou comando correspondente.
+- [ ] #2 Rotas e navegação lateral funcionam perfeitamente no navegador.
+- [ ] #3 Formulários e chat simulam interações e exibem logs de console fictícios equivalentes à CLI.
+- [ ] #4 Documentação (README) no subdiretório da GUI explicando instalação, inicialização e compartilhamento de tipos.
+- [ ] #5 Boilerplate compila sem erros com npm run dev no diretório gui
 <!-- DOD:END -->

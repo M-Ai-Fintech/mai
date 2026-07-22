@@ -1,16 +1,17 @@
 ---
 id: MAI-41
 title: Implementar constraint programming em Optimization (KYC/Valuation)
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-10 06:04'
+updated_date: '2026-07-22 05:29'
 labels:
   - engine
   - optimization
   - poc
-milestone: m-5
+  - revalidation
+milestone: m-11
 dependencies: []
 parent_task_id: MAI-27
 priority: medium
@@ -25,12 +26,12 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Deals que violam restrições de KYC (ex.: PEP, sanções OFAC/BACEN) são rejeitados automaticamente pelo solver antes de chegarem ao ranking final.
-- [x] #2 A razão de alavancagem máxima (ex.: Dívida/EBITDA > 6×) bloqueia a estrutura de deal correspondente com mensagem de erro estruturada.
-- [x] #3 O índice mínimo de cobertura de EBITDA (ex.: EBITDA/Juros < 1,5×) é verificado e falha com diagnóstico claro.
-- [x] #4 O output do algoritmo genético (`GAResult`) é filtrado pelo solver, retornando apenas estruturas que satisfazem **todas** as restrições ativas.
-- [x] #5 Restrições podem ser ativadas/desativadas por configuração, sem alterar o código-fonte de `constraints.ts`.
-- [x] #6 O solver processa um conjunto de 100 candidatos em menos de 200 ms (benchmark local, Deno).
+- [ ] #1 Deals que violam restrições de KYC (ex.: PEP, sanções OFAC/BACEN) são rejeitados automaticamente pelo solver antes de chegarem ao ranking final.
+- [ ] #2 A razão de alavancagem máxima (ex.: Dívida/EBITDA > 6×) bloqueia a estrutura de deal correspondente com mensagem de erro estruturada.
+- [ ] #3 O índice mínimo de cobertura de EBITDA (ex.: EBITDA/Juros < 1,5×) é verificado e falha com diagnóstico claro.
+- [ ] #4 O output do algoritmo genético (`GAResult`) é filtrado pelo solver, retornando apenas estruturas que satisfazem **todas** as restrições ativas.
+- [ ] #5 Restrições podem ser ativadas/desativadas por configuração, sem alterar o código-fonte de `constraints.ts`.
+- [ ] #6 O solver processa um conjunto de 100 candidatos em menos de 200 ms (benchmark local, Deno).
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -58,16 +59,22 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Isolamento Completo da Lógica de Restrições: A função optimizeWithConstraints() que faz a filtragem de KYC e limites de alavancagem financeira sobre a saída do GA (constraints.ts) nunca é chamada pela CLI ou pela Core API de produção. A lógica é testada apenas em seu próprio arquivo de testes (constraints_test.ts). Em tempo de execução real, nenhuma restrição de PEP/OFAC ou alavancagem financeira é aplicada.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: Constraints are exercised by the legacy API, but NegotiationAgent still calls unconstrained optimizeDeal. Reopen until KYC, leverage, and coverage invariants apply to the agentic production path.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Arquivo `src/engines/optimization/constraints.ts` implementado com pelo menos 4 tipos de restrição distintos (KYC, alavancagem, cobertura, valuation floor).
-- [x] #2 Testes unitários para **cada tipo de constraint** passando (`deno test`) com cobertura ≥ 85%.
-- [x] #3 Teste de integração validando o pipeline completo: saída do GA → CP solver → lista de deals viáveis ranqueados.
-- [x] #4 Nenhum deal com flag `kycBlocked: true` passa pelo solver em qualquer cenário de teste.
-- [x] #5 Documentação inline (JSDoc) descrevendo parâmetros, unidades e referências regulatórias de cada restrição.
-- [x] #6 PR aprovado e tarefa movida para `Done` no Backlog.md.
+- [ ] #1 Arquivo `src/engines/optimization/constraints.ts` implementado com pelo menos 4 tipos de restrição distintos (KYC, alavancagem, cobertura, valuation floor).
+- [ ] #2 Testes unitários para **cada tipo de constraint** passando (`deno test`) com cobertura ≥ 85%.
+- [ ] #3 Teste de integração validando o pipeline completo: saída do GA → CP solver → lista de deals viáveis ranqueados.
+- [ ] #4 Nenhum deal com flag `kycBlocked: true` passa pelo solver em qualquer cenário de teste.
+- [ ] #5 Documentação inline (JSDoc) descrevendo parâmetros, unidades e referências regulatórias de cada restrição.
+- [ ] #6 PR aprovado e tarefa movida para `Done` no Backlog.md.
 <!-- DOD:END -->
 
 ## Notes

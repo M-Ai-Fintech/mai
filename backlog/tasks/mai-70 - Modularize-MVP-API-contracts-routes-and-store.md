@@ -5,13 +5,14 @@ status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-19 16:48'
-updated_date: '2026-07-19 17:00'
+updated_date: '2026-07-22 05:30'
 labels:
   - backend
   - refactor
   - api
   - tests
-milestone: m-6
+  - revalidated
+milestone: m-12
 dependencies:
   - MAI-67
 references:
@@ -66,8 +67,25 @@ Store modularization complete: src/api/mvp_store.ts is now a 263-line stable fac
 Final QA: tests/api now mirrors contracts/store/routes with shared support fixtures and preserves 25/25 original behavior cases. Consolidated deno fmt --check and deno lint passed across 46 API/test files; deno check src/api/server.ts passed. Live server smoke returned 200 with stable list/resource envelopes for deals, BR entities, and custom dashboard layout. Documentation now records stable façade imports and route precedence.
 <!-- SECTION:NOTES:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:30
+---
+## Done revalidation — 2026-07-22\n\nDone is preserved. MVP API contracts, routes, store modules, and compatibility facades are separated and 25/25 focused API tests pass. The result is a structural refactor; persistence remains intentionally mock-backed under MAI-67.
+---
+<!-- COMMENTS:END -->
+
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
 Split the 2,570-line MVP API surface into domain modules while preserving contracts.ts, mvp_store.ts, and mvp_routes.ts as stable public façades. Reorganized all API tests by contracts, store, and routes without reducing the 25 behavioral cases; format, lint, server type-check, direct tests, live HTTP smoke, and diff checks pass.
 <!-- SECTION:FINAL_SUMMARY:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [x] #1 API contract, route, and store boundaries are modular and tested
+- [x] #2 All focused API tests pass
+- [x] #3 Compatibility facades preserve the explicit prototype boundary
+<!-- DOD:END -->

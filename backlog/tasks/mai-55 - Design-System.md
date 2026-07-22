@@ -1,18 +1,20 @@
 ---
 id: MAI-55
 title: Configuração e Codificação do Design System Mastercard
-status: Done
+status: To Do
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:33'
-updated_date: '2026-07-14 15:41'
+updated_date: '2026-07-22 05:56'
 labels:
   - GUI
   - design-system
   - stitch
   - foundation
-milestone: m-6
-dependencies: []
+  - revalidation
+milestone: m-12
+dependencies:
+  - MAI-85
 references:
   - gui/DESIGN.md
 priority: high
@@ -27,14 +29,12 @@ Definir e consolidar o Design System Mastercard no projeto, atuando exclusivamen
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Design System carregado com sucesso no Stitch MCP via create_design_system_from_design_md usando gui/DESIGN.md
-- [x] #2 Paleta de cores completa (Canvas Cream, Ink Black, Signal Orange, etc.) validada visualmente nos protótipos Stitch
-- [x] #3 Tipografia configurada com Sofia Sans (Google Fonts) respeitando a hierarquia de pesos: 450 (body), 500 (headlines), 700 (eyebrow)
-- [x] #4 Escala de border-radius do Design System (20px, 40px, 50%, 999px) corretamente aplicada nos componentes Stitch
-- [x] #5 Sistema de sombras (Level 0-3) e profundidade documentado e testável nos protótipos
+- [ ] #1 Design System carregado com sucesso no Stitch MCP via create_design_system_from_design_md usando gui/DESIGN.md
+- [ ] #2 Paleta de cores completa (Canvas Cream, Ink Black, Signal Orange, etc.) validada visualmente nos protótipos Stitch
+- [ ] #3 Tipografia configurada com Sofia Sans (Google Fonts) respeitando a hierarquia de pesos: 450 (body), 500 (headlines), 700 (eyebrow)
+- [ ] #4 Escala de border-radius do Design System (20px, 40px, 50%, 999px) corretamente aplicada nos componentes Stitch
+- [ ] #5 Sistema de sombras (Level 0-3) e profundidade documentado e testável nos protótipos
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
@@ -42,10 +42,20 @@ Definir e consolidar o Design System Mastercard no projeto, atuando exclusivamen
 1. Revisar gui/DESIGN.md garantindo a especificação formal completa do 'O QUÊ' (hex/hsl, escala tipográfica, radii, sombras e especificações formais de componentes). 2. Importar e configurar a fonte Sofia Sans (Google Fonts) no gui/app/layout.tsx como fallback de MarkForMC. 3. Conectar ao Stitch MCP e criar o projeto base (create_project). 4. Realizar upload do gui/DESIGN.md (upload_design_md) e ativar o Design System (create_design_system_from_design_md). 5. Gerar uma tela de validação visual no Stitch para confirmar a fidelidade das especificações visuais e dos assets. 6. Validar a conformidade com o PO.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The design-system typography requirement specifies Sofia Sans, while the application imports Plus Jakarta Sans and Public Sans. Reopen to choose and enforce one canonical visual system.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Projeto Stitch criado e Design System carregado sem erros
-- [x] #2 Pelo menos um protótipo de teste gerado no Stitch utilizando o DS carregado para validação visual
-- [x] #3 Sofia Sans importada e configurada no gui/app/layout.tsx via next/font/google
-- [x] #4 Documento gui/DESIGN.md revisado e versionado como fonte de verdade oficial
+- [ ] #1 Projeto Stitch criado e Design System carregado sem erros
+- [ ] #2 Pelo menos um protótipo de teste gerado no Stitch utilizando o DS carregado para validação visual
+- [ ] #3 Sofia Sans importada e configurada no gui/app/layout.tsx via next/font/google
+- [ ] #4 Documento gui/DESIGN.md revisado e versionado como fonte de verdade oficial
 <!-- DOD:END -->

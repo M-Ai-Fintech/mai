@@ -3,12 +3,13 @@ id: MAI-75
 title: >-
   Introduce Target Dossier as a first-class domain artifact and remove
   company_culture from agent Memory
-status: Done
+status: To Do
 assignee: []
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-20 19:28'
-labels: []
-milestone: m-7
+updated_date: '2026-07-22 05:29'
+labels:
+  - revalidation
+milestone: m-10
 dependencies: []
 priority: medium
 ordinal: 67000
@@ -28,6 +29,13 @@ Domain modeling revealed that 'company_culture' was incorrectly placed inside th
 - [ ] #4 Company Culture profile is stored as a sub-field of Target Dossier, not as a standalone memory entry
 - [ ] #5 SourcingAndKYBAgent produces a Target Dossier output (or partial dossier) rather than a flat KYB report
 <!-- AC:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Every applicable acceptance criterion is checked with current evidence
+- [ ] #2 All focused tests and the repository-wide verification gate pass
+- [ ] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
+<!-- DOD:END -->
 
 ## Comments
 
@@ -64,5 +72,11 @@ Criação do `TargetDossier` como uma entidade explícita (first-class domain ar
 ### O que validar
 
 - Acesse a interface web na tela de detalhes da Entidade e navegue até a aba "Dossier". Teste atualizar as informações.
+---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The implementation contradicts the task: company_culture remains accepted and persisted as agent memory, while Target Dossier lacks the complete VDR/business/culture artifact and agent production path. Reopen.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->

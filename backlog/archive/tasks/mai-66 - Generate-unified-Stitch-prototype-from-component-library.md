@@ -1,19 +1,18 @@
 ---
 id: MAI-66
 title: Generate unified Stitch prototype from component library
-status: In Progress
+status: To Do
 assignee: []
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-19 15:06'
+updated_date: '2026-07-22 05:55'
 labels:
   - stitch
   - prototype
   - GUI
   - design
-milestone: m-6
-dependencies:
-  - MAI-64
-  - MAI-65
+  - superseded
+milestone: m-12
+dependencies: []
 modified_files:
   - gui/docs/stitch-master-prototype-prompt.md
   - gui/docs/prototype-state-map.md
@@ -49,3 +48,13 @@ Use the clean Stitch project, which now contains only component showcases and DE
 <!-- SECTION:NOTES:BEGIN -->
 Single generation session 6687577330794631075 completed from the validated master prompt. Stitch returned eight representative screens across all four families and used design-system asset 6617072512575356605 version 3. The result is not accepted as complete: generated heights are 2048–2144px rather than 1440px, only two representative states per family were rendered, and the new screens are addressable by ID but are not present in the visible list_screens inventory. Known IDs verified: 1926a95e1c434707bc04258b3ed3547e, 2b4c77817b6b471b82cbfbaa4b3fb73d, 274a6ec770a24a2e97266beeda6a9718, c9bcd5a1b8fb4d7daaada70d55a66e5c. Prompt validation passes. Keep MAI-66 In Progress; acceptance criterion 3 remains open.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:55
+---
+Supersession decision — 2026-07-22: The unified Stitch prototype could not be completed because generated screens repeatedly diverged from the design system. Continuing this task would preserve a failed tool constraint rather than a product outcome. It is superseded by MAI-85; stale Stitch validation references are covered by MAI-83.
+---
+<!-- COMMENTS:END -->

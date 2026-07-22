@@ -1,16 +1,18 @@
 ---
 id: MAI-3
 title: Orquestração de Testes Rápidos e Smoke Tests no MVP
-status: Done
+status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-09 17:21'
+updated_date: '2026-07-22 05:28'
 labels:
   - testing
   - mvp
-milestone: m-1
-dependencies: []
+  - revalidation
+milestone: m-9
+dependencies:
+  - MAI-79
 parent_task_id: MAI-2
 priority: high
 ordinal: 3000
@@ -24,17 +26,18 @@ Criação de um pipeline local de "Smoke Tests" capaz de validar a integridade d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Modo Diagnóstico na CLI: A CLI deve aceitar um novo comando ou flag
+- [ ] #1 Modo Diagnóstico na CLI: A CLI deve aceitar um novo comando ou flag
       execute apenas os testes rápidos com tempo < 2s.
-- [x] #2 Mocked Lifecycle: Simulação completa do fluxo do deal (MADealLifecycle)
+- [ ] #2 Mocked Lifecycle: Simulação completa do fluxo do deal (MADealLifecycle)
       '--smoke' ou 'smoke' para verificar infraestrutura local.
-- [x] #3 Offline First: Isolamento de rede garantindo execução total offline e
+- [ ] #3 Offline First: Isolamento de rede garantindo execução total offline e
       com todas as transações de estado validadas.
       sem depender de Postgres ativo.
 
-- [x] #4 Comando CLI nativo deno task test:smoke executa a bateria de testes críticos
-- [x] #5 Fluxo simulado (MADealLifecycle) executa sem depender do PostgreSQL ou rede
-- [x] #6 Flag --smoke na CLI imprime um diagnóstico da saúde da infraestrutura
+- [ ] #4 Comando CLI nativo deno task test:smoke executa a bateria de testes críticos
+- [ ] #5 Fluxo simulado (MADealLifecycle) executa sem depender do PostgreSQL ou rede
+- [ ] #6 Flag --smoke na CLI imprime um diagnóstico da saúde da infraestrutura
+- [ ] #7 The smoke command performs active dependency checks and labels every fallback or unavailable dependency without printing static success
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -61,20 +64,26 @@ created: 2026-07-09 17:21
 ---
 [SANEAMENTO] Testes de fumaça e unitários expandidos e corrigidos. A suíte completa agora valida o carregamento assíncrono dos pesos ONNX/Transformers locais, teste real de conexões e fallback automático do Postgres, além do fluxo real e assíncrono de mensageria Pub/Sub.
 ---
+
+author: @codex
+created: 2026-07-22 05:28
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The smoke suite only exercises the in-memory MvpStore lifecycle, while the CLI health output is static. It does not actively prove PostgreSQL, Pub/Sub, ONNX, Gemini, or the real deal pipeline.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 A CLI responde ao comando smoke imprimindo um relatório de diagnóstico
+- [ ] #1 A CLI responde ao comando smoke imprimindo um relatório de diagnóstico
       2 segundos.
-- [x] #2 O fluxo completo do ciclo de vida M&A é coberto pelo smoke test sem
+- [ ] #2 O fluxo completo do ciclo de vida M&A é coberto pelo smoke test sem
       formatado.
-- [x] #3 Nenhum erro de tipo ou linter é gerado.
+- [ ] #3 Nenhum erro de tipo ou linter é gerado.
       dependências ativas de banco de dados ou rede.
-- [x] #4 Documentação do comando de smoke test e diagnóstico adicionada ao
+- [ ] #4 Documentação do comando de smoke test e diagnóstico adicionada ao
       README.md.
 
-- [x] #5 deno task test:smoke completa execução em < 2s
-- [x] #6 CLI responde graciosamente ao argumento --smoke com um relatório
-- [x] #7 Testes passando 100% isolados de rede e DB real
+- [ ] #5 deno task test:smoke completa execução em < 2s
+- [ ] #6 CLI responde graciosamente ao argumento --smoke com um relatório
+- [ ] #7 Testes passando 100% isolados de rede e DB real
 <!-- DOD:END -->

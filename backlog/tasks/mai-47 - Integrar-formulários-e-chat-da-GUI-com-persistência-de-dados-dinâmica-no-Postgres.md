@@ -3,17 +3,17 @@ id: MAI-47
 title: >-
   Integrar formulários e chat da GUI com persistência de dados dinâmica no
   Postgres
-status: Done
+status: To Do
 assignee:
   - '@antigravity'
 created_date: '2026-07-10 05:33'
-updated_date: '2026-07-10 06:04'
-labels: []
-milestone: m-5
+updated_date: '2026-07-22 05:30'
+labels:
+  - revalidation
+milestone: m-12
 dependencies: []
 references:
   - Filha de MAI-17
-  - MAI-17
 priority: medium
 ordinal: 48000
 ---
@@ -26,10 +26,10 @@ Estabelecer a conexão real e dinâmica entre a interface Next.js e o banco de d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Inputs de formulários do front-end são salvos no banco Postgres de forma persistente.
-- [x] #2 Histórico de fases e valuations anteriores de cada deal são carregados dinamicamente na UI.
-- [x] #3 O Chat RAG exibe histórico real recuperado da tabela de memórias/conversas.
-- [x] #4 Respostas dos solvers (ONNX, MILP, Genético) são registradas no banco vinculadas ao ID do deal.
+- [ ] #1 Inputs de formulários do front-end são salvos no banco Postgres de forma persistente.
+- [ ] #2 Histórico de fases e valuations anteriores de cada deal são carregados dinamicamente na UI.
+- [ ] #3 O Chat RAG exibe histórico real recuperado da tabela de memórias/conversas.
+- [ ] #4 Respostas dos solvers (ONNX, MILP, Genético) são registradas no banco vinculadas ao ID do deal.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -56,6 +56,12 @@ created: 2026-07-10 06:04
 ---
 [REVISÃO CRÍTICA] 1. Integração Incompleta na GUI: Embora os endpoints do backend tenham sido implementados no TransactionRepository e conectados na API, as views da GUI para Engines e Chat são totalmente estáticas, impossibilitando que inputs de formulários de solvers e histórico de chats RAG reais sejam disparados ou persistidos dinamicamente via interface web.
 ---
+
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The task claims dynamic PostgreSQL persistence, but deals, entities, chat, engines, and layouts are stored in the mock-backed in-memory MvpStore. Reopen and distinguish prototype state from durable persistence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
 <!-- COMMENTS:END -->
 
 ## Final Summary
@@ -66,8 +72,8 @@ Implemented TransactionRepository.ts with createDeal, getDeals, getDealById, and
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Endpoints de API Deno atualizados com lógica de escrita/leitura no Postgres e validados.
-- [x] #2 Telas do Next.js integradas consumindo dados reais das APIs sem erros de renderização.
-- [x] #3 Teste de integração manual comprovando a persistência no banco pós-ação na UI.
-- [x] #4 Arquivos markdown criados/alterados correspondentes a esta task commitados.
+- [ ] #1 Endpoints de API Deno atualizados com lógica de escrita/leitura no Postgres e validados.
+- [ ] #2 Telas do Next.js integradas consumindo dados reais das APIs sem erros de renderização.
+- [ ] #3 Teste de integração manual comprovando a persistência no banco pós-ação na UI.
+- [ ] #4 Arquivos markdown criados/alterados correspondentes a esta task commitados.
 <!-- DOD:END -->

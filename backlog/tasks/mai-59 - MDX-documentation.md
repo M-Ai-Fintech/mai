@@ -1,19 +1,20 @@
 ---
 id: MAI-59
 title: Template e Padrão de Documentação MDX para Componentes
-status: Done
+status: To Do
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:34'
-updated_date: '2026-07-14 15:51'
+updated_date: '2026-07-22 05:29'
 labels:
   - GUI
   - documentation
   - storybook
   - mdx
-milestone: m-6
+  - revalidation
+milestone: m-12
 dependencies:
-  - MAI-54
+  - MAI-84
 references:
   - gui/DESIGN.md
   - gui/DESIGN_GUIDELINES.md
@@ -29,14 +30,12 @@ Definir e implementar o template padrão de documentação MDX para componentes 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [x] #1 Template MDX padrão criado em gui/components/_template/ComponentTemplate.mdx com todas as seções obrigatórias
-- [x] #2 Seções obrigatórias definidas: Overview, Props API (auto-generated), Variants, Usage Guidelines, Accessibility, Design System Reference
-- [x] #3 Auto-geração da tabela de props funcionando via @storybook/addon-docs (ArgsTable)
-- [x] #4 Pelo menos 2 componentes existentes documentados seguindo o template (ex: Button e um segundo)
-- [x] #5 Checklist de documentação MDX adicionada como item padrão na DoD de todo componente futuro
+- [ ] #1 Template MDX padrão criado em gui/components/_template/ComponentTemplate.mdx com todas as seções obrigatórias
+- [ ] #2 Seções obrigatórias definidas: Overview, Props API (auto-generated), Variants, Usage Guidelines, Accessibility, Design System Reference
+- [ ] #3 Auto-geração da tabela de props funcionando via @storybook/addon-docs (ArgsTable)
+- [ ] #4 Pelo menos 2 componentes existentes documentados seguindo o template (ex: Button e um segundo)
+- [ ] #5 Checklist de documentação MDX adicionada como item padrão na DoD de todo componente futuro
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
@@ -44,9 +43,19 @@ Definir e implementar o template padrão de documentação MDX para componentes 
 1. Estudar addon-docs do Storybook 9 para entender auto-geração de props. 2. Criar template MDX em gui/components/_template/. 3. Documentar as seções obrigatórias e opcionais. 4. Aplicar o template no componente Button existente (MAI-54). 5. Criar um segundo componente simples (ex: Badge) e documentá-lo com o template para validação.
 <!-- SECTION:PLAN:END -->
 
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-22 05:29
+---
+## Rebaseline audit — 2026-07-22\n\nCurrent status: The MDX template renders, but contribution guidance is incomplete and the template remains in Portuguese. Reopen and consolidate it into the canonical English documentation system.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+<!-- COMMENTS:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [x] #1 Template validado por renderização no Storybook sem erros
-- [x] #2 Guia de contribuição atualizado explicando como usar o template MDX
-- [x] #3 Consistência entre o template MDX e os Design Guidelines (MAI-56)
+- [ ] #1 Template validado por renderização no Storybook sem erros
+- [ ] #2 Guia de contribuição atualizado explicando como usar o template MDX
+- [ ] #3 Consistência entre o template MDX e os Design Guidelines (MAI-56)
 <!-- DOD:END -->
