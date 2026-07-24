@@ -1,9 +1,65 @@
 # Implementation
 
-1. Invoke `$model-selection` for implementation.
-2. Make the smallest coherent change with `apply_patch`; preserve unrelated changes.
-3. Add or update tests in the same task. Keep generated files and temporary artifacts out of the patch unless the task requires them.
-4. Re-read every modified file and use `rg` to check renamed or removed identifiers.
-5. Update Backlog notes when a material fact changes.
+Implement the approved plan on the isolated task branch while preserving unrelated work.
 
-Completion: the branch contains only task-scoped changes and executable regression coverage.
+## Preconditions
+
+- Intake and discovery gates passed.
+- The approved plan is stored in Backlog.
+- Required investigation has selected an evidence-backed path.
+- The current branch and worktree are safe for task-scoped edits.
+
+## Workflow
+
+1. Invoke `$model-selection` for implementation.
+2. Re-read the approved plan and the relevant source and tests.
+3. Establish regression coverage before or with the fix:
+   - use `$tdd` when test-first development is appropriate;
+   - otherwise prove the old behavior through the narrowest reliable reproduction.
+4. Implement one coherent slice at a time.
+5. Use `apply_patch` for manual file edits. Use formatters or generators only for mechanical output they own.
+6. Preserve public contracts, domain invariants, error semantics, and security boundaries unless the task explicitly changes them.
+7. Keep configuration, migration, generated-file, and environment changes explicit.
+8. Re-read each changed file after editing.
+9. Use `rg` to find:
+   - callers and consumers;
+   - renamed or removed identifiers;
+   - duplicated constants or stale terminology;
+   - tests and documentation affected by the change.
+10. Run the narrowest useful check after each slice. Do not defer all feedback until final verification.
+
+## Scope control
+
+When implementation reveals work outside the approved plan or acceptance criteria:
+
+1. stop the current slice;
+2. explain the new work and why it is required;
+3. ask whether to expand the task or create a follow-up;
+4. update the Backlog plan only after approval.
+
+Do not mix cleanup, refactoring, or unrelated fixes into the task because the files are already open.
+
+## Backlog record
+
+After a meaningful slice:
+
+- use `task_edit.notesAppend` for decisions, useful findings, and intermediate verification;
+- use `task_edit.modifiedFiles` with the complete current task-scoped path list;
+- use `addReferences` or `addDocumentation` when new authoritative context appears;
+- keep status aligned with reality.
+
+Do not check acceptance criteria until verification provides direct evidence.
+
+## Completion gate
+
+Implementation is complete only when:
+
+- every approved slice exists;
+- regression coverage exercises the changed behavior;
+- modified files are task-scoped;
+- unrelated worktree changes remain intact;
+- stale identifiers and consumers were checked;
+- generated and temporary artifacts are intentional;
+- Backlog records material implementation facts and current modified files.
+
+Proceed to verification with uncommitted changes unless the repository workflow explicitly requires an earlier commit.

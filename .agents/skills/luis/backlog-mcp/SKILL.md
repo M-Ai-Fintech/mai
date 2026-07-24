@@ -37,8 +37,8 @@ Completion: every tracked request is attached to the correct task, and Backlog r
 - `task_view`: complete context for one task.
 - `task_create`: create tasks, drafts, subtasks, dependencies, criteria, and task metadata.
 - `task_edit`: update task state and all structured sections.
-- `task_complete`: complete a fully verified task.
-- `task_archive`: archive a task that should leave the active project view.
+- `task_complete`: move already-Done tasks to the completed folder during periodic cleanup.
+- `task_archive`: archive duplicate, canceled, or invalid work.
 
 ### Milestones
 
@@ -262,13 +262,13 @@ Record:
 
 If discovered work is outside the acceptance criteria, stop and ask whether to expand the task or create follow-up work. Do not silently absorb it.
 
-## Completing and archiving
+## Finishing and cleanup
 
 Read `task-finalization` first.
 
 ### Completion gate
 
-Before `task_complete`, verify:
+Before setting `status` to `Done`, verify:
 
 1. every acceptance criterion is checked with evidence;
 2. every applicable project and task-specific DoD item is complete;
@@ -281,7 +281,9 @@ Before `task_complete`, verify:
 
 `Done` means the outcome is delivered and reviewable. It does not mean an implementation attempt exists.
 
-Use `task_complete` for a finished task. Use `task_archive` when removing a task from active project management is the intended operation. Do not use archive as a substitute for completion.
+Set `status` to `Done` through `task_edit` for normal finalization. Done tasks remain in the Done column until periodic cleanup.
+
+Use `task_complete` only for the periodic operation that moves already-Done tasks into the completed folder. Use `task_archive` only for duplicate, canceled, or invalid tasks. Neither tool is a substitute for setting an implemented task to Done.
 
 Completion: the task record contains enough evidence for another person to understand what changed and why it is complete.
 
