@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-22 06:59'
-updated_date: '2026-07-22 07:18'
+updated_date: '2026-07-24 08:21'
 labels:
   - skills
   - agent-workflow
@@ -71,9 +71,13 @@ Establish a compact, English-first local skill system that reliably routes MAI w
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Implemented on branch chore/MAI-86-agent-skills. Validated eight local skill manifests, all phase/reference files, required front-matter delimiters, deleted-skill absence, and absence of inherited QA/Slack/Mongo/Aprova references. `git diff --check` passed. Backlog MCP was interrogated directly: server backlog.md 1.47.1 exposes task, milestone, document, DoD, and workflow tools. Implementation is ready for owner review; no commit, push, or PR was created without explicit remote-mutation authorization.
+Implemented on branch chore/MAI-86-agent-skills. Validated local skill manifests, phase/reference files, required front-matter delimiters, and removed-skill references. `git diff --check` passed. Backlog MCP was interrogated directly: server backlog.md 1.47.1 exposes task, milestone, document, DoD, and workflow tools.
 
 Committed 9417ccd and pushed branch chore/MAI-86-agent-skills to origin. Draft PR creation is blocked: the GitHub connector returned 404 for M-Ai-Fintech/MVP and `gh auth status` reports the active token invalid. Branch compare URL: https://github.com/M-Ai-Fintech/MVP/pull/new/chore/MAI-86-agent-skills.
+
+First review batch: rebuilt Backlog MCP from the Backlog.md reference; restored Caveman as an English translation with its original activation and examples; expanded configuration closure into an evidence-based systemic gate; and reverted only investigate to its pre-PR form. `comment-backlog-task` and `release` remain removed. Validation: `git diff --check`; investigate matches origin/master exactly; Backlog MCP references resolve in solve-mai and wrap-up.
+
+Expanded `backlog-mcp/SKILL.md` from 59 to 467 lines as a comprehensive MCP-native adaptation of the 959-line Backlog.md CLI reference. It now covers all 20 exposed MCP tools, task field operations, acceptance criteria and DoD semantics, milestones, governed documents, lifecycle recipes, completion gates, troubleshooting, and explicit handling for CLI-only capabilities. Validation: `git diff --check`; tool-name coverage checked against the live Backlog MCP tool inventory.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
