@@ -3,6 +3,7 @@ export interface VerificationCheck {
   label: string;
   command: string;
   args: string[];
+  env?: Record<string, string>;
 }
 
 export interface VerificationResult {
@@ -30,6 +31,7 @@ export const verificationChecks: VerificationCheck[] = [
       "--allow-run",
       "--allow-net",
     ],
+    env: { DENO_ENV: "test" },
   },
   {
     id: "gui-unit-tests",
@@ -69,6 +71,7 @@ export async function executeCheck(
   try {
     const output = await new Deno.Command(check.command, {
       args: check.args,
+      env: check.env,
       stdout: "piped",
       stderr: "piped",
     }).output();
