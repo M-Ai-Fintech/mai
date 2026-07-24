@@ -17,7 +17,7 @@ import {
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
-import { t } from "../i18n/index.ts";
+import { t, tList } from "../i18n/index.ts";
 
 export class CLICommands {
   /**
@@ -46,7 +46,7 @@ export class CLICommands {
       spinner.stop();
 
       new Table()
-        .header(t("cli.tables.kybHeader"))
+        .header([...tList("cli.tables.kybHeader")])
         .body([
           [
             t("cli.tables.kybFields.legalName"),
@@ -123,14 +123,32 @@ export class CLICommands {
         );
       } else {
         if (!aiConfig.isFallback) {
-          const query = t("cli.messages.cultureQuery", {
-            name: data.legalName || "Target",
-          });
-          const reply = await AgentOrchestrator.executeAgentQuery(
-            "kyb_temp",
-            query,
-          );
-          console.log(reply);
+          try {
+            const query = t("cli.messages.cultureQuery", {
+              name: data.legalName || "Target",
+            });
+            const reply = await AgentOrchestrator.executeAgentQuery(
+              "kyb_temp",
+              query,
+            );
+            console.log(reply);
+          } catch {
+            console.log(
+              t("cli.messages.culture", {
+                value: t("cli.messages.defaultCultureGood"),
+              }),
+            );
+            console.log(
+              t("cli.messages.pastMovements", {
+                value: t("cli.messages.defaultMovementsGood"),
+              }),
+            );
+            console.log(
+              t("cli.messages.negotiators", {
+                value: t("cli.messages.defaultNegotiatorsGood"),
+              }),
+            );
+          }
         } else {
           const sector = data.sector || t("cli.messages.techSaaS");
           console.log(
@@ -207,23 +225,15 @@ export class CLICommands {
       console.log(t("cli.messages.calculatedRiskMetrics"));
 
       new Table()
-        .header(t("cli.tables.riskHeader"))
+        .header([...tList("cli.tables.riskHeader")])
         .body([
           [
             t("cli.tables.riskFields.insolvency"),
             `${(report.metrics.insolvencyRisk * 100).toFixed(2)}%`,
           ],
           [
-            t("cli.tables.riskFields.churn"),
-            `${(report.metrics.churnProbability * 100).toFixed(2)}%`,
-          ],
-          [
-            t("cli.tables.riskFields.volatility"),
-            `${report.metrics.dcfVolatility}%`,
-          ],
-          [
-            t("cli.tables.riskFields.synergyScore"),
-            `${report.metrics.industry4Score}/100`,
+            t("cli.tables.riskFields.zScore"),
+            report.metrics.zScore,
           ],
         ])
         .padding(2)
@@ -432,7 +442,9 @@ export class CLICommands {
       if (res.optimization.selectedTargetIds.length === 0) {
         console.log(t("cli.messages.noCompaniesMetCriteria"));
       } else {
-        const table = new Table().header(t("cli.tables.portfolioHeader"))
+        const table = new Table().header([
+          ...tList("cli.tables.portfolioHeader"),
+        ])
           .padding(2).border(true);
         res.optimization.selectedTargetIds.forEach((id) => {
           const target = pipelineTargets.find((t) => t.id === id);

@@ -56,5 +56,5 @@ Deno.test("Document Generator - LaTeX Source Generation", () => {
   );
   assertEquals(latexSource.includes("60.00\\%"), true);
   assertEquals(latexSource.includes("75.00\\%"), true);
-  assertEquals(latexSource.includes("24 meses"), true);
+  assertEquals(latexSource.includes("24 months post-closing"), true);
 });

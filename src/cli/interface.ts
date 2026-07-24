@@ -4,7 +4,7 @@ import { CLICommands } from "./commands.ts";
 import { CLIChat } from "./chat.ts";
 import { colors } from "@cliffy/ansi";
 import { CLIErrorHandler } from "./errors.ts";
-import { Locale, setLocale } from "../i18n/index.ts";
+import { resolveLocale, setLocale } from "../i18n/index.ts";
 
 function printBanner() {
   console.log(colors.cyan(`
@@ -278,11 +278,9 @@ const mainCommand = new Command()
   .globalOption("-v, --verbose", "Enable verbose output")
   .globalOption("-d, --debug", "Enable debug output")
   .globalOption("-l, --lang <locale:string>", "Set locale (en, pt-BR)", {
-    default: "pt-BR",
+    default: "en",
   })
-  .action(async (options: any) => {
-    if (options.lang) setLocale(options.lang as Locale);
-  })
+  .action(() => {})
   .command("kyb", kybCommand)
   .command("predict", predictCommand)
   .command("portfolio", portfolioCommand)
@@ -304,8 +302,7 @@ const mainCommand = new Command()
   .command("completions", new CompletionsCommand())
   .command("interactive", interactiveCommand)
   .default("interactive")
-  .action(async (options: any) => {
-    if (options.lang) setLocale(options.lang as Locale);
+  .action(async () => {
     if (Deno.args.length === 0) {
       await mainCommand.parse(["interactive"]);
     }
@@ -315,10 +312,15 @@ export async function main() {
   try {
     const { AppBootstrapper } = await import("../core/boot.ts");
     await AppBootstrapper.bootstrap();
-    // Pre-parse the language option so it's applied globally early on
-    const tempParse = await mainCommand.parse(Deno.args, { exitCode: 0 });
-    if (tempParse.options.lang) setLocale(tempParse.options.lang as Locale);
-
+    const languageIndex = Deno.args.findIndex((argument) =>
+      argument === "--lang" || argument === "-l"
+    );
+    const inlineLanguage = Deno.args.find((argument) =>
+      argument.startsWith("--lang=")
+    )?.slice("--lang=".length);
+    const requestedLanguage = inlineLanguage ??
+      (languageIndex >= 0 ? Deno.args[languageIndex + 1] : undefined);
+    setLocale(resolveLocale(requestedLanguage ?? "pt-BR"));
     await mainCommand.parse(Deno.args);
   } catch (error) {
     const isDebug = Deno.args.includes("--debug") || Deno.args.includes("-d");

@@ -39,6 +39,7 @@ export const ptBR = {
       riskHeader: ["Métrica", "Valor"],
       riskFields: {
         insolvency: "Probabilidade de Insolvência",
+        zScore: "Classificação Z-Score",
         churn: "Probabilidade de Churn de Contratos",
         volatility: "Volatilidade Projetada do FCD",
         synergyScore: "Score de Resiliência de Sinergia (Indústria 4.0)",

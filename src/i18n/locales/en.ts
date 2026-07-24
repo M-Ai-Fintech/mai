@@ -39,6 +39,7 @@ export const en = {
       riskHeader: ["Metric", "Value"],
       riskFields: {
         insolvency: "Insolvency Probability",
+        zScore: "Z-Score Classification",
         churn: "Contract Churn Probability",
         volatility: "Projected DCF Volatility",
         synergyScore: "Synergy Resilience Score (Industry 4.0)",
