@@ -18,6 +18,12 @@ export type CheckExecutor = (
 
 export const verificationChecks: VerificationCheck[] = [
   {
+    id: "canonical-documentation",
+    label: "Canonical documentation",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_docs.ts"],
+  },
+  {
     id: "deno-tests",
     label: "Deno tests",
     command: "deno",

@@ -4,7 +4,6 @@ set -e
 # Refactoring (replacing mock fallbacks, memory service rename, genetic optimizer move)
 git add src/core/db/memory_service.ts src/core/db/DatabaseMemoryService.ts src/core/boot.ts src/core/pubsub/LocalPubSubBus.ts
 git add src/engines/optimization/genetic.ts src/engines/optimization/kyc/coordinator.ts
-git add backlog/docs/refactoring_technical_debt.md context/refactoring_technical_debt.md
 git add src/cli/interface.ts src/cli/chat.ts src/cli/commands.ts src/cli/errors.ts
 git add tests/engines/optimization.spec.ts tests/pubsub.spec.ts tests/e2e/cli.spec.ts
 git commit -m "refactor: restructure core, apply singletons and move optimization engines" || true
@@ -60,4 +59,3 @@ git commit -m "feat(core): implement MAI-16" || true
 # Remaining updates (RAG layer, ai provider, actions.ts, remaining task updates, etc)
 git add .
 git commit -m "feat(agent): update RAG layers, MCP tools and backlog tasks" || true
-

@@ -13,6 +13,19 @@ Deno.test("verification runner explicitly uses the isolated test environment", (
   assertEquals(denoTests?.env, { DENO_ENV: "test" });
 });
 
+Deno.test("verification runner includes the canonical documentation checker", () => {
+  const documentation = verificationChecks.find((check) =>
+    check.id === "canonical-documentation"
+  );
+
+  assertEquals(documentation, {
+    id: "canonical-documentation",
+    label: "Canonical documentation",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_docs.ts"],
+  });
+});
+
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
     id: "intentional-failure",
