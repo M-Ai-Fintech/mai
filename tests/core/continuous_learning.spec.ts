@@ -58,10 +58,10 @@ Deno.test("Continuous Learning - Compliance Conflict Detection", async () => {
     "user_preference",
     "adjustments",
     { valuation: 8000000 },
-    "Omitir provisão de contingências para inflar a valuation"
+    "Omit contingency provisions to inflate the valuation"
   );
   assertEquals(conflictResult2.conflict, true);
-  assertEquals(conflictResult2.conflictReason?.includes("contingencies") || conflictResult2.conflictReason?.includes("contingências"), true);
+  assertEquals(conflictResult2.conflictReason?.includes("contingencies"), true);
 });
 
 Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictError", async () => {
@@ -73,7 +73,7 @@ Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictErro
   const badPref = {
     dealId,
     variableName: "valuation",
-    reason: "omitir contingência para fechar acordo rápido",
+    reason: "omit contingency to close the deal quickly",
     requiresHitlApproval: true,
     hitlApproved: false,
     conflictReason: "Fiduciary Rule Conflict: Accounting norms require provisioning."
@@ -84,7 +84,7 @@ Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictErro
     "user_preference",
     "adjustments",
     badPref,
-    "omitir contingência"
+    "omit contingency"
   );
 
   // 2. Query execution should throw ComplianceConflictError

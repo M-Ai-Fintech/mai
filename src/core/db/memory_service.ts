@@ -1,3 +1,3 @@
 // src/core/db/memory_service.ts
-// Redirecionamento unificado para evitar duplicação do DatabaseMemoryService.
+// Unified redirect to avoid duplicating DatabaseMemoryService.
 export * from "./DatabaseMemoryService.ts";

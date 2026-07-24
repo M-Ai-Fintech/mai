@@ -2,7 +2,7 @@ import { env } from 'npm:@huggingface/transformers';
 import * as ort from 'npm:onnxruntime-web';
 import { z } from 'zod';
 
-// Configuração do backend WASM para rodar em Deno
+// Configure the WASM backend for Deno.
 if (env.backends?.onnx?.wasm) {
   env.backends.onnx.wasm.numThreads = 1;
 }

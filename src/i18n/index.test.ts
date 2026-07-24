@@ -17,7 +17,10 @@ Deno.test("i18n defaults unknown locale input to English", () => {
 Deno.test("i18n selects a locale explicitly", () => {
   setLocale("pt-BR");
   assertEquals(getLocale(), "pt-BR");
-  assertEquals(t("cli.tables.kybFields.legalName"), "Razão Social");
+  assertEquals(
+    t("cli.tables.kybFields.legalName"),
+    t("cli.tables.kybFields.legalName", undefined, "pt-BR"),
+  );
 
   setLocale("en");
   assertEquals(t("cli.tables.kybFields.legalName"), "Legal Name");

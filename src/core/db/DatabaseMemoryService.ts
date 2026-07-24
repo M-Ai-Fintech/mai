@@ -75,8 +75,8 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Conecta ao banco de dados e verifica a conectividade.
-   * Não lança erro caso o banco esteja inacessível.
+   * Connects to the database and verifies connectivity.
+   * Does not throw when the database is unavailable.
    */
   async connect(): Promise<boolean> {
     try {
@@ -96,7 +96,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Executa uma query SQL com suporte a parâmetros parametrizados.
+   * Executes a parameterized SQL query.
    */
   async query(text: string, params?: any[], retries = 3): Promise<any> {
     if (this.isDbAvailable === false) {
@@ -111,7 +111,7 @@ export class DatabaseMemoryService {
         this.isDbAvailable = true;
         return result;
       } catch (error: any) {
-        // Códigos de erro transientes comuns do Postgres e falhas de rede (Node.js/pg)
+        // Common transient Postgres and network error codes (Node.js/pg).
         const isTransient = [
           "08000",
           "08003",
@@ -142,14 +142,14 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Encerra o pool de conexões com o banco.
+   * Closes the database connection pool.
    */
   async close(): Promise<void> {
     await this.pool.end();
   }
 
   /**
-   * Obtém as preferências consolidadas de um usuário ou broker no banco de dados.
+   * Gets the consolidated preferences for a user or broker.
    */
   public async getUserPreferences(
     userId: string,
@@ -164,7 +164,7 @@ export class DatabaseMemoryService {
       return res.rows[0].preferences;
     }
 
-    // Retorna preferências padrão se nenhum registro for encontrado
+    // Return default preferences when no record is found.
     return {
       defaultValuationMethod: "DCF",
       riskAppetite: "Moderate",
@@ -173,8 +173,8 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Salva ou atualiza as preferências do usuário no banco de dados.
-   * Suporta o armazenamento de embeddings reais.
+   * Saves or updates user preferences.
+   * Supports storing real embeddings.
    */
   public async saveUserPreferences(
     userId: string,
@@ -198,10 +198,10 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta o conhecimento de domínio geral cadastrado por categoria.
+   * Queries general domain knowledge by category.
    */
   /**
-   * Consulta utilizando o operador de contenção GIN (@>) em JSONB.
+   * Queries JSONB using the GIN containment operator (@>).
    */
   public async searchDomainKnowledgeByJson(
     filter: Record<string, unknown>,
@@ -216,7 +216,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta o conhecimento de domínio geral cadastrado por categoria.
+   * Queries general domain knowledge by category.
    */
   public async getDomainKnowledge(
     category: string,
@@ -231,7 +231,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Grava novo conhecimento de domínio associado a uma categoria específica.
+   * Stores new domain knowledge for a specific category.
    */
   public async saveDomainKnowledge(
     category: string,
@@ -251,7 +251,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta a memória da cultura organizacional de uma empresa alvo (business_id).
+   * Queries organizational-culture memory for a target company (business_id).
    */
   public async getCompanyCultureMemory(
     businessId: string,
@@ -266,7 +266,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Grava dados de análise cultural sobre uma empresa.
+   * Stores cultural-analysis data for a company.
    */
   public async saveCompanyCultureMemory(
     businessId: string,
@@ -286,9 +286,9 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta vetorial real (pg_vector) utilizando a distância de cosseno (<=>).
-   * Localiza conhecimentos de domínio e padrões de negociação próximos ao embedding fornecido.
-   * Possui fallback em memória para similaridade se pgvector/Postgres falhar.
+   * Runs a real pgvector query using cosine distance (<=>).
+   * Finds domain knowledge and negotiation patterns near the supplied embedding.
+   * Falls back to in-memory similarity if pgvector/Postgres fails.
    */
   public async searchSimilarKnowledge(
     queryEmbedding: number[],
@@ -358,7 +358,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta vetorial real (pg_vector) utilizando a distância de cosseno (<=>) em user_preferences.
+   * Runs a real pgvector cosine-distance query on user_preferences.
    */
   public async searchSimilarPreferences(
     queryEmbedding: number[],
@@ -418,7 +418,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Consulta vetorial real (pg_vector) utilizando a distância de cosseno (<=>) em company_culture_memory.
+   * Runs a real pgvector cosine-distance query on company_culture_memory.
    */
   public async searchSimilarCultureMemory(
     queryEmbedding: number[],
@@ -478,7 +478,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Executa uma consulta SQL genérica parametrizada no banco real.
+   * Executes a generic parameterized SQL query against the real database.
    */
   public async executeRawQuery<T>(
     sql: string,
@@ -489,7 +489,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Salva um chunk de documento do VDR no banco de dados.
+   * Saves a VDR document chunk to the database.
    */
   public async saveVdrDocumentChunk(
     dealId: string,
@@ -597,7 +597,7 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Busca o último checkpoint de um agente em uma transação
+   * Gets an agent's latest checkpoint for a transaction.
    */
   public async getLatestFlowCheckpoint(
     transactionId: string,

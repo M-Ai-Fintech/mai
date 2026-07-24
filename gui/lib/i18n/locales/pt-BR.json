@@ -137,6 +137,11 @@
       "addBtn": "+ Adicionar Entrada Manual"
     }
   },
+  "generativeUI": {
+    "defaultAction": "Ação",
+    "defaultMetric": "Métrica",
+    "emptySchema": "Nenhum esquema gerado disponível."
+  },
   "footer": {
     "brand": "M&Ai Fintech",
     "description": "Middleware inteligente de M&A low-touch orquestrado por ecossistema agêntico Deno + ADK e motor neural ONNX.",

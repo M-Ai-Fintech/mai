@@ -1,6 +1,6 @@
 /**
  * @module BookValueMethod
- * @description Pure mathematical calculation of Book Value (Valor Patrimonial).
+ * @description Pure mathematical calculation of book value.
  * Formula: BV = Total Assets - Intangible Assets - Total Liabilities
  */
 

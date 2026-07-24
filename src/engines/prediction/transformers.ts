@@ -6,7 +6,7 @@ export class TransformersEngine {
   private static readonly testEmbeddingDimensions = 384;
 
   /**
-   * Inicializa o pipeline de extração de features usando o modelo all-MiniLM-L6-v2 do Hugging Face.
+   * Initializes the feature-extraction pipeline using Hugging Face's all-MiniLM-L6-v2 model.
    */
   private static async getExtractor() {
     if (this.extractor) return this.extractor;
@@ -18,8 +18,8 @@ export class TransformersEngine {
   }
 
   /**
-   * Gera um vetor de embedding real para o texto fornecido.
-   * Lança exceções reais se o pipeline do Transformers falhar ou não conseguir carregar.
+   * Generates a real embedding vector for the supplied text.
+   * Propagates errors if the Transformers pipeline fails or cannot load.
    */
   public static async generateEmbedding(text: string): Promise<number[]> {
     if (Deno.env.get("DENO_ENV") === "test") {

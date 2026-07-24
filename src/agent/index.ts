@@ -164,7 +164,7 @@ ${dynamicKnowledge || "No recorded domain knowledge."}
 ${query}
 `;
 
-    // Re-checa fallback para evitar chamadas à API com chave falsa
+    // Recheck fallback to avoid API calls with a placeholder key.
     if (aiConfig.isFallback) {
       console.warn(
         "[MOCK] Operation intercepted: Broker Orchestrator response simulation.",

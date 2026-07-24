@@ -80,7 +80,7 @@ Deno.test("M&A E2E Flow: Sourcing -> DD -> Closing", async (t) => {
   // 3. Gemini Search Tool
   await t.step("Gemini Search Tool for Sourcing", async () => {
     const searchResult = await geminiGoogleSearchTool.execute!({
-      query: "Reputação da empresa Tech Nova M&A",
+      query: "Reputation of Tech Nova M&A",
       targetCompany: "Tech Nova",
       aspect: "reputation",
     }, { runId: "test" } as any);

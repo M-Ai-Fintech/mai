@@ -19,12 +19,12 @@ Deno.test("Hugging Face MCP Tool - Fine Tuned Inference", async () => {
   const result = await huggingFaceMcpTool.execute!({
     model: "meta-llama/Llama-3-8B-Instruct",
     task: "fine_tuned_inference",
-    text: "Analise a seguinte cláusula de Tag-Along e explique se ela respeita a norma da CVM brasileira: '...'",
+    text: "Analyze this Tag-Along clause and explain whether it complies with Brazilian CVM rules: '...'",
   }, {} as any);
 
   assertEquals(result.success, true);
   assertEquals(
-    result.output.includes("[MOCK - Inferência Fine-Tuned (meta-llama/Llama-3-8B-Instruct)]"),
+    result.output.includes("[MOCK - Fine-Tuned Inference (meta-llama/Llama-3-8B-Instruct)]"),
     true
   );
 });
