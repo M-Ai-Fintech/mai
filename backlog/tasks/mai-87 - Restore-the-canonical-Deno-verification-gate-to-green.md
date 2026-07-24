@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@luisfelipeluis49'
 created_date: '2026-07-24 09:16'
-updated_date: '2026-07-24 14:40'
+updated_date: '2026-07-24 14:52'
 labels:
   - testing
   - reliability
@@ -13,7 +13,7 @@ labels:
 milestone: m-9
 dependencies: []
 references:
-  - 'https://github.com/M-Ai-Fintech/MVP/pull/3'
+  - 'https://github.com/M-Ai-Fintech/MVP/tree/chore/MAI-79-verification-gate'
 modified_files:
   - deno.json
   - README.md
@@ -126,4 +126,10 @@ Resolve the existing Deno failures exposed by MAI-79 so `deno task verify` passe
 - Base: `master`; branch: `chore/MAI-87-deno-verification`.
 - A autenticação GitHub foi revalidada e a entrega foi publicada.
 - A tarefa permanece `In Progress` até a revisão humana.
+
+## MAI-79 baseline
+
+- MAI-87 is linked to the MAI-79 verification-gate branch: https://github.com/M-Ai-Fintech/MVP/tree/chore/MAI-79-verification-gate
+- The MAI-79 review PR is https://github.com/M-Ai-Fintech/MVP/pull/4 (target: `master`).
+- MAI-87 must validate the green `deno task verify` result against this canonical gate before MAI-79 can be finalized.
 <!-- SECTION:NOTES:END -->
