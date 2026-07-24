@@ -3,6 +3,8 @@
     "start": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-ffi --allow-run src/main.ts",
     "api:start": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-ffi --allow-run src/api/server.ts",
     "test": "deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net",
+    "verify": "deno run --allow-env --allow-read --allow-run scripts/verify.ts",
+    "verify:integration": "deno run --allow-env --allow-net --allow-ffi --allow-sys scripts/verify_integration.ts",
     "test:smoke": "deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/smoke.spec.ts",
     "db:start": "docker compose up -d",
     "db:stop": "docker compose down",
@@ -34,7 +36,15 @@
   "nodeModulesDir": "auto",
   "test": {
     "include": [
-      "tests/**/*.spec.ts"
+      "tests/**/*.spec.ts",
+      "tests/**/*.test.ts",
+      "tests/**/*_test.ts",
+      "src/**/*.spec.ts",
+      "src/**/*.test.ts",
+      "src/**/*_test.ts",
+      "scripts/**/*.spec.ts",
+      "scripts/**/*.test.ts",
+      "scripts/**/*_test.ts"
     ]
   }
 }

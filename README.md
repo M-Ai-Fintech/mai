@@ -331,10 +331,37 @@ deno task start
 ### 🧪 3. Executando os Testes Automatizados
 
 ```bash
-deno task test
-# ou diretamente:
-deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net
+deno task verify
 ```
+
+`deno task verify` é o gate local obrigatório antes de uma tarefa poder ser
+marcada como `Done`. Ele executa todos os testes Deno configurados em `tests/`,
+`src/` e `scripts/`, testes unitários da GUI, build de produção do Next.js,
+validação e build do Storybook, e seus testes de interação. Em um checkout
+limpo, instale as dependências da GUI e o Chromium do Playwright antes do gate:
+
+```bash
+npm --prefix gui ci
+npm --prefix gui exec playwright install chromium
+```
+
+Os smoke tests de serviços externos ficam fora do gate local para não aceitar
+mocks como prova de integração. Para executá-los, forneça serviços reais e rode:
+
+```bash
+export DATABASE_URL='postgresql://...'
+export GEMINI_API_KEY='...'
+export PAPERMARK_API_URL='https://...'
+export PAPERMARK_API_KEY='...'
+export PAPERMARK_ROOM_ID='...'
+deno task verify:integration
+```
+
+`GEMINI_SMOKE_MODEL` é opcional e permite selecionar o modelo Gemini habilitado
+pela chave. O profile também executa uma inferência real do Transformers/Hugging
+Face (o download do modelo pode ocorrer na primeira execução). Ele falha se
+qualquer variável faltar, se uma credencial for inválida ou se um serviço não
+responder; ele nunca usa mocks.
 
 ---
 

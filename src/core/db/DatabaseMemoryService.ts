@@ -100,7 +100,9 @@ export class DatabaseMemoryService {
    */
   async query(text: string, params?: any[], retries = 3): Promise<any> {
     if (this.isDbAvailable === false) {
-      throw new Error("Database connection is unavailable (cached offline state).");
+      throw new Error(
+        "Database connection is unavailable (cached offline state).",
+      );
     }
     let attempt = 0;
     while (attempt <= retries) {
@@ -579,13 +581,18 @@ export class DatabaseMemoryService {
     transactionId: string,
     agentId: string,
     topic: string,
-    state: Record<string, unknown>
+    state: Record<string, unknown>,
   ): Promise<boolean> {
     const sql = `
       INSERT INTO flow_checkpoints (transaction_id, agent_id, topic, state)
       VALUES ($1, $2, $3, $4);
     `;
-    await this.query(sql, [transactionId, agentId, topic, JSON.stringify(state)]);
+    await this.query(sql, [
+      transactionId,
+      agentId,
+      topic,
+      JSON.stringify(state),
+    ]);
     return true;
   }
 
@@ -594,7 +601,7 @@ export class DatabaseMemoryService {
    */
   public async getLatestFlowCheckpoint(
     transactionId: string,
-    agentId: string
+    agentId: string,
   ): Promise<Record<string, unknown> | null> {
     const sql = `
       SELECT state
@@ -609,5 +616,4 @@ export class DatabaseMemoryService {
     }
     return null;
   }
-
 }

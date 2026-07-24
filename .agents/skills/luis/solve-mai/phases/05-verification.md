@@ -16,8 +16,9 @@ Prove the requested outcome, regression coverage, and completion criteria with r
 6. Test negative cases, failure handling, and boundary behavior proportional to risk.
 7. For configuration or provider defects, invoke `$config-bug-closure` and require its PASS gate.
 8. Check documentation examples, commands, paths, links, and generated artifacts when they changed.
-9. Run `git diff --check` and inspect `git status --short`.
-10. Capture exact commands, exit status, results, and environment limitations.
+9. When the repository defines `deno task verify`, run it as mandatory broader evidence before claiming a task is ready for Done. Record its exact result; a failed or unavailable gate blocks completion.
+10. Run `git diff --check` and inspect `git status --short`.
+11. Capture exact commands, exit status, results, and environment limitations.
 
 ## Map evidence to Backlog
 

@@ -1,25 +1,28 @@
 import { assertEquals } from "@std/assert";
 import { DatabaseMemoryService } from "../../src/core/db/DatabaseMemoryService.ts";
 
-Deno.test("DatabaseMemoryService retry mechanism", async () => {
-  // Create an instance pointing to a non-existent DB to trigger ECONNREFUSED
-  const db = new DatabaseMemoryService(
-    "postgresql://postgres:postgres@localhost:5433/invalid_db",
-  );
+Deno.test("DatabaseMemoryService retries transient connection failures", async () => {
+  const db = new DatabaseMemoryService();
+  let attempts = 0;
+  (db as unknown as { pool: { query: () => Promise<never> } }).pool.query =
+    () => {
+      attempts++;
+      return Promise.reject(
+        Object.assign(new Error("connection refused"), {
+          code: "ECONNREFUSED",
+        }),
+      );
+    };
 
-  // Attempt a query which should fail with ECONNREFUSED and trigger retries
   const start = Date.now();
   try {
-    await db.query("SELECT 1", [], 1); // 1 retry to keep test fast
+    await db.query("SELECT 1", [], 1);
     throw new Error("Should have thrown an error");
   } catch (err: any) {
-    // Assert it took at least some time (retries happened)
     const duration = Date.now() - start;
     assertEquals(duration >= 1000, true);
-    assertEquals(
-      err.code === "ECONNREFUSED" || err.message.includes("ECONNREFUSED"),
-      true,
-    );
+    assertEquals(attempts, 2);
+    assertEquals(err.code, "ECONNREFUSED");
   } finally {
     await db.close().catch(() => {});
   }

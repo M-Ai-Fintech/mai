@@ -73,11 +73,19 @@ Acesse `http://localhost:3000`.
 
 ## Verificação
 
+O gate canônico do repositório é executado a partir da raiz:
+
+```bash
+deno task verify
+```
+
+Ele inclui os testes unitários da GUI, o build de produção do Next.js, a
+validação e o build do Storybook, e os testes de interação. Para executar um
+check isolado da GUI:
+
 ```bash
 cd gui
-npx tsc --noEmit
-npx vitest run --config vitest.unit.config.ts
-npm run validate:stitch-prompt
+npm run test:unit
 npm run validate:storybook-docs
 npm run test-storybook -- --run
 npm run build
