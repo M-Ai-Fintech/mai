@@ -5,13 +5,15 @@ status: In Progress
 assignee:
   - codex
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 15:56'
+updated_date: '2026-07-24 16:02'
 labels:
   - documentation
   - architecture
   - governance
 milestone: m-14
 dependencies: []
+references:
+  - 'https://github.com/M-Ai-Fintech/MVP/pull/5'
 modified_files:
   - AGENTS.md
   - CONTEXT.md
@@ -158,6 +160,13 @@ Intake started 2026-07-24. Scope: consolidate repository documentation into gove
 
 ## Remaining human action
 - Create/review PR and approve. Task remains In Progress until required human review is complete.
+
+## Commits and PR
+- `2334610` — `doc(MAI-84): consolidate governed project documentation`.
+- `82ec95a` — `chore(MAI-84): refresh documentation graph`.
+- Draft PR: https://github.com/M-Ai-Fintech/MVP/pull/5 targeting `master`.
+- GitHub/Backlog automation added unrelated MAI-79 commit `13316a6` after publication. It was neutralized without force-push by `b5d489d` (`chore(MAI-84): exclude unrelated MAI-79 update`). Final PR file list contains no MAI-79 file.
+- PR state: OPEN, draft; no review decision; no remote status checks reported. Human review and approval remain required.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
