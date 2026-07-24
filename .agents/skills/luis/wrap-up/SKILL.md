@@ -1,19 +1,68 @@
 ---
 name: wrap-up
-description: End a MAI work session with a concise, English handoff.
-disable-model-invocation: true
+description: >
+  End-of-session recap for MAI work. Summarizes what changed, surfaces uncommitted state, and lists
+  follow-ups. Caveman style by default. Use for /wrap-up, "wrap up", "end session",
+  "finish session", or "summarize session".
 ---
 
-# Wrap Up MAI
+# Wrap-up
 
-Run `git branch --show-current`, `git status --short`, and the relevant recent commits. If a Backlog task is in scope, read it through the Backlog MCP.
+End-of-session brief. Caveman style. Zero fluff.
 
-Report only non-empty sections:
+## Context probes
 
-- Done
-- Changed
-- Verification
-- Pending
-- Next
+- Run `git branch --show-current` for the branch.
+- Run `git status --short` for worktree state.
+- Run `git log --oneline @{u}..HEAD`; if no upstream exists, use `git log --oneline -5`.
 
-Use Caveman. Do not commit, push, change Backlog, or claim PR approval. Identify the task branch and any human review still required.
+## Output sections
+
+Skip empty sections.
+
+1. **Done** — bullets describing what was accomplished.
+2. **Diff** — files touched, one per line: `path (new|edit|del)`.
+3. **Commits** — one line per new commit.
+4. **Pending** — uncommitted changes, untracked files, and unresolved questions.
+5. **Next** — obvious follow-ups such as opening a PR, updating Backlog, or running QA.
+
+## Rules
+
+- Use Caveman: drop articles, filler, and pleasantries.
+- Keep each bullet at 15 words or fewer.
+- Skip empty sections instead of writing "N/A".
+- List paths without restating file contents.
+- Write in en-US.
+- Do not add praise or a closing summary.
+- Do not auto-commit; the user invokes `$commit-changes` when a commit is wanted.
+- Do not change or comment on Backlog automatically; the user invokes `$backlog-mcp` for that operation.
+
+## Example
+
+```text
+Done:
+- MAI-942 fix: middleware handles expiration with `<=`
+- Coverage increased from 78% to 91%
+
+Diff:
+- src/auth/middleware.ts (edit)
+- src/auth/middleware.test.ts (edit)
+
+Commits:
+- fix(MAI-942): correct expiration check
+
+Pending:
+- src/utils/log.ts modified, uncommitted
+- Open question: refresh-token behavior
+
+Next:
+- Open PR
+- Record MAI-942 test run in Backlog
+```
+
+## Do not
+
+- Add closing pleasantries.
+- Suggest commit contents inline; let the user invoke `$commit-changes`.
+- Save to memory automatically.
+- Repeat the full session; report only the brief.
