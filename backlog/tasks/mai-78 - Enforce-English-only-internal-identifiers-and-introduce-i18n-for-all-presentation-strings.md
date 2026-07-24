@@ -3,11 +3,11 @@ id: MAI-78
 title: >-
   Enforce English-only internal identifiers and introduce i18n for all
   presentation strings
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-24 19:24'
+updated_date: '2026-07-24 19:45'
 labels:
   - revalidation
 milestone: m-14
@@ -61,6 +61,8 @@ Intake 2026-07-24: cleaned the 431-file formatting worktree, renamed the rejecte
 Implementation 2026-07-24: treated the Antigravity branch as reference only. Rejected its 431-file worktree formatting churn, excluded runtime knowledge Markdown and generated Graphify artifacts, and later rejected its 40-file core/test rewrite after whitespace-insensitive review. Implemented typed en/pt-BR catalogs, deterministic English fallback, explicit CLI/GUI locale selection, localized CLI/GUI/document/agent presentation boundaries, English internal identifiers/source text, and a regression language checker. Verification: deno task verify passed all eight stages with network/localhost access; focused i18n and checker tests passed 8/8; focused integration suite passed 41 tests plus 8 steps; git diff --check passed.
 
 Backlog comment cleanup 2026-07-24: translated Portuguese comments in all 30 affected active task records. Archived tasks were intentionally excluded per owner direction. Extended scripts/check_i18n.ts to scan only active Backlog comment sections; checker tests pass 4/4 and deno task verify passes all eight stages.
+
+Completion 2026-07-24: PR #6 was merged into master as 17280594825f6bf74a5b9288b600148b64796c51 and the subsequent Graphify update is present at 5cb5594. Human review/owner approval is satisfied. The i18n source and active Backlog-comment checker passes on updated master.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -114,7 +116,7 @@ Implementation is published for human review in PR #6: https://github.com/M-Ai-F
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Rebuilt MAI-78 from master using the rejected Antigravity branch only as a reference. Added typed English and PT-BR i18n boundaries across CLI, GUI, generated documents, and agent-facing presentation; converted maintained internal/source text to English; and added automated regression enforcement. Full repository verification passes. Kept In Progress pending human PR review.
+Completed and merged through PR #6. MAI now uses English-only internal identifiers with typed en/PT-BR presentation catalogs, deterministic fallback, selectable CLI/GUI locale, localized documents and agent-facing output, and automated enforcement for source text and active Backlog comments. Full repository verification passed before merge; the post-merge checker passes on master.
 <!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
