@@ -5,13 +5,15 @@ status: In Progress
 assignee:
   - '@luisfelipeluis49'
 created_date: '2026-07-24 09:16'
-updated_date: '2026-07-24 14:36'
+updated_date: '2026-07-24 14:40'
 labels:
   - testing
   - reliability
   - bug
 milestone: m-9
 dependencies: []
+references:
+  - 'https://github.com/M-Ai-Fintech/MVP/pull/3'
 modified_files:
   - deno.json
   - README.md
@@ -117,4 +119,11 @@ Resolve the existing Deno failures exposed by MAI-79 so `deno task verify` passe
 - Commits publicados: `a228200` e `4245006`.
 - Abertura da PR pendente apenas de autenticação/autorização do GitHub: o token do `gh` está inválido e o conector GitHub não possui acesso ao repositório.
 - A tarefa permanece `In Progress` até a revisão humana na PR.
+
+## PR aberta
+
+- PR pronta para revisão humana: https://github.com/M-Ai-Fintech/MVP/pull/3
+- Base: `master`; branch: `chore/MAI-87-deno-verification`.
+- A autenticação GitHub foi revalidada e a entrega foi publicada.
+- A tarefa permanece `In Progress` até a revisão humana.
 <!-- SECTION:NOTES:END -->
