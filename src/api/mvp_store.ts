@@ -1,5 +1,5 @@
 /**
- * Stable public façade for deterministic MVP_6 in-memory persistence.
+ * Stable public facade for deterministic MVP_6 in-memory persistence.
  *
  * Domain behavior is implemented under `store/`; callers continue importing
  * this module so the API surface and mock-backed seed behavior remain stable.
@@ -27,7 +27,11 @@ import {
 import { ChatRepository } from "./store/chat.ts";
 import { DealRepository } from "./store/deals.ts";
 import { EngineRepository } from "./store/engines.ts";
-import { EntityListQuery, EntityRepository, DossierRepository } from "./store/entities.ts";
+import {
+  DossierRepository,
+  EntityListQuery,
+  EntityRepository,
+} from "./store/entities.ts";
 import { DashboardLayoutRepository } from "./store/layouts.ts";
 import {
   NotificationListQuery,
@@ -53,10 +57,10 @@ export { MvpStoreError } from "./store/error.ts";
 export type { MvpStoreErrorCode } from "./store/error.ts";
 export { MVP_SEED_IDS } from "./store/seed_ids.ts";
 export type {
-  Dossier,
-  DossierPatch,
   AgentId,
   CursorPage,
+  Dossier,
+  DossierPatch,
   EngineName,
   Entity,
   EntityInput,

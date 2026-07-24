@@ -1,17 +1,16 @@
 // src/agent/agents/sourcing-kyb/tools/index.ts
 import {
-  verifyRegistryTool,
-  mcpDatabaseTool,
-  geminiGoogleSearchTool,
   databaseMemoryServiceTool,
-  googleCloudPubSubTool
+  geminiGoogleSearchTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool,
+  verifyRegistryTool,
 } from "../../../actions.ts";
 
 export {
-  verifyRegistryTool,
-  mcpDatabaseTool,
-  geminiGoogleSearchTool,
   databaseMemoryServiceTool,
-  googleCloudPubSubTool
+  geminiGoogleSearchTool,
+  googleCloudPubSubTool,
+  mcpDatabaseTool,
+  verifyRegistryTool,
 };
-

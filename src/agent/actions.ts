@@ -13,18 +13,16 @@ import { PortfolioSolver } from "../engines/optimization/kyc/kyc_valuation_solve
 
 import { LocalPubSubBus } from "../core/pubsub/LocalPubSubBus.ts";
 
-
-
 /**
  * Tool 1: KYB/Registry verification
  */
 export const verifyRegistryTool = createTool({
   id: "verify-registry-tool",
   description:
-    "Verifica a situação cadastral corporativa e dívidas tributárias de um CNPJ na Receita Federal.",
+    "Verifies the corporate registration status and tax debts of a CNPJ at the Federal Revenue.",
   inputSchema: z.object({
     cnpj: z.string().describe(
-      "O CNPJ da empresa-alvo (apenas dígitos ou formatado).",
+      "The target company's CNPJ (digits only or formatted).",
     ),
   }),
   outputSchema: z.any(),
@@ -40,7 +38,7 @@ export const verifyRegistryTool = createTool({
 export const analyzeCompanyRisksTool = createTool({
   id: "analyze-company-risks-tool",
   description:
-    "Analisa a saúde financeira preditiva de uma empresa (risco de insolvência, volatilidade de fluxo de caixa e churn de clientes).",
+    "Analyzes the predictive financial health of a company (insolvency risk, cash flow volatility, and customer churn).",
   inputSchema: z.object({
     name: z.string(),
     ebitda: z.number(),
@@ -64,7 +62,7 @@ export const analyzeCompanyRisksTool = createTool({
 export const optimizePortfolioTool = createTool({
   id: "optimize-portfolio-tool",
   description:
-    "Resolve a otimização linear inteira mista (MILP) para selecionar o portfólio ideal de aquisições de M&A.",
+    "Solves the mixed-integer linear programming (MILP) optimization to select the ideal portfolio of M&A acquisitions.",
   inputSchema: z.object({
     targets: z.array(
       z.object({
@@ -114,7 +112,10 @@ export const optimizePortfolioTool = createTool({
       mutualExclusions: input.mutualExclusions,
     };
 
-    const solverResult = await PortfolioSolver.evaluateAndOptimize(solverTargets, criteria);
+    const solverResult = await PortfolioSolver.evaluateAndOptimize(
+      solverTargets,
+      criteria,
+    );
 
     const result = {
       selectedTargetIds: solverResult.optimization.selectedTargetIds,
@@ -134,7 +135,7 @@ export const optimizePortfolioTool = createTool({
 export const optimizeTermSheetTool = createTool({
   id: "optimize-term-sheet-tool",
   description:
-    "Executa um algoritmo genético de negociação bilateral para encontrar as melhores cláusulas do Term Sheet (Equity, Cash, Earn-out e Escrow).",
+    "Executes a bilateral negotiation genetic algorithm to find the best Term Sheet clauses (Equity, Cash, Earn-out, and Escrow).",
   inputSchema: z.object({
     valuationMin: z.number().default(10_000_000),
     valuationMax: z.number().default(50_000_000),
@@ -153,10 +154,11 @@ export const optimizeTermSheetTool = createTool({
     const result = optimizeDeal({
       valuationMin: input.valuationMin,
       valuationMax: input.valuationMax,
-      preferences: input.preferences ?? { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 }
+      preferences: input.preferences ??
+        { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 },
     }, {
       populationSize: input.populationSize ?? 100,
-      generations: input.generations ?? 50
+      generations: input.generations ?? 50,
     });
     return { success: true, result };
   },
@@ -168,10 +170,10 @@ export const optimizeTermSheetTool = createTool({
 export const generatePdfTermSheetTool = createTool({
   id: "generate-pdf-term-sheet-tool",
   description:
-    "Gera o documento físico PDF final do Term Sheet e o escreve no sistema de arquivos.",
+    "Generates the final physical PDF document of the Term Sheet and writes it to the file system.",
   inputSchema: z.object({
     filePath: z.string().describe(
-      "Caminho do arquivo de destino (ex: ./term_sheets/deal_1.pdf).",
+      "Destination file path (e.g., ./term_sheets/deal_1.pdf).",
     ),
     buyerName: z.string(),
     sellerName: z.string(),
@@ -197,33 +199,38 @@ export const generatePdfTermSheetTool = createTool({
     return {
       success: true,
       filePath: input.filePath,
-      message: "PDF gerado com sucesso.",
+      message: "PDF generated successfully.",
     };
   },
 });
 
 /**
- * Tool 6: Barramento local de mensageria assíncrona
- * Adaptador para publicação de eventos de requisição de VDR e acionamento de Engines
- * via barramento local (PubSubBus). Contrato compatível com Google Cloud Pub/Sub para
- * migração futura transparente.
+ * Tool 6: Local asynchronous messaging bus
+ * Adapter for publishing VDR request events and triggering Engines
+ * via local bus (PubSubBus). Contract compatible with Google Cloud Pub/Sub for
+ * transparent future migration.
  */
 export const googleCloudPubSubTool = createTool({
   id: "pubsub-bus-tool",
   description:
-    "Simula a requisição de acesso ao VDR e acionamento assíncrono das Engines computacionais no MVP.",
+    "Simulates the request for VDR access and asynchronous triggering of computational Engines in the MVP.",
   inputSchema: z.object({
-    topic: z.string().describe("Tópico do Pub/Sub para publicar a mensagem."),
-    dealId: z.string().optional().describe("ID do deal/transação associado."),
-    requester: z.string().optional().describe("Identidade do agente ou serviço solicitante."),
-    payload: z.record(z.any()).optional().describe("Carga útil adicional para o evento."),
-    action: z.enum(["request_vdr_access", "publish_event", "trigger_engine"]).default("publish_event"),
+    topic: z.string().describe("Pub/Sub topic to publish the message."),
+    dealId: z.string().optional().describe("Associated deal/transaction ID."),
+    requester: z.string().optional().describe(
+      "Identity of the requesting agent or service.",
+    ),
+    payload: z.record(z.any()).optional().describe(
+      "Additional payload for the event.",
+    ),
+    action: z.enum(["request_vdr_access", "publish_event", "trigger_engine"])
+      .default("publish_event"),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
     const mockMessageId = `msg_${Math.random().toString(36).substring(2, 11)}`;
     const bus = LocalPubSubBus.getInstance();
-    
+
     const messagePayload = {
       messageId: mockMessageId,
       dealId: input.dealId,
@@ -233,18 +240,26 @@ export const googleCloudPubSubTool = createTool({
       timestamp: new Date().toISOString(),
     };
 
-    // Publica o evento no broker local real
+    // Publishes the event to the real local broker
     bus.publish(input.topic, messagePayload);
 
-    if (input.action === "request_vdr_access" && input.dealId && input.requester) {
+    if (
+      input.action === "request_vdr_access" && input.dealId && input.requester
+    ) {
       const documents = await VDRService.getDocumentsForDeal(input.dealId);
-      // Publica evento de resposta asssincronamente de volta
+      // Publishes response event asynchronously back
       bus.publish(`${input.topic}_response`, {
         ...messagePayload,
         status: "success",
         documents,
       });
-      return { success: true, messageId: mockMessageId, action: input.action, dealId: input.dealId, documents };
+      return {
+        success: true,
+        messageId: mockMessageId,
+        action: input.action,
+        dealId: input.dealId,
+        documents,
+      };
     }
 
     if (input.action === "trigger_engine" && input.dealId) {
@@ -253,7 +268,13 @@ export const googleCloudPubSubTool = createTool({
         status: "success",
         result: `Engine triggered successfully for ${input.dealId}`,
       });
-      return { success: true, messageId: mockMessageId, action: input.action, dealId: input.dealId, message: "Engine triggered successfully" };
+      return {
+        success: true,
+        messageId: mockMessageId,
+        action: input.action,
+        dealId: input.dealId,
+        message: "Engine triggered successfully",
+      };
     }
 
     return {
@@ -261,7 +282,7 @@ export const googleCloudPubSubTool = createTool({
       messageId: mockMessageId,
       topic: input.topic,
       action: input.action,
-      message: `Mensagem publicada com sucesso no tópico '${input.topic}'.`,
+      message: `Message published successfully to topic '${input.topic}'.`,
     };
   },
 });
@@ -272,55 +293,147 @@ export const googleCloudPubSubTool = createTool({
 export const mcpDatabaseTool = createTool({
   id: "mcp-database-tool",
   description:
-    "Interface MCP nativa para gerenciar e consultar o esquema PostgreSQL e tabelas operacionais (transaction, business, financial_structure, phase_history).",
+    "Native MCP interface to manage and query the PostgreSQL schema and operational tables (transaction, business, financial_structure, phase_history).",
   inputSchema: z.object({
     action: z.enum(["query", "inspect_schema", "list_tables"]),
-    table: z.enum(["transaction", "business", "financial_structure", "phase_history"]).optional(),
-    query: z.string().optional().describe("Consulta SQL customizada para executar."),
-    parameters: z.array(z.any()).optional().describe("Parâmetros para a consulta SQL."),
+    table: z.enum([
+      "transaction",
+      "business",
+      "financial_structure",
+      "phase_history",
+    ]).optional(),
+    query: z.string().optional().describe("Custom SQL query to execute."),
+    parameters: z.array(z.any()).optional().describe(
+      "Parameters for the SQL query.",
+    ),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
     const memoryService = DatabaseMemoryService.getInstance();
     try {
       if (input.action === "list_tables") {
-        const sql = `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public';`;
-        const result = await memoryService.executeRawQuery<{ name: string }>(sql);
+        const sql =
+          `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public';`;
+        const result = await memoryService.executeRawQuery<{ name: string }>(
+          sql,
+        );
         const tables = result.map((r) => r.name);
         return { success: true, tables };
       }
       if (input.action === "inspect_schema" && input.table) {
-        const sql = `SELECT column_name as column FROM information_schema.columns WHERE table_name = $1;`;
-        const result = await memoryService.executeRawQuery<{ column: string }>(sql, [input.table]);
+        const sql =
+          `SELECT column_name as column FROM information_schema.columns WHERE table_name = $1;`;
+        const result = await memoryService.executeRawQuery<{ column: string }>(
+          sql,
+          [input.table],
+        );
         const columns = result.map((r) => r.column);
         return { success: true, table: input.table, schema: { columns } };
       }
       if (input.action === "query") {
-        const sql = input.query || `SELECT * FROM ${input.table ?? "transaction"} LIMIT 10;`;
-        const data = await memoryService.executeRawQuery<any>(sql, input.parameters);
-        return { success: true, action: input.action, executedQuery: sql, data };
+        const sql = input.query ||
+          `SELECT * FROM ${input.table ?? "transaction"} LIMIT 10;`;
+        const data = await memoryService.executeRawQuery<any>(
+          sql,
+          input.parameters,
+        );
+        return {
+          success: true,
+          action: input.action,
+          executedQuery: sql,
+          data,
+        };
       }
-      return { success: false, message: "Ação desconhecida ou inválida." };
+      return { success: false, message: "Unknown or invalid action." };
     } catch (err: any) {
-      console.warn("mcpDatabaseTool - Conexão ao Postgres falhou, executando fallback:", err.message);
+      console.warn(
+        "mcpDatabaseTool - Connection to Postgres failed, executing fallback:",
+        err.message,
+      );
       if (input.action === "list_tables") {
-        return { success: true, tables: ["transaction", "business", "financial_structure", "phase_history"], fallback: true };
+        return {
+          success: true,
+          tables: [
+            "transaction",
+            "business",
+            "financial_structure",
+            "phase_history",
+          ],
+          fallback: true,
+        };
       }
       if (input.action === "inspect_schema" && input.table) {
         const schemas: Record<string, unknown> = {
-          transaction: { columns: ["id", "title", "code", "transaction_type_id", "transaction_strategy_id", "transaction_status_id", "target_valuation", "currency", "created_at", "updated_at"] },
-          business: { columns: ["id", "name", "cnpj", "sector", "origin_country", "created_at", "updated_at"] },
-          financial_structure: { columns: ["id", "transaction_id", "cash_percentage", "equity_percentage", "earn_out_percentage", "escrow_percentage", "total_valuation", "created_at", "updated_at"] },
-          phase_history: { columns: ["id", "transaction_id", "phase_id", "phase_status_id", "data", "started_at", "completed_at", "comments", "created_at"] },
+          transaction: {
+            columns: [
+              "id",
+              "title",
+              "code",
+              "transaction_type_id",
+              "transaction_strategy_id",
+              "transaction_status_id",
+              "target_valuation",
+              "currency",
+              "created_at",
+              "updated_at",
+            ],
+          },
+          business: {
+            columns: [
+              "id",
+              "name",
+              "cnpj",
+              "sector",
+              "origin_country",
+              "created_at",
+              "updated_at",
+            ],
+          },
+          financial_structure: {
+            columns: [
+              "id",
+              "transaction_id",
+              "cash_percentage",
+              "equity_percentage",
+              "earn_out_percentage",
+              "escrow_percentage",
+              "total_valuation",
+              "created_at",
+              "updated_at",
+            ],
+          },
+          phase_history: {
+            columns: [
+              "id",
+              "transaction_id",
+              "phase_id",
+              "phase_status_id",
+              "data",
+              "started_at",
+              "completed_at",
+              "comments",
+              "created_at",
+            ],
+          },
         };
-        return { success: true, table: input.table, schema: schemas[input.table] ?? { columns: ["id", "created_at"] }, fallback: true };
+        return {
+          success: true,
+          table: input.table,
+          schema: schemas[input.table] ?? { columns: ["id", "created_at"] },
+          fallback: true,
+        };
       }
       return {
         success: true,
         action: input.action,
-        executedQuery: input.query ?? `SELECT * FROM ${input.table ?? "transaction"} LIMIT 10`,
+        executedQuery: input.query ??
+          `SELECT * FROM ${input.table ?? "transaction"} LIMIT 10`,
         data: [
-          { id: crypto.randomUUID(), status: "active", notes: "Query executada via Fallback MCP (Banco offline)" },
+          {
+            id: crypto.randomUUID(),
+            status: "active",
+            notes: "Query executed via Fallback MCP (Database offline)",
+          },
         ],
         fallback: true,
       };
@@ -334,21 +447,42 @@ export const mcpDatabaseTool = createTool({
 export const huggingFaceMcpTool = createTool({
   id: "hugging-face-mcp-tool",
   description:
-    "Conexão MCP para interagir com modelos e carregar pesos ONNX/Transformers locais para predição de risco e insolvência, bem como inferência em modelos LLM com adaptadores LoRA (Fine-Tuning para M&A Brasileiro).",
+    "MCP connection to interact with models and load local ONNX/Transformers weights for risk and insolvency prediction, as well as inference in LLM models with LoRA adapters (Fine-Tuning for Brazilian M&A).",
   inputSchema: z.object({
     model: z.string().default("onnx-risk-predictor-q8"),
-    task: z.enum(["predict_insolvency", "load_weights", "embedding", "load_lora_adapter", "fine_tuned_inference"]).default("predict_insolvency"),
-    inputData: z.record(z.any()).optional().describe("Dados financeiros da empresa para inferência."),
-    text: z.string().optional().describe("Texto para geração de embedding ou prompt para LLM com LoRA."),
-    adapterPath: z.string().optional().describe("Caminho do adapter LoRA a ser carregado (ex: ./lora_adapter_ma_br)."),
+    task: z.enum([
+      "predict_insolvency",
+      "load_weights",
+      "embedding",
+      "load_lora_adapter",
+      "fine_tuned_inference",
+    ]).default("predict_insolvency"),
+    inputData: z.record(z.any()).optional().describe(
+      "Company financial data for inference.",
+    ),
+    text: z.string().optional().describe(
+      "Text for embedding generation or prompt for LLM with LoRA.",
+    ),
+    adapterPath: z.string().optional().describe(
+      "Path of the LoRA adapter to load (e.g., ./lora_adapter_ma_br).",
+    ),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
     if (input.task === "load_weights") {
-      return { success: true, model: input.model, status: "Weights loaded successfully (q8/q4 quantized ONNX)" };
+      return {
+        success: true,
+        model: input.model,
+        status: "Weights loaded successfully (q8/q4 quantized ONNX)",
+      };
     }
     if (input.task === "load_lora_adapter") {
-      return { success: true, model: input.model, adapterPath: input.adapterPath, status: "LoRA adapter loaded and merged successfully for inference." };
+      return {
+        success: true,
+        model: input.model,
+        adapterPath: input.adapterPath,
+        status: "LoRA adapter loaded and merged successfully for inference.",
+      };
     }
     if (input.task === "fine_tuned_inference" && input.text) {
       const aiConfig = AIProvider.getApiKey();
@@ -358,8 +492,9 @@ export const huggingFaceMcpTool = createTool({
           const { google } = await import("npm:@ai-sdk/google");
           const response = await generateText({
             model: google("gemini-3.5-flash"),
-            prompt: `Você é um modelo de linguagem especializado em M&A no mercado brasileiro (juridiquês e financês), simulando um modelo fine-tuned LoRA.
-Responda à seguinte cláusula ou instrução de due diligence de forma técnica e objetiva:
+            prompt:
+              `You are a language model specialized in M&A in the Brazilian market (legalese and finance), simulating a fine-tuned LoRA model.
+Respond to the following due diligence clause or instruction in a technical and objective manner:
 
 ${input.text}`,
           });
@@ -369,14 +504,18 @@ ${input.text}`,
             output: response.text,
           };
         } catch (err: any) {
-          console.warn("huggingFaceMcpTool - Falha na inferência real com o modelo do Google:", err.message);
+          console.warn(
+            "huggingFaceMcpTool - Real inference failed with Google model:",
+            err.message,
+          );
           throw err;
         }
       }
-      return { 
-        success: true, 
-        model: input.model, 
-        output: `[MOCK - Inferência Fine-Tuned (${input.model})] Análise da cláusula (Juridiquês M&A BR): A cláusula descrita impõe obrigações solidárias ao Vendedor e gatilhos de Change of Control típicos do mercado brasileiro, sem penalidade de rescisão.` 
+      return {
+        success: true,
+        model: input.model,
+        output:
+          `[MOCK - Fine-Tuned Inference (${input.model})] Clause analysis (Brazilian M&A Legalese): The described clause imposes joint obligations on the Seller and Change of Control triggers typical of the Brazilian market, without termination penalty.`,
       };
     }
     if (input.task === "embedding" && input.text) {
@@ -394,7 +533,7 @@ ${input.text}`,
         operatingCashFlow: Number(data.operatingCashFlow || 0),
         historicalVolatility: Number(data.historicalVolatility || 0),
       };
-      
+
       const metrics = await ONNXEngine.runModelInference(modelInput);
       let riskLevel = "low";
       if (metrics.insolvencyRisk > 0.8) riskLevel = "critical";
@@ -407,13 +546,19 @@ ${input.text}`,
         prediction: {
           insolvencyRiskScore: metrics.insolvencyRisk,
           riskLevel,
-          confidence: parseFloat((1 - Math.abs(metrics.insolvencyRisk - 0.5) * 0.1).toFixed(2)),
-          details: `Inferência executada via Hugging Face MCP com modelo ONNX (Insolvência: ${metrics.insolvencyRisk}).`,
+          confidence: parseFloat(
+            (1 - Math.abs(metrics.insolvencyRisk - 0.5) * 0.1).toFixed(2),
+          ),
+          details:
+            `Inference executed via Hugging Face MCP with ONNX model (Insolvency: ${metrics.insolvencyRisk}).`,
           metrics,
         },
       };
     } catch (err: any) {
-      console.warn("huggingFaceMcpTool - Falha na inferência ONNX real, usando fallback:", err.message);
+      console.warn(
+        "huggingFaceMcpTool - Real ONNX inference failed, using fallback:",
+        err.message,
+      );
       return {
         success: true,
         model: input.model,
@@ -421,7 +566,8 @@ ${input.text}`,
           insolvencyRiskScore: 0.14,
           riskLevel: "low",
           confidence: 0.96,
-          details: "Inferência executada via Hugging Face MCP com modelo ONNX (Fallback).",
+          details:
+            "Inference executed via Hugging Face MCP with ONNX model (Fallback).",
         },
         fallback: true,
       };
@@ -435,11 +581,16 @@ ${input.text}`,
 export const geminiGoogleSearchTool = createTool({
   id: "gemini-google-search-tool",
   description:
-    "Busca em tempo real e grounding via Gemini API para apurar reputação, cultura corporativa, movimentações passadas e notícias do setor.",
+    "Real-time search and grounding via Gemini API to ascertain reputation, corporate culture, past moves, and industry news.",
   inputSchema: z.object({
-    query: z.string().describe("A consulta para busca e grounding via Gemini API no Google Search."),
-    targetCompany: z.string().optional().describe("Nome da empresa alvo da investigação."),
-    aspect: z.enum(["reputation", "culture", "past_deals", "news", "general"]).default("general"),
+    query: z.string().describe(
+      "The query for search and grounding via Gemini API in Google Search.",
+    ),
+    targetCompany: z.string().optional().describe(
+      "Name of the target company under investigation.",
+    ),
+    aspect: z.enum(["reputation", "culture", "past_deals", "news", "general"])
+      .default("general"),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
@@ -447,7 +598,9 @@ export const geminiGoogleSearchTool = createTool({
     const apiKey = aiConfig.key;
 
     if (!apiKey) {
-      console.warn("geminiGoogleSearchTool - GEMINI_API_KEY não configurada. Usando fallback mocado.");
+      console.warn(
+        "geminiGoogleSearchTool - GEMINI_API_KEY not configured. Using mocked fallback.",
+      );
       return {
         success: true,
         query: input.query,
@@ -456,17 +609,23 @@ export const geminiGoogleSearchTool = createTool({
         groundingMetadata: {
           sources: [
             {
-              title: `${input.targetCompany ?? "Empresa Alvo"} - Análise de Mercado e Notícias (Mock)`,
-              url: `https://news.google.com/search?q=${encodeURIComponent(input.query)}`,
+              title: `${
+                input.targetCompany ?? "Target Company"
+              } - Market Analysis and News (Mock)`,
+              url: `https://news.google.com/search?q=${
+                encodeURIComponent(input.query)
+              }`,
             },
           ],
         },
-        summary: `Resultados do grounding via Gemini API para '${input.query}'. A empresa demonstra forte governança, cultura focada em inovação e reputação sólida no setor, sem litígios desabonadores recentes em movimentações passadas.`,
+        summary:
+          `Grounding results via Gemini API for '${input.query}'. The company demonstrates strong governance, innovation-focused culture, and solid industry reputation, with no recent discrediting litigation in past moves.`,
       };
     }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -475,25 +634,34 @@ export const geminiGoogleSearchTool = createTool({
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Faça uma busca detalhada no Google Search para obter informações reais sobre: ${input.query}. Foque nos aspectos de reputação e histórico da empresa: ${input.targetCompany || "Empresa sob investigação"}.`
-            }]
+              text:
+                `Do a detailed search in Google Search to get real information about: ${input.query}. Focus on the reputation and history aspects of the company: ${
+                  input.targetCompany || "Company under investigation"
+                }.`,
+            }],
           }],
           tools: [{
-            googleSearch: {}
-          }]
-        })
+            googleSearch: {},
+          }],
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `HTTP Error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const responseData = await response.json();
-      const text = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const groundingMetadata = responseData.candidates?.[0]?.groundingMetadata || {};
+      const text = responseData.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "";
+      const groundingMetadata =
+        responseData.candidates?.[0]?.groundingMetadata || {};
 
-      const sources = (groundingMetadata.groundingChunks || []).map((chunk: any) => ({
-        title: chunk.web?.title || "Fonte de Informação",
+      const sources = (groundingMetadata.groundingChunks || []).map((
+        chunk: any,
+      ) => ({
+        title: chunk.web?.title || "Information Source",
         url: chunk.web?.uri || "",
       })).filter((s: any) => s.url);
 
@@ -505,15 +673,23 @@ export const geminiGoogleSearchTool = createTool({
         groundingMetadata: {
           sources: sources.length > 0 ? sources : [
             {
-              title: `${input.targetCompany ?? "Empresa Alvo"} - Notícias e Referências`,
-              url: `https://www.google.com/search?q=${encodeURIComponent(input.query)}`,
-            }
+              title: `${
+                input.targetCompany ?? "Target Company"
+              } - News and References`,
+              url: `https://www.google.com/search?q=${
+                encodeURIComponent(input.query)
+              }`,
+            },
           ],
         },
-        summary: text || `Resultados do grounding via Gemini API para '${input.query}'. A empresa demonstra forte governança e reputação sólida.`,
+        summary: text ||
+          `Grounding results via Gemini API for '${input.query}'. The company demonstrates strong governance and solid reputation.`,
       };
     } catch (err: any) {
-      console.warn("geminiGoogleSearchTool - Chamada à API falhou, usando fallback mocado:", err.message);
+      console.warn(
+        "geminiGoogleSearchTool - API call failed, using mocked fallback:",
+        err.message,
+      );
       return {
         success: true,
         query: input.query,
@@ -522,12 +698,17 @@ export const geminiGoogleSearchTool = createTool({
         groundingMetadata: {
           sources: [
             {
-              title: `${input.targetCompany ?? "Empresa Alvo"} - Análise de Mercado (Fallback)`,
-              url: `https://news.google.com/search?q=${encodeURIComponent(input.query)}`,
+              title: `${
+                input.targetCompany ?? "Target Company"
+              } - Market Analysis (Fallback)`,
+              url: `https://news.google.com/search?q=${
+                encodeURIComponent(input.query)
+              }`,
             },
           ],
         },
-        summary: `Resultados do grounding (fallback) para '${input.query}'. A empresa demonstra forte governança, cultura focada em inovação e reputação sólida no setor, sem litígios desabonadores recentes em movimentações passadas.`,
+        summary:
+          `Grounding results (fallback) for '${input.query}'. The company demonstrates strong governance, innovation-focused culture, and solid industry reputation, with no recent discrediting litigation in past moves.`,
       };
     }
   },
@@ -539,7 +720,7 @@ export const geminiGoogleSearchTool = createTool({
 export const databaseMemoryServiceTool = createTool({
   id: "database-memory-service-tool",
   description:
-    "Conector com o Postgres dedicado a armazenar memórias, cultura e preferências do usuário separadamente de phase_history.",
+    "Postgres connector dedicated to storing memories, culture, and user preferences separately from phase_history.",
   inputSchema: z.object({
     action: z.enum([
       "get_user_preferences",
@@ -550,54 +731,119 @@ export const databaseMemoryServiceTool = createTool({
       "save_company_culture",
       "search_similar_knowledge",
     ]),
-    userId: z.string().optional().describe("ID do usuário/broker (obrigatório para preferências)."),
-    category: z.string().optional().describe("Categoria de conhecimento de domínio."),
-    businessId: z.string().optional().describe("ID da empresa para consulta de cultura."),
-    data: z.record(z.any()).optional().describe("Dados a serem salvos (preferências, conhecimento ou cultura)."),
-    embedding: z.array(z.number()).optional().describe("Vetor de embedding opcional para o registro."),
-    queryEmbedding: z.array(z.number()).optional().describe("Vetor de consulta para busca por similaridade."),
+    userId: z.string().optional().describe(
+      "User/broker ID (required for preferences).",
+    ),
+    category: z.string().optional().describe("Domain knowledge category."),
+    businessId: z.string().optional().describe("Company ID for culture query."),
+    data: z.record(z.any()).optional().describe(
+      "Data to be saved (preferences, knowledge, or culture).",
+    ),
+    embedding: z.array(z.number()).optional().describe(
+      "Optional embedding vector for the record.",
+    ),
+    queryEmbedding: z.array(z.number()).optional().describe(
+      "Query vector for similarity search.",
+    ),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
     const memoryService = DatabaseMemoryService.getInstance();
     switch (input.action) {
       case "get_user_preferences": {
-        if (!input.userId) throw new Error("userId é obrigatório para get_user_preferences");
-        const preferences = await memoryService.getUserPreferences(input.userId);
+        if (!input.userId) {
+          throw new Error("userId is required for get_user_preferences");
+        }
+        const preferences = await memoryService.getUserPreferences(
+          input.userId,
+        );
         return { success: true, userId: input.userId, preferences };
       }
       case "save_user_preferences": {
-        if (!input.userId || !input.data) throw new Error("userId e data são obrigatórios para save_user_preferences");
-        await memoryService.saveUserPreferences(input.userId, input.data, input.embedding);
-        return { success: true, message: "Preferências do usuário salvas com sucesso no Database Memory Service." };
+        if (!input.userId || !input.data) {
+          throw new Error(
+            "userId and data are required for save_user_preferences",
+          );
+        }
+        await memoryService.saveUserPreferences(
+          input.userId,
+          input.data,
+          input.embedding,
+        );
+        return {
+          success: true,
+          message:
+            "User preferences saved successfully in the Database Memory Service.",
+        };
       }
       case "get_domain_knowledge": {
-        if (!input.category) throw new Error("category é obrigatória para get_domain_knowledge");
-        const knowledge = await memoryService.getDomainKnowledge(input.category);
+        if (!input.category) {
+          throw new Error("category is required for get_domain_knowledge");
+        }
+        const knowledge = await memoryService.getDomainKnowledge(
+          input.category,
+        );
         return { success: true, category: input.category, knowledge };
       }
       case "save_domain_knowledge": {
-        if (!input.category || !input.data) throw new Error("category e data são obrigatórios para save_domain_knowledge");
-        await memoryService.saveDomainKnowledge(input.category, input.data, input.embedding);
-        return { success: true, message: "Conhecimento de domínio salvo com sucesso no Database Memory Service." };
+        if (!input.category || !input.data) {
+          throw new Error(
+            "category and data are required for save_domain_knowledge",
+          );
+        }
+        await memoryService.saveDomainKnowledge(
+          input.category,
+          input.data,
+          input.embedding,
+        );
+        return {
+          success: true,
+          message:
+            "Domain knowledge saved successfully in the Database Memory Service.",
+        };
       }
       case "get_company_culture": {
-        if (!input.businessId) throw new Error("businessId é obrigatório para get_company_culture");
-        const culture = await memoryService.getCompanyCultureMemory(input.businessId);
+        if (!input.businessId) {
+          throw new Error("businessId is required for get_company_culture");
+        }
+        const culture = await memoryService.getCompanyCultureMemory(
+          input.businessId,
+        );
         return { success: true, businessId: input.businessId, culture };
       }
       case "save_company_culture": {
-        if (!input.businessId || !input.data) throw new Error("businessId e data são obrigatórios para save_company_culture");
-        await memoryService.saveCompanyCultureMemory(input.businessId, input.data, input.embedding);
-        return { success: true, message: "Memória da cultura da empresa salva com sucesso no Database Memory Service." };
+        if (!input.businessId || !input.data) {
+          throw new Error(
+            "businessId and data are required for save_company_culture",
+          );
+        }
+        await memoryService.saveCompanyCultureMemory(
+          input.businessId,
+          input.data,
+          input.embedding,
+        );
+        return {
+          success: true,
+          message:
+            "Company culture memory saved successfully in the Database Memory Service.",
+        };
       }
       case "search_similar_knowledge": {
-        if (!input.queryEmbedding) throw new Error("queryEmbedding é obrigatório para search_similar_knowledge");
-        const results = await memoryService.searchSimilarKnowledge(input.queryEmbedding);
+        if (!input.queryEmbedding) {
+          throw new Error(
+            "queryEmbedding is required for search_similar_knowledge",
+          );
+        }
+        const results = await memoryService.searchSimilarKnowledge(
+          input.queryEmbedding,
+        );
         return { success: true, results };
       }
       default:
-        return { success: false, message: "Ação desconhecida no DatabaseMemoryService." };
+        return {
+          success: false,
+          message: "Unknown action in DatabaseMemoryService.",
+        };
     }
   },
 });
@@ -608,16 +854,32 @@ export const databaseMemoryServiceTool = createTool({
 export const synergyPricingTool = createTool({
   id: "synergy-pricing-tool",
   description:
-    "Valores de sinergia operacional (receitas e custos) e financeira (tax shields) e precificação final do deal baseados na fórmula de compartilhamento (Alpha).",
+    "Values for operational (revenue and cost) and financial (tax shields) synergy, and final deal pricing based on the sharing formula (Alpha).",
   inputSchema: z.object({
-    standaloneValue: z.number().describe("Valor standalone da empresa alvo em milhões."),
-    costSynergies: z.array(z.number()).describe("Vetor anual de sinergias de custos em milhões."),
-    revenueSynergies: z.array(z.number()).describe("Vetor anual de sinergias de receitas em milhões."),
-    integrationCosts: z.array(z.number()).describe("Vetor anual de custos de integração em milhões."),
-    wacc: z.number().describe("Custo Médio Ponderado de Capital (WACC) para o desconto (ex: 0.12 para 12%)."),
-    taxRate: z.number().default(0.34).describe("Alíquota de imposto corporativo (padrão 0.34 para 34%)."),
-    revenueHaircut: z.number().default(0.40).describe("Desconto/Haircut aplicado sobre as sinergias de receita (padrão 0.40 para 40%)."),
-    sharingCoefficient: z.number().default(0.30).describe("Coeficiente de compartilhamento de sinergia Alpha (padrão 0.30 para 30%)."),
+    standaloneValue: z.number().describe(
+      "Standalone value of the target company in millions.",
+    ),
+    costSynergies: z.array(z.number()).describe(
+      "Annual vector of cost synergies in millions.",
+    ),
+    revenueSynergies: z.array(z.number()).describe(
+      "Annual vector of revenue synergies in millions.",
+    ),
+    integrationCosts: z.array(z.number()).describe(
+      "Annual vector of integration costs in millions.",
+    ),
+    wacc: z.number().describe(
+      "Weighted Average Cost of Capital (WACC) for the discount (e.g., 0.12 for 12%).",
+    ),
+    taxRate: z.number().default(0.34).describe(
+      "Corporate tax rate (default 0.34 for 34%).",
+    ),
+    revenueHaircut: z.number().default(0.40).describe(
+      "Discount/Haircut applied to revenue synergies (default 0.40 for 40%).",
+    ),
+    sharingCoefficient: z.number().default(0.30).describe(
+      "Alpha synergy sharing coefficient (default 0.30 for 30%).",
+    ),
   }),
   outputSchema: z.any(),
   execute: async (input) => {
@@ -637,7 +899,11 @@ export const synergyPricingTool = createTool({
     let pvRevenueSynergies = 0;
     let pvIntegrationCosts = 0;
 
-    const years = Math.max(costSynergies.length, revenueSynergies.length, integrationCosts.length);
+    const years = Math.max(
+      costSynergies.length,
+      revenueSynergies.length,
+      integrationCosts.length,
+    );
 
     for (let t = 0; t < years; t++) {
       const year = t + 1;
@@ -659,7 +925,8 @@ export const synergyPricingTool = createTool({
       pvIntegrationCosts += intCostTaxAdjusted / discountFactor;
     }
 
-    const netSynergyValue = pvCostSynergies + pvRevenueSynergies - pvIntegrationCosts;
+    const netSynergyValue = pvCostSynergies + pvRevenueSynergies -
+      pvIntegrationCosts;
     const sellerPremium = sharingCoefficient * netSynergyValue;
     const recommendedPurchasePrice = standaloneValue + sellerPremium;
 
@@ -682,9 +949,14 @@ export const synergyPricingTool = createTool({
 export const vdrStructuredAccessTool = createTool({
   id: "vdr-structured-access-tool",
   description:
-    "Ferramenta para acesso estruturado ao VDR (Virtual Data Room). Permite listar arquivos, ler conteúdo, consultar o RAG local e auditar a completude dos documentos.",
+    "Tool for structured access to the VDR (Virtual Data Room). Allows listing files, reading content, querying the local RAG, and auditing document completeness.",
   inputSchema: z.object({
-    action: z.enum(["list_files", "read_file_content", "query_silo", "audit_compliance"]),
+    action: z.enum([
+      "list_files",
+      "read_file_content",
+      "query_silo",
+      "audit_compliance",
+    ]),
     dealId: z.string(),
     fileName: z.string().optional(),
     queryText: z.string().optional(),
@@ -697,29 +969,49 @@ export const vdrStructuredAccessTool = createTool({
         const docs = await VDRService.getDocumentsForDeal(input.dealId);
         const mappedDocs = docs.map((doc) => {
           let tag = "#other";
-          if (doc.type === "Financeiro") tag = "#financial";
-          else if (doc.type === "Societário") tag = "#corporate";
-          else if (doc.type === "Trabalhista") tag = "#labor";
-          else if (doc.type === "Tributário") tag = "#tax";
+          if (doc.type === "finance") tag = "#financial";
+          else if (doc.type === "corporate") tag = "#corporate";
+          else if (doc.type === "labor") tag = "#labor";
+          else if (doc.type === "tax") tag = "#tax";
           return { ...doc, tag };
         });
         return { success: true, dealId: input.dealId, files: mappedDocs };
       }
       case "read_file_content": {
-        if (!input.fileName) throw new Error("fileName is required for read_file_content");
-        const content = await Deno.readTextFile(`./vdr_rooms/${input.dealId}/${input.fileName}`);
-        return { success: true, dealId: input.dealId, fileName: input.fileName, content };
+        if (!input.fileName) {
+          throw new Error("fileName is required for read_file_content");
+        }
+        const content = await Deno.readTextFile(
+          `./vdr_rooms/${input.dealId}/${input.fileName}`,
+        );
+        return {
+          success: true,
+          dealId: input.dealId,
+          fileName: input.fileName,
+          content,
+        };
       }
       case "query_silo": {
-        if (!input.queryText) throw new Error("queryText is required for query_silo");
+        if (!input.queryText) {
+          throw new Error("queryText is required for query_silo");
+        }
         const { ClientSiloedRAG } = await import("./rag_layer.ts");
-        const results = await ClientSiloedRAG.querySilo(input.dealId, input.queryText, input.topK ?? 2);
-        return { success: true, dealId: input.dealId, query: input.queryText, results };
+        const results = await ClientSiloedRAG.querySilo(
+          input.dealId,
+          input.queryText,
+          input.topK ?? 2,
+        );
+        return {
+          success: true,
+          dealId: input.dealId,
+          query: input.queryText,
+          results,
+        };
       }
       case "audit_compliance": {
         const docs = await VDRService.getDocumentsForDeal(input.dealId);
         const types = docs.map((d) => d.type);
-        const requiredTypes = ["Financeiro", "Societário", "Trabalhista", "Tributário"];
+        const requiredTypes = ["finance", "corporate", "labor", "tax"];
         const missing = requiredTypes.filter((rt) => !types.includes(rt));
         const status = missing.length === 0 ? "COMPLIANT" : "NON_COMPLIANT";
         return {
@@ -727,11 +1019,15 @@ export const vdrStructuredAccessTool = createTool({
           dealId: input.dealId,
           status,
           missingCategories: missing,
-          message: missing.length === 0 ? "Todos os documentos essenciais estão presentes." : `Ausência de documentos essenciais: ${missing.join(", ")}. Potencial risco deal-breaker.`,
+          message: missing.length === 0
+            ? "All essential documents are present."
+            : `Missing essential documents: ${
+              missing.join(", ")
+            }. Potential deal-breaker risk.`,
         };
       }
       default:
-        throw new Error("Ação desconhecida");
+        throw new Error("Unknown action");
     }
   },
 });

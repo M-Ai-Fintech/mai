@@ -1,14 +1,14 @@
 // src/agent/ai_provider.ts
 
 /**
- * Utilitário de configuração e inicialização do provedor Gemini.
- * Valida as chaves de ambiente em ordem de prioridade.
+ * Utility for configuring and initializing the Gemini provider.
+ * Validates environment keys in order of priority.
  */
 export class AIProvider {
   /**
-   * Busca ativamente pela chave de API do Gemini/Google AI Studio.
-   * Se nenhuma chave for encontrada, emite um aviso no console e
-   * retorna uma flag informando que está operando em fallback/dry-run.
+   * Actively searches for the Gemini/Google AI Studio API key.
+   * If no key is found, emits a warning to the console and
+   * returns a flag informing that it is operating in fallback/dry-run.
    */
   public static getApiKey(): { key: string | null; isFallback: boolean } {
     if (Deno.env.get("DENO_ENV") === "test") {
@@ -29,15 +29,15 @@ export class AIProvider {
     }
 
     if (Deno.args[0] !== "completions") {
-      // Nenhuma chave encontrada: emitir mensagem de aviso clara e amigável.
+      // No key found: emit a clear and friendly warning message.
       console.warn(
-        "\n[AVISO] Nenhuma chave de API encontrada para o Google AI Studio/Gemini.",
+        "\n[WARNING] No API key found for Google AI Studio/Gemini.",
       );
       console.warn(
-        "Verifique se as variáveis GEMINI_API_KEY ou GOOGLE_GENERATIVE_AI_API_KEY estão definidas no seu ambiente ou no arquivo .env.",
+        "Check if the variables GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY are defined in your environment or in the .env file.",
       );
       console.warn(
-        "O sistema operará em modo DRY-RUN/FALLBACK (mock) e nenhuma requisição real à API será efetuada.\n",
+        "The system will operate in DRY-RUN/FALLBACK (mock) mode and no real API requests will be made.\n",
       );
       console.warn(
         "Configure your key using backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md\n",

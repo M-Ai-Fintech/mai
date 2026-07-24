@@ -1,13 +1,38 @@
 import { z } from "zod";
 
 export const contractanalysisSchema = z.object({
-  contractTitle: z.string().describe("Título ou identificação do contrato analisado."),
-  counterparty: z.string().describe("Nome da contraparte no contrato."),
-  hasChangeOfControlClause: z.boolean().describe("Se há cláusula expressa de alteração de controle acionário."),
-  requiresConsentForAssignment: z.boolean().describe("Se exige consentimento prévio para cessão do contrato."),
-  noticePeriodDays: z.number().describe("Prazo mínimo de notificação para encerramento sem justa causa (em dias)."),
-  hasNonCompeteOrExclusivity: z.boolean().describe("Se possui cláusula de exclusividade ou restrição de não concorrência."),
-  arbitrationChamber: z.enum(["CAM-CCBC", "CAM-B3", "CCI", "FGV", "Judicial-Court", "Other"]).describe("Câmara arbitral eleita para resolução de disputas (ex: CAM-CCBC, B3)."),
-  riskRating: z.enum(["low", "medium", "high", "critical"]).describe("Classificação do nível de risco contratual."),
-  recommendations: z.array(z.string()).describe("Lista de recomendações de renegociação ou notificações regulatórias."),
+  contractTitle: z.string().describe(
+    "Title or identification of the analyzed contract.",
+  ),
+  counterparty: z.string().describe(
+    "Name of the counterparty in the contract.",
+  ),
+  hasChangeOfControlClause: z.boolean().describe(
+    "If there is an explicit change of control clause.",
+  ),
+  requiresConsentForAssignment: z.boolean().describe(
+    "If prior consent is required for contract assignment.",
+  ),
+  noticePeriodDays: z.number().describe(
+    "Minimum notice period for termination without cause (in days).",
+  ),
+  hasNonCompeteOrExclusivity: z.boolean().describe(
+    "If it has an exclusivity or non-compete restriction clause.",
+  ),
+  arbitrationChamber: z.enum([
+    "CAM-CCBC",
+    "CAM-B3",
+    "CCI",
+    "FGV",
+    "Judicial-Court",
+    "Other",
+  ]).describe(
+    "Arbitration chamber elected for dispute resolution (e.g., CAM-CCBC, B3).",
+  ),
+  riskRating: z.enum(["low", "medium", "high", "critical"]).describe(
+    "Classification of the contractual risk level.",
+  ),
+  recommendations: z.array(z.string()).describe(
+    "List of recommendations for renegotiation or regulatory notifications.",
+  ),
 });

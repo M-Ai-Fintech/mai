@@ -1,22 +1,48 @@
 import { z } from "zod";
 
 export const valuationSchema = z.object({
-  dealId: z.string().describe("Identificador único do deal/transação."),
-  targetCompany: z.string().describe("Nome da empresa-alvo analisada."),
-  ebitda: z.number().describe("EBITDA de referência para o valuation em milhões de reais (BRL)."),
-  revenue: z.number().describe("Receita líquida de referência em milhões de reais."),
-  suggestedMultiple: z.number().describe("Múltiplo de EV/EBITDA sugerido ou praticado para o setor no Brasil."),
-  ev: z.number().describe("Enterprise Value estimado resultante em milhões de reais."),
-  netDebt: z.number().describe("Dívida líquida atual (Dívida total - Caixa e equivalentes) em milhões de reais."),
-  equityValue: z.number().describe("Equity Value resultante (EV - Dívida Líquida) em milhões de reais."),
-  valuationMethod: z.enum(["DCF", "Multiples", "LBO", "Asset-Based"]).describe("Método principal de valuation adotado."),
-  discountRate: z.number().describe("Taxa de desconto ou WACC utilizada na modelagem (ex: 0.12 para 12%)."),
-  perpetualGrowthRate: z.number().describe("Taxa de crescimento na perpetuidade (g) adotada (ex: 0.03 para 3%)."),
+  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  targetCompany: z.string().describe("Name of the analyzed target company."),
+  ebitda: z.number().describe(
+    "Reference EBITDA for valuation in millions of reais (BRL).",
+  ),
+  revenue: z.number().describe("Reference net revenue in millions of reais."),
+  suggestedMultiple: z.number().describe(
+    "Suggested or practiced EV/EBITDA multiple for the sector in Brazil.",
+  ),
+  ev: z.number().describe(
+    "Resulting estimated Enterprise Value in millions of reais.",
+  ),
+  netDebt: z.number().describe(
+    "Current net debt (Total debt - Cash and equivalents) in millions of reais.",
+  ),
+  equityValue: z.number().describe(
+    "Resulting Equity Value (EV - Net Debt) in millions of reais.",
+  ),
+  valuationMethod: z.enum(["DCF", "Multiples", "LBO", "Asset-Based"]).describe(
+    "Primary valuation method adopted.",
+  ),
+  discountRate: z.number().describe(
+    "Discount rate or WACC used in modeling (e.g., 0.12 for 12%).",
+  ),
+  perpetualGrowthRate: z.number().describe(
+    "Perpetuity growth rate (g) adopted (e.g., 0.03 for 3%).",
+  ),
   valuationRange: z.object({
-    min: z.number().describe("Valor mínimo estimado da faixa de valuation em milhões de reais."),
-    max: z.number().describe("Valor máximo estimado da faixa de valuation em milhões de reais."),
-  }).describe("Faixa de valuation aceitável para mitigar fadiga de negociação."),
-  illiquidityDiscount: z.number().describe("Desconto de iliquidez aplicado ao deal (ex: 0.20 para 20%)."),
-  controlPremium: z.number().describe("Prêmio de controle adicionado ao deal (ex: 0.15 para 15%)."),
-  notes: z.string().optional().describe("Observações sobre premissas e normalizações de EBITDA (QoE)."),
+    min: z.number().describe(
+      "Minimum estimated value of the valuation range in millions of reais.",
+    ),
+    max: z.number().describe(
+      "Maximum estimated value of the valuation range in millions of reais.",
+    ),
+  }).describe("Acceptable valuation range to mitigate negotiation fatigue."),
+  illiquidityDiscount: z.number().describe(
+    "Illiquidity discount applied to the deal (e.g., 0.20 for 20%).",
+  ),
+  controlPremium: z.number().describe(
+    "Control premium added to the deal (e.g., 0.15 for 15%).",
+  ),
+  notes: z.string().optional().describe(
+    "Observations on assumptions and EBITDA normalizations (QoE).",
+  ),
 });

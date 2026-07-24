@@ -11,7 +11,7 @@ export const domainAreaSchema = z.enum([
   "regulatory",
   "environmental",
   "tech",
-  "third-party-consent"
+  "third-party-consent",
 ]);
 
 export type DomainArea = z.infer<typeof domainAreaSchema>;

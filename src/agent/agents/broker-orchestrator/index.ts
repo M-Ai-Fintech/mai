@@ -7,7 +7,7 @@ import { TransformersEngine } from "../../../engines/prediction/transformers.ts"
 import { ContinuousLearningEngine } from "../../continuous_learning.ts";
 
 const instructions = Deno.readTextFileSync(
-  new URL("./instructions.md", import.meta.url)
+  new URL("./instructions.md", import.meta.url),
 );
 
 export const BrokerOrchestratorAgent = new Agent({
@@ -28,7 +28,7 @@ export class BrokerOrchestratorService {
   }
 
   /**
-   * Intercepta uma correção do usuário e persiste de forma segregada no
+   * Intercepts a user correction and persists it separately in the
    * Database Memory Service: Domain Knowledge vs. User Preferences.
    */
   public async processUserCorrection(
@@ -47,72 +47,108 @@ export class BrokerOrchestratorService {
       // 1. Live keyword/semantic checks
       const normalizedText = textToEmbed.toLowerCase();
       if (
-        normalizedText.includes("omitir split payment") || 
-        normalizedText.includes("lc 214/2025") || 
-        (normalizedText.includes("split payment") && normalizedText.includes("omitir"))
+        normalizedText.includes("omitir split payment") ||
+        normalizedText.includes("lc 214/2025") ||
+        (normalizedText.includes("split payment") &&
+          normalizedText.includes("omitir"))
       ) {
         conflict = true;
-        conflictReason = "Fiduciary Rule Conflict: LC 214/2025 requires mandatory retention and split payment processing.";
+        conflictReason =
+          "Fiduciary Rule Conflict: LC 214/2025 requires mandatory retention and split payment processing.";
       } else if (
-        normalizedText.includes("omitir provisão de contingências") || 
-        normalizedText.includes("omitir contingência") || 
-        normalizedText.includes("sem provisão") || 
-        (normalizedText.includes("contingência") && normalizedText.includes("omitir"))
+        normalizedText.includes("omit contingency provision") ||
+        normalizedText.includes("omit contingency") ||
+        normalizedText.includes("no provision") ||
+        (normalizedText.includes("contingency") &&
+          normalizedText.includes("omitir"))
       ) {
         conflict = true;
-        conflictReason = "Fiduciary Rule Conflict: Accounting norms require provisioning for probable contingencies.";
+        conflictReason =
+          "Fiduciary Rule Conflict: Accounting norms require provisioning for probable contingencies.";
       }
 
       // 2. Vector search check against domain knowledge
       try {
-        const conflicts = await this.memoryService.searchSimilarKnowledge(embedding, 1);
+        const conflicts = await this.memoryService.searchSimilarKnowledge(
+          embedding,
+          1,
+        );
         if (conflicts.length > 0 && conflicts[0].similarity > 0.85) {
           conflict = true;
-          conflictReason = `Conflito com regra fiduciária: ${conflicts[0].category}`;
+          conflictReason = `Conflict with fiduciary rule: ${
+            conflicts[0].category
+          }`;
         }
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Vector similarity compliance check skipped (DB offline/empty).", err);
+        console.warn(
+          "[BrokerOrchestratorService] Vector similarity compliance check skipped (DB offline/empty).",
+          err,
+        );
       }
 
       if (conflict) {
-        console.warn(`\n⚠️  [COMPLIANCE_CONFLICT] A preferência do usuário conflita com as regras de conformidade. Requer aprovação HITL.`);
+        console.warn(
+          `\n⚠️ [COMPLIANCE_CONFLICT] User preference conflicts with compliance rules. HITL approval required.`,
+        );
         data.requiresHitlApproval = true;
         data.conflictReason = conflictReason;
       }
-      
+
       try {
         await this.memoryService.saveUserPreferences(userId, data, embedding);
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Failed to save user preference to DB. Storing in ContinuousLearningEngine fallback.", err);
+        console.warn(
+          "[BrokerOrchestratorService] Failed to save user preference to DB. Storing in ContinuousLearningEngine fallback.",
+          err,
+        );
         await ContinuousLearningEngine.recordCorrection({
           dealId: (data.dealId as string) || "unknown",
           variableName: (data.variableName as any) || "valuation",
           originalValue: (data.originalValue as number) || 0,
           correctedValue: (data.correctedValue as number) || 0,
-          reason: (data.reason as string) || String(data.conflictReason || feedbackText || ""),
+          reason: (data.reason as string) ||
+            String(data.conflictReason || feedbackText || ""),
         });
       }
     } else if (correctionType === "domain_knowledge") {
       try {
-        await this.memoryService.saveDomainKnowledge(categoryOrKey, data, embedding);
+        await this.memoryService.saveDomainKnowledge(
+          categoryOrKey,
+          data,
+          embedding,
+        );
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Failed to save domain knowledge to DB.", err);
+        console.warn(
+          "[BrokerOrchestratorService] Failed to save domain knowledge to DB.",
+          err,
+        );
       }
     } else if (correctionType === "company_culture") {
       try {
-        await this.memoryService.saveCompanyCultureMemory(categoryOrKey, data, embedding);
+        await this.memoryService.saveCompanyCultureMemory(
+          categoryOrKey,
+          data,
+          embedding,
+        );
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Failed to save company culture memory to DB.", err);
+        console.warn(
+          "[BrokerOrchestratorService] Failed to save company culture memory to DB.",
+          err,
+        );
       }
     }
     return { success: true, conflict, conflictReason };
   }
 
   /**
-   * Recupera o contexto completo do broker (preferências + conhecimento de domínio)
-   * para ser injetado no prompt de qualquer agente antes da execução.
+   * Retrieves the complete broker context (preferences + domain knowledge)
+   * to be injected into any agent's prompt before execution.
    */
-  public async getOrchestratorContext(userId: string, domainCategory: string, queryEmbedding?: number[]) {
+  public async getOrchestratorContext(
+    userId: string,
+    domainCategory: string,
+    queryEmbedding?: number[],
+  ) {
     let preferences: any = [];
     let domainKnowledge: any = [];
 
@@ -125,12 +161,15 @@ export class BrokerOrchestratorService {
         preferences = prefs;
         domainKnowledge = dk;
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Failed to search DB, using ContinuousLearningEngine fallback.", err);
+        console.warn(
+          "[BrokerOrchestratorService] Failed to search DB, using ContinuousLearningEngine fallback.",
+          err,
+        );
         const history = await ContinuousLearningEngine.getFeedbackHistory();
-        preferences = history.map(h => ({
+        preferences = history.map((h) => ({
           userId: "default_user",
           preferences: h,
-          similarity: 1.0
+          similarity: 1.0,
         }));
       }
     } else {
@@ -142,7 +181,10 @@ export class BrokerOrchestratorService {
         preferences = prefs;
         domainKnowledge = dk;
       } catch (err) {
-        console.warn("[BrokerOrchestratorService] Failed to get preferences from DB, using ContinuousLearningEngine fallback.", err);
+        console.warn(
+          "[BrokerOrchestratorService] Failed to get preferences from DB, using ContinuousLearningEngine fallback.",
+          err,
+        );
         const history = await ContinuousLearningEngine.getFeedbackHistory();
         preferences = history.reduce((acc, h) => {
           acc[h.variableName] = h.correctedValue;

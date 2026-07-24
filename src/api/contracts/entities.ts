@@ -75,4 +75,6 @@ export interface TargetDossier extends VersionedResource {
   lastUpdated: ISODateTime;
 }
 
-export type UpdateTargetDossierRequest = Partial<Omit<TargetDossier, "entityId" | "lastUpdated">> & VersionedResource;
+export type UpdateTargetDossierRequest =
+  & Partial<Omit<TargetDossier, "entityId" | "lastUpdated">>
+  & VersionedResource;

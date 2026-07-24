@@ -1,31 +1,46 @@
 // src/agent/index.ts
-// Ponto de entrada unificado do ecossistema agêntico de M&A Low-Touch Middleware.
-// Todos os agentes executam exclusivamente com Gemini 3.1 Pro via @ai-sdk/google.
-// A variável de ambiente esperada é GOOGLE_GENERATIVE_AI_API_KEY.
+// Unified entry point for the M&A Low-Touch Middleware agentic ecosystem.
+// All agents run exclusively with Gemini 3.1 Pro via @ai-sdk/google.
+// The expected environment variable is GOOGLE_GENERATIVE_AI_API_KEY.
 
 import { AIProvider } from "./ai_provider.ts";
 
 import { Agent } from "@mastra/core/agent";
 
-// Inicializa a configuração do provedor de IA (garantindo que se não houver chave não haverá crash em tempo de execução)
+// Initializes the AI provider configuration (ensuring that if there is no key there will be no runtime crash)
 const aiConfig = AIProvider.getApiKey();
 if (aiConfig.isFallback) {
-  // Define uma chave falsa temporária para que a biblioteca do Google não lance exceção durante a inicialização dos arquivos locais
+  // Sets a temporary fake key so the Google library doesn't throw an exception during local file initialization
   Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", "mock-key-for-dry-run");
 
-  // Monkeypatch Agent.prototype.generate para evitar chamadas de API reais sem chaves
-  Agent.prototype.generate = async function (this: any, prompt: string, _options?: any) {
-    console.warn(`[MOCK - ${this.name || this.id || 'Agent'}] Operação interceptada em modo dry-run.`);
+  // Monkeypatch Agent.prototype.generate to prevent real API calls without keys
+  Agent.prototype.generate = async function (
+    this: any,
+    prompt: string,
+    _options?: any,
+  ) {
+    console.warn(
+      `[MOCK - ${
+        this.name || this.id || "Agent"
+      }] Operation intercepted in dry-run mode.`,
+    );
     return {
-      text: `[DRY-RUN/MOCK - ${this.name || this.id || 'Agent'}] Resposta simulada pois nenhuma chave do Google AI Studio/Gemini foi configurada. Prompt enviado: "${prompt.substring(0, 100).replace(/\n/g, " ")}..."`,
+      text: `[DRY-RUN/MOCK - ${
+        this.name || this.id || "Agent"
+      }] Simulated response because no Google AI Studio/Gemini key was configured. Prompt sent: "${
+        prompt.substring(0, 100).replace(/\n/g, " ")
+      }..."`,
     } as any;
   };
 } else if (aiConfig.key) {
-  // Garante que o SDK leia a chave certa
+  // Ensures the SDK reads the correct key
   Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", aiConfig.key);
 }
 
-import { BrokerOrchestratorAgent, BrokerOrchestratorService } from "./agents/broker-orchestrator/index.ts";
+import {
+  BrokerOrchestratorAgent,
+  BrokerOrchestratorService,
+} from "./agents/broker-orchestrator/index.ts";
 import { SourcingAndKYBAgent } from "./agents/sourcing-kyb/index.ts";
 import { GeneralDueDiligenceAgent } from "./agents/general-dd/index.ts";
 import { FinancialRiskAgent } from "./agents/financial-risk/index.ts";
@@ -46,18 +61,18 @@ const legalClosingAgent = LegalClosingAgent;
 export {
   brokerOrchestratorAgent,
   BrokerOrchestratorService,
-  sourcingAndKYBAgent,
-  generalDueDiligenceAgent,
-  financialRiskAgent,
-  legalDueDiligenceAgent,
   dealMatchingAgent,
-  negotiationAgent,
+  financialRiskAgent,
+  generalDueDiligenceAgent,
   legalClosingAgent,
+  legalDueDiligenceAgent,
+  negotiationAgent,
+  sourcingAndKYBAgent,
 };
 
 // ---------------------------------------------------------------------------
 // AgentOrchestrator
-// Classe responsável por executar queries no BrokerOrchestratorAgent.
+// Class responsible for executing queries on the BrokerOrchestratorAgent.
 // ---------------------------------------------------------------------------
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 
@@ -81,67 +96,83 @@ export class AgentOrchestrator {
 
     try {
       const queryEmbedding = await TransformersEngine.generateEmbedding(query);
-      const dynamicContext = await orchestratorService.getOrchestratorContext("default_user", "general", queryEmbedding);
-      
+      const dynamicContext = await orchestratorService.getOrchestratorContext(
+        "default_user",
+        "general",
+        queryEmbedding,
+      );
+
       // Compliance check on retrieved preferences
       if (!bypassConflict && dynamicContext.preferences) {
         const preferencesList = Array.isArray(dynamicContext.preferences)
           ? dynamicContext.preferences
           : [dynamicContext.preferences];
-          
+
         for (const pref of preferencesList) {
           if (!pref) continue;
-          const prefData = (pref && typeof pref === "object" && "preferences" in pref) 
-            ? pref.preferences as Record<string, any>
-            : pref as Record<string, any>;
-            
+          const prefData =
+            (pref && typeof pref === "object" && "preferences" in pref)
+              ? pref.preferences as Record<string, any>
+              : pref as Record<string, any>;
+
           const prefStr = JSON.stringify(prefData).toLowerCase();
-          const hasSemanticConflict = 
-            prefStr.includes("omitir split payment") || 
-            prefStr.includes("omitir provis") || 
-            prefStr.includes("omitir conting") ||
-            (prefData && prefData.requiresHitlApproval && !prefData.hitlApproved);
-            
+          const hasSemanticConflict = prefStr.includes("omit split payment") ||
+            prefStr.includes("omit provis") ||
+            prefStr.includes("omit conting") ||
+            (prefData && prefData.requiresHitlApproval &&
+              !prefData.hitlApproved);
+
           if (hasSemanticConflict) {
-            const reason = prefData.conflictReason || 
-              (prefData.reason && prefData.reason.toLowerCase().includes("conflict") ? prefData.reason : undefined) || 
-              "Fiduciary Rule Conflict: Conflito com regra fiduciária de conformidade (LC 214/2025 ou provisão de contingências).";
+            const reason = prefData.conflictReason ||
+              (prefData.reason &&
+                  prefData.reason.toLowerCase().includes("conflict")
+                ? prefData.reason
+                : undefined) ||
+              "Fiduciary Rule Conflict: Conflict with fiduciary compliance rule (LC 214/2025 or contingency provision).";
             throw new ComplianceConflictError(reason, prefData);
           }
         }
       }
 
       dynamicPreferences = JSON.stringify(dynamicContext.preferences, null, 2);
-      dynamicKnowledge = JSON.stringify(dynamicContext.domainKnowledge, null, 2);
+      dynamicKnowledge = JSON.stringify(
+        dynamicContext.domainKnowledge,
+        null,
+        2,
+      );
     } catch (err) {
       if (err instanceof ComplianceConflictError) {
         throw err;
       }
-      console.warn("Failed to retrieve dynamic context for prompt injection:", err);
+      console.warn(
+        "Failed to retrieve dynamic context for prompt injection:",
+        err,
+      );
     }
 
     const prompt = `
-## Contexto do Deal [${dealId}]
-${context || "Nenhum contexto de RAG disponível no momento."}
+## Deal Context [${dealId}]
+${context || "No RAG context available at the moment."}
 
-## Preferências do Usuário (Continuous Learning)
-${dynamicPreferences || "Nenhuma preferência registrada."}
+## User Preferences (Continuous Learning)
+${dynamicPreferences || "No recorded preferences."}
 
-## Conhecimento de Domínio Legal/Tributário
-${dynamicKnowledge || "Nenhum conhecimento de domínio registrado."}
+## Legal/Tax Domain Knowledge
+${dynamicKnowledge || "No recorded domain knowledge."}
 
-## Instrução do Broker
+## Broker Instruction
 ${query}
 `;
 
     // Re-checa fallback para evitar chamadas à API com chave falsa
     if (aiConfig.isFallback) {
-      console.warn("[MOCK] Operação interceptada: Simulação de resposta do Broker Orchestrator.");
-      return `[DRY-RUN/MOCK] A chamada ao modelo Gemini foi interceptada pois não há chave de API (GEMINI_API_KEY) configurada. Prompt original enviado com ${prompt.length} caracteres.`;
+      console.warn(
+        "[MOCK] Operation intercepted: Broker Orchestrator response simulation.",
+      );
+      return `[DRY-RUN/MOCK] The call to the Gemini model was intercepted because no API key (GEMINI_API_KEY) is configured. Original prompt sent with ${prompt.length} characters.`;
     }
 
     const response = await brokerOrchestratorAgent.generate(prompt);
     return response.text || String(response);
   }
 }
-

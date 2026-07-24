@@ -2,7 +2,15 @@ import { EntityRole, KybStatus } from "../contracts.ts";
 import { assertAdvisor, getEntity } from "./accessors.ts";
 import { MvpStoreError } from "./error.ts";
 import { MvpStoreState } from "./state.ts";
-import { Entity, EntityInput, EntityPatch, ListQuery, Page, Dossier, DossierPatch } from "./types.ts";
+import {
+  Dossier,
+  DossierPatch,
+  Entity,
+  EntityInput,
+  EntityPatch,
+  ListQuery,
+  Page,
+} from "./types.ts";
 import { clone, normalizedSearch, normalizedTaxId, pageOf } from "./utils.ts";
 
 export interface EntityListQuery extends ListQuery {
@@ -131,7 +139,6 @@ export class EntityRepository {
   }
 }
 
-
 export class DossierRepository {
   constructor(private readonly state: MvpStoreState) {}
 
@@ -157,7 +164,11 @@ export class DossierRepository {
   update(entityId: string, patch: DossierPatch): Dossier {
     const current = this.get(entityId);
     if (patch.version !== undefined && patch.version !== current.version) {
-      throw new MvpStoreError("RESOURCE_VERSION_CONFLICT", "Dossier version is stale", 409);
+      throw new MvpStoreError(
+        "RESOURCE_VERSION_CONFLICT",
+        "Dossier version is stale",
+        409,
+      );
     }
     const { version: _expectedVersion, ...changes } = patch;
     const updated: Dossier = {
