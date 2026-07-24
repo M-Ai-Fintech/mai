@@ -11,10 +11,31 @@ export type AgentId = (typeof AGENTS)[number];
 
 export interface StreamedReply {
   content: string;
-  status: "idle" | "streaming" | "reconnecting" | "completed" | "failed" | "stopped";
+  status:
+    | "idle"
+    | "streaming"
+    | "reconnecting"
+    | "completed"
+    | "failed"
+    | "stopped";
   error?: string;
-  tools?: Array<{ id: string; name: string; status: "running" | "completed"; result?: unknown }>;
-  citations?: Array<{ id: string; documentId: string; label: string; excerpt: string | null; page: number | null }>;
+  tools?: Array<
+    {
+      id: string;
+      name: string;
+      status: "running" | "completed";
+      result?: unknown;
+    }
+  >;
+  citations?: Array<
+    {
+      id: string;
+      documentId: string;
+      label: string;
+      excerpt: string | null;
+      page: number | null;
+    }
+  >;
 }
 
 export interface StructuredAssistantContent {
@@ -25,10 +46,14 @@ export interface StructuredAssistantContent {
 }
 
 function tableCells(line: string): string[] {
-  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((
+    cell,
+  ) => cell.trim());
 }
 
-export function structureAssistantContent(content: string): StructuredAssistantContent {
+export function structureAssistantContent(
+  content: string,
+): StructuredAssistantContent {
   const lines = content.split(/\r?\n/);
   const paragraphs: string[] = [];
   const bullets: string[] = [];
@@ -37,7 +62,9 @@ export function structureAssistantContent(content: string): StructuredAssistantC
   let table: StructuredAssistantContent["table"] = null;
 
   const flushParagraph = () => {
-    if (paragraphBuffer.length) paragraphs.push(paragraphBuffer.splice(0).join(" "));
+    if (paragraphBuffer.length) {
+      paragraphs.push(paragraphBuffer.splice(0).join(" "));
+    }
   };
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -61,7 +88,10 @@ export function structureAssistantContent(content: string): StructuredAssistantC
     if (!table && line.includes("|") && index + 1 < lines.length) {
       const headers = tableCells(line);
       const separator = tableCells(lines[index + 1]);
-      if (headers.length > 1 && separator.length === headers.length && separator.every((cell) => /^:?-{3,}:?$/.test(cell))) {
+      if (
+        headers.length > 1 && separator.length === headers.length &&
+        separator.every((cell) => /^:?-{3,}:?$/.test(cell))
+      ) {
         flushParagraph();
         const rows: string[][] = [];
         index += 2;
@@ -97,7 +127,10 @@ export function decideStreamAction(
   reconnectCount: number,
 ): "complete" | "reconnect" | "fail" {
   if (terminal === "completed") return "complete";
-  return canReconnectStream(reconnectCount, terminal === "failed" ? retryable : true)
+  return canReconnectStream(
+      reconnectCount,
+      terminal === "failed" ? retryable : true,
+    )
     ? "reconnect"
     : "fail";
 }
@@ -110,11 +143,31 @@ export function reduceStreamedReply(
     case "message.accepted":
       return { ...reply, status: "streaming" };
     case "tool.started":
-      return { ...reply, status: "streaming", tools: [...(reply.tools ?? []), { id: event.data.toolCallId, name: event.data.toolName, status: "running" }] };
+      return {
+        ...reply,
+        status: "streaming",
+        tools: [...(reply.tools ?? []), {
+          id: event.data.toolCallId,
+          name: event.data.toolName,
+          status: "running",
+        }],
+      };
     case "tool.completed":
-      return { ...reply, status: "streaming", tools: (reply.tools ?? []).map((tool) => tool.id === event.data.toolCallId ? { ...tool, status: "completed", result: event.data.result } : tool) };
+      return {
+        ...reply,
+        status: "streaming",
+        tools: (reply.tools ?? []).map((tool) =>
+          tool.id === event.data.toolCallId
+            ? { ...tool, status: "completed", result: event.data.result }
+            : tool
+        ),
+      };
     case "citation":
-      return { ...reply, status: "streaming", citations: [...(reply.citations ?? []), event.data] };
+      return {
+        ...reply,
+        status: "streaming",
+        citations: [...(reply.citations ?? []), event.data],
+      };
     case "response.delta":
       return {
         ...reply,
@@ -126,7 +179,9 @@ export function reduceStreamedReply(
         content: event.data.content || reply.content,
         status: "completed",
         tools: reply.tools,
-        citations: event.data.citations.length ? event.data.citations : reply.citations,
+        citations: event.data.citations.length
+          ? event.data.citations
+          : reply.citations,
       };
     case "response.failed":
       return {
@@ -137,7 +192,10 @@ export function reduceStreamedReply(
   }
 }
 
-export function formatCompactMoney(amountMinor: string, currency: string): string {
+export function formatCompactMoney(
+  amountMinor: string,
+  currency: string,
+): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,

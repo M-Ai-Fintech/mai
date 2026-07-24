@@ -52,7 +52,9 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={onClose}
     >
       <div
-        className={`w-full bg-white border border-ink-black/10 rounded-lg shadow-level-3 overflow-hidden transform transition-all text-left ${sizeStyles[size]}`}
+        className={`w-full bg-white border border-ink-black/10 rounded-lg shadow-level-3 overflow-hidden transform transition-all text-left ${
+          sizeStyles[size]
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -80,17 +82,19 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Footer */}
-        {footer ? (
-          <div className="p-4 px-6 border-t border-dust-taupe/40 bg-canvas-cream/20 flex justify-end gap-3">
-            {footer}
-          </div>
-        ) : (
-          <div className="p-4 px-6 border-t border-dust-taupe/40 bg-canvas-cream/20 flex justify-end gap-3">
-            <Button variant="secondary" size="sm" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        )}
+        {footer
+          ? (
+            <div className="p-4 px-6 border-t border-dust-taupe/40 bg-canvas-cream/20 flex justify-end gap-3">
+              {footer}
+            </div>
+          )
+          : (
+            <div className="p-4 px-6 border-t border-dust-taupe/40 bg-canvas-cream/20 flex justify-end gap-3">
+              <Button variant="secondary" size="sm" onClick={onClose}>
+                Close
+              </Button>
+            </div>
+          )}
       </div>
     </div>
   );

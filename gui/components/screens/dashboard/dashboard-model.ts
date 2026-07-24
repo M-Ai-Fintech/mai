@@ -104,7 +104,11 @@ export function formatMoneyRange(deal: DealSummary, locale = "en-US") {
     maximumFractionDigits: 1,
   });
 
-  return `${formatter.format(Number(deal.valuationRange.min.amountMinor) / 100)} – ${formatter.format(
-    Number(deal.valuationRange.max.amountMinor) / 100,
-  )}`;
+  return `${
+    formatter.format(Number(deal.valuationRange.min.amountMinor) / 100)
+  } – ${
+    formatter.format(
+      Number(deal.valuationRange.max.amountMinor) / 100,
+    )
+  }`;
 }

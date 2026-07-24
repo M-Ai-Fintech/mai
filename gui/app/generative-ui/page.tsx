@@ -4,17 +4,22 @@ import { useState } from "react";
 import { Card } from "@/components/Card/Card";
 import { Button } from "@/components/Button/Button";
 import { Badge } from "@/components/Badge/Badge";
-import { GenerativeUIRenderer, GenerativeUISchema } from "@/lib/generative-ui-engine";
+import {
+  GenerativeUIRenderer,
+  GenerativeUISchema,
+} from "@/lib/generative-ui-engine";
+import { useTranslation } from "@/lib/i18n/I18nProvider";
 
 export default function GenerativeUIPage() {
+  const { t } = useTranslation();
   const [prompt, setPrompt] = useState("");
   const [isSynthesizing, setIsSynthesizing] = useState(false);
 
   // Preset schemas synthesized dynamically based on design guidelines & Dealroom.net benchmark
   const presetSchemas: Record<string, GenerativeUISchema> = {
     valuation: {
-      title: "Matriz Comparativa de Valuation SaaS M&A",
-      description: "Sintetizado via BrokerOrchestratorAgent aplicando o Dealroom.net benchmark",
+      title: t("generativeUi.presetData.valuation.title"),
+      description: t("generativeUi.presetData.valuation.description"),
       root: {
         id: "root-grid",
         type: "Grid",
@@ -29,15 +34,15 @@ export default function GenerativeUIPage() {
                 id: "b1",
                 type: "Badge",
                 props: { variant: "default" },
-                children: "• SEGUNDA RODADA",
+                children: t("generativeUi.presetData.valuation.badge1"),
               },
               {
                 id: "s1",
                 type: "Stat",
                 props: {
-                  label: "EV / Revenue Múltiplo Médio",
-                  value: "8.4x ARR",
-                  subtext: "Baseado em 14 deals de SaaS B2B no Brasil",
+                  label: t("generativeUi.presetData.valuation.stat1Label"),
+                  value: t("generativeUi.presetData.valuation.stat1Value"),
+                  subtext: t("generativeUi.presetData.valuation.stat1Sub"),
                 },
               },
             ],
@@ -51,15 +56,15 @@ export default function GenerativeUIPage() {
                 id: "b2",
                 type: "Badge",
                 props: { variant: "orange" },
-                children: "• ALERTA ONNX RISK",
+                children: t("generativeUi.presetData.valuation.badge2"),
               },
               {
                 id: "s2",
                 type: "Stat",
                 props: {
-                  label: "Sensibilidade de Churn",
-                  value: "Elevada (18.2%)",
-                  subtext: "Requer Cláusula Escrow de R$ 5M",
+                  label: t("generativeUi.presetData.valuation.stat2Label"),
+                  value: t("generativeUi.presetData.valuation.stat2Value"),
+                  subtext: t("generativeUi.presetData.valuation.stat2Sub"),
                 },
               },
             ],
@@ -68,8 +73,8 @@ export default function GenerativeUIPage() {
       },
     },
     dueDiligence: {
-      title: "Checklist de Compliance Legal & Trabalhista",
-      description: "Análise sintetizada a partir do VDR pelo LegalDueDiligenceAgent",
+      title: t("generativeUi.presetData.dueDiligence.title"),
+      description: t("generativeUi.presetData.dueDiligence.description"),
       root: {
         id: "root-card",
         type: "Card",
@@ -79,32 +84,36 @@ export default function GenerativeUIPage() {
             id: "b-dd",
             type: "Badge",
             props: { variant: "dark" },
-            children: "• AUDITORIA CONTRATUAL",
+            children: t("generativeUi.presetData.dueDiligence.badge"),
           },
           {
             id: "t1",
             type: "Text",
-            props: { className: "text-base font-semibold text-ink-black mt-2 mb-1" },
-            children: "Pendências de Contingência Identificadas:",
+            props: {
+              className: "text-base font-semibold text-ink-black mt-2 mb-1",
+            },
+            children: t("generativeUi.presetData.dueDiligence.text1"),
           },
           {
             id: "t2",
             type: "Text",
             props: { className: "text-xs text-slate-gray mb-4" },
-            children: "1. Cláusula de Change of Control no Contrato com Fornecedor Principal\n2. 3 Ações Trabalhistas sem provisão em balanço",
+            children: t("generativeUi.presetData.dueDiligence.text2"),
           },
           {
             id: "btn-act",
             type: "Button",
             props: { variant: "consent" },
-            children: "Gerar Minuta de Aditivo Contractual",
+            children: t("generativeUi.presetData.dueDiligence.btn"),
           },
         ],
       },
     },
   };
 
-  const [activeSchema, setActiveSchema] = useState<GenerativeUISchema>(presetSchemas.valuation);
+  const [activeSchema, setActiveSchema] = useState<GenerativeUISchema>(
+    presetSchemas.valuation,
+  );
 
   const handleSynthesize = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,8 +124,8 @@ export default function GenerativeUIPage() {
     setTimeout(() => {
       // Synthesize a custom dynamic UI schema for the prompt
       const synthesized: GenerativeUISchema = {
-        title: `Dashboard Sintetizado: "${prompt}"`,
-        description: "Interface gerada em tempo de execução combinando componentes MAI-53",
+        title: t("generativeUi.presetData.synthesized.title", { prompt }),
+        description: t("generativeUi.presetData.synthesized.description"),
         root: {
           id: "synth-root",
           type: "Grid",
@@ -131,15 +140,17 @@ export default function GenerativeUIPage() {
                   id: "sb1",
                   type: "Badge",
                   props: { variant: "default" },
-                  children: "• UI GENERATIVA ADK",
+                  children: t("generativeUi.presetData.synthesized.badge1"),
                 },
                 {
                   id: "ss1",
                   type: "Stat",
                   props: {
-                    label: "Métrica Personalizada Alvo",
-                    value: "R$ 42.8M",
-                    subtext: `Filtro aplicado para: "${prompt}"`,
+                    label: t("generativeUi.presetData.synthesized.stat1Label"),
+                    value: t("generativeUi.presetData.synthesized.stat1Value"),
+                    subtext: t("generativeUi.presetData.synthesized.stat1Sub", {
+                      prompt,
+                    }),
                   },
                 },
               ],
@@ -153,19 +164,19 @@ export default function GenerativeUIPage() {
                   id: "sb2",
                   type: "Badge",
                   props: { variant: "dark" },
-                  children: "• ACOES RECOMENDADAS",
+                  children: t("generativeUi.presetData.synthesized.badge2"),
                 },
                 {
                   id: "st2",
                   type: "Text",
                   props: { className: "text-xs text-slate-gray my-2" },
-                  children: "Estrutura recomendada pelo NegotiationAgent baseada em fitness genético.",
+                  children: t("generativeUi.presetData.synthesized.text2"),
                 },
                 {
                   id: "sbtn",
                   type: "Button",
                   props: { variant: "primary", size: "sm" },
-                  children: "Exportar para Term Sheet",
+                  children: t("generativeUi.presetData.synthesized.btn"),
                 },
               ],
             },
@@ -180,10 +191,12 @@ export default function GenerativeUIPage() {
 
   const handleAnchorToDashboard = () => {
     // Persist to localStorage as dynamic widget anchor for MAI-60
-    const saved = JSON.parse(localStorage.getItem("mai_anchored_widgets") || "[]");
+    const saved = JSON.parse(
+      localStorage.getItem("mai_anchored_widgets") || "[]",
+    );
     saved.push(activeSchema);
     localStorage.setItem("mai_anchored_widgets", JSON.stringify(saved));
-    alert("Widget sintetizado ancorado com sucesso no Dashboard Dinâmico (MAI-60)!");
+    alert(t("generativeUi.successAlert"));
   };
 
   return (
@@ -192,14 +205,14 @@ export default function GenerativeUIPage() {
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-signal-orange"></span>
           <p className="text-xs font-bold text-slate-gray uppercase tracking-wider">
-            UI GENERATIVA EM RUNTIME (MAI-57)
+            {t("generativeUi.headerBadge")}
           </p>
         </div>
         <h1 className="text-3xl font-medium text-ink-black tracking-tight">
-          Generative UI Synthesis Studio
+          {t("generativeUi.title")}
         </h1>
         <p className="text-slate-gray mt-1 text-sm">
-          Sintetize interfaces sob demanda via prompt agêntico consumindo componentes da MAI-53 sob o gui/DESIGN_GUIDELINES.md
+          {t("generativeUi.description")}
         </p>
       </header>
 
@@ -210,27 +223,31 @@ export default function GenerativeUIPage() {
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ex: Sintetizar dashboard de valuation comparativo para o setor SaaS..."
+            placeholder={t("generativeUi.placeholder")}
             className="flex-1 bg-canvas-cream border border-dust-taupe rounded-full px-4 py-3 text-sm text-ink-black focus:outline-none focus:ring-2 focus:ring-ink-black"
           />
           <Button type="submit" variant="primary" disabled={isSynthesizing}>
-            {isSynthesizing ? "Sintetizando..." : "Sintetizar Interface"}
+            {isSynthesizing
+              ? t("generativeUi.synthesizing")
+              : t("generativeUi.synthesizeBtn")}
           </Button>
         </form>
 
         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-dust-taupe/40 text-xs">
-          <span className="font-bold text-slate-gray uppercase">Presetações Rápidas:</span>
+          <span className="font-bold text-slate-gray uppercase">
+            {t("generativeUi.presets")}
+          </span>
           <button
             onClick={() => setActiveSchema(presetSchemas.valuation)}
             className="px-3 py-1 bg-canvas-cream rounded-full border border-dust-taupe hover:bg-lifted-cream font-medium cursor-pointer"
           >
-            Valuation SaaS
+            {t("generativeUi.presetValuation")}
           </button>
           <button
             onClick={() => setActiveSchema(presetSchemas.dueDiligence)}
             className="px-3 py-1 bg-canvas-cream rounded-full border border-dust-taupe hover:bg-lifted-cream font-medium cursor-pointer"
           >
-            Compliance Legal
+            {t("generativeUi.presetCompliance")}
           </button>
         </div>
       </Card>
@@ -240,10 +257,14 @@ export default function GenerativeUIPage() {
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-ink-black">
-              Preview da Interface Sintetizada
+              {t("generativeUi.previewTitle")}
             </h2>
-            <Button variant="consent" size="sm" onClick={handleAnchorToDashboard}>
-              + Ancorar no Dashboard Dinâmico
+            <Button
+              variant="consent"
+              size="sm"
+              onClick={handleAnchorToDashboard}
+            >
+              {t("generativeUi.anchorBtn")}
             </Button>
           </div>
 
@@ -254,9 +275,13 @@ export default function GenerativeUIPage() {
 
         <div>
           <h2 className="text-lg font-semibold text-ink-black mb-4">
-            Esquema JSON DSL (Component Schema)
+            {t("generativeUi.schemaTitle")}
           </h2>
-          <Card variant="dark" padding="md" className="font-mono text-xs text-canvas-cream h-[400px] overflow-y-auto">
+          <Card
+            variant="dark"
+            padding="md"
+            className="font-mono text-xs text-canvas-cream h-[400px] overflow-y-auto"
+          >
             <pre>{JSON.stringify(activeSchema, null, 2)}</pre>
           </Card>
         </div>

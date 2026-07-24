@@ -21,7 +21,9 @@ export const Divider: React.FC<DividerProps> = ({
 
   return (
     <hr
-      className={`border-t border-dust-taupe/60 ${borderStyle} ${spacingStyles[spacing]} ${className}`}
+      className={`border-t border-dust-taupe/60 ${borderStyle} ${
+        spacingStyles[spacing]
+      } ${className}`}
       {...props}
     />
   );

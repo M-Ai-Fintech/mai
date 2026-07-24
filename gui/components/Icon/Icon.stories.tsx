@@ -95,5 +95,5 @@ export const CustomSizeAndUnknown: Story = {
 };
 
 export const FullCoverageIcon: Story = {
-  args: { name: "search", className: "extra", color: "red" }
+  args: { name: "search", className: "extra", color: "red" },
 };

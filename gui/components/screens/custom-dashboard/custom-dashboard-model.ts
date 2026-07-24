@@ -10,7 +10,10 @@ const widgetSizes: Record<DashboardWidgetType, { w: number; h: number }> = {
   risk_summary: { w: 6, h: 3 },
 };
 
-const widgetPresets: Record<DashboardWidgetType, Array<{ w: number; h: number }>> = {
+const widgetPresets: Record<
+  DashboardWidgetType,
+  Array<{ w: number; h: number }>
+> = {
   kpi: [{ w: 4, h: 2 }, { w: 6, h: 3 }, { w: 12, h: 3 }],
   pipeline_table: [{ w: 6, h: 4 }, { w: 12, h: 4 }],
   agent_entry: [{ w: 4, h: 3 }, { w: 6, h: 3 }, { w: 12, h: 4 }],
@@ -46,14 +49,19 @@ export function addDashboardWidget(
   config: Record<string, string> = {},
 ): DashboardWidget[] {
   const size = widgetSizes[type];
-  const y = widgets.reduce((maximum, widget) => Math.max(maximum, widget.grid.y + widget.grid.h), 0);
+  const y = widgets.reduce(
+    (maximum, widget) => Math.max(maximum, widget.grid.y + widget.grid.h),
+    0,
+  );
   return [
     ...widgets,
     {
       instanceId,
       type,
       grid: { x: 0, y, ...size },
-      config: type === "kpi" ? { metric: config.metric ?? "pipeline_value", ...config } : config,
+      config: type === "kpi"
+        ? { metric: config.metric ?? "pipeline_value", ...config }
+        : config,
     },
   ];
 }
@@ -63,11 +71,18 @@ export function moveDashboardWidget(
   instanceId: string,
   direction: -1 | 1,
 ): DashboardWidget[] {
-  const currentIndex = widgets.findIndex((widget) => widget.instanceId === instanceId);
+  const currentIndex = widgets.findIndex((widget) =>
+    widget.instanceId === instanceId
+  );
   const nextIndex = currentIndex + direction;
-  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= widgets.length) return widgets;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= widgets.length) {
+    return widgets;
+  }
   const result = [...widgets];
-  [result[currentIndex], result[nextIndex]] = [result[nextIndex], result[currentIndex]];
+  [result[currentIndex], result[nextIndex]] = [
+    result[nextIndex],
+    result[currentIndex],
+  ];
   return reflowDashboardWidgets(result);
 }
 
@@ -78,7 +93,9 @@ export function resizeDashboardWidget(
   const resized = widgets.map((widget) => {
     if (widget.instanceId !== instanceId) return widget;
     const presets = widgetPresets[widget.type];
-    const current = presets.findIndex(({ w, h }) => w === widget.grid.w && h === widget.grid.h);
+    const current = presets.findIndex(({ w, h }) =>
+      w === widget.grid.w && h === widget.grid.h
+    );
     const next = presets[(current + 1) % presets.length];
     return { ...widget, grid: { ...widget.grid, ...next } };
   });
@@ -89,5 +106,7 @@ export function removeDashboardWidget(
   widgets: DashboardWidget[],
   instanceId: string,
 ): DashboardWidget[] {
-  return reflowDashboardWidgets(widgets.filter((widget) => widget.instanceId !== instanceId));
+  return reflowDashboardWidgets(
+    widgets.filter((widget) => widget.instanceId !== instanceId),
+  );
 }

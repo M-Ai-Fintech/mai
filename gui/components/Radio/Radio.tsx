@@ -21,7 +21,7 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
         )}
       </label>
     );
-  }
+  },
 );
 
 Radio.displayName = "Radio";

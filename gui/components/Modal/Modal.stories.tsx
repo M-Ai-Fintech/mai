@@ -17,17 +17,19 @@ type Story = StoryObj<typeof Modal>;
 export const Default: Story = {
   args: {
     isOpen: true,
-    title: "Confirmar Proposta Financeira",
+    title: "Confirm Financial Proposal",
     subtitle: "Deal TC-2026 — Acquisition Target",
     children: (
       <p>
-        Deseja submeter a proposta otimizada pelo algoritmo genético contendo R$ 15.000.000,00 em Cash e 20% em Equity ao NegotiationAgent?
+        Do you want to submit the proposal optimized by the genetic algorithm
+        containing R$ 15,000,000.00 in Cash and 20% in Equity to the
+        NegotiationAgent?
       </p>
     ),
     footer: (
       <>
         <Button variant="secondary" size="sm">Cancel</Button>
-        <Button variant="primary" size="sm">Submeter Proposta</Button>
+        <Button variant="primary" size="sm">Submit Proposal</Button>
       </>
     ),
   },
@@ -35,14 +37,16 @@ export const Default: Story = {
     const body = canvasElement.ownerDocument.body;
     const dialog = await within(body).findByRole("dialog");
     await expect(dialog).toBeInTheDocument();
-    
+
     // Check if close button works
-    const closeBtn = await within(dialog).findByRole("button", { name: /Close modal/i });
+    const closeBtn = await within(dialog).findByRole("button", {
+      name: /Close modal/i,
+    });
     await userEvent.click(closeBtn);
     await expect(args.onClose).toHaveBeenCalled();
 
     // Check Escape key
-    await userEvent.keyboard('{Escape}');
+    await userEvent.keyboard("{Escape}");
     await expect(args.onClose).toHaveBeenCalledTimes(2);
 
     // To hit unmount coverage we might need a story that doesn't render it open, but we'll try this first.

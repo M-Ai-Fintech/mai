@@ -1,6 +1,7 @@
 import React from "react";
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "consent" | "satellite" | "icon";
   size?: "sm" | "md" | "lg";
   icon?: React.ReactNode;
@@ -18,7 +19,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Base styles: left-aligned content by default, focus ring for accessibility (WCAG 2.1 AA)
     let baseStyles =
@@ -64,15 +65,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`${baseStyles} ${variant !== "satellite" && variant !== "icon" ? sizeStyles[size] : ""} ${variantStyles} ${className}`}
+        className={`${baseStyles} ${
+          variant !== "satellite" && variant !== "icon" ? sizeStyles[size] : ""
+        } ${variantStyles} ${className}`}
         disabled={disabled}
         {...props}
       >
-        {icon && <span className={children ? "mr-2 inline-flex" : "inline-flex"}>{icon}</span>}
+        {icon && (
+          <span className={children ? "mr-2 inline-flex" : "inline-flex"}>
+            {icon}
+          </span>
+        )}
         {children && <span>{children}</span>}
       </button>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

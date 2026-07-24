@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { within, userEvent } from "storybook/test";
+import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
-import { CountrySelector, COUNTRIES } from "./CountrySelector";
+import { COUNTRIES, CountrySelector } from "./CountrySelector";
 
 const meta: Meta<typeof CountrySelector> = {
   title: "Components/Forms/CountrySelector",
@@ -37,20 +37,20 @@ export const DarkFooterPill: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
-    
+
     // Open dropdown
     await userEvent.click(button);
-    
+
     // Select US
     const usOption = await canvas.findByText("United States");
     await userEvent.click(usOption);
-    
+
     // Open dropdown again
     await userEvent.click(button);
-    
+
     // Click outside to close
     await userEvent.click(canvasElement);
-  }
+  },
 };
 
 export const LightSurfacePill: Story = {
@@ -73,14 +73,14 @@ export const LightSurfacePill: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: /Current country is/i });
-    
+
     // Open dropdown
     await userEvent.click(button);
-    
+
     // Select Brasil
     const brOption = await canvas.findByText("Brasil");
     await userEvent.click(brOption);
-  }
+  },
 };
 
 export const InvalidCountry: Story = {
@@ -90,5 +90,5 @@ export const InvalidCountry: Story = {
         selectedCountry={"XYZ" as any}
       />
     );
-  }
+  },
 };

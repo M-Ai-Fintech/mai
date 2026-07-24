@@ -333,7 +333,9 @@ export default function DealsPage() {
               ? "No deals match the selected filters."
               : "Create the first deal to start the M&A pipeline."}
             actionLabel={filtersActive ? "Reset filters" : "Create deal"}
-            onAction={filtersActive ? resetFilters : () => router.push("/?create=deal")}
+            onAction={filtersActive
+              ? resetFilters
+              : () => router.push("/?create=deal")}
             icon={
               <Icon name={filtersActive ? "filter" : "fileText"} size="lg" />
             }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Icon } from "../Icon/Icon";
 
 export type CountryCode = "BR" | "ES" | "US";
@@ -13,7 +13,12 @@ export interface CountryOption {
 export const COUNTRIES: CountryOption[] = [
   { code: "BR", name: "Brasil", currency: "BRL (R$)", flagIcon: "flagBR" },
   { code: "ES", name: "España", currency: "EUR (€)", flagIcon: "flagES" },
-  { code: "US", name: "United States", currency: "USD ($)", flagIcon: "flagUS" },
+  {
+    code: "US",
+    name: "United States",
+    currency: "USD ($)",
+    flagIcon: "flagUS",
+  },
 ];
 
 export interface CountrySelectorProps {
@@ -31,7 +36,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [current, setCurrent] = useState<CountryOption>(
-    COUNTRIES.find((c) => c.code === selectedCountry) || COUNTRIES[0]
+    COUNTRIES.find((c) => c.code === selectedCountry) || COUNTRIES[0],
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -122,9 +127,9 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   <span>{option.name}</span>
                 </div>
                 <span
-                  className={
-                    isSelected ? "text-white text-[10px]" : "text-dust-taupe text-[10px]"
-                  }
+                  className={isSelected
+                    ? "text-white text-[10px]"
+                    : "text-dust-taupe text-[10px]"}
                 >
                   {option.currency}
                 </span>

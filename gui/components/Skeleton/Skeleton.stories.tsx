@@ -33,7 +33,7 @@ export const CardPlaceholder: Story = {
 export const FullPropsCoverage: Story = {
   render: () => (
     <div className="flex flex-col gap-2">
-      <Skeleton className="custom-class" style={{ color: 'red' }} />
+      <Skeleton className="custom-class" style={{ color: "red" }} />
     </div>
   ),
 };

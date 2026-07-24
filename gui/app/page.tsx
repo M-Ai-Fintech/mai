@@ -26,21 +26,21 @@ import { Toast } from "@/components/Toast/Toast";
 import { Textarea } from "@/components/Textarea/Textarea";
 import {
   DASHBOARD_PHASES,
+  type DashboardPhase,
+  type DashboardView,
+  type DealDraft,
+  type DealDraftErrors,
   EMPTY_DEAL_DRAFT,
   formatMoneyRange,
   groupDealsByPhase,
   PHASE_LABELS,
   toDealCreate,
   validateDealDraft,
-  type DashboardPhase,
-  type DashboardView,
-  type DealDraft,
-  type DealDraftErrors,
 } from "@/components/screens/dashboard/dashboard-model";
 import { parseDashboardRouteState } from "@/components/screens/dashboard/dashboard-route-state";
 import {
-  APIError,
   ApiClient,
+  APIError,
   type DealListQuery,
   type DealSummary,
   type EntitySummary,
@@ -66,22 +66,31 @@ function LoadingBoard({ view }: { view: DashboardView }) {
     return (
       <Card variant="default" padding="none" aria-label="Loading deals">
         <div className="space-y-3 p-5">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="grid grid-cols-6 gap-4 border-b border-dust-taupe/40 py-3">
-              <Skeleton className="col-span-2" />
-              <Skeleton />
-              <Skeleton />
-              <Skeleton />
-              <Skeleton />
-            </div>
-          ))}
+          {Array.from(
+            { length: 6 },
+            (_, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-6 gap-4 border-b border-dust-taupe/40 py-3"
+              >
+                <Skeleton className="col-span-2" />
+                <Skeleton />
+                <Skeleton />
+                <Skeleton />
+                <Skeleton />
+              </div>
+            ),
+          )}
         </div>
       </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-4" aria-label="Loading deals">
+    <div
+      className="grid grid-cols-1 gap-6 xl:grid-cols-4"
+      aria-label="Loading deals"
+    >
       {DASHBOARD_PHASES.map((phase) => (
         <Card key={phase} variant="raised" padding="sm">
           <Skeleton width="55%" />
@@ -97,7 +106,10 @@ function LoadingBoard({ view }: { view: DashboardView }) {
 
 function DealCard({ deal }: { deal: DealSummary }) {
   return (
-    <Link href={`/deals/${deal.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-black">
+    <Link
+      href={`/deals/${deal.id}`}
+      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-black"
+    >
       <Card variant="default" padding="sm" className="min-h-[156px]">
         <div className="flex items-start justify-between gap-3">
           <Badge variant="orange">{PHASE_LABELS[deal.currentPhase]}</Badge>
@@ -108,11 +120,24 @@ function DealCard({ deal }: { deal: DealSummary }) {
             size="sm"
           />
         </div>
-        <p className="mt-4 font-label text-[10px] font-bold uppercase tracking-wider text-slate-gray">{deal.code}</p>
-        <h3 className="mt-1 text-base font-semibold text-ink-black">{deal.title}</h3>
+        <p className="mt-4 font-label text-[10px] font-bold uppercase tracking-wider text-slate-gray">
+          {deal.code}
+        </p>
+        <h3 className="mt-1 text-base font-semibold text-ink-black">
+          {deal.title}
+        </h3>
         <p className="mt-1 text-xs text-slate-gray">{deal.target.legalName}</p>
-        <p className="mt-3 text-sm font-semibold text-ink-black">{formatMoneyRange(deal)}</p>
-        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-gray"><span>{deal.leadAdvisor?.displayName ?? "Unassigned"}</span><span>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(deal.updatedAt))}</span></div>
+        <p className="mt-3 text-sm font-semibold text-ink-black">
+          {formatMoneyRange(deal)}
+        </p>
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-gray">
+          <span>{deal.leadAdvisor?.displayName ?? "Unassigned"}</span>
+          <span>
+            {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+              new Date(deal.updatedAt),
+            )}
+          </span>
+        </div>
       </Card>
     </Link>
   );
@@ -127,7 +152,9 @@ export default function DashboardPage() {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [phase, setPhase] = useState<"all" | DashboardPhase>("all");
-  const [status, setStatus] = useState<"all" | "active" | "completed" | "archived">("active");
+  const [status, setStatus] = useState<
+    "all" | "active" | "completed" | "archived"
+  >("active");
   const [assigneeId, setAssigneeId] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -173,7 +200,11 @@ export default function DashboardPage() {
       setTotalPages(response.meta.totalPages);
     } catch (cause) {
       setDeals([]);
-      setError(cause instanceof Error ? cause.message : "The deal pipeline could not be loaded.");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "The deal pipeline could not be loaded.",
+      );
     } finally {
       setLoading(false);
     }
@@ -192,7 +223,9 @@ export default function DashboardPage() {
     });
     return Array.from(unique.values()).filter((advisor) => advisor !== null);
   }, [deals]);
-  const filtersActive = Boolean(search || phase !== "all" || status !== "active" || assigneeId !== "all");
+  const filtersActive = Boolean(
+    search || phase !== "all" || status !== "active" || assigneeId !== "all",
+  );
 
   const resetFilters = () => {
     setSearchDraft("");
@@ -217,7 +250,11 @@ export default function DashboardPage() {
       setTargets(entityPage.data);
       setTeamMembers(teamPage.data.filter((member) => member.active));
     } catch (cause) {
-      setOptionsError(cause instanceof Error ? cause.message : "Deal form options could not be loaded.");
+      setOptionsError(
+        cause instanceof Error
+          ? cause.message
+          : "Deal form options could not be loaded.",
+      );
     } finally {
       setOptionsLoading(false);
     }
@@ -248,7 +285,11 @@ export default function DashboardPage() {
     const clientErrors = validateDealDraft(draft);
     setDraftErrors(clientErrors);
     if (Object.keys(clientErrors).length > 0) {
-      setToast({ title: "Review required fields", message: "Correct the highlighted deal fields and submit again.", variant: "error" });
+      setToast({
+        title: "Review required fields",
+        message: "Correct the highlighted deal fields and submit again.",
+        variant: "error",
+      });
       return;
     }
 
@@ -266,7 +307,9 @@ export default function DashboardPage() {
     } catch (cause) {
       if (cause instanceof APIError && cause.fieldErrors) {
         const serverErrors = Object.fromEntries(
-          Object.entries(cause.fieldErrors).map(([field, messages]) => [field, messages[0]]),
+          Object.entries(cause.fieldErrors).map((
+            [field, messages],
+          ) => [field, messages[0]]),
         ) as DealDraftErrors;
         setDraftErrors(serverErrors);
       } else {
@@ -285,23 +328,41 @@ export default function DashboardPage() {
     <div className="space-y-8 p-8">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-signal-orange">Executive pipeline</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink-black">M&amp;A Pipeline</h1>
-          <p className="mt-1 text-sm text-slate-gray">Monitor active mandates from sourcing through closing.</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-signal-orange">
+            Executive pipeline
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink-black">
+            M&amp;A Pipeline
+          </h1>
+          <p className="mt-1 text-sm text-slate-gray">
+            Monitor active mandates from sourcing through closing.
+          </p>
         </div>
-        <Button variant="primary" size="md" onClick={() => void openCreate()} disabled={loading}>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={() => void openCreate()}
+          disabled={loading}
+        >
           Create Deal
         </Button>
       </section>
 
-      <Card variant="default" padding="sm" className="flex flex-wrap items-center justify-between gap-4 overflow-visible">
+      <Card
+        variant="default"
+        padding="sm"
+        className="flex flex-wrap items-center justify-between gap-4 overflow-visible"
+      >
         <Tabs
           tabs={[
             { id: "kanban", label: "Board", count: total },
             { id: "table", label: "Table" },
           ]}
           activeTab={view}
-          onChange={(nextView) => nextView === "table" ? router.push("/deals") : setView(nextView as DashboardView)}
+          onChange={(nextView) =>
+            nextView === "table"
+              ? router.push("/deals")
+              : setView(nextView as DashboardView)}
         />
         <div className="grid min-w-0 flex-1 grid-cols-1 gap-6 md:grid-cols-2 xl:max-w-[1180px] xl:grid-cols-4">
           <Input
@@ -318,7 +379,10 @@ export default function DashboardPage() {
             placeholder="All stages"
             options={[
               { value: "all", label: "All Stages" },
-              ...DASHBOARD_PHASES.map((item) => ({ value: item, label: PHASE_LABELS[item] })),
+              ...DASHBOARD_PHASES.map((item) => ({
+                value: item,
+                label: PHASE_LABELS[item],
+              })),
             ]}
             onChange={(value) => {
               setPhase(value as "all" | DashboardPhase);
@@ -335,7 +399,10 @@ export default function DashboardPage() {
               { value: "completed", label: "Completed" },
               { value: "archived", label: "Archived" },
             ]}
-            onChange={(value) => { setStatus(value as typeof status); setPage(1); }}
+            onChange={(value) => {
+              setStatus(value as typeof status);
+              setPage(1);
+            }}
             disabled={loading}
           />
           <Dropdown
@@ -343,7 +410,10 @@ export default function DashboardPage() {
             placeholder="All assignees"
             options={[
               { value: "all", label: "All Assignees" },
-              ...advisors.map((advisor) => ({ value: advisor.id, label: advisor.displayName })),
+              ...advisors.map((advisor) => ({
+                value: advisor.id,
+                label: advisor.displayName,
+              })),
             ]}
             onChange={(value) => {
               setAssigneeId(value as string);
@@ -356,92 +426,144 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <main className="min-w-0 xl:col-span-9">
-          {loading ? (
-            <LoadingBoard view={view} />
-          ) : error ? (
-            <Card variant="raised" className="flex min-h-[300px] flex-col items-center justify-center text-center">
-              <Icon name="alert" size="xl" className="text-signal-orange" />
-              <h2 className="mt-4 text-lg font-semibold text-ink-black">Pipeline unavailable</h2>
-              <p className="mt-1 max-w-md text-sm text-slate-gray">{error}</p>
-              <Button className="mt-5" variant="primary" onClick={() => void loadDeals()}>
-                Retry
-              </Button>
-              <Button className="mt-3" variant="secondary" onClick={() => router.push("/")}>Return to dashboard</Button>
-            </Card>
-          ) : deals.length === 0 ? (
-            <EmptyState
-              title="No deals found"
-              description={
-                filtersActive
+          {loading ? <LoadingBoard view={view} /> : error
+            ? (
+              <Card
+                variant="raised"
+                className="flex min-h-[300px] flex-col items-center justify-center text-center"
+              >
+                <Icon name="alert" size="xl" className="text-signal-orange" />
+                <h2 className="mt-4 text-lg font-semibold text-ink-black">
+                  Pipeline unavailable
+                </h2>
+                <p className="mt-1 max-w-md text-sm text-slate-gray">{error}</p>
+                <Button
+                  className="mt-5"
+                  variant="primary"
+                  onClick={() => void loadDeals()}
+                >
+                  Retry
+                </Button>
+                <Button
+                  className="mt-3"
+                  variant="secondary"
+                  onClick={() => router.push("/")}
+                >
+                  Return to dashboard
+                </Button>
+              </Card>
+            )
+            : deals.length === 0
+            ? (
+              <EmptyState
+                title="No deals found"
+                description={filtersActive
                   ? "No active deals match the current search and filters."
-                  : "Create the first mandate to start building the pipeline."
-              }
-              actionLabel={filtersActive ? "Reset Filters" : "Create Deal"}
-              onAction={filtersActive ? resetFilters : () => void openCreate()}
-              icon={<Icon name={filtersActive ? "filter" : "fileText"} size="lg" />}
-            />
-          ) : view === "table" ? (
-            <Card variant="default" padding="none">
-              <Table aria-label="Active deals">
-                <TableHead>
-                  <TableRow isHeader>
-                    <TableCell isHeader>Deal / Target</TableCell>
-                    <TableCell isHeader>Stage</TableCell>
-                    <TableCell isHeader>Valuation</TableCell>
-                    <TableCell isHeader>Lead Advisor</TableCell>
-                    <TableCell isHeader>Updated</TableCell>
-                  </TableRow>
-                </TableHead>
-                <tbody>
-                  {deals.map((deal) => (
-                    <TableRow key={deal.id}>
-                      <TableCell>
-                        <Link href={`/deals/${deal.id}`} className="font-semibold text-ink-black hover:underline">
-                          {deal.title}
-                        </Link>
-                        <span className="ml-2 text-xs text-slate-gray">{deal.target.legalName}</span>
-                      </TableCell>
-                      <TableCell><Badge variant="orange">{PHASE_LABELS[deal.currentPhase]}</Badge></TableCell>
-                      <TableCell>{formatMoneyRange(deal)}</TableCell>
-                      <TableCell>{deal.leadAdvisor?.displayName ?? "Unassigned"}</TableCell>
-                      <TableCell>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(deal.updatedAt))}</TableCell>
-                    </TableRow>
-                  ))}
-                </tbody>
-              </Table>
-              <TablePagination
-                currentPage={page}
-                totalPages={totalPages}
-                totalItems={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-                onPageSizeChange={(nextSize) => {
-                  setPageSize(nextSize);
-                  setPage(1);
-                }}
+                  : "Create the first mandate to start building the pipeline."}
+                actionLabel={filtersActive ? "Reset Filters" : "Create Deal"}
+                onAction={filtersActive
+                  ? resetFilters
+                  : () => void openCreate()}
+                icon={
+                  <Icon
+                    name={filtersActive ? "filter" : "fileText"}
+                    size="lg"
+                  />
+                }
               />
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-              {DASHBOARD_PHASES.map((columnPhase) => (
-                <Card key={columnPhase} variant="raised" padding="sm" className="overflow-visible">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-sm font-semibold text-ink-black">{PHASE_LABELS[columnPhase]}</h2>
-                    <Badge variant="dark">{groupedDeals[columnPhase].length}</Badge>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {groupedDeals[columnPhase].length > 0 ? (
-                      groupedDeals[columnPhase].map((deal) => <DealCard key={deal.id} deal={deal} />)
-                    ) : (
-                      <div className="rounded-lg border border-dashed border-dust-taupe p-5 text-center text-xs text-slate-gray">
-                        No deals in this stage
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+            )
+            : view === "table"
+            ? (
+              <Card variant="default" padding="none">
+                <Table aria-label="Active deals">
+                  <TableHead>
+                    <TableRow isHeader>
+                      <TableCell isHeader>Deal / Target</TableCell>
+                      <TableCell isHeader>Stage</TableCell>
+                      <TableCell isHeader>Valuation</TableCell>
+                      <TableCell isHeader>Lead Advisor</TableCell>
+                      <TableCell isHeader>Updated</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <tbody>
+                    {deals.map((deal) => (
+                      <TableRow key={deal.id}>
+                        <TableCell>
+                          <Link
+                            href={`/deals/${deal.id}`}
+                            className="font-semibold text-ink-black hover:underline"
+                          >
+                            {deal.title}
+                          </Link>
+                          <span className="ml-2 text-xs text-slate-gray">
+                            {deal.target.legalName}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="orange">
+                            {PHASE_LABELS[deal.currentPhase]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatMoneyRange(deal)}</TableCell>
+                        <TableCell>
+                          {deal.leadAdvisor?.displayName ?? "Unassigned"}
+                        </TableCell>
+                        <TableCell>
+                          {new Intl.DateTimeFormat("en-US", {
+                            dateStyle: "medium",
+                          }).format(new Date(deal.updatedAt))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </Table>
+                <TablePagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={total}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={(nextSize) => {
+                    setPageSize(nextSize);
+                    setPage(1);
+                  }}
+                />
+              </Card>
+            )
+            : (
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+                {DASHBOARD_PHASES.map((columnPhase) => (
+                  <Card
+                    key={columnPhase}
+                    variant="raised"
+                    padding="sm"
+                    className="overflow-visible"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-ink-black">
+                        {PHASE_LABELS[columnPhase]}
+                      </h2>
+                      <Badge variant="dark">
+                        {groupedDeals[columnPhase].length}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {groupedDeals[columnPhase].length > 0
+                        ? (
+                          groupedDeals[columnPhase].map((deal) => (
+                            <DealCard key={deal.id} deal={deal} />
+                          ))
+                        )
+                        : (
+                          <div className="rounded-lg border border-dashed border-dust-taupe p-5 text-center text-xs text-slate-gray">
+                            No deals in this stage
+                          </div>
+                        )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
         </main>
 
         <aside className="space-y-6 xl:col-span-3">
@@ -449,29 +571,44 @@ export default function DashboardPage() {
             <Badge variant="orange">BrokerOrchestrator</Badge>
             <h2 className="mt-4 text-lg font-semibold">Deal intelligence</h2>
             <p className="mt-2 text-sm text-canvas-cream/75">
-              Review the selected mandate with the orchestrator and its specialist agents.
+              Review the selected mandate with the orchestrator and its
+              specialist agents.
             </p>
-            {deals[0] ? (
-              <Button
-                className="mt-5"
-                variant="secondary"
-                size="sm"
-                onClick={() => router.push(`/deals/${deals[0].id}/chat`)}
-              >
-                Open Agent Chat
-              </Button>
-            ) : (
-              <Button className="mt-5" variant="secondary" size="sm" disabled>Open Agent Chat</Button>
-            )}
+            {deals[0]
+              ? (
+                <Button
+                  className="mt-5"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => router.push(`/deals/${deals[0].id}/chat`)}
+                >
+                  Open Agent Chat
+                </Button>
+              )
+              : (
+                <Button className="mt-5" variant="secondary" size="sm" disabled>
+                  Open Agent Chat
+                </Button>
+              )}
           </Card>
           <Card variant="default">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-gray">Current result</p>
-            <p className="mt-3 text-3xl font-semibold text-ink-black">{total}</p>
-            <p className="mt-1 text-sm text-slate-gray">active deals across the filtered pipeline</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-gray">
+              Current result
+            </p>
+            <p className="mt-3 text-3xl font-semibold text-ink-black">
+              {total}
+            </p>
+            <p className="mt-1 text-sm text-slate-gray">
+              active deals across the filtered pipeline
+            </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {phase !== "all" && <Badge variant="outline">{PHASE_LABELS[phase]}</Badge>}
+              {phase !== "all" && (
+                <Badge variant="outline">{PHASE_LABELS[phase]}</Badge>
+              )}
               {search && <Badge variant="default">Search active</Badge>}
-              {!filtersActive && <Badge variant="default">All active deals</Badge>}
+              {!filtersActive && (
+                <Badge variant="default">All active deals</Badge>
+              )}
             </div>
           </Card>
         </aside>
@@ -485,120 +622,214 @@ export default function DashboardPage() {
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
-            <Button variant="primary" onClick={() => void submitCreate()} disabled={creating || optionsLoading || Boolean(optionsError)}>
+            <Button
+              variant="secondary"
+              onClick={() => setIsCreateOpen(false)}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void submitCreate()}
+              disabled={creating || optionsLoading || Boolean(optionsError)}
+            >
               {creating ? "Creating…" : "Create Deal"}
             </Button>
           </>
         }
       >
-        {optionsLoading ? (
-          <div className="space-y-5" aria-label="Loading deal form">
-            <Skeleton />
-            <Skeleton variant="rectangular" height={44} />
-            <Skeleton />
-            <Skeleton variant="rectangular" height={44} />
-            <Skeleton variant="rectangular" height={96} />
-          </div>
-        ) : optionsError ? (
-          <Card variant="raised">
-            <div className="flex items-start gap-3">
-              <Icon name="alert" className="mt-0.5 text-signal-orange" />
-              <div>
-                <h3 className="font-semibold">Form options unavailable</h3>
-                <p className="mt-1 text-xs text-slate-gray">{optionsError}</p>
-                <Button className="mt-4" variant="secondary" size="sm" onClick={() => void openCreate()}>Retry</Button>
-              </div>
+        {optionsLoading
+          ? (
+            <div className="space-y-5" aria-label="Loading deal form">
+              <Skeleton />
+              <Skeleton variant="rectangular" height={44} />
+              <Skeleton />
+              <Skeleton variant="rectangular" height={44} />
+              <Skeleton variant="rectangular" height={96} />
             </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormField label="Deal Title" required error={draftErrors.title} className="md:col-span-2">
-              <Input
-                autoFocus
-                value={draft.title}
-                hasError={Boolean(draftErrors.title)}
-                onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-                placeholder="Project Horizon"
-              />
-            </FormField>
-            <FormField label="Deal Type" required error={draftErrors.dealType}>
-              <Dropdown
-                value={draft.dealType}
-                options={[
-                  { value: "buy_side", label: "Buy-side" },
-                  { value: "sell_side", label: "Sell-side" },
-                ]}
-                onChange={(value) => setDraft((current) => ({ ...current, dealType: value as DealDraft["dealType"] }))}
-              />
-            </FormField>
-            <FormField label="Target Entity" required error={draftErrors.targetId} hint={targets.length === 0 ? "Create a target entity before creating a deal." : undefined}>
-              <Dropdown
-                searchable
-                value={draft.targetId}
-                placeholder="Select target"
+          )
+          : optionsError
+          ? (
+            <Card variant="raised">
+              <div className="flex items-start gap-3">
+                <Icon name="alert" className="mt-0.5 text-signal-orange" />
+                <div>
+                  <h3 className="font-semibold">Form options unavailable</h3>
+                  <p className="mt-1 text-xs text-slate-gray">{optionsError}</p>
+                  <Button
+                    className="mt-4"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void openCreate()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )
+          : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                label="Deal Title"
+                required
+                error={draftErrors.title}
+                className="md:col-span-2"
+              >
+                <Input
+                  autoFocus
+                  value={draft.title}
+                  hasError={Boolean(draftErrors.title)}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))}
+                  placeholder="Project Horizon"
+                />
+              </FormField>
+              <FormField
+                label="Deal Type"
+                required
+                error={draftErrors.dealType}
+              >
+                <Dropdown
+                  value={draft.dealType}
+                  options={[
+                    { value: "buy_side", label: "Buy-side" },
+                    { value: "sell_side", label: "Sell-side" },
+                  ]}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      dealType: value as DealDraft["dealType"],
+                    }))}
+                />
+              </FormField>
+              <FormField
+                label="Target Entity"
+                required
                 error={draftErrors.targetId}
-                options={targets.map((target) => ({ value: target.id, label: target.legalName }))}
-                onChange={(value) => setDraft((current) => ({ ...current, targetId: value as string }))}
-                disabled={targets.length === 0}
-              />
-            </FormField>
-            <FormField label="Phase" required hint="New mandates enter the sequential workflow in Sourcing.">
-              <Dropdown
-                value={draft.phase}
-                options={[{ value: "sourcing", label: "Sourcing" }]}
-                onChange={() => undefined}
-                disabled
-              />
-            </FormField>
-            <FormField label="Currency" required>
-              <Dropdown
-                value={draft.currency}
-                options={["BRL", "USD", "EUR"].map((currency) => ({ value: currency, label: currency }))}
-                onChange={(value) => setDraft((current) => ({ ...current, currency: value as DealDraft["currency"] }))}
-              />
-            </FormField>
-            <FormField label="Lead Advisor" hint="Optional">
-              <Dropdown
-                searchable
-                value={draft.leadAdvisorId}
-                placeholder="Unassigned"
-                options={[
-                  { value: "", label: "Unassigned" },
-                  ...teamMembers.map((member) => ({ value: member.id, label: member.displayName })),
-                ]}
-                onChange={(value) => setDraft((current) => ({ ...current, leadAdvisorId: value as string }))}
-              />
-            </FormField>
-            <FormField label="Valuation Minimum" required error={draftErrors.valuationMin}>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={draft.valuationMin}
-                hasError={Boolean(draftErrors.valuationMin)}
-                onChange={(event) => setDraft((current) => ({ ...current, valuationMin: event.target.value }))}
-              />
-            </FormField>
-            <FormField label="Valuation Maximum" required error={draftErrors.valuationMax}>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={draft.valuationMax}
-                hasError={Boolean(draftErrors.valuationMax)}
-                onChange={(event) => setDraft((current) => ({ ...current, valuationMax: event.target.value }))}
-              />
-            </FormField>
-            <FormField label="Internal Note" hint="Optional; visible only to the deal team." className="md:col-span-2">
-              <Textarea
-                value={draft.internalNote}
-                onChange={(event) => setDraft((current) => ({ ...current, internalNote: event.target.value }))}
-                placeholder="Add sourcing context or initial constraints."
-              />
-            </FormField>
-          </div>
-        )}
+                hint={targets.length === 0
+                  ? "Create a target entity before creating a deal."
+                  : undefined}
+              >
+                <Dropdown
+                  searchable
+                  value={draft.targetId}
+                  placeholder="Select target"
+                  error={draftErrors.targetId}
+                  options={targets.map((target) => ({
+                    value: target.id,
+                    label: target.legalName,
+                  }))}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      targetId: value as string,
+                    }))}
+                  disabled={targets.length === 0}
+                />
+              </FormField>
+              <FormField
+                label="Phase"
+                required
+                hint="New mandates enter the sequential workflow in Sourcing."
+              >
+                <Dropdown
+                  value={draft.phase}
+                  options={[{ value: "sourcing", label: "Sourcing" }]}
+                  onChange={() => undefined}
+                  disabled
+                />
+              </FormField>
+              <FormField label="Currency" required>
+                <Dropdown
+                  value={draft.currency}
+                  options={["BRL", "USD", "EUR"].map((currency) => ({
+                    value: currency,
+                    label: currency,
+                  }))}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      currency: value as DealDraft["currency"],
+                    }))}
+                />
+              </FormField>
+              <FormField label="Lead Advisor" hint="Optional">
+                <Dropdown
+                  searchable
+                  value={draft.leadAdvisorId}
+                  placeholder="Unassigned"
+                  options={[
+                    { value: "", label: "Unassigned" },
+                    ...teamMembers.map((member) => ({
+                      value: member.id,
+                      label: member.displayName,
+                    })),
+                  ]}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      leadAdvisorId: value as string,
+                    }))}
+                />
+              </FormField>
+              <FormField
+                label="Valuation Minimum"
+                required
+                error={draftErrors.valuationMin}
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={draft.valuationMin}
+                  hasError={Boolean(draftErrors.valuationMin)}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      valuationMin: event.target.value,
+                    }))}
+                />
+              </FormField>
+              <FormField
+                label="Valuation Maximum"
+                required
+                error={draftErrors.valuationMax}
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={draft.valuationMax}
+                  hasError={Boolean(draftErrors.valuationMax)}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      valuationMax: event.target.value,
+                    }))}
+                />
+              </FormField>
+              <FormField
+                label="Internal Note"
+                hint="Optional; visible only to the deal team."
+                className="md:col-span-2"
+              >
+                <Textarea
+                  value={draft.internalNote}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      internalNote: event.target.value,
+                    }))}
+                  placeholder="Add sourcing context or initial constraints."
+                />
+              </FormField>
+            </div>
+          )}
       </Modal>
 
       {toast && (

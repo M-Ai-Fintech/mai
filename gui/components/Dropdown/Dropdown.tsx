@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Icon } from "../Icon/Icon";
 
 export interface DropdownOption {
@@ -114,7 +114,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className={`w-full text-left space-y-1.5 select-none ${className}`} ref={containerRef}>
+    <div
+      className={`w-full text-left space-y-1.5 select-none ${className}`}
+      ref={containerRef}
+    >
       {label && (
         <label className="block text-xs font-bold text-ink-black uppercase tracking-wider">
           {label}
@@ -158,38 +161,44 @@ export const Dropdown: React.FC<DropdownProps> = ({
               </div>
             )}
 
-            {filteredOptions.length === 0 ? (
-              <div className="p-3 text-xs text-slate-gray text-center">
-                No option found
-              </div>
-            ) : (
-              filteredOptions.map((opt) => {
-                const isSelected = selectedValues.includes(opt.value);
-                return (
-                  <div
-                    key={opt.value}
-                    onClick={() => handleSelectOption(opt)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                      opt.disabled
-                        ? "opacity-40 cursor-not-allowed"
-                        : isSelected
-                        ? "bg-ink-black text-canvas-cream font-bold"
-                        : "hover:bg-soft-bone text-ink-black"
-                    }`}
-                  >
-                    <span>{opt.label}</span>
-                    {opt.badge && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-signal-orange text-white font-extrabold ml-2">
-                        {opt.badge}
-                      </span>
-                    )}
-                    {isSelected && !opt.badge && (
-                      <Icon name="check" size="sm" className="text-canvas-cream" />
-                    )}
-                  </div>
-                );
-              })
-            )}
+            {filteredOptions.length === 0
+              ? (
+                <div className="p-3 text-xs text-slate-gray text-center">
+                  No option found
+                </div>
+              )
+              : (
+                filteredOptions.map((opt) => {
+                  const isSelected = selectedValues.includes(opt.value);
+                  return (
+                    <div
+                      key={opt.value}
+                      onClick={() => handleSelectOption(opt)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                        opt.disabled
+                          ? "opacity-40 cursor-not-allowed"
+                          : isSelected
+                          ? "bg-ink-black text-canvas-cream font-bold"
+                          : "hover:bg-soft-bone text-ink-black"
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      {opt.badge && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-signal-orange text-white font-extrabold ml-2">
+                          {opt.badge}
+                        </span>
+                      )}
+                      {isSelected && !opt.badge && (
+                        <Icon
+                          name="check"
+                          size="sm"
+                          className="text-canvas-cream"
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              )}
           </div>
         )}
       </div>

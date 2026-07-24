@@ -1,7 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const body = await request.json();
-  return NextResponse.json({ success: true, dealId: id, updatedStatus: body.statusId });
+  return NextResponse.json({
+    success: true,
+    dealId: id,
+    updatedStatus: body.statusId,
+  });
 }

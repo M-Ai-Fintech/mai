@@ -54,9 +54,9 @@ export const FullCoverageSpinner: Story = {
       <Spinner size="sm" />
       <Spinner size="lg" color="white" />
     </div>
-  )
+  ),
 };
 
 export const FullCoverageSpinner2: Story = {
-  render: () => <Spinner size={undefined} color={undefined} />
+  render: () => <Spinner size={undefined} color={undefined} />,
 };

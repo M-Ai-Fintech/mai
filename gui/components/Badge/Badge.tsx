@@ -20,11 +20,13 @@ export const Badge: React.FC<BadgeProps> = ({
 
   switch (variant) {
     case "default":
-      variantStyles = "bg-lifted-cream text-ink-black border border-dust-taupe/40";
+      variantStyles =
+        "bg-lifted-cream text-ink-black border border-dust-taupe/40";
       break;
     case "orange":
       // Signal Orange badge — icon & text must be pure white (#FFFFFF) per user feedback
-      variantStyles = "bg-signal-orange text-white border-none [&_svg]:text-white [&_svg]:fill-current";
+      variantStyles =
+        "bg-signal-orange text-white border-none [&_svg]:text-white [&_svg]:fill-current";
       break;
     case "dark":
       variantStyles = "bg-ink-black text-canvas-cream border-none";

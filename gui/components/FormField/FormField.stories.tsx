@@ -37,7 +37,7 @@ export const NonElementChildren: Story = {
   args: {
     label: "Plain Text Field",
     children: "This is just text, not a React element",
-  }
+  },
 };
 
 export const ValidationError: Story = {

@@ -58,11 +58,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         } ${isMobileOpen ? "translate-x-0" : "max-md:-translate-x-full"}`}
       >
         <div className="flex h-[72px] items-center justify-between border-b border-dust-taupe/60 px-5">
-          <Link href="/" aria-label="M&Ai dashboard" className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/"
+            aria-label="M&Ai dashboard"
+            className="flex min-w-0 items-center gap-3"
+          >
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink-black text-sm font-bold text-canvas-cream">
               M&A
             </span>
-            {!isCollapsed && <span className="truncate text-lg font-bold tracking-[-0.03em]">M&Ai</span>}
+            {!isCollapsed && (
+              <span className="truncate text-lg font-bold tracking-[-0.03em]">
+                M&Ai
+              </span>
+            )}
           </Link>
           <button
             type="button"
@@ -70,7 +78,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="hidden h-11 w-11 place-items-center rounded-full text-slate-gray hover:bg-canvas-cream hover:text-ink-black md:grid"
           >
-            <Icon name={isCollapsed ? "chevronRight" : "chevronDown"} size="sm" className={!isCollapsed ? "rotate-90" : ""} />
+            <Icon
+              name={isCollapsed ? "chevronRight" : "chevronDown"}
+              size="sm"
+              className={!isCollapsed ? "rotate-90" : ""}
+            />
           </button>
         </div>
 
@@ -98,9 +110,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           : "text-slate-gray hover:bg-canvas-cream hover:text-ink-black"
                       } ${isCollapsed ? "justify-center" : ""}`}
                     >
-                      <Icon name={item.icon ?? "info"} size="md" className="shrink-0" />
-                      {!isCollapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
-                      {!isCollapsed && item.badge && <span className="font-label text-xs">{item.badge}</span>}
+                      <Icon
+                        name={item.icon ?? "info"}
+                        size="md"
+                        className="shrink-0"
+                      />
+                      {!isCollapsed && (
+                        <span className="min-w-0 flex-1 truncate">
+                          {item.label}
+                        </span>
+                      )}
+                      {!isCollapsed && item.badge && (
+                        <span className="font-label text-xs">{item.badge}</span>
+                      )}
                     </Link>
                   );
                 })}
@@ -108,7 +130,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ))}
         </nav>
-
       </aside>
     </>
   );

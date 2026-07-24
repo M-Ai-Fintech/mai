@@ -9,7 +9,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  
+
   /* Mastercard specific theme colors */
   --color-canvas-cream: #F3F0EE;
   --color-lifted-cream: #FCFBFA;
@@ -18,14 +18,14 @@
   --color-light-signal-orange: #F37338;
   --color-clay-brown: #9A3A0A;
   --color-slate-gray: #696969;
-  
+
   /* Map older/existing layout variable names to the new palette to preserve functionality */
   --color-dark-surface: #FCFBFA; /* Lifted Cream */
   --color-dark-border: #D1CDC7; /* Dust Taupe */
   --color-teal-accent: #141413; /* Ink Black for primary buttons */
   --color-teal-accent-hover: #262627; /* Charcoal */
   --color-cyan-accent: #F37338; /* Light Signal Orange */
-  
+
   /* Overwrite Slate palette to fit the cream-editorial design */
   --color-slate-950: #E8E2DA; /* Darker cream for overlays / watermarks */
   --color-slate-900: #F3F0EE; /* Canvas Cream */
@@ -37,7 +37,7 @@
   --color-slate-300: #141413; /* Ink Black */
   --color-slate-200: #141413; /* Ink Black */
   --color-slate-100: #141413; /* Ink Black */
-  
+
   /* Fonts */
   --font-sans: var(--font-plus-jakarta-sans), Arial, sans-serif;
   --font-label: var(--font-public-sans), Arial, sans-serif;

@@ -26,12 +26,18 @@ export class ErrorBoundary extends Component<
     showDetails: false,
   };
 
-  public static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+  public static getDerivedStateFromError(
+    error: Error,
+  ): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an unhandled exception:", error, errorInfo);
+    console.error(
+      "ErrorBoundary caught an unhandled exception:",
+      error,
+      errorInfo,
+    );
     this.setState({ errorInfo });
   }
 
@@ -67,7 +73,8 @@ export class ErrorBoundary extends Component<
                 An interface exception occurred
               </h3>
               <p className="text-xs text-slate-gray">
-                The execution layer encountered an unexpected error while processing data for this module.
+                The execution layer encountered an unexpected error while
+                processing data for this module.
               </p>
             </div>
 

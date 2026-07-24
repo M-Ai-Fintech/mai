@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   addDashboardWidget,
+  type DashboardWidget,
   moveDashboardWidget,
   removeDashboardWidget,
   resizeDashboardWidget,
-  type DashboardWidget,
 } from "./custom-dashboard-model";
 
 const first: DashboardWidget = {
@@ -22,7 +22,10 @@ describe("custom dashboard layout transitions", () => {
       "00000000-0000-4000-8000-000000000002",
     );
     expect(result).toHaveLength(2);
-    expect(result[1]).toMatchObject({ type: "risk_summary", grid: { x: 0, y: 2, w: 6, h: 3 } });
+    expect(result[1]).toMatchObject({
+      type: "risk_summary",
+      grid: { x: 0, y: 2, w: 6, h: 3 },
+    });
   });
 
   it("reorders widgets and normalizes their grid rows", () => {
@@ -32,8 +35,14 @@ describe("custom dashboard layout transitions", () => {
       "00000000-0000-4000-8000-000000000002",
     )[1];
     const result = moveDashboardWidget([first, second], second.instanceId, -1);
-    expect(result.map((widget) => widget.instanceId)).toEqual([second.instanceId, first.instanceId]);
-    expect(result.map((widget) => [widget.grid.x, widget.grid.y])).toEqual([[0, 0], [6, 0]]);
+    expect(result.map((widget) => widget.instanceId)).toEqual([
+      second.instanceId,
+      first.instanceId,
+    ]);
+    expect(result.map((widget) => [widget.grid.x, widget.grid.y])).toEqual([[
+      0,
+      0,
+    ], [6, 0]]);
   });
 
   it("removes a widget without mutating the source", () => {

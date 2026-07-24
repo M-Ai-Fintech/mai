@@ -2,14 +2,20 @@ import React from "react";
 import { Button } from "../Button/Button";
 
 // Main Table Container
-export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
+export interface TableProps
+  extends React.TableHTMLAttributes<HTMLTableElement> {
   children?: React.ReactNode;
 }
 
-export const Table: React.FC<TableProps> = ({ children = null, className = "", ...props }) => {
+export const Table: React.FC<TableProps> = (
+  { children = null, className = "", ...props },
+) => {
   return (
     <div className="w-full overflow-x-auto border border-dust-taupe/60 rounded-lg bg-white shadow-level-1 text-left">
-      <table className={`w-full text-left border-collapse text-sm ${className}`} {...props}>
+      <table
+        className={`w-full text-left border-collapse text-sm ${className}`}
+        {...props}
+      >
         {children}
       </table>
     </div>
@@ -17,20 +23,27 @@ export const Table: React.FC<TableProps> = ({ children = null, className = "", .
 };
 
 // Table Head
-export interface TableHeadProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+export interface TableHeadProps
+  extends React.HTMLAttributes<HTMLTableSectionElement> {
   children: React.ReactNode;
 }
 
-export const TableHead: React.FC<TableHeadProps> = ({ children, className = "", ...props }) => {
+export const TableHead: React.FC<TableHeadProps> = (
+  { children, className = "", ...props },
+) => {
   return (
-    <thead className={`bg-canvas-cream/60 border-b border-dust-taupe/60 text-slate-gray text-xs font-bold uppercase tracking-wider ${className}`} {...props}>
+    <thead
+      className={`bg-canvas-cream/60 border-b border-dust-taupe/60 text-slate-gray text-xs font-bold uppercase tracking-wider ${className}`}
+      {...props}
+    >
       {children}
     </thead>
   );
 };
 
 // Table Row
-export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+export interface TableRowProps
+  extends React.HTMLAttributes<HTMLTableRowElement> {
   children: React.ReactNode;
   isHeader?: boolean;
 }
@@ -53,7 +66,8 @@ export const TableRow: React.FC<TableRowProps> = ({
 };
 
 // Table Cell
-export interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+export interface TableCellProps
+  extends React.TdHTMLAttributes<HTMLTableCellElement> {
   children: React.ReactNode;
   isHeader?: boolean;
   maxWidthClassName?: string;
@@ -119,7 +133,10 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
           ))}
         </select>
         <span>
-          Showing <strong className="text-ink-black">{startItem}-{endItem}</strong> of <strong className="text-ink-black">{totalItems}</strong>
+          Showing{" "}
+          <strong className="text-ink-black">{startItem}-{endItem}</strong> of
+          {" "}
+          <strong className="text-ink-black">{totalItems}</strong>
         </span>
       </div>
 

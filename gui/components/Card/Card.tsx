@@ -15,10 +15,11 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className = "",
       ...props
     },
-    ref
+    ref,
   ) => {
     // Left-aligned content by default per user feedback & Dealroom.net benchmark
-    let baseStyles = "text-left transition-all duration-150 relative overflow-hidden";
+    let baseStyles =
+      "text-left transition-all duration-150 relative overflow-hidden";
 
     // Padding scale
     const paddingStyles = {
@@ -62,13 +63,15 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`${baseStyles} ${paddingStyles[padding]} ${variantStyles} ${className}`}
+        className={`${baseStyles} ${
+          paddingStyles[padding]
+        } ${variantStyles} ${className}`}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 
 Card.displayName = "Card";
