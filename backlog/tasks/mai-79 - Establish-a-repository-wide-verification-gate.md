@@ -1,10 +1,10 @@
 ---
 id: MAI-79
 title: Establish a repository-wide verification gate
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 15:15'
+updated_date: '2026-07-24 15:19'
 labels:
   - testing
   - reliability
@@ -96,7 +96,16 @@ Create one canonical local verification command that proves the repository state
 - MAI-87 recorded 135 passing Deno tests, 29 GUI unit tests, 24 validated Storybook MDX files, and 89 passing Storybook interaction tests.
 - The explicit integration profile rejects absent or placeholder PostgreSQL, Gemini, and Papermark configuration without selecting mocks.
 - PR #4 is the MAI-79 review PR. MAI-79 remains In Progress pending human review and approval; no live-provider pass is claimed.
+
+## Finalization
+- PR #4 has been merged and human approval is complete. MAI-79 is now Done.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Established the repository-wide verification gate. Added canonical `deno task verify`, complete Deno discovery, GUI/Next/Storybook aggregation, controlled failure propagation, and a safe explicit integration profile. MAI-87 restored the gate to green and was merged at `db04a9b`. Verification: 135 Deno tests, 29 GUI unit tests, 24 Storybook MDX validations, and 89 Storybook interaction tests passed; `deno task verify` exited 0. PR: https://github.com/M-Ai-Fintech/MVP/pull/4 (merged). No remaining work.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
