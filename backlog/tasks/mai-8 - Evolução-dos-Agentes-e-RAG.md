@@ -68,16 +68,16 @@ A evolução será dividida em quatro frentes principais:
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 19:22
 ---
-[REVISÃO CRÍTICA] 1. A geração de embeddings reais na ferramenta huggingFaceMcpTool possui um try-catch silencioso que, em caso de erro, devolve um vetor hardcoded ([0.012, -0.045...]), iludindo a camada RAG e os agentes sobre a capacidade vetorial ativa. Isso compromete a confiabilidade das buscas semânticas.
+[CRITICAL REVIEW] Real embedding generation in `huggingFaceMcpTool` has a silent try/catch that returns a hardcoded vector (`[0.012, -0.045...]`) on failure, misleading the RAG layer and agents about active vector capability. This compromises semantic-search reliability.
 ---
 
 author: @Antigravity
 created: 2026-07-09 20:32
 ---
-Revisão crítica resolvida: Embedding real agora propaga exceção.
+Critical review resolved: Real embedding generation now propagates exceptions.
 ---
 
 author: @codex

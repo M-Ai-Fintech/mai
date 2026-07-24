@@ -40,33 +40,33 @@ Two different agents export a schema named 'termsheetSchema' with incompatible s
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Separação da ambiguidade do schema dual `termsheetSchema`. Foram criados dois schemas isolados: um para a negociação (`NegotiationProposal`) e outro formal vinculativo (`BindingTermSheet`), compartilhando estruturas comuns de `src/shared/schemas/term-sheet.ts`.
+Removed ambiguity from the dual `termsheetSchema` by creating separate schemas for negotiation (`NegotiationProposal`) and the formal binding document (`BindingTermSheet`), sharing common structures from `src/shared/schemas/term-sheet.ts`.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `src/shared/schemas/term-sheet.ts` — Schema base unificado criado.
-- `src/agent/agents/negotiation/schemas/term-sheet.ts` — Adaptado para a mesa de negociação.
-- `src/agent/agents/legal-closing/schemas/term-sheet.ts` — Criado para o documento vinculativo final (Legal Closing).
+- `src/shared/schemas/term-sheet.ts` — Created the unified base schema.
+- `src/agent/agents/negotiation/schemas/term-sheet.ts` — Adapted for negotiation.
+- `src/agent/agents/legal-closing/schemas/term-sheet.ts` — Created for the final binding Legal Closing document.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/agents** — Agentes NegotiationAgent e LegalClosingAgent.
+- **mai/agents** — NegotiationAgent and LegalClosingAgent.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] Legal Closing Agent utiliza um schema diferente daquele da Mesa de Negociação.
+- [ ] Legal Closing Agent uses a different schema from NegotiationAgent.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Fluxo E2E (Sourcing -> Negociação -> Legal Closing) precisa garantir que a conversão entre o Proposal e o Binding Term Sheet ocorra de maneira fluída.
+- The E2E flow (Sourcing -> Negotiation -> Legal Closing) must ensure smooth conversion from Proposal to Binding Term Sheet.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Validar o pipeline de geração de PDFs fiduciários e negociação no CLI.
+- Validate the fiduciary PDF-generation and negotiation pipeline in the CLI.
 ---
 
 author: @codex

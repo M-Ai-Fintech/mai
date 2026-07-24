@@ -1,6 +1,6 @@
 const PORTUGUESE_MARKERS = [
   /[ãõçáéíóúâêôàüÃÕÇÁÉÍÓÚÂÊÔÀÜ]/u,
-  /\b(?:ação|ações|arquivo|aviso|dados|empresa|erro|falha|não|resultado|situação|sucesso|usuário|valor)\b/iu,
+  /\b(?:ação|ações|arquivo|arquivos|aviso|banco|chave|código|comando|configuração|conteúdo|contrato|critérios|dados|deve|devem|documentação|empresa|erro|falha|implementação|não|negociação|objetivo|padrão|português|projeto|relatório|resultado|resumo|risco|situação|sucesso|tarefa|teste|testes|todos|usuário|validação|valor|verificação)\b/iu,
 ] as const;
 
 const SCANNED_ROOTS = ["src", "gui", "tests", "scripts"] as const;
@@ -30,6 +30,28 @@ export function findPortugueseText(source: string): I18nViolation[] {
       line: source.slice(0, match.index).split("\n").length,
       text: text.slice(0, 120),
     });
+  }
+
+  return violations;
+}
+
+export function findPortugueseBacklogComments(
+  source: string,
+): I18nViolation[] {
+  const begin = "<!-- COMMENTS:BEGIN -->";
+  const end = "<!-- COMMENTS:END -->";
+  const start = source.indexOf(begin);
+  const finish = source.indexOf(end);
+  if (start === -1 || finish === -1 || finish <= start) return [];
+
+  const commentsStart = start + begin.length;
+  const comments = source.slice(commentsStart, finish);
+  const firstLine = source.slice(0, commentsStart).split("\n").length - 1;
+  const violations: I18nViolation[] = [];
+
+  for (const [index, text] of comments.split("\n").entries()) {
+    if (!PORTUGUESE_MARKERS.some((marker) => marker.test(text))) continue;
+    violations.push({ line: firstLine + index + 1, text: text.slice(0, 120) });
   }
 
   return violations;
@@ -78,6 +100,22 @@ export async function checkRepository(): Promise<I18nViolation[]> {
     } catch (error) {
       if (!(error instanceof Deno.errors.NotFound)) throw error;
     }
+  }
+
+  try {
+    for await (const entry of Deno.readDir("backlog/tasks")) {
+      if (!entry.isFile || !entry.name.endsWith(".md")) continue;
+      const path = `backlog/tasks/${entry.name}`;
+      const source = await Deno.readTextFile(path);
+      for (const violation of findPortugueseBacklogComments(source)) {
+        console.error(
+          `${path}:${violation.line}: non-English Backlog comment: ${violation.text}`,
+        );
+        violations.push(violation);
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
   }
 
   return violations;

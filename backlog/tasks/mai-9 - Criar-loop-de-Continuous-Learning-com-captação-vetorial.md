@@ -59,16 +59,16 @@ Implementar um loop de aprendizado contínuo (Continuous Learning) no ecossistem
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 19:22
 ---
-[REVISÃO CRÍTICA] 1. Falha grave de persistência: O código salva feedbacks em um arquivo estático (./data/human_feedback.json) usando `Deno.writeTextFile`, contrariando o AC#2 que exige uso do DatabaseMemoryService no PostgreSQL. 2. Os embeddings prometidos não são gerados e salvos (AC#1 não atendido). 3. A checagem de conformidade (Compliance Conflict) exigida no AC#5 não foi implementada.
+[CRITICAL REVIEW] 1. Serious persistence failure: The code saves feedback to `./data/human_feedback.json` with `Deno.writeTextFile`, contrary to AC #2, which requires `DatabaseMemoryService` with PostgreSQL. 2. The promised embeddings are neither generated nor saved (AC #1 unmet). 3. The compliance-conflict check required by AC #5 was not implemented.
 ---
 
 author: @Antigravity
 created: 2026-07-09 20:32
 ---
-Revisão crítica resolvida: Integrado a tabela user_preferences com pgvector real e implementado compliance e fallback.
+Critical review resolved: Integrated the `user_preferences` table with real pgvector support and implemented compliance handling and fallback behavior.
 ---
 
 author: @codex

@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-24 18:49'
+updated_date: '2026-07-24 19:24'
 labels:
   - revalidation
 milestone: m-14
@@ -59,6 +59,8 @@ The codebase mixes Portuguese string literals in domain logic (e.g., VDR complia
 Intake 2026-07-24: cleaned the 431-file formatting worktree, renamed the rejected implementation to reference/MAI-78-antigravity-i18n, and created chore/MAI-78-i18n from master. Graphify outputs are expected dirty generated artifacts and excluded from commits. MAI-84 remains stale as In Progress, but its PR #5 is merged into master and the canonical ADR/documentation dependency is present, so the delivered dependency is treated as satisfied.
 
 Implementation 2026-07-24: treated the Antigravity branch as reference only. Rejected its 431-file worktree formatting churn, excluded runtime knowledge Markdown and generated Graphify artifacts, and later rejected its 40-file core/test rewrite after whitespace-insensitive review. Implemented typed en/pt-BR catalogs, deterministic English fallback, explicit CLI/GUI locale selection, localized CLI/GUI/document/agent presentation boundaries, English internal identifiers/source text, and a regression language checker. Verification: deno task verify passed all eight stages with network/localhost access; focused i18n and checker tests passed 8/8; focused integration suite passed 41 tests plus 8 steps; git diff --check passed.
+
+Backlog comment cleanup 2026-07-24: translated Portuguese comments in all 30 affected active task records. Archived tasks were intentionally excluded per owner direction. Extended scripts/check_i18n.ts to scan only active Backlog comment sections; checker tests pass 4/4 and deno task verify passes all eight stages.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -66,34 +68,34 @@ Implementation 2026-07-24: treated the Antigravity branch as reference only. Rej
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Remoção de nomenclaturas mistas/português do código interno. As propriedades do schema de resposta (KYB) foram renomeadas de `razaoSocial` para `legalName`, `situacaoCadastral` para `registrationStatus`, etc. Mantendo as labels de exibição do CLI traduzidas (i18n).
+Removed mixed-language terminology from internal code. Renamed KYB response properties from `razaoSocial` to `legalName`, `situacaoCadastral` to `registrationStatus`, and so on, while keeping CLI display labels translated through i18n.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `src/agent/vdr_mock.ts` — Chaves de mock adaptadas.
-- `gui/lib/api-client.ts` — Contratos KYC adaptados.
-- `src/cli/commands.ts` — CLI labels traduzidas dinamicamente do objeto em inglês.
+- `src/agent/vdr_mock.ts` — Updated mock keys.
+- `gui/lib/api-client.ts` — Updated KYC contracts.
+- `src/cli/commands.ts` — Dynamically translated CLI labels from the English object.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
 - **mai/core**, **mai/gui**, **mai/cli**
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] A execução do comando `kyb` no CLI continua exibindo os dados formatados em português ao usuário.
-- [ ] Todos os contratos TS usam as propriedades equivalentes em inglês.
+- [ ] Running the `kyb` CLI command continues displaying user data formatted in Portuguese.
+- [ ] All TypeScript contracts use the equivalent English properties.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Quebras em chamadas antigas que aguardavam a key em PT-BR e não foram atualizadas.
+- Older callers that still expect PT-BR keys may break if they were not updated.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Executar `deno run -A src/cli/index.ts kyb 12345678000199` e garantir que os dados "Razão Social", etc. estão preenchidos e não `undefined` ou `N/A`.
+- Run `deno run -A src/cli/index.ts kyb 12345678000199` and confirm that localized fields such as the legal-name label are populated rather than `undefined` or `N/A`.
 ---
 
 author: @codex
@@ -109,15 +111,15 @@ Implementation is published for human review in PR #6: https://github.com/M-Ai-F
 ---
 <!-- COMMENTS:END -->
 
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Rebuilt MAI-78 from master using the rejected Antigravity branch only as a reference. Added typed English and PT-BR i18n boundaries across CLI, GUI, generated documents, and agent-facing presentation; converted maintained internal/source text to English; and added automated regression enforcement. Full repository verification passes. Kept In Progress pending human PR review.
+<!-- SECTION:FINAL_SUMMARY:END -->
+
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [x] #1 Every applicable acceptance criterion is checked with current evidence
 - [x] #2 All focused tests and the repository-wide verification gate pass
 - [x] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
 <!-- DOD:END -->
-
-## Final Summary
-
-<!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Rebuilt MAI-78 from master using the rejected Antigravity branch only as a reference. Added typed English and PT-BR i18n boundaries across CLI, GUI, generated documents, and agent-facing presentation; converted maintained internal/source text to English; and added automated regression enforcement. Full repository verification passes. Kept In Progress pending human PR review.
-<!-- SECTION:FINAL_SUMMARY:END -->

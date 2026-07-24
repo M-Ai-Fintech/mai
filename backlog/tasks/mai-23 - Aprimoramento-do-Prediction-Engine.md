@@ -50,15 +50,15 @@ Replace the current Z‑Score rule‑based prediction engine with a neural class
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 21:35
 ---
-[REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o critério DoD #5 (atualizar documentação no repositório com instruções para treinamento/exportação e o arquivo docs/prediction_engine.md) não foi cumprido (o arquivo não existe e o README.md não possui as instruções detalhadas). 2. O código de inferência e testes unitários com fallback foram implementados corretamente, cumprindo os demais requisitos funcionais.
+[CRITICAL REVIEW] 1. The task was marked Done, but DoD #5—repository documentation for training/export and `docs/prediction_engine.md`—was not met: the file did not exist and `README.md` lacked detailed instructions. 2. Inference code and fallback unit tests were implemented correctly and met the other functional requirements.
 ---
 
 created: 2026-07-09 21:52
 ---
-Crítica resolvida: Documentação criada em docs/prediction_engine.md e README.md atualizado com as instruções detalhadas do pipeline ONNX.
+Critical review resolved: Created `docs/prediction_engine.md` and updated `README.md` with detailed ONNX pipeline instructions.
 ---
 
 author: @codex

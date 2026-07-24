@@ -58,16 +58,16 @@ Principais Funcionalidades a Desenvolver:
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 19:22
 ---
-[REVISÃO CRÍTICA] 1. A ferramenta `vdrStructuredAccessTool` engole falhas nas ações `read_file_content` e `query_silo`, retornando fallbacks silenciosos em formato de MOCK em vez de falhar graciosamente ou propagar o erro ao agente. Isso quebra o determinismo da Due Diligence e faz com que o agente tome decisões sobre documentos inexistentes.
+[CRITICAL REVIEW] `vdrStructuredAccessTool` swallows failures from `read_file_content` and `query_silo`, returning silent MOCK fallbacks instead of failing gracefully or propagating the error to the agent. This breaks Due Diligence determinism and causes decisions based on nonexistent documents.
 ---
 
 author: @Antigravity
 created: 2026-07-09 20:32
 ---
-Revisão crítica resolvida: Removidos mocks síncronos e adicionada propagação real de exceções nas ações de VDR.
+Critical review resolved: Removed synchronous mocks and added real exception propagation to VDR actions.
 ---
 
 author: @codex

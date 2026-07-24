@@ -1,5 +1,8 @@
 import { assertEquals } from "@std/assert";
-import { findPortugueseText } from "./check_i18n.ts";
+import {
+  findPortugueseBacklogComments,
+  findPortugueseText,
+} from "./check_i18n.ts";
 
 Deno.test("i18n checker rejects Portuguese presentation literals", () => {
   const violations = findPortugueseText(
@@ -22,4 +25,18 @@ Deno.test("i18n checker accepts English source text", () => {
     findPortugueseText('console.error("Unable to save user data.");'),
     [],
   );
+});
+
+Deno.test("i18n checker scans active Backlog comments only", () => {
+  const task = `## Description
+Descrição histórica outside comments is not part of this boundary.
+<!-- COMMENTS:BEGIN -->
+created: 2026-07-24
+---
+Resumo da implementação
+<!-- COMMENTS:END -->`;
+
+  const violations = findPortugueseBacklogComments(task);
+  assertEquals(violations.length, 1);
+  assertEquals(violations[0].text, "Resumo da implementação");
 });

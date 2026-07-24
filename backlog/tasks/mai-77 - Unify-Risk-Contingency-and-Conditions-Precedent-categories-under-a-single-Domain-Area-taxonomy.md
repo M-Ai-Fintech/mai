@@ -43,35 +43,35 @@ Three separate category lists exist for essentially the same domain areas: risk-
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Unificação da taxonomia de domínios entre Riscos (Risk Matrix), Passivos (Contingency) e Condições Precedentes em um único enumerador global `DomainArea` (`corporate`, `financial`, `labor`, `tax`, `civil`, etc.).
+Unified the domain taxonomy for Risk Matrix, Contingency, and Conditions Precedent under one global `DomainArea` enum (`corporate`, `financial`, `labor`, `tax`, `civil`, etc.).
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `src/shared/schemas/domain-area.ts` — Novo tipo base `DomainArea`.
-- `src/agent/agents/legal-closing/schemas/conditions-precedent.ts` — Atualizado para usar `DomainArea`.
-- `src/agent/agents/legal-dd/schemas/contingency.ts` — Atualizado para usar `DomainArea`.
-- `src/agent/agents/general-dd/schemas/risk-matrix.ts` — Atualizado para usar `DomainArea`.
-- `tests/e2e/cli.spec.ts` — Ajuste de fragilidade no teste de recomendação de Portfolio.
+- `src/shared/schemas/domain-area.ts` — New base `DomainArea` type.
+- `src/agent/agents/legal-closing/schemas/conditions-precedent.ts` — Updated to use `DomainArea`.
+- `src/agent/agents/legal-dd/schemas/contingency.ts` — Updated to use `DomainArea`.
+- `src/agent/agents/general-dd/schemas/risk-matrix.ts` — Updated to use `DomainArea`.
+- `tests/e2e/cli.spec.ts` — Removed fragility from the portfolio-recommendation test.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/agents** — Modelos de Dados base.
+- **mai/agents** — Base data models.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] As 3 taxonomias importam a mesma lista `DomainArea` centralizada.
+- [ ] All three taxonomies import the same centralized `DomainArea` list.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Possível regressão em extrações do Gemini (agora minúsculas) em testes complexos caso o mock do LLM retorne CamelCase.
+- Complex tests may regress if the LLM mock returns CamelCase while Gemini extraction now expects lowercase.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Valide as exibições no fluxo CLI de `negotiate` e extrato de Risco.
+- Validate displays in the `negotiate` CLI flow and risk report.
 ---
 
 author: @codex

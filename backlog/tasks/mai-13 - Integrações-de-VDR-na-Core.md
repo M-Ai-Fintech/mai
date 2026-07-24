@@ -66,16 +66,16 @@ Desenvolver a integração da Core API com provedores de Virtual Data Room (VDR)
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 19:22
 ---
-[REVISÃO CRÍTICA] 1. O AC#4 está quebrado: Em `rag_layer.ts` (ClientSiloedRAG), a inicialização do silo para provedores externos (iDeals/Intralinks) APENAS moca o conteúdo com a string `Conteúdo extraído de [nome do arquivo]` ao invés de efetuar o download dos arquivos físicos e realizar o chunking/vetorização. Documentos reais não estão sendo indexados no PostgreSQL.
+[CRITICAL REVIEW] AC #4 is broken: In `rag_layer.ts` (`ClientSiloedRAG`), silo initialization for external providers (iDeals/Intralinks) only mocks content with a placeholder string instead of downloading physical files and performing chunking/vectorization. Real documents are not indexed in PostgreSQL.
 ---
 
 author: @Antigravity
 created: 2026-07-09 20:32
 ---
-Revisão crítica resolvida: Implementado download real dos binários com conversão para texto no rag_layer.ts.
+Critical review resolved: Implemented real binary downloads with text conversion in `rag_layer.ts`.
 ---
 
 author: @codex

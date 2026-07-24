@@ -40,41 +40,41 @@ During the domain modeling session, 'Deal' was established as the canonical term
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:27
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Refatoração da entidade central do domínio de `Transaction` para `Deal`, consolidando as nomenclaturas. O arquivo `ma_flow.ts` (desatualizado) foi removido em favor do fluxo no `mvp_store`, e os testes smoke foram atualizados.
+Refactored the central domain entity from `Transaction` to `Deal` and consolidated terminology. Removed the outdated `ma_flow.ts` in favor of the `mvp_store` flow and updated smoke tests.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `tests/smoke.spec.ts` — Ajuste para utilizar a nomenclatura Deal.
-- `src/core/ma_flow.ts` — Arquivo removido.
+- `tests/smoke.spec.ts` — Updated to use Deal terminology.
+- `src/core/ma_flow.ts` — Removed.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/core** — Fluxo de ciclo de vida e e2e tests.
+- **mai/core** — Lifecycle flow and E2E tests.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] O fluxo do `MvpStore` completa o ciclo de vida usando `deal` em vez de `transaction`.
-- [ ] O teste smoke completa todas as fases sem erros.
+- [ ] The `MvpStore` flow completes the lifecycle using `deal` instead of `transaction`.
+- [ ] The smoke test completes every phase without errors.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Possível impacto em ferramentas antigas de CLI que ainda possam buscar `transaction` (o teste e2e deve cobrir isso).
+- Older CLI tools that still query `transaction` may be affected; the E2E test should cover this.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Valide se o pipeline `deno test` passa integralmente, especificamente os smoke tests em `tests/smoke.spec.ts`.
+- Confirm that the complete `deno test` pipeline passes, especially `tests/smoke.spec.ts`.
 
-### Pontos de Atenção / Edge Cases
+### Attention Points / Edge Cases
 
-- ⚠️ Nenhum impacto de UI direto, apenas fluxo interno.
+- ⚠️ No direct UI impact; internal flow only.
 
-### Proposta de Fluxo de Teste
+### Proposed Test Flow
 
-1. Executar `deno test -A tests/smoke.spec.ts` e verificar se passa com sucesso.
+1. Run `deno test -A tests/smoke.spec.ts` and confirm it passes.
 ---
 
 author: @codex

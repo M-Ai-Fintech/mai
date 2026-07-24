@@ -48,10 +48,10 @@ Estabelecer o boilerplate inicial da interface gráfica (Web Dashboard) pareada 
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Falsa conformidade: O critério AC #5 'Compatibilidade de Tipagem' foi marcado como feito, mas conforme documentado no README da GUI, o compartilhamento direto de tipos TS com a Core (Deno) não foi implementado, utilizando-se apenas mocks baseados na estrutura acordada.
+[CRITICAL REVIEW] False compliance: AC #5, “Type Compatibility,” was marked complete, but the GUI README documents that direct TypeScript type sharing with Core (Deno) was not implemented; only mocks based on the agreed structure were used.
 ---
 
 author: @codex

@@ -51,10 +51,10 @@ Implemented Fase 2.1 and 2.2 of MAI-47: Integrated GUI frontend (api-client, pag
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Integração Incompleta na GUI: Embora os endpoints do backend tenham sido implementados no TransactionRepository e conectados na API, as views da GUI para Engines e Chat são totalmente estáticas, impossibilitando que inputs de formulários de solvers e histórico de chats RAG reais sejam disparados ou persistidos dinamicamente via interface web.
+[CRITICAL REVIEW] Incomplete GUI integration: Although backend endpoints were implemented in `TransactionRepository` and connected to the API, the Engine and Chat GUI views are entirely static. Solver form inputs and real RAG chat history cannot be submitted or persisted dynamically through the web interface.
 ---
 
 author: @codex

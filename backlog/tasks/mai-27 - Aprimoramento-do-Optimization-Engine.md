@@ -63,15 +63,15 @@ Currently both algorithms are duplicated in the CLI (`src/cli/commands.ts`) and 
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-09 21:35
 ---
-[REVISÃO CRÍTICA] 1. A tarefa foi dada como 'Done', porém o AC #1, AC #3 e DoD #2 falharam: A classe MILPOptimizer ainda existe de forma duplicada em src/agent/actions.ts (linha 31 a 121). A tool 'optimizePortfolioTool' não importa o novo módulo PortfolioSolver de kyc_valuation_solver.ts, ela utiliza a implementação antiga duplicada.
+[CRITICAL REVIEW] The task was marked Done, but AC #1, AC #3, and DoD #2 failed: `MILPOptimizer` remained duplicated in `src/agent/actions.ts` (lines 31–121), and `optimizePortfolioTool` used the old duplicate implementation instead of importing the new `PortfolioSolver` from `kyc_valuation_solver.ts`.
 ---
 
 created: 2026-07-09 21:52
 ---
-Crítica resolvida: MILPOptimizer duplicado removido de actions.ts e tool optimizePortfolioTool integrada para usar o novo PortfolioSolver.
+Critical review resolved: Removed the duplicate `MILPOptimizer` from `actions.ts` and integrated `optimizePortfolioTool` with the new `PortfolioSolver`.
 ---
 
 author: @codex

@@ -57,10 +57,10 @@ Referências úteis: NSGA-II para otimização multi-objetivo caso seja necessá
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Duplicação Crítica de Lógica: Há dois algoritmos genéticos separados e incompatíveis no código: src/engines/optimization/genetic.ts (que atua sobre valuation, cash, equity, earn-out, escrow) e term_sheet_optimizer.ts (que opera sobre cashPercentage, buyerEquityShare, earnOutTargetYears, nonCompeteMonths). 2. Motor Inutilizado em Produção: O algoritmo desenvolvido sob a tarefa MAI-40 (genetic.ts) só é chamado no test runner e na tool Mastra, enquanto a CLI e a API Server continuam utilizando o term_sheet_optimizer.ts antigo. A lógica de convergência otimizada não está de fato integrada no fluxo real do middleware.
+[CRITICAL REVIEW] 1. Critical logic duplication: The code contains two separate, incompatible genetic algorithms: `src/engines/optimization/genetic.ts` operates on valuation, cash, equity, earn-out, and escrow, while `term_sheet_optimizer.ts` operates on cash percentage, buyer equity share, earn-out years, and non-compete months. 2. Engine unused in production: The MAI-40 algorithm is called only by tests and the Mastra tool; CLI and API Server still use the old optimizer, so optimized convergence is not integrated into the real middleware flow.
 ---
 
 author: @codex

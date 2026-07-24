@@ -41,35 +41,35 @@ The risk severity enum is inconsistent across the codebase: risk-matrix.ts uses 
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Padronização dos enums de severidade de risco (`Risk Severity`) para minúsculas (`low`, `medium`, `high`, `critical`) em todos os schemas (contingência, insolvência e análise de contrato), facilitando a inferência pelo LLM e reduzindo ambiguidades.
+Standardized risk-severity enums to lowercase (`low`, `medium`, `high`, `critical`) across contingency, insolvency, and contract-analysis schemas, simplifying LLM inference and reducing ambiguity.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `src/agent/actions.ts` — Ajuste no Enum `riskLevel` para minúsculas.
-- `src/agent/agents/financial-risk/schemas/insolvency.ts` — Ajuste no schema.
-- `src/agent/agents/legal-dd/schemas/contingency.ts` — Ajuste no schema.
-- `src/agent/agents/legal-dd/schemas/contract-analysis.ts` — Ajuste no schema.
+- `src/agent/actions.ts` — Changed the `riskLevel` enum to lowercase.
+- `src/agent/agents/financial-risk/schemas/insolvency.ts` — Updated the schema.
+- `src/agent/agents/legal-dd/schemas/contingency.ts` — Updated the schema.
+- `src/agent/agents/legal-dd/schemas/contract-analysis.ts` — Updated the schema.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/agents** — Schemas de extração e tools.
+- **mai/agents** — Extraction schemas and tools.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] A severidade é extraída em minúsculas por todas as tools.
-- [ ] Os agentes validam os dados contra os schemas sem falhas Zod.
+- [ ] Every tool extracts severity in lowercase.
+- [ ] Agents validate data against the schemas without Zod failures.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Agentes de VDR Extraction podem falhar se tentarem forçar output capitalizado.
+- VDR Extraction agents may fail if they force capitalized output.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Valide via CLI que extrações de risco (ex: prediction) retornam `low`, `medium`, `high` ou `critical` corretamente formatados.
+- Use the CLI to confirm that risk extraction (for example, prediction) returns correctly formatted `low`, `medium`, `high`, or `critical` values.
 ---
 
 author: @codex

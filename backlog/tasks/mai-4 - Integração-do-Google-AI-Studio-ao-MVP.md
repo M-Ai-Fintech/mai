@@ -68,15 +68,15 @@ Garantir que a SDK de IA do projeto acesse o Google AI Studio corretamente de fo
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-4]
-1. Patch com Chave Falsa no Ambiente: O arquivo 'src/agent/index.ts' injeta 'mock-key-for-dry-run' no Deno.env para contornar a inicialização da biblioteca Mastra/Google na ausência de chaves de API. Contudo, essa interceptação só é tratada manualmente em 'AgentOrchestrator.executeAgentQuery'.
-2. Falhas não Tratadas nos Agentes Mastra: Qualquer subcomando da CLI ou chamada direta aos outros agentes instanciados de forma independente tentará disparar chamadas de API reais do Google usando a chave falsa e falhará com HTTP 400/401, em vez de passar por um fallback amigável de dry-run.
+[CRITICAL REVIEW - MAI-4]
+1. Fake environment-key patch: `src/agent/index.ts` injects `mock-key-for-dry-run` into `Deno.env` to bypass Mastra/Google initialization when API keys are absent. However, only `AgentOrchestrator.executeAgentQuery` handles this interception manually.
+2. Unhandled Mastra agent failures: Any CLI subcommand or direct call to independently instantiated agents will attempt real Google API calls with the fake key and fail with HTTP 400/401 instead of using a friendly dry-run fallback.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:21
 ---
-[SANEAMENTO] Implementado monkeypatching global em Agent.prototype.generate e Agent.prototype.stream na inicialização de agentes no ponto de entrada src/agent/index.ts, garantindo a interceptação graciosa de todas as chamadas a agentes da biblioteca Mastra em modo dry-run quando nenhuma chave Gemini estiver disponível. AIProvider.getApiKey agora detecta 'mock-key-for-dry-run' e o trata de forma unificada como fallback.
+[REMEDIATION] Added global monkey-patching of `Agent.prototype.generate` and `Agent.prototype.stream` during agent initialization in `src/agent/index.ts`, gracefully intercepting all Mastra agent calls in dry-run mode when no Gemini key is available. `AIProvider.getApiKey` now detects `mock-key-for-dry-run` and handles it consistently as a fallback.
 ---
 
 author: @codex

@@ -47,15 +47,15 @@ Transformar a CLI básica numa ferramenta interativa usando Cliffy. Adicionar me
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-6]
-1. Inconsistência de Backlog (DoD e AC desmarcados): A tarefa foi colocada como concluída (Done), mas a maior parte das caixas de critérios de aceitação e DoD do markdown permanecem desmarcadas (ex: spinners de carregamento real para ONNX e algoritmos genéticos, tabelas formatadas de scores).
-2. Congelamento da CLI (Thread Bloqueante): Os algoritmos de otimização linear (MILP via WASM) e o otimizador genético de Term Sheet rodam de forma 100% síncrona na thread do Deno. Isso bloqueia o loop interativo e congela a CLI durante processamentos custosos, tornando feedbacks como spinners meras decorações estáticas.
+[CRITICAL REVIEW - MAI-6]
+1. Backlog inconsistency: The task was marked Done while most acceptance-criteria and DoD boxes remained unchecked, including real ONNX/genetic-algorithm loading spinners and formatted score tables.
+2. CLI freeze: The linear optimizer (MILP via WASM) and Term Sheet genetic optimizer run synchronously on the Deno thread, blocking the interactive loop during expensive processing and reducing spinner feedback to static decoration.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:22
 ---
-[SANEAMENTO] Corrigido o travamento da thread única do Deno. O algoritmo genético de Term Sheet e a orquestração do portfólio MILP foram refatorados para execução assíncrona yieldable de gerações/passos, permitindo que a CLI interativa e os spinners de progresso executem sem congelamento.
+[REMEDIATION] Fixed the Deno single-thread freeze. The Term Sheet genetic algorithm and MILP portfolio orchestration now use yieldable asynchronous generations/steps, allowing the interactive CLI and progress spinners to run without freezing.
 ---
 
 author: @codex
