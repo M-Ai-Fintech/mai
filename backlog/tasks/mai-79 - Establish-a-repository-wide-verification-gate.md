@@ -4,13 +4,15 @@ title: Establish a repository-wide verification gate
 status: In Progress
 assignee: []
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 14:26'
+updated_date: '2026-07-24 15:15'
 labels:
   - testing
   - reliability
 milestone: m-9
 dependencies:
   - MAI-87
+references:
+  - 'https://github.com/M-Ai-Fintech/MVP/pull/4'
 modified_files:
   - deno.json
   - gui/package.json
@@ -36,12 +38,12 @@ Create one canonical local verification command that proves the repository state
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 One documented command runs every Deno unit, integration, and colocated test under both tests/ and src/
-- [ ] #2 The gate runs GUI unit tests, Next.js production build, Storybook build, and Storybook interaction tests
-- [ ] #3 The obsolete Stitch validator is not part of the canonical gate and no package script references a missing validator file
-- [ ] #4 Any failed child command makes the aggregate command fail with a clear component-level summary
-- [ ] #5 Real PostgreSQL, Gemini, and Papermark smoke tests are available in an explicit integration profile and never silently pass through mocks
-- [ ] #6 The task completion workflow references this verification gate as mandatory evidence for Done
+- [x] #1 One documented command runs every Deno unit, integration, and colocated test under both tests/ and src/
+- [x] #2 The gate runs GUI unit tests, Next.js production build, Storybook build, and Storybook interaction tests
+- [x] #3 The obsolete Stitch validator is not part of the canonical gate and no package script references a missing validator file
+- [x] #4 Any failed child command makes the aggregate command fail with a clear component-level summary
+- [x] #5 Real PostgreSQL, Gemini, and Papermark smoke tests are available in an explicit integration profile and never silently pass through mocks
+- [x] #6 The task completion workflow references this verification gate as mandatory evidence for Done
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -87,11 +89,18 @@ Create one canonical local verification command that proves the repository state
 ## Scope correction from MAI-87
 - The PostgreSQL, Papermark, and Gemini integrations are not yet implemented or configured, so no live `verify:integration` run can be required at this stage.
 - MAI-79/MAI-87 prove the canonical local gate and that the future integration profile fails safely without mocks. Executing that profile belongs to the future provider-integration tasks, not to MAI-79 finalization.
+
+## MAI-87 completion verification
+- MAI-87 was merged into this branch at `db04a9b` and is now Done.
+- The canonical `deno task verify` gate completed with the recorded PASS component summary: Deno tests, GUI unit tests, Next.js production build, Storybook documentation, Storybook build, and Storybook interaction tests.
+- MAI-87 recorded 135 passing Deno tests, 29 GUI unit tests, 24 validated Storybook MDX files, and 89 passing Storybook interaction tests.
+- The explicit integration profile rejects absent or placeholder PostgreSQL, Gemini, and Papermark configuration without selecting mocks.
+- PR #4 is the MAI-79 review PR. MAI-79 remains In Progress pending human review and approval; no live-provider pass is claimed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 The aggregate gate passes from a clean checkout with documented prerequisites
-- [ ] #2 A controlled failing check proves that failures propagate to the final exit code
-- [ ] #3 No test suite is excluded solely because of its directory or filename convention
+- [x] #1 The aggregate gate passes from a clean checkout with documented prerequisites
+- [x] #2 A controlled failing check proves that failures propagate to the final exit code
+- [x] #3 No test suite is excluded solely because of its directory or filename convention
 <!-- DOD:END -->
