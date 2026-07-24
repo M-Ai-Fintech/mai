@@ -1,4 +1,4 @@
 interface:
-  display_name: "Investigate MAI"
-  short_description: "Diagnose an MAI task with evidence"
-  default_prompt: "Use $investigate to diagnose this MAI failure without implementing a fix."
+  display_name: "Investigate"
+  short_description: "Trace MAI bugs to their root cause"
+  default_prompt: "Use $investigate to diagnose this task without implementing a fix."
