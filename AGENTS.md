@@ -1,175 +1,52 @@
-# Integração Google AI & ADK: M&A Low-Touch Middleware
+# Repository Agent Instructions
 
-Este documento estabelece as diretrizes de integração com o ecossistema de Inteligência Artificial do Google e o Agent Development Kit (ADK) em TypeScript aplicados ao middleware de M&A, englobando a fase de MVP (Monolito em Deno) e a futura arquitetura corporativa em nuvem (GCP).
+Canonical project architecture, domain, setup, operations, and product
+documentation lives under `backlog/docs/`. Start with the
+[Documentation Index](backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
+Do not place competing project-wide authority in this file.
 
----
+## Backlog.md workflow
 
-## 1. Google AI Studio & ADK TypeScript (Fase MVP / Monolito)
+This project uses Backlog.md as its system of record.
 
-Para a construção ágil do MVP em Deno, utilizamos o **Google AI Studio** para prover as chaves de acesso aos modelos Gemini de última geração, integrados nativamente via ADK em TypeScript no ponto de entrada central `src/agent/index.ts`.
+For every request:
 
-### Configurando a Chave de API
-1. Gere uma API Key no [Google AI Studio](https://aistudio.google.com/app/api-keys).
-2. Defina a variável de ambiente no terminal:
-   ```bash
-   export GEMINI_API_KEY="sua_chave_aqui"
-   ```
-3. A camada agêntica inicializará os modelos conectando-os ao ecossistema de 7 agentes.
+1. Run `backlog instructions overview` before answering or acting.
+2. Use the overview to decide whether to search, read, create, or update a task.
+3. Read `task-execution` before planning or implementation and
+   `task-finalization` before completion.
+4. Run `backlog <command> --help` before unfamiliar CLI operations.
 
----
+Never edit Backlog tasks, documents, decisions, drafts, or milestones directly.
+Use the configured Backlog tools so metadata, relationships, and history remain
+consistent.
 
-## 2. O Ecossistema de 7 Agentes no ADK
+## Documentation governance
 
-O ADK orquestra a comunicação entre os agentes através de fluxos determinísticos (Workflows) e comandos diretos via CLI, garantindo acesso compartilhado universal ao VDR, Engines e PostgreSQL.
+- `backlog/docs/` is the governed documentation root.
+- Canonical documentation and ADRs are English.
+- English ADRs under `backlog/docs/decisions/` are authoritative.
+- Backlog Decisions remain unused until governed create, view, and edit
+  workflows are available.
+- Colocated Storybook MDX and `src/agent/agents/**` knowledge assets have local
+  implementation authority only.
+- `graphify-out/` is generated and non-authoritative.
+- Update the documentation inventory and ownership metadata whenever a
+  documentation-like asset is added, removed, moved, or reclassified.
 
-```
-src/agent/
-├── agents/
-│   ├── orchestrator.ts       # BrokerOrchestratorAgent
-│   ├── kyb_sourcing.ts       # SourcingAndKYBAgent
-│   ├── due_diligence.ts      # GeneralDD, FinancialRisk e LegalDD
-│   ├── deal_matching.ts      # DealMatchingAgent
-│   ├── negotiation.ts        # NegotiationAgent
-│   └── legal_closing.ts      # LegalClosingAgent
-├── workflows/                # Validação Zod e Workflows
-├── context/                  # Adaptadores VDR, Engines e DB
-├── actions.ts                # As 5 Ferramentas do ADK
-└── index.ts                  # Ponto de Entrada Unificado
-```
+## Graphify
 
-### Comportamento e Regras dos Agentes
-* **`BrokerOrchestratorAgent`**: Ponto de acesso e orquestração. Intercepta correções do usuário e alimenta o *Database Memory Service*, segregando *Domain Knowledge* de *User Preferences*.
-* **`SourcingAndKYBAgent`**: Acessível via CLI. Combina a checagem analítica na Receita/SERPRO com a investigação da cultura corporativa, movimentações passadas e perfil dos negociadores.
-* **`GeneralDueDiligenceAgent`**: Acesso direto do usuário à auditoria. Requisita VDR via barramento Pub/Sub e delega tarefas pesadas para seus dois subagentes de backend:
-  * `FinancialRiskAgent`: Dedicado aos demonstrativos financeiros e ao motor ONNX.
-  * `LegalDueDiligenceAgent`: Dedicado à varredura de contratos (RAG) e cláusulas de *Change of Control*.
-* **`DealMatchingAgent`**: Otimiza a alocação de capital focando em faixas flexíveis (*valuation ranges*) para eliminar o desgaste e a fadiga de negociação (*deal fatigue*).
-* **`NegotiationAgent`**: Mesa de conselho iterativa. Nunca impõe acordos finais; oferece sempre 3 ou mais alternativas estratégicas (combinando *Cash*, *Equity*, *Earn-outs* e *Escrow*).
-* **`LegalClosingAgent`**: Atua após a aprovação prévia dos termos finais. Exibe um preview estruturado em Markdown na CLI antes de gerar os binários PDF/LaTeX via `pdf-lib`.
+The project knowledge graph is stored in `graphify-out/`.
 
----
+- For codebase questions, first run `graphify query "<question>"` when
+  `graphify-out/graph.json` exists.
+- Use `graphify path "<A>" "<B>"` for relationships and
+  `graphify explain "<concept>"` for focused concepts.
+- Use `graphify-out/wiki/index.md` for broad navigation when present.
+- Dirty generated graph files are expected after hooks or incremental updates.
+- After modifying code, run `graphify update .`.
 
-## 3. As 5 Integrações Globais do ADK
+## Local instructions
 
-O arquivo `src/agent/actions.ts` expõe as 5 integrações fundamentais do ADK:
-1. **`Google Cloud Pub/Sub tool`**: Adaptador assíncrono para solicitação de dados do VDR à Core API e acionamento de Engines.
-2. **`MCP Toolbox for Databases tool`**: Interface MCP nativa para gerenciar e consultar o esquema PostgreSQL.
-3. **`Hugging Face MCP tool`**: Conexão MCP para interagir com modelos e carregar pesos ONNX/Transformers locais.
-4. **`Gemini API Google Search tool`**: Busca em tempo real e *grounding* para apurar reputação, cultura e notícias do setor.
-5. **`Database Memory Service`**: Repositório autônomo no Postgres dedicado a armazenar memórias, cultura e preferências do usuário separadamente de `phase_history`.
-
----
-
-## 4. Google Colab (Treinamento do Motor Preditivo)
-
-O classificador neural ONNX do motor preditivo (`src/engines/prediction/onnx.ts`) é treinado em GPU (T4 ou L4) fora do runtime Deno através do **Google Colab**.
-
-O pipeline compreende:
-1. **Coleta de Dados:** Carga de balanços históricos e scores Altman Z-Score normatizados.
-2. **Treino no PyTorch:** Criação do modelo classificador feedforward (MLP).
-3. **Exportação ONNX:** Compilação do grafo treinado para `.onnx` (`torch.onnx.export`).
-4. **Quantização q8/q4:** Redução de pesos para 8 bits, viabilizando inferência ultrarrápida no Deno via WASM/FFI.
-
-O notebook simulado está localizado em: 👉 **[scripts/colab_training_notebook.ipynb](file:///home/luis/mai/scripts/colab_training_notebook.ipynb)**
-
----
-
-## 5. Vertex AI & Infra GCP (Fase Futura de Produção / Enterprise)
-
-A arquitetura corporativa na Google Cloud Platform (GCP) representa a visão de evolução futura pós-MVP. O monolito atual em Deno adota práticas rígidas de desacoplamento de eventos e persistência para que a futura migração para a nuvem da Google seja instantânea.
-
-```mermaid
-graph TD
-    subgraph Entrada e Roteamento
-        LB[Cloud Load Balancing] --> AG[Cloud API Gateway]
-        LB --> AGE[Camada Agêntica]
-    end
-
-    subgraph Core & Barramento de Eventos
-        AG --> CORE[Core API / Integrações VDR]
-        CORE <-->|Eventos / Mensageria| PUB[Google Cloud Pub/Sub]
-        AGE <-->|Requisição VDR e Engines| PUB
-    end
-
-    subgraph Inteligência & Persistência (Vertex AI / BigQuery)
-        BQ[BigQuery / Histórico de Mercado] --> VTX[Vertex AI / Gemini Endpoint]
-        VTX --> AGE
-    end
-
-    subgraph Motores Computacionais (Cloud Run)
-        PUB -->|Gatilho| CR_ENG[Engines: Predição, Otimização e Documentos]
-    end
-
-    subgraph Armazenamento & Banco de Dados (Replica Pool)
-        CR_ENG <--> CS[Cloud Storage: VDR, ONNX, PDFs]
-        CR_ENG <--> PG_M[(Postgres Master)]
-        CORE <--> PG_M
-        PG_M --> PG_S1[(Postgres Slave 1)]
-        PG_M --> PG_S2[(Postgres Slave 2)]
-    end
-```
-
-### Vantagens de Conformidade na Escala Enterprise (GCP)
-* **Silos e Privacidade Fiduciária:** Na Vertex AI, os dados confidenciais dos VDRs e as consultas RAG nunca trafegam em redes abertas nem treinam modelos fundacionais do Google.
-* **VPC Service Controls:** Envelopa os pipelines do Deno, Cloud Run e inferências do Gemini dentro de um perímetro de rede privado e seguro.
-* **CMEK (Customer-Managed Encryption Keys):** Os embeddings gerados e gravados no Cloud Storage / Postgres são criptografados com chaves gerenciadas diretamente pela equipe de M&A.
-
-### Exemplo de Conexão Segura Futura (Vertex AI)
-No ambiente produtivo futuro, o ADK em TypeScript utilizará credenciais padrão da GCP (ADC) e a biblioteca `@google-cloud/vertexai`:
-
-```typescript
-import { GoogleVertexAI } from "@google-cloud/vertexai";
-import { Agent } from "@mastra/core/agent";
-
-// Inicialização segura no ambiente Vertex AI da GCP
-const vertexAI = new GoogleVertexAI({
-  project: "gama-fund-ma-prod",
-  location: "us-central1",
-});
-
-export const productionBrokerAgent = new Agent({
-  id: "ma-broker-prod",
-  name: "M&A Production Agent",
-  instructions: "...",
-  model: {
-    provider: "VERTEX_AI",
-    name: "gemini-3.1-pro",
-  },
-});
-```
-
-<!-- BACKLOG.MD GUIDELINES START -->
-<CRITICAL_INSTRUCTION>
-
-## Backlog.md Workflow
-
-This project uses Backlog.md for task and project management.
-
-**For every user request in this project, run `backlog instructions overview` before answering or taking action.**
-
-Use the overview to decide whether to search, read, create, or update Backlog tasks.
-
-Use the detailed guides when needed:
-- `backlog instructions task-creation` for creating or splitting tasks
-- `backlog instructions task-execution` for planning and implementation workflow
-- `backlog instructions task-finalization` for completion and handoff
-
-Use `backlog <command> --help` before running unfamiliar commands. Help shows options, fields, and examples.
-
-Do not edit Backlog task, draft, document, decision, or milestone markdown files directly. Use the `backlog` CLI so metadata, relationships, and history stay consistent.
-
-</CRITICAL_INSTRUCTION>
-<!-- BACKLOG.MD GUIDELINES END -->
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+Read every more-specific `AGENTS.md` that applies to files being changed. For
+the GUI, `gui/AGENTS.md` contains the Next.js-version rule.

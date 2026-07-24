@@ -40,7 +40,7 @@ export class AIProvider {
         "O sistema operará em modo DRY-RUN/FALLBACK (mock) e nenhuma requisição real à API será efetuada.\n",
       );
       console.warn(
-        "Para configurar sua chave, veja a documentação em: /context/google_ai_studio_setup.md ou /backlog/docs/google_ai_studio_setup.md\n",
+        "Configure your key using backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md\n",
       );
     }
 
