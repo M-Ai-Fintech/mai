@@ -4,13 +4,13 @@ title: Establish a repository-wide verification gate
 status: In Progress
 assignee: []
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 09:14'
+updated_date: '2026-07-24 09:17'
 labels:
   - testing
   - reliability
 milestone: m-9
 dependencies:
-  - MAI-79.1
+  - MAI-87
 modified_files:
   - deno.json
   - gui/package.json
@@ -80,6 +80,9 @@ Create one canonical local verification command that proves the repository state
 
 ## Follow-up
 - MAI-79.1 is now the explicit prerequisite for the existing Deno failures exposed by this gate. It is a child task and MAI-79 depends on it; completion must record a green `deno task verify` result here before MAI-79 can be finalized.
+
+## Follow-up correction
+- MAI-79.1 was archived because decimal child IDs are not the current MAI convention. MAI-87 supersedes it as MAI-79's required prerequisite and completion must return green-gate evidence to MAI-79.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
