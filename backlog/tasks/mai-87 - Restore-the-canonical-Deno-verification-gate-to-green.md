@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@luisfelipeluis49'
 created_date: '2026-07-24 09:16'
-updated_date: '2026-07-24 14:25'
+updated_date: '2026-07-24 14:36'
 labels:
   - testing
   - reliability
@@ -110,4 +110,11 @@ Resolve the existing Deno failures exposed by MAI-79 so `deno task verify` passe
 - Live PostgreSQL, Papermark, and Gemini integrations are not implemented/configured yet, so executing `verify:integration` is not possible in this task.
 - MAI-87 does not claim a live integration pass and does not require one for its local-gate acceptance criteria. The profile is retained as an explicit future contract: it fails safely instead of using mocks until the dedicated integration tasks provision those services.
 - Pending handoff is human review/PR authorization only; live-service validation belongs to the future PostgreSQL, Papermark, and Gemini integration work.
+
+## Entrega para revisão humana
+
+- Branch publicada: `chore/MAI-87-deno-verification`.
+- Commits publicados: `a228200` e `4245006`.
+- Abertura da PR pendente apenas de autenticação/autorização do GitHub: o token do `gh` está inválido e o conector GitHub não possui acesso ao repositório.
+- A tarefa permanece `In Progress` até a revisão humana na PR.
 <!-- SECTION:NOTES:END -->
