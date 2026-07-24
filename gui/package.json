@@ -9,8 +9,8 @@
     "lint": "eslint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
-    "validate:stitch-prompt": "node scripts/validate-stitch-master-prompt.mjs",
     "test-storybook": "vitest --project=storybook",
     "test-storybook:update": "vitest --project=storybook --update"
   },

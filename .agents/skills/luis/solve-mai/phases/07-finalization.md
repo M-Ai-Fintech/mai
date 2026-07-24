@@ -35,6 +35,7 @@ Set `status: "Done"` through `task_edit` only when:
 - every required acceptance criterion is checked;
 - applicable DoD is complete;
 - required verification passes;
+- when available, `deno task verify` has passed and its exact evidence is recorded;
 - documentation and modified files are current;
 - required PR checks pass;
 - required human approval exists;
