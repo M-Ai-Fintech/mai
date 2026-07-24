@@ -1,5 +1,5 @@
 import { BaseVDRProvider } from "./provider.ts";
-import { VDRDocument, SupergoodConfig } from "./types.ts";
+import { SupergoodConfig, VDRDocument } from "./types.ts";
 
 export interface PapermarkConfig extends SupergoodConfig {
   apiUrl?: string;
@@ -11,9 +11,10 @@ export class PapermarkAdapter extends BaseVDRProvider {
 
   constructor(config?: PapermarkConfig) {
     super(config);
-    this.apiKey = Deno.env.get("PAPERMARK_API_KEY") || config?.apiKey || "";
-    this.apiUrl = config?.apiUrl || Deno.env.get("PAPERMARK_API_URL") || "https://api.papermark.io";
-    
+    this.apiKey = config?.apiKey || Deno.env.get("PAPERMARK_API_KEY") || "";
+    this.apiUrl = config?.apiUrl || Deno.env.get("PAPERMARK_API_URL") ||
+      "https://api.papermark.io";
+
     if (!this.apiKey && Deno.env.get("DENO_ENV") !== "test") {
       console.warn("PAPERMARK_API_KEY is not set.");
     }
@@ -34,9 +35,13 @@ export class PapermarkAdapter extends BaseVDRProvider {
     const path = folderId ? `/v1/rooms/${folderId}/documents` : `/v1/documents`;
     const response = await this.fetchPapermark(path);
     const data = await response.json();
-    
-    const docs = Array.isArray(data.documents) ? data.documents : Array.isArray(data) ? data : [];
-    
+
+    const docs = Array.isArray(data.documents)
+      ? data.documents
+      : Array.isArray(data)
+      ? data
+      : [];
+
     return docs.map((doc: Record<string, unknown>) => ({
       id: String(doc.id),
       name: String(doc.name || doc.title || "document"),
@@ -49,7 +54,9 @@ export class PapermarkAdapter extends BaseVDRProvider {
   }
 
   async downloadDocument(documentId: string): Promise<Uint8Array> {
-    const response = await this.fetchPapermark(`/v1/documents/${documentId}/download`);
+    const response = await this.fetchPapermark(
+      `/v1/documents/${documentId}/download`,
+    );
     const buffer = await response.arrayBuffer();
     return new Uint8Array(buffer);
   }
@@ -68,7 +75,11 @@ export class PapermarkAdapter extends BaseVDRProvider {
     };
   }
 
-  async uploadDocument(name: string, content: Uint8Array, folderId?: string): Promise<VDRDocument> {
+  async uploadDocument(
+    name: string,
+    content: Uint8Array,
+    folderId?: string,
+  ): Promise<VDRDocument> {
     const formData = new FormData();
     formData.append("file", new Blob([content as unknown as BlobPart]), name);
     if (folderId) {
@@ -93,7 +104,7 @@ export class PapermarkAdapter extends BaseVDRProvider {
 
   async downloadBatch(dealId: string, dataRoomId: string): Promise<void> {
     const documents = await this.listDocuments(dataRoomId);
-    
+
     const outputDir = `./vdr_rooms/${dealId}`;
     await Deno.mkdir(outputDir, { recursive: true });
 

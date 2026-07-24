@@ -4,7 +4,7 @@ title: Establish a repository-wide verification gate
 status: In Progress
 assignee: []
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 09:17'
+updated_date: '2026-07-24 14:26'
 labels:
   - testing
   - reliability
@@ -61,28 +61,32 @@ Create one canonical local verification command that proves the repository state
 - Added `deno task verify` with component-level result aggregation and non-zero exit on any child failure.
 - Expanded Deno discovery to `.spec.ts`, `.test.ts`, and `_test.ts` under `tests/`, `src/`, and `scripts/`.
 - Added GUI unit-test command and removed obsolete `validate:stitch-prompt`.
-- Added a credential-required `deno task verify:integration` profile for real PostgreSQL, Gemini, and Papermark checks.
+- Added a credential-required `deno task verify:integration` profile for real PostgreSQL, Gemini, Papermark, and Transformers checks.
 - Documented prerequisites and made solve-mai verification/finalization require `deno task verify` evidence.
 
 ## Verification
 - `deno fmt --check deno.json scripts/verify.ts scripts/verify_test.ts scripts/verify_integration.ts scripts/verify_integration_test.ts` — passed.
-- `deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net scripts/verify_test.ts scripts/verify_integration_test.ts` — 3 passed.
-- `deno task verify:integration` without credentials — failed as designed, naming every required real-service variable and never selecting mocks.
+- `deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net scripts/verify_test.ts scripts/verify_integration_test.ts` — passed.
+- `deno task verify:integration` without credentials — fails as designed, naming required real-service variables and never selecting mocks.
 - `npm --prefix gui run test:unit` — 29 passed.
 - `npm --prefix gui run validate:storybook-docs` — 24 files validated.
-- `npm --prefix gui run build` — passed outside sandbox (Google Fonts access required).
+- `npm --prefix gui run build` — passed with network access for Google Fonts.
 - `npm --prefix gui run build-storybook` — passed.
-- `npm --prefix gui run test-storybook -- --run` — 89 passed outside sandbox (local browser server required).
+- `npm --prefix gui run test-storybook -- --run` — 89 passed.
 - `git diff --check` — passed.
 
-## Blocker
-- `deno task verify` correctly fails because the newly included existing Deno suite has 14 failing tests: Pub/Sub, genetic selection, VDR/RAG/memory, Papermark, CLI/e2e agent compatibility, and a Hugging Face dependency fetch. Fixing those separate product defects is outside MAI-79's approved gate-establishment scope, so its clean-checkout DoD cannot yet be checked.
+## MAI-87 green-gate evidence
+- MAI-87 completed the prerequisite local-gate repairs on `chore/MAI-87-deno-verification`; it supersedes the prior failure blocker.
+- `deno task verify` — exit 0. Component summary: PASS Deno tests, GUI unit tests, Next.js production build, Storybook documentation, Storybook build, and Storybook interaction tests.
+- Deno coverage: `DENO_ENV=test deno test --quiet --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net` — 135 passed, 0 failed; the canonical include list retains all supported conventions under `tests/`, `src/`, and `scripts/`.
+- `verify:integration` rejects absent or placeholder PostgreSQL, Gemini, and Papermark configuration without mocks, then runs a real Transformers smoke when prerequisites are supplied.
 
-## Follow-up
-- MAI-79.1 is now the explicit prerequisite for the existing Deno failures exposed by this gate. It is a child task and MAI-79 depends on it; completion must record a green `deno task verify` result here before MAI-79 can be finalized.
+## Remaining owner action
+- Resume MAI-79 finalization after human review and a real-service `deno task verify:integration` run with PostgreSQL, Gemini, Papermark, and network access.
 
-## Follow-up correction
-- MAI-79.1 was archived because decimal child IDs are not the current MAI convention. MAI-87 supersedes it as MAI-79's required prerequisite and completion must return green-gate evidence to MAI-79.
+## Scope correction from MAI-87
+- The PostgreSQL, Papermark, and Gemini integrations are not yet implemented or configured, so no live `verify:integration` run can be required at this stage.
+- MAI-79/MAI-87 prove the canonical local gate and that the future integration profile fails safely without mocks. Executing that profile belongs to the future provider-integration tasks, not to MAI-79 finalization.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

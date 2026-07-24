@@ -11,6 +11,11 @@ export interface IntegrationConfig {
 
 type Environment = Record<string, string | undefined>;
 
+function isRealConfigurationValue(value: string | undefined): value is string {
+  return Boolean(value?.trim()) && value !== "sua_chave_aqui" &&
+    value !== "mock-key-for-dry-run";
+}
+
 export function integrationConfig(environment: Environment): IntegrationConfig {
   const geminiApiKey = environment.GEMINI_API_KEY ||
     environment.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -22,7 +27,7 @@ export function integrationConfig(environment: Environment): IntegrationConfig {
     PAPERMARK_ROOM_ID: environment.PAPERMARK_ROOM_ID,
   };
   const missing = Object.entries(required)
-    .filter(([, value]) => !value)
+    .filter(([, value]) => !isRealConfigurationValue(value))
     .map(([name]) => name);
 
   if (missing.length > 0) {
@@ -107,12 +112,28 @@ async function verifyPapermark(config: IntegrationConfig): Promise<void> {
   }
 }
 
+async function verifyTransformers(): Promise<void> {
+  const { TransformersEngine } = await import(
+    "../src/engines/prediction/transformers.ts"
+  );
+  const embedding = await TransformersEngine.generateEmbedding(
+    "Real transformer integration smoke.",
+  );
+  if (
+    embedding.length !== 384 ||
+    embedding.some((value) => !Number.isFinite(value))
+  ) {
+    throw new Error("Transformers live smoke returned an invalid embedding.");
+  }
+}
+
 if (import.meta.main) {
   const config = integrationConfig(Deno.env.toObject());
   await verifyPostgres(config.databaseUrl);
   await verifyGemini(config.geminiApiKey, config.geminiModel);
   await verifyPapermark(config);
+  await verifyTransformers();
   console.log(
-    "Live integration smoke checks passed: PostgreSQL, Gemini, Papermark.",
+    "Live integration smoke checks passed: PostgreSQL, Gemini, Papermark, Transformers.",
   );
 }

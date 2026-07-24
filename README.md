@@ -358,8 +358,10 @@ deno task verify:integration
 ```
 
 `GEMINI_SMOKE_MODEL` é opcional e permite selecionar o modelo Gemini habilitado
-pela chave. O profile falha se qualquer variável faltar, se uma credencial for
-inválida ou se um serviço não responder; ele nunca usa mocks.
+pela chave. O profile também executa uma inferência real do Transformers/Hugging
+Face (o download do modelo pode ocorrer na primeira execução). Ele falha se
+qualquer variável faltar, se uma credencial for inválida ou se um serviço não
+responder; ele nunca usa mocks.
 
 ---
 

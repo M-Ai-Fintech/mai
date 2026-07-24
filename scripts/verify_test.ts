@@ -3,7 +3,15 @@ import {
   hasFailures,
   runVerification,
   type VerificationCheck,
+  verificationChecks,
 } from "./verify.ts";
+
+Deno.test("verification runner explicitly uses the isolated test environment", () => {
+  const denoTests = verificationChecks.find((check) =>
+    check.id === "deno-tests"
+  );
+  assertEquals(denoTests?.env, { DENO_ENV: "test" });
+});
 
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
