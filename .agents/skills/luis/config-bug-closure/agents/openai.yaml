@@ -1,4 +1,4 @@
 interface:
-  display_name: "Config Bug Closure"
-  short_description: "Audit Mongo config bugs before closure"
-  default_prompt: "Use $config-bug-closure to audit this config bug across all five layers."
+  display_name: "Configuration Closure"
+  short_description: "Verify an MAI configuration fix is complete"
+  default_prompt: "Use $config-bug-closure to verify this MAI configuration or provider fix."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Caveman"
-  short_description: "Resposta técnica ultracurta e precisa"
-  default_prompt: "Use $caveman to answer this request tersely."
+  short_description: "Compress routine MAI updates in English"
+  default_prompt: "Use $caveman to make this operational update concise and clear."

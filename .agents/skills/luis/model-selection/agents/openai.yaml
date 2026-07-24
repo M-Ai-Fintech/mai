@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Selection"
+  short_description: "Route MAI work across Gemini, Claude, and Codex"
+  default_prompt: "Use $model-selection to route this MAI phase by complexity, capabilities, and live capacity."

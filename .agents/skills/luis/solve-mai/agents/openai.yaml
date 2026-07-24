@@ -1,4 +1,4 @@
 interface:
   display_name: "Solve MAI"
-  short_description: "Resolve an MAI task through QA handoff"
-  default_prompt: "Use $solve-mai to handle this MAI task end to end."
+  short_description: "Deliver one MAI task to human PR review"
+  default_prompt: "Use $solve-mai to resolve this MAI task end to end."
