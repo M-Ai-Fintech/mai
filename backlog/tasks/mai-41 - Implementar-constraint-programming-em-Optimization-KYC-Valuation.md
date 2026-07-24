@@ -54,10 +54,10 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Isolamento Completo da Lógica de Restrições: A função optimizeWithConstraints() que faz a filtragem de KYC e limites de alavancagem financeira sobre a saída do GA (constraints.ts) nunca é chamada pela CLI ou pela Core API de produção. A lógica é testada apenas em seu próprio arquivo de testes (constraints_test.ts). Em tempo de execução real, nenhuma restrição de PEP/OFAC ou alavancagem financeira é aplicada.
+[CRITICAL REVIEW] Complete isolation of constraint logic: `optimizeWithConstraints()` in `constraints.ts`, which applies KYC filtering and leverage limits to GA output, is never called by the CLI or production Core API. It is tested only in `constraints_test.ts`; no PEP/OFAC or financial-leverage constraints apply at runtime.
 ---
 
 author: @codex

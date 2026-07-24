@@ -14,11 +14,12 @@ export class FineTuningRegistry {
       format: "JSONL",
       requiredFields: ["instruction", "context", "output"],
       example: {
-        instruction: "Identifique as implicações de Change of Control.",
-        context: "No caso de alienação de controle...",
-        output: "A implicação é a possibilidade de rescisão unilateral..."
+        instruction: "Identify the implications of Change of Control.",
+        context: "In the event of change of control...",
+        output:
+          "The implication is the possibility of unilateral termination...",
       },
-      targetDomain: "M&A Brazilian Market (Juridiquês / Financês)",
+      targetDomain: "M&A Brazilian Market (Legal / Financial)",
     };
   }
 
@@ -34,7 +35,15 @@ export class FineTuningRegistry {
         r: 16,
         alpha: 32,
         dropout: 0.05,
-        targetModules: ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        targetModules: [
+          "q_proj",
+          "v_proj",
+          "k_proj",
+          "o_proj",
+          "gate_proj",
+          "up_proj",
+          "down_proj",
+        ],
         learningRate: 2e-4,
         epochs: 3,
         batchSize: 4,
@@ -97,7 +106,7 @@ def train_lora():
     dataset = load_dataset("json", data_files=dataset_path, split="train")
 
     def format_instruction(example):
-        return {"text": f"### Instrução:\\n{example['instruction']}\\n\\n### Contexto:\\n{example['context']}\\n\\n### Resposta:\\n{example['output']}"}
+        return {"text": f"### Instruction:\\n{example['instruction']}\\n\\n### Context:\\n{example['context']}\\n\\n### Response:\\n{example['output']}"}
 
     dataset = dataset.map(format_instruction)
 

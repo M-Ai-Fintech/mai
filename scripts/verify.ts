@@ -24,6 +24,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["run", "--allow-read", "scripts/check_docs.ts"],
   },
   {
+    id: "i18n-strings",
+    label: "I18n Strings Check",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_i18n.ts"],
+  },
+  {
     id: "deno-tests",
     label: "Deno tests",
     command: "deno",

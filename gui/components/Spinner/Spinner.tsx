@@ -27,7 +27,9 @@ export const Spinner: React.FC<SpinnerProps> = ({
     <div
       role="status"
       aria-label="Loading"
-      className={`inline-block rounded-full animate-spin ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      className={`inline-block rounded-full animate-spin ${sizeStyles[size]} ${
+        variantStyles[variant]
+      } ${className}`}
       {...props}
     >
       <span className="sr-only">Loading...</span>

@@ -58,13 +58,17 @@ export function entityToForm(entity: EntitySummary): EntityFormState {
 
 export function validateEntityForm(form: EntityFormState): EntityFormErrors {
   const errors: EntityFormErrors = {};
-  if (!form.legalName.trim()) errors.legalName = "Corporate legal name is required.";
+  if (!form.legalName.trim()) {
+    errors.legalName = "Corporate legal name is required.";
+  }
   if (!form.taxId.trim()) errors.taxId = "CNPJ / Tax ID is required.";
   if (!form.sector.trim()) errors.sector = "Industry sector is required.";
   if (!/^\S+@\S+\.\S+$/.test(form.contactEmail)) {
     errors.contactEmail = "Enter a valid contact email.";
   }
-  if (form.roles.length === 0) errors.roles = "Select at least one entity role.";
+  if (form.roles.length === 0) {
+    errors.roles = "Select at least one entity role.";
+  }
   return errors;
 }
 
@@ -82,7 +86,9 @@ export function toEntityWrite(form: EntityFormState): EntityWrite {
   };
 }
 
-export function firstFieldError(fieldErrors?: Record<string, string[]>): EntityFormErrors {
+export function firstFieldError(
+  fieldErrors?: Record<string, string[]>,
+): EntityFormErrors {
   if (!fieldErrors) return {};
   return Object.fromEntries(
     Object.entries(fieldErrors)
@@ -91,7 +97,9 @@ export function firstFieldError(fieldErrors?: Record<string, string[]>): EntityF
   ) as EntityFormErrors;
 }
 
-export function firstEntityErrorField(errors: EntityFormErrors): keyof EntityFormState | undefined {
+export function firstEntityErrorField(
+  errors: EntityFormErrors,
+): keyof EntityFormState | undefined {
   return ENTITY_FORM_FIELD_ORDER.find((field) => Boolean(errors[field]));
 }
 

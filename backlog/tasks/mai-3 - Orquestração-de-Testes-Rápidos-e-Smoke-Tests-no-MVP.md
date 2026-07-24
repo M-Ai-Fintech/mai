@@ -54,15 +54,15 @@ Criação de um pipeline local de "Smoke Tests" capaz de validar a integridade d
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-3]
-1. Teste de Fumaça Superficial: O teste 'tests/smoke.spec.ts' valida unicamente a máquina de estados síncrona do deal em memória ('MADealLifecycle'). Ele não exercita o PubSub local, banco de dados Postgres ou o 'TransformersEngine', o que mascara possíveis problemas graves de runtime e de carregamento de dependências locais offline.
-2. Diagnóstico Estático de Saúde: O comando CLI 'smoke' não realiza nenhuma verificação ou ping de integridade ativa. Ele apenas cospe logs estáticos fixos no console ('Ambiente OK', 'Rede OK'), fornecendo um falso senso de conformidade da infraestrutura de desenvolvimento local.
+[CRITICAL REVIEW - MAI-3]
+1. Superficial smoke test: `tests/smoke.spec.ts` validates only the synchronous in-memory deal state machine (`MADealLifecycle`). It does not exercise local Pub/Sub, PostgreSQL, or `TransformersEngine`, masking serious runtime and offline dependency-loading problems.
+2. Static health diagnosis: The `smoke` CLI command performs no active health check or ping. It only prints fixed console messages (`Environment OK`, `Network OK`), creating a false sense that the local development infrastructure is healthy.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:21
 ---
-[SANEAMENTO] Testes de fumaça e unitários expandidos e corrigidos. A suíte completa agora valida o carregamento assíncrono dos pesos ONNX/Transformers locais, teste real de conexões e fallback automático do Postgres, além do fluxo real e assíncrono de mensageria Pub/Sub.
+[REMEDIATION] Expanded and corrected smoke and unit tests. The full suite now validates asynchronous local ONNX/Transformers weight loading, real connection checks and automatic PostgreSQL fallback, and the real asynchronous Pub/Sub messaging flow.
 ---
 
 author: @codex

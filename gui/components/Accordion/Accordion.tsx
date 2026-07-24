@@ -47,8 +47,10 @@ export const Accordion: React.FC<AccordionProps> = ({
             className={`transition-all duration-200 overflow-hidden ${
               variant === "bordered"
                 ? `border rounded-2xl bg-white shadow-sm ${
-                    isOpen ? "border-signal-orange ring-1 ring-signal-orange/20" : "border-dust-taupe/40"
-                  }`
+                  isOpen
+                    ? "border-signal-orange ring-1 ring-signal-orange/20"
+                    : "border-dust-taupe/40"
+                }`
                 : "border-b border-dust-taupe/30 pb-3"
             }`}
           >
@@ -73,7 +75,9 @@ export const Accordion: React.FC<AccordionProps> = ({
                   )}
                 </div>
                 {item.subtitle && (
-                  <span className="text-xs text-slate-gray">{item.subtitle}</span>
+                  <span className="text-xs text-slate-gray">
+                    {item.subtitle}
+                  </span>
                 )}
               </div>
 

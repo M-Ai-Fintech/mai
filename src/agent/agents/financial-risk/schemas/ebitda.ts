@@ -1,12 +1,28 @@
 import { z } from "zod";
 
 export const ebitdaSchema = z.object({
-  reportedEbitda: z.number().describe("EBITDA contábil declarado nos demonstrativos originais da empresa alvo."),
-  proLaboreAdjustment: z.number().describe("Ajuste de pró-labore dos sócios para preço de mercado de contratação executiva."),
-  personalExpensesAddback: z.number().describe("Despesas pessoais dos controladores pagas pela empresa (despesas familiares)."),
-  pejotizacaoCltProvision: z.number().describe("Provisão de riscos de reclassificação trabalhista de prestadores PJ para regime CLT."),
-  relatedPartyRentAdjustment: z.number().describe("Ajuste de aluguel de partes relacionadas para patamar justo de mercado."),
-  capexOpexCapitalization: z.number().describe("Normalização de CAPEX indevidamente ativado ou OPEX capitalizado."),
-  normalizedEbitda: z.number().describe("EBITDA normalizado resultante após aplicação de todas as linhas de ajuste."),
-  redFlags: z.array(z.string()).describe("Lista de inconsistências ou riscos financeiros detectados durante a normalização."),
+  reportedEbitda: z.number().describe(
+    "Accounting EBITDA declared in the original financial statements of the target company.",
+  ),
+  proLaboreAdjustment: z.number().describe(
+    "Adjustment of partners' compensation to market price for executive hiring.",
+  ),
+  personalExpensesAddback: z.number().describe(
+    "Personal expenses of controllers paid by the company (family expenses).",
+  ),
+  pejotizacaoCltProvision: z.number().describe(
+    "Provision for labor reclassification risks from PJ contractors to CLT regime.",
+  ),
+  relatedPartyRentAdjustment: z.number().describe(
+    "Adjustment of rent for related parties to a fair market level.",
+  ),
+  capexOpexCapitalization: z.number().describe(
+    "Normalization of improperly activated CAPEX or capitalized OPEX.",
+  ),
+  normalizedEbitda: z.number().describe(
+    "Resulting normalized EBITDA after applying all adjustment lines.",
+  ),
+  redFlags: z.array(z.string()).describe(
+    "List of inconsistencies or financial risks detected during normalization.",
+  ),
 });

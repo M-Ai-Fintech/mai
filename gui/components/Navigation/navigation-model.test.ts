@@ -23,10 +23,18 @@ describe("shared navigation model", () => {
 
   it("derives the same shell breadcrumbs for each prototype family", () => {
     expect(breadcrumbsForPath("/").at(-1)?.label).toBe("Dashboard");
-    expect(breadcrumbsForPath("/clients").at(-1)?.label).toBe("Portfolio & Clients");
-    expect(breadcrumbsForPath("/entities").at(-1)?.label).toBe("Portfolio & Clients");
-    expect(breadcrumbsForPath("/dashboard/custom").at(-1)?.label).toBe("Custom dashboard");
-    expect(breadcrumbsForPath("/deals/deal-1/chat").at(-1)?.label).toBe("Agentic Workspace");
+    expect(breadcrumbsForPath("/clients").at(-1)?.label).toBe(
+      "Portfolio & Clients",
+    );
+    expect(breadcrumbsForPath("/entities").at(-1)?.label).toBe(
+      "Portfolio & Clients",
+    );
+    expect(breadcrumbsForPath("/dashboard/custom").at(-1)?.label).toBe(
+      "Custom dashboard",
+    );
+    expect(breadcrumbsForPath("/deals/deal-1/chat").at(-1)?.label).toBe(
+      "Agentic Workspace",
+    );
   });
 
   it("keeps root exact while supporting route-family active navigation", () => {
@@ -36,6 +44,7 @@ describe("shared navigation model", () => {
     expect(navigationItemIsActive("/clients/one", "/clients")).toBe(true);
     expect(navigationItemIsActive("/deals/deal-1", "/deals")).toBe(true);
     expect(navigationItemIsActive("/deals/deal-1/chat", "/deals")).toBe(false);
-    expect(navigationItemIsActive("/deals/deal-1/chat", "/deals/example/chat")).toBe(true);
+    expect(navigationItemIsActive("/deals/deal-1/chat", "/deals/example/chat"))
+      .toBe(true);
   });
 });

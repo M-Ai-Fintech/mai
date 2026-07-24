@@ -44,15 +44,15 @@ Configuração e inicialização do banco de dados relacional PostgreSQL local u
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-1]
-1. Duplicação de DatabaseMemoryService: Existe uma classe homônima em 'src/core/db/DatabaseMemoryService.ts' (aponta para mai/postgres) e outra em 'src/core/db/memory_service.ts' (aponta para ma_database/ma_broker). Os agentes e mocks utilizam a segunda, de modo que sem configurar DATABASE_URL no .env, eles falham silenciosamente na autenticação com o banco Postgres do docker-compose e caem no fallback de mock.
-2. Incompatibilidade SQL pg_vector: O schema.sql cria a coluna 'embedding' como REAL[], mas a query de 'searchSimilarKnowledge' em memory_service.ts usa o operador '<=>' (distância de cosseno), exclusivo do pg_vector. Em um banco real sem pg_vector instalado ou com tipo REAL[], essa consulta irá falhar com erro de sintaxe.
+[CRITICAL REVIEW - MAI-1]
+1. Duplicate DatabaseMemoryService: A class with the same name exists in `src/core/db/DatabaseMemoryService.ts` (pointing to mai/postgres) and in `src/core/db/memory_service.ts` (pointing to ma_database/ma_broker). Agents and mocks use the latter, so without `DATABASE_URL` in `.env` they silently fail to authenticate with the docker-compose PostgreSQL database and fall back to mocks.
+2. pgvector SQL incompatibility: `schema.sql` creates the `embedding` column as `REAL[]`, but `searchSimilarKnowledge` in `memory_service.ts` uses the `<=>` cosine-distance operator, which is specific to pgvector. On a real database without pgvector, or with a `REAL[]` type, this query will fail with a syntax error.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:21
 ---
-[SANEAMENTO] DatabaseMemoryService unificado em Singleton e habilitado pgvector fallback em memória + pgvector real no schema.sql.
+[REMEDIATION] Unified DatabaseMemoryService as a Singleton and enabled both an in-memory pgvector fallback and real pgvector support in `schema.sql`.
 ---
 
 author: @codex

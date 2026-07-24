@@ -1,14 +1,14 @@
 // src/agent/agents/legal-dd/tools/index.ts
 import {
+  databaseMemoryServiceTool,
   googleCloudPubSubTool,
   mcpDatabaseTool,
-  databaseMemoryServiceTool,
-  vdrStructuredAccessTool
+  vdrStructuredAccessTool,
 } from "../../../actions.ts";
 
 export {
+  databaseMemoryServiceTool,
   googleCloudPubSubTool,
   mcpDatabaseTool,
-  databaseMemoryServiceTool,
-  vdrStructuredAccessTool
+  vdrStructuredAccessTool,
 };

@@ -22,7 +22,7 @@ export const DefaultBadge: Story = {
 export const WithoutProps: Story = {
   args: {
     children: "No Props Passed",
-  }
+  },
 };
 
 export const Default: Story = {

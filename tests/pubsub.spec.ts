@@ -180,7 +180,7 @@ Deno.test("huggingFaceMcpTool - Predicts insolvency and loads weights", async ()
 
 Deno.test("geminiGoogleSearchTool - Executes query and returns sources and summary", async () => {
   const result = await geminiGoogleSearchTool.execute!({
-    query: "Valuation múltiplos SaaS Brasil 2026",
+    query: "SaaS valuation multiples Brazil 2026",
     targetCompany: "SaaS Dev Corp",
     aspect: "general",
   }, {} as any);

@@ -26,16 +26,20 @@ export const FormField: React.FC<FormFieldProps> = ({
 
   const childWithProps = React.isValidElement<Record<string, unknown>>(children)
     ? React.cloneElement(children, {
-        id,
-        "aria-describedby": `${hint ? hintId : ""} ${error ? errorId : ""}`.trim() || undefined,
-        "aria-invalid": !!error,
-      })
+      id,
+      "aria-describedby":
+        `${hint ? hintId : ""} ${error ? errorId : ""}`.trim() || undefined,
+      "aria-invalid": !!error,
+    })
     : children;
 
   return (
     <div className={`w-full text-left space-y-1 ${className}`}>
       {label && (
-        <label htmlFor={id} className="block text-xs font-bold text-slate-gray uppercase tracking-wider">
+        <label
+          htmlFor={id}
+          className="block text-xs font-bold text-slate-gray uppercase tracking-wider"
+        >
           {label} {required && <span className="text-signal-orange">*</span>}
         </label>
       )}

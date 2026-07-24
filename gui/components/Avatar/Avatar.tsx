@@ -23,14 +23,14 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full overflow-hidden border border-dust-taupe bg-lifted-cream font-bold text-ink-black select-none shrink-0 ${sizeStyles[size]} ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-full overflow-hidden border border-dust-taupe bg-lifted-cream font-bold text-ink-black select-none shrink-0 ${
+        sizeStyles[size]
+      } ${className}`}
       {...props}
     >
-      {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
-      ) : (
-        <span>{fallback.substring(0, 2).toUpperCase()}</span>
-      )}
+      {src
+        ? <img src={src} alt={alt} className="w-full h-full object-cover" />
+        : <span>{fallback.substring(0, 2).toUpperCase()}</span>}
     </div>
   );
 };

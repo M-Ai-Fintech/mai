@@ -48,10 +48,10 @@ Implementar a camada de cliente HTTP (SDK/API Client) na interface gráfica (Das
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Integração Incompleta: O cliente HTTP gui/lib/api-client.ts foi criado, mas as telas de chat e engines da GUI não o utilizam, permanecendo como elementos puramente visuais e estáticos sem comunicação real com a Core API.
+[CRITICAL REVIEW] Incomplete integration: The HTTP client in `gui/lib/api-client.ts` exists, but the GUI chat and engine screens do not use it and remain purely visual, static elements with no real communication with the Core API.
 ---
 
 author: @codex

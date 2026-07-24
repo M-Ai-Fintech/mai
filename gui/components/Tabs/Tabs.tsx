@@ -23,7 +23,10 @@ export const Tabs: React.FC<TabsProps> = ({
   className = "",
 }) => {
   return (
-    <div data-variant={variant} className={`inline-flex items-center p-1 bg-canvas-cream border border-dust-taupe/60 rounded-full select-none ${className}`}>
+    <div
+      data-variant={variant}
+      className={`inline-flex items-center p-1 bg-canvas-cream border border-dust-taupe/60 rounded-full select-none ${className}`}
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (

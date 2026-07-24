@@ -60,15 +60,15 @@ Extensão da interface de linha de comando com suporte a autocompletar e um fram
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-7]
-1. Inconsistência do Backlog (DoD e AC desmarcados): A tarefa está marcada como concluída (Done), mas todas as caixas de AC e DoD no arquivo markdown estão desmarcadas.
-2. Interrupção do Loop Interativo: No loop do modo interativo em 'src/cli/interface.ts', se um erro for disparado por um subcomando, a exceção é capturada pelo catch global que invoca 'CLIErrorHandler.handleError'. O handler executa 'Deno.exit(1)' imediatamente. Isso quebra a experiência do usuário de estar em um loop CLI robusto e interativo, pois qualquer erro isolado encerra o terminal abruptamente em vez de recuperar e retornar ao menu principal.
+[CRITICAL REVIEW - MAI-7]
+1. Backlog inconsistency: The task is marked Done, but every AC and DoD box in the Markdown file is unchecked.
+2. Interactive-loop interruption: In `src/cli/interface.ts`, a subcommand error reaches the global catch and invokes `CLIErrorHandler.handleError`, which immediately executes `Deno.exit(1)`. Any isolated error therefore terminates the terminal instead of recovering and returning to the main menu.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:22
 ---
-[SANEAMENTO] Corrigido o encerramento do processo no loop interativo CLI. O CLIErrorHandler.handleError agora suporta um parâmetro 'exitProcess: boolean'. No loop interativo, se um comando falhar, o erro é interceptado, gravado no arquivo de log seguro ./data/logs/cli_errors.log com sanitização de segredos/chaves de API, e o usuário retorna de forma limpa ao menu principal em vez de ter o processo encerrado abruptamente.
+[REMEDIATION] Fixed process termination in the interactive CLI loop. `CLIErrorHandler.handleError` now supports `exitProcess: boolean`. Interactive command failures are intercepted and written to `./data/logs/cli_errors.log` with secret/API-key sanitization, then the user returns cleanly to the main menu.
 ---
 
 author: @codex

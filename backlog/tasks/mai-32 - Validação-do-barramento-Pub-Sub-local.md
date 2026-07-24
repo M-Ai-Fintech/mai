@@ -53,10 +53,10 @@ Validate the local Pub/Sub bus ensuring reliable asynchronous event routing betw
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Negligência de Backlog: A tarefa foi marcada como 'Done', mas os critérios AC #2 a #10 e DoD #2 a #11 foram deixados inteiramente desmarcados ([ ]). 2. Dependência de FFI: O teste unitário requer explicitamente a flag --allow-ffi devido ao uso de onnxruntime-node, o que viola o DoD de nenhuma dependência nativa Node.js em ambiente Deno para o motor.
+[CRITICAL REVIEW] 1. Backlog neglect: The task was marked Done, but AC #2–#10 and DoD #2–#11 were left entirely unchecked. 2. FFI dependency: The unit test explicitly requires `--allow-ffi` because it uses `onnxruntime-node`, violating the DoD requirement that the engine have no native Node.js dependency in Deno.
 ---
 
 author: @codex

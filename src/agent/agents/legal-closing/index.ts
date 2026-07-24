@@ -4,7 +4,7 @@ import { google } from "@ai-sdk/google";
 import * as tools from "./tools/index.ts";
 
 const instructions = Deno.readTextFileSync(
-  new URL("./instructions.md", import.meta.url)
+  new URL("./instructions.md", import.meta.url),
 );
 
 export const LegalClosingAgent = new Agent({
@@ -14,5 +14,3 @@ export const LegalClosingAgent = new Agent({
   instructions: instructions,
   tools: tools,
 });
-
-

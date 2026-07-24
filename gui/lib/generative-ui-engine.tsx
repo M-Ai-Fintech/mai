@@ -2,6 +2,7 @@ import React from "react";
 import { Card } from "@/components/Card/Card";
 import { Button } from "@/components/Button/Button";
 import { Badge } from "@/components/Badge/Badge";
+import { useTranslation } from "@/lib/i18n/I18nProvider";
 
 export interface ComponentSchemaNode {
   id: string;
@@ -16,7 +17,10 @@ export interface GenerativeUISchema {
   root: ComponentSchemaNode;
 }
 
-export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode {
+export function renderGenerativeNode(
+  node: ComponentSchemaNode,
+  t: (key: string) => string,
+): React.ReactNode {
   if (!node) return null;
 
   switch (node.type) {
@@ -29,7 +33,7 @@ export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode
           className={node.props?.className || ""}
         >
           {Array.isArray(node.children)
-            ? node.children.map(renderGenerativeNode)
+            ? node.children.map((child) => renderGenerativeNode(child, t))
             : node.children}
         </Card>
       );
@@ -43,7 +47,9 @@ export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode
           onClick={node.props?.onClick}
           className={node.props?.className || ""}
         >
-          {typeof node.children === "string" ? node.children : "Ação"}
+          {typeof node.children === "string"
+            ? node.children
+            : t("generativeUI.defaultAction")}
         </Button>
       );
 
@@ -62,7 +68,7 @@ export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode
       return (
         <div key={node.id} className="text-left py-2">
           <p className="text-xs font-bold text-slate-gray uppercase tracking-wider mb-1">
-            {node.props?.label || "Métrica"}
+            {node.props?.label || t("generativeUI.defaultMetric")}
           </p>
           <p className="text-2xl font-bold text-ink-black tracking-tight">
             {node.props?.value || "0.00"}
@@ -82,14 +88,17 @@ export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode
           } gap-4 ${node.props?.className || ""}`}
         >
           {Array.isArray(node.children)
-            ? node.children.map(renderGenerativeNode)
+            ? node.children.map((child) => renderGenerativeNode(child, t))
             : node.children}
         </div>
       );
 
     case "Text":
       return (
-        <div key={node.id} className={node.props?.className || "text-sm text-ink-black mb-2"}>
+        <div
+          key={node.id}
+          className={node.props?.className || "text-sm text-ink-black mb-2"}
+        >
           {typeof node.children === "string" ? node.children : ""}
         </div>
       );
@@ -99,11 +108,17 @@ export function renderGenerativeNode(node: ComponentSchemaNode): React.ReactNode
   }
 }
 
-export function GenerativeUIRenderer({ schema }: { schema: GenerativeUISchema }) {
+export function GenerativeUIRenderer(
+  { schema }: { schema: GenerativeUISchema },
+) {
+  const { t } = useTranslation();
+
   if (!schema || !schema.root) {
     return (
       <Card variant="raised" padding="md">
-        <p className="text-sm text-slate-gray italic">Nenhum esquema gerado disponível.</p>
+        <p className="text-sm text-slate-gray italic">
+          {t("generativeUI.emptySchema")}
+        </p>
       </Card>
     );
   }
@@ -117,7 +132,7 @@ export function GenerativeUIRenderer({ schema }: { schema: GenerativeUISchema })
         )}
       </div>
 
-      {renderGenerativeNode(schema.root)}
+      {renderGenerativeNode(schema.root, t)}
     </div>
   );
 }

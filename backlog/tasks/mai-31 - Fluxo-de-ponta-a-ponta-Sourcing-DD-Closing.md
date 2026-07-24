@@ -57,10 +57,10 @@ Validate and test the complete end‑to‑end orchestration of the M&A middlewar
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Teste de Integração Mocado: O teste e2e/flow.test.ts faz monkeypatch de DatabaseMemoryService.prototype.query para retornar dados mocados, impossibilitando a validação real da integração com o banco. 2. Fallbacks de IA Silenciosos: Sem GEMINI_API_KEY configurada, os agentes rodam inteiramente com fallbacks e respostas mockadas estáticas interceptadas de forma transparente, o que mascara se os agentes funcionam corretamente com prompts reais em um fluxo E2E.
+[CRITICAL REVIEW] 1. Mocked integration test: `e2e/flow.test.ts` monkey-patches `DatabaseMemoryService.prototype.query` to return mocked data, preventing real database-integration validation. 2. Silent AI fallbacks: Without `GEMINI_API_KEY`, agents run entirely on fallbacks and transparently intercepted static mock responses, masking whether real prompts work in an E2E flow.
 ---
 
 author: @codex

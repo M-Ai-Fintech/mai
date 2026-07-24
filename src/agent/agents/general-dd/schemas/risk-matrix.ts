@@ -2,18 +2,34 @@ import { z } from "zod";
 import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
 
 export const riskmatrixSchema = z.object({
-  dealId: z.string().describe("Identificador único do deal/transação."),
+  dealId: z.string().describe("Unique identifier of the deal/transaction."),
   risks: z.array(
     z.object({
-      id: z.string().describe("Identificador do risco auditado."),
-      category: domainAreaSchema.describe("Categoria principal do risco."),
-      description: z.string().describe("Detalhamento literal do risco ou passivo contingente encontrado."),
-      severity: z.enum(["low", "medium", "high", "critical"]).describe("Gravidade do impacto do risco."),
-      probability: z.enum(["low", "medium", "high"]).describe("Probabilidade de materialização do passivo."),
-      valuationImpact: z.number().describe("Impacto financeiro direto ou redução sugerida no Enterprise Value em milhões de reais."),
-      mitigationStrategy: z.string().describe("Estratégia ou contingência sugerida para mitigação (ex: Escrow, indenização, renegociação)."),
-      isDealBreaker: z.boolean().describe("Marca se o risco viola os critérios Go/No-Go da transação."),
-    })
-  ).describe("Matriz de riscos unificados e passivos contingentes identificados na auditoria."),
-  overallRiskScore: z.number().min(0).max(10).describe("Pontuação geral consolidada de risco da transação (0 a 10)."),
+      id: z.string().describe("Identifier of the audited risk."),
+      category: domainAreaSchema.describe("Main category of the risk."),
+      description: z.string().describe(
+        "Literal detail of the found risk or contingent liability.",
+      ),
+      severity: z.enum(["low", "medium", "high", "critical"]).describe(
+        "Severity of the risk impact.",
+      ),
+      probability: z.enum(["low", "medium", "high"]).describe(
+        "Probability of materialization of the liability.",
+      ),
+      valuationImpact: z.number().describe(
+        "Direct financial impact or suggested reduction in Enterprise Value in millions of reais.",
+      ),
+      mitigationStrategy: z.string().describe(
+        "Suggested strategy or contingency for mitigation (e.g., Escrow, indemnification, renegotiation).",
+      ),
+      isDealBreaker: z.boolean().describe(
+        "Marks if the risk violates the transaction's Go/No-Go criteria.",
+      ),
+    }),
+  ).describe(
+    "Matrix of unified risks and contingent liabilities identified in the audit.",
+  ),
+  overallRiskScore: z.number().min(0).max(10).describe(
+    "Consolidated overall transaction risk score (0 to 10).",
+  ),
 });

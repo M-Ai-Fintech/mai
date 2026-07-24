@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   EMPTY_ENTITY_FORM,
-  entityToForm,
   entityArchiveSuccessNotice,
+  entityToForm,
   firstEntityErrorField,
   firstFieldError,
   toEntityWrite,
@@ -57,19 +57,28 @@ describe("entity CRUD state", () => {
       version: 1,
     });
 
-    expect(form).toMatchObject({ legalName: "Aurora Capital", roles: ["buyer"] });
+    expect(form).toMatchObject({
+      legalName: "Aurora Capital",
+      roles: ["buyer"],
+    });
     form.roles.push("institution");
     expect(roles).toEqual(["buyer"]);
   });
 
   it("uses backend field validation messages in the form", () => {
-    expect(firstFieldError({ taxId: ["Tax ID already exists"], sector: [] })).toEqual({
-      taxId: "Tax ID already exists",
-    });
+    expect(firstFieldError({ taxId: ["Tax ID already exists"], sector: [] }))
+      .toEqual({
+        taxId: "Tax ID already exists",
+      });
   });
 
   it("returns the first invalid field in visual form order", () => {
-    expect(firstEntityErrorField({ roles: "Choose a role", taxId: "Tax ID required" })).toBe("taxId");
+    expect(
+      firstEntityErrorField({
+        roles: "Choose a role",
+        taxId: "Tax ID required",
+      }),
+    ).toBe("taxId");
     expect(firstEntityErrorField({})).toBeUndefined();
   });
 

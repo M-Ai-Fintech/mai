@@ -51,15 +51,15 @@ Refatoração inicial de mocks. Como não temos um VDR real configurado, o foco 
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-5]
-1. Simulações Hardcoded na CLI disfarçadas de Agentes: Os outputs dos comandos 'checkRegistry' (KYB), 'analyzeRisk' (Risco Financeiro) e 'optimizeTermSheet' (Negotiation) trazem trechos qualitativos estáticos (ex: 'Governança sólida, fit cultural alto', passivos e Change of Control do RAG) em instruções de console.log rígidas na CLI. O processamento dinâmico por agentes de IA ou RAG é mascarado na interface por essas strings hardcoded.
-2. Pipeline de Alvos Rígido: O otimizador de portfólio consome um array 'pipelineTargets' declarado inline dentro de 'src/cli/commands.ts'. O sistema não lê os deals e empresas de forma dinâmica a partir da tabela 'business' do Postgres real, impedindo testes com novos alvos.
+[CRITICAL REVIEW - MAI-5]
+1. Hardcoded CLI simulations disguised as agents: The `checkRegistry` (KYB), `analyzeRisk` (Financial Risk), and `optimizeTermSheet` (Negotiation) outputs contain static qualitative passages in rigid CLI `console.log` calls. These hardcoded strings mask dynamic AI-agent or RAG processing.
+2. Rigid target pipeline: The portfolio optimizer consumes an inline `pipelineTargets` array in `src/cli/commands.ts`. The system does not dynamically read deals and companies from the real PostgreSQL `business` table, preventing tests with new targets.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:22
 ---
-[SANEAMENTO] Removidas simulações hardcoded da CLI. O comando checkRegistry agora busca a cultura societária dinamicamente do banco de dados na tabela company_culture_memory; o comando analyzeRisk inicializa ClientSiloedRAG e busca cláusulas de Change of Control no VDR local; o comando optimizePortfolio carrega targets via queries SQL reais da tabela business com fallback robusto.
+[REMEDIATION] Removed hardcoded CLI simulations. `checkRegistry` now retrieves corporate culture dynamically from `company_culture_memory`; `analyzeRisk` initializes `ClientSiloedRAG` and retrieves Change of Control clauses from the local VDR; and `optimizePortfolio` loads targets through real SQL queries against `business`, with a robust fallback.
 ---
 
 author: @codex

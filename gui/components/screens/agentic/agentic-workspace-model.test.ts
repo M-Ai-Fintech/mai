@@ -20,14 +20,20 @@ describe("agentic workspace state", () => {
       { content: "Risk ", status: "streaming" },
       { ...ids, event: "response.delta", data: { textDelta: "is moderate" } },
     );
-    expect(streaming).toEqual({ content: "Risk is moderate", status: "streaming" });
+    expect(streaming).toEqual({
+      content: "Risk is moderate",
+      status: "streaming",
+    });
 
     const completed = reduceStreamedReply(streaming, {
       ...ids,
       event: "response.completed",
       data: { content: "Risk is moderate.", citations: [] },
     });
-    expect(completed).toEqual({ content: "Risk is moderate.", status: "completed" });
+    expect(completed).toEqual({
+      content: "Risk is moderate.",
+      status: "completed",
+    });
   });
 
   it("preserves streamed content when the backend reports a failure", () => {
@@ -36,10 +42,18 @@ describe("agentic workspace state", () => {
       {
         ...ids,
         event: "response.failed",
-        data: { code: "AGENT_FAILED", message: "Engine unavailable", retryable: true },
+        data: {
+          code: "AGENT_FAILED",
+          message: "Engine unavailable",
+          retryable: true,
+        },
       },
     );
-    expect(failed).toEqual({ content: "Partial", status: "failed", error: "Engine unavailable" });
+    expect(failed).toEqual({
+      content: "Partial",
+      status: "failed",
+      error: "Engine unavailable",
+    });
   });
 
   it("retains tool lifecycle and citations during a streamed response", () => {
@@ -47,20 +61,39 @@ describe("agentic workspace state", () => {
     const documentId = "00000000-0000-4000-8000-000000000005";
     const started = reduceStreamedReply(
       { content: "", status: "streaming" },
-      { ...ids, event: "tool.started", data: { toolCallId: toolId, toolName: "financial_risk", input: {} } },
+      {
+        ...ids,
+        event: "tool.started",
+        data: { toolCallId: toolId, toolName: "financial_risk", input: {} },
+      },
     );
     const completed = reduceStreamedReply(started, {
       ...ids,
       event: "tool.completed",
-      data: { toolCallId: toolId, toolName: "financial_risk", result: { score: 2.4 } },
+      data: {
+        toolCallId: toolId,
+        toolName: "financial_risk",
+        result: { score: 2.4 },
+      },
     });
     const cited = reduceStreamedReply(completed, {
       ...ids,
       event: "citation",
-      data: { id: ids.eventId, documentId, label: "Financial statements", excerpt: null, page: 4 },
+      data: {
+        id: ids.eventId,
+        documentId,
+        label: "Financial statements",
+        excerpt: null,
+        page: 4,
+      },
     });
 
-    expect(cited.tools).toEqual([{ id: toolId, name: "financial_risk", status: "completed", result: { score: 2.4 } }]);
+    expect(cited.tools).toEqual([{
+      id: toolId,
+      name: "financial_risk",
+      status: "completed",
+      result: { score: 2.4 },
+    }]);
     expect(cited.citations?.[0]).toMatchObject({ documentId, page: 4 });
 
     const afterDelta = reduceStreamedReply(cited, {
@@ -79,7 +112,9 @@ describe("agentic workspace state", () => {
     expect(canReconnectStream(0, false)).toBe(false);
     expect(decideStreamAction("failed", false, 0)).toBe("fail");
     expect(decideStreamAction("failed", true, 0)).toBe("reconnect");
-    expect(decideStreamAction("completed", false, MAX_STREAM_RECONNECTS)).toBe("complete");
+    expect(decideStreamAction("completed", false, MAX_STREAM_RECONNECTS)).toBe(
+      "complete",
+    );
     expect(decideStreamAction(null, true, MAX_STREAM_RECONNECTS)).toBe("fail");
   });
 

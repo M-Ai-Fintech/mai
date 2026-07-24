@@ -42,36 +42,36 @@ Domain modeling revealed that 'company_culture' was incorrectly placed inside th
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Criação do `TargetDossier` como uma entidade explícita (first-class domain artifact) de Due Diligence, removendo a `company_culture` da memória solta dos agentes. Adicionadas as rotas backend e a view React na interface gráfica (GUI).
+Created `TargetDossier` as an explicit first-class Due Diligence domain artifact, removing `company_culture` from unstructured agent memory. Added backend routes and a React GUI view.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `gui/components/screens/entities/TargetDossier.tsx` — Nova tela do Dossier (GUI).
-- `gui/components/screens/entities/EntityDetail.tsx` — Adicionada tab de Dossier.
-- `src/api/routes/entities_team.ts`, `src/api/mvp_store.ts`, `src/api/store/entities.ts`, `src/api/store/state.ts`, `src/api/store/types.ts` — Rotas e gerenciamento de estado.
-- `gui/lib/api-client.ts` — Contratos e funções `getTargetDossier` e `updateTargetDossier`.
+- `gui/components/screens/entities/TargetDossier.tsx` — New Dossier GUI screen.
+- `gui/components/screens/entities/EntityDetail.tsx` — Added the Dossier tab.
+- `src/api/routes/entities_team.ts`, `src/api/mvp_store.ts`, `src/api/store/entities.ts`, `src/api/store/state.ts`, `src/api/store/types.ts` — Routes and state management.
+- `gui/lib/api-client.ts` — Contracts and `getTargetDossier`/`updateTargetDossier` functions.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/core** e **mai/gui** — Backend APIs e Frontend Web.
+- **mai/core** and **mai/gui** — Backend APIs and web frontend.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] A interface web agora exibe uma Tab dedicada ao "Target Dossier" para a entidade.
-- [ ] O modelo `TargetDossier` persiste corretamente via API.
+- [ ] The web interface displays a dedicated Target Dossier tab for the entity.
+- [ ] The `TargetDossier` model persists correctly through the API.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Quebras de layout na tela de detalhes da entidade (EntityDetail).
-- Possível falta de sincronia se múltiplos agentes atualizarem o Dossier simultaneamente.
+- Layout regressions on the EntityDetail screen.
+- Possible synchronization issues if multiple agents update the Dossier concurrently.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Acesse a interface web na tela de detalhes da Entidade e navegue até a aba "Dossier". Teste atualizar as informações.
+- Open the entity-details web screen, navigate to the Dossier tab, and test updating its information.
 ---
 
 author: @codex

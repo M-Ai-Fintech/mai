@@ -1,0 +1,171 @@
+{
+  "generativeUi": {
+    "title": "Generative UI Synthesis Studio",
+    "headerBadge": "RUNTIME GENERATIVE UI (MAI-57)",
+    "description": "Synthesize interfaces on-demand via agentic prompt consuming MAI-53 components under gui/DESIGN_GUIDELINES.md",
+    "placeholder": "Ex: Synthesize comparative valuation dashboard for SaaS sector...",
+    "synthesizing": "Synthesizing...",
+    "synthesizeBtn": "Synthesize Interface",
+    "presets": "Quick Presets:",
+    "presetValuation": "SaaS Valuation",
+    "presetCompliance": "Legal Compliance",
+    "previewTitle": "Synthesized Interface Preview",
+    "anchorBtn": "+ Anchor to Dynamic Dashboard",
+    "schemaTitle": "JSON DSL Schema (Component Schema)",
+    "successAlert": "Synthesized widget successfully anchored to the Dynamic Dashboard (MAI-60)!",
+    "presetData": {
+      "valuation": {
+        "title": "SaaS M&A Valuation Comparative Matrix",
+        "description": "Synthesized via BrokerOrchestratorAgent applying the Dealroom.net benchmark",
+        "badge1": "• SECOND ROUND",
+        "stat1Label": "EV / Revenue Average Multiple",
+        "stat1Value": "8.4x ARR",
+        "stat1Sub": "Based on 14 B2B SaaS deals in Brazil",
+        "badge2": "• ONNX RISK ALERT",
+        "stat2Label": "Churn Sensitivity",
+        "stat2Value": "High (18.2%)",
+        "stat2Sub": "Requires Escrow Clause of BRL 5M"
+      },
+      "dueDiligence": {
+        "title": "Legal & Labor Compliance Checklist",
+        "description": "Analysis synthesized from VDR by LegalDueDiligenceAgent",
+        "badge": "• CONTRACT AUDIT",
+        "text1": "Identified Contingency Pending Items:",
+        "text2": "1. Change of Control Clause in Main Supplier Contract\n2. 3 Labor Lawsuits without balance sheet provision",
+        "btn": "Generate Contract Addendum Draft"
+      },
+      "synthesized": {
+        "title": "Synthesized Dashboard: \"{prompt}\"",
+        "description": "Interface generated at runtime combining MAI-53 components",
+        "badge1": "• ADK GENERATIVE UI",
+        "stat1Label": "Target Custom Metric",
+        "stat1Value": "BRL 42.8M",
+        "stat1Sub": "Filter applied for: \"{prompt}\"",
+        "badge2": "• RECOMMENDED ACTIONS",
+        "text2": "Recommended structure by NegotiationAgent based on genetic fitness.",
+        "btn": "Export to Term Sheet"
+      }
+    }
+  },
+  "engines": {
+    "headerBadge": "M&A ANALYTICAL ENGINES",
+    "title": "Engines & Insights Panel (MAI-52)",
+    "description": "Simulation and risk audit for deal: ",
+    "tabs": {
+      "overview": "Overview / Sourcing",
+      "engines": "Due Diligence & Engines",
+      "rag": "RAG Orchestrator"
+    },
+    "onnx": {
+      "title": "ONNX Risk Engine",
+      "badge": "• WASM INFERENCE",
+      "description": "Neural classifier trained on Colab and compiled to WASM",
+      "targetCorp": "Target Company",
+      "ebitda": "EBITDA (BRL)",
+      "revenue": "Revenue (BRL)",
+      "running": "Running...",
+      "runBtn": "Run Risk Prediction",
+      "logs": {
+        "running": "Running ONNX Financial Risk Engine for \"{name}\"...",
+        "done": "ONNX Inference completed!",
+        "insolvency": "Insolvency Risk: {risk}%",
+        "zscore": "Altman Z-Score Classification: {score}",
+        "dcf": "DCF Risk Category: {label}",
+        "error": "ERROR running ONNX: {msg}"
+      }
+    },
+    "milp": {
+      "title": "MILP Valuation",
+      "badge": "• HIGHS SOLVER",
+      "description": "Allocation optimization under linear budget constraints",
+      "budget": "Max Allocation (BRL M)",
+      "riskTolerance": "Risk Limit (0.0 to 1.0)",
+      "running": "Optimizing...",
+      "runBtn": "Run MILP Optimization",
+      "logs": {
+        "running": "Running MILP Optimizer... Budget: BRL {budget}M, Tolerance: {tol}",
+        "done": "MILP Optimization completed! Status: {status}",
+        "synergy": "Total Synergy Score: {score}",
+        "cost": "Total Allocated Cost: BRL {cost}M",
+        "error": "ERROR running MILP: {msg}"
+      }
+    },
+    "ga": {
+      "title": "Genetic Term Sheet",
+      "badge": "• GA + CONSTRAINTS",
+      "description": "Genetic evolution of clause structure (Cash/Equity/Escrow)",
+      "valMin": "Min Val. (BRL M)",
+      "valMax": "Max Val. (BRL M)",
+      "running": "Evolving...",
+      "runBtn": "Run Genetic Optimizer",
+      "logs": {
+        "running": "Running Genetic Algorithm for Clauses and Constraints...",
+        "done": "Genetic Optimization completed! Generated {len} viable proposals.",
+        "alt": "Alternative {idx}: Valuation BRL {val}M (Fitness: {fit})",
+        "error": "ERROR running GA: {msg}"
+      }
+    },
+    "console": {
+      "title": "// Engines Execution Console",
+      "ready": "> Engines ready for deal: {id}..."
+    }
+  },
+  "settings": {
+    "headerBadge": "SYSTEM SETTINGS",
+    "title": "Settings & Memory",
+    "description": "Global configurations and continuous learning",
+    "userPreferences": {
+      "title": "User Preferences",
+      "riskTolerance": "Default Risk Tolerance",
+      "riskConservative": "Conservative",
+      "riskModerate": "Moderate",
+      "riskAggressive": "Aggressive",
+      "negotiationStyle": "Preferred Negotiation Style",
+      "styleCollaborative": "Collaborative",
+      "styleCompetitive": "Competitive",
+      "styleCompromise": "Compromise",
+      "saveBtn": "Save Preferences"
+    },
+    "memory": {
+      "title": "Memory & Culture (Database)",
+      "description": "Information retained by the Broker Agent over past interactions.",
+      "domainKnowledge": "Domain Knowledge",
+      "companyCulture": "Company Culture",
+      "added": "Added: {date}",
+      "entry1": "Avoid earn-out clauses tied to gross revenue in SaaS startups.",
+      "entry2": "Prioritize retention of key talent in technical leadership during the first year post-acquisition.",
+      "addBtn": "+ Add Manual Entry"
+    }
+  },
+  "generativeUI": {
+    "defaultAction": "Action",
+    "defaultMetric": "Metric",
+    "emptySchema": "No generated schema is available."
+  },
+  "footer": {
+    "brand": "M&Ai Fintech",
+    "description": "Smart low-touch M&A middleware orchestrated by Deno + ADK agentic ecosystem and ONNX neural engine.",
+    "solutionsTitle": "M&A Solutions",
+    "solutions": {
+      "sourcing": "Sourcing & Revenue Validation/KYB",
+      "dd": "Financial Due Diligence (Altman Z-Score)",
+      "legal": "Legal Audit & Contracts RAG",
+      "negotiation": "Negotiation Desk (Genetic Algorithm)",
+      "closing": "Automatic Closing & PDF Term Sheet"
+    },
+    "resourcesTitle": "Resources & Docs",
+    "resources": {
+      "api": "Core API Documentation",
+      "adk": "ADK Agent Framework TypeScript",
+      "onnx": "Google Colab ONNX Model Training",
+      "security": "Fiduciary Security & VDR Silos"
+    },
+    "governanceTitle": "Governance & Support",
+    "governanceDesc": "Designed in accordance with banking compliance guidelines and LGPD/GDPR privacy.",
+    "jurisdiction": "Jurisdiction & Currency",
+    "rights": "M&Ai Fintech Inc. © {year} — All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Fiduciary Terms of Use",
+    "compliance": "Central Bank Compliance"
+  }
+}

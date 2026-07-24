@@ -52,10 +52,10 @@ Estruturar e validar o notebook Jupyter (scripts/colab_training_notebook.ipynb) 
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Conformidade Geral: O notebook colab_training_notebook.ipynb foi estruturado adequadamente e os modelos bruto (ma_classifier.onnx) e quantizado (ma_classifier_q8.onnx) foram gerados e posicionados na pasta models/. Nenhuma inconsistência encontrada.
+[CRITICAL REVIEW] General compliance: `colab_training_notebook.ipynb` was structured appropriately, and both the raw (`ma_classifier.onnx`) and quantized (`ma_classifier_q8.onnx`) models were generated and placed in `models/`. No inconsistencies were found.
 ---
 
 author: @codex

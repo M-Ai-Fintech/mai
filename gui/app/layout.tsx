@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Public_Sans } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/Navigation/AppShell";
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -28,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${publicSans.variable} bg-background font-sans text-foreground antialiased`}
       >
-        <AppShell>{children}</AppShell>
+        <I18nProvider>
+          <AppShell>{children}</AppShell>
+        </I18nProvider>
       </body>
     </html>
   );

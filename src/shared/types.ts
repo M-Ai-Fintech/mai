@@ -135,7 +135,7 @@ export interface DlomInput {
 }
 
 /**
- * Data inputs for Juros sobre o Capital Próprio (JCP) tax shield adjustment.
+ * Data inputs for Interest on Equity (JCP) tax shield adjustment.
  * Accounts for Brazilian tax-deductible interest paid on equity.
  */
 export interface JcpInput {

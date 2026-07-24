@@ -60,10 +60,10 @@ Thresholds Z-Score de Altman (1968): Safe ≥ 2.99 | Grey Zone 1.81–2.99 | Dis
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
-author: Auditoria Técnica
+author: Technical Audit
 created: 2026-07-10 06:04
 ---
-[REVISÃO CRÍTICA] 1. Falha de Inicialização em Produção: O método loadOnnxModel nunca é inicializado no setup de produção (AppBootstrapper ou api/server.ts). Como consequência, as inferências em execução (MLEngine) falham silenciosamente na carga do modelo e retornam o valor de fallback mockado (0.14 / Safe), inviabilizando a execução do modelo real no runtime. 2. Tratamento de Erro Omisso nos Testes: O teste de inferência com modelo real em prediction.spec.ts engole erros silenciosamente no bloco try-catch ('Model loading skipped'), fazendo com que o teste passe mesmo se o arquivo ONNX estiver ausente ou corrompido.
+[CRITICAL REVIEW] 1. Production initialization failure: `loadOnnxModel` is never initialized in production setup (`AppBootstrapper` or `api/server.ts`). Runtime inference therefore silently fails to load the model and returns the mocked fallback value (0.14 / Safe), preventing real model execution. 2. Missing test error handling: The real-model inference test in `prediction.spec.ts` silently swallows errors in a `try/catch` (“Model loading skipped”), so it passes even if the ONNX file is missing or corrupt.
 ---
 
 author: @codex

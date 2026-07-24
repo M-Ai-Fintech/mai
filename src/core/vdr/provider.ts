@@ -1,49 +1,49 @@
 import { VDRDocument, SupergoodConfig } from "./types.ts";
 
 /**
- * Interface genérica para provedores de Virtual Data Room (VDR).
+ * Generic interface for Virtual Data Room (VDR) providers.
  */
 export interface VDRProvider {
   /**
-   * Lista os documentos de um folder específico, ou da raiz se não informado.
+   * Lists documents in a specific folder, or at the root when omitted.
    */
   listDocuments(folderId?: string): Promise<VDRDocument[]>;
 
   /**
-   * Faz o download do conteúdo de um documento em formato Uint8Array.
+   * Downloads document content as a Uint8Array.
    */
   downloadDocument(documentId: string): Promise<Uint8Array>;
 
   /**
-   * Retorna os metadados de um documento.
+   * Returns document metadata.
    */
   getDocumentMetadata(documentId: string): Promise<VDRDocument>;
 
   /**
-   * Faz o upload de um novo documento.
+   * Uploads a new document.
    */
   uploadDocument(name: string, content: Uint8Array, folderId?: string): Promise<VDRDocument>;
 }
 
 /**
- * Classe base que implementa a injeção do proxy Supergood para chamadas de VDR.
+ * Base class that injects the Supergood proxy into VDR calls.
  */
 export abstract class BaseVDRProvider implements VDRProvider {
   protected supergoodConfig?: SupergoodConfig;
 
   /**
-   * @param config Configurações do proxy Supergood. Se omitidas, as chamadas podem ser feitas localmente ou diretamente.
+   * @param config Supergood proxy settings. Calls can be made locally or directly when omitted.
    */
   constructor(config?: SupergoodConfig) {
     this.supergoodConfig = config;
   }
 
   /**
-   * Método utilitário para formatar a URL e injetar cabeçalhos do Supergood na requisição (`fetch`).
-   * Roteia através da proxy do Supergood quando habilitado.
+   * Formats the URL and injects Supergood headers into the `fetch` request.
+   * Routes through the Supergood proxy when enabled.
    * 
-   * @param targetUrl A URL final no provedor de VDR de destino.
-   * @param init Parâmetros adicionais da requisição (método, body, headers).
+   * @param targetUrl Final URL at the target VDR provider.
+   * @param init Additional request parameters (method, body, headers).
    */
   protected async fetchThroughProxy(targetUrl: string, init?: RequestInit): Promise<Response> {
     let url = targetUrl;
@@ -51,7 +51,7 @@ export abstract class BaseVDRProvider implements VDRProvider {
 
     if (this.supergoodConfig) {
       if (this.supergoodConfig.proxyUrl) {
-        // Envia para o proxy do supergood em vez do target URL, repassando o destino em um header customizado
+        // Send to Supergood instead of the target URL and pass the destination in a custom header.
         url = this.supergoodConfig.proxyUrl;
         headers.set("x-supergood-target-url", targetUrl);
       }

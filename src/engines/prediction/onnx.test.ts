@@ -6,13 +6,13 @@ import { PredictionEngine } from './index.ts';
 const VALID_INPUT = new Float32Array([1.5, 2.0, -0.5, 1.2, 0.8, 3.1]);
 const MOCK_MODEL_PATH = 'models/ma_classifier_q8.onnx';
 
-Deno.test('ONNX Engine - Carregar modelo quantizado via loadOnnxModel', async () => {
+Deno.test('ONNX Engine - loads a quantized model via loadOnnxModel', async () => {
   resetSession();
   await loadOnnxModel(MOCK_MODEL_PATH);
-  // Se não lançar exceção, o teste passa.
+  // The test passes when no exception is thrown.
 });
 
-Deno.test('ONNX Engine - Falha ao carregar modelo inexistente', async () => {
+Deno.test('ONNX Engine - fails to load a missing model', async () => {
   resetSession();
   await assertRejects(
     async () => {
@@ -23,7 +23,7 @@ Deno.test('ONNX Engine - Falha ao carregar modelo inexistente', async () => {
   );
 });
 
-Deno.test('ONNX Engine - Lança erro de validação (Zod) se input for vazio', async () => {
+Deno.test('ONNX Engine - throws a Zod validation error for empty input', async () => {
   resetSession();
   await loadOnnxModel(MOCK_MODEL_PATH);
   
@@ -36,7 +36,7 @@ Deno.test('ONNX Engine - Lança erro de validação (Zod) se input for vazio', a
   );
 });
 
-Deno.test('ONNX Engine - Lança erro se tentar inferir sem carregar modelo', async () => {
+Deno.test('ONNX Engine - throws when inference runs before model loading', async () => {
   resetSession();
   await assertRejects(
     async () => {
@@ -47,7 +47,7 @@ Deno.test('ONNX Engine - Lança erro se tentar inferir sem carregar modelo', asy
   );
 });
 
-Deno.test('ONNX Engine - Inferência válida retorna distressProbability e zScoreLabel', async () => {
+Deno.test('ONNX Engine - valid inference returns distressProbability and zScoreLabel', async () => {
   resetSession();
   await loadOnnxModel(MOCK_MODEL_PATH);
   
@@ -58,7 +58,7 @@ Deno.test('ONNX Engine - Inferência válida retorna distressProbability e zScor
   assertEquals(Object.values(ZScoreLabel).includes(result.zScoreLabel), true);
 });
 
-Deno.test('ONNX Engine - Benchmark < 200ms para inferência (P50/P99)', async () => {
+Deno.test('ONNX Engine - inference benchmark stays below 200ms (P50/P99)', async () => {
   resetSession();
   await loadOnnxModel(MOCK_MODEL_PATH);
   
@@ -86,11 +86,11 @@ Deno.test('ONNX Engine - Benchmark < 200ms para inferência (P50/P99)', async ()
     P99: `${p99.toFixed(2)} ms`,
   });
 
-  assertEquals(p50 < 100, true, `P50 foi ${p50}ms (esperado < 100ms)`);
-  assertEquals(p99 < 200, true, `P99 foi ${p99}ms (esperado < 200ms)`);
+  assertEquals(p50 < 100, true, `P50 was ${p50}ms (expected < 100ms)`);
+  assertEquals(p99 < 200, true, `P99 was ${p99}ms (expected < 200ms)`);
 });
 
-Deno.test('PredictionEngine - Integração com onnxInfer', async () => {
+Deno.test('PredictionEngine - integrates with onnxInfer', async () => {
   resetSession();
   const engine = new PredictionEngine();
   await engine.initialize(MOCK_MODEL_PATH);

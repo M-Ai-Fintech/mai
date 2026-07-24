@@ -31,7 +31,6 @@ const entityWrite = z.object({
   primaryAdvisorId: uuid.nullable(),
 }).strict();
 
-
 const targetDossierPatch = z.object({
   executiveSummary: z.string().optional(),
   corporateStructure: z.string().optional(),
@@ -93,7 +92,6 @@ export async function handleEntitiesAndTeamRoutes(
     }
     return methodNotAllowed(["GET", "PATCH", "DELETE"]);
   }
-
 
   const dossierMatch = path.match(/^\/api\/entities\/([^/]+)\/dossier$/);
   if (dossierMatch) {

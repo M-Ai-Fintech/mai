@@ -59,15 +59,15 @@ ordinal: 2000
 author: Antigravity (Gemini)
 created: 2026-07-09 16:37
 ---
-[REVISÃO CRÍTICA - MAI-2]
-1. Injeção de Dependências Fictícia: Embora a tarefa declare uma arquitetura de injeção de dependências (DI), o que foi implementado em 'src/core/boot.ts' são propriedades estáticas. Pior, as classes operacionais nos agentes e mocks instanciam localmente 'new DatabaseMemoryService()' em vez de reutilizar a conexão estática do bootstrapper, gerando múltiplos pools de conexão concorrentes e contornando a verificação do bootstrapper.
-2. Propagação Silenciosa de Erros: Falhas críticas na inicialização do DB ou PubSub no bootstrap são engolidas por um try/catch simples. A CLI continua a subir normalmente, gerando falhas em cascata posteriores difíceis de rastrear.
+[CRITICAL REVIEW - MAI-2]
+1. Fake dependency injection: Although the task specifies a dependency-injection architecture, `src/core/boot.ts` implements static properties. Operational agent and mock classes instantiate `new DatabaseMemoryService()` locally instead of reusing the bootstrapper connection, creating competing connection pools and bypassing bootstrap verification.
+2. Silent error propagation: Critical DB or Pub/Sub initialization failures are swallowed by a simple try/catch. The CLI continues starting normally, causing later cascading failures that are difficult to trace.
 ---
 
 author: Antigravity
 created: 2026-07-09 17:21
 ---
-[SANEAMENTO] Injeção de dependências fictícia corrigida com Singletons (DatabaseMemoryService e LocalPubSubBus) no bootstrap e nas ferramentas operacionais, removendo conexões concorrentes órfãs. Melhorado tratamento e logging de falhas de banco de dados e Pub/Sub.
+[REMEDIATION] Replaced fake dependency injection with `DatabaseMemoryService` and `LocalPubSubBus` Singletons in bootstrap and operational tools, removing orphaned competing connections. Improved database and Pub/Sub failure handling and logging.
 ---
 
 author: @codex

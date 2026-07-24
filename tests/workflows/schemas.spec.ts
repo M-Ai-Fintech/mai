@@ -56,7 +56,7 @@ Deno.test("Schema Validation - riskmatrixSchema validates structured impact", ()
       {
         id: "RSK-001",
         category: "tax",
-        description: "Contingência fiscal",
+        description: "Tax contingency",
         severity: "critical",
         probability: "high",
         valuationImpact: 15000000,
@@ -79,7 +79,7 @@ Deno.test("Schema Validation - riskmatrixSchema rejects invalid enums", () => {
       {
         id: "RSK-001",
         category: "UNKNOWN", // Invalid category
-        description: "Contingência fiscal",
+        description: "Tax contingency",
         severity: "SUPER_HIGH", // Invalid severity
         probability: "SURE", // Invalid probability
         valuationImpact: 15000000,

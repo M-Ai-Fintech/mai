@@ -1,3 +1,4 @@
+import { t } from "../../i18n/index.ts";
 // src/engines/document-generator/latex.ts
 
 export interface TermSheetProposal {
@@ -31,60 +32,77 @@ export class LaTeXGenerator {
 \\geometry{margin=1in}
 \\usepackage{booktabs}
 
-\\title{\\textbf{TERM SHEET: CORRESPONDENTE DE FUSÃO E AQUISIÇÃO}}
-\\author{\\textbf{CONFIDENCIAL}}
+\\title{\\textbf{${t("documentGen.latex.title")}}}
+\\author{\\textbf{${t("documentGen.latex.author")}}}
 \\date{\\today}
 
 \\begin{document}
 
 \\maketitle
 
-Este Term Sheet resume os principais termos e condições relativos à potencial aquisição da empresa \\textbf{${params.targetName}} pela adquirente \\textbf{${params.buyerName}}.
+${
+      t("documentGen.latex.intro", {
+        target: params.targetName,
+        buyer: params.buyerName,
+      })
+    }
 
-\\section{Partes Envolvidas}
+\\section{${t("documentGen.latex.partiesTitle")}}
 \\begin{itemize}
-    \\item \\textbf{Comprador:} ${params.buyerName}
-    \\item \\textbf{Vendedor:} Acionistas da ${params.sellerName}
-    \\item \\textbf{Empresa-Alvo:} ${params.targetName}
+    \\item \\textbf{${t("documentGen.latex.buyer")}} ${params.buyerName}
+    \\item \\textbf{${t("documentGen.latex.seller")}} ${params.sellerName}
+    \\item \\textbf{${t("documentGen.latex.target")}} ${params.targetName}
 \\end{itemize}
 
-\\section{Estrutura de Capitalização e Valuation}
-As partes concordam preliminarmente com a seguinte estrutura de transação otimizada por algoritmo genético de negociação estratégica:
+\\section{${t("documentGen.latex.structureTitle")}}
+${t("documentGen.latex.structureIntro")}
 \\begin{itemize}
-    \\item \\textbf{Valuation de Referência:} \$${params.valuationAmount.toLocaleString()}
-    \\item \\textbf{Componente em Caixa (Upfront Cash):} \$${cashAmount.toLocaleString()} (${
+    \\item \\textbf{${
+      t("documentGen.latex.valuation")
+    }} \\$${params.valuationAmount.toLocaleString()}
+    \\item \\textbf{${
+      t("documentGen.latex.cash")
+    }} \\$${cashAmount.toLocaleString()} (${
       (params.proposal.cashPercentage * 100).toFixed(2)
     }\\%)
-    \\item \\textbf{Componente em Ações (Equity Roll):} \$${equityAmount.toLocaleString()} (${
+    \\item \\textbf{${
+      t("documentGen.latex.equity")
+    }} \\$${equityAmount.toLocaleString()} (${
       ((1 - params.proposal.cashPercentage) * 100).toFixed(2)
     }\\%)
-    \\item \\textbf{Participação do Comprador no Capital Social Pós-Fechamento:} ${
+    \\item \\textbf{${t("documentGen.latex.postClosingStake")}} ${
       (params.proposal.buyerEquityShare * 100).toFixed(2)
     }\\%
 \\end{itemize}
 
-\\section{Condições de Desempenho (Earn-out)}
-A transação prevê uma estrutura de earn-out vinculada a metas de desempenho corporativo:
+\\section{${t("documentGen.latex.earnOutTitle")}}
+${t("documentGen.latex.earnOutIntro")}
 \\begin{itemize}
-    \\item \\textbf{Período de Medição de Metas:} ${
+    \\item \\textbf{${t("documentGen.latex.earnOutPeriod")}} ${
       params.proposal.earnOutTargetYears.toFixed(1)
-    } anos.
+    } ${t("documentGen.latex.years")}
 \\end{itemize}
 
-\\section{Restrições de Não-Competição (Non-Compete)}
-Como parte integrante da transação, os sócios fundadores da ${params.sellerName} acordam com as seguintes restrições:
+\\section{${t("documentGen.latex.nonCompeteTitle")}}
+${t("documentGen.latex.nonCompeteIntro", { seller: params.sellerName })}
 \\begin{itemize}
-    \\item \\textbf{Prazo de Não-Competição:} ${params.proposal.nonCompeteMonths} meses pós-fechamento.
+    \\item \\textbf{${
+      t("documentGen.latex.nonCompetePeriod")
+    }} ${params.proposal.nonCompeteMonths} ${t("documentGen.latex.monthsAfter")}
 \\end{itemize}
 
-\\section{Natureza Não-Vinculativa}
-Exceto pelas cláusulas de confidencialidade e exclusividade, este documento representa apenas uma intenção de negociação e não constitui uma obrigação legal de conclusão da transação.
+\\section{${t("documentGen.latex.nonBindingTitle")}}
+${t("documentGen.latex.nonBindingIntro")}
 
 \\vspace{2cm}
 \\begin{center}
 \\begin{tabular}{cc}
     \\underline{\\hspace{6cm}} & \\underline{\\hspace{6cm}} \\\\
-    \\textbf{Comprador: ${params.buyerName}} & \\textbf{Vendedor: ${params.sellerName}} \\\\
+    \\textbf{${
+      t("documentGen.latex.signatureBuyer", { buyer: params.buyerName })
+    }} & \\textbf{${
+      t("documentGen.latex.signatureSeller", { seller: params.sellerName })
+    }} \\\\
 \\end{tabular}
 \\end{center}
 
@@ -96,7 +114,10 @@ Exceto pelas cláusulas de confidencialidade e exclusividade, este documento rep
    * Compiles LaTeX source to PDF using a spawned pdflatex process,
    * optimized for production with robust temp directory handling.
    */
-  public static async compileToPDF(latexContent: string, outputFileName?: string): Promise<Uint8Array> {
+  public static async compileToPDF(
+    latexContent: string,
+    outputFileName?: string,
+  ): Promise<Uint8Array> {
     const tempDir = await Deno.makeTempDir({ prefix: "latex_build_" });
     const texFilePath = `${tempDir}/document.tex`;
     const pdfFilePath = `${tempDir}/document.pdf`;
@@ -104,7 +125,13 @@ Exceto pelas cláusulas de confidencialidade e exclusividade, este documento rep
     await Deno.writeTextFile(texFilePath, latexContent);
 
     const command = new Deno.Command("pdflatex", {
-      args: ["-interaction=nonstopmode", "-halt-on-error", "-output-directory", tempDir, texFilePath],
+      args: [
+        "-interaction=nonstopmode",
+        "-halt-on-error",
+        "-output-directory",
+        tempDir,
+        texFilePath,
+      ],
       stdout: "piped",
       stderr: "piped",
     });
@@ -112,13 +139,14 @@ Exceto pelas cláusulas de confidencialidade e exclusividade, este documento rep
     const { code, stdout, stderr } = await command.output();
 
     if (code !== 0) {
-      const errorMsg = new TextDecoder().decode(stderr) || new TextDecoder().decode(stdout);
+      const errorMsg = new TextDecoder().decode(stderr) ||
+        new TextDecoder().decode(stdout);
       await Deno.remove(tempDir, { recursive: true }).catch(() => {});
       throw new Error(`LaTeX compilation failed: ${errorMsg}`);
     }
 
     const pdfBytes = await Deno.readFile(pdfFilePath);
-    
+
     if (outputFileName) {
       await Deno.writeFile(outputFileName, pdfBytes);
     }

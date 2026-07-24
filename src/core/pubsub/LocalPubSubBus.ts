@@ -2,9 +2,9 @@
 import { MessageBus } from './MessageBus.ts';
 
 /**
- * Barramento local de mensageria assíncrona (PubSub local) para comunicação entre agentes.
- * Implementa o padrão Singleton para evitar conexões e listeners duplicados.
- * Suporta replay e at-least-once guarantee.
+ * Local asynchronous message bus for communication between agents.
+ * Uses the Singleton pattern to avoid duplicate connections and listeners.
+ * Supports replay and at-least-once delivery.
  */
 export class LocalPubSubBus implements MessageBus {
   private static instance: LocalPubSubBus;
@@ -26,7 +26,7 @@ export class LocalPubSubBus implements MessageBus {
     }
     this.listeners.get(topic)!.add(callback);
 
-    // Replay para garantir at-least-once
+    // Replay to guarantee at-least-once delivery.
     if (this.history.has(topic)) {
       const historyData = this.history.get(topic)!;
       historyData.forEach((data) => {
@@ -34,7 +34,7 @@ export class LocalPubSubBus implements MessageBus {
           try {
             callback(data);
           } catch (err) {
-            console.error('Erro ao disparar callback de replay para o tópico ' + topic + ':', err);
+            console.error('Error invoking replay callback for topic ' + topic + ':', err);
           }
         }, 0);
       });
@@ -54,7 +54,7 @@ export class LocalPubSubBus implements MessageBus {
           try {
             cb(data);
           } catch (err) {
-            console.error('Erro ao disparar callback para o tópico ' + topic + ':', err);
+            console.error('Error invoking callback for topic ' + topic + ':', err);
           }
         }, 0);
       });

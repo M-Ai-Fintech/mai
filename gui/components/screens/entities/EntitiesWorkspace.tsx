@@ -7,7 +7,10 @@ import { Avatar } from "@/components/Avatar/Avatar";
 import { Button } from "@/components/Button/Button";
 import { Card } from "@/components/Card/Card";
 import { Checkbox } from "@/components/Checkbox/Checkbox";
-import { CountrySelector, type CountryCode } from "@/components/CountrySelector/CountrySelector";
+import {
+  type CountryCode,
+  CountrySelector,
+} from "@/components/CountrySelector/CountrySelector";
 import { Dropdown } from "@/components/Dropdown/Dropdown";
 import { EmptyState } from "@/components/EmptyState/EmptyState";
 import { FormField } from "@/components/FormField/FormField";
@@ -25,23 +28,23 @@ import {
 import { Toast } from "@/components/Toast/Toast";
 import { Tabs } from "@/components/Tabs/Tabs";
 import {
-  APIError,
   ApiClient,
+  APIError,
   type EntitySummary,
   type TeamMember,
 } from "@/lib/api-client";
 import {
   EMPTY_ENTITY_FORM,
   entityArchiveSuccessNotice,
-  entityToForm,
-  firstEntityErrorField,
-  firstFieldError,
-  toEntityWrite,
-  validateEntityForm,
   type EntityFormErrors,
   type EntityFormState,
   type EntityRole,
+  entityToForm,
+  firstEntityErrorField,
+  firstFieldError,
   type KybStatus,
+  toEntityWrite,
+  validateEntityForm,
 } from "./entity-state";
 
 const ROLE_OPTIONS = [
@@ -65,13 +68,22 @@ const SECTOR_OPTIONS = [
   { value: "healthcare", label: "Healthcare" },
   { value: "saas", label: "SaaS" },
 ];
-type ToastState = { title: string; message: string; variant: "success" | "error" };
+type ToastState = {
+  title: string;
+  message: string;
+  variant: "success" | "error";
+};
 
 function humanize(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return value.replaceAll("_", " ").replace(
+    /\b\w/g,
+    (letter) => letter.toUpperCase(),
+  );
 }
 
-function statusVariant(status: KybStatus): "default" | "orange" | "dark" | "outline" {
+function statusVariant(
+  status: KybStatus,
+): "default" | "orange" | "dark" | "outline" {
   if (status === "approved") return "dark";
   if (status === "pending" || status === "in_review") return "orange";
   return "outline";
@@ -98,17 +110,23 @@ export function EntitiesWorkspace({
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState(initialSearch);
   const [role, setRole] = useState<EntityRole>(initialRole);
-  const [countryCode, setCountryCode] = useState<CountryCode>(initialCountryCode);
+  const [countryCode, setCountryCode] = useState<CountryCode>(
+    initialCountryCode,
+  );
   const [sector, setSector] = useState(initialSector);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
-  const [editingEntity, setEditingEntity] = useState<EntitySummary | null>(null);
+  const [editingEntity, setEditingEntity] = useState<EntitySummary | null>(
+    null,
+  );
   const [form, setForm] = useState<EntityFormState>(EMPTY_ENTITY_FORM);
   const [formErrors, setFormErrors] = useState<EntityFormErrors>({});
   const [saving, setSaving] = useState(false);
-  const [archiveTarget, setArchiveTarget] = useState<EntitySummary | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<EntitySummary | null>(
+    null,
+  );
   const [archiveBlocked, setArchiveBlocked] = useState<string | null>(null);
   const [versionConflictOpen, setVersionConflictOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -123,11 +141,13 @@ export function EntitiesWorkspace({
     const url = new URL(window.location.href);
     const values = { role, search, sector, countryCode, ...next };
     url.searchParams.set("role", values.role);
-    for (const [key, value] of Object.entries({
-      search: values.search,
-      sector: values.sector,
-      country: values.countryCode,
-    })) {
+    for (
+      const [key, value] of Object.entries({
+        search: values.search,
+        sector: values.sector,
+        country: values.countryCode,
+      })
+    ) {
       if (value) url.searchParams.set(key, value);
       else url.searchParams.delete(key);
     }
@@ -138,7 +158,9 @@ export function EntitiesWorkspace({
     const firstField = firstEntityErrorField(errors);
     if (!firstField) return;
     window.requestAnimationFrame(() => {
-      const field = formRootRef.current?.querySelector<HTMLElement>(`[data-entity-field="${firstField}"] input, [data-entity-field="${firstField}"] button`);
+      const field = formRootRef.current?.querySelector<HTMLElement>(
+        `[data-entity-field="${firstField}"] input, [data-entity-field="${firstField}"] button`,
+      );
       field?.focus();
     });
   }, []);
@@ -166,7 +188,9 @@ export function EntitiesWorkspace({
       setTotalPages(result.meta.totalPages);
     } catch (error) {
       if (signal?.aborted) return;
-      setLoadError(error instanceof Error ? error.message : "Unable to load entities.");
+      setLoadError(
+        error instanceof Error ? error.message : "Unable to load entities.",
+      );
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -184,7 +208,10 @@ export function EntitiesWorkspace({
     if (url.searchParams.get("notice") !== "archived") return;
     const entityName = url.searchParams.get("entity") ?? "";
     const notice = entityArchiveSuccessNotice(entityName);
-    const timer = window.setTimeout(() => setToast({ ...notice, variant: "success" }), 0);
+    const timer = window.setTimeout(
+      () => setToast({ ...notice, variant: "success" }),
+      0,
+    );
     url.searchParams.delete("notice");
     url.searchParams.delete("entity");
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
@@ -193,7 +220,10 @@ export function EntitiesWorkspace({
 
   useEffect(() => {
     const controller = new AbortController();
-    const timer = window.setTimeout(() => void loadEntities(controller.signal), 250);
+    const timer = window.setTimeout(
+      () => void loadEntities(controller.signal),
+      250,
+    );
     return () => {
       window.clearTimeout(timer);
       controller.abort();
@@ -235,7 +265,13 @@ export function EntitiesWorkspace({
         setFormErrors({});
         setModalMode("edit");
       })
-      .catch(() => setToast({ title: "Entity unavailable", message: "The selected entity could not be opened for editing.", variant: "error" }));
+      .catch(() =>
+        setToast({
+          title: "Entity unavailable",
+          message: "The selected entity could not be opened for editing.",
+          variant: "error",
+        })
+      );
   }, []);
 
   const closeForm = () => {
@@ -256,13 +292,19 @@ export function EntitiesWorkspace({
     try {
       const payload = toEntityWrite(form);
       if (modalMode === "edit" && editingEntity) {
-        await ApiClient.updateEntity(editingEntity.id, { ...payload, version: editingEntity.version });
+        await ApiClient.updateEntity(editingEntity.id, {
+          ...payload,
+          version: editingEntity.version,
+        });
       } else {
         await ApiClient.createEntity(payload);
       }
       setToast({
-        title: modalMode === "edit" ? `${modalRoleLabel} updated` : `${modalRoleLabel} created`,
-        message: `${payload.legalName} is now available in the entity workspace.`,
+        title: modalMode === "edit"
+          ? `${modalRoleLabel} updated`
+          : `${modalRoleLabel} created`,
+        message:
+          `${payload.legalName} is now available in the entity workspace.`,
         variant: "success",
       });
       setModalMode(null);
@@ -275,12 +317,17 @@ export function EntitiesWorkspace({
         setFormErrors(backendErrors);
         focusFirstInvalidField(backendErrors);
       }
-      if (error instanceof APIError && error.kind === "conflict" && !error.fieldErrors) {
+      if (
+        error instanceof APIError && error.kind === "conflict" &&
+        !error.fieldErrors
+      ) {
         setVersionConflictOpen(true);
       }
       setToast({
         title: `${modalRoleLabel} was not saved`,
-        message: error instanceof Error ? error.message : "Review the form and try again.",
+        message: error instanceof Error
+          ? error.message
+          : "Review the form and try again.",
         variant: "error",
       });
     } finally {
@@ -302,7 +349,11 @@ export function EntitiesWorkspace({
       setArchiveBlocked(null);
       setReloadKey((key) => key + 1);
     } catch (error) {
-      setArchiveBlocked(error instanceof Error ? error.message : "This entity cannot be archived while it has active deals.");
+      setArchiveBlocked(
+        error instanceof Error
+          ? error.message
+          : "This entity cannot be archived while it has active deals.",
+      );
       setToast({
         title: "Entity was not archived",
         message: error instanceof Error ? error.message : "Try again.",
@@ -322,11 +373,20 @@ export function EntitiesWorkspace({
       setFormErrors({});
       setVersionConflictOpen(false);
     } catch (cause) {
-      setToast({ title: "Entity unavailable", message: cause instanceof Error ? cause.message : "Could not reload the entity.", variant: "error" });
+      setToast({
+        title: "Entity unavailable",
+        message: cause instanceof Error
+          ? cause.message
+          : "Could not reload the entity.",
+        variant: "error",
+      });
     }
   };
 
-  const setFilter = (setter: (value: string) => void, value: string | string[]) => {
+  const setFilter = (
+    setter: (value: string) => void,
+    value: string | string[],
+  ) => {
     const nextValue = Array.isArray(value) ? value[0] ?? "" : value;
     setter(nextValue);
     setPage(1);
@@ -334,7 +394,9 @@ export function EntitiesWorkspace({
   };
 
   const selectRole = (nextRole: string) => {
-    if (!["buyer", "seller", "target", "institution"].includes(nextRole)) return;
+    if (!["buyer", "seller", "target", "institution"].includes(nextRole)) {
+      return;
+    }
     setRole(nextRole as EntityRole);
     setPage(1);
     syncQuery({ role: nextRole as EntityRole });
@@ -355,17 +417,27 @@ export function EntitiesWorkspace({
             Portfolio &amp; Clients
           </h1>
           <p className="mt-2 text-sm text-slate-gray">
-            Manage buyer, seller, target, and institutional records from one contract-backed workspace.
+            Manage buyer, seller, target, and institutional records from one
+            contract-backed workspace.
           </p>
         </div>
-        <Button variant="primary" size="lg" onClick={openCreate} disabled={loading}>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={openCreate}
+          disabled={loading}
+        >
           Add entity
         </Button>
       </header>
 
       <div className="mb-4">
         <Tabs
-          tabs={FORM_ROLE_OPTIONS.map((option) => ({ id: option.value, label: option.label, disabled: loading }))}
+          tabs={FORM_ROLE_OPTIONS.map((option) => ({
+            id: option.value,
+            label: option.label,
+            disabled: loading,
+          }))}
           activeTab={role}
           onChange={selectRole}
         />
@@ -385,185 +457,357 @@ export function EntitiesWorkspace({
             syncQuery({ search: event.target.value });
           }}
         />
-        <Dropdown options={SECTOR_OPTIONS} value={sector} disabled={loading} onChange={(value) => setFilter(setSector, value)} />
+        <Dropdown
+          options={SECTOR_OPTIONS}
+          value={sector}
+          disabled={loading}
+          onChange={(value) => setFilter(setSector, value)}
+        />
         <fieldset disabled={loading} className={loading ? "opacity-50" : ""}>
-          <CountrySelector selectedCountry={countryCode} variant="light" className="w-full" onChange={(country) => { setCountryCode(country.code); setPage(1); syncQuery({ countryCode: country.code }); }} />
+          <CountrySelector
+            selectedCountry={countryCode}
+            variant="light"
+            className="w-full"
+            onChange={(country) => {
+              setCountryCode(country.code);
+              setPage(1);
+              syncQuery({ countryCode: country.code });
+            }}
+          />
         </fieldset>
       </div>
 
-      {loading ? (
-        <div aria-label="Loading entities" className="space-y-3 rounded-xl bg-white p-6 shadow-level-1">
-          <Skeleton variant="rectangular" height={48} />
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} variant="rectangular" height={64} />
-          ))}
-        </div>
-      ) : loadError ? (
-        <Card variant="raised" role="alert" className="p-10 text-center">
-          <Icon name="alert" size="xl" className="mb-3 text-red-700" />
-          <h2 className="text-lg font-semibold text-ink-black">Entities could not be loaded</h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm text-slate-gray">{loadError}</p>
-          <Button className="mt-5" variant="secondary" onClick={() => setReloadKey((key) => key + 1)}>
-            Retry
-          </Button>
-        </Card>
-      ) : entities.length === 0 ? (
-        <EmptyState
-          title={hasOptionalFilters ? "No entities match these filters" : `No ${role} entities yet`}
-          description={
-            hasOptionalFilters
+      {loading
+        ? (
+          <div
+            aria-label="Loading entities"
+            className="space-y-3 rounded-xl bg-white p-6 shadow-level-1"
+          >
+            <Skeleton variant="rectangular" height={48} />
+            {Array.from(
+              { length: 6 },
+              (_, index) => (
+                <Skeleton key={index} variant="rectangular" height={64} />
+              ),
+            )}
+          </div>
+        )
+        : loadError
+        ? (
+          <Card variant="raised" role="alert" className="p-10 text-center">
+            <Icon name="alert" size="xl" className="mb-3 text-red-700" />
+            <h2 className="text-lg font-semibold text-ink-black">
+              Entities could not be loaded
+            </h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm text-slate-gray">
+              {loadError}
+            </p>
+            <Button
+              className="mt-5"
+              variant="secondary"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Retry
+            </Button>
+          </Card>
+        )
+        : entities.length === 0
+        ? (
+          <EmptyState
+            title={hasOptionalFilters
+              ? "No entities match these filters"
+              : `No ${role} entities yet`}
+            description={hasOptionalFilters
               ? "Clear or adjust the search and filters to see other portfolio entities."
-              : `Create the first ${role} entity to start building the institutional portfolio.`
-          }
-          actionLabel={hasOptionalFilters ? "Clear filters" : `Add ${humanize(role)}`}
-          onAction={() => {
-            if (hasOptionalFilters) {
-              setSearch(""); setSector(""); setCountryCode("BR"); setPage(1); syncQuery({ search: "", sector: "", countryCode: "BR" });
-            } else openCreate();
-          }}
-          icon={<Icon name="user" size="lg" />}
-        />
-      ) : (
-        <div className="overflow-hidden rounded-xl bg-white shadow-level-1">
-          <Table aria-label="Portfolio entities">
-            <TableHead>
-              <TableRow isHeader>
-                <TableCell isHeader><Checkbox aria-label="Select all visible entities" /></TableCell>
-                <TableCell isHeader>Target CNPJ / Name</TableCell>
-                <TableCell isHeader>Sector</TableCell>
-                <TableCell isHeader>Entity Role</TableCell>
-                <TableCell isHeader>Jurisdiction</TableCell>
-                <TableCell isHeader>Primary Advisor</TableCell>
-                <TableCell isHeader>KYB Status</TableCell>
-                <TableCell isHeader>Updated</TableCell>
-                <TableCell isHeader>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <tbody>
-              {entities.map((entity) => (
-                <TableRow key={entity.id}>
-                  <TableCell><Checkbox aria-label={`Select ${entity.legalName}`} /></TableCell>
-                  <TableCell className="font-semibold text-ink-black">
-                    <span className="block truncate">{entity.legalName}</span>
-                    <span className="mt-1 block text-xs font-normal text-slate-gray">{entity.taxId}</span>
-                  </TableCell>
-                  <TableCell>{humanize(entity.sector)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {entity.roles.slice(0, 2).map((entityRole) => (
-                        <Badge key={entityRole} variant={entityRole === "buyer" ? "dark" : "outline"}>
-                          {humanize(entityRole)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{entity.countryCode}</TableCell>
-                  <TableCell>
-                    {entity.primaryAdvisorId ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar
-                          size="sm"
-                          src={advisors.get(entity.primaryAdvisorId)?.avatarUrl ?? undefined}
-                          alt={advisors.get(entity.primaryAdvisorId)?.displayName ?? "Assigned advisor"}
-                          fallback={advisors.get(entity.primaryAdvisorId)?.displayName ?? "AD"}
-                        />
-                        <span>{advisors.get(entity.primaryAdvisorId)?.displayName ?? "Assigned"}</span>
-                      </div>
-                    ) : "Unassigned"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant(entity.kybStatus)}>{humanize(entity.kybStatus)}</Badge>
-                  </TableCell>
-                  <TableCell>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(entity.updatedAt))}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Link href={`/entities/${entity.id}`}><Button variant="secondary" size="sm">View</Button></Link>
-                      <Button variant="secondary" size="sm" onClick={() => openEdit(entity)}>Edit</Button>
-                      <Button variant="secondary" size="sm" onClick={() => { setArchiveBlocked(null); setArchiveTarget(entity); }}>Archive</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </tbody>
-          </Table>
-          <TablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={total}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+              : `Create the first ${role} entity to start building the institutional portfolio.`}
+            actionLabel={hasOptionalFilters
+              ? "Clear filters"
+              : `Add ${humanize(role)}`}
+            onAction={() => {
+              if (hasOptionalFilters) {
+                setSearch("");
+                setSector("");
+                setCountryCode("BR");
+                setPage(1);
+                syncQuery({ search: "", sector: "", countryCode: "BR" });
+              } else openCreate();
+            }}
+            icon={<Icon name="user" size="lg" />}
           />
-        </div>
-      )}
+        )
+        : (
+          <div className="overflow-hidden rounded-xl bg-white shadow-level-1">
+            <Table aria-label="Portfolio entities">
+              <TableHead>
+                <TableRow isHeader>
+                  <TableCell isHeader>
+                    <Checkbox aria-label="Select all visible entities" />
+                  </TableCell>
+                  <TableCell isHeader>Target CNPJ / Name</TableCell>
+                  <TableCell isHeader>Sector</TableCell>
+                  <TableCell isHeader>Entity Role</TableCell>
+                  <TableCell isHeader>Jurisdiction</TableCell>
+                  <TableCell isHeader>Primary Advisor</TableCell>
+                  <TableCell isHeader>KYB Status</TableCell>
+                  <TableCell isHeader>Updated</TableCell>
+                  <TableCell isHeader>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <tbody>
+                {entities.map((entity) => (
+                  <TableRow key={entity.id}>
+                    <TableCell>
+                      <Checkbox aria-label={`Select ${entity.legalName}`} />
+                    </TableCell>
+                    <TableCell className="font-semibold text-ink-black">
+                      <span className="block truncate">{entity.legalName}</span>
+                      <span className="mt-1 block text-xs font-normal text-slate-gray">
+                        {entity.taxId}
+                      </span>
+                    </TableCell>
+                    <TableCell>{humanize(entity.sector)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {entity.roles.slice(0, 2).map((entityRole) => (
+                          <Badge
+                            key={entityRole}
+                            variant={entityRole === "buyer"
+                              ? "dark"
+                              : "outline"}
+                          >
+                            {humanize(entityRole)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{entity.countryCode}</TableCell>
+                    <TableCell>
+                      {entity.primaryAdvisorId
+                        ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              size="sm"
+                              src={advisors.get(entity.primaryAdvisorId)
+                                ?.avatarUrl ?? undefined}
+                              alt={advisors.get(entity.primaryAdvisorId)
+                                ?.displayName ?? "Assigned advisor"}
+                              fallback={advisors.get(entity.primaryAdvisorId)
+                                ?.displayName ?? "AD"}
+                            />
+                            <span>
+                              {advisors.get(entity.primaryAdvisorId)
+                                ?.displayName ?? "Assigned"}
+                            </span>
+                          </div>
+                        )
+                        : "Unassigned"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant(entity.kybStatus)}>
+                        {humanize(entity.kybStatus)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" })
+                        .format(new Date(entity.updatedAt))}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Link href={`/entities/${entity.id}`}>
+                          <Button variant="secondary" size="sm">View</Button>
+                        </Link>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => openEdit(entity)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setArchiveBlocked(null);
+                            setArchiveTarget(entity);
+                          }}
+                        >
+                          Archive
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </Table>
+            <TablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
+          </div>
+        )}
 
       <Modal
         isOpen={modalMode !== null}
         onClose={closeForm}
         size="lg"
-        title={modalMode === "edit" ? `Edit ${modalRoleLabel}` : `Add ${modalRoleLabel}`}
+        title={modalMode === "edit"
+          ? `Edit ${modalRoleLabel}`
+          : `Add ${modalRoleLabel}`}
         subtitle="Fields map directly to the approved MVP entity contract."
         footer={
           <>
-            <Button variant="secondary" onClick={closeForm} disabled={saving}>Cancel</Button>
-            <Button variant="primary" onClick={() => void saveEntity()} disabled={saving}>
-              {saving ? "Saving..." : modalMode === "edit" ? "Save changes" : `Save ${modalRoleLabel}`}
+            <Button variant="secondary" onClick={closeForm} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void saveEntity()}
+              disabled={saving}
+            >
+              {saving
+                ? "Saving..."
+                : modalMode === "edit"
+                ? "Save changes"
+                : `Save ${modalRoleLabel}`}
             </Button>
           </>
         }
       >
-        <div ref={formRootRef} className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField label="Corporate Legal Name" required error={formErrors.legalName} className="md:col-span-2" id="entity-legal-name">
+        <div
+          ref={formRootRef}
+          className="grid grid-cols-1 gap-6 md:grid-cols-2"
+        >
+          <FormField
+            label="Corporate Legal Name"
+            required
+            error={formErrors.legalName}
+            className="md:col-span-2"
+            id="entity-legal-name"
+          >
             <div data-entity-field="legalName">
-            <Input value={form.legalName} hasError={Boolean(formErrors.legalName)} onChange={(event) => setForm({ ...form, legalName: event.target.value })} />
+              <Input
+                value={form.legalName}
+                hasError={Boolean(formErrors.legalName)}
+                onChange={(event) =>
+                  setForm({ ...form, legalName: event.target.value })}
+              />
             </div>
           </FormField>
           <FormField label="CNPJ / Tax ID" required error={formErrors.taxId}>
             <div data-entity-field="taxId">
-            <Input value={form.taxId} hasError={Boolean(formErrors.taxId)} onChange={(event) => setForm({ ...form, taxId: event.target.value })} />
+              <Input
+                value={form.taxId}
+                hasError={Boolean(formErrors.taxId)}
+                onChange={(event) =>
+                  setForm({ ...form, taxId: event.target.value })}
+              />
             </div>
           </FormField>
-          <FormField label="Contact Email" required error={formErrors.contactEmail}>
+          <FormField
+            label="Contact Email"
+            required
+            error={formErrors.contactEmail}
+          >
             <div data-entity-field="contactEmail">
-            <Input type="email" value={form.contactEmail} hasError={Boolean(formErrors.contactEmail)} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} />
+              <Input
+                type="email"
+                value={form.contactEmail}
+                hasError={Boolean(formErrors.contactEmail)}
+                onChange={(event) =>
+                  setForm({ ...form, contactEmail: event.target.value })}
+              />
             </div>
           </FormField>
           <FormField label="Industry Sector" required error={formErrors.sector}>
             <div data-entity-field="sector">
-            <Dropdown options={SECTOR_OPTIONS.slice(1)} value={form.sector} error={formErrors.sector} onChange={(value) => setForm({ ...form, sector: Array.isArray(value) ? value[0] : value })} />
+              <Dropdown
+                options={SECTOR_OPTIONS.slice(1)}
+                value={form.sector}
+                error={formErrors.sector}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    sector: Array.isArray(value) ? value[0] : value,
+                  })}
+              />
             </div>
           </FormField>
           <FormField label="Entity Roles" required error={formErrors.roles}>
             <div data-entity-field="roles">
-            <Dropdown
-              options={FORM_ROLE_OPTIONS}
-              value={form.roles}
-              multiSelect
-              searchable
-              error={formErrors.roles}
-              onChange={(value) => setForm({ ...form, roles: (Array.isArray(value) ? value : [value]) as EntityRole[] })}
-            />
+              <Dropdown
+                options={FORM_ROLE_OPTIONS}
+                value={form.roles}
+                multiSelect
+                searchable
+                error={formErrors.roles}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    roles:
+                      (Array.isArray(value) ? value : [value]) as EntityRole[],
+                  })}
+              />
             </div>
           </FormField>
           <FormField label="Country" required>
-            <CountrySelector selectedCountry={form.countryCode as CountryCode} variant="light" onChange={(country) => setForm({ ...form, countryCode: country.code })} />
+            <CountrySelector
+              selectedCountry={form.countryCode as CountryCode}
+              variant="light"
+              onChange={(country) =>
+                setForm({ ...form, countryCode: country.code })}
+            />
           </FormField>
           <FormField label="KYB Status" required>
-            <Dropdown options={STATUS_OPTIONS} value={form.kybStatus} onChange={(value) => setForm({ ...form, kybStatus: (Array.isArray(value) ? value[0] : value) as KybStatus })} />
-          </FormField>
-          <FormField label="Primary Advisor" hint="Optional for newly sourced targets." className="md:col-span-2">
             <Dropdown
-              options={[{ value: "", label: "Unassigned" }, ...teamMembers.map((member) => ({ value: member.id, label: `${member.displayName} — ${member.role}` }))]}
+              options={STATUS_OPTIONS}
+              value={form.kybStatus}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  kybStatus:
+                    (Array.isArray(value) ? value[0] : value) as KybStatus,
+                })}
+            />
+          </FormField>
+          <FormField
+            label="Primary Advisor"
+            hint="Optional for newly sourced targets."
+            className="md:col-span-2"
+          >
+            <Dropdown
+              options={[
+                { value: "", label: "Unassigned" },
+                ...teamMembers.map((member) => ({
+                  value: member.id,
+                  label: `${member.displayName} — ${member.role}`,
+                })),
+              ]}
               value={form.primaryAdvisorId}
               searchable
-              onChange={(value) => setForm({ ...form, primaryAdvisorId: Array.isArray(value) ? value[0] ?? "" : value })}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  primaryAdvisorId: Array.isArray(value)
+                    ? value[0] ?? ""
+                    : value,
+                })}
             />
           </FormField>
           <div className="md:col-span-2">
             <Checkbox
               label="Subject to BACEN Regulatory Clearance"
               checked={form.regulatoryClearanceRequired}
-              onChange={(event) => setForm({ ...form, regulatoryClearanceRequired: event.target.checked })}
+              onChange={(event) => setForm({
+                ...form,
+                regulatoryClearanceRequired: event.target.checked,
+              })}
             />
           </div>
         </div>
@@ -575,7 +819,22 @@ export function EntitiesWorkspace({
         size="md"
         title="Entity updated elsewhere"
         subtitle="Your entered values remain visible behind this dialog."
-        footer={<><Button variant="secondary" onClick={() => setVersionConflictOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => void reloadConflictedEntity()}>Reload current entity</Button></>}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setVersionConflictOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void reloadConflictedEntity()}
+            >
+              Reload current entity
+            </Button>
+          </>
+        }
       >
         <p>Reload the latest resource version before applying another edit.</p>
       </Modal>
@@ -588,16 +847,44 @@ export function EntitiesWorkspace({
         subtitle="This removes the entity from active portfolio results."
         footer={
           <>
-            <Button variant="secondary" onClick={() => setArchiveTarget(null)} disabled={saving}>Cancel</Button>
-            <Button variant="consent" onClick={() => void archiveEntity()} disabled={saving || Boolean(archiveBlocked)}>
+            <Button
+              variant="secondary"
+              onClick={() => setArchiveTarget(null)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="consent"
+              onClick={() => void archiveEntity()}
+              disabled={saving || Boolean(archiveBlocked)}
+            >
               {saving ? "Archiving..." : "Archive entity"}
             </Button>
           </>
         }
       >
-        <p>Archive <strong>{archiveTarget?.legalName}</strong>? Existing deal references are preserved.</p>
-        {archiveBlocked && <p role="alert" className="mt-4 font-bold text-red-700">{archiveBlocked}</p>}
-        {archiveBlocked && archiveTarget && <Link href={`/deals?search=${encodeURIComponent(archiveTarget.legalName)}`}><Button className="mt-4" variant="secondary" size="sm">View active deals</Button></Link>}
+        <p>
+          Archive{" "}
+          <strong>{archiveTarget?.legalName}</strong>? Existing deal references
+          are preserved.
+        </p>
+        {archiveBlocked && (
+          <p role="alert" className="mt-4 font-bold text-red-700">
+            {archiveBlocked}
+          </p>
+        )}
+        {archiveBlocked && archiveTarget && (
+          <Link
+            href={`/deals?search=${
+              encodeURIComponent(archiveTarget.legalName)
+            }`}
+          >
+            <Button className="mt-4" variant="secondary" size="sm">
+              View active deals
+            </Button>
+          </Link>
+        )}
       </Modal>
 
       {toast && (

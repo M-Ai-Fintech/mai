@@ -8,10 +8,16 @@ import { DatabaseMemoryService } from "../core/db/DatabaseMemoryService.ts";
 import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
 import { PortfolioSolver } from "../engines/optimization/kyc/index.ts";
 import { TargetRawInput } from "../engines/optimization/types.ts";
-import { optimizeWithConstraints, KycConstraint, LeverageConstraint, CoverageConstraint } from "../engines/optimization/index.ts";
+import {
+  CoverageConstraint,
+  KycConstraint,
+  LeverageConstraint,
+  optimizeWithConstraints,
+} from "../engines/optimization/index.ts";
 import { ClientSiloedRAG } from "../agent/rag_layer.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
+import { t, tList } from "../i18n/index.ts";
 
 export class CLICommands {
   /**
@@ -27,8 +33,11 @@ export class CLICommands {
    * Command to check corporate registry details (KYB).
    */
   public static async checkRegistry(cnpj: string): Promise<void> {
-    this.printHeader("Verificação Cadastral de KYB (SERPRO/Receita)");
-    const spinner = new Spinner({ message: `[SourcingAndKYBAgent] Pesquisando registro e background para o CNPJ: ${cnpj}...`, color: "cyan" });
+    this.printHeader(t("cli.headers.checkRegistry"));
+    const spinner = new Spinner({
+      message: t("cli.spinners.kyb", { cnpj }),
+      color: "cyan",
+    });
     spinner.start();
 
     try {
@@ -37,31 +46,53 @@ export class CLICommands {
       spinner.stop();
 
       new Table()
-        .header(["Campo", "Valor"])
+        .header([...tList("cli.tables.kybHeader")])
         .body([
-          ["Razão Social", data.legalName || data.name || "N/A"],
-          ["Nome Fantasia", data.tradeName || data.name || "N/A"],
-          ["Situação", data.registrationStatus || "ATIVA"],
-          ["Capital Social", `R$ ${(data.shareCapital || 0).toLocaleString()}`],
-          ["Data de Fundação", data.foundingDate || data.created_at || "N/A"],
-          ["Débitos Fiscais", `R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`]
+          [
+            t("cli.tables.kybFields.legalName"),
+            data.legalName || data.name || t("cli.tables.notAvailable"),
+          ],
+          [
+            t("cli.tables.kybFields.tradeName"),
+            data.tradeName || data.name || t("cli.tables.notAvailable"),
+          ],
+          [
+            t("cli.tables.kybFields.status"),
+            data.registrationStatus || t("cli.tables.statusActive"),
+          ],
+          [
+            t("cli.tables.kybFields.capital"),
+            `R$ ${(data.shareCapital || 0).toLocaleString()}`,
+          ],
+          [
+            t("cli.tables.kybFields.foundingDate"),
+            data.foundingDate || data.created_at ||
+            t("cli.tables.notAvailable"),
+          ],
+          [
+            t("cli.tables.kybFields.taxDebts"),
+            `R$ ${(data.taxDebtsAmount || 0).toLocaleString()}`,
+          ],
         ])
         .padding(2)
         .border(true)
         .render();
 
       if (data.taxDebtsAmount && data.taxDebtsAmount > 0) {
-        console.log(`\n\x1b[31m[AVISO] Débitos fiscais detectados! Isso pode impactar o valuation do ativo.\x1b[0m`);
+        console.log(t("cli.messages.taxDebtsWarning"));
       } else {
-        console.log(`\n\x1b[32m[OK] Registro limpo e em conformidade fiscal.\x1b[0m`);
+        console.log(t("cli.messages.cleanRegistry"));
       }
 
-      console.log(`\n[SourcingAndKYBAgent - Análise Qualitativa e Cultural]`);
-      
+      console.log(t("cli.messages.kybQualitative"));
+
       let cultureMemory: any[] = [];
       try {
         const db = DatabaseMemoryService.getInstance();
-        const biz = await db.executeRawQuery<any>(`SELECT id FROM business WHERE cnpj = $1 LIMIT 1`, [cnpj]);
+        const biz = await db.executeRawQuery<any>(
+          `SELECT id FROM business WHERE cnpj = $1 LIMIT 1`,
+          [cnpj],
+        );
         if (biz.length > 0) {
           cultureMemory = await db.getCompanyCultureMemory(biz[0].id);
         }
@@ -72,25 +103,75 @@ export class CLICommands {
       const aiConfig = AIProvider.getApiKey();
       if (cultureMemory.length > 0 && cultureMemory[0].cultureData) {
         const c = cultureMemory[0].cultureData;
-        console.log(`- Cultura Corporativa: ${c.corporateCulture || c.culture || 'Governança sólida, fit cultural alto com adquirente.'}`);
-        console.log(`- Movimentações Passadas: ${c.pastMovements || c.history || 'Sem histórico de litígios societários graves.'}`);
-        console.log(`- Perfil dos Negociadores: ${c.negotiatorProfile || c.negotiators || 'Board experiente no setor de atuação.'}`);
+        console.log(
+          t("cli.messages.culture", {
+            value: c.corporateCulture || c.culture ||
+              t("cli.messages.defaultCultureGood"),
+          }),
+        );
+        console.log(
+          t("cli.messages.pastMovements", {
+            value: c.pastMovements || c.history ||
+              t("cli.messages.defaultMovementsGood"),
+          }),
+        );
+        console.log(
+          t("cli.messages.negotiators", {
+            value: c.negotiatorProfile || c.negotiators ||
+              t("cli.messages.defaultNegotiatorsGood"),
+          }),
+        );
       } else {
         if (!aiConfig.isFallback) {
-          const query = `Faça uma análise de sourcing qualitativa e cultural em português de exatas 3 linhas (uma para 'Cultura Corporativa', uma para 'Movimentações Passadas', uma para 'Perfil dos Negociadores') para a empresa ${data.legalName || 'Target'}.`;
-          const reply = await AgentOrchestrator.executeAgentQuery("kyb_temp", query);
-          console.log(reply);
+          try {
+            const query = t("cli.messages.cultureQuery", {
+              name: data.legalName || "Target",
+            });
+            const reply = await AgentOrchestrator.executeAgentQuery(
+              "kyb_temp",
+              query,
+            );
+            console.log(reply);
+          } catch {
+            console.log(
+              t("cli.messages.culture", {
+                value: t("cli.messages.defaultCultureGood"),
+              }),
+            );
+            console.log(
+              t("cli.messages.pastMovements", {
+                value: t("cli.messages.defaultMovementsGood"),
+              }),
+            );
+            console.log(
+              t("cli.messages.negotiators", {
+                value: t("cli.messages.defaultNegotiatorsGood"),
+              }),
+            );
+          }
         } else {
-          const sector = data.sector || "Tecnologia / SaaS";
-          console.log(`- Cultura Corporativa: Foco em inovação no setor de ${sector}, governança sólida, fit cultural alto com adquirente.`);
-          console.log(`- Movimentações Passadas: Crescimento orgânico consistente, sem histórico de litígios societários.`);
-          console.log(`- Perfil dos Negociadores: Board experiente e focado em expansão internacional.`);
+          const sector = data.sector || t("cli.messages.techSaaS");
+          console.log(
+            t("cli.messages.culture", {
+              value: t("cli.messages.cultureFallback", { sector }),
+            }),
+          );
+          console.log(
+            t("cli.messages.pastMovements", {
+              value: t("cli.messages.movementsFallback"),
+            }),
+          );
+          console.log(
+            t("cli.messages.negotiators", {
+              value: t("cli.messages.negotiatorsFallback"),
+            }),
+          );
         }
       }
     } catch (err) {
       spinner.stop();
       console.error(
-        "\n\x1b[31mErro na verificação cadastral:\x1b[0m",
+        t("cli.messages.kybError"),
         err instanceof Error ? err.message : String(err),
       );
       throw err;
@@ -110,8 +191,11 @@ export class CLICommands {
     volatility: number;
     sector: string;
   }): Promise<void> {
-    this.printHeader(`Análise Preditiva de Risco: ${options.name}`);
-    const spinner = new Spinner({ message: "[GeneralDueDiligenceAgent] Acionando subagente FinancialRiskAgent para inferência ONNX local quantizada...", color: "cyan" });
+    this.printHeader(t("cli.headers.analyzeRisk", { name: options.name }));
+    const spinner = new Spinner({
+      message: t("cli.spinners.risk"),
+      color: "cyan",
+    });
     spinner.start();
 
     const profile: CompanyFinancialProfile = {
@@ -128,43 +212,62 @@ export class CLICommands {
     try {
       const report = await MLEngine.analyzeProfile(profile);
       spinner.stop();
-      console.log(`\nClassificação do Risco de FCD: \x1b[33m[${report.dcfRiskLabel}]\x1b[0m`);
       console.log(
-        `Status de Geração de Embeddings: ${
-          report.embeddingsGenerated ? "\x1b[32mATIVADO (Local)\x1b[0m" : "\x1b[31mDESATIVADO\x1b[0m"
-        }`,
+        t("cli.messages.riskClassification", { label: report.dcfRiskLabel }),
       );
-      console.log("\nMétricas de Risco Calculadas:");
+      console.log(
+        t("cli.messages.embeddingStatus", {
+          status: report.embeddingsGenerated
+            ? t("cli.messages.activated")
+            : t("cli.messages.deactivated"),
+        }),
+      );
+      console.log(t("cli.messages.calculatedRiskMetrics"));
+
       new Table()
-        .header(["Métrica", "Valor"])
+        .header([...tList("cli.tables.riskHeader")])
         .body([
-          ["Probabilidade de Insolvência", `${(report.metrics.insolvencyRisk * 100).toFixed(2)}%`],
-          ["Probabilidade de Churn de Contratos", `${(report.metrics.churnProbability * 100).toFixed(2)}%`],
-          ["Volatilidade Projetada do FCD", `${report.metrics.dcfVolatility}%`],
-          ["Score de Resiliência de Sinergia (Indústria 4.0)", `${report.metrics.industry4Score}/100`]
+          [
+            t("cli.tables.riskFields.insolvency"),
+            `${(report.metrics.insolvencyRisk * 100).toFixed(2)}%`,
+          ],
+          [
+            t("cli.tables.riskFields.zScore"),
+            report.metrics.zScore,
+          ],
         ])
         .padding(2)
         .border(true)
         .render();
 
-      console.log(`\n[GeneralDueDiligenceAgent - Parecer Subagente LegalDueDiligenceAgent]`);
-      
+      console.log(t("cli.messages.legalDueDiligence"));
+
       const dealId = "deal_alpha";
       await ClientSiloedRAG.initializeSilo(dealId, `./vdr_rooms/${dealId}`);
-      const queryResults = await ClientSiloedRAG.querySilo(dealId, "Change of Control", 2);
-      
-      console.log(`- RAG VDR: Varredura concluída. Principais trechos encontrados no VDR:`);
+      const queryResults = await ClientSiloedRAG.querySilo(
+        dealId,
+        "Change of Control",
+        2,
+      );
+
+      console.log(t("cli.messages.ragScanComplete"));
       if (queryResults.length === 0) {
-        console.log(`  * Nenhuma cláusula de relevância crítica identificada.`);
+        console.log(t("cli.messages.noCriticalClauses"));
       } else {
         queryResults.forEach((r) => {
-          console.log(`  * [Doc: ${r.document}] "${r.text.substring(0, 110)}..." (Similaridade: ${(r.score * 100).toFixed(1)}%)`);
+          console.log(
+            t("cli.messages.docSnippet", {
+              doc: r.document,
+              text: r.text.substring(0, 110),
+              score: (r.score * 100).toFixed(1),
+            }),
+          );
         });
       }
     } catch (err) {
       spinner.stop();
       console.error(
-        "\n\x1b[31mErro no processamento preditivo:\x1b[0m",
+        t("cli.messages.riskError"),
         err instanceof Error ? err.message : String(err),
       );
       throw err;
@@ -178,7 +281,7 @@ export class CLICommands {
     budget: number,
     riskTolerance: number,
   ): Promise<void> {
-    this.printHeader("Otimização de Portfólio de Aquisições (MILP)");
+    this.printHeader(t("cli.headers.optimizePortfolio"));
 
     let pipelineTargets: TargetRawInput[] = [];
     let dbLoaded = false;
@@ -201,8 +304,13 @@ export class CLICommands {
       const rows = await db.executeRawQuery<any>(sql);
       if (rows && rows.length > 0) {
         pipelineTargets = rows.map((r: any, idx: number) => {
-          const costVal = r.cost ? Number(r.cost) / 1000000 : (r.valuation ? Number(r.valuation) / 1000000 : (30 + idx * 10));
-          const synergy = Math.min(99, Math.max(30, (r.name.length * 3) + 20 + (idx * 5) % 30));
+          const costVal = r.cost
+            ? Number(r.cost) / 1000000
+            : (r.valuation ? Number(r.valuation) / 1000000 : (30 + idx * 10));
+          const synergy = Math.min(
+            99,
+            Math.max(30, (r.name.length * 3) + 20 + (idx * 5) % 30),
+          );
           return {
             id: r.id || `T${idx + 1}`,
             name: r.name,
@@ -219,10 +327,12 @@ export class CLICommands {
           };
         });
         dbLoaded = true;
-        console.log(`\n\x1b[32m[Database] Carregadas ${pipelineTargets.length} empresas dinamicamente da tabela 'business'.\x1b[0m`);
+        console.log(
+          t("cli.messages.dbLoaded", { count: pipelineTargets.length }),
+        );
       }
     } catch (_err) {
-      console.warn("\n[Aviso] Banco de dados offline. Carregando alvos de simulação.");
+      console.warn(t("cli.messages.dbOfflineWarning"));
     }
 
     if (!dbLoaded || pipelineTargets.length === 0) {
@@ -240,11 +350,11 @@ export class CLICommands {
           operatingCashFlow: 2500000,
           historicalVolatility: 0.14,
           businessSector: "Tecnologia",
-            taxDebtsAmount: 0,
+          taxDebtsAmount: 0,
         },
         {
           id: "T2",
-          name: "Beta Logística Ltda",
+          name: "Beta Logistics LLC",
           synergyValue: 70,
           acquisitionCost: 30,
           ebitda: 2800000,
@@ -253,8 +363,8 @@ export class CLICommands {
           totalLiabilities: 7000000,
           operatingCashFlow: 1800000,
           historicalVolatility: 0.10,
-          businessSector: "Logística",
-            taxDebtsAmount: 0,
+          businessSector: "Logistics",
+          taxDebtsAmount: 0,
         },
         {
           id: "T3",
@@ -268,11 +378,11 @@ export class CLICommands {
           operatingCashFlow: 4000000,
           historicalVolatility: 0.18,
           businessSector: "Infraestrutura",
-            taxDebtsAmount: 0,
+          taxDebtsAmount: 0,
         },
         {
           id: "T4",
-          name: "Delta Distribuidora",
+          name: "Delta Distributor",
           synergyValue: 40,
           acquisitionCost: 15,
           ebitda: 1200000,
@@ -281,22 +391,26 @@ export class CLICommands {
           totalLiabilities: 4500000,
           operatingCashFlow: 600000,
           historicalVolatility: 0.22,
-          businessSector: "Comércio",
-            taxDebtsAmount: 0,
+          businessSector: "Commerce",
+          taxDebtsAmount: 0,
         },
       ];
     }
 
     console.log(
-      `Pipeline de entrada: ${pipelineTargets.length} empresas elegíveis.`,
+      t("cli.messages.pipelineInput", { count: pipelineTargets.length }),
     );
     console.log(
-      `Orçamento Limite: $${budget}M | Tolerância de Risco Máxima: ${
-        (riskTolerance * 100).toFixed(0)
-      }%`,
+      t("cli.messages.budgetTolerance", {
+        budget,
+        tolerance: (riskTolerance * 100).toFixed(0),
+      }),
     );
 
-    const spinner = new Spinner({ message: "[DealMatchingAgent] Calculando alocação de capital e faixas flexíveis (valuation ranges)...", color: "cyan" });
+    const spinner = new Spinner({
+      message: t("cli.spinners.matching"),
+      color: "cyan",
+    });
     spinner.start();
 
     try {
@@ -313,25 +427,36 @@ export class CLICommands {
 
       spinner.stop();
       console.log(
-        `\nSolução do Solver HiGHS: \x1b[32m${res.optimization.status.toUpperCase()}\x1b[0m`,
+        t("cli.messages.solverSolution", {
+          status: res.optimization.status.toUpperCase(),
+        }),
       );
-      console.log(`Sinergia Total Realizada: ${res.totalSynergy} pontos`);
-      console.log(`Orçamento Alocado: $${res.totalCost}M de $${budget}M`);
-      console.log(`\nEmpresas Recomendadas para Aquisição (Faixas Flexíveis para evitar Deal Fatigue):`);
+      console.log(
+        t("cli.messages.totalSynergy", { synergy: res.totalSynergy }),
+      );
+      console.log(
+        t("cli.messages.allocatedBudget", { cost: res.totalCost, budget }),
+      );
+      console.log(t("cli.messages.recommendedCompanies"));
 
       if (res.optimization.selectedTargetIds.length === 0) {
-        console.log(
-          " -> Nenhuma empresa atendeu aos critérios sob as restrições atuais.",
-        );
+        console.log(t("cli.messages.noCompaniesMetCriteria"));
       } else {
-        const table = new Table().header(["ID", "Nome da Empresa", "Faixa Sugerida", "Referência", "Risco"]).padding(2).border(true);
+        const table = new Table().header([
+          ...tList("cli.tables.portfolioHeader"),
+        ])
+          .padding(2).border(true);
         res.optimization.selectedTargetIds.forEach((id) => {
           const target = pipelineTargets.find((t) => t.id === id);
           const risk = res.evaluatedProfiles[id].metrics.insolvencyRisk;
           const minVal = (target!.acquisitionCost * 0.9).toFixed(1);
           const maxVal = (target!.acquisitionCost * 1.15).toFixed(1);
           table.push([
-            id, target?.name || "", `$${minVal}M a $${maxVal}M`, `$${target?.acquisitionCost}M`, `${(risk * 100).toFixed(1)}%`
+            id,
+            target?.name || "",
+            t("cli.messages.portfolioRange", { min: minVal, max: maxVal }),
+            `$${target?.acquisitionCost}M`,
+            `${(risk * 100).toFixed(1)}%`,
           ]);
         });
         table.render();
@@ -339,7 +464,7 @@ export class CLICommands {
     } catch (err) {
       spinner.stop();
       console.error(
-        "\n\x1b[31mErro na otimização de portfólio:\x1b[0m",
+        t("cli.messages.portfolioError"),
         err instanceof Error ? err.message : String(err),
       );
       throw err;
@@ -350,10 +475,8 @@ export class CLICommands {
    * Command to optimize term sheet clauses via Genetic Algorithm.
    */
   public static async optimizeTermSheet(): Promise<void> {
-    this.printHeader("Otimização Contratual por Algoritmo Genético");
-    console.log(
-      "[NegotiationAgent] Atuando como mesa de conselho iterativa. Apresentando 3+ alternativas estratégicas de negociação...",
-    );
+    this.printHeader(t("cli.headers.optimizeTermSheet"));
+    console.log(t("cli.spinners.negotiation"));
 
     try {
       const constraints = [
@@ -361,87 +484,162 @@ export class CLICommands {
         new LeverageConstraint(4.0),
         new CoverageConstraint(2.5),
       ];
-      const kyc = { kycBlocked: false, sanctionMatch: false, pepExposure: false };
+      const kyc = {
+        kycBlocked: false,
+        sanctionMatch: false,
+        pepExposure: false,
+      };
       const financial = { ebitda: 5.0, debt: 15.0, interestExpense: 1.0 };
 
       const resLiquidity = optimizeWithConstraints({
         profile: {
           valuationMin: 80,
           valuationMax: 120,
-          preferences: { cash: 0.7, equity: 0.1, earnOut: 0.1, escrow: 0.1 }
+          preferences: { cash: 0.7, equity: 0.1, earnOut: 0.1, escrow: 0.1 },
         },
         kyc,
         financial,
         constraints,
-        geneticConfig: { populationSize: 100, generations: 40 }
+        geneticConfig: { populationSize: 100, generations: 40 },
       });
 
       const resBalanced = optimizeWithConstraints({
         profile: {
           valuationMin: 80,
           valuationMax: 120,
-          preferences: { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 }
+          preferences: { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 },
         },
         kyc,
         financial,
         constraints,
-        geneticConfig: { populationSize: 100, generations: 40 }
+        geneticConfig: { populationSize: 100, generations: 40 },
       });
 
       const resRetention = optimizeWithConstraints({
         profile: {
           valuationMin: 80,
           valuationMax: 120,
-          preferences: { cash: 0.2, equity: 0.2, earnOut: 0.5, escrow: 0.1 }
+          preferences: { cash: 0.2, equity: 0.2, earnOut: 0.5, escrow: 0.1 },
         },
         kyc,
         financial,
         constraints,
-        geneticConfig: { populationSize: 100, generations: 40 }
+        geneticConfig: { populationSize: 100, generations: 40 },
       });
 
       const bestLiquidity = resLiquidity[0];
-      console.log("\n--- [Alternativa 1: Conservadora / Foco em Liquidez] ---");
+      console.log(t("cli.messages.alt1Title"));
       if (bestLiquidity) {
-        console.log(`- Valuation Sugerido:                $${bestLiquidity.valuation.toFixed(2)}M`);
-        console.log(`- Composição de Caixa Upfront:       ${(bestLiquidity.cashPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Ações (Equity Roll):  ${(bestLiquidity.equityPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Earn-out:            ${(bestLiquidity.earnOutPercentage * 100).toFixed(2)}%`);
-        console.log(`- Retenção em Escrow:                ${(bestLiquidity.escrowPercentage * 100).toFixed(2)}%`);
-        console.log(`- Indicador de Acordo (Fitness):     ${bestLiquidity.fitness.toFixed(5)}`);
+        console.log(
+          t("cli.messages.suggestedValuation", {
+            val: bestLiquidity.valuation.toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.cashUpfront", {
+            val: (bestLiquidity.cashPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.equityRoll", {
+            val: (bestLiquidity.equityPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.earnOut", {
+            val: (bestLiquidity.earnOutPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.escrowRetention", {
+            val: (bestLiquidity.escrowPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.fitnessIndicator", {
+            val: bestLiquidity.fitness.toFixed(5),
+          }),
+        );
       } else {
-        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+        console.log(t("cli.messages.noViableAlternative"));
       }
 
       const bestBalanced = resBalanced[0];
-      console.log("\n--- [Alternativa 2: Balanceada / Padrão Otimizado] ---");
+      console.log(t("cli.messages.alt2Title"));
       if (bestBalanced) {
-        console.log(`- Valuation Sugerido:                $${bestBalanced.valuation.toFixed(2)}M`);
-        console.log(`- Composição de Caixa Upfront:       ${(bestBalanced.cashPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Ações (Equity Roll):  ${(bestBalanced.equityPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Earn-out:            ${(bestBalanced.earnOutPercentage * 100).toFixed(2)}%`);
-        console.log(`- Retenção em Escrow:                ${(bestBalanced.escrowPercentage * 100).toFixed(2)}%`);
-        console.log(`- Indicador de Acordo (Fitness):     ${bestBalanced.fitness.toFixed(5)}`);
+        console.log(
+          t("cli.messages.suggestedValuation", {
+            val: bestBalanced.valuation.toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.cashUpfront", {
+            val: (bestBalanced.cashPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.equityRoll", {
+            val: (bestBalanced.equityPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.earnOut", {
+            val: (bestBalanced.earnOutPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.escrowRetention", {
+            val: (bestBalanced.escrowPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.fitnessIndicator", {
+            val: bestBalanced.fitness.toFixed(5),
+          }),
+        );
       } else {
-        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+        console.log(t("cli.messages.noViableAlternative"));
       }
 
       const bestRetention = resRetention[0];
-      console.log("\n--- [Alternativa 3: Oportunidade com Retenção de Risco] ---");
+      console.log(t("cli.messages.alt3Title"));
       if (bestRetention) {
-        console.log(`- Valuation Sugerido:                $${bestRetention.valuation.toFixed(2)}M`);
-        console.log(`- Composição de Caixa Upfront:       ${(bestRetention.cashPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Ações (Equity Roll):  ${(bestRetention.equityPercentage * 100).toFixed(2)}%`);
-        console.log(`- Composição de Earn-out:            ${(bestRetention.earnOutPercentage * 100).toFixed(2)}%`);
-        console.log(`- Retenção em Escrow:                ${(bestRetention.escrowPercentage * 100).toFixed(2)}%`);
-        console.log(`- Indicador de Acordo (Fitness):     ${bestRetention.fitness.toFixed(5)}`);
+        console.log(
+          t("cli.messages.suggestedValuation", {
+            val: bestRetention.valuation.toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.cashUpfront", {
+            val: (bestRetention.cashPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.equityRoll", {
+            val: (bestRetention.equityPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.earnOut", {
+            val: (bestRetention.earnOutPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.escrowRetention", {
+            val: (bestRetention.escrowPercentage * 100).toFixed(2),
+          }),
+        );
+        console.log(
+          t("cli.messages.fitnessIndicator", {
+            val: bestRetention.fitness.toFixed(5),
+          }),
+        );
       } else {
-        console.log(" -> Nenhuma alternativa viável sob as restrições de KYC/Leverage.");
+        console.log(t("cli.messages.noViableAlternative"));
       }
-
     } catch (err) {
       console.error(
-        "Erro na busca genética:",
+        t("cli.messages.geneticSearchError"),
         err instanceof Error ? err.message : String(err),
       );
     }
@@ -457,11 +655,14 @@ export class CLICommands {
     valuation: number;
     output: string;
   }): Promise<void> {
-    this.printHeader("Geração de Documentação Contratual");
-    console.log(`[LegalClosingAgent] Iniciando processo de fechamento (Closing) para o deal: ${options.target}...`);
-    console.log(`[LegalClosingAgent] Verificando aprovação prévia dos termos finais... OK.`);
-    
-    const spinner = new Spinner({ message: "Otimizando termos finais via algoritmo genético...", color: "cyan" });
+    this.printHeader(t("cli.headers.generateDocument"));
+    console.log(t("cli.spinners.closingStart", { target: options.target }));
+    console.log(t("cli.spinners.closingVerify"));
+
+    const spinner = new Spinner({
+      message: t("cli.spinners.closingOptimize"),
+      color: "cyan",
+    });
     spinner.start();
 
     // Fetch optimized terms using genetic algorithm
@@ -476,36 +677,26 @@ export class CLICommands {
     const proposal = negotiation.bestProposal;
     spinner.stop();
 
-    console.log("\n" + "=".repeat(60));
-    console.log(" PREVIEW DO TERM SHEET EM MARKDOWN (CLI PREVIEWER)");
-    console.log("=".repeat(60));
-    console.log(`
-# TERMO DE COMPROMISSO DE FUSÃO E AQUISIÇÃO (TERM SHEET)
+    console.log(t("cli.messages.markdownPreviewHeader"));
+    console.log(t("cli.messages.termSheetTemplate", {
+      buyer: options.buyer,
+      seller: options.seller,
+      target: options.target,
+      valuation: options.valuation.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+      cash: (proposal.cashPercentage * 100).toFixed(1),
+      equity: ((1 - proposal.cashPercentage) * 100).toFixed(1),
+      buyerEquity: (proposal.buyerEquityShare * 100).toFixed(1),
+      earnOutYears: proposal.earnOutTargetYears,
+      nonCompeteMonths: proposal.nonCompeteMonths,
+    }));
+    console.log(t("cli.messages.previewFooter"));
 
-**PROPOSTA VINCULANTE DE INVESTIMENTO E AQUISIÇÃO DE PARTICIPAÇÃO SOCIETÁRIA**
-
-**1. AS PARTES**
-* **Adquirente:** ${options.buyer}
-* **Vendedora:** ${options.seller}
-* **Empresa Alvo:** ${options.target}
-
-**2. VALUATION E ESTRUTURAÇÃO DA OPERAÇÃO**
-* **Valuation Base (Enterprise Value):** R$ ${options.valuation.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-* **Estrutura do Preço de Aquisição:**
-  * **Parcela à Vista (Cash Upfront):** ${(proposal.cashPercentage * 100).toFixed(1)}% do valor total.
-  * **Permuta de Ações (Equity Roll):** ${((1 - proposal.cashPercentage) * 100).toFixed(1)}% em ações preferenciais da Adquirente.
-  * **Participação da Adquirente pós-fechamento:** ${(proposal.buyerEquityShare * 100).toFixed(1)}% do capital social votante.
-
-**3. CLÁUSULAS ESPECIAIS E GARANTIAS**
-* **Cláusula de Earn-out:** Fica estipulado um período de metas de desempenho operacional de ${proposal.earnOutTargetYears} anos.
-* **Acordo de Não-Competência (Non-Compete):** Os fundadores e administradores da Vendedora obrigam-se a não exercer atividade concorrente pelo prazo de ${proposal.nonCompeteMonths} meses a contar do Fechamento.
-* **Confidencialidade e Exclusividade:** Este instrumento guarda exclusividade mútua e sigilo estrito entre as partes.
-
-**[Status]** Termos validados pelas partes e prontos para assinatura digital.
-`);
-    console.log("=".repeat(60) + "\n");
-    
-    const spinnerComp = new Spinner({ message: "[LegalClosingAgent] Preview validado. Compilando os binários PDF e LaTeX...", color: "cyan" });
+    const spinnerComp = new Spinner({
+      message: t("cli.spinners.closingCompile"),
+      color: "cyan",
+    });
     spinnerComp.start();
 
     try {
@@ -522,7 +713,7 @@ export class CLICommands {
       const texPath = options.output.replace(".pdf", ".tex");
       await Deno.writeTextFile(texPath, latex);
       spinnerComp.stop();
-      console.log(`[LaTeX] Código-fonte gerado em: \x1b[32m${texPath}\x1b[0m`);
+      console.log(t("cli.messages.latexGenerated", { path: texPath }));
 
       // 2. Generate PDF via pdf-lib
       await PDFGenerator.writeTermSheetPDF(options.output, {
@@ -532,13 +723,11 @@ export class CLICommands {
         valuationAmount: options.valuation,
         proposal,
       });
-      console.log(
-        `[PDF] Documento PDF compilado e salvo em: \x1b[32m${options.output}\x1b[0m`,
-      );
+      console.log(t("cli.messages.pdfCompiled", { path: options.output }));
     } catch (err) {
       spinnerComp.stop();
       console.error(
-        "\n\x1b[31mErro na geração do documento:\x1b[0m",
+        t("cli.messages.docGenError"),
         err instanceof Error ? err.message : String(err),
       );
       throw err;

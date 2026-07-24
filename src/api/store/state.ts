@@ -1,11 +1,11 @@
 import { DashboardLayout, Notification, TeamMember } from "../contracts.ts";
 import {
   DealState,
+  Dossier,
   Entity,
   StoredChatMessage,
   StoredChatThread,
   StoredEngineRun,
-  Dossier,
 } from "./types.ts";
 
 export class MvpStoreState {

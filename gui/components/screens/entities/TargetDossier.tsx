@@ -16,7 +16,9 @@ export function TargetDossier({ entityId }: { entityId: string }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Partial<DossierType>>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{title: string, message: string, variant: "success" | "error"} | null>(null);
+  const [toast, setToast] = useState<
+    { title: string; message: string; variant: "success" | "error" } | null
+  >(null);
 
   useEffect(() => {
     ApiClient.getTargetDossier(entityId)
@@ -30,7 +32,11 @@ export function TargetDossier({ entityId }: { entityId: string }) {
   }
 
   if (!dossier) {
-    return <Card className="p-4"><p>Failed to load dossier.</p></Card>;
+    return (
+      <Card className="p-4">
+        <p>Failed to load dossier.</p>
+      </Card>
+    );
   }
 
   const openEdit = () => {
@@ -51,13 +57,21 @@ export function TargetDossier({ entityId }: { entityId: string }) {
         financialHealth: form.financialHealth,
         litigationRisks: form.litigationRisks,
         marketPosition: form.marketPosition,
-        version: dossier.version
+        version: dossier.version,
       });
       setDossier(updated);
       setEditing(false);
-      setToast({ title: "Saved", message: "Target Dossier updated successfully.", variant: "success" });
+      setToast({
+        title: "Saved",
+        message: "Target Dossier updated successfully.",
+        variant: "success",
+      });
     } catch (e) {
-      setToast({ title: "Error", message: "Failed to update dossier.", variant: "error" });
+      setToast({
+        title: "Error",
+        message: "Failed to update dossier.",
+        variant: "error",
+      });
     }
     setSaving(false);
   };
@@ -72,23 +86,33 @@ export function TargetDossier({ entityId }: { entityId: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h3 className="font-semibold">Executive Summary</h3>
-          <p className="text-sm text-slate-gray">{dossier.executiveSummary || "No data"}</p>
+          <p className="text-sm text-slate-gray">
+            {dossier.executiveSummary || "No data"}
+          </p>
         </div>
         <div>
           <h3 className="font-semibold">Corporate Structure</h3>
-          <p className="text-sm text-slate-gray">{dossier.corporateStructure || "No data"}</p>
+          <p className="text-sm text-slate-gray">
+            {dossier.corporateStructure || "No data"}
+          </p>
         </div>
         <div>
           <h3 className="font-semibold">Financial Health</h3>
-          <p className="text-sm text-slate-gray">{dossier.financialHealth || "No data"}</p>
+          <p className="text-sm text-slate-gray">
+            {dossier.financialHealth || "No data"}
+          </p>
         </div>
         <div>
           <h3 className="font-semibold">Litigation Risks</h3>
-          <p className="text-sm text-slate-gray">{dossier.litigationRisks || "No data"}</p>
+          <p className="text-sm text-slate-gray">
+            {dossier.litigationRisks || "No data"}
+          </p>
         </div>
         <div>
           <h3 className="font-semibold">Market Position</h3>
-          <p className="text-sm text-slate-gray">{dossier.marketPosition || "No data"}</p>
+          <p className="text-sm text-slate-gray">
+            {dossier.marketPosition || "No data"}
+          </p>
         </div>
       </div>
 
@@ -99,26 +123,50 @@ export function TargetDossier({ entityId }: { entityId: string }) {
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={closeEdit} disabled={saving}>Cancel</Button>
-            <Button variant="primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            <Button variant="secondary" onClick={closeEdit} disabled={saving}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <FormField label="Executive Summary">
-            <Input value={form.executiveSummary || ""} onChange={(e) => setForm({...form, executiveSummary: e.target.value})} />
+            <Input
+              value={form.executiveSummary || ""}
+              onChange={(e) =>
+                setForm({ ...form, executiveSummary: e.target.value })}
+            />
           </FormField>
           <FormField label="Corporate Structure">
-            <Input value={form.corporateStructure || ""} onChange={(e) => setForm({...form, corporateStructure: e.target.value})} />
+            <Input
+              value={form.corporateStructure || ""}
+              onChange={(e) =>
+                setForm({ ...form, corporateStructure: e.target.value })}
+            />
           </FormField>
           <FormField label="Financial Health">
-            <Input value={form.financialHealth || ""} onChange={(e) => setForm({...form, financialHealth: e.target.value})} />
+            <Input
+              value={form.financialHealth || ""}
+              onChange={(e) =>
+                setForm({ ...form, financialHealth: e.target.value })}
+            />
           </FormField>
           <FormField label="Litigation Risks">
-            <Input value={form.litigationRisks || ""} onChange={(e) => setForm({...form, litigationRisks: e.target.value})} />
+            <Input
+              value={form.litigationRisks || ""}
+              onChange={(e) =>
+                setForm({ ...form, litigationRisks: e.target.value })}
+            />
           </FormField>
           <FormField label="Market Position">
-            <Input value={form.marketPosition || ""} onChange={(e) => setForm({...form, marketPosition: e.target.value})} />
+            <Input
+              value={form.marketPosition || ""}
+              onChange={(e) =>
+                setForm({ ...form, marketPosition: e.target.value })}
+            />
           </FormField>
         </div>
       </Modal>

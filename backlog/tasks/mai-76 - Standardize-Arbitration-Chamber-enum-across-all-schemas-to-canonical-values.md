@@ -40,32 +40,32 @@ The Arbitration Chamber concept appears in both contract-analysis.ts (legal-dd) 
 <!-- COMMENTS:BEGIN -->
 created: 2026-07-20 19:28
 ---
-## 🚀 Resumo da Implementação
+## 🚀 Implementation Summary
 
-Padronização do Enum `Arbitration Chamber` (`"CAM-CCBC"`, `"CAM-B3"`, `"CCI"`, `"FGV"`, `"Judicial-Court"`, `"Other"`) garantindo que as áreas de Contract Analysis e Term Sheet usem exatamente os mesmos valores.
+Standardized the `Arbitration Chamber` enum (`"CAM-CCBC"`, `"CAM-B3"`, `"CCI"`, `"FGV"`, `"Judicial-Court"`, `"Other"`) so Contract Analysis and Term Sheet use exactly the same values.
 
-### 📁 Arquivos Alterados
+### 📁 Changed Files
 
-- `src/agent/agents/legal-dd/schemas/contract-analysis.ts` — Atualização do Enum.
-- `src/agent/agents/negotiation/schemas/term-sheet.ts` — Atualização do Enum e integração.
+- `src/agent/agents/legal-dd/schemas/contract-analysis.ts` — Updated the enum.
+- `src/agent/agents/negotiation/schemas/term-sheet.ts` — Updated and integrated the enum.
 
-### 🔧 Serviços Afetados
+### 🔧 Affected Services
 
-- **mai/agents** — Legal DD e Negociação.
+- **mai/agents** — Legal DD and Negotiation.
 
-## ✅ 1. Critérios de Aceite
+## ✅ 1. Acceptance Criteria
 
-- [ ] Zod valida corretamente os nomes oficiais das câmaras de arbitragem nos dois agentes.
+- [ ] Zod correctly validates official arbitration-chamber names in both agents.
 
-## ⚠️ 2. Possíveis Impactos
+## ⚠️ 2. Possible Impacts
 
-- Nenhum.
+- None.
 
-## 🧪 3. Recomendações para QA
+## 🧪 3. QA Recommendations
 
-### O que validar
+### What to validate
 
-- Validar extração sem erros via Zod.
+- Validate error-free extraction through Zod.
 ---
 
 author: @codex

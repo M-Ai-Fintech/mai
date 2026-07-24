@@ -23,7 +23,9 @@ export const Toast: React.FC<ToastProps> = ({
   return (
     <div
       role="alert"
-      className={`inline-flex items-start gap-4 p-4 rounded-lg border shadow-level-3 max-w-sm text-left animate-slide-in ${variantStyles[variant]}`}
+      className={`inline-flex items-start gap-4 p-4 rounded-lg border shadow-level-3 max-w-sm text-left animate-slide-in ${
+        variantStyles[variant]
+      }`}
     >
       <div className="flex-1">
         <h4 className="text-xs font-bold uppercase tracking-wider">{title}</h4>

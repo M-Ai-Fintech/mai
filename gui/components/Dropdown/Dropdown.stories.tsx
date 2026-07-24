@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { within, userEvent } from "storybook/test";
+import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { Dropdown } from "./Dropdown";
 
@@ -12,10 +12,10 @@ export default meta;
 type Story = StoryObj<typeof Dropdown>;
 
 const sampleOptions = [
-  { value: "sourcing", label: "Sourcing & KYB", badge: "ATUAL" },
-  { value: "dd_financial", label: "Due Diligence Financeira" },
-  { value: "dd_legal", label: "Due Diligence Jurídica" },
-  { value: "negotiation", label: "Mesa de Negociação" },
+  { value: "sourcing", label: "Sourcing & KYB", badge: "CURRENT" },
+  { value: "dd_financial", label: "Financial Due Diligence" },
+  { value: "dd_legal", label: "Legal Due Diligence" },
+  { value: "negotiation", label: "Negotiation Table" },
   { value: "closing", label: "Closing & SPA Term Sheet" },
   { value: "disabled_opt", label: "Disabled Option", disabled: true },
   { value: "", label: "Empty Value Option" },
@@ -28,7 +28,7 @@ export const SingleSelect: Story = {
     return (
       <div className="max-w-sm p-4">
         <Dropdown
-          label="Fase da Transação M&A"
+          label="M&A Transaction Phase"
           options={sampleOptions}
           value={selected}
           onChange={(v) => setSelected(v)}
@@ -40,14 +40,14 @@ export const SingleSelect: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-    
+
     const body = canvasElement.ownerDocument.body;
-    
+
     // Click disabled option
     const disabledOption = await within(body).findByText("Disabled Option");
     await userEvent.click(disabledOption);
 
-    const option = await within(body).findByText("Mesa de Negociação");
+    const option = await within(body).findByText("Negotiation Table");
     await userEvent.click(option);
 
     // Click empty option
@@ -58,7 +58,7 @@ export const SingleSelect: Story = {
     // Open again to test click outside
     await userEvent.click(trigger);
     await userEvent.click(canvasElement);
-  }
+  },
 };
 
 export const SearchableAndMultiSelect: Story = {
@@ -68,7 +68,7 @@ export const SearchableAndMultiSelect: Story = {
     return (
       <div className="max-w-sm p-4">
         <Dropdown
-          label="Agentes Ativos na Auditoria"
+          label="Active Agents in Audit"
           options={sampleOptions}
           value={selected}
           onChange={(v) => setSelected(v)}
@@ -82,23 +82,23 @@ export const SearchableAndMultiSelect: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-    
+
     const body = canvasElement.ownerDocument.body;
-    const option = await within(body).findByText("Due Diligence Financeira");
+    const option = await within(body).findByText("Financial Due Diligence");
     await userEvent.click(option);
-    
+
     const input = await within(body).findByPlaceholderText("Search option...");
-    await userEvent.type(input, "Mesa");
-    
-    const option2 = await within(body).findByText("Mesa de Negociação");
+    await userEvent.type(input, "Negotiation");
+
+    const option2 = await within(body).findByText("Negotiation Table");
     await userEvent.click(option2);
-    
+
     // Click again to unselect
     await userEvent.click(option2);
-    
+
     // click trigger to close
     await userEvent.click(trigger);
-  }
+  },
 };
 
 export const DisabledDropdown: Story = {
@@ -118,7 +118,7 @@ export const EmptyAndErrorDropdown: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-  }
+  },
 };
 
 export const Uncontrolled: Story = {
@@ -130,18 +130,18 @@ export const Uncontrolled: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-    
+
     const body = canvasElement.ownerDocument.body;
-    const option = await within(body).findByText("Due Diligence Financeira");
+    const option = await within(body).findByText("Financial Due Diligence");
     await userEvent.click(option);
-  }
+  },
 };
 
 export const InvalidValueSingle: Story = {
   args: {
     options: sampleOptions,
     value: "not-found",
-  }
+  },
 };
 
 export const InvalidValueMulti: Story = {
@@ -149,5 +149,5 @@ export const InvalidValueMulti: Story = {
     options: sampleOptions,
     value: ["sourcing", "not-found"],
     multiSelect: true,
-  }
+  },
 };

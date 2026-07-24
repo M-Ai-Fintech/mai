@@ -34,7 +34,7 @@ export const Primary: Story = {
 export const WithoutProps: Story = {
   args: {
     children: "No Props Passed",
-  }
+  },
 };
 
 export const PrimaryInkPill: Story = {

@@ -24,8 +24,12 @@ export const DefaultHighContrast: Story = {
     variant: "default",
     children: (
       <div>
-        <h3 className="text-lg font-medium text-ink-black mb-1">Deal TechFin M&A</h3>
-        <p className="text-sm text-slate-gray">Valuation: $45M — Status: In Due Diligence</p>
+        <h3 className="text-lg font-medium text-ink-black mb-1">
+          Deal TechFin M&A
+        </h3>
+        <p className="text-sm text-slate-gray">
+          Valuation: $45M — Status: In Due Diligence
+        </p>
       </div>
     ),
   },
@@ -36,7 +40,9 @@ export const SignalOrangeCard: Story = {
     variant: "orange",
     children: (
       <div>
-        <h3 className="text-lg font-medium text-white mb-1">Compliance Action Required</h3>
+        <h3 className="text-lg font-medium text-white mb-1">
+          Compliance Action Required
+        </h3>
         <p className="text-sm text-white/90">Pending KYB document validation</p>
       </div>
     ),
@@ -58,7 +64,7 @@ export const DefaultCard: Story = {
 export const WithoutProps: Story = {
   args: {
     children: "No Props Passed",
-  }
+  },
 };
 
 export const DarkCard: Story = {
