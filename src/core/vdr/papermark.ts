@@ -39,8 +39,8 @@ export class PapermarkAdapter extends BaseVDRProvider {
     const docs = Array.isArray(data.documents)
       ? data.documents
       : Array.isArray(data)
-      ? data
-      : [];
+        ? data
+        : [];
 
     return docs.map((doc: Record<string, unknown>) => ({
       id: String(doc.id),
