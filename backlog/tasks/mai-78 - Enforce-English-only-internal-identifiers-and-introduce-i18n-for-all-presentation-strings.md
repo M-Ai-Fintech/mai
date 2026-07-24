@@ -7,12 +7,14 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-24 18:47'
+updated_date: '2026-07-24 18:49'
 labels:
   - revalidation
 milestone: m-14
 dependencies:
   - MAI-84
+references:
+  - 'https://github.com/M-Ai-Fintech/MVP/pull/6'
 documentation:
   - >-
     backlog/docs/decisions/adr-0001-english-internal-identifiers-i18n/doc-14 -
@@ -59,13 +61,6 @@ Intake 2026-07-24: cleaned the 431-file formatting worktree, renamed the rejecte
 Implementation 2026-07-24: treated the Antigravity branch as reference only. Rejected its 431-file worktree formatting churn, excluded runtime knowledge Markdown and generated Graphify artifacts, and later rejected its 40-file core/test rewrite after whitespace-insensitive review. Implemented typed en/pt-BR catalogs, deterministic English fallback, explicit CLI/GUI locale selection, localized CLI/GUI/document/agent presentation boundaries, English internal identifiers/source text, and a regression language checker. Verification: deno task verify passed all eight stages with network/localhost access; focused i18n and checker tests passed 8/8; focused integration suite passed 41 tests plus 8 steps; git diff --check passed.
 <!-- SECTION:NOTES:END -->
 
-## Definition of Done
-<!-- DOD:BEGIN -->
-- [x] #1 Every applicable acceptance criterion is checked with current evidence
-- [x] #2 All focused tests and the repository-wide verification gate pass
-- [x] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
-<!-- DOD:END -->
-
 ## Comments
 
 <!-- COMMENTS:BEGIN -->
@@ -106,7 +101,20 @@ created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: No i18n layer exists; Portuguese strings remain in CLI, engines, documents, and repository content. Reopen and enforce English-only maintained content with non-English presentation text isolated to locale catalogs.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
+
+author: @codex
+created: 2026-07-24 18:49
+---
+Implementation is published for human review in PR #6: https://github.com/M-Ai-Fintech/MVP/pull/6. Full repository verification passed before publication; task remains In Progress pending review.
+---
 <!-- COMMENTS:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [x] #1 Every applicable acceptance criterion is checked with current evidence
+- [x] #2 All focused tests and the repository-wide verification gate pass
+- [x] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
+<!-- DOD:END -->
 
 ## Final Summary
 
