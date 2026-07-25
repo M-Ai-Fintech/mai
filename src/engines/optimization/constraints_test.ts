@@ -9,7 +9,6 @@ import {
 } from "./constraints.ts";
 import { optimizeWithConstraints } from "./index.ts";
 import { DealProfile } from "./genetic.ts";
-import { defaultConfig } from "./config.ts";
 
 Deno.test("KycConstraint rejects blocked deals", () => {
   const constraint = new KycConstraint();
@@ -86,7 +85,7 @@ Deno.test("Integration test: optimizeWithConstraints drops unfeasible deals", ()
   
   const constraints = [
     new KycConstraint(),
-    new LeverageConstraint(defaultConfig.maxLeverage)
+    new LeverageConstraint(6.0)
   ];
   
   // Case 1: KYC Blocked
