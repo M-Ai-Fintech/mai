@@ -6,7 +6,6 @@
 export * from "./valuation/index.ts";
 export * from "./genetic.ts";
 export * from "./types.ts";
-export * from "./config.ts";
 export * from "./constraints.ts";
 
 import { DealProfile, initialPopulation, evolve, DEFAULT_CONFIG, GeneticConfig, TermSheetAlternative } from "./genetic.ts";
