@@ -1,4 +1,0 @@
-interface:
-  display_name: "Wrap Up MAI"
-  short_description: "Create a concise MAI session handoff"
-  default_prompt: "Use $wrap-up for this MAI session."
