@@ -11,6 +11,35 @@ description: >
 
 Diagnose only. Do not implement unless the user separately asks for a fix.
 
+## Escalate hard bugs
+
+`$investigate` is the default investigation path inside `$solve-mai`. After
+intake, invoke `$diagnosing-bugs` when a tight reproduction loop is necessary
+to distinguish causes, including when the defect is:
+
+- intermittent, timing-sensitive, or environment-dependent;
+- a performance regression;
+- spread across asynchronous, multi-service, provider, or persistence
+  boundaries;
+- supported by several plausible causes that static tracing cannot separate; or
+- not yet backed by a deterministic, red-capable check for the reported
+  symptom.
+
+Invoke it **before forming a root-cause theory or doing broad code tracing**.
+Use its diagnostic discipline: build and tighten a feedback loop, reproduce
+and minimise, rank falsifiable hypotheses, and use probes that distinguish
+them. Carry its reproduction command, observed output, and rejected
+hypotheses into this investigation's evidence.
+
+This is a diagnostic sub-invocation only. `$investigate` retains its
+diagnose-only boundary: do not perform `$diagnosing-bugs` Phases 5–6 (fix,
+regression-test implementation, or cleanup). Instead, report the identified
+regression seam and hand the implementation path back to `$solve-mai`.
+
+If `$diagnosing-bugs` cannot establish a red-capable loop, stop and report what
+was tried plus the needed artifact, access, or instrumentation permission. Do
+not replace that evidence with a static-analysis guess.
+
 ## Inputs
 
 1. Require a Backlog task ID such as `MAI-17`, or enough context to find it.
@@ -23,17 +52,20 @@ Diagnose only. Do not implement unless the user separately asks for a fix.
 2. Read the task with `backlog task view MAI-N --plain`.
 3. Extract symptoms, acceptance criteria, prior attempts, dependencies, and referenced files.
 4. Inspect `git status --short`, recent commits, and relevant repository instructions.
-5. Trace the flow end to end:
+5. Decide whether the defect meets **Escalate hard bugs**. If it does, invoke
+   `$diagnosing-bugs` and complete its diagnostic sub-invocation before
+   proceeding.
+6. Trace the flow end to end:
    - entry point or UI event;
    - request, command, or event transport;
    - service and domain logic;
    - persistence or external integration;
    - response, render, or generated artifact.
-6. Use `rg` to find definitions, callers, configuration, tests, and similar working paths.
-7. Compare intended behavior from Backlog with actual behavior in code.
-8. Test competing hypotheses with read-only checks or focused reproduction when safe.
-9. Inspect local or deployed runtime logs when static analysis cannot distinguish hypotheses.
-10. Stop when one explanation accounts for every reported symptom.
+7. Use `rg` to find definitions, callers, configuration, tests, and similar working paths.
+8. Compare intended behavior from Backlog with actual behavior in code.
+9. Test competing hypotheses with read-only checks or focused reproduction when safe.
+10. Inspect local or deployed runtime logs when static analysis cannot distinguish hypotheses.
+11. Stop when one explanation accounts for every reported symptom.
 
 ## Evidence standard
 
@@ -45,6 +77,9 @@ Report:
 - minimal proposed fix;
 - likely side effects and missing test coverage;
 - confidence level and remaining uncertainty.
+
+For escalated hard bugs, also report the executed red-capable command and its
+result, or explicitly state why no such loop could be built.
 
 Distinguish facts from inference. Quote exact errors without altering them.
 
