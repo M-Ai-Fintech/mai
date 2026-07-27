@@ -8,8 +8,22 @@ export * from "./genetic.ts";
 export * from "./types.ts";
 export * from "./constraints.ts";
 
-import { DealProfile, initialPopulation, evolve, DEFAULT_CONFIG, GeneticConfig, TermSheetAlternative } from "./genetic.ts";
-import { Constraint, KycData, FinancialData, EvaluationContext, filterFeasible } from "./constraints.ts";
+import { selectTermSheetAlternatives } from "./alternatives.ts";
+import {
+  Constraint,
+  EvaluationContext,
+  filterFeasible,
+  FinancialData,
+  KycData,
+} from "./constraints.ts";
+import {
+  DealProfile,
+  DEFAULT_CONFIG,
+  evolve,
+  GeneticConfig,
+  initialPopulation,
+  TermSheetAlternative,
+} from "./genetic.ts";
 
 export interface OptimizationRequest {
   profile: DealProfile;
@@ -24,69 +38,28 @@ export interface OptimizationRequest {
  * @param request The deal profile, constraint settings, and genetic config
  * @returns Feasible and distinct term sheet alternatives
  */
-export function optimizeWithConstraints(request: OptimizationRequest): TermSheetAlternative[] {
-  const { profile, kyc, financial, constraints = [], geneticConfig = {} } = request;
-  
+export function optimizeWithConstraints(
+  request: OptimizationRequest,
+): TermSheetAlternative[] {
+  const { profile, constraints = [], geneticConfig = {} } = request;
   const finalConfig = { ...DEFAULT_CONFIG, ...geneticConfig };
   const initialPop = initialPopulation(finalConfig.populationSize, profile);
   const finalPop = evolve(initialPop, profile, finalConfig);
-  
-  // Form contexts for constraint evaluation
-  const candidates: EvaluationContext[] = finalPop.map(c => ({
-    chromosome: c,
-    profile,
-    kyc,
-    financial,
-  }));
-  
-  // 4. filterFeasible(candidates, constraints) antes do ranking
+  const candidates = evaluationContexts(finalPop, request);
   const feasibleCandidates = filterFeasible(candidates, constraints);
-  
-  const distinct: TermSheetAlternative[] = [];
-  for (const { chromosome: c } of feasibleCandidates) {
-    if (distinct.length >= 3) break;
-    
-    let isDistinct = true;
-    for (const d of distinct) {
-      const diff = 
-        Math.abs(c.cash - d.cashPercentage) +
-        Math.abs(c.equity - d.equityPercentage) +
-        Math.abs(c.earnOut - d.earnOutPercentage) +
-        Math.abs(c.escrow - d.escrowPercentage);
-      
-      if (diff < 0.1) {
-        isDistinct = false;
-        break;
-      }
-    }
-    
-    if (isDistinct) {
-      distinct.push({
-        valuation: c.valuation,
-        cashPercentage: c.cash,
-        equityPercentage: c.equity,
-        earnOutPercentage: c.earnOut,
-        escrowPercentage: c.escrow,
-        fitness: c.fitness || 0,
-      });
-    }
-  }
+  return selectTermSheetAlternatives(
+    feasibleCandidates.map((candidate) => candidate.chromosome),
+  );
+}
 
-  let idx = 0;
-  while (distinct.length < 3 && idx < feasibleCandidates.length) {
-    const { chromosome: c } = feasibleCandidates[idx++];
-    const included = distinct.some(d => d.cashPercentage === c.cash && d.valuation === c.valuation);
-    if (!included) {
-      distinct.push({
-        valuation: c.valuation,
-        cashPercentage: c.cash,
-        equityPercentage: c.equity,
-        earnOutPercentage: c.earnOut,
-        escrowPercentage: c.escrow,
-        fitness: c.fitness || 0,
-      });
-    }
-  }
-
-  return distinct;
+function evaluationContexts(
+  chromosomes: EvaluationContext["chromosome"][],
+  request: OptimizationRequest,
+): EvaluationContext[] {
+  return chromosomes.map((chromosome) => ({
+    chromosome,
+    profile: request.profile,
+    kyc: request.kyc,
+    financial: request.financial,
+  }));
 }

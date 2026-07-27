@@ -8,7 +8,6 @@
 import type {
   EbitdaMultipleInput,
   MethodResult,
-  ValuationFlag,
 } from "../../../../shared/types.ts";
 
 /**
@@ -19,33 +18,29 @@ import type {
  * @throws {RangeError} If evEbitdaMultiple <= 0, totalDebt < 0, or cashAndEquivalents < 0.
  */
 export function computeEbitdaMultiple(data: EbitdaMultipleInput): MethodResult {
-  if (data.evEbitdaMultiple <= 0) {
-    throw new RangeError(
-      "[ValuationEngine:EBITDA] EV/EBITDA multiple must be > 0.",
-    );
-  }
-  if (data.totalDebt < 0 || data.cashAndEquivalents < 0) {
-    throw new RangeError(
-      "[ValuationEngine:EBITDA] Total debt and cash must be >= 0.",
-    );
-  }
-
-  const flags: ValuationFlag[] = [];
-
+  validateEbitdaInput(data);
   if (data.ebitda <= 0) {
-    flags.push("NON_POSITIVE_EBITDA");
     return {
       method: "EBITDA Multiple Valuation",
       value: NaN,
-      flags,
+      flags: ["NON_POSITIVE_EBITDA"],
     };
   }
-
-  const impliedEv = data.ebitda * data.evEbitdaMultiple;
-
   return {
     method: "EBITDA Multiple Valuation",
-    value: impliedEv,
-    flags,
+    value: data.ebitda * data.evEbitdaMultiple,
+    flags: [],
   };
+}
+
+function validateEbitdaInput(data: EbitdaMultipleInput): void {
+  if (data.evEbitdaMultiple <= 0) {
+    throw new RangeError(
+      `[ValuationEngine:EBITDA] EV/EBITDA multiple was ${data.evEbitdaMultiple}; expected a number greater than 0.`,
+    );
+  }
+  if (data.totalDebt >= 0 && data.cashAndEquivalents >= 0) return;
+  throw new RangeError(
+    `[ValuationEngine:EBITDA] debt/cash was ${data.totalDebt}/${data.cashAndEquivalents}; expected both values to be non-negative.`,
+  );
 }

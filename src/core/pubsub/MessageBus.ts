@@ -1,7 +1,10 @@
-// src/core/pubsub/MessageBus.ts
+export type MessageListener<TPayload> = (payload: TPayload) => void;
 
 export interface MessageBus {
-  subscribe(topic: string, callback: (data: any) => void): void;
-  publish(topic: string, data: any): void;
+  subscribe<TPayload>(
+    topic: string,
+    callback: MessageListener<TPayload>,
+  ): void;
+  publish<TPayload>(topic: string, payload: TPayload): void;
   clear(topic?: string): void;
 }

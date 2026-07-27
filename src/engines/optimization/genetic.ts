@@ -1,4 +1,5 @@
-import { z } from "npm:zod";
+import { z } from "zod";
+import { selectTermSheetAlternatives } from "./alternatives.ts";
 
 export const TermSheetAlternativeSchema = z.object({
   valuation: z.number(),
@@ -74,10 +75,14 @@ export function normalizePercentages(c: Chromosome): void {
   }
 }
 
-export function initialPopulation(size: number, profile: DealProfile): Chromosome[] {
+export function initialPopulation(
+  size: number,
+  profile: DealProfile,
+): Chromosome[] {
   const pop: Chromosome[] = [];
   for (let i = 0; i < size; i++) {
-    const valuation = profile.valuationMin + Math.random() * (profile.valuationMax - profile.valuationMin);
+    const valuation = profile.valuationMin +
+      Math.random() * (profile.valuationMax - profile.valuationMin);
     const c: Chromosome = {
       valuation,
       cash: Math.random(),
@@ -92,27 +97,37 @@ export function initialPopulation(size: number, profile: DealProfile): Chromosom
 }
 
 export function evaluate(chromosome: Chromosome, profile: DealProfile): void {
-  let score = 1000;
-
-  // Valuation penalty (Deal Fatigue)
-  if (chromosome.valuation < profile.valuationMin) {
-    score -= (profile.valuationMin - chromosome.valuation) * 10;
-  } else if (chromosome.valuation > profile.valuationMax) {
-    score -= (chromosome.valuation - profile.valuationMax) * 10;
-  }
-
-  // Preferences Euclidean Distance
-  const cashDiff = Math.abs(chromosome.cash - profile.preferences.cash);
-  const equityDiff = Math.abs(chromosome.equity - profile.preferences.equity);
-  const earnOutDiff = Math.abs(chromosome.earnOut - profile.preferences.earnOut);
-  const escrowDiff = Math.abs(chromosome.escrow - profile.preferences.escrow);
-
-  score -= (cashDiff + equityDiff + earnOutDiff + escrowDiff) * 100;
-
-  chromosome.fitness = score;
+  chromosome.fitness = 1000 -
+    valuationPenalty(chromosome.valuation, profile) -
+    preferencePenalty(chromosome, profile);
 }
 
-export function select(population: Chromosome[], tournamentSize: number): Chromosome {
+function valuationPenalty(valuation: number, profile: DealProfile): number {
+  if (valuation < profile.valuationMin) {
+    return (profile.valuationMin - valuation) * 10;
+  }
+  if (valuation > profile.valuationMax) {
+    return (valuation - profile.valuationMax) * 10;
+  }
+  return 0;
+}
+
+function preferencePenalty(
+  chromosome: Chromosome,
+  profile: DealProfile,
+): number {
+  return (
+    Math.abs(chromosome.cash - profile.preferences.cash) +
+    Math.abs(chromosome.equity - profile.preferences.equity) +
+    Math.abs(chromosome.earnOut - profile.preferences.earnOut) +
+    Math.abs(chromosome.escrow - profile.preferences.escrow)
+  ) * 100;
+}
+
+export function select(
+  population: Chromosome[],
+  tournamentSize: number,
+): Chromosome {
   let best = population[Math.floor(Math.random() * population.length)];
   for (let i = 1; i < tournamentSize; i++) {
     const contender = population[Math.floor(Math.random() * population.length)];
@@ -123,7 +138,10 @@ export function select(population: Chromosome[], tournamentSize: number): Chromo
   return best;
 }
 
-export function crossover(parentA: Chromosome, parentB: Chromosome): Chromosome {
+export function crossover(
+  parentA: Chromosome,
+  parentB: Chromosome,
+): Chromosome {
   const alpha = Math.random();
   const child: Chromosome = {
     valuation: parentA.valuation * alpha + parentB.valuation * (1 - alpha),
@@ -136,7 +154,11 @@ export function crossover(parentA: Chromosome, parentB: Chromosome): Chromosome 
   return child;
 }
 
-export function mutate(chromosome: Chromosome, profile: DealProfile, rate: number): void {
+export function mutate(
+  chromosome: Chromosome,
+  profile: DealProfile,
+  rate: number,
+): void {
   const valRange = Math.max(1, profile.valuationMax - profile.valuationMin);
   if (Math.random() < rate) {
     chromosome.valuation += gaussianRandom(0, valRange * 0.1);
@@ -145,94 +167,57 @@ export function mutate(chromosome: Chromosome, profile: DealProfile, rate: numbe
   if (Math.random() < rate) chromosome.equity += gaussianRandom(0, 0.1);
   if (Math.random() < rate) chromosome.earnOut += gaussianRandom(0, 0.1);
   if (Math.random() < rate) chromosome.escrow += gaussianRandom(0, 0.1);
-  
+
   normalizePercentages(chromosome);
 }
 
 export function evolve(
   population: Chromosome[],
   profile: DealProfile,
-  config: GeneticConfig
+  config: GeneticConfig,
 ): Chromosome[] {
   let currentPop = population;
 
   for (const c of currentPop) evaluate(c, profile);
-
   for (let g = 0; g < config.generations; g++) {
-    const newPop: Chromosome[] = [];
-    currentPop.sort((a, b) => (b.fitness || 0) - (a.fitness || 0));
-    
-    // Elitism
-    newPop.push({ ...currentPop[0] });
-
-    while (newPop.length < config.populationSize) {
-      const parentA = select(currentPop, config.tournamentSize);
-      const parentB = select(currentPop, config.tournamentSize);
-      const child = crossover(parentA, parentB);
-      mutate(child, profile, config.mutationRate);
-      evaluate(child, profile);
-      newPop.push(child);
-    }
-    currentPop = newPop;
+    currentPop = evolveGeneration(currentPop, profile, config);
   }
-
   currentPop.sort((a, b) => (b.fitness || 0) - (a.fitness || 0));
   return currentPop;
 }
 
+function evolveGeneration(
+  population: Chromosome[],
+  profile: DealProfile,
+  config: GeneticConfig,
+): Chromosome[] {
+  population.sort((a, b) => (b.fitness || 0) - (a.fitness || 0));
+  const next = [{ ...population[0] }];
+  while (next.length < config.populationSize) {
+    next.push(breedGenerationChild(population, profile, config));
+  }
+  return next;
+}
+
+function breedGenerationChild(
+  population: Chromosome[],
+  profile: DealProfile,
+  config: GeneticConfig,
+): Chromosome {
+  const parentA = select(population, config.tournamentSize);
+  const parentB = select(population, config.tournamentSize);
+  const child = crossover(parentA, parentB);
+  mutate(child, profile, config.mutationRate);
+  evaluate(child, profile);
+  return child;
+}
+
 export function optimizeDeal(
   profile: DealProfile,
-  config: Partial<GeneticConfig> = {}
+  config: Partial<GeneticConfig> = {},
 ): TermSheetAlternative[] {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
   const initialPop = initialPopulation(finalConfig.populationSize, profile);
   const finalPop = evolve(initialPop, profile, finalConfig);
-  
-  const distinct: TermSheetAlternative[] = [];
-  for (const c of finalPop) {
-    if (distinct.length >= 3) break;
-    
-    let isDistinct = true;
-    for (const d of distinct) {
-      const diff = 
-        Math.abs(c.cash - d.cashPercentage) +
-        Math.abs(c.equity - d.equityPercentage) +
-        Math.abs(c.earnOut - d.earnOutPercentage) +
-        Math.abs(c.escrow - d.escrowPercentage);
-      
-      if (diff < 0.1) {
-        isDistinct = false;
-        break;
-      }
-    }
-    
-    if (isDistinct) {
-      distinct.push({
-        valuation: c.valuation,
-        cashPercentage: c.cash,
-        equityPercentage: c.equity,
-        earnOutPercentage: c.earnOut,
-        escrowPercentage: c.escrow,
-        fitness: c.fitness || 0,
-      });
-    }
-  }
-
-  let idx = 0;
-  while (distinct.length < 3 && idx < finalPop.length) {
-    const c = finalPop[idx++];
-    const included = distinct.some(d => d.cashPercentage === c.cash && d.valuation === c.valuation);
-    if (!included) {
-      distinct.push({
-        valuation: c.valuation,
-        cashPercentage: c.cash,
-        equityPercentage: c.equity,
-        earnOutPercentage: c.earnOut,
-        escrowPercentage: c.escrow,
-        fitness: c.fitness || 0,
-      });
-    }
-  }
-
-  return distinct;
+  return selectTermSheetAlternatives(finalPop);
 }

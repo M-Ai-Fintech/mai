@@ -64,11 +64,18 @@ export class LeverageConstraint implements Constraint {
   constructor(public maxLeverage: number) {}
 
   evaluate(context: EvaluationContext): ConstraintResult {
-    if (!context.financial || context.financial.ebitda <= 0) return { feasible: true };
+    if (!context.financial || context.financial.ebitda <= 0) {
+      return { feasible: true };
+    }
     // Leverage = Total Debt / EBITDA
     const leverage = context.financial.debt / context.financial.ebitda;
     if (leverage > this.maxLeverage) {
-      return { feasible: false, reason: `Leverage ratio ${leverage.toFixed(2)} exceeds maximum of ${this.maxLeverage}.` };
+      return {
+        feasible: false,
+        reason: `Leverage ratio ${
+          leverage.toFixed(2)
+        } exceeds maximum of ${this.maxLeverage}.`,
+      };
     }
     return { feasible: true };
   }
@@ -82,11 +89,19 @@ export class CoverageConstraint implements Constraint {
   constructor(public minCoverage: number) {}
 
   evaluate(context: EvaluationContext): ConstraintResult {
-    if (!context.financial || context.financial.interestExpense <= 0) return { feasible: true };
+    if (!context.financial || context.financial.interestExpense <= 0) {
+      return { feasible: true };
+    }
     // Coverage = EBITDA / Interest Expense
-    const coverage = context.financial.ebitda / context.financial.interestExpense;
+    const coverage = context.financial.ebitda /
+      context.financial.interestExpense;
     if (coverage < this.minCoverage) {
-      return { feasible: false, reason: `EBITDA coverage ${coverage.toFixed(2)} is below minimum of ${this.minCoverage}.` };
+      return {
+        feasible: false,
+        reason: `EBITDA coverage ${
+          coverage.toFixed(2)
+        } is below minimum of ${this.minCoverage}.`,
+      };
     }
     return { feasible: true };
   }
@@ -101,14 +116,22 @@ export class ValuationFloorConstraint implements Constraint {
 
   evaluate(context: EvaluationContext): ConstraintResult {
     if (context.chromosome.valuation < this.minValuation) {
-      return { feasible: false, reason: `Valuation ${context.chromosome.valuation.toFixed(2)} is below floor of ${this.minValuation}.` };
+      return {
+        feasible: false,
+        reason: `Valuation ${
+          context.chromosome.valuation.toFixed(2)
+        } is below floor of ${this.minValuation}.`,
+      };
     }
     return { feasible: true };
   }
 }
 
-export function filterFeasible(candidates: EvaluationContext[], constraints: Constraint[]): EvaluationContext[] {
-  return candidates.filter(candidate => {
+export function filterFeasible(
+  candidates: EvaluationContext[],
+  constraints: Constraint[],
+): EvaluationContext[] {
+  return candidates.filter((candidate) => {
     for (const constraint of constraints) {
       if (constraint.enabled) {
         const result = constraint.evaluate(candidate);

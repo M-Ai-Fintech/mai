@@ -1,6 +1,12 @@
-import pg from "pg";
-
-const { Pool } = pg;
+import { DatabaseConnection } from "./DatabaseConnection.ts";
+import { EmbeddedRow, rankBySimilarity } from "./similarity.ts";
+import {
+  cultureSearch,
+  knowledgeSearch,
+  preferenceSearch,
+  SimilaritySearchConfig,
+  vdrSearch,
+} from "./memory_search.ts";
 
 export interface UserPreferencesRecord {
   readonly id: string;
@@ -29,123 +35,48 @@ export interface CompanyCultureMemoryRecord {
   readonly updatedAt: Date;
 }
 
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0.0;
-  let normA = 0.0;
-  let normB = 0.0;
-  const len = Math.min(vecA.length, vecB.length);
-  for (let i = 0; i < len; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-  if (normA === 0 || normB === 0) return 0.0;
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+export interface SimilarKnowledge {
+  id: string;
+  category: string;
+  knowledge: Record<string, unknown>;
+  similarity: number;
 }
 
-export class DatabaseMemoryService {
+export interface SimilarPreference {
+  id: string;
+  userId: string;
+  preferences: Record<string, unknown>;
+  similarity: number;
+}
+
+export interface SimilarCultureMemory {
+  id: string;
+  businessId: string;
+  cultureData: Record<string, unknown>;
+  similarity: number;
+}
+
+export interface SimilarVdrChunk {
+  documentName: string;
+  chunkIndex: number;
+  textChunk: string;
+  similarity: number;
+}
+
+const DEFAULT_USER_PREFERENCES: Record<string, unknown> = {
+  defaultValuationMethod: "DCF",
+  riskAppetite: "Moderate",
+  preferredJurisdiction: "Brazil",
+};
+
+export class DatabaseMemoryService extends DatabaseConnection {
   private static instance: DatabaseMemoryService | null = null;
-  protected isDbAvailable: boolean | null = null;
-  protected pool: pg.Pool;
 
   public static getInstance(): DatabaseMemoryService {
     if (!DatabaseMemoryService.instance) {
       DatabaseMemoryService.instance = new DatabaseMemoryService();
     }
     return DatabaseMemoryService.instance;
-  }
-
-  constructor(
-    connectionString = Deno.env.get("DATABASE_URL") ||
-      "postgres://postgres:postgres@localhost:5432/mai",
-  ) {
-    this.pool = new Pool({
-      connectionString,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-      statement_timeout: 10000,
-    });
-    this.pool.on("error", (err) => {
-      console.error(
-        "Unexpected error on idle client in DatabaseMemoryService:",
-        err.message,
-      );
-    });
-  }
-
-  /**
-   * Connects to the database and verifies connectivity.
-   * Does not throw when the database is unavailable.
-   */
-  async connect(): Promise<boolean> {
-    try {
-      const client = await this.pool.connect();
-      console.log("Database connected successfully.");
-      client.release();
-      this.isDbAvailable = true;
-      return true;
-    } catch (error) {
-      console.error(
-        "Failed to connect to the database:",
-        error instanceof Error ? error.message : String(error),
-      );
-      this.isDbAvailable = false;
-      return false;
-    }
-  }
-
-  /**
-   * Executes a parameterized SQL query.
-   */
-  async query(text: string, params?: any[], retries = 3): Promise<any> {
-    if (this.isDbAvailable === false) {
-      throw new Error(
-        "Database connection is unavailable (cached offline state).",
-      );
-    }
-    let attempt = 0;
-    while (attempt <= retries) {
-      try {
-        const result = await this.pool.query(text, params);
-        this.isDbAvailable = true;
-        return result;
-      } catch (error: any) {
-        // Common transient Postgres and network error codes (Node.js/pg).
-        const isTransient = [
-          "08000",
-          "08003",
-          "08006",
-          "57P01",
-          "ECONNRESET",
-          "ECONNREFUSED",
-        ].includes(error.code);
-        if (error.code === "ECONNREFUSED") {
-          this.isDbAvailable = false;
-        }
-        if (!isTransient || attempt === retries) {
-          throw error;
-        }
-        attempt++;
-        const delay = Math.min(
-          1000 * Math.pow(2, attempt) + Math.random() * 1000,
-          10000,
-        );
-        console.warn(
-          `Query failed (code: ${error.code}), retrying in ${
-            Math.round(delay)
-          }ms... (Attempt ${attempt}/${retries})`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-  }
-
-  /**
-   * Closes the database connection pool.
-   */
-  async close(): Promise<void> {
-    await this.pool.end();
   }
 
   /**
@@ -159,22 +90,15 @@ export class DatabaseMemoryService {
       FROM user_preferences 
       WHERE user_id = $1;
     `;
-    const res = await this.query(sql, [userId]);
-    if (res.rows.length > 0) {
-      return res.rows[0].preferences;
-    }
-
-    // Return default preferences when no record is found.
-    return {
-      defaultValuationMethod: "DCF",
-      riskAppetite: "Moderate",
-      preferredJurisdiction: "Brazil",
-    };
+    const res = await this.query<{ preferences: Record<string, unknown> }>(
+      sql,
+      [userId],
+    );
+    return res.rows[0]?.preferences ?? { ...DEFAULT_USER_PREFERENCES };
   }
 
   /**
    * Saves or updates user preferences.
-   * Supports storing real embeddings.
    */
   public async saveUserPreferences(
     userId: string,
@@ -198,9 +122,6 @@ export class DatabaseMemoryService {
   }
 
   /**
-   * Queries general domain knowledge by category.
-   */
-  /**
    * Queries JSONB using the GIN containment operator (@>).
    */
   public async searchDomainKnowledgeByJson(
@@ -211,8 +132,10 @@ export class DatabaseMemoryService {
       FROM domain_knowledge 
       WHERE knowledge @> $1::jsonb;
     `;
-    const res = await this.query(sql, [JSON.stringify(filter)]);
-    return res.rows as DomainKnowledgeRecord[];
+    const res = await this.query<DomainKnowledgeRecord>(sql, [
+      JSON.stringify(filter),
+    ]);
+    return res.rows;
   }
 
   /**
@@ -226,8 +149,8 @@ export class DatabaseMemoryService {
       FROM domain_knowledge 
       WHERE category = $1;
     `;
-    const res = await this.query(sql, [category]);
-    return res.rows as DomainKnowledgeRecord[];
+    const res = await this.query<DomainKnowledgeRecord>(sql, [category]);
+    return res.rows;
   }
 
   /**
@@ -261,8 +184,8 @@ export class DatabaseMemoryService {
       FROM company_culture_memory 
       WHERE business_id = $1;
     `;
-    const res = await this.query(sql, [businessId]);
-    return res.rows as CompanyCultureMemoryRecord[];
+    const res = await this.query<CompanyCultureMemoryRecord>(sql, [businessId]);
+    return res.rows;
   }
 
   /**
@@ -293,68 +216,8 @@ export class DatabaseMemoryService {
   public async searchSimilarKnowledge(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<
-    Array<
-      {
-        id: string;
-        category: string;
-        knowledge: Record<string, unknown>;
-        similarity: number;
-      }
-    >
-  > {
-    try {
-      const sql = `
-        SELECT id, category, knowledge, 1 - (embedding <=> $1::vector) AS similarity
-        FROM domain_knowledge
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> $1::vector
-        LIMIT $2;
-      `;
-      const res = await this.query(sql, [
-        JSON.stringify(queryEmbedding),
-        limit,
-      ]);
-      return res.rows;
-    } catch (error) {
-      console.warn(
-        "[DatabaseMemoryService] pgvector query failed, running in-memory similarity fallback:",
-        error instanceof Error ? error.message : String(error),
-      );
-
-      const allKnowledgeSql = `
-        SELECT id, category, knowledge, embedding
-        FROM domain_knowledge
-        WHERE embedding IS NOT NULL;
-      `;
-      const res = await this.query(allKnowledgeSql);
-      const allRows = res.rows as Array<
-        {
-          id: string;
-          category: string;
-          knowledge: Record<string, any>;
-          embedding: number[] | string;
-        }
-      >;
-
-      const similarityList = allRows.map((row) => {
-        let emb = row.embedding;
-        if (typeof emb === "string") {
-          if (emb.startsWith("[")) emb = JSON.parse(emb);
-          else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
-        }
-        const sim = cosineSimilarity(queryEmbedding, emb as number[]);
-        return {
-          id: row.id,
-          category: row.category,
-          knowledge: row.knowledge,
-          similarity: sim,
-        };
-      });
-
-      similarityList.sort((a, b) => b.similarity - a.similarity);
-      return similarityList.slice(0, limit);
-    }
+  ): Promise<SimilarKnowledge[]> {
+    return await this.searchEmbeddings(knowledgeSearch(queryEmbedding, limit));
   }
 
   /**
@@ -363,58 +226,8 @@ export class DatabaseMemoryService {
   public async searchSimilarPreferences(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<
-    Array<
-      {
-        id: string;
-        userId: string;
-        preferences: Record<string, unknown>;
-        similarity: number;
-      }
-    >
-  > {
-    try {
-      const sql = `
-        SELECT id, user_id AS "userId", preferences, 1 - (embedding <=> $1::vector) AS similarity
-        FROM user_preferences
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> $1::vector
-        LIMIT $2;
-      `;
-      const res = await this.query(sql, [
-        JSON.stringify(queryEmbedding),
-        limit,
-      ]);
-      return res.rows;
-    } catch (error) {
-      console.warn(
-        "[DatabaseMemoryService] pgvector preferences search failed, running fallback:",
-        error instanceof Error ? error.message : String(error),
-      );
-
-      const sql = `
-        SELECT id, user_id AS "userId", preferences, embedding
-        FROM user_preferences
-        WHERE embedding IS NOT NULL;
-      `;
-      const res = await this.query(sql);
-      const rows = res.rows as any[];
-      const similarityList = rows.map((row) => {
-        let emb = row.embedding;
-        if (typeof emb === "string") {
-          if (emb.startsWith("[")) emb = JSON.parse(emb);
-          else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
-        }
-        return {
-          id: row.id,
-          userId: row.userId,
-          preferences: row.preferences,
-          similarity: cosineSimilarity(queryEmbedding, emb as number[]),
-        };
-      });
-      similarityList.sort((a, b) => b.similarity - a.similarity);
-      return similarityList.slice(0, limit);
-    }
+  ): Promise<SimilarPreference[]> {
+    return await this.searchEmbeddings(preferenceSearch(queryEmbedding, limit));
   }
 
   /**
@@ -423,58 +236,8 @@ export class DatabaseMemoryService {
   public async searchSimilarCultureMemory(
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<
-    Array<
-      {
-        id: string;
-        businessId: string;
-        cultureData: Record<string, unknown>;
-        similarity: number;
-      }
-    >
-  > {
-    try {
-      const sql = `
-        SELECT id, business_id AS "businessId", culture_data AS "cultureData", 1 - (embedding <=> $1::vector) AS similarity
-        FROM company_culture_memory
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> $1::vector
-        LIMIT $2;
-      `;
-      const res = await this.query(sql, [
-        JSON.stringify(queryEmbedding),
-        limit,
-      ]);
-      return res.rows;
-    } catch (error) {
-      console.warn(
-        "[DatabaseMemoryService] pgvector culture search failed, running fallback:",
-        error instanceof Error ? error.message : String(error),
-      );
-
-      const sql = `
-        SELECT id, business_id AS "businessId", culture_data AS "cultureData", embedding
-        FROM company_culture_memory
-        WHERE embedding IS NOT NULL;
-      `;
-      const res = await this.query(sql);
-      const rows = res.rows as any[];
-      const similarityList = rows.map((row) => {
-        let emb = row.embedding;
-        if (typeof emb === "string") {
-          if (emb.startsWith("[")) emb = JSON.parse(emb);
-          else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
-        }
-        return {
-          id: row.id,
-          businessId: row.businessId,
-          cultureData: row.cultureData,
-          similarity: cosineSimilarity(queryEmbedding, emb as number[]),
-        };
-      });
-      similarityList.sort((a, b) => b.similarity - a.similarity);
-      return similarityList.slice(0, limit);
-    }
+  ): Promise<SimilarCultureMemory[]> {
+    return await this.searchEmbeddings(cultureSearch(queryEmbedding, limit));
   }
 
   /**
@@ -484,8 +247,8 @@ export class DatabaseMemoryService {
     sql: string,
     params?: unknown[],
   ): Promise<T[]> {
-    const res = await this.query(sql, params as any[]);
-    return res.rows as T[];
+    const res = await this.query<T>(sql, params);
+    return res.rows;
   }
 
   /**
@@ -519,59 +282,10 @@ export class DatabaseMemoryService {
     dealId: string,
     queryEmbedding: number[],
     limit = 5,
-  ): Promise<
-    Array<
-      {
-        documentName: string;
-        chunkIndex: number;
-        textChunk: string;
-        similarity: number;
-      }
-    >
-  > {
-    try {
-      const sql = `
-        SELECT document_name AS "documentName", chunk_index AS "chunkIndex", text_chunk AS "textChunk", 1 - (embedding <=> $1::vector) AS similarity
-        FROM vdr_document_chunks
-        WHERE deal_id = $2 AND embedding IS NOT NULL
-        ORDER BY embedding <=> $1::vector
-        LIMIT $3;
-      `;
-      const res = await this.query(sql, [
-        JSON.stringify(queryEmbedding),
-        dealId,
-        limit,
-      ]);
-      return res.rows;
-    } catch (error) {
-      console.warn(
-        "[DatabaseMemoryService] pgvector VDR search failed, running fallback:",
-        error instanceof Error ? error.message : String(error),
-      );
-
-      const sql = `
-        SELECT document_name, chunk_index, text_chunk, embedding
-        FROM vdr_document_chunks
-        WHERE deal_id = $1 AND embedding IS NOT NULL;
-      `;
-      const res = await this.query(sql, [dealId]);
-      const rows = res.rows as any[];
-      const similarityList = rows.map((row) => {
-        let emb = row.embedding;
-        if (typeof emb === "string") {
-          if (emb.startsWith("[")) emb = JSON.parse(emb);
-          else emb = emb.replace(/[{}]/g, "").split(",").map(Number);
-        }
-        return {
-          documentName: row.document_name,
-          chunkIndex: row.chunk_index,
-          textChunk: row.text_chunk,
-          similarity: cosineSimilarity(queryEmbedding, emb as number[]),
-        };
-      });
-      similarityList.sort((a, b) => b.similarity - a.similarity);
-      return similarityList.slice(0, limit);
-    }
+  ): Promise<SimilarVdrChunk[]> {
+    return await this.searchEmbeddings(
+      vdrSearch(dealId, queryEmbedding, limit),
+    );
   }
 
   /**
@@ -610,10 +324,43 @@ export class DatabaseMemoryService {
       ORDER BY created_at DESC
       LIMIT 1;
     `;
-    const res = await this.query(sql, [transactionId, agentId]);
-    if (res.rows && res.rows.length > 0) {
+    const res = await this.query<{ state: Record<string, unknown> }>(sql, [
+      transactionId,
+      agentId,
+    ]);
+    if (res.rows.length > 0) {
       return res.rows[0].state;
     }
     return null;
+  }
+
+  private async searchEmbeddings<TRow extends EmbeddedRow, TResult>(
+    config: SimilaritySearchConfig<TRow, TResult>,
+  ): Promise<TResult[]> {
+    try {
+      const result = await this.query<TResult>(
+        config.nativeSql,
+        config.nativeParams,
+      );
+      return result.rows;
+    } catch (error: unknown) {
+      console.warn(`${config.warning}; running in-memory fallback:`, error);
+      return await this.fallbackEmbeddings(config);
+    }
+  }
+
+  private async fallbackEmbeddings<TRow extends EmbeddedRow, TResult>(
+    config: SimilaritySearchConfig<TRow, TResult>,
+  ): Promise<TResult[]> {
+    const result = await this.query<TRow>(
+      config.fallbackSql,
+      config.fallbackParams,
+    );
+    return rankBySimilarity(
+      result.rows,
+      config.queryEmbedding,
+      config.limit,
+      config.map,
+    );
   }
 }

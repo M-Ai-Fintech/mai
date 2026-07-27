@@ -6,6 +6,7 @@
 import { AIProvider } from "./ai_provider.ts";
 
 import { Agent } from "@mastra/core/agent";
+import { JsonObject } from "../shared/json.ts";
 
 // Initializes the AI provider configuration (ensuring that if there is no key there will be no runtime crash)
 const aiConfig = AIProvider.getApiKey();
@@ -14,23 +15,21 @@ if (aiConfig.isFallback) {
   Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", "mock-key-for-dry-run");
 
   // Monkeypatch Agent.prototype.generate to prevent real API calls without keys
-  Agent.prototype.generate = async function (
-    this: any,
-    prompt: string,
-    _options?: any,
-  ) {
+  Agent.prototype.generate = function (prompt: string) {
+    const promptText = String(prompt);
     console.warn(
       `[MOCK - ${
         this.name || this.id || "Agent"
       }] Operation intercepted in dry-run mode.`,
     );
-    return {
+    const response = {
       text: `[DRY-RUN/MOCK - ${
         this.name || this.id || "Agent"
       }] Simulated response because no Google AI Studio/Gemini key was configured. Prompt sent: "${
-        prompt.substring(0, 100).replace(/\n/g, " ")
+        promptText.substring(0, 100).replace(/\n/g, " ")
       }..."`,
-    } as any;
+    };
+    return Promise.resolve(response) as ReturnType<Agent["generate"]>;
   };
 } else if (aiConfig.key) {
   // Ensures the SDK reads the correct key
@@ -77,7 +76,7 @@ export {
 import { TransformersEngine } from "../engines/prediction/transformers.ts";
 
 export class ComplianceConflictError extends Error {
-  constructor(message: string, public preferenceData: any) {
+  constructor(message: string, public preferenceData: JsonObject) {
     super(message);
     this.name = "ComplianceConflictError";
   }
@@ -90,81 +89,8 @@ export class AgentOrchestrator {
     context = "",
     bypassConflict = false,
   ): Promise<string> {
-    const orchestratorService = new BrokerOrchestratorService();
-    let dynamicPreferences = "";
-    let dynamicKnowledge = "";
-
-    try {
-      const queryEmbedding = await TransformersEngine.generateEmbedding(query);
-      const dynamicContext = await orchestratorService.getOrchestratorContext(
-        "default_user",
-        "general",
-        queryEmbedding,
-      );
-
-      // Compliance check on retrieved preferences
-      if (!bypassConflict && dynamicContext.preferences) {
-        const preferencesList = Array.isArray(dynamicContext.preferences)
-          ? dynamicContext.preferences
-          : [dynamicContext.preferences];
-
-        for (const pref of preferencesList) {
-          if (!pref) continue;
-          const prefData =
-            (pref && typeof pref === "object" && "preferences" in pref)
-              ? pref.preferences as Record<string, any>
-              : pref as Record<string, any>;
-
-          const prefStr = JSON.stringify(prefData).toLowerCase();
-          const hasSemanticConflict = prefStr.includes("omit split payment") ||
-            prefStr.includes("omit provis") ||
-            prefStr.includes("omit conting") ||
-            (prefData && prefData.requiresHitlApproval &&
-              !prefData.hitlApproved);
-
-          if (hasSemanticConflict) {
-            const reason = prefData.conflictReason ||
-              (prefData.reason &&
-                  prefData.reason.toLowerCase().includes("conflict")
-                ? prefData.reason
-                : undefined) ||
-              "Fiduciary Rule Conflict: Conflict with fiduciary compliance rule (LC 214/2025 or contingency provision).";
-            throw new ComplianceConflictError(reason, prefData);
-          }
-        }
-      }
-
-      dynamicPreferences = JSON.stringify(dynamicContext.preferences, null, 2);
-      dynamicKnowledge = JSON.stringify(
-        dynamicContext.domainKnowledge,
-        null,
-        2,
-      );
-    } catch (err) {
-      if (err instanceof ComplianceConflictError) {
-        throw err;
-      }
-      console.warn(
-        "Failed to retrieve dynamic context for prompt injection:",
-        err,
-      );
-    }
-
-    const prompt = `
-## Deal Context [${dealId}]
-${context || "No RAG context available at the moment."}
-
-## User Preferences (Continuous Learning)
-${dynamicPreferences || "No recorded preferences."}
-
-## Legal/Tax Domain Knowledge
-${dynamicKnowledge || "No recorded domain knowledge."}
-
-## Broker Instruction
-${query}
-`;
-
-    // Recheck fallback to avoid API calls with a placeholder key.
+    const dynamicContext = await loadPromptContext(query, bypassConflict);
+    const prompt = brokerPrompt(dealId, query, context, dynamicContext);
     if (aiConfig.isFallback) {
       console.warn(
         "[MOCK] Operation intercepted: Broker Orchestrator response simulation.",
@@ -175,4 +101,93 @@ ${query}
     const response = await brokerOrchestratorAgent.generate(prompt);
     return response.text || String(response);
   }
+}
+
+interface PromptContext {
+  preferences: string;
+  knowledge: string;
+}
+
+async function loadPromptContext(
+  query: string,
+  bypassConflict: boolean,
+): Promise<PromptContext> {
+  try {
+    const embedding = await TransformersEngine.generateEmbedding(query);
+    const context = await new BrokerOrchestratorService()
+      .getOrchestratorContext("default_user", "general", embedding);
+    if (!bypassConflict) assertCompliantPreferences(context.preferences);
+    return {
+      preferences: JSON.stringify(context.preferences, null, 2),
+      knowledge: JSON.stringify(context.domainKnowledge, null, 2),
+    };
+  } catch (error: unknown) {
+    if (error instanceof ComplianceConflictError) throw error;
+    console.warn("Failed to retrieve dynamic prompt context:", error);
+    return { preferences: "", knowledge: "" };
+  }
+}
+
+function assertCompliantPreferences(preferences: unknown): void {
+  const entries = Array.isArray(preferences) ? preferences : [preferences];
+  for (const entry of entries) {
+    if (!entry) continue;
+    const preference = preferencePayload(entry);
+    if (hasComplianceConflict(preference)) {
+      throw new ComplianceConflictError(conflictReason(preference), preference);
+    }
+  }
+}
+
+function preferencePayload(entry: unknown): JsonObject {
+  if (typeof entry !== "object" || entry === null) return {};
+  if ("preferences" in entry && isJsonObject(entry.preferences)) {
+    return entry.preferences;
+  }
+  return isJsonObject(entry) ? entry : {};
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasComplianceConflict(preference: JsonObject): boolean {
+  const serialized = JSON.stringify(preference).toLowerCase();
+  return serialized.includes("omit split payment") ||
+    serialized.includes("omit provis") ||
+    serialized.includes("omit conting") ||
+    preference.requiresHitlApproval === true &&
+      preference.hitlApproved !== true;
+}
+
+function conflictReason(preference: JsonObject): string {
+  if (typeof preference.conflictReason === "string") {
+    return preference.conflictReason;
+  }
+  if (
+    typeof preference.reason === "string" &&
+    preference.reason.toLowerCase().includes("conflict")
+  ) return preference.reason;
+  return "Fiduciary Rule Conflict: Conflict with fiduciary compliance rule (LC 214/2025 or contingency provision).";
+}
+
+function brokerPrompt(
+  dealId: string,
+  query: string,
+  ragContext: string,
+  dynamic: PromptContext,
+): string {
+  return `
+## Deal Context [${dealId}]
+${ragContext || "No RAG context available at the moment."}
+
+## User Preferences (Continuous Learning)
+${dynamic.preferences || "No recorded preferences."}
+
+## Legal/Tax Domain Knowledge
+${dynamic.knowledge || "No recorded domain knowledge."}
+
+## Broker Instruction
+${query}
+`;
 }

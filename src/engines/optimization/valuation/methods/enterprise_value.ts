@@ -7,7 +7,6 @@
 import type {
   EnterpriseValueInput,
   MethodResult,
-  ValuationFlag,
 } from "../../../../shared/types.ts";
 
 /**
@@ -22,20 +21,13 @@ export function computeEnterpriseValue(
 ): MethodResult {
   if (data.totalDebt < 0 || data.cashAndEquivalents < 0) {
     throw new RangeError(
-      "[ValuationEngine:EnterpriseValue] Total debt and cash must be >= 0.",
+      `[ValuationEngine:EnterpriseValue] debt/cash was ${data.totalDebt}/${data.cashAndEquivalents}; expected non-negative values.`,
     );
   }
-
-  const ev = data.marketCap + data.totalDebt - data.cashAndEquivalents;
-  const flags: ValuationFlag[] = [];
-
-  if (ev < 0) {
-    flags.push("NEGATIVE_ENTERPRISE_VALUE");
-  }
-
+  const value = data.marketCap + data.totalDebt - data.cashAndEquivalents;
   return {
     method: "Enterprise Value (EV)",
-    value: ev,
-    flags,
+    value,
+    flags: value < 0 ? ["NEGATIVE_ENTERPRISE_VALUE"] : [],
   };
 }

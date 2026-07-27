@@ -1,18 +1,19 @@
-import { assertEquals, assertExists, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { vdrStructuredAccessTool } from "../../src/agent/actions.ts";
+import { testToolContext } from "../support/tool_context.ts";
+import { requireArray, requireRecord } from "../support/value_guards.ts";
 
 Deno.test("vdrStructuredAccessTool - list_files", async () => {
   const result = await vdrStructuredAccessTool.execute!({
     action: "list_files",
     dealId: "test-deal",
-  }, {} as any);
-  assertExists(result);
-  assertEquals((result as any).success, true);
-  assertEquals((result as any).dealId, "test-deal");
-  assertExists((result as any).files);
-  assertEquals(Array.isArray((result as any).files), true);
-  if ((result as any).files.length > 0) {
-    assertExists((result as any).files[0].tag);
+  }, testToolContext);
+  const output = requireRecord(result);
+  const files = requireArray(output.files, "files");
+  assertEquals(output.success, true);
+  assertEquals(output.dealId, "test-deal");
+  if (files.length > 0) {
+    assertExists(requireRecord(files[0]).tag);
   }
 });
 
@@ -21,8 +22,8 @@ Deno.test("vdrStructuredAccessTool - read_file_content (error propagation)", asy
     await vdrStructuredAccessTool.execute!({
       action: "read_file_content",
       dealId: "test-deal",
-      fileName: "Estatuto_Social.pdf"
-    }, {} as any);
+      fileName: "Estatuto_Social.pdf",
+    }, testToolContext);
   });
 });
 
@@ -31,23 +32,23 @@ Deno.test("vdrStructuredAccessTool - query_silo", async () => {
     action: "query_silo",
     dealId: "test-deal",
     queryText: "Change of control",
-    topK: 2
-  }, {} as any);
-  assertExists(result);
-  assertEquals((result as any).success, true);
-  assertEquals((result as any).dealId, "test-deal");
-  assertEquals((result as any).query, "Change of control");
-  assertExists((result as any).results);
+    topK: 2,
+  }, testToolContext);
+  const output = requireRecord(result);
+  assertEquals(output.success, true);
+  assertEquals(output.dealId, "test-deal");
+  assertEquals(output.query, "Change of control");
+  assertExists(output.results);
 });
 
 Deno.test("vdrStructuredAccessTool - audit_compliance", async () => {
   const result = await vdrStructuredAccessTool.execute!({
     action: "audit_compliance",
     dealId: "test-deal",
-  }, {} as any);
-  assertExists(result);
-  assertEquals((result as any).success, true);
-  assertEquals((result as any).dealId, "test-deal");
-  assertExists((result as any).status);
-  assertExists((result as any).missingCategories);
+  }, testToolContext);
+  const output = requireRecord(result);
+  assertEquals(output.success, true);
+  assertEquals(output.dealId, "test-deal");
+  assertExists(output.status);
+  requireArray(output.missingCategories, "missingCategories");
 });

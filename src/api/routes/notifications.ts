@@ -14,39 +14,44 @@ const markRead = z.object({ read: z.literal(true) }).strict();
 export async function handleNotificationRoutes(
   context: MvpRouteContext,
 ): Promise<Response | null> {
-  const { request, url, path, method, store } = context;
+  return listNotifications(context) ?? await updateNotification(context);
+}
 
-  if (path === "/api/notifications") {
-    if (method !== "GET") return methodNotAllowed(["GET"]);
-    const unreadOnlyValue = url.searchParams.get("unreadOnly");
-    const unreadOnly = parseBooleanQuery(unreadOnlyValue);
-    if (unreadOnlyValue !== null && unreadOnly === undefined) {
-      throw new HttpRouteError(
-        400,
-        "INVALID_QUERY",
-        "unreadOnly must be true or false",
-      );
-    }
-    const result = store.listNotifications({
-      unreadOnly,
-      cursor: url.searchParams.get("cursor") || undefined,
-      limit: parseLimit(url.searchParams.get("limit"), 20),
-    });
-    return new Response(JSON.stringify(result), {
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
+function listNotifications(context: MvpRouteContext): Response | null {
+  if (context.path !== "/api/notifications") return null;
+  if (context.method !== "GET") return methodNotAllowed(["GET"]);
+  const result = context.store.listNotifications({
+    unreadOnly: unreadOnlyQuery(context.url),
+    cursor: context.url.searchParams.get("cursor") || undefined,
+    limit: parseLimit(context.url.searchParams.get("limit"), 20),
+  });
+  return jsonResult(result);
+}
 
-  const notificationMatch = path.match(/^\/api\/notifications\/([^/]+)$/);
-  if (notificationMatch) {
-    const id = validateId(
-      decodeURIComponent(notificationMatch[1]),
-      "notificationId",
-    );
-    if (method !== "PATCH") return methodNotAllowed(["PATCH"]);
-    const input = markRead.parse(await bodyAsJson(request));
-    return jsonSuccess(store.markNotificationRead(id, input.read));
-  }
+function unreadOnlyQuery(url: URL): boolean | undefined {
+  const value = url.searchParams.get("unreadOnly");
+  const parsed = parseBooleanQuery(value);
+  if (value === null || parsed !== undefined) return parsed;
+  throw new HttpRouteError(
+    400,
+    "INVALID_QUERY",
+    `unreadOnly value "${value}" is invalid; expected "true" or "false"`,
+  );
+}
 
-  return null;
+async function updateNotification(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const match = context.path.match(/^\/api\/notifications\/([^/]+)$/);
+  if (!match) return null;
+  if (context.method !== "PATCH") return methodNotAllowed(["PATCH"]);
+  const id = validateId(decodeURIComponent(match[1]), "notificationId");
+  const input = markRead.parse(await bodyAsJson(context.request));
+  return jsonSuccess(context.store.markNotificationRead(id, input.read));
+}
+
+function jsonResult(value: unknown): Response {
+  return new Response(JSON.stringify(value), {
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
 }

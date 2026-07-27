@@ -1,82 +1,96 @@
-import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals, assertRejects } from "@std/assert";
 import { IDealsVDRProvider } from "../src/core/vdr/providers/ideals.ts";
 import { IntralinksVDRProvider } from "../src/core/vdr/providers/intralinks.ts";
 
 const mockSupergoodConfig = {
   apiKey: "test-api-key",
-  proxyUrl: "https://proxy.supergood.ai"
+  proxyUrl: "https://proxy.supergood.ai",
 };
 
-const idealsFixture = JSON.parse(Deno.readTextFileSync("./tests/fixtures/ideals.json"));
-const intralinksFixture = JSON.parse(Deno.readTextFileSync("./tests/fixtures/intralinks.json"));
+const idealsFixture = JSON.parse(
+  Deno.readTextFileSync("./tests/fixtures/ideals.json"),
+);
+const intralinksFixture = JSON.parse(
+  Deno.readTextFileSync("./tests/fixtures/intralinks.json"),
+);
 
-Deno.test("IDealsVDRProvider - listDocuments successful mapping", async () => {
-  const provider = new IDealsVDRProvider(mockSupergoodConfig);
-  
-  // Mock fetch
+class StaticFetch {
+  constructor(private readonly response: Response) {}
+
+  fetch(): Promise<Response> {
+    return Promise.resolve(this.response.clone());
+  }
+}
+
+async function withFakeFetch(
+  fakeFetch: StaticFetch,
+  test: () => Promise<void>,
+): Promise<void> {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (input, init) => {
-    return new Response(JSON.stringify(idealsFixture), { status: 200 });
-  };
-
+  globalThis.fetch = () => fakeFetch.fetch();
   try {
-    const docs = await provider.listDocuments();
-    assertEquals(docs.length, 2);
-    assertEquals(docs[0].id, "101");
-    assertEquals(docs[0].name, "financial_report.pdf");
-    assertEquals(docs[0].folderId, "10");
+    await test();
   } finally {
     globalThis.fetch = originalFetch;
   }
+}
+
+Deno.test("IDealsVDRProvider maps document fixtures", async () => {
+  const provider = new IDealsVDRProvider(mockSupergoodConfig);
+  const fakeFetch = new StaticFetch(
+    Response.json(idealsFixture, { status: 200 }),
+  );
+
+  await withFakeFetch(fakeFetch, async () => {
+    const documents = await provider.listDocuments();
+    assertEquals(documents.length, 2);
+    assertEquals(documents[0].id, "101");
+    assertEquals(documents[0].name, "financial_report.pdf");
+    assertEquals(documents[0].folderId, "10");
+  });
 });
 
-Deno.test("IDealsVDRProvider - error handling 401", async () => {
+Deno.test("IDealsVDRProvider explains rejected credentials", async () => {
   const provider = new IDealsVDRProvider(mockSupergoodConfig);
-  
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response("Unauthorized", { status: 401 });
+  const fakeFetch = new StaticFetch(
+    new Response("Unauthorized", { status: 401 }),
+  );
 
-  try {
+  await withFakeFetch(fakeFetch, async () => {
     await assertRejects(
       () => provider.listDocuments(),
       Error,
-      "iDeals API Error: Authentication expired or invalid credentials (401)."
+      "iDeals listDocuments rejected credentials; expected a valid, unexpired API credential (HTTP 401).",
     );
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  });
 });
 
-Deno.test("IntralinksVDRProvider - listDocuments successful mapping", async () => {
+Deno.test("IntralinksVDRProvider maps document fixtures", async () => {
   const provider = new IntralinksVDRProvider(mockSupergoodConfig);
-  
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify(intralinksFixture), { status: 200 });
+  const fakeFetch = new StaticFetch(
+    Response.json(intralinksFixture, { status: 200 }),
+  );
 
-  try {
-    const docs = await provider.listDocuments();
-    assertEquals(docs.length, 2);
-    assertEquals(docs[0].id, "201");
-    assertEquals(docs[0].name, "Q3_earnings.pdf");
-    assertEquals(docs[0].folderId, "20");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  await withFakeFetch(fakeFetch, async () => {
+    const documents = await provider.listDocuments();
+    assertEquals(documents.length, 2);
+    assertEquals(documents[0].id, "201");
+    assertEquals(documents[0].name, "Q3_earnings.pdf");
+    assertEquals(documents[0].folderId, "20");
+  });
 });
 
-Deno.test("IntralinksVDRProvider - error handling 429", async () => {
+Deno.test("IntralinksVDRProvider explains rate limiting", async () => {
   const provider = new IntralinksVDRProvider(mockSupergoodConfig);
-  
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response("Too Many Requests", { status: 429 });
+  const fakeFetch = new StaticFetch(
+    new Response("Too Many Requests", { status: 429 }),
+  );
 
-  try {
+  await withFakeFetch(fakeFetch, async () => {
     await assertRejects(
       () => provider.listDocuments(),
       Error,
-      "Intralinks API Error: Rate limit exceeded (429). Please try again later."
+      "Intralinks listDocuments exceeded its request quota; expected a request below the provider rate limit (HTTP 429).",
     );
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  });
 });

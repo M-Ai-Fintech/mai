@@ -1,146 +1,226 @@
-// src/engines/optimization/matching/term_sheet_optimizer.ts
-import { TermSheetOptimizerParams, TermSheetOptimizerResult } from "../types.ts";
+import {
+  TermSheetOptimizerParams,
+  TermSheetOptimizerResult,
+  TermSheetProposal,
+} from "../types.ts";
+
+type Preference = NonNullable<TermSheetOptimizerParams["preference"]>;
+interface Candidate {
+  c: TermSheetProposal;
+  f: number;
+}
 
 export class TermSheetOptimizer {
-  public static async run(params: TermSheetOptimizerParams): Promise<TermSheetOptimizerResult> {
-    const {
-      minBuyerReservationUtility,
-      minSellerReservationUtility,
-      populationSize,
-      generations,
-      mutationRate,
-      crossoverRate,
-      preference = "balanced",
-    } = params;
-
-    const calculateUtilities = (c: {
-      cashPercentage: number;
-      buyerEquityShare: number;
-      earnOutTargetYears: number;
-      nonCompeteMonths: number;
-    }) => {
-      let uS = 0.4 * c.cashPercentage +
-               0.3 * (1 - c.buyerEquityShare) +
-               0.15 * ((5 - c.earnOutTargetYears) / 4) +
-               0.15 * ((60 - c.nonCompeteMonths) / 48);
-      let uB = 0.35 * (1 - c.cashPercentage) +
-               0.35 * c.buyerEquityShare +
-               0.15 * ((c.earnOutTargetYears - 1) / 4) +
-               0.15 * ((c.nonCompeteMonths - 12) / 48);
-
-      if (preference === "liquidity") {
-        uS = 0.7 * c.cashPercentage +
-             0.1 * (1 - c.buyerEquityShare) +
-             0.1 * ((5 - c.earnOutTargetYears) / 4) +
-             0.1 * ((60 - c.nonCompeteMonths) / 48);
-        uB = 0.5 * (1 - c.cashPercentage) +
-             0.3 * c.buyerEquityShare +
-             0.1 * ((c.earnOutTargetYears - 1) / 4) +
-             0.1 * ((c.nonCompeteMonths - 12) / 48);
-      } else if (preference === "retention") {
-        uS = 0.2 * c.cashPercentage +
-             0.3 * (1 - c.buyerEquityShare) +
-             0.25 * ((5 - c.earnOutTargetYears) / 4) +
-             0.25 * ((60 - c.nonCompeteMonths) / 48);
-        uB = 0.2 * (1 - c.cashPercentage) +
-             0.2 * c.buyerEquityShare +
-             0.3 * ((c.earnOutTargetYears - 1) / 4) +
-             0.3 * ((c.nonCompeteMonths - 12) / 48);
-      }
-      return { uS, uB };
-    };
-
-    const fitness = (c: any) => {
-      const { uS, uB } = calculateUtilities(c);
-      if (uS < minSellerReservationUtility || uB < minBuyerReservationUtility) {
-        return 0;
-      }
-      return (uS - minSellerReservationUtility) * (uB - minBuyerReservationUtility);
-    };
-
-    const rand = () => ({
-      cashPercentage: 0.1 + Math.random() * 0.9,
-      buyerEquityShare: 0.1 + Math.random() * 0.9,
-      earnOutTargetYears: 1.0 + Math.random() * 4.0,
-      nonCompeteMonths: Math.floor(12 + Math.random() * 49),
-    });
-
-    let pop = Array.from({ length: populationSize }, () => {
-      const c = rand();
-      return { c, f: fitness(c) };
-    });
-
-    for (let g = 0; g < generations; g++) {
-      if (g % 10 === 0) {
+  public static async run(
+    params: TermSheetOptimizerParams,
+  ): Promise<TermSheetOptimizerResult> {
+    const preference = params.preference ?? "balanced";
+    const fitness = fitnessFunction(params, preference);
+    let population = initialPopulation(params.populationSize, fitness);
+    for (let generation = 0; generation < params.generations; generation++) {
+      if (generation % 10 === 0) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
-      pop.sort((a, b) => b.f - a.f);
-      const next: typeof pop = pop.slice(0, Math.floor(populationSize * 0.2));
-      while (next.length < populationSize) {
-        const pA = pop[Math.floor(Math.random() * pop.length * 0.5)].c;
-        const pB = pop[Math.floor(Math.random() * pop.length * 0.5)].c;
-        const child = {
-          cashPercentage: (pA.cashPercentage + pB.cashPercentage) / 2,
-          buyerEquityShare: (pA.buyerEquityShare + pB.buyerEquityShare) / 2,
-          earnOutTargetYears: (pA.earnOutTargetYears + pB.earnOutTargetYears) / 2,
-          nonCompeteMonths: Math.round((pA.nonCompeteMonths + pB.nonCompeteMonths) / 2),
-        };
-        // Use crossoverRate to maybe skip crossover and clone (simplified logic, just mutate mostly as before)
-        if (Math.random() < mutationRate) child.cashPercentage = Math.min(1.0, Math.max(0.1, child.cashPercentage + (Math.random() - 0.5) * 0.2));
-        if (Math.random() < mutationRate) child.buyerEquityShare = Math.min(1.0, Math.max(0.1, child.buyerEquityShare + (Math.random() - 0.5) * 0.2));
-        if (Math.random() < mutationRate) child.earnOutTargetYears = Math.min(5.0, Math.max(1.0, child.earnOutTargetYears + (Math.random() - 0.5) * 1.0));
-        if (Math.random() < mutationRate) child.nonCompeteMonths = Math.min(60, Math.max(12, Math.round(child.nonCompeteMonths + (Math.random() - 0.5) * 12)));
-        next.push({ c: child, f: fitness(child) });
-      }
-      pop = next;
+      population = evolvePopulation(population, params, fitness);
     }
+    return optimizerResult(bestCandidate(population), preference);
+  }
 
-    pop.sort((a, b) => b.f - a.f);
-    const best = pop[0];
-    const { uS, uB } = calculateUtilities(best.c);
+  public static evaluate(
+    solution: TermSheetProposal,
+    preference: Preference = "balanced",
+  ) {
+    const { buyer, seller } = calculateUtilities(solution, preference);
+    return { buyerUtility: buyer, sellerUtility: seller };
+  }
+}
 
+function fitnessFunction(
+  params: TermSheetOptimizerParams,
+  preference: Preference,
+) {
+  return (proposal: TermSheetProposal): number => {
+    const utility = calculateUtilities(proposal, preference);
+    if (
+      utility.seller < params.minSellerReservationUtility ||
+      utility.buyer < params.minBuyerReservationUtility
+    ) return 0;
+    return (utility.seller - params.minSellerReservationUtility) *
+      (utility.buyer - params.minBuyerReservationUtility);
+  };
+}
+
+function calculateUtilities(
+  proposal: TermSheetProposal,
+  preference: Preference,
+) {
+  const factors = utilityFactors(proposal);
+  const weights = utilityWeights(preference);
+  return {
+    seller: weightedUtility(factors.seller, weights.seller),
+    buyer: weightedUtility(factors.buyer, weights.buyer),
+  };
+}
+
+function utilityFactors(proposal: TermSheetProposal) {
+  return {
+    seller: [
+      proposal.cashPercentage,
+      1 - proposal.buyerEquityShare,
+      (5 - proposal.earnOutTargetYears) / 4,
+      (60 - proposal.nonCompeteMonths) / 48,
+    ],
+    buyer: [
+      1 - proposal.cashPercentage,
+      proposal.buyerEquityShare,
+      (proposal.earnOutTargetYears - 1) / 4,
+      (proposal.nonCompeteMonths - 12) / 48,
+    ],
+  };
+}
+
+function utilityWeights(preference: Preference) {
+  if (preference === "liquidity") {
+    return { seller: [0.7, 0.1, 0.1, 0.1], buyer: [0.5, 0.3, 0.1, 0.1] };
+  }
+  if (preference === "retention") {
     return {
-      bestProposal: {
-        cashPercentage: parseFloat(best.c.cashPercentage.toFixed(2)),
-        buyerEquityShare: parseFloat(best.c.buyerEquityShare.toFixed(2)),
-        earnOutTargetYears: parseFloat(best.c.earnOutTargetYears.toFixed(1)),
-        nonCompeteMonths: best.c.nonCompeteMonths,
-      },
-      buyerUtility: parseFloat(uB.toFixed(3)),
-      sellerUtility: parseFloat(uS.toFixed(3)),
-      fitness: parseFloat(best.f.toFixed(4)),
+      seller: [0.2, 0.3, 0.25, 0.25],
+      buyer: [0.2, 0.2, 0.3, 0.3],
     };
   }
+  return { seller: [0.4, 0.3, 0.15, 0.15], buyer: [0.35, 0.35, 0.15, 0.15] };
+}
 
-  public static evaluate(solution: any, preference: "liquidity" | "balanced" | "retention" = "balanced") {
-      let uS = 0.4 * solution.cashPercentage +
-               0.3 * (1 - solution.buyerEquityShare) +
-               0.15 * ((5 - solution.earnOutTargetYears) / 4) +
-               0.15 * ((60 - solution.nonCompeteMonths) / 48);
-      let uB = 0.35 * (1 - solution.cashPercentage) +
-               0.35 * solution.buyerEquityShare +
-               0.15 * ((solution.earnOutTargetYears - 1) / 4) +
-               0.15 * ((solution.nonCompeteMonths - 12) / 48);
+function weightedUtility(values: number[], weights: number[]): number {
+  return values.reduce(
+    (total, value, index) => total + value * weights[index],
+    0,
+  );
+}
 
-      if (preference === "liquidity") {
-        uS = 0.7 * solution.cashPercentage +
-             0.1 * (1 - solution.buyerEquityShare) +
-             0.1 * ((5 - solution.earnOutTargetYears) / 4) +
-             0.1 * ((60 - solution.nonCompeteMonths) / 48);
-        uB = 0.5 * (1 - solution.cashPercentage) +
-             0.3 * solution.buyerEquityShare +
-             0.1 * ((solution.earnOutTargetYears - 1) / 4) +
-             0.1 * ((solution.nonCompeteMonths - 12) / 48);
-      } else if (preference === "retention") {
-        uS = 0.2 * solution.cashPercentage +
-             0.3 * (1 - solution.buyerEquityShare) +
-             0.25 * ((5 - solution.earnOutTargetYears) / 4) +
-             0.25 * ((60 - solution.nonCompeteMonths) / 48);
-        uB = 0.2 * (1 - solution.cashPercentage) +
-             0.2 * solution.buyerEquityShare +
-             0.3 * ((solution.earnOutTargetYears - 1) / 4) +
-             0.3 * ((solution.nonCompeteMonths - 12) / 48);
-      }
-      return { buyerUtility: uB, sellerUtility: uS };
+function initialPopulation(
+  size: number,
+  fitness: (proposal: TermSheetProposal) => number,
+): Candidate[] {
+  return Array.from({ length: size }, () => {
+    const proposal = randomProposal();
+    return { c: proposal, f: fitness(proposal) };
+  });
+}
+
+function randomProposal(): TermSheetProposal {
+  return {
+    cashPercentage: 0.1 + Math.random() * 0.9,
+    buyerEquityShare: 0.1 + Math.random() * 0.9,
+    earnOutTargetYears: 1 + Math.random() * 4,
+    nonCompeteMonths: Math.floor(12 + Math.random() * 49),
+  };
+}
+
+function evolvePopulation(
+  population: Candidate[],
+  params: TermSheetOptimizerParams,
+  fitness: (proposal: TermSheetProposal) => number,
+): Candidate[] {
+  population.sort((left, right) => right.f - left.f);
+  const eliteCount = Math.floor(params.populationSize * 0.2);
+  const next = population.slice(0, eliteCount);
+  while (next.length < params.populationSize) {
+    const child = breed(selectParent(population), selectParent(population));
+    mutate(child, params.mutationRate);
+    next.push({ c: child, f: fitness(child) });
   }
+  return next;
+}
+
+function selectParent(population: Candidate[]): TermSheetProposal {
+  const index = Math.floor(Math.random() * population.length * 0.5);
+  return population[index].c;
+}
+
+function breed(
+  left: TermSheetProposal,
+  right: TermSheetProposal,
+): TermSheetProposal {
+  return {
+    cashPercentage: (left.cashPercentage + right.cashPercentage) / 2,
+    buyerEquityShare: (left.buyerEquityShare + right.buyerEquityShare) / 2,
+    earnOutTargetYears: (left.earnOutTargetYears + right.earnOutTargetYears) /
+      2,
+    nonCompeteMonths: Math.round(
+      (left.nonCompeteMonths + right.nonCompeteMonths) / 2,
+    ),
+  };
+}
+
+function mutate(proposal: TermSheetProposal, rate: number): void {
+  mutateOwnership(proposal, rate);
+  mutateTiming(proposal, rate);
+}
+
+function mutateOwnership(proposal: TermSheetProposal, rate: number): void {
+  proposal.cashPercentage = mutateValue(
+    proposal.cashPercentage,
+    rate,
+    0.1,
+    1,
+    0.2,
+  );
+  proposal.buyerEquityShare = mutateValue(
+    proposal.buyerEquityShare,
+    rate,
+    0.1,
+    1,
+    0.2,
+  );
+}
+
+function mutateTiming(proposal: TermSheetProposal, rate: number): void {
+  proposal.earnOutTargetYears = mutateValue(
+    proposal.earnOutTargetYears,
+    rate,
+    1,
+    5,
+    1,
+  );
+  proposal.nonCompeteMonths = Math.round(
+    mutateValue(proposal.nonCompeteMonths, rate, 12, 60, 12),
+  );
+}
+
+function mutateValue(
+  value: number,
+  rate: number,
+  minimum: number,
+  maximum: number,
+  range: number,
+): number {
+  if (Math.random() >= rate) return value;
+  return Math.min(
+    maximum,
+    Math.max(minimum, value + (Math.random() - 0.5) * range),
+  );
+}
+
+function bestCandidate(population: Candidate[]): Candidate {
+  return population.sort((left, right) => right.f - left.f)[0];
+}
+
+function optimizerResult(
+  best: Candidate,
+  preference: Preference,
+): TermSheetOptimizerResult {
+  const utility = calculateUtilities(best.c, preference);
+  return {
+    bestProposal: {
+      cashPercentage: Number(best.c.cashPercentage.toFixed(2)),
+      buyerEquityShare: Number(best.c.buyerEquityShare.toFixed(2)),
+      earnOutTargetYears: Number(best.c.earnOutTargetYears.toFixed(1)),
+      nonCompeteMonths: best.c.nonCompeteMonths,
+    },
+    buyerUtility: Number(utility.buyer.toFixed(3)),
+    sellerUtility: Number(utility.seller.toFixed(3)),
+    fitness: Number(best.f.toFixed(4)),
+  };
 }

@@ -2,6 +2,7 @@ import type { DashboardLayout } from "@/lib/api-client";
 
 export type DashboardWidget = DashboardLayout["widgets"][number];
 export type DashboardWidgetType = DashboardWidget["type"];
+export type DashboardWidgetScreenState = "ready" | "empty";
 
 const widgetSizes: Record<DashboardWidgetType, { w: number; h: number }> = {
   kpi: { w: 4, h: 2 },
@@ -20,26 +21,56 @@ const widgetPresets: Record<
   risk_summary: [{ w: 4, h: 3 }, { w: 6, h: 3 }, { w: 12, h: 4 }],
 };
 
+interface DashboardGridCursor {
+  x: number;
+  y: number;
+  rowHeight: number;
+}
+
 function reflowDashboardWidgets(widgets: DashboardWidget[]): DashboardWidget[] {
-  let x = 0;
-  let y = 0;
-  let rowHeight = 0;
+  let cursor = { x: 0, y: 0, rowHeight: 0 };
   return widgets.map((widget) => {
-    if (x + widget.grid.w > 12) {
-      x = 0;
-      y += rowHeight;
-      rowHeight = 0;
-    }
-    const placed = { ...widget, grid: { ...widget.grid, x, y } };
-    x += widget.grid.w;
-    rowHeight = Math.max(rowHeight, widget.grid.h);
-    if (x === 12) {
-      x = 0;
-      y += rowHeight;
-      rowHeight = 0;
-    }
-    return placed;
+    const result = placeDashboardWidget(widget, cursor);
+    cursor = result.cursor;
+    return result.widget;
   });
+}
+
+function placeDashboardWidget(
+  widget: DashboardWidget,
+  cursor: DashboardGridCursor,
+): { widget: DashboardWidget; cursor: DashboardGridCursor } {
+  const wrapped = wrapDashboardGridRow(cursor, widget);
+  const placed = {
+    ...widget,
+    grid: { ...widget.grid, x: wrapped.x, y: wrapped.y },
+  };
+  return {
+    widget: placed,
+    cursor: advanceDashboardGridCursor(wrapped, widget),
+  };
+}
+
+function wrapDashboardGridRow(
+  cursor: DashboardGridCursor,
+  widget: DashboardWidget,
+): DashboardGridCursor {
+  if (cursor.x + widget.grid.w <= 12) return cursor;
+  return { x: 0, y: cursor.y + cursor.rowHeight, rowHeight: 0 };
+}
+
+function advanceDashboardGridCursor(
+  cursor: DashboardGridCursor,
+  widget: DashboardWidget,
+): DashboardGridCursor {
+  const next = {
+    x: cursor.x + widget.grid.w,
+    y: cursor.y,
+    rowHeight: Math.max(cursor.rowHeight, widget.grid.h),
+  };
+  return next.x === 12
+    ? { x: 0, y: next.y + next.rowHeight, rowHeight: 0 }
+    : next;
 }
 
 export function addDashboardWidget(
@@ -48,22 +79,59 @@ export function addDashboardWidget(
   instanceId: string,
   config: Record<string, string> = {},
 ): DashboardWidget[] {
-  const size = widgetSizes[type];
-  const y = widgets.reduce(
+  return [...widgets, newDashboardWidget(widgets, type, instanceId, config)];
+}
+
+function newDashboardWidget(
+  widgets: DashboardWidget[],
+  type: DashboardWidgetType,
+  instanceId: string,
+  config: Record<string, string>,
+): DashboardWidget {
+  return {
+    instanceId,
+    type,
+    grid: { x: 0, y: nextDashboardWidgetY(widgets), ...widgetSizes[type] },
+    config: dashboardWidgetInitialConfig(type, config),
+  };
+}
+
+function nextDashboardWidgetY(widgets: DashboardWidget[]): number {
+  return widgets.reduce(
     (maximum, widget) => Math.max(maximum, widget.grid.y + widget.grid.h),
     0,
   );
-  return [
-    ...widgets,
-    {
-      instanceId,
-      type,
-      grid: { x: 0, y, ...size },
-      config: type === "kpi"
-        ? { metric: config.metric ?? "pipeline_value", ...config }
-        : config,
-    },
-  ];
+}
+
+function dashboardWidgetInitialConfig(
+  type: DashboardWidgetType,
+  config: Record<string, string>,
+): Record<string, string> {
+  return type === "kpi"
+    ? { metric: config.metric ?? "pipeline_value", ...config }
+    : config;
+}
+
+export function dashboardWidgetsChanged(
+  draftWidgets: DashboardWidget[],
+  persistedWidgets: DashboardWidget[],
+): boolean {
+  return JSON.stringify(draftWidgets) !== JSON.stringify(persistedWidgets);
+}
+
+export function dashboardScreenState(
+  widgets: DashboardWidget[],
+): DashboardWidgetScreenState {
+  return widgets.length ? "ready" : "empty";
+}
+
+export function dashboardWidgetConfig(
+  type: DashboardWidgetType,
+  title: string,
+  kpiMetric: string,
+): Record<string, string> {
+  const config = { title: title.trim() };
+  return type === "kpi" ? { ...config, metric: kpiMetric } : config;
 }
 
 export function moveDashboardWidget(

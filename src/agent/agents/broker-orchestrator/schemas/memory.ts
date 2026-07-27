@@ -5,5 +5,5 @@ export const memorySchema = z.object({
   subCategory: z.string(),
   content: z.string(),
   confidence: z.number().min(0).max(1),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });

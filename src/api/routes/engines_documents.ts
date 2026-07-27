@@ -32,21 +32,7 @@ const createDocument = z.object({
 
 function listVdrDocuments(store: MvpStore, dealId: string, url: URL): Response {
   store.getTeamAssignments(dealId);
-  const documents: VdrDocument[] = [{
-    id: "00000000-0000-4000-8000-000000000061",
-    dealId,
-    name: "FY25 Financial Statements.pdf",
-    mimeType: "application/pdf",
-    sizeBytes: 1_842_000,
-    createdAt: "2026-07-19T12:00:00.000Z",
-  }, {
-    id: "00000000-0000-4000-8000-000000000062",
-    dealId,
-    name: "Material Contracts.pdf",
-    mimeType: "application/pdf",
-    sizeBytes: 924_000,
-    createdAt: "2026-07-19T12:01:00.000Z",
-  }];
+  const documents = sampleVdrDocuments(dealId);
   const query = parsePaginationQuery(url.searchParams);
   const start = (query.page - 1) * query.pageSize;
   return jsonListSuccess(documents.slice(start, start + query.pageSize), {
@@ -56,110 +42,206 @@ function listVdrDocuments(store: MvpStore, dealId: string, url: URL): Response {
   });
 }
 
+function sampleVdrDocuments(dealId: string): VdrDocument[] {
+  const shared = { dealId, mimeType: "application/pdf" };
+  return [
+    {
+      ...shared,
+      id: "00000000-0000-4000-8000-000000000061",
+      name: "FY25 Financial Statements.pdf",
+      sizeBytes: 1_842_000,
+      createdAt: "2026-07-19T12:00:00.000Z",
+    },
+    {
+      ...shared,
+      id: "00000000-0000-4000-8000-000000000062",
+      name: "Material Contracts.pdf",
+      sizeBytes: 924_000,
+      createdAt: "2026-07-19T12:01:00.000Z",
+    },
+  ];
+}
+
 export async function handleEngineAndDocumentRoutes(
   context: MvpRouteContext,
 ): Promise<Response | null> {
-  const {
-    request,
-    url,
-    path,
-    method,
-    store,
-    runEngine,
-    createDocument: createDocumentResource,
-  } = context;
+  return await handleEngineRuns(context) ??
+    handleVdrDocuments(context) ??
+    await handleGeneratedDocuments(context);
+}
 
+async function handleEngineRuns(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const { path } = context;
   const engineMatch = path.match(/^\/api\/deals\/([^/]+)\/engine-runs$/);
-  if (engineMatch) {
-    const dealId = validateId(decodeURIComponent(engineMatch[1]), "dealId");
-    if (method === "GET") {
-      const query = parsePaginationQuery(url.searchParams);
-      const engineValue = url.searchParams.get("engine");
-      const engine = engineValue ? engineKind.safeParse(engineValue) : null;
-      if (engine && !engine.success) {
-        throw new HttpRouteError(400, "INVALID_QUERY", "Unknown engine");
-      }
-      const result = store.listEngineRuns(dealId, {
-        ...query,
-        engine: engine?.success ? engine.data : undefined,
-      });
-      return jsonListSuccess(result.data, result.meta);
-    }
-    if (method === "POST") {
-      const input = createEngineRun.parse(await bodyAsJson(request));
-      const queued = store.createEngineRun(dealId, input.engine, input.input);
-      try {
-        const result = await runEngine({
-          dealId,
-          engine: input.engine,
-          input: input.input,
-        });
-        const completed = store.updateEngineRun(dealId, queued.id, {
-          status: EngineRunStatus.Completed,
-          result,
-        });
-        return jsonSuccess(completed, { status: 201 });
-      } catch (cause) {
-        const message = cause instanceof Error
-          ? cause.message
-          : "Engine execution failed";
-        const failed = store.updateEngineRun(dealId, queued.id, {
-          status: EngineRunStatus.Failed,
-          error: { code: "ENGINE_EXECUTION_FAILED", message },
-        });
-        return jsonSuccess(failed, { status: 201 });
-      }
-    }
-    return methodNotAllowed(["GET", "POST"]);
+  if (!engineMatch) return null;
+  const dealId = matchedDealId(engineMatch);
+  if (context.method === "GET") return listEngineRuns(context, dealId);
+  if (context.method === "POST") {
+    return await runRequestedEngine(context, dealId);
   }
+  return methodNotAllowed(["GET", "POST"]);
+}
 
-  const vdrMatch = path.match(/^\/api\/deals\/([^/]+)\/vdr-documents$/);
-  if (vdrMatch) {
-    const dealId = validateId(decodeURIComponent(vdrMatch[1]), "dealId");
-    if (method !== "GET") return methodNotAllowed(["GET"]);
-    return listVdrDocuments(store, dealId, url);
-  }
+function listEngineRuns(context: MvpRouteContext, dealId: string): Response {
+  const { url, store } = context;
+  const engine = parsedEngine(url.searchParams.get("engine"));
+  const result = store.listEngineRuns(dealId, {
+    ...parsePaginationQuery(url.searchParams),
+    engine,
+  });
+  return jsonListSuccess(result.data, result.meta);
+}
 
-  const documentsMatch = path.match(/^\/api\/deals\/([^/]+)\/documents$/);
-  if (documentsMatch) {
-    const dealId = validateId(
-      decodeURIComponent(documentsMatch[1]),
-      "dealId",
+function parsedEngine(value: string | null): EngineKind | undefined {
+  if (!value) return undefined;
+  const parsed = engineKind.safeParse(value);
+  if (parsed.success) return parsed.data;
+  throw new HttpRouteError(
+    400,
+    "INVALID_QUERY",
+    `Unknown engine "${value}"; expected a supported engine kind.`,
+  );
+}
+
+async function runRequestedEngine(
+  context: MvpRouteContext,
+  dealId: string,
+): Promise<Response> {
+  const input = createEngineRun.parse(await bodyAsJson(context.request));
+  const queued = context.store.createEngineRun(
+    dealId,
+    input.engine,
+    input.input,
+  );
+  return await executeEngine(context, dealId, queued.id, input);
+}
+
+async function executeEngine(
+  context: MvpRouteContext,
+  dealId: string,
+  runId: string,
+  input: z.infer<typeof createEngineRun>,
+): Promise<Response> {
+  try {
+    const result = await context.runEngine({ dealId, ...input });
+    return completedEngineResponse(
+      context.store,
+      dealId,
+      runId,
+      recordResult(result),
     );
-    if (method !== "POST") return methodNotAllowed(["POST"]);
-    const input = createDocument.parse(await bodyAsJson(request));
-    const sourceRun = store.listEngineRuns(dealId, { page: 1, pageSize: 100 })
-      .data
-      .find((run) => run.id === input.sourceRunId);
-    if (!sourceRun) {
-      throw new HttpRouteError(
-        404,
-        "ENGINE_RUN_NOT_FOUND",
-        "Source engine run not found",
-      );
-    }
-    if (sourceRun.status !== EngineRunStatus.Completed) {
-      throw new HttpRouteError(
-        409,
-        "ENGINE_RUN_NOT_COMPLETED",
-        "Source engine run is not completed",
-      );
-    }
-    const document = await createDocumentResource({ dealId, ...input });
-    if (
-      document.dealId !== dealId || document.sourceRunId !== input.sourceRunId
-    ) {
-      throw new HttpRouteError(
-        500,
-        "DOCUMENT_CONTRACT_ERROR",
-        "Generated document scope is invalid",
-      );
-    }
-    return jsonSuccess({
-      ...document,
-      downloadUrl: new URL(document.downloadUrl, url.origin).toString(),
-    }, { status: 201 });
+  } catch (error: unknown) {
+    return failedEngineResponse(context.store, dealId, runId, error);
   }
+}
 
-  return null;
+function completedEngineResponse(
+  store: MvpStore,
+  dealId: string,
+  runId: string,
+  result: Record<string, unknown>,
+): Response {
+  const completed = store.updateEngineRun(dealId, runId, {
+    status: EngineRunStatus.Completed,
+    result,
+  });
+  return jsonSuccess(completed, { status: 201 });
+}
+
+function recordResult(result: unknown): Record<string, unknown> {
+  return typeof result === "object" && result !== null && !Array.isArray(result)
+    ? result as Record<string, unknown>
+    : { value: result };
+}
+
+function failedEngineResponse(
+  store: MvpStore,
+  dealId: string,
+  runId: string,
+  error: unknown,
+): Response {
+  const message = error instanceof Error ? error.message : String(error);
+  const failed = store.updateEngineRun(dealId, runId, {
+    status: EngineRunStatus.Failed,
+    error: { code: "ENGINE_EXECUTION_FAILED", message },
+  });
+  return jsonSuccess(failed, { status: 201 });
+}
+
+function handleVdrDocuments(context: MvpRouteContext): Response | null {
+  const { path, method, store, url } = context;
+  const vdrMatch = path.match(/^\/api\/deals\/([^/]+)\/vdr-documents$/);
+  if (!vdrMatch) return null;
+  if (method !== "GET") return methodNotAllowed(["GET"]);
+  return listVdrDocuments(store, matchedDealId(vdrMatch), url);
+}
+
+async function handleGeneratedDocuments(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const { path, method, request, store, url } = context;
+  const documentsMatch = path.match(/^\/api\/deals\/([^/]+)\/documents$/);
+  if (!documentsMatch) return null;
+  if (method !== "POST") return methodNotAllowed(["POST"]);
+  const dealId = matchedDealId(documentsMatch);
+  const input = createDocument.parse(await bodyAsJson(request));
+  assertCompletedSourceRun(store, dealId, input.sourceRunId);
+  const document = await context.createDocument({ dealId, ...input });
+  assertDocumentScope(document, dealId, input.sourceRunId);
+  return jsonSuccess({
+    ...document,
+    downloadUrl: new URL(document.downloadUrl, url.origin).toString(),
+  }, { status: 201 });
+}
+
+function assertCompletedSourceRun(
+  store: MvpStore,
+  dealId: string,
+  sourceRunId: string,
+): void {
+  const runs = store.listEngineRuns(dealId, { page: 1, pageSize: 100 }).data;
+  const source = runs.find((run) => run.id === sourceRunId);
+  if (!source) throw missingSourceRun(sourceRunId, dealId);
+  if (source.status === EngineRunStatus.Completed) return;
+  throw incompleteSourceRun(sourceRunId, source.status);
+}
+
+function missingSourceRun(sourceRunId: string, dealId: string): HttpRouteError {
+  return new HttpRouteError(
+    404,
+    "ENGINE_RUN_NOT_FOUND",
+    `Source engine run "${sourceRunId}" was not found; expected a run for deal "${dealId}".`,
+  );
+}
+
+function incompleteSourceRun(
+  sourceRunId: string,
+  status: EngineRunStatus,
+): HttpRouteError {
+  return new HttpRouteError(
+    409,
+    "ENGINE_RUN_NOT_COMPLETED",
+    `Source engine run "${sourceRunId}" has status "${status}"; expected "completed".`,
+  );
+}
+
+function assertDocumentScope(
+  document: { dealId: string; sourceRunId: string },
+  dealId: string,
+  sourceRunId: string,
+): void {
+  if (document.dealId === dealId && document.sourceRunId === sourceRunId) {
+    return;
+  }
+  throw new HttpRouteError(
+    500,
+    "DOCUMENT_CONTRACT_ERROR",
+    `Generated document has deal "${document.dealId}" and run "${document.sourceRunId}"; expected deal "${dealId}" and run "${sourceRunId}".`,
+  );
+}
+
+function matchedDealId(match: RegExpMatchArray): string {
+  return validateId(decodeURIComponent(match[1]), "dealId");
 }

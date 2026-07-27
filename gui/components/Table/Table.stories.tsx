@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within } from "storybook/test";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import {
   Table,
@@ -18,6 +18,15 @@ const meta: Meta<typeof Table> = {
 
 export default meta;
 type Story = StoryObj<typeof Table>;
+
+interface SampleDeal {
+  id: string;
+  title: string;
+  code: string;
+  valuation: string;
+  phase: string;
+  updated: string;
+}
 
 const sampleDeals = [
   {
@@ -44,99 +53,116 @@ const sampleDeals = [
     phase: "Negotiation",
     updated: "10/07/2026",
   },
+] satisfies SampleDeal[];
+
+const financialHeadings = [
+  "Transaction / Target Company Name",
+  "Internal Code",
+  "Target Valuation",
+  "Current Phase",
+  "Actions",
 ];
 
-export const Default: Story = {
-  render: () => (
+function DefaultDealRow({ deal }: { deal: SampleDeal }) {
+  return (
+    <TableRow>
+      <TableCell className="font-semibold text-ink-black">
+        {deal.title}
+      </TableCell>
+      <TableCell className="text-slate-gray">{deal.code}</TableCell>
+      <TableCell className="font-bold text-ink-black">
+        {deal.valuation}
+      </TableCell>
+      <TableCell>
+        <Badge variant="default">{deal.phase}</Badge>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function DefaultTable() {
+  return (
     <Table>
       <TableHead>
         <TableRow isHeader>
-          <TableCell isHeader>Target Company</TableCell>
-          <TableCell isHeader>Code</TableCell>
-          <TableCell isHeader>Target Valuation</TableCell>
-          <TableCell isHeader>Phase</TableCell>
+          {["Target Company", "Code", "Target Valuation", "Phase"].map(
+            (label) => <TableCell key={label} isHeader>{label}</TableCell>,
+          )}
         </TableRow>
       </TableHead>
       <tbody>
-        <TableRow>
-          <TableCell className="font-semibold text-ink-black">
-            TechCorp Financial Services S.A.
-          </TableCell>
-          <TableCell className="text-slate-gray">TC-2026</TableCell>
-          <TableCell className="font-bold text-ink-black">
-            R$ 150.000.000,00
-          </TableCell>
-          <TableCell>
-            <Badge variant="default">Sourcing & KYB</Badge>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell className="font-semibold text-ink-black">
-            Alpha Tech Innovations in AI and Cloud
-          </TableCell>
-          <TableCell className="text-slate-gray">AT-2026</TableCell>
-          <TableCell className="font-bold text-ink-black">
-            R$ 45.000.000,00
-          </TableCell>
-          <TableCell>
-            <Badge variant="default">Due Diligence</Badge>
-          </TableCell>
-        </TableRow>
+        {sampleDeals.slice(0, 2).map((deal) => (
+          <DefaultDealRow key={deal.id} deal={deal} />
+        ))}
       </tbody>
     </Table>
-  ),
+  );
+}
+
+export const Default: Story = {
+  render: () => <DefaultTable />,
 };
 
+function FinancialDealRow({ deal }: { deal: SampleDeal }) {
+  return (
+    <TableRow>
+      <TableCell className="font-semibold text-ink-black">
+        {deal.title}
+      </TableCell>
+      <TableCell className="text-slate-gray">{deal.code}</TableCell>
+      <TableCell className="font-bold text-ink-black">
+        {deal.valuation}
+      </TableCell>
+      <TableCell>
+        <Badge variant="default">{deal.phase}</Badge>
+      </TableCell>
+      <TableCell>
+        <Button variant="secondary" size="sm">View Details</Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function FinancialDealsTable() {
+  return (
+    <Table>
+      <TableHead>
+        <TableRow isHeader>
+          {financialHeadings.map((label) => (
+            <TableCell key={label} isHeader>{label}</TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <tbody>
+        {sampleDeals.map((deal) => (
+          <FinancialDealRow key={deal.id} deal={deal} />
+        ))}
+      </tbody>
+    </Table>
+  );
+}
+
+function FinancialTableStory() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  return (
+    <div className="space-y-4">
+      <FinancialDealsTable />
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={5}
+        totalItems={48}
+        pageSize={pageSize}
+        pageSizeOptions={[10, 25, 50, 100]}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
+    </div>
+  );
+}
+
 export const FinancialTableInteractive: Story = {
-  render: () => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-
-    return (
-      <div className="space-y-4">
-        <Table>
-          <TableHead>
-            <TableRow isHeader>
-              <TableCell isHeader>Transaction / Target Company Name</TableCell>
-              <TableCell isHeader>Internal Code</TableCell>
-              <TableCell isHeader>Target Valuation</TableCell>
-              <TableCell isHeader>Current Phase</TableCell>
-              <TableCell isHeader>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <tbody>
-            {sampleDeals.map((deal) => (
-              <TableRow key={deal.id}>
-                <TableCell className="font-semibold text-ink-black">
-                  {deal.title}
-                </TableCell>
-                <TableCell className="text-slate-gray">{deal.code}</TableCell>
-                <TableCell className="font-bold text-ink-black">
-                  {deal.valuation}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="default">{deal.phase}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="secondary" size="sm">View Details</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </tbody>
-        </Table>
-
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={5}
-          totalItems={48}
-          pageSize={pageSize}
-          pageSizeOptions={[10, 25, 50, 100]}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-        />
-      </div>
-    );
-  },
+  render: () => <FinancialTableStory />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -172,5 +198,5 @@ export const FullCoverageTable: Story = {
 };
 
 export const FullCoverageTable2: Story = {
-  render: () => <Table children={undefined} />,
+  render: () => <Table>{undefined}</Table>,
 };

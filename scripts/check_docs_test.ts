@@ -1,5 +1,14 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { runDocumentationCheck } from "./check_docs.ts";
+import {
+  parseCanonicalManifest,
+  validateManifestRecords,
+} from "./documentation_check_inventory.ts";
+import { validateMarkdownTree } from "./documentation_check_links.ts";
+import {
+  localMarkdownTargets,
+  normalizeDocumentationPath,
+} from "./documentation_check_paths.ts";
 
 async function withDocs(
   files: Record<string, string>,
@@ -20,8 +29,7 @@ async function withDocs(
   }
 }
 
-const inventory = (documents: Array<Record<string, string>>) =>
-  `# Documentation Inventory
+const inventoryHeader = `# Documentation Inventory
 
 - Authority ID: canonical:inventory.md
 - Owner: Documentation owner
@@ -34,15 +42,18 @@ const inventory = (documents: Array<Record<string, string>>) =>
 
 | Path | Owner | Purpose | Authority | Freshness | Language | Disposition |
 | --- | --- | --- | --- | --- | --- | --- |
-| ` +
-  "`human-only.md` | Maintainers | Human inventory | none | current | English | reference |\n" +
-  `
+| \`human-only.md\` | Maintainers | Human inventory | none | current | English | reference |
+`;
+
+function inventory(documents: Array<Record<string, string>>): string {
+  return `${inventoryHeader}
 ## Machine-readable canonical manifest
 
 \`\`\`json
 ${JSON.stringify({ canonicalRoot: ".", documents }, null, 2)}
 \`\`\`
 `;
+}
 
 const governedDoc = (title: string, content = "") =>
   `# ${title}
@@ -75,6 +86,83 @@ const entry = (path: string, authority = `canonical:${path}`) => ({
   freshness: "2026-07-24",
   language: "English",
   disposition: "canonical",
+});
+
+function missingGovernanceFiles(): Record<string, string> {
+  return {
+    "inventory.md": inventory([entry("inventory.md"), {
+      path: "index.md",
+      owner: "Documentation owner",
+      purpose: "Test documentation",
+      authority: "canonical:index",
+      freshness: "2026-07-24",
+      language: "English",
+      disposition: "",
+    }]),
+    "index.md": governedDoc("Documentation"),
+    "unlisted.md": "# Unlisted\n",
+  };
+}
+
+function canonicalMetadataFiles(): Record<string, string> {
+  return {
+    "inventory.md": inventory([
+      entry("inventory.md"),
+      entry("canonical.md"),
+      {
+        ...entry("deprecated.md", "none"),
+        disposition: "deprecated",
+        language: "Portuguese",
+      },
+    ]),
+    "canonical.md": "# Canonical\n",
+    "deprecated.md": "# Deprecated\n",
+  };
+}
+
+Deno.test("documentation path helpers normalize paths and select local links", () => {
+  assertEquals(
+    normalizeDocumentationPath("/docs/./index/../guide.md"),
+    "/docs/guide.md",
+  );
+  assertEquals(
+    localMarkdownTargets(
+      "[Guide](guide.md) [Section](#section) [Web](https://example.com)",
+    ),
+    ["guide.md"],
+  );
+});
+
+Deno.test("canonical manifest parser returns governed records", () => {
+  const parsed = parseCanonicalManifest(
+    inventory([entry("inventory.md")]),
+    "inventory.md",
+  );
+  assertEquals(parsed.records, [entry("inventory.md")]);
+  assertEquals(parsed.diagnostic, undefined);
+});
+
+Deno.test("manifest record validator exposes documented paths", async () => {
+  await withDocs({
+    "inventory.md": governedDoc("Inventory"),
+  }, async (root) => {
+    const result = await validateManifestRecords(root, [
+      entry("inventory.md"),
+    ]);
+    assertEquals(result.diagnostics, []);
+    assertEquals([...result.documentedPaths], ["inventory.md"]);
+  });
+});
+
+Deno.test("Markdown tree validator reports unlisted files", async () => {
+  await withDocs({
+    "unlisted.md": "# Unlisted\n",
+  }, async (root) => {
+    const diagnostics = await validateMarkdownTree(root, new Set());
+    assertEquals(diagnostics.map((finding) => finding.code), [
+      "undocumented-markdown",
+    ]);
+  });
 });
 
 Deno.test("documentation checker accepts a governed canonical tree with valid relative links", async () => {
@@ -125,19 +213,7 @@ Deno.test("documentation checker reports duplicate explicit authority claims", a
 });
 
 Deno.test("documentation checker reports missing governance metadata and undocumented Markdown files", async () => {
-  await withDocs({
-    "inventory.md": inventory([entry("inventory.md"), {
-      path: "index.md",
-      owner: "Documentation owner",
-      purpose: "Test documentation",
-      authority: "canonical:index",
-      freshness: "2026-07-24",
-      language: "English",
-      disposition: "",
-    }]),
-    "index.md": governedDoc("Documentation"),
-    "unlisted.md": "# Unlisted\n",
-  }, async (root) => {
+  await withDocs(missingGovernanceFiles(), async (root) => {
     const diagnostics = await runDocumentationCheck(root);
     assertEquals(
       diagnostics.map((diagnostic) => diagnostic.code),
@@ -191,19 +267,7 @@ Deno.test("documentation checker reports canonical manifest paths whose Markdown
 });
 
 Deno.test("documentation checker requires stable body metadata on canonical documents only", async () => {
-  await withDocs({
-    "inventory.md": inventory([
-      entry("inventory.md"),
-      entry("canonical.md"),
-      {
-        ...entry("deprecated.md", "none"),
-        disposition: "deprecated",
-        language: "Portuguese",
-      },
-    ]),
-    "canonical.md": "# Canonical\n",
-    "deprecated.md": "# Deprecated\n",
-  }, async (root) => {
+  await withDocs(canonicalMetadataFiles(), async (root) => {
     const diagnostics = await runDocumentationCheck(root);
     assertEquals(
       diagnostics.map((diagnostic) => diagnostic.code),

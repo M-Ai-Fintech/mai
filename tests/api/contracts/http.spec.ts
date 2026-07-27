@@ -34,7 +34,18 @@ Deno.test("parseBooleanQuery accepts only explicit boolean strings", () => {
   assertEquals(parseBooleanQuery(null), undefined);
 });
 
-Deno.test("JSON response helpers use stable success, list, and error envelopes", async () => {
+Deno.test(
+  "JSON response helpers use stable success, list, and error envelopes",
+  verifyJsonResponseEnvelopes,
+);
+
+async function verifyJsonResponseEnvelopes(): Promise<void> {
+  await verifySuccessEnvelope();
+  await verifyListEnvelope();
+  await verifyErrorEnvelope();
+}
+
+async function verifySuccessEnvelope(): Promise<void> {
   const success = jsonSuccess({ id: "deal-id" }, { status: 201 });
   assertEquals(success.status, 201);
   assertEquals(
@@ -42,7 +53,9 @@ Deno.test("JSON response helpers use stable success, list, and error envelopes",
     "application/json; charset=utf-8",
   );
   assertEquals(await success.json(), { data: { id: "deal-id" } });
+}
 
+async function verifyListEnvelope(): Promise<void> {
   const list = jsonListSuccess([{ id: "deal-id" }], {
     page: 1,
     pageSize: 10,
@@ -53,7 +66,9 @@ Deno.test("JSON response helpers use stable success, list, and error envelopes",
     data: [{ id: "deal-id" }],
     meta: { page: 1, pageSize: 10, total: 1, totalPages: 1 },
   });
+}
 
+async function verifyErrorEnvelope(): Promise<void> {
   const error = jsonError(
     409,
     "ENTITY_TAX_ID_CONFLICT",
@@ -68,4 +83,4 @@ Deno.test("JSON response helpers use stable success, list, and error envelopes",
       fieldErrors: { taxId: ["Already in use"] },
     },
   });
-});
+}

@@ -1,5 +1,4 @@
-// src/core/pubsub/LocalPubSubBus.ts
-import { MessageBus } from './MessageBus.ts';
+import { MessageBus, MessageListener } from "./MessageBus.ts";
 
 /**
  * Local asynchronous message bus for communication between agents.
@@ -8,8 +7,8 @@ import { MessageBus } from './MessageBus.ts';
  */
 export class LocalPubSubBus implements MessageBus {
   private static instance: LocalPubSubBus;
-  private listeners: Map<string, Set<(data: any) => void>> = new Map();
-  private history: Map<string, any[]> = new Map();
+  private listeners = new Map<string, Set<MessageListener<unknown>>>();
+  private history = new Map<string, unknown[]>();
 
   private constructor() {}
 
@@ -20,62 +19,67 @@ export class LocalPubSubBus implements MessageBus {
     return LocalPubSubBus.instance;
   }
 
-  public subscribe(topic: string, callback: (data: any) => void): void {
+  public subscribe<TPayload>(
+    topic: string,
+    callback: MessageListener<TPayload>,
+  ): void {
+    const listener = callback as MessageListener<unknown>;
     if (!this.listeners.has(topic)) {
       this.listeners.set(topic, new Set());
     }
-    this.listeners.get(topic)!.add(callback);
+    this.listeners.get(topic)?.add(listener);
 
     // Replay to guarantee at-least-once delivery.
-    if (this.history.has(topic)) {
-      const historyData = this.history.get(topic)!;
-      historyData.forEach((data) => {
-        setTimeout(() => {
-          try {
-            callback(data);
-          } catch (err) {
-            console.error('Error invoking replay callback for topic ' + topic + ':', err);
-          }
-        }, 0);
-      });
-    }
+    const history = this.history.get(topic) ?? [];
+    history.forEach((payload) =>
+      this.scheduleDelivery(topic, listener, payload)
+    );
   }
 
-  public publish(topic: string, data: any): void {
+  public publish<TPayload>(topic: string, payload: TPayload): void {
     if (!this.history.has(topic)) {
       this.history.set(topic, []);
     }
-    this.history.get(topic)!.push(data);
+    this.history.get(topic)?.push(payload);
 
-    const list = this.listeners.get(topic);
-    if (list) {
-      list.forEach((cb) => {
-        setTimeout(() => {
-          try {
-            cb(data);
-          } catch (err) {
-            console.error('Error invoking callback for topic ' + topic + ':', err);
-          }
-        }, 0);
-      });
-    }
+    const listeners = this.listeners.get(topic) ?? [];
+    listeners.forEach((listener) =>
+      this.scheduleDelivery(topic, listener, payload)
+    );
   }
 
   public clear(topic?: string): void {
     if (topic) {
       const set = this.listeners.get(topic);
-      if (set) set.clear();
+      set?.clear();
       this.listeners.delete(topic);
-      
-      const arr = this.history.get(topic);
-      if (arr) arr.length = 0;
+
+      const history = this.history.get(topic);
+      if (history) history.length = 0;
       this.history.delete(topic);
-    } else {
-      this.listeners.forEach(set => set.clear());
-      this.listeners.clear();
-      
-      this.history.forEach(arr => arr.length = 0);
-      this.history.clear();
+      return;
     }
+
+    this.listeners.forEach((listeners) => listeners.clear());
+    this.listeners.clear();
+    this.history.forEach((history) => history.length = 0);
+    this.history.clear();
+  }
+
+  private scheduleDelivery(
+    topic: string,
+    listener: MessageListener<unknown>,
+    payload: unknown,
+  ): void {
+    setTimeout(() => {
+      try {
+        listener(payload);
+      } catch (error) {
+        console.error(
+          `Error invoking callback for topic "${topic}":`,
+          error,
+        );
+      }
+    }, 0);
   }
 }

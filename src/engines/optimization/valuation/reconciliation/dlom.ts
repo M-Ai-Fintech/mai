@@ -24,28 +24,19 @@ export function cumulativeNormalCDF(x: number): number {
  * DLOM = Put(S, S, T, r, sigma) / S = e^(-r*T)*N(-d2) - e^(-q*T)*N(-d1)
  */
 export function computeChaffeDLOM(input: DlomInput): number {
-  const {
-    volatility: sigma,
-    riskFreeRate: r,
-    holdingPeriod: T,
-    dividendYield = 0.0,
-  } = input;
+  if (input.holdingPeriod <= 0 || input.volatility <= 0) return 0;
+  return Math.max(0, Math.min(1, chaffeRate(input)));
+}
 
-  if (T <= 0 || sigma <= 0) {
-    return 0.0;
-  }
-
-  // Under K = S, ln(S/K) = 0.
-  const d1 = ((r - dividendYield + (sigma * sigma) / 2) * T) /
-    (sigma * Math.sqrt(T));
-  const d2 = d1 - sigma * Math.sqrt(T);
-
-  const nNegD1 = cumulativeNormalCDF(-d1);
-  const nNegD2 = cumulativeNormalCDF(-d2);
-
-  const dlomRate = Math.exp(-r * T) * nNegD2 -
-    Math.exp(-dividendYield * T) * nNegD1;
-
-  // Clip between 0% and 100% boundary
-  return Math.max(0.0, Math.min(1.0, dlomRate));
+function chaffeRate(input: DlomInput): number {
+  const yieldRate = input.dividendYield ?? 0;
+  const rootPeriod = Math.sqrt(input.holdingPeriod);
+  const d1 = (
+    input.riskFreeRate - yieldRate +
+    input.volatility ** 2 / 2
+  ) * input.holdingPeriod / (input.volatility * rootPeriod);
+  const d2 = d1 - input.volatility * rootPeriod;
+  return Math.exp(-input.riskFreeRate * input.holdingPeriod) *
+      cumulativeNormalCDF(-d2) -
+    Math.exp(-yieldRate * input.holdingPeriod) * cumulativeNormalCDF(-d1);
 }

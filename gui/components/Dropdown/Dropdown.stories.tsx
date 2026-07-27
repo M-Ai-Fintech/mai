@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { Dropdown } from "./Dropdown";
@@ -21,9 +21,43 @@ const sampleOptions = [
   { value: "", label: "Empty Value Option" },
 ];
 
+async function chooseSingleSelectOptions(
+  body: HTMLElement,
+  trigger: HTMLElement,
+) {
+  // Click disabled option
+  await userEvent.click(await within(body).findByText("Disabled Option"));
+  await userEvent.click(await within(body).findByText("Negotiation Table"));
+  // Click empty option
+  await userEvent.click(trigger);
+  await userEvent.click(await within(body).findByText("Empty Value Option"));
+}
+
+async function closeSingleSelectOutside(
+  canvasElement: HTMLElement,
+  trigger: HTMLElement,
+) {
+  // Open again to test click outside
+  await userEvent.click(trigger);
+  await userEvent.click(canvasElement);
+}
+
+const initialMultiSelection = ["sourcing", "dd_legal"];
+
+async function chooseSearchableOptions(body: HTMLElement) {
+  const option = await within(body).findByText("Financial Due Diligence");
+  await userEvent.click(option);
+  const input = await within(body).findByPlaceholderText("Search option...");
+  await userEvent.type(input, "Negotiation");
+  const negotiation = await within(body).findByText("Negotiation Table");
+  await userEvent.click(negotiation);
+  // Click again to unselect
+  await userEvent.click(negotiation);
+}
+
 export const SingleSelect: Story = {
   render: () => {
-    const [selected, setSelected] = useState<any>("dd_financial");
+    const [selected, setSelected] = useState("dd_financial");
 
     return (
       <div className="max-w-sm p-4">
@@ -31,7 +65,9 @@ export const SingleSelect: Story = {
           label="M&A Transaction Phase"
           options={sampleOptions}
           value={selected}
-          onChange={(v) => setSelected(v)}
+          onChange={(value) => {
+            if (typeof value === "string") setSelected(value);
+          }}
         />
       </div>
     );
@@ -40,38 +76,24 @@ export const SingleSelect: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-
     const body = canvasElement.ownerDocument.body;
-
-    // Click disabled option
-    const disabledOption = await within(body).findByText("Disabled Option");
-    await userEvent.click(disabledOption);
-
-    const option = await within(body).findByText("Negotiation Table");
-    await userEvent.click(option);
-
-    // Click empty option
-    await userEvent.click(trigger);
-    const emptyOption = await within(body).findByText("Empty Value Option");
-    await userEvent.click(emptyOption);
-
-    // Open again to test click outside
-    await userEvent.click(trigger);
-    await userEvent.click(canvasElement);
+    await chooseSingleSelectOptions(body, trigger);
+    await closeSingleSelectOutside(canvasElement, trigger);
   },
 };
 
 export const SearchableAndMultiSelect: Story = {
   render: () => {
-    const [selected, setSelected] = useState<any>(["sourcing", "dd_legal"]);
-
+    const [selected, setSelected] = useState<string[]>(initialMultiSelection);
     return (
       <div className="max-w-sm p-4">
         <Dropdown
           label="Active Agents in Audit"
           options={sampleOptions}
           value={selected}
-          onChange={(v) => setSelected(v)}
+          onChange={(value) => {
+            if (Array.isArray(value)) setSelected(value);
+          }}
           searchable
           multiSelect
         />
@@ -82,20 +104,8 @@ export const SearchableAndMultiSelect: Story = {
     const canvas = within(canvasElement);
     const trigger = await canvas.findByRole("button");
     await userEvent.click(trigger);
-
     const body = canvasElement.ownerDocument.body;
-    const option = await within(body).findByText("Financial Due Diligence");
-    await userEvent.click(option);
-
-    const input = await within(body).findByPlaceholderText("Search option...");
-    await userEvent.type(input, "Negotiation");
-
-    const option2 = await within(body).findByText("Negotiation Table");
-    await userEvent.click(option2);
-
-    // Click again to unselect
-    await userEvent.click(option2);
-
+    await chooseSearchableOptions(body);
     // click trigger to close
     await userEvent.click(trigger);
   },

@@ -33,11 +33,15 @@ Deno.test("verification runner reports a failing child in its component summary"
     command: "unused",
     args: [],
   };
-  const results = await runVerification([check], async (candidate) => ({
-    check: candidate,
-    success: false,
-    output: "expected failure",
-  }));
+  const results = await runVerification(
+    [check],
+    (candidate) =>
+      Promise.resolve({
+        check: candidate,
+        success: false,
+        output: "expected failure",
+      }),
+  );
 
   assert(hasFailures(results));
   assertEquals(results[0].check.id, "intentional-failure");

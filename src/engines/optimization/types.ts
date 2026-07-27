@@ -1,4 +1,4 @@
-import { z } from "npm:zod";
+import { z } from "zod";
 
 export const TermSheetOptimizerParamsSchema = z.object({
   minBuyerReservationUtility: z.number().min(0).max(1),
@@ -9,7 +9,9 @@ export const TermSheetOptimizerParamsSchema = z.object({
   crossoverRate: z.number().min(0).max(1),
   preference: z.enum(["liquidity", "balanced", "retention"]).optional(),
 });
-export type TermSheetOptimizerParams = z.infer<typeof TermSheetOptimizerParamsSchema>;
+export type TermSheetOptimizerParams = z.infer<
+  typeof TermSheetOptimizerParamsSchema
+>;
 
 export const TermSheetProposalSchema = z.object({
   cashPercentage: z.number(),
@@ -25,7 +27,9 @@ export const TermSheetOptimizerResultSchema = z.object({
   sellerUtility: z.number(),
   fitness: z.number(),
 });
-export type TermSheetOptimizerResult = z.infer<typeof TermSheetOptimizerResultSchema>;
+export type TermSheetOptimizerResult = z.infer<
+  typeof TermSheetOptimizerResultSchema
+>;
 
 export const TargetRawInputSchema = z.object({
   id: z.string(),
@@ -47,7 +51,8 @@ export const PortfolioCriteriaSchema = z.object({
   budgetLimit: z.number().positive(),
   riskToleranceLimit: z.number().min(0).max(1),
   taxDebtCap: z.number().nonnegative(),
-  sectorAllocationCaps: z.record(z.string(), z.number().nonnegative()).optional(),
+  sectorAllocationCaps: z.record(z.string(), z.number().nonnegative())
+    .optional(),
   mutualExclusions: z.array(z.array(z.string())).optional(),
 });
 export type PortfolioCriteria = z.infer<typeof PortfolioCriteriaSchema>;
@@ -59,10 +64,13 @@ export const PortfolioResultSchema = z.object({
   }),
   totalSynergy: z.number(),
   totalCost: z.number(),
-  evaluatedProfiles: z.record(z.string(), z.object({
-    metrics: z.object({
-      insolvencyRisk: z.number(),
-    })
-  })),
+  evaluatedProfiles: z.record(
+    z.string(),
+    z.object({
+      metrics: z.object({
+        insolvencyRisk: z.number(),
+      }),
+    }),
+  ),
 });
 export type PortfolioResult = z.infer<typeof PortfolioResultSchema>;

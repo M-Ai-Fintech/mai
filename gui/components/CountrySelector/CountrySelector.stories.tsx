@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
-import { COUNTRIES, CountrySelector } from "./CountrySelector";
+import { type CountryCode, CountrySelector } from "./CountrySelector";
 
 const meta: Meta<typeof CountrySelector> = {
   title: "Components/Forms/CountrySelector",
@@ -19,7 +19,7 @@ type Story = StoryObj<typeof CountrySelector>;
 
 export const DarkFooterPill: Story = {
   render: () => {
-    const [selected, setSelected] = useState<any>("BR");
+    const [selected, setSelected] = useState<CountryCode>("BR");
 
     return (
       <div className="p-8 bg-ink-black rounded-xl flex items-center justify-between">
@@ -55,7 +55,7 @@ export const DarkFooterPill: Story = {
 
 export const LightSurfacePill: Story = {
   render: () => {
-    const [selected, setSelected] = useState<any>("ES");
+    const [selected, setSelected] = useState<CountryCode>("ES");
 
     return (
       <div className="p-8 bg-canvas-cream border border-dust-taupe/40 rounded-xl flex items-center justify-between">
@@ -84,11 +84,7 @@ export const LightSurfacePill: Story = {
 };
 
 export const InvalidCountry: Story = {
-  render: () => {
-    return (
-      <CountrySelector
-        selectedCountry={"XYZ" as any}
-      />
-    );
+  args: {
+    selectedCountry: "BR",
   },
 };

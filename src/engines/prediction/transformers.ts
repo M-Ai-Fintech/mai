@@ -1,8 +1,13 @@
 // src/engines/prediction/transformers.ts
 import { pipeline } from "@huggingface/transformers";
 
+type FeatureExtractor = (
+  text: string,
+  options: { pooling: "mean"; normalize: true },
+) => Promise<{ data: ArrayLike<number> }>;
+
 export class TransformersEngine {
-  private static extractor: any = null;
+  private static extractor: FeatureExtractor | null = null;
   private static readonly testEmbeddingDimensions = 384;
 
   /**
@@ -13,7 +18,7 @@ export class TransformersEngine {
     this.extractor = await pipeline(
       "feature-extraction",
       "Xenova/all-MiniLM-L6-v2",
-    );
+    ) as FeatureExtractor;
     return this.extractor;
   }
 

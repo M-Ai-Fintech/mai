@@ -6,6 +6,12 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: string | number;
 }
 
+const SKELETON_VARIANT_CLASS = {
+  text: "bg-dust-taupe/40 animate-pulse rounded h-4 w-full my-1",
+  circular: "bg-dust-taupe/40 animate-pulse rounded-full",
+  rectangular: "bg-dust-taupe/40 animate-pulse rounded-lg",
+} as const;
+
 export const Skeleton: React.FC<SkeletonProps> = ({
   variant = "text",
   width,
@@ -14,29 +20,23 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   style,
   ...props
 }) => {
-  let variantStyles = "bg-dust-taupe/40 animate-pulse";
-
-  switch (variant) {
-    case "text":
-      variantStyles += " rounded h-4 w-full my-1";
-      break;
-    case "circular":
-      variantStyles += " rounded-full";
-      break;
-    case "rectangular":
-      variantStyles += " rounded-lg";
-      break;
-  }
-
   return (
     <div
-      className={`${variantStyles} ${className}`}
-      style={{
-        width: width !== undefined ? width : undefined,
-        height: height !== undefined ? height : undefined,
-        ...style,
-      }}
+      className={`${SKELETON_VARIANT_CLASS[variant]} ${className}`}
+      style={skeletonStyle(width, height, style)}
       {...props}
     />
   );
 };
+
+function skeletonStyle(
+  width: SkeletonProps["width"],
+  height: SkeletonProps["height"],
+  style: SkeletonProps["style"],
+) {
+  return {
+    width: width !== undefined ? width : undefined,
+    height: height !== undefined ? height : undefined,
+    ...style,
+  };
+}

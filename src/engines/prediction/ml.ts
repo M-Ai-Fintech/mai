@@ -27,47 +27,53 @@ export class MLEngine {
    * This includes generating text embeddings for context analysis and running the ONNX neural network.
    */
   public static async analyzeProfile(
-    profile: CompanyFinancialProfile
+    profile: CompanyFinancialProfile,
   ): Promise<MLPredictionReport> {
-    // 1. Generate text embeddings for the sector/company description
-    const sectorContext = `Company ${profile.name} operating in the ${profile.businessSector} sector. EBITDA: ${profile.ebitda}, Revenue: ${profile.revenue}.`;
-    let embeddingsGenerated = false;
-    try {
-      const embedding = await TransformersEngine.generateEmbedding(sectorContext);
-      embeddingsGenerated = embedding && embedding.length > 0;
-    } catch (err) {
-      console.warn("Failed to generate Transformers embeddings, continuing without them:", err);
-    }
-
-    // 2. Map profile to ONNX inputs
-    const modelInput: ONNXModelInput = {
-      ebitda: profile.ebitda,
-      revenue: profile.revenue,
-      totalAssets: profile.totalAssets,
-      totalLiabilities: profile.totalLiabilities,
-      operatingCashFlow: profile.operatingCashFlow,
-      historicalVolatility: profile.historicalVolatility,
-    };
-
-    // 3. Execute the ONNX model (Altman Z-Score neural simulation)
-    const metrics = await ONNXEngine.runModelInference(modelInput);
-
-    // 4. Derive labels based on risk scores
-    let dcfRiskLabel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "LOW";
-    if (metrics.insolvencyRisk > 0.8) {
-      dcfRiskLabel = "CRITICAL";
-    } else if (metrics.insolvencyRisk > 0.5) {
-      dcfRiskLabel = "HIGH";
-    } else if (metrics.insolvencyRisk > 0.25) {
-      dcfRiskLabel = "MEDIUM";
-    }
-
+    const embeddingsGenerated = await generateProfileEmbedding(profile);
+    const metrics = await ONNXEngine.runModelInference(modelInput(profile));
     return {
       companyName: profile.name,
       metrics,
       embeddingsGenerated,
-      dcfRiskLabel,
+      dcfRiskLabel: riskLabel(metrics.insolvencyRisk),
       timestamp: new Date().toISOString(),
     };
   }
+}
+
+async function generateProfileEmbedding(
+  profile: CompanyFinancialProfile,
+): Promise<boolean> {
+  const context =
+    `Company ${profile.name} operating in the ${profile.businessSector} sector. EBITDA: ${profile.ebitda}, Revenue: ${profile.revenue}.`;
+  try {
+    const embedding = await TransformersEngine.generateEmbedding(context);
+    return embedding.length > 0;
+  } catch (error: unknown) {
+    console.warn(
+      "Failed to generate Transformers embeddings, continuing without them:",
+      error,
+    );
+    return false;
+  }
+}
+
+function modelInput(profile: CompanyFinancialProfile): ONNXModelInput {
+  return {
+    ebitda: profile.ebitda,
+    revenue: profile.revenue,
+    totalAssets: profile.totalAssets,
+    totalLiabilities: profile.totalLiabilities,
+    operatingCashFlow: profile.operatingCashFlow,
+    historicalVolatility: profile.historicalVolatility,
+  };
+}
+
+function riskLabel(
+  risk: number,
+): MLPredictionReport["dcfRiskLabel"] {
+  if (risk > 0.8) return "CRITICAL";
+  if (risk > 0.5) return "HIGH";
+  if (risk > 0.25) return "MEDIUM";
+  return "LOW";
 }

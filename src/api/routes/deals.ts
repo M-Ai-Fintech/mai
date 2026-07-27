@@ -80,95 +80,128 @@ const replaceAssignments = z.object({
 export async function handleDealRoutes(
   context: MvpRouteContext,
 ): Promise<Response | null> {
-  const { request, url, path, method, store } = context;
+  return await handleDealCollection(context) ??
+    await handlePhaseTransition(context) ??
+    await handleDealResource(context) ??
+    await handleAssignments(context);
+}
 
-  if (path === "/api/deals") {
-    if (method === "GET") {
-      const query = parsePaginationQuery(url.searchParams);
-      const statusValue = url.searchParams.get("status");
-      const phaseValue = url.searchParams.get("phase");
-      const status = statusValue ? dealStatus.safeParse(statusValue) : null;
-      const phase = phaseValue ? dealPhase.safeParse(phaseValue) : null;
-      if (status && !status.success) {
-        throw new HttpRouteError(400, "INVALID_QUERY", "Unknown deal status");
-      }
-      if (phase && !phase.success) {
-        throw new HttpRouteError(400, "INVALID_QUERY", "Unknown deal phase");
-      }
-      const assigneeValue = url.searchParams.get("assigneeId");
-      const assigneeId = assigneeValue
-        ? validateId(assigneeValue, "assigneeId")
-        : undefined;
-      const result = store.listDeals({
-        ...query,
-        status: status?.success ? status.data : undefined,
-        phase: phase?.success ? phase.data : undefined,
-        assigneeId,
-      });
-      return jsonListSuccess(result.data, result.meta);
-    }
-    if (method === "POST") {
-      const input = dealWrite.parse(await bodyAsJson(request));
-      return jsonSuccess(store.createDeal(input), { status: 201 });
-    }
-    return methodNotAllowed(["GET", "POST"]);
+async function handleDealCollection(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  if (context.path !== "/api/deals") return null;
+  if (context.method === "GET") return listDeals(context);
+  if (context.method === "POST") {
+    const input = dealWrite.parse(await bodyAsJson(context.request));
+    return jsonSuccess(context.store.createDeal(input), { status: 201 });
   }
+  return methodNotAllowed(["GET", "POST"]);
+}
 
+function listDeals(context: MvpRouteContext): Response {
+  const { url, store } = context;
+  const status = enumQuery(url, "status", dealStatus);
+  const phase = enumQuery(url, "phase", dealPhase);
+  const assignee = url.searchParams.get("assigneeId");
+  const result = store.listDeals({
+    ...parsePaginationQuery(url.searchParams),
+    status,
+    phase,
+    assigneeId: assignee ? validateId(assignee, "assigneeId") : undefined,
+  });
+  return jsonListSuccess(result.data, result.meta);
+}
+
+function enumQuery<T>(
+  url: URL,
+  name: string,
+  schema: z.ZodType<T>,
+): T | undefined {
+  const value = url.searchParams.get(name);
+  if (!value) return undefined;
+  const parsed = schema.safeParse(value);
+  if (parsed.success) return parsed.data;
+  throw new HttpRouteError(
+    400,
+    "INVALID_QUERY",
+    `Unknown ${name} "${value}"; expected a supported ${name}.`,
+  );
+}
+
+async function handlePhaseTransition(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const { path, method, request, store } = context;
   const phaseTransitionMatch = path.match(
     /^\/api\/deals\/([^/]+)\/phase-transitions$/,
   );
-  if (phaseTransitionMatch) {
-    const dealId = validateId(
-      decodeURIComponent(phaseTransitionMatch[1]),
-      "dealId",
-    );
-    if (method !== "POST") return methodNotAllowed(["POST"]);
-    const input = phaseTransition.parse(await bodyAsJson(request));
-    return jsonSuccess(store.transitionDealPhase(dealId, input));
-  }
+  if (!phaseTransitionMatch) return null;
+  if (method !== "POST") return methodNotAllowed(["POST"]);
+  const dealId = matchedDealId(phaseTransitionMatch);
+  const input = phaseTransition.parse(await bodyAsJson(request));
+  return jsonSuccess(store.transitionDealPhase(dealId, input));
+}
 
+async function handleDealResource(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const { path, method, request, store, url } = context;
   const dealMatch = path.match(/^\/api\/deals\/([^/]+)$/);
-  if (dealMatch) {
-    const dealId = validateId(decodeURIComponent(dealMatch[1]), "dealId");
-    if (method === "GET") return jsonSuccess(store.getDealDetail(dealId));
-    if (method === "PATCH") {
-      const input = dealPatch.parse(await bodyAsJson(request));
-      return jsonSuccess(store.updateDeal(dealId, input));
-    }
-    if (method === "DELETE") {
-      const versionValue = url.searchParams.get("version");
-      const version = versionValue && /^\d+$/.test(versionValue)
-        ? Number(versionValue)
-        : undefined;
-      return jsonSuccess(store.archiveDeal(dealId, version));
-    }
-    return methodNotAllowed(["GET", "PATCH", "DELETE"]);
+  if (!dealMatch) return null;
+  const dealId = matchedDealId(dealMatch);
+  if (method === "GET") return jsonSuccess(store.getDealDetail(dealId));
+  if (method === "PATCH") {
+    const input = dealPatch.parse(await bodyAsJson(request));
+    return jsonSuccess(store.updateDeal(dealId, input));
   }
+  if (method === "DELETE") {
+    return jsonSuccess(store.archiveDeal(dealId, numericVersion(url)));
+  }
+  return methodNotAllowed(["GET", "PATCH", "DELETE"]);
+}
 
+async function handleAssignments(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  const { path, method, store } = context;
   const assignmentsMatch = path.match(
     /^\/api\/deals\/([^/]+)\/team-assignments$/,
   );
-  if (assignmentsMatch) {
-    const dealId = validateId(
-      decodeURIComponent(assignmentsMatch[1]),
-      "dealId",
-    );
-    if (method === "GET") {
-      return jsonSuccess(store.getTeamAssignments(dealId));
-    }
-    if (method === "PUT") {
-      const input = replaceAssignments.parse(await bodyAsJson(request));
-      const result = store.putTeamAssignments(
-        dealId,
-        input.version,
-        input.assignments,
-      );
-      return jsonSuccess(result.data, {
-        headers: { "x-resource-version": String(result.version) },
-      });
-    }
-    return methodNotAllowed(["GET", "PUT"]);
+  if (!assignmentsMatch) return null;
+  const dealId = matchedDealId(assignmentsMatch);
+  if (method === "GET") {
+    return jsonSuccess(store.getTeamAssignments(dealId));
   }
+  if (method !== "PUT") return methodNotAllowed(["GET", "PUT"]);
+  return await replaceTeamAssignments(context, dealId);
+}
 
-  return null;
+async function replaceTeamAssignments(
+  context: MvpRouteContext,
+  dealId: string,
+): Promise<Response> {
+  const input = replaceAssignments.parse(await bodyAsJson(context.request));
+  const result = context.store.putTeamAssignments(
+    dealId,
+    input.version,
+    input.assignments,
+  );
+  return assignmentResponse(result);
+}
+
+function assignmentResponse(
+  result: ReturnType<MvpRouteContext["store"]["putTeamAssignments"]>,
+): Response {
+  return jsonSuccess(result.data, {
+    headers: { "x-resource-version": String(result.version) },
+  });
+}
+
+function matchedDealId(match: RegExpMatchArray): string {
+  return validateId(decodeURIComponent(match[1]), "dealId");
+}
+
+function numericVersion(url: URL): number | undefined {
+  const value = url.searchParams.get("version");
+  return value && /^\d+$/.test(value) ? Number(value) : undefined;
 }

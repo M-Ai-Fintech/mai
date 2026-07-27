@@ -46,43 +46,51 @@ export async function handleMvpRoute(
   request: Request,
   dependencies: MvpRouteDependencies = {},
 ): Promise<Response | null> {
+  const context = routeContext(request, dependencies);
+  try {
+    return await dispatchRoute(context);
+  } catch (error: unknown) {
+    return routeErrorResponse(error);
+  }
+}
+
+function routeContext(
+  request: Request,
+  dependencies: MvpRouteDependencies,
+): MvpRouteContext {
   const url = new URL(request.url);
-  const context: MvpRouteContext = {
+  return {
     request,
     url,
     path: url.pathname.replace(/\/+$/, "") || "/",
     method: request.method.toUpperCase(),
     ...resolveMvpRouteDependencies(dependencies),
   };
+}
 
-  try {
-    for (const handleDomainRoute of domainRoutes) {
-      const response = await handleDomainRoute(context);
-      if (response) return response;
-    }
-    return null;
-  } catch (error) {
-    if (error instanceof z.ZodError) return validationError(error);
-    if (error instanceof MvpStoreError) {
-      return jsonError(
-        error.status,
-        error.code,
-        error.message,
-        error.fieldErrors,
-      );
-    }
-    if (error instanceof HttpRouteError) {
-      return jsonError(
-        error.status,
-        error.code,
-        error.message,
-        error.fieldErrors,
-      );
-    }
+async function dispatchRoute(
+  context: MvpRouteContext,
+): Promise<Response | null> {
+  for (const handleDomainRoute of domainRoutes) {
+    const response = await handleDomainRoute(context);
+    if (response) return response;
+  }
+  return null;
+}
+
+function routeErrorResponse(error: unknown): Response {
+  if (error instanceof z.ZodError) return validationError(error);
+  if (error instanceof MvpStoreError || error instanceof HttpRouteError) {
     return jsonError(
-      500,
-      "INTERNAL_ERROR",
-      "The request could not be completed",
+      error.status,
+      error.code,
+      error.message,
+      error.fieldErrors,
     );
   }
+  return jsonError(
+    500,
+    "INTERNAL_ERROR",
+    "The request could not be completed",
+  );
 }

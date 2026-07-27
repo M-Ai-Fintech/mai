@@ -34,33 +34,41 @@ const putLayout = z.object({
 export async function handleDashboardRoutes(
   context: MvpRouteContext,
 ): Promise<Response | null> {
-  const { request, path, method, store } = context;
+  const { path, method, store } = context;
   const layoutMatch = path.match(
     /^\/api\/users\/me\/dashboard-layouts\/([^/]+)$/,
   );
   if (!layoutMatch) return null;
 
-  const slug = decodeURIComponent(layoutMatch[1]);
-  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) {
-    throw new HttpRouteError(
-      400,
-      "INVALID_SLUG",
-      "Dashboard layout slug is invalid",
-    );
-  }
+  const slug = validatedSlug(layoutMatch[1]);
   if (method === "GET") return jsonSuccess(store.getDashboardLayout(slug));
-  if (method === "PUT") {
-    const input = putLayout.parse(await bodyAsJson(request));
-    return jsonSuccess(
-      store.putDashboardLayout(
-        slug,
-        input.version,
-        input.widgets as DashboardWidget[],
-      ),
-    );
-  }
+  if (method === "PUT") return await updateLayout(context, slug);
   if (method === "DELETE") {
     return jsonSuccess(store.resetDashboardLayout(slug));
   }
   return methodNotAllowed(["GET", "PUT", "DELETE"]);
+}
+
+function validatedSlug(encodedSlug: string): string {
+  const slug = decodeURIComponent(encodedSlug);
+  if (/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) return slug;
+  throw new HttpRouteError(
+    400,
+    "INVALID_SLUG",
+    `Dashboard layout slug "${slug}" is invalid; expected lowercase letters, numbers, or hyphens`,
+  );
+}
+
+async function updateLayout(
+  context: MvpRouteContext,
+  slug: string,
+): Promise<Response> {
+  const input = putLayout.parse(await bodyAsJson(context.request));
+  return jsonSuccess(
+    context.store.putDashboardLayout(
+      slug,
+      input.version,
+      input.widgets as DashboardWidget[],
+    ),
+  );
 }

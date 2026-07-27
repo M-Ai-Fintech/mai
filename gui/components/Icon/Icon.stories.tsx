@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
 import { Icon, IconName } from "./Icon";
 
@@ -85,11 +85,10 @@ export const Sizes: Story = {
   ),
 };
 
-export const CustomSizeAndUnknown: Story = {
+export const CustomSize: Story = {
   render: () => (
     <div className="flex gap-4 p-4">
       <Icon name="search" size={48} />
-      <Icon name={"unknown" as any} size={"unknown" as any} />
     </div>
   ),
 };

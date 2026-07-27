@@ -1,30 +1,38 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { huggingFaceMcpTool } from "../src/agent/actions.ts";
+import { testToolContext } from "./support/tool_context.ts";
+import { requireRecord } from "./support/value_guards.ts";
 
 Deno.test("Hugging Face MCP Tool - Load LoRA adapter", async () => {
-  // @ts-ignore: bypass execute being possibly undefined and requiring context for simple test
-  const result = await huggingFaceMcpTool.execute!({
+  const output = await huggingFaceMcpTool.execute!({
     model: "meta-llama/Llama-3-8B-Instruct",
     task: "load_lora_adapter",
     adapterPath: "./lora_adapter_ma_br",
-  }, {} as any);
+  }, testToolContext);
+  const result = requireRecord(output);
 
   assertEquals(result.success, true);
-  assertEquals(result.status, "LoRA adapter loaded and merged successfully for inference.");
+  assertEquals(
+    result.status,
+    "LoRA adapter loaded and merged successfully for inference.",
+  );
   assertEquals(result.adapterPath, "./lora_adapter_ma_br");
 });
 
 Deno.test("Hugging Face MCP Tool - Fine Tuned Inference", async () => {
-  // @ts-ignore: bypass execute being possibly undefined and requiring context for simple test
-  const result = await huggingFaceMcpTool.execute!({
+  const output = await huggingFaceMcpTool.execute!({
     model: "meta-llama/Llama-3-8B-Instruct",
     task: "fine_tuned_inference",
-    text: "Analyze this Tag-Along clause and explain whether it complies with Brazilian CVM rules: '...'",
-  }, {} as any);
+    text:
+      "Analyze this Tag-Along clause and explain whether it complies with Brazilian CVM rules: '...'",
+  }, testToolContext);
+  const result = requireRecord(output);
 
   assertEquals(result.success, true);
   assertEquals(
-    result.output.includes("[MOCK - Fine-Tuned Inference (meta-llama/Llama-3-8B-Instruct)]"),
-    true
+    String(result.output).includes(
+      "[MOCK - Fine-Tuned Inference (meta-llama/Llama-3-8B-Instruct)]",
+    ),
+    true,
   );
 });

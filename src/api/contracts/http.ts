@@ -75,7 +75,16 @@ export function parsePaginationQuery(
   );
   const search = searchParams.get("search")?.trim() || undefined;
   const sort = searchParams.get("sort")?.trim() || undefined;
+  return paginationResult(page, requestedPageSize, maxPageSize, search, sort);
+}
 
+function paginationResult(
+  page: number,
+  requestedPageSize: number,
+  maxPageSize: number,
+  search?: string,
+  sort?: string,
+): ParsedPageQuery {
   return {
     page,
     pageSize: Math.min(requestedPageSize, maxPageSize),

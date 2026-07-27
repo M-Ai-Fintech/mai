@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { Tabs } from "./Tabs";
@@ -35,7 +35,7 @@ export const InteractiveTabs: Story = {
     // but just in case, we can try
     try {
       await userEvent.click(disabledTab);
-    } catch (e) {
+    } catch {
       // expected to fail or just ignore
     }
   },

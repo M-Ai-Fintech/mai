@@ -10,6 +10,15 @@ export interface IntegrationConfig {
 }
 
 type Environment = Record<string, string | undefined>;
+type RequiredConfiguration = Record<
+  | "DATABASE_URL"
+  | "GEMINI_API_KEY"
+  | "PAPERMARK_API_KEY"
+  | "PAPERMARK_API_URL"
+  | "PAPERMARK_ROOM_ID",
+  string | undefined
+>;
+type RequiredConfigurationName = keyof RequiredConfiguration;
 
 function isRealConfigurationValue(value: string | undefined): value is string {
   return Boolean(value?.trim()) && value !== "sua_chave_aqui" &&
@@ -17,36 +26,71 @@ function isRealConfigurationValue(value: string | undefined): value is string {
 }
 
 export function integrationConfig(environment: Environment): IntegrationConfig {
-  const geminiApiKey = environment.GEMINI_API_KEY ||
-    environment.GOOGLE_GENERATIVE_AI_API_KEY;
-  const required = {
+  const required = requiredConfiguration(environment);
+  assertCompleteConfiguration(required);
+  return buildIntegrationConfig(required, environment);
+}
+
+function requiredConfiguration(
+  environment: Environment,
+): RequiredConfiguration {
+  return {
     DATABASE_URL: environment.DATABASE_URL,
-    GEMINI_API_KEY: geminiApiKey,
+    GEMINI_API_KEY: environment.GEMINI_API_KEY ||
+      environment.GOOGLE_GENERATIVE_AI_API_KEY,
     PAPERMARK_API_KEY: environment.PAPERMARK_API_KEY,
     PAPERMARK_API_URL: environment.PAPERMARK_API_URL,
     PAPERMARK_ROOM_ID: environment.PAPERMARK_ROOM_ID,
   };
+}
+
+function assertCompleteConfiguration(required: RequiredConfiguration): void {
   const missing = Object.entries(required)
     .filter(([, value]) => !isRealConfigurationValue(value))
     .map(([name]) => name);
+  if (missing.length === 0) return;
+  throw new Error(
+    "verify:integration requires real service configuration; " +
+      `invalid values: '${missing.join(", ")}'. ` +
+      "Expected real service values and never substitutes mocks.",
+  );
+}
 
-  if (missing.length > 0) {
-    throw new Error(
-      `verify:integration requires real service configuration: ${
-        missing.join(", ")
-      }. ` +
-        "It never substitutes mocks.",
-    );
-  }
-
+function buildIntegrationConfig(
+  required: RequiredConfiguration,
+  environment: Environment,
+): IntegrationConfig {
   return {
-    databaseUrl: required.DATABASE_URL!,
-    geminiApiKey: required.GEMINI_API_KEY!,
+    databaseUrl: requiredValue(required, "DATABASE_URL"),
+    geminiApiKey: requiredValue(required, "GEMINI_API_KEY"),
     geminiModel: environment.GEMINI_SMOKE_MODEL || "gemini-2.5-flash",
-    papermarkApiKey: required.PAPERMARK_API_KEY!,
-    papermarkApiUrl: required.PAPERMARK_API_URL!.replace(/\/$/, ""),
-    papermarkRoomId: required.PAPERMARK_ROOM_ID!,
+    papermarkApiKey: requiredValue(required, "PAPERMARK_API_KEY"),
+    papermarkApiUrl: requiredValue(required, "PAPERMARK_API_URL").replace(
+      /\/$/,
+      "",
+    ),
+    papermarkRoomId: requiredValue(required, "PAPERMARK_ROOM_ID"),
   };
+}
+
+function requiredValue(
+  required: RequiredConfiguration,
+  name: RequiredConfigurationName,
+): string {
+  const value = required[name];
+  return requireConfigurationValue(value, name);
+}
+
+function requireConfigurationValue(
+  value: string | undefined,
+  name: string,
+): string {
+  if (isRealConfigurationValue(value)) return value;
+  throw new Error(
+    `Invalid integration configuration '${name}=${
+      String(value)
+    }'; expected a real service value.`,
+  );
 }
 
 async function verifyPostgres(databaseUrl: string): Promise<void> {
@@ -54,8 +98,11 @@ async function verifyPostgres(databaseUrl: string): Promise<void> {
   try {
     await client.connect();
     const result = await client.query("SELECT 1 AS live_smoke");
-    if (result.rows[0]?.live_smoke !== 1) {
-      throw new Error("PostgreSQL did not return the live smoke value.");
+    const actual = result.rows[0]?.live_smoke;
+    if (actual !== 1) {
+      throw new Error(
+        `PostgreSQL live smoke returned '${String(actual)}'; expected 1.`,
+      );
     }
   } finally {
     await client.end().catch(() => {});
@@ -63,53 +110,87 @@ async function verifyPostgres(databaseUrl: string): Promise<void> {
 }
 
 async function verifyGemini(apiKey: string, model: string): Promise<void> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${
-      encodeURIComponent(model)
-    }:generateContent?key=${encodeURIComponent(apiKey)}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Reply only with OK." }] }],
-        generationConfig: { maxOutputTokens: 8 },
-      }),
-    },
-  );
+  const response = await fetch(geminiUrl(apiKey, model), geminiRequest());
   if (!response.ok) {
-    throw new Error(`Gemini live smoke failed with HTTP ${response.status}.`);
+    throw new Error(
+      `Gemini live smoke returned HTTP ${response.status}; expected 2xx.`,
+    );
   }
-
-  const payload = await response.json();
-  if (!payload.candidates?.[0]?.content?.parts?.[0]?.text) {
-    throw new Error("Gemini live smoke returned no generated content.");
+  const payload: unknown = await response.json();
+  if (!hasGeneratedGeminiText(payload)) {
+    throw new Error(
+      `Gemini payload '${
+        JSON.stringify(payload)
+      }' lacked expected generated text.`,
+    );
   }
 }
 
+function geminiUrl(apiKey: string, model: string): string {
+  const encodedModel = encodeURIComponent(model);
+  const encodedKey = encodeURIComponent(apiKey);
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodedModel}:generateContent?key=${encodedKey}`;
+}
+
+function geminiRequest(): RequestInit {
+  return {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: "Reply only with OK." }] }],
+      generationConfig: { maxOutputTokens: 8 },
+    }),
+  };
+}
+
+function hasGeneratedGeminiText(payload: unknown): boolean {
+  if (!isRecord(payload) || !Array.isArray(payload.candidates)) return false;
+  const candidate = payload.candidates[0];
+  if (!isRecord(candidate) || !isRecord(candidate.content)) return false;
+  const parts = candidate.content.parts;
+  if (!Array.isArray(parts) || !isRecord(parts[0])) return false;
+  return typeof parts[0].text === "string" && parts[0].text.length > 0;
+}
+
 async function verifyPapermark(config: IntegrationConfig): Promise<void> {
-  const response = await fetch(
-    `${config.papermarkApiUrl}/v1/rooms/${
-      encodeURIComponent(config.papermarkRoomId)
-    }/documents`,
-    {
-      headers: {
-        Authorization: `Bearer ${config.papermarkApiKey}`,
-        Accept: "application/json",
-      },
-    },
-  );
+  const response = await fetch(papermarkUrl(config), papermarkRequest(config));
   if (!response.ok) {
     throw new Error(
-      `Papermark live smoke failed with HTTP ${response.status}.`,
+      `Papermark live smoke returned HTTP ${response.status}; expected 2xx.`,
     );
   }
-
-  const payload = await response.json();
-  if (!Array.isArray(payload) && !Array.isArray(payload.documents)) {
+  const payload: unknown = await response.json();
+  if (!hasPapermarkDocuments(payload)) {
     throw new Error(
-      "Papermark live smoke returned an unexpected documents payload.",
+      `Papermark payload '${
+        JSON.stringify(payload)
+      }'; expected an array or documents array.`,
     );
   }
+}
+
+function papermarkUrl(config: IntegrationConfig): string {
+  const roomId = encodeURIComponent(config.papermarkRoomId);
+  return `${config.papermarkApiUrl}/v1/rooms/${roomId}/documents`;
+}
+
+function papermarkRequest(config: IntegrationConfig): RequestInit {
+  return {
+    headers: {
+      Authorization: `Bearer ${config.papermarkApiKey}`,
+      Accept: "application/json",
+    },
+  };
+}
+
+function hasPapermarkDocuments(payload: unknown): boolean {
+  if (Array.isArray(payload)) return true;
+  return isRecord(payload) && Array.isArray(payload.documents);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  const isObject = typeof value === "object";
+  return isObject && value !== null;
 }
 
 async function verifyTransformers(): Promise<void> {

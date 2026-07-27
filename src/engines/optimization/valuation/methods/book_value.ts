@@ -7,7 +7,6 @@
 import type {
   BalanceSheetData,
   MethodResult,
-  ValuationFlag,
 } from "../../../../shared/types.ts";
 
 /**
@@ -18,25 +17,22 @@ import type {
  * @throws {RangeError} If any of the balance sheet inputs are negative.
  */
 export function computeBookValue(data: BalanceSheetData): MethodResult {
-  if (
-    data.totalAssets < 0 || data.intangibleAssets < 0 ||
-    data.totalLiabilities < 0
-  ) {
-    throw new RangeError(
-      "[ValuationEngine:BookValue] Balance sheet inputs must be >= 0.",
-    );
-  }
-
-  const bv = data.totalAssets - data.intangibleAssets - data.totalLiabilities;
-  const flags: ValuationFlag[] = [];
-
-  if (bv < 0) {
-    flags.push("NEGATIVE_BOOK_VALUE");
-  }
-
+  validateBalanceSheet(data);
+  const value = data.totalAssets - data.intangibleAssets -
+    data.totalLiabilities;
   return {
     method: "Book Value",
-    value: bv,
-    flags,
+    value,
+    flags: value < 0 ? ["NEGATIVE_BOOK_VALUE"] : [],
   };
+}
+
+function validateBalanceSheet(data: BalanceSheetData): void {
+  if (
+    data.totalAssets >= 0 && data.intangibleAssets >= 0 &&
+    data.totalLiabilities >= 0
+  ) return;
+  throw new RangeError(
+    `[ValuationEngine:BookValue] assets/intangibles/liabilities was ${data.totalAssets}/${data.intangibleAssets}/${data.totalLiabilities}; expected non-negative values.`,
+  );
 }

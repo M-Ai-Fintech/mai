@@ -1,31 +1,35 @@
-# Which skill to use for each agent?
-Doesn't know what skill to use for each agent? Considering codex and agy, here is a list for you.
+# Skill Router
 
-## Both:
-- ask-matt
-- backlog-mcp
-- caveman
-- commit-changes
-- grill-me
-- handoff
-- research
-- resolving-merge-conflicts
-- to-spec
-- to-tickets
+Use this as a quick router for local `.agents/skills` choices.
 
-## agy (Antigravity)
-- code-review (to review codex assigned tasks)
-- investigate (heavy-context depending)
-- teach
+## Shared
 
-## Codex (ChatGPT)
-- code-review (to review agy assigned tasks)
-- grill-with-docs
-- improve-codebase-architecture
-- solve-mai
-- writting-great-skills
+- `backlog-mcp`: Backlog project-state lifecycle work.
+- `caveman`: terse routine updates.
+- `clean-code`: whole-repository audit or refactor against `AGENTS.md` rules.
+- `commit-changes`: focused one-line commit creation.
+- `grill-me`: sharpen an underspecified idea through questions.
+- `handoff`: compact the current session for another agent.
+- `research`: source-backed investigation.
+- `resolving-merge-conflicts`: resolve an active merge conflict.
+- `to-spec`: turn an idea into a spec.
+- `to-tickets`: turn a spec into tickets.
 
+## Antigravity
 
-## ???
-- triagr
-- wayfinder
+- `code-review`: review Codex-assigned work.
+- `investigate`: heavy-context defect investigation.
+- `teach`: build learning material.
+
+## Codex
+
+- `code-review`: review Antigravity-assigned work.
+- `grill-with-docs`: question an idea while consulting documents.
+- `improve-codebase-architecture`: architecture-focused improvement pass.
+- `solve-mai`: Backlog task to reviewed PR.
+- `writing-great-skills`: write or revise skills predictably.
+
+## Triage
+
+- `triage`: classify incoming work.
+- `wayfinder`: navigate a multi-step effort.

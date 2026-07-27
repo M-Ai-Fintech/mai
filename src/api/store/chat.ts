@@ -63,25 +63,14 @@ export class ChatRepository {
     input: { agentId: AgentId; message: string; clientMessageId: string },
   ): StoredChatMessage {
     const thread = this.getThread(threadId, dealId);
-    const existing = this.state.messages.get(threadId)!.find((message) =>
+    const messages = this.state.messages.get(threadId)!;
+    const existing = messages.find((message) =>
       message.clientMessageId === input.clientMessageId
     );
     if (existing) return clone(existing);
     const timestamp = this.state.now();
-    const message: StoredChatMessage = {
-      id: this.state.id(),
-      threadId,
-      role: "user",
-      agentId: input.agentId,
-      clientMessageId: input.clientMessageId,
-      content: input.message,
-      citations: [],
-      status: "accepted",
-      error: null,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    this.state.messages.get(threadId)!.push(message);
+    const message = userMessage(this.state.id(), threadId, input, timestamp);
+    messages.push(message);
     thread.agentId = input.agentId;
     this.touchThread(thread, timestamp);
     return clone(message);
@@ -93,19 +82,12 @@ export class ChatRepository {
   ): StoredChatMessage {
     const thread = this.getThread(threadId);
     const timestamp = this.state.now();
-    const message: StoredChatMessage = {
-      id: this.state.id(),
+    const message = assistantMessage(
+      this.state.id(),
       threadId,
-      role: "assistant",
       agentId,
-      clientMessageId: null,
-      content: "",
-      citations: [],
-      status: "streaming",
-      error: null,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
+      timestamp,
+    );
     this.state.messages.get(threadId)!.push(message);
     this.touchThread(thread, timestamp);
     return clone(message);
@@ -186,24 +168,73 @@ export class ChatRepository {
   }
 
   private toMessage(message: StoredChatMessage): ChatMessage {
-    if (message.role === "user") {
-      return {
-        id: message.id,
-        threadId: message.threadId,
-        role: "user",
-        content: message.content,
-        clientMessageId: message.clientMessageId!,
-        createdAt: message.createdAt,
-      };
-    }
-    return {
-      id: message.id,
-      threadId: message.threadId,
-      role: "assistant",
-      content: message.content,
-      agentId: message.agentId!,
-      citations: clone(message.citations),
-      createdAt: message.createdAt,
-    };
+    return message.role === "user"
+      ? toUserMessage(message)
+      : toAssistantMessage(message);
   }
+}
+
+function userMessage(
+  id: string,
+  threadId: string,
+  input: { agentId: AgentId; message: string; clientMessageId: string },
+  timestamp: string,
+): StoredChatMessage {
+  return {
+    id,
+    threadId,
+    role: "user",
+    agentId: input.agentId,
+    clientMessageId: input.clientMessageId,
+    content: input.message,
+    citations: [],
+    status: "accepted",
+    error: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function assistantMessage(
+  id: string,
+  threadId: string,
+  agentId: AgentId,
+  timestamp: string,
+): StoredChatMessage {
+  return {
+    id,
+    threadId,
+    role: "assistant",
+    agentId,
+    clientMessageId: null,
+    content: "",
+    citations: [],
+    status: "streaming",
+    error: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function toUserMessage(message: StoredChatMessage): ChatMessage {
+  return {
+    id: message.id,
+    threadId: message.threadId,
+    role: "user",
+    content: message.content,
+    clientMessageId: message.clientMessageId!,
+    createdAt: message.createdAt,
+  };
+}
+
+function toAssistantMessage(message: StoredChatMessage): ChatMessage {
+  return {
+    id: message.id,
+    threadId: message.threadId,
+    role: "assistant",
+    content: message.content,
+    agentId: message.agentId!,
+    citations: clone(message.citations),
+    createdAt: message.createdAt,
+  };
 }

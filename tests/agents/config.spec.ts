@@ -1,13 +1,13 @@
 import { assertEquals } from "@std/assert";
-import { 
-  brokerOrchestratorAgent, 
-  sourcingAndKYBAgent,
-  generalDueDiligenceAgent,
-  financialRiskAgent,
-  legalDueDiligenceAgent,
+import {
+  brokerOrchestratorAgent,
   dealMatchingAgent,
+  financialRiskAgent,
+  generalDueDiligenceAgent,
+  legalClosingAgent,
+  legalDueDiligenceAgent,
   negotiationAgent,
-  legalClosingAgent
+  sourcingAndKYBAgent,
 } from "../../src/agent/index.ts";
 
 Deno.test("Agent Configuration - All agents are properly instantiated", () => {
