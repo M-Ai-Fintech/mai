@@ -3,11 +3,15 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
 import en from "./locales/en.json";
 import ptBR from "./locales/pt-BR.json";
+import {
+  translate,
+  type TranslationTree,
+  type TranslationVariables,
+} from "./translation";
 
-type Locale = "en" | "pt-BR";
-type Translations = Record<string, any>;
+export type Locale = "en" | "pt-BR";
 
-const translations: Record<Locale, Translations> = {
+const translations: Record<Locale, TranslationTree> = {
   en,
   "pt-BR": ptBR,
 };
@@ -15,67 +19,21 @@ const translations: Record<Locale, Translations> = {
 interface I18nContextProps {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string, variables?: Record<string, string | number>) => string;
+  t: (key: string, variables?: TranslationVariables) => string;
 }
 
 const I18nContext = createContext<I18nContextProps | undefined>(undefined);
 
+function isLocale(value: string | null): value is Locale {
+  return value === "en" || value === "pt-BR";
+}
+
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocaleState] = useState<Locale>("en");
 
-  React.useEffect(() => {
-    const saved = localStorage.getItem("mai_locale") as Locale;
-    if (saved && (saved === "en" || saved === "pt-BR")) {
-      setLocaleState(saved);
-    }
-  }, []);
-
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem("mai_locale", newLocale);
-  };
-
-  const t = (
-    key: string,
-    variables?: Record<string, string | number>,
-  ): string => {
-    const keys = key.split(".");
-    let value: any = translations[locale];
-
-    for (const k of keys) {
-      if (value && typeof value === "object" && k in value) {
-        value = value[k];
-      } else {
-        // Fallback to English
-        let fallbackValue: any = translations["en"];
-        for (const fbK of keys) {
-          if (
-            fallbackValue && typeof fallbackValue === "object" &&
-            fbK in fallbackValue
-          ) {
-            fallbackValue = fallbackValue[fbK];
-          } else {
-            return key;
-          }
-        }
-        value = fallbackValue;
-        break;
-      }
-    }
-
-    if (typeof value === "string") {
-      if (variables) {
-        return Object.entries(variables).reduce(
-          (str, [varName, varValue]) =>
-            str.replace(new RegExp(`{${varName}}`, "g"), String(varValue)),
-          value,
-        );
-      }
-      return value;
-    }
-
-    return key;
-  };
+  useStoredLocale(setLocaleState);
+  const setLocale = localeWriter(setLocaleState);
+  const t = translatorForLocale(locale);
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>
@@ -84,10 +42,31 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useTranslation = () => {
+function useStoredLocale(setLocaleState: (locale: Locale) => void): void {
+  React.useEffect(() => {
+    const saved = localStorage.getItem("mai_locale");
+    if (isLocale(saved)) queueMicrotask(() => setLocaleState(saved));
+  }, [setLocaleState]);
+}
+
+function localeWriter(setLocaleState: (locale: Locale) => void) {
+  return (newLocale: Locale) => {
+    setLocaleState(newLocale);
+    localStorage.setItem("mai_locale", newLocale);
+  };
+}
+
+function translatorForLocale(locale: Locale) {
+  return (key: string, variables?: TranslationVariables): string =>
+    translate(key, translations[locale], translations.en, variables);
+}
+
+export const useTranslation = (): I18nContextProps => {
   const context = useContext(I18nContext);
   if (!context) {
-    throw new Error("useTranslation must be used within an I18nProvider");
+    throw new Error(
+      "useTranslation has no I18nContext; expected an ancestor I18nProvider",
+    );
   }
   return context;
 };
