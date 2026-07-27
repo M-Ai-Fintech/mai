@@ -1,11 +1,11 @@
 ---
 id: MAI-88
 title: Apply clean-code rules across the project
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-26 17:28'
-updated_date: '2026-07-27 19:15'
+updated_date: '2026-07-27 19:18'
 labels:
   - skills
   - clean-code
@@ -356,14 +356,14 @@ Apply the clean-code rules in AGENTS.md across the repository. Correct project-s
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The existing PR is updated to contain the complete repository-wide cleanup as one PR.
-- [ ] #2 AGENTS.md contains concrete project commands and no clean-code skill routing paragraph.
-- [ ] #3 The repository is audited across source, GUI, tests, scripts, and local skills with generated and dependency paths excluded.
-- [ ] #4 Fix-now clean-code violations are implemented across all audited ownership areas in the existing branch and single PR.
-- [ ] #5 Files over 500 lines and functions over 20 lines are split where behavior can be preserved; remaining exceptions are documented with concrete risk.
-- [ ] #6 Untyped any usage, duplication, vague names, weak comments, nesting, error messages, dependency boundaries, and test quality violations are fixed or explicitly justified.
-- [ ] #7 An independent challenge agent reviews the integrated repository cleanup and all actionable findings are resolved.
-- [ ] #8 deno fmt, focused tests, deno task verify, git diff --check, and graphify update . are run with exact results recorded.
+- [x] #1 The existing PR is updated to contain the complete repository-wide cleanup as one PR.
+- [x] #2 AGENTS.md contains concrete project commands and no clean-code skill routing paragraph.
+- [x] #3 The repository is audited across source, GUI, tests, scripts, and local skills with generated and dependency paths excluded.
+- [x] #4 Fix-now clean-code violations are implemented across all audited ownership areas in the existing branch and single PR.
+- [x] #5 Files over 500 lines and functions over 20 lines are split where behavior can be preserved; remaining exceptions are documented with concrete risk.
+- [x] #6 Untyped any usage, duplication, vague names, weak comments, nesting, error messages, dependency boundaries, and test quality violations are fixed or explicitly justified.
+- [x] #7 An independent challenge agent reviews the integrated repository cleanup and all actionable findings are resolved.
+- [x] #8 deno fmt, focused tests, deno task verify, git diff --check, and graphify update . are run with exact results recorded.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -438,4 +438,12 @@ Final integrated evidence (2026-07-27): exhaustive TypeScript/TSX/JS/JSX/MJS/CJS
 Challenge fixes completed: five reviewer-identified callbacks plus 76 additional test callbacks and 13 final Storybook/scanner-count outliers were refactored through four disjoint agents and local integration. The task modified-files inventory was replaced with the complete current worktree path set.
 
 Final verification: deno fmt --check passed for 317 changed code files; deno lint src tests scripts passed for 227 files; deno task test passed 167 tests with 1 opt-in live smoke ignored; npm --prefix gui run test:unit passed 72 tests in 19 files; GUI ESLint and tsc passed; git diff --check passed; graphify update . passed; escalated deno task verify passed all 8 phases (canonical docs, i18n, Deno tests, GUI tests, Next build, Storybook docs/build/interactions).
+
+PR #8 updated after push: title is 'refactor(MAI-88): apply clean-code rules across project'; body records the one-PR scope, 419-file audit result, challenge resolution, exact passing verification, opt-in live smoke behavior, and Graphify warnings.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented the MAI-88 repository-wide clean-code cleanup in the single existing PR requested by the owner. Corrected AGENTS.md commands and removed the routing paragraph; updated the clean-code skill for explicit whole-repository single-PR work; refactored backend, agents, engines, CLI, GUI, scripts, local skills, tests, and Storybook into focused typed modules; removed executable any/Dict/z.any usage; split every code file/function beyond the configured thresholds; made default tests deterministic and kept live agent smoke coverage opt-in. Independent challenge findings and the stricter follow-up scan were resolved. Final evidence: 419 code files scanned with 0 functions over 20 lines and 0 files over 500; deno fmt check passed for 317 changed code files; Deno lint passed for 227 files; deno task test passed 167 tests with 1 live smoke ignored; GUI passed 72 unit tests, ESLint, and TypeScript; git diff check and Graphify update passed; deno task verify passed all 8 phases. PR #8 is updated at https://github.com/luisfelipeluis49/mai/pull/8.
+<!-- SECTION:FINAL_SUMMARY:END -->
