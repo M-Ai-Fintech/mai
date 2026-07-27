@@ -43,6 +43,7 @@ import { TeamMemberListQuery, TeamRepository } from "./store/team.ts";
 import {
   AgentId,
   CursorPage,
+  DossierPatch,
   EngineName,
   Entity,
   EntityInput,
@@ -138,7 +139,7 @@ export class MvpStore {
     return this.dossiers.get(entityId);
   }
 
-  updateDossier(entityId: string, patch: any) {
+  updateDossier(entityId: string, patch: DossierPatch) {
     return this.dossiers.update(entityId, patch);
   }
 

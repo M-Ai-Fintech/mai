@@ -14,36 +14,35 @@ export class AIProvider {
     if (Deno.env.get("DENO_ENV") === "test") {
       return { key: null, isFallback: true };
     }
-
-    const keysToTry = [
-      "GEMINI_API_KEY",
-      "GOOGLE_GENERATIVE_AI_API_KEY",
-      "GOOGLE_API_KEY",
-    ];
-
-    for (const envVar of keysToTry) {
-      const key = Deno.env.get(envVar);
-      if (key && key.trim() !== "" && key.trim() !== "mock-key-for-dry-run") {
-        return { key: key.trim(), isFallback: false };
-      }
-    }
-
-    if (Deno.args[0] !== "completions") {
-      // No key found: emit a clear and friendly warning message.
-      console.warn(
-        "\n[WARNING] No API key found for Google AI Studio/Gemini.",
-      );
-      console.warn(
-        "Check if the variables GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY are defined in your environment or in the .env file.",
-      );
-      console.warn(
-        "The system will operate in DRY-RUN/FALLBACK (mock) mode and no real API requests will be made.\n",
-      );
-      console.warn(
-        "Configure your key using backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md\n",
-      );
-    }
-
+    const key = firstConfiguredKey();
+    if (key) return { key, isFallback: false };
+    if (Deno.args[0] !== "completions") warnAboutMissingApiKey();
     return { key: null, isFallback: true };
   }
+}
+
+function firstConfiguredKey(): string | null {
+  const names = [
+    "GEMINI_API_KEY",
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+    "GOOGLE_API_KEY",
+  ];
+  for (const name of names) {
+    const key = Deno.env.get(name)?.trim();
+    if (key && key !== "mock-key-for-dry-run") return key;
+  }
+  return null;
+}
+
+function warnAboutMissingApiKey(): void {
+  console.warn("\n[WARNING] No API key found for Google AI Studio/Gemini.");
+  console.warn(
+    "Check if the variables GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY are defined in your environment or in the .env file.",
+  );
+  console.warn(
+    "The system will operate in DRY-RUN/FALLBACK (mock) mode and no real API requests will be made.\n",
+  );
+  console.warn(
+    "Configure your key using backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md\n",
+  );
 }

@@ -25,24 +25,9 @@ export class EntityRepository {
   constructor(private readonly state: MvpStoreState) {}
 
   list(query: EntityListQuery = {}): Page<Entity> {
-    const search = normalizedSearch(query.search);
-    let rows = [...this.state.entities.values()].filter((entity) =>
-      (query.includeArchived || !entity.archivedAt) &&
-      (!query.role || entity.roles.includes(query.role)) &&
-      (!query.sector || entity.sector === query.sector) &&
-      (!query.countryCode || entity.countryCode === query.countryCode) &&
-      (!query.kybStatus || entity.kybStatus === query.kybStatus) &&
-      (!search ||
-        `${entity.legalName} ${entity.taxId} ${entity.contactEmail ?? ""}`
-          .toLocaleLowerCase().includes(search))
-    );
-    const descending = query.sort?.startsWith("-") ?? false;
-    const sortKey = query.sort?.replace(/^-/, "") ?? "legalName";
-    rows = rows.sort((a, b) => {
-      const left = sortKey === "updatedAt" ? a.updatedAt : a.legalName;
-      const right = sortKey === "updatedAt" ? b.updatedAt : b.legalName;
-      return left.localeCompare(right) * (descending ? -1 : 1);
-    });
+    const rows = [...this.state.entities.values()]
+      .filter((entity) => matchesEntity(entity, query))
+      .sort(entityComparator(query));
     return pageOf(rows, query);
   }
 
@@ -69,55 +54,26 @@ export class EntityRepository {
 
   update(id: string, patch: EntityPatch): Entity {
     const current = this.get(id);
-    if (patch.version !== current.version) {
-      throw new MvpStoreError(
-        "RESOURCE_VERSION_CONFLICT",
-        "Entity version is stale",
-        409,
-      );
-    }
+    assertEntityVersion(current, patch.version);
     if (patch.taxId) this.assertUniqueTaxId(patch.taxId, id);
     if (patch.primaryAdvisorId !== undefined) {
       assertAdvisor(this.state, patch.primaryAdvisorId);
     }
-    const { version: _expectedVersion, ...changes } = patch;
-    const updated: Entity = {
-      ...current,
-      ...clone(changes),
-      roles: changes.roles ? [...new Set(changes.roles)] : current.roles,
-      updatedAt: this.state.now(),
-      version: current.version + 1,
-    };
+    const updated = updatedEntity(current, patch, this.state.now());
     this.state.entities.set(id, updated);
     return clone(updated);
   }
 
   archive(id: string, version?: number): Entity {
     const current = this.get(id);
-    if (version !== undefined && version !== current.version) {
-      throw new MvpStoreError(
-        "RESOURCE_VERSION_CONFLICT",
-        "Entity version is stale",
-        409,
-      );
-    }
-    const hasActiveDeal = [...this.state.deals.values()].some((deal) =>
-      deal.activeEntityIds.includes(id)
-    );
-    if (hasActiveDeal) {
-      throw new MvpStoreError(
-        "ENTITY_HAS_ACTIVE_DEALS",
-        "Entity cannot be archived while it has active deals",
-        409,
-      );
-    }
+    assertEntityVersion(current, version);
+    assertNoActiveDeal(this.state, id);
     if (current.archivedAt) return current;
-    const archived = {
-      ...current,
-      archivedAt: this.state.now(),
-      updatedAt: this.state.now(),
-      version: current.version + 1,
-    };
+    const archived = archivedEntity(
+      current,
+      this.state.now(),
+      this.state.now(),
+    );
     this.state.entities.set(id, archived);
     return clone(archived);
   }
@@ -137,6 +93,82 @@ export class EntityRepository {
       );
     }
   }
+}
+
+function matchesEntity(entity: Entity, query: EntityListQuery): boolean {
+  const text = `${entity.legalName} ${entity.taxId} ${
+    entity.contactEmail ?? ""
+  }`
+    .toLocaleLowerCase();
+  return (query.includeArchived || !entity.archivedAt) &&
+    (!query.role || entity.roles.includes(query.role)) &&
+    (!query.sector || entity.sector === query.sector) &&
+    (!query.countryCode || entity.countryCode === query.countryCode) &&
+    (!query.kybStatus || entity.kybStatus === query.kybStatus) &&
+    (!query.search || text.includes(normalizedSearch(query.search)));
+}
+
+function entityComparator(
+  query: EntityListQuery,
+): (left: Entity, right: Entity) => number {
+  const descending = query.sort?.startsWith("-") ?? false;
+  const sortKey = query.sort?.replace(/^-/, "") ?? "legalName";
+  return (left, right) => {
+    const leftValue = sortKey === "updatedAt" ? left.updatedAt : left.legalName;
+    const rightValue = sortKey === "updatedAt"
+      ? right.updatedAt
+      : right.legalName;
+    return leftValue.localeCompare(rightValue) * (descending ? -1 : 1);
+  };
+}
+
+function assertEntityVersion(entity: Entity, version?: number): void {
+  if (version === undefined || version === entity.version) return;
+  throw new MvpStoreError(
+    "RESOURCE_VERSION_CONFLICT",
+    `Entity version "${version}" is stale; expected "${entity.version}"`,
+    409,
+  );
+}
+
+function assertNoActiveDeal(state: MvpStoreState, entityId: string): void {
+  const active = [...state.deals.values()].some((deal) =>
+    deal.activeEntityIds.includes(entityId)
+  );
+  if (!active) return;
+  throw new MvpStoreError(
+    "ENTITY_HAS_ACTIVE_DEALS",
+    `Entity "${entityId}" cannot be archived while it has active deals`,
+    409,
+  );
+}
+
+function archivedEntity(
+  entity: Entity,
+  archivedAt: string,
+  updatedAt: string,
+): Entity {
+  return {
+    ...entity,
+    archivedAt,
+    updatedAt,
+    version: entity.version + 1,
+  };
+}
+
+function updatedEntity(
+  current: Entity,
+  patch: EntityPatch,
+  updatedAt: string,
+): Entity {
+  const { version: _expectedVersion, ...changes } = patch;
+  return {
+    ...current,
+    ...clone(changes),
+    roles: changes.roles ? [...new Set(changes.roles)] : current.roles,
+    updatedAt,
+    version: current.version + 1,
+  };
 }
 
 export class DossierRepository {

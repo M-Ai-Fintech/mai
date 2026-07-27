@@ -41,34 +41,50 @@ export class TeamRepository {
     inputs: TeamAssignmentInput[],
   ): { data: TeamAssignment[]; version: number } {
     const deal = getDealState(this.state, dealId);
-    if (deal.version !== version) {
-      throw new MvpStoreError(
-        "RESOURCE_VERSION_CONFLICT",
-        "Deal version is stale",
-        409,
-      );
-    }
-    const leadCount = inputs.filter((item) => item.isLead).length;
-    if (leadCount > 1) {
-      throw new MvpStoreError(
-        "TEAM_ASSIGNMENT_INVALID",
-        "Only one lead assignment is allowed",
-        422,
-        { assignments: ["Only one assignment may be marked as lead"] },
-      );
-    }
-    const assignments = inputs.map((input) => {
-      assertAdvisor(this.state, input.teamMemberId);
-      const { teamMemberId, ...assignment } = input;
-      return {
-        ...clone(assignment),
-        id: this.state.id(),
-        teamMember: clone(this.state.teamMembers.get(teamMemberId)!),
-      };
-    });
+    assertAssignmentVersion(dealId, deal.version, version);
+    assertSingleLead(inputs);
+    const assignments = inputs.map((input) =>
+      createAssignment(this.state, input)
+    );
     deal.teamAssignments = assignments;
     deal.version += 1;
     deal.updatedAt = this.state.now();
     return clone({ data: assignments, version: deal.version });
   }
+}
+
+function assertAssignmentVersion(
+  dealId: string,
+  actual: number,
+  expected: number,
+): void {
+  if (actual === expected) return;
+  throw new MvpStoreError(
+    "RESOURCE_VERSION_CONFLICT",
+    `Deal "${dealId}" has version "${actual}"; expected "${expected}"`,
+    409,
+  );
+}
+
+function assertSingleLead(inputs: TeamAssignmentInput[]): void {
+  if (inputs.filter((item) => item.isLead).length <= 1) return;
+  throw new MvpStoreError(
+    "TEAM_ASSIGNMENT_INVALID",
+    `Received multiple lead assignments; expected at most one`,
+    422,
+    { assignments: ["Only one assignment may be marked as lead"] },
+  );
+}
+
+function createAssignment(
+  state: MvpStoreState,
+  input: TeamAssignmentInput,
+): TeamAssignment {
+  assertAdvisor(state, input.teamMemberId);
+  const { teamMemberId, ...assignment } = input;
+  return {
+    ...clone(assignment),
+    id: state.id(),
+    teamMember: clone(state.teamMembers.get(teamMemberId)!),
+  };
 }
