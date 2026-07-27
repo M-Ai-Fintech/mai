@@ -79,24 +79,34 @@ Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictErro
     conflictReason: "Fiduciary Rule Conflict: Accounting norms require provisioning."
   };
   
-  await orchestrator.processUserCorrection(
-    "default_user",
-    "user_preference",
-    "adjustments",
-    badPref,
-    "omit contingency"
-  );
+  try {
+    await orchestrator.processUserCorrection(
+      "default_user",
+      "user_preference",
+      "adjustments",
+      badPref,
+      "omit contingency"
+    );
 
-  // 2. Query execution should throw ComplianceConflictError
-  await assertRejects(
-    async () => {
-      await AgentOrchestrator.executeAgentQuery(dealId, "Show valuation options", "some context");
-    },
-    ComplianceConflictError,
-    "Fiduciary Rule Conflict"
-  );
+    // 2. Query execution should throw ComplianceConflictError
+    await assertRejects(
+      async () => {
+        await AgentOrchestrator.executeAgentQuery(dealId, "Show valuation options", "some context");
+      },
+      ComplianceConflictError,
+      "Fiduciary Rule Conflict"
+    );
 
-  // 3. Query execution with bypassConflict = true should not throw
-  const response = await AgentOrchestrator.executeAgentQuery(dealId, "Show valuation options", "some context", true);
-  assertEquals(typeof response, "string");
+    // 3. Query execution with bypassConflict = true should not throw
+    const response = await AgentOrchestrator.executeAgentQuery(dealId, "Show valuation options", "some context", true);
+    assertEquals(typeof response, "string");
+  } finally {
+    // Reset default_user preferences to prevent cross-test state pollution
+    const db = DatabaseMemoryService.getInstance();
+    await db.saveUserPreferences("default_user", {
+      defaultValuationMethod: "DCF",
+      riskAppetite: "Moderate",
+      preferredJurisdiction: "Brazil",
+    });
+  }
 });
