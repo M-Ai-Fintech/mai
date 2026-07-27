@@ -9,6 +9,130 @@ import {
 } from "../../src/engines/optimization/valuation/index.ts";
 import type { ExtendedValuationInput } from "../../src/shared/types.ts";
 
+const CONTINGENCY_INPUT = {
+  taxContingencies: [
+    {
+      id: "T1",
+      category: "tax" as const,
+      description: "ICMS",
+      amount: 500_000,
+      probability: "PROBABLE" as const,
+    },
+    {
+      id: "T2",
+      category: "tax" as const,
+      description: "PIS",
+      amount: 200_000,
+      probability: "POSSIBLE" as const,
+    },
+  ],
+  laborContingencies: [
+    {
+      id: "L1",
+      category: "labor" as const,
+      description: "CLT Overtime",
+      amount: 100_000,
+      probability: "POSSIBLE" as const,
+      probabilityWeight: 0.60,
+    },
+    {
+      id: "L2",
+      category: "labor" as const,
+      description: "FGTS Claim",
+      amount: 50_000,
+      probability: "REMOTE" as const,
+    },
+  ],
+};
+
+const RECONCILIATION_INPUT = {
+  values: [
+    5_000_000,
+    6_500_000,
+    5_500_000,
+    50_000_000,
+    45_000_000,
+    40_000_000,
+  ],
+  weightsConfig: {
+    bookValue: { minWeight: 0.0, maxWeight: 0.10, priorWeight: 0.05 },
+    dcf: { minWeight: 0.30, maxWeight: 0.70, priorWeight: 0.50 },
+    terminalValue: { minWeight: 0.05, maxWeight: 0.25, priorWeight: 0.15 },
+    marketCap: { minWeight: 0.0, maxWeight: 0.0, priorWeight: 0.0 },
+    enterpriseValue: { minWeight: 0.0, maxWeight: 0.0, priorWeight: 0.0 },
+    ebitdaValuation: { minWeight: 0.10, maxWeight: 0.50, priorWeight: 0.30 },
+  },
+};
+
+const EXTENDED_VALUATION_INPUT: ExtendedValuationInput = {
+  companyId: "COMP-LATAM-456",
+  profile: {
+    listingStatus: "private",
+    stage: "growth",
+    sector: "technology",
+    financialStability: "high",
+  },
+  balanceSheet: {
+    totalAssets: 10_000_000,
+    intangibleAssets: 1_000_000,
+    totalLiabilities: 4_000_000,
+  },
+  cashFlowProjection: {
+    cashFlows: [500_000, 600_000, 700_000],
+    wacc: 0.12,
+  },
+  terminalValue: {
+    lastCashFlow: 700_000,
+    growthRate: 0.02,
+    wacc: 0.12,
+    projectionYears: 3,
+  },
+  marketData: {
+    sharePrice: 25,
+    outstandingShares: 2_000_000,
+  },
+  enterpriseValue: {
+    marketCap: 50_000_000,
+    totalDebt: 5_000_000,
+    cashAndEquivalents: 10_000_000,
+  },
+  ebitdaMultiple: {
+    ebitda: 2_000_000,
+    evEbitdaMultiple: 12,
+    totalDebt: 5_000_000,
+    cashAndEquivalents: 10_000_000,
+  },
+  dlom: {
+    volatility: 0.35,
+    riskFreeRate: 0.1075,
+    holdingPeriod: 1.5,
+  },
+  jcp: {
+    jcpAmount: 500_000,
+    corporateTaxRate: 0.34,
+  },
+  contingencies: {
+    taxContingencies: [
+      {
+        id: "T1",
+        category: "tax",
+        description: "PIS/COFINS Dispute",
+        amount: 300_000,
+        probability: "POSSIBLE",
+      },
+    ],
+    laborContingencies: [
+      {
+        id: "L1",
+        category: "labor",
+        description: "CLT Claim",
+        amount: 100_000,
+        probability: "PROBABLE",
+      },
+    ],
+  },
+};
+
 Deno.test("cumulativeNormalCDF – validates standard Normal distribution values", () => {
   // Mean = 0
   assertAlmostEquals(cumulativeNormalCDF(0.0), 0.5, 1e-6);
@@ -43,43 +167,7 @@ Deno.test("computeJcpTaxShield – calculates tax shield benefits correctly", ()
 });
 
 Deno.test("computeContingencyDeductions – expected value probability calculations", () => {
-  const data = {
-    taxContingencies: [
-      {
-        id: "T1",
-        category: "tax" as const,
-        description: "ICMS",
-        amount: 500_000,
-        probability: "PROBABLE" as const,
-      },
-      {
-        id: "T2",
-        category: "tax" as const,
-        description: "PIS",
-        amount: 200_000,
-        probability: "POSSIBLE" as const,
-      },
-    ],
-    laborContingencies: [
-      {
-        id: "L1",
-        category: "labor" as const,
-        description: "CLT Overtime",
-        amount: 100_000,
-        probability: "POSSIBLE" as const,
-        probabilityWeight: 0.60,
-      },
-      {
-        id: "L2",
-        category: "labor" as const,
-        description: "FGTS Claim",
-        amount: 50_000,
-        probability: "REMOTE" as const,
-      },
-    ],
-  };
-
-  const totalDeduction = computeContingencyDeductions(data);
+  const totalDeduction = computeContingencyDeductions(CONTINGENCY_INPUT);
   // T1 (Probable): 500,000 * 1.0 = 500,000
   // T2 (Possible): 200,000 * 0.5 = 100,000
   // L1 (Possible with custom weight): 100,000 * 0.6 = 60,000
@@ -89,26 +177,7 @@ Deno.test("computeContingencyDeductions – expected value probability calculati
 });
 
 Deno.test("ReconciliationEngine – projects weights onto simplex under constraints", () => {
-  const input = {
-    values: [
-      5_000_000,
-      6_500_000,
-      5_500_000,
-      50_000_000,
-      45_000_000,
-      40_000_000,
-    ],
-    weightsConfig: {
-      bookValue: { minWeight: 0.0, maxWeight: 0.10, priorWeight: 0.05 },
-      dcf: { minWeight: 0.30, maxWeight: 0.70, priorWeight: 0.50 },
-      terminalValue: { minWeight: 0.05, maxWeight: 0.25, priorWeight: 0.15 },
-      marketCap: { minWeight: 0.0, maxWeight: 0.0, priorWeight: 0.0 },
-      enterpriseValue: { minWeight: 0.0, maxWeight: 0.0, priorWeight: 0.0 },
-      ebitdaValuation: { minWeight: 0.10, maxWeight: 0.50, priorWeight: 0.30 },
-    },
-  };
-
-  const res = ReconciliationEngine.reconcile(input);
+  const res = ReconciliationEngine.reconcile(RECONCILIATION_INPUT);
   assertEquals(res.status, "optimal");
 
   const w = res.weights;
@@ -124,77 +193,8 @@ Deno.test("ReconciliationEngine – projects weights onto simplex under constrai
 });
 
 Deno.test("ValuationEngine – end-to-end evaluation with reconciliation & adjustments", () => {
-  const input: ExtendedValuationInput = {
-    companyId: "COMP-LATAM-456",
-    profile: {
-      listingStatus: "private",
-      stage: "growth",
-      sector: "technology",
-      financialStability: "high",
-    },
-    balanceSheet: {
-      totalAssets: 10_000_000,
-      intangibleAssets: 1_000_000,
-      totalLiabilities: 4_000_000,
-    },
-    cashFlowProjection: {
-      cashFlows: [500_000, 600_000, 700_000],
-      wacc: 0.12,
-    },
-    terminalValue: {
-      lastCashFlow: 700_000,
-      growthRate: 0.02,
-      wacc: 0.12,
-      projectionYears: 3,
-    },
-    marketData: {
-      sharePrice: 25,
-      outstandingShares: 2_000_000,
-    },
-    enterpriseValue: {
-      marketCap: 50_000_000,
-      totalDebt: 5_000_000,
-      cashAndEquivalents: 10_000_000,
-    },
-    ebitdaMultiple: {
-      ebitda: 2_000_000,
-      evEbitdaMultiple: 12,
-      totalDebt: 5_000_000,
-      cashAndEquivalents: 10_000_000,
-    },
-    dlom: {
-      volatility: 0.35,
-      riskFreeRate: 0.1075,
-      holdingPeriod: 1.5,
-    },
-    jcp: {
-      jcpAmount: 500_000,
-      corporateTaxRate: 0.34,
-    },
-    contingencies: {
-      taxContingencies: [
-        {
-          id: "T1",
-          category: "tax",
-          description: "PIS/COFINS Dispute",
-          amount: 300_000,
-          probability: "POSSIBLE",
-        },
-      ],
-      laborContingencies: [
-        {
-          id: "L1",
-          category: "labor",
-          description: "CLT Claim",
-          amount: 100_000,
-          probability: "PROBABLE",
-        },
-      ],
-    },
-  };
-
   const engine = new ValuationEngine();
-  const report = engine.evaluate(input);
+  const report = engine.evaluate(EXTENDED_VALUATION_INPUT);
 
   assertEquals(report.companyId, "COMP-LATAM-456");
   assertEquals(report.reconciliation !== undefined, true);

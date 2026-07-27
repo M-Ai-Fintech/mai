@@ -1,191 +1,198 @@
-import { assertEquals, assertNotEquals } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import {
+  geminiGoogleSearchTool,
   googleCloudPubSubTool,
-  mcpDatabaseTool,
   huggingFaceMcpTool,
-  geminiGoogleSearchTool
+  mcpDatabaseTool,
 } from "../src/agent/actions.ts";
 import { LocalPubSubBus } from "../src/core/pubsub/LocalPubSubBus.ts";
+import { testToolContext } from "./support/tool_context.ts";
+import { requireArray, requireRecord } from "./support/value_guards.ts";
 
-Deno.test("LocalPubSubBus - Publish and Subscribe real messaging flow", async () => {
-  const bus = LocalPubSubBus.getInstance();
-  bus.clear();
+const VDR_REQUEST = {
+  topic: "vdr_requests",
+  action: "request_vdr_access",
+  dealId: "deal_1",
+  requester: "LegalDueDiligenceAgent",
+};
 
-  let receivedData1: any = null;
-  let receivedData2: any = null;
+const ENGINE_REQUEST = {
+  topic: "engine_requests",
+  action: "trigger_engine",
+  dealId: "deal_2",
+};
 
-  bus.subscribe("test_topic", (data: any) => {
-    receivedData1 = data;
+const INSOLVENCY_INPUT = {
+  ebitda: 10,
+  revenue: 50,
+  totalAssets: 100,
+  totalLiabilities: 30,
+  operatingCashFlow: 8,
+  historicalVolatility: 0.15,
+};
+
+function nextMessage(
+  bus: LocalPubSubBus,
+  topic: string,
+): Promise<Record<string, unknown>> {
+  return new Promise((resolve) => {
+    bus.subscribe(topic, (payload) => resolve(requireRecord(payload)));
   });
+}
 
-  bus.subscribe("test_topic", (data: any) => {
-    receivedData2 = data;
-  });
-
-  const payload = { hello: "world", test: true };
-  bus.publish("test_topic", payload);
-
-  // Wait for async delivery
-  await new Promise((resolve) => setTimeout(resolve, 10));
-
-  assertNotEquals(receivedData1, null);
-  assertEquals(receivedData1.hello, "world");
-  assertEquals(receivedData1.test, true);
-
-  assertNotEquals(receivedData2, null);
-  assertEquals(receivedData2.hello, "world");
-  assertEquals(receivedData2.test, true);
-});
-
-Deno.test("LocalPubSubBus - Error isolation", async () => {
-  const bus = LocalPubSubBus.getInstance();
-  bus.clear();
-
-  let receivedData: any = null;
-
-  bus.subscribe("error_topic", () => {
-    throw new Error("Simulated failure");
-  });
-
-  bus.subscribe("error_topic", (data: any) => {
-    receivedData = data;
-  });
-
-  bus.publish("error_topic", { success: true });
-
-  await new Promise((resolve) => setTimeout(resolve, 10));
-
-  assertNotEquals(receivedData, null);
-  assertEquals(receivedData.success, true);
-});
-
-Deno.test("LocalPubSubBus - Cleanup and memory leak prevention", async () => {
-  const bus = LocalPubSubBus.getInstance();
-  bus.clear();
-
-  let count = 0;
-  bus.subscribe("clean_topic", () => {
-    count++;
-  });
-
-  bus.publish("clean_topic", { test: 1 });
-  await new Promise((resolve) => setTimeout(resolve, 10));
-  assertEquals(count, 1);
-
-  bus.clear("clean_topic");
-
-  bus.publish("clean_topic", { test: 2 });
-  await new Promise((resolve) => setTimeout(resolve, 10));
-  assertEquals(count, 1); // should not increment because listener was cleared
-});
-
-Deno.test("googleCloudPubSubTool - Publishes and returns success and handles request_vdr_access", async () => {
-  const bus = LocalPubSubBus.getInstance();
-  bus.clear();
-
-  let responseData: any = null;
-  bus.subscribe("vdr_requests_response", (data: any) => {
-    responseData = data;
-  });
-
-  const result = await googleCloudPubSubTool.execute!({
-    topic: "vdr_requests",
-    action: "request_vdr_access",
-    dealId: "deal_1",
-    requester: "LegalDueDiligenceAgent",
-  }, {} as any);
-
+function assertVdrToolResult(result: Record<string, unknown>): void {
   assertEquals(result.success, true);
   assertEquals(result.action, "request_vdr_access");
   assertEquals(result.dealId, "deal_1");
-  assertNotEquals(result.documents, undefined);
+  requireArray(result.documents, "documents");
+}
 
-  // Wait a small bit for any async handlers
-  await new Promise((resolve) => setTimeout(resolve, 10));
+function assertVdrResponse(response: Record<string, unknown>): void {
+  assertEquals(response.status, "success");
+  assertEquals(response.requester, "LegalDueDiligenceAgent");
+}
 
-  assertNotEquals(responseData, null);
-  assertEquals(responseData.status, "success");
-  assertEquals(responseData.requester, "LegalDueDiligenceAgent");
-});
-
-Deno.test("googleCloudPubSubTool - Handles trigger_engine action", async () => {
-  const bus = LocalPubSubBus.getInstance();
-  bus.clear();
-
-  let responseData: any = null;
-  bus.subscribe("engine_requests_response", (data: any) => {
-    responseData = data;
-  });
-
-  const result = await googleCloudPubSubTool.execute!({
-    topic: "engine_requests",
-    action: "trigger_engine",
-    dealId: "deal_2",
-  }, {} as any);
-
+function assertEngineToolResult(result: Record<string, unknown>): void {
   assertEquals(result.success, true);
   assertEquals(result.action, "trigger_engine");
   assertEquals(result.dealId, "deal_2");
+}
 
-  await new Promise((resolve) => setTimeout(resolve, 10));
+function assertEngineResponse(response: Record<string, unknown>): void {
+  assertEquals(response.status, "success");
+  assertEquals(response.result, "Engine triggered successfully for deal_2");
+}
 
-  assertNotEquals(responseData, null);
-  assertEquals(responseData.status, "success");
-  assertEquals(responseData.result, "Engine triggered successfully for deal_2");
+Deno.test("LocalPubSubBus delivers a publication to every subscriber", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+  const firstMessage = nextMessage(bus, "test_topic");
+  const secondMessage = nextMessage(bus, "test_topic");
+
+  bus.publish("test_topic", { hello: "world", test: true });
+
+  assertEquals(await firstMessage, { hello: "world", test: true });
+  assertEquals(await secondMessage, { hello: "world", test: true });
 });
 
-Deno.test("mcpDatabaseTool - Runs tables and schema commands with graceful fallback", async () => {
-  const resultList = await mcpDatabaseTool.execute!({
+Deno.test("LocalPubSubBus isolates a failing subscriber", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+  bus.subscribe("error_topic", () => {
+    throw new Error("Simulated failure");
+  });
+  const deliveredMessage = nextMessage(bus, "error_topic");
+
+  bus.publish("error_topic", { success: true });
+
+  assertEquals(await deliveredMessage, { success: true });
+});
+
+Deno.test("LocalPubSubBus stops delivery after topic cleanup", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+  let deliveryCount = 0;
+  bus.subscribe("clean_topic", () => deliveryCount++);
+
+  const firstDelivery = nextMessage(bus, "clean_topic");
+  bus.publish("clean_topic", { sequence: 1 });
+  await firstDelivery;
+  assertEquals(deliveryCount, 1);
+
+  bus.clear("clean_topic");
+  const eventLoopBarrier = nextMessage(bus, "barrier_topic");
+  bus.publish("clean_topic", { sequence: 2 });
+  bus.publish("barrier_topic", { complete: true });
+  await eventLoopBarrier;
+  assertEquals(deliveryCount, 1);
+});
+
+Deno.test("googleCloudPubSubTool publishes a VDR response", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+  const responseMessage = nextMessage(bus, "vdr_requests_response");
+
+  const output = await googleCloudPubSubTool.execute!(
+    VDR_REQUEST,
+    testToolContext,
+  );
+  const result = requireRecord(output);
+  assertVdrToolResult(result);
+  assertVdrResponse(await responseMessage);
+});
+
+Deno.test("googleCloudPubSubTool publishes an engine response", async () => {
+  const bus = LocalPubSubBus.getInstance();
+  bus.clear();
+  const responseMessage = nextMessage(bus, "engine_requests_response");
+
+  const output = await googleCloudPubSubTool.execute!(
+    ENGINE_REQUEST,
+    testToolContext,
+  );
+  const result = requireRecord(output);
+  assertEngineToolResult(result);
+  assertEngineResponse(await responseMessage);
+});
+
+async function assertDatabaseTableList(): Promise<void> {
+  const listOutput = await mcpDatabaseTool.execute!({
     action: "list_tables",
-  }, {} as any);
+  }, testToolContext);
+  const tableList = requireRecord(listOutput);
+  const tables = requireArray(tableList.tables, "tables");
+  assertEquals(tableList.success, true);
+  assertEquals(tables.includes("transaction"), true);
+}
 
-  assertEquals(resultList.success, true);
-  assertNotEquals(resultList.tables, undefined);
-  assertEquals(resultList.tables.includes("transaction"), true);
-
-  const resultInspect = await mcpDatabaseTool.execute!({
+async function assertTransactionSchema(): Promise<void> {
+  const inspectOutput = await mcpDatabaseTool.execute!({
     action: "inspect_schema",
     table: "transaction",
-  }, {} as any);
+  }, testToolContext);
+  const inspection = requireRecord(inspectOutput);
+  const schema = requireRecord(inspection.schema);
 
-  assertEquals(resultInspect.success, true);
-  assertEquals(resultInspect.table, "transaction");
-  assertNotEquals(resultInspect.schema?.columns, undefined);
+  assertEquals(inspection.success, true);
+  assertEquals(inspection.table, "transaction");
+  requireArray(schema.columns, "schema.columns");
+}
+
+Deno.test("mcpDatabaseTool lists tables and inspects schema", async () => {
+  await assertDatabaseTableList();
+  await assertTransactionSchema();
 });
 
-Deno.test("huggingFaceMcpTool - Predicts insolvency and loads weights", async () => {
-  const resultLoad = await huggingFaceMcpTool.execute!({
+Deno.test("huggingFaceMcpTool loads weights and predicts insolvency", async () => {
+  const loadOutput = await huggingFaceMcpTool.execute!({
     task: "load_weights",
-  }, {} as any);
+  }, testToolContext);
+  const loadResult = requireRecord(loadOutput);
+  assertEquals(loadResult.success, true);
+  assertEquals(String(loadResult.status).includes("loaded"), true);
 
-  assertEquals(resultLoad.success, true);
-  assertEquals(resultLoad.status.includes("loaded"), true);
+  const predictionOutput = await huggingFaceMcpTool.execute!(
+    { task: "predict_insolvency", inputData: INSOLVENCY_INPUT },
+    testToolContext,
+  );
+  const predictionResult = requireRecord(predictionOutput);
+  const prediction = requireRecord(predictionResult.prediction);
 
-  const resultPredict = await huggingFaceMcpTool.execute!({
-    task: "predict_insolvency",
-    inputData: {
-      ebitda: 10,
-      revenue: 50,
-      totalAssets: 100,
-      totalLiabilities: 30,
-      operatingCashFlow: 8,
-      historicalVolatility: 0.15,
-    }
-  }, {} as any);
-
-  assertEquals(resultPredict.success, true);
-  assertNotEquals(resultPredict.prediction?.insolvencyRiskScore, undefined);
-  assertNotEquals(resultPredict.prediction?.riskLevel, undefined);
+  assertEquals(predictionResult.success, true);
+  assertEquals(typeof prediction.insolvencyRiskScore, "number");
+  assertEquals(typeof prediction.riskLevel, "string");
 });
 
-Deno.test("geminiGoogleSearchTool - Executes query and returns sources and summary", async () => {
-  const result = await geminiGoogleSearchTool.execute!({
+Deno.test("geminiGoogleSearchTool returns sources and a summary", async () => {
+  const output = await geminiGoogleSearchTool.execute!({
     query: "SaaS valuation multiples Brazil 2026",
     targetCompany: "SaaS Dev Corp",
     aspect: "general",
-  }, {} as any);
+  }, testToolContext);
+  const result = requireRecord(output);
+  const groundingMetadata = requireRecord(result.groundingMetadata);
 
   assertEquals(result.success, true);
-  assertNotEquals(result.groundingMetadata?.sources, undefined);
-  assertNotEquals(result.summary, undefined);
+  requireArray(groundingMetadata.sources, "groundingMetadata.sources");
+  assertEquals(typeof result.summary, "string");
 });

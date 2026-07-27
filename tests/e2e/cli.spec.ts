@@ -1,8 +1,13 @@
-// tests/e2e/cli.spec.ts
 import { assertEquals } from "@std/assert";
 import { t } from "../../src/i18n/index.ts";
 
-const runCLI = async (args: string[]) => {
+interface CliResult {
+  code: number;
+  stdout: string;
+  stderr: string;
+}
+
+async function runCLI(args: string[]): Promise<CliResult> {
   const command = new Deno.Command(Deno.execPath(), {
     args: ["run", "--allow-all", "src/cli/interface.ts", ...args],
     stdin: "null",
@@ -15,28 +20,51 @@ const runCLI = async (args: string[]) => {
     stdout: new TextDecoder().decode(stdout),
     stderr: new TextDecoder().decode(stderr),
   };
-};
+}
+
+async function removeGeneratedFile(path: string): Promise<void> {
+  try {
+    await Deno.remove(path);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+}
+
+function assertSuccessful(result: CliResult): void {
+  if (result.code !== 0) {
+    console.log("TEST STDOUT:", result.stdout);
+    console.log("TEST STDERR:", result.stderr);
+  }
+  assertEquals(result.code, 0);
+}
+
+function assertOutputIncludes(stdout: string, expected: string): void {
+  assertEquals(stdout.includes(expected), true);
+}
+
+async function assertGeneratedTermSheetFiles(): Promise<void> {
+  const pdfInfo = await Deno.stat("./term_sheets/term_sheet_composto.pdf");
+  const texInfo = await Deno.stat("./term_sheets/term_sheet_composto.tex");
+  assertEquals(pdfInfo.isFile, true);
+  assertEquals(pdfInfo.size > 0, true);
+  assertEquals(texInfo.isFile, true);
+  assertEquals(texInfo.size > 0, true);
+}
 
 Deno.test("E2E CLI - kyb command executes successfully", async () => {
-  const { code, stdout, stderr } = await runCLI(["kyb", "12345678000199"]);
-  if (code !== 0) {
-    console.log("TEST STDOUT:", stdout);
-    console.log("TEST STDERR:", stderr);
-  }
-  assertEquals(code, 0);
-  assertEquals(
-    stdout.includes(
-      t("cli.headers.checkRegistry", undefined, "pt-BR").toUpperCase(),
-    ),
-    true,
+  const result = await runCLI(["kyb", "12345678000199"]);
+  assertSuccessful(result);
+  assertOutputIncludes(
+    result.stdout,
+    t("cli.headers.checkRegistry", undefined, "pt-BR").toUpperCase(),
   );
-  assertEquals(
-    stdout.includes(t("cli.tables.kybFields.status", undefined, "pt-BR")),
-    true,
+  assertOutputIncludes(
+    result.stdout,
+    t("cli.tables.kybFields.status", undefined, "pt-BR"),
   );
-  assertEquals(
-    stdout.includes(t("cli.tables.kybFields.legalName", undefined, "pt-BR")),
-    true,
+  assertOutputIncludes(
+    result.stdout,
+    t("cli.tables.kybFields.legalName", undefined, "pt-BR"),
   );
 });
 
@@ -75,61 +103,42 @@ Deno.test("E2E CLI - portfolio command executes successfully", async () => {
 Deno.test("E2E CLI - negotiate command executes successfully", async () => {
   const { code, stdout } = await runCLI(["negotiate"]);
   assertEquals(code, 0);
-  assertEquals(
-    stdout.includes(
-      t("cli.headers.optimizeTermSheet", undefined, "pt-BR").toUpperCase(),
-    ),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.headers.optimizeTermSheet", undefined, "pt-BR").toUpperCase(),
   );
-  assertEquals(
-    stdout.includes(t("cli.messages.alt1Title", undefined, "pt-BR").trim()),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.messages.alt1Title", undefined, "pt-BR").trim(),
   );
-  assertEquals(
-    stdout.includes(t("cli.messages.alt2Title", undefined, "pt-BR").trim()),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.messages.alt2Title", undefined, "pt-BR").trim(),
   );
-  assertEquals(
-    stdout.includes(t("cli.messages.alt3Title", undefined, "pt-BR").trim()),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.messages.alt3Title", undefined, "pt-BR").trim(),
   );
 });
 
 Deno.test("E2E CLI - document command generates PDF and LaTeX", async () => {
-  // Ensure the target files don't exist before testing
-  try {
-    await Deno.remove("./term_sheets/term_sheet_composto.pdf");
-  } catch {}
-  try {
-    await Deno.remove("./term_sheets/term_sheet_composto.tex");
-  } catch {}
+  await removeGeneratedFile("./term_sheets/term_sheet_composto.pdf");
+  await removeGeneratedFile("./term_sheets/term_sheet_composto.tex");
 
   const { code, stdout } = await runCLI(["document"]);
   assertEquals(code, 0);
-  assertEquals(
-    stdout.includes(
-      t("cli.headers.generateDocument", undefined, "pt-BR").toUpperCase(),
-    ),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.headers.generateDocument", undefined, "pt-BR").toUpperCase(),
   );
-  assertEquals(
-    stdout.includes(
-      t("cli.messages.pdfCompiled", { path: "" }, "pt-BR").split("\x1b")[0],
-    ),
-    true,
+  assertOutputIncludes(
+    stdout,
+    t("cli.messages.pdfCompiled", { path: "" }, "pt-BR").split("\x1b")[0],
   );
-
-  // Assert files exist and are not empty
-  const pdfInfo = await Deno.stat("./term_sheets/term_sheet_composto.pdf");
-  const texInfo = await Deno.stat("./term_sheets/term_sheet_composto.tex");
-  assertEquals(pdfInfo.isFile, true);
-  assertEquals(pdfInfo.size > 0, true);
-  assertEquals(texInfo.isFile, true);
-  assertEquals(texInfo.size > 0, true);
+  await assertGeneratedTermSheetFiles();
 });
 
 Deno.test("E2E CLI - invalid command shows help/error", async () => {
-  const { code, stderr } = await runCLI(["invalid_command_123"]);
-  // Depending on commander config it might exit with 0 or 1
+  const { stderr } = await runCLI(["invalid_command_123"]);
   assertEquals(stderr.includes('Unknown command "invalid_command_123"'), true);
 });

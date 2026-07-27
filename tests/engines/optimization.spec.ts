@@ -1,7 +1,8 @@
 // tests/engines/optimization.spec.ts
-import { assertEquals, assertNotEquals, assertAlmostEquals } from "@std/assert";
+import { assertAlmostEquals, assertEquals, assertNotEquals } from "@std/assert";
 import { TermSheetOptimizer } from "../../src/engines/optimization/matching/index.ts";
 import { PortfolioSolver } from "../../src/engines/optimization/kyc/index.ts";
+import type { TermSheetProposal } from "../../src/engines/optimization/types.ts";
 import { synergyPricingTool } from "../../src/agent/actions.ts";
 
 const sampleTargets = [
@@ -71,8 +72,14 @@ Deno.test("PortfolioSolver - Filters high risk targets", async () => {
     taxDebtCap: 100,
   });
 
-  assertEquals(result.optimization.selectedTargetIds.includes("target_3"), false);
-  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_2"].sort());
+  assertEquals(
+    result.optimization.selectedTargetIds.includes("target_3"),
+    false,
+  );
+  assertEquals(
+    result.optimization.selectedTargetIds.sort(),
+    ["target_1", "target_2"].sort(),
+  );
   assertEquals(result.totalSynergy, 130);
   assertEquals(result.totalCost, 55);
 });
@@ -85,8 +92,14 @@ Deno.test("PortfolioSolver - Respects mutual exclusion constraints", async () =>
     mutualExclusions: [["target_1", "target_2"]], // A and B are mutually exclusive
   });
 
-  assertEquals(result.optimization.selectedTargetIds.includes("target_1"), false);
-  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_2", "target_3"].sort());
+  assertEquals(
+    result.optimization.selectedTargetIds.includes("target_1"),
+    false,
+  );
+  assertEquals(
+    result.optimization.selectedTargetIds.sort(),
+    ["target_2", "target_3"].sort(),
+  );
 });
 
 Deno.test("PortfolioSolver - Returns infeasible status when no targets match risk criteria", async () => {
@@ -109,8 +122,14 @@ Deno.test("PortfolioSolver - Respects tax debt cap", async () => {
     taxDebtCap: 20, // target_2 has 50, so it will be excluded
   });
 
-  assertEquals(result.optimization.selectedTargetIds.includes("target_2"), false);
-  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_3"].sort());
+  assertEquals(
+    result.optimization.selectedTargetIds.includes("target_2"),
+    false,
+  );
+  assertEquals(
+    result.optimization.selectedTargetIds.sort(),
+    ["target_1", "target_3"].sort(),
+  );
 });
 
 Deno.test("PortfolioSolver - Respects sector allocation caps", async () => {
@@ -123,12 +142,36 @@ Deno.test("PortfolioSolver - Respects sector allocation caps", async () => {
     },
   });
 
-  assertEquals(result.optimization.selectedTargetIds.includes("target_3"), false); // exceeds SaaS budget 25 alone
-  assertEquals(result.optimization.selectedTargetIds.sort(), ["target_1", "target_2"].sort());
+  assertEquals(
+    result.optimization.selectedTargetIds.includes("target_3"),
+    false,
+  ); // exceeds SaaS budget 25 alone
+  assertEquals(
+    result.optimization.selectedTargetIds.sort(),
+    ["target_1", "target_2"].sort(),
+  );
 });
 
-
 // --- 2. TERM SHEET GENETIC OPTIMIZER TESTS ---
+
+function assertProposalRanges(proposal: TermSheetProposal): void {
+  assertEquals(
+    proposal.cashPercentage >= 0.1 && proposal.cashPercentage <= 1.0,
+    true,
+  );
+  assertEquals(
+    proposal.buyerEquityShare >= 0.1 && proposal.buyerEquityShare <= 1.0,
+    true,
+  );
+  assertEquals(
+    proposal.earnOutTargetYears >= 1.0 && proposal.earnOutTargetYears <= 5.0,
+    true,
+  );
+  assertEquals(
+    proposal.nonCompeteMonths >= 12 && proposal.nonCompeteMonths <= 60,
+    true,
+  );
+}
 
 Deno.test("TermSheetOptimizer - Converges to valid proposal", async () => {
   const result = await TermSheetOptimizer.run({
@@ -141,15 +184,11 @@ Deno.test("TermSheetOptimizer - Converges to valid proposal", async () => {
   });
 
   assertNotEquals(result.bestProposal, null);
-  assertEquals(result.bestProposal.cashPercentage >= 0.1 && result.bestProposal.cashPercentage <= 1.0, true);
-  assertEquals(result.bestProposal.buyerEquityShare >= 0.1 && result.bestProposal.buyerEquityShare <= 1.0, true);
-  assertEquals(result.bestProposal.earnOutTargetYears >= 1.0 && result.bestProposal.earnOutTargetYears <= 5.0, true);
-  assertEquals(result.bestProposal.nonCompeteMonths >= 12 && result.bestProposal.nonCompeteMonths <= 60, true);
+  assertProposalRanges(result.bestProposal);
   assertEquals(result.buyerUtility >= 0.2, true);
   assertEquals(result.sellerUtility >= 0.2, true);
   assertEquals(result.fitness >= 0, true);
 });
-
 
 // --- 3. SYNERGY PRICING TOOL TESTS ---
 
@@ -163,7 +202,7 @@ Deno.test("synergyPricingTool - Calculates present value and purchase price corr
     taxRate: 0.34,
     revenueHaircut: 0.40,
     sharingCoefficient: 0.30,
-  }, {} as any);
+  }, {} as Parameters<NonNullable<typeof synergyPricingTool.execute>>[1]);
 
   assertEquals(executeResult.success, true);
   const data = executeResult;

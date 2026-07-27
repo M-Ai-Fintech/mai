@@ -81,23 +81,43 @@ export async function executeCheck(
   check: VerificationCheck,
 ): Promise<VerificationResult> {
   try {
-    const output = await new Deno.Command(check.command, {
-      args: check.args,
-      env: check.env,
-      stdout: "piped",
-      stderr: "piped",
-    }).output();
-    const text = new TextDecoder().decode(output.stdout) +
-      new TextDecoder().decode(output.stderr);
-
-    return { check, success: output.success, output: text };
+    const command = verificationCommand(check);
+    const output = await command.output();
+    return commandResult(check, output);
   } catch (error) {
-    return {
-      check,
-      success: false,
-      output: error instanceof Error ? error.message : String(error),
-    };
+    return failedCommandResult(check, error);
   }
+}
+
+function verificationCommand(check: VerificationCheck): Deno.Command {
+  return new Deno.Command(check.command, {
+    args: check.args,
+    env: check.env,
+    stdout: "piped",
+    stderr: "piped",
+  });
+}
+
+function commandResult(
+  check: VerificationCheck,
+  output: Deno.CommandOutput,
+): VerificationResult {
+  const decoder = new TextDecoder();
+  const text = decoder.decode(output.stdout) + decoder.decode(output.stderr);
+  return { check, success: output.success, output: text };
+}
+
+function failedCommandResult(
+  check: VerificationCheck,
+  error: unknown,
+): VerificationResult {
+  const reason = error instanceof Error ? error.message : String(error);
+  const command = [check.command, ...check.args].join(" ");
+  return {
+    check,
+    success: false,
+    output: `Failed to run '${command}': ${reason}`,
+  };
 }
 
 export async function runVerification(
@@ -105,23 +125,32 @@ export async function runVerification(
   execute: CheckExecutor = executeCheck,
 ): Promise<VerificationResult[]> {
   const results: VerificationResult[] = [];
-
   for (const check of checks) {
-    console.log(`\n▶ ${check.label}`);
-    const result = await execute(check);
-    results.push(result);
-
-    if (!result.success && result.output.trim()) {
-      console.error(result.output.trim());
-    }
+    results.push(await executeAndReport(check, execute));
   }
+  reportVerificationSummary(results);
+  return results;
+}
 
+async function executeAndReport(
+  check: VerificationCheck,
+  execute: CheckExecutor,
+): Promise<VerificationResult> {
+  console.log(`\n▶ ${check.label}`);
+  const result = await execute(check);
+  if (!result.success && result.output.trim()) {
+    console.error(result.output.trim());
+  }
+  return result;
+}
+
+function reportVerificationSummary(
+  results: readonly VerificationResult[],
+): void {
   console.log("\nVerification summary:");
   for (const result of results) {
     console.log(`  ${result.success ? "PASS" : "FAIL"} ${result.check.label}`);
   }
-
-  return results;
 }
 
 export function hasFailures(results: readonly VerificationResult[]): boolean {

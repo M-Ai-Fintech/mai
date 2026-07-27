@@ -10,6 +10,40 @@ import {
 } from "../../src/engines/optimization/valuation/index.ts";
 import type { ValuationInput } from "../../src/shared/types.ts";
 
+const SAMPLE_VALUATION_INPUT: ValuationInput = {
+  companyId: "COMP-123",
+  balanceSheet: {
+    totalAssets: 10_000_000,
+    intangibleAssets: 1_000_000,
+    totalLiabilities: 4_000_000,
+  },
+  cashFlowProjection: {
+    cashFlows: [500_000, 600_000, 700_000],
+    wacc: 0.12,
+  },
+  terminalValue: {
+    lastCashFlow: 700_000,
+    growthRate: 0.02,
+    wacc: 0.12,
+    projectionYears: 3,
+  },
+  marketData: {
+    sharePrice: 25,
+    outstandingShares: 2_000_000,
+  },
+  enterpriseValue: {
+    marketCap: 50_000_000,
+    totalDebt: 5_000_000,
+    cashAndEquivalents: 10_000_000,
+  },
+  ebitdaMultiple: {
+    ebitda: 2_000_000,
+    evEbitdaMultiple: 12,
+    totalDebt: 5_000_000,
+    cashAndEquivalents: 10_000_000,
+  },
+};
+
 // ─── Individual Method Unit Tests & Edge Cases ───────────────────────────────
 
 Deno.test("computeBookValue – calculates correctly", () => {
@@ -162,42 +196,8 @@ Deno.test("computeEbitdaMultiple – flags non-positive EBITDA", () => {
 // ─── Engine Facade Integration Test ──────────────────────────────────────────
 
 Deno.test("ValuationEngine – evaluate end-to-end", () => {
-  const sampleInput: ValuationInput = {
-    companyId: "COMP-123",
-    balanceSheet: {
-      totalAssets: 10_000_000,
-      intangibleAssets: 1_000_000,
-      totalLiabilities: 4_000_000,
-    },
-    cashFlowProjection: {
-      cashFlows: [500_000, 600_000, 700_000],
-      wacc: 0.12,
-    },
-    terminalValue: {
-      lastCashFlow: 700_000,
-      growthRate: 0.02,
-      wacc: 0.12,
-      projectionYears: 3,
-    },
-    marketData: {
-      sharePrice: 25,
-      outstandingShares: 2_000_000,
-    },
-    enterpriseValue: {
-      marketCap: 50_000_000,
-      totalDebt: 5_000_000,
-      cashAndEquivalents: 10_000_000,
-    },
-    ebitdaMultiple: {
-      ebitda: 2_000_000,
-      evEbitdaMultiple: 12,
-      totalDebt: 5_000_000,
-      cashAndEquivalents: 10_000_000,
-    },
-  };
-
   const engine = new ValuationEngine();
-  const report = engine.evaluate(sampleInput);
+  const report = engine.evaluate(SAMPLE_VALUATION_INPUT);
 
   assertEquals(report.companyId, "COMP-123");
   assertEquals(typeof report.timestamp, "string");
