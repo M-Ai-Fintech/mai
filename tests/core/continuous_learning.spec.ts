@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { TransformersEngine } from "../../src/engines/prediction/transformers.ts";
+import { DatabaseMemoryService } from "../../src/core/db/memory_service.ts";
 import { ClientSiloedRAG } from "../../src/agent/rag_layer.ts";
 import { BrokerOrchestratorService } from "../../src/agent/agents/broker-orchestrator/index.ts";
 import {
@@ -139,17 +140,31 @@ Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictErro
 
   // 1. We register a conflicting preference in user_preferences table
   // (We do this by using a helper with conflict reason to test the trigger)
-  await registerConflictingPreference(dealId);
+  try {
+    await registerConflictingPreference(dealId);
 
-  // 2. Query execution should throw ComplianceConflictError
-  await assertBlockedAgentQuery(dealId);
+    // 2. Query execution should throw ComplianceConflictError
+    await assertBlockedAgentQuery(dealId);
 
-  // 3. Query execution with bypassConflict = true should not throw
-  const response = await AgentOrchestrator.executeAgentQuery(
-    dealId,
-    "Show valuation options",
-    "some context",
-    true,
-  );
-  assertEquals(typeof response, "string");
+    // 3. Query execution with bypassConflict = true should not throw
+    const response = await AgentOrchestrator.executeAgentQuery(
+      dealId,
+      "Show valuation options",
+      "some context",
+      true,
+    );
+    assertEquals(typeof response, "string");
+  } finally {
+    // Reset default_user preferences to prevent cross-test state pollution
+    const db = DatabaseMemoryService.getInstance();
+    try {
+      await db.saveUserPreferences("default_user", {
+        defaultValuationMethod: "DCF",
+        riskAppetite: "Moderate",
+        preferredJurisdiction: "Brazil",
+      });
+    } catch {
+      // Offline test runs have no persistent state to reset.
+    }
+  }
 });
