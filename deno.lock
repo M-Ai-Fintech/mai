@@ -13,6 +13,7 @@
     "npm:javascript-lp-solver@1.0.3": "1.0.3",
     "npm:onnxruntime-node@*": "1.24.3",
     "npm:onnxruntime-web@*": "1.26.0",
+    "npm:onnxruntime-web@1.21.0": "1.21.0",
     "npm:pdf-lib@^1.17.1": "1.17.1",
     "npm:pg@^8.11.3": "8.22.0",
     "npm:zod@*": "4.4.3",
@@ -1391,6 +1392,9 @@
         "wrappy"
       ]
     },
+    "onnxruntime-common@1.21.0": {
+      "integrity": "sha512-Q632iLLrtCAVOTO65dh2+mNbQir/QNTVBG3h/QdZBpns7mZ0RYbLRBgGABPbpU9351AgYy7SJf1WaeVwMrBFPQ=="
+    },
     "onnxruntime-common@1.24.0-dev.20251116-b39e144322": {
       "integrity": "sha512-BOoomdHYmNRL5r4iQ4bMvsl2t0/hzVQ3OM3PHD0gxeXu1PmggqBv3puZicEUVOA3AtHHYmqZtjMj9FOfGrATTw=="
     },
@@ -1409,6 +1413,17 @@
       ],
       "os": ["win32", "darwin", "linux"],
       "scripts": true
+    },
+    "onnxruntime-web@1.21.0": {
+      "integrity": "sha512-adzOe+7uI7lKz6pQNbAsLMQd2Fq5Jhmoxd8LZjJr8m3KvbFyiYyRxRiC57/XXD+jb18voppjeGAjoZmskXG+7A==",
+      "dependencies": [
+        "flatbuffers",
+        "guid-typescript",
+        "long",
+        "onnxruntime-common@1.21.0",
+        "platform",
+        "protobufjs"
+      ]
     },
     "onnxruntime-web@1.26.0": {
       "integrity": "sha512-LbRr/8zZt2xilI2smrVQGGKINo0U46i8qJp+UXyMBGfqN7KjnH1BiwCwLwyNIVV4i9CKFv7Sf4PwLKWnT8/bEA==",

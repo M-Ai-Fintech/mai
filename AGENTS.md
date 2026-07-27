@@ -53,11 +53,6 @@ the GUI, `gui/AGENTS.md` contains the Next.js-version rule.
 
 ## Code style
 
-For repository-wide clean-code audits or refactor passes, read
-`.agents/skills/clean-code/SKILL.md` and use it as the search, triage,
-partition, change, review, and PR execution path. This file remains the local
-agent rule source for the bullets below.
-
 - Functions: 4-20 lines. Split if longer.
 - Files: under 500 lines. Split by responsibility.
 - One thing per function, one responsibility per module (SRP).
@@ -79,7 +74,9 @@ agent rule source for the bullets below.
 
 ## Tests
 
-- Tests run with a single command: `<project-specific>`.
+- Run the full verification suite with `deno task verify`.
+- Run backend tests directly with `deno task test`.
+- Run GUI unit tests with `npm --prefix gui run test:unit`.
 - Every new function gets a test. Bug fixes get a regression test.
 - Mock external I/O (API, DB, filesystem) with named fake classes,
   not inline stubs.
@@ -99,8 +96,8 @@ agent rule source for the bullets below.
 
 ## Formatting
 
-- Use the language default formatter (`cargo fmt`, `gofmt`, `prettier`,
-  `black`, `rubocop -A`). Don't discuss style beyond that.
+- Format Deno and TypeScript source with `deno fmt`.
+- Check GUI formatting and lint rules with `npm --prefix gui run lint`.
 
 ## Logging
 

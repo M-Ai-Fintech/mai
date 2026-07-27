@@ -97,11 +97,11 @@ outside the verified slice.
 
 ## 8. PR
 
-Create one human-reviewable PR per coherent cleanup slice unless the current
-task is audit-only. When remote mutation is authorized, commit only task-scoped
-files, push without force, and create or update the PR with the task ID, finding
-summary, verification, risks, and remaining human action. Do not aggregate
-unrelated immediate candidates from different ownership boundaries in one PR.
+Use the PR scope requested by the owner. Default to one human-reviewable PR per
+coherent cleanup slice, but keep a repository-wide cleanup in one PR when the
+owner explicitly requires it. When remote mutation is authorized, commit only
+task-scoped files, push without force, and create or update the PR with the task
+ID, finding summary, verification, risks, and remaining human action.
 
 Completion: Backlog contains the finding inventory and verification evidence,
 the branch contains only task-scoped changes, and either the PR URL or explicit
