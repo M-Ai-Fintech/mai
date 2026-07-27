@@ -3,6 +3,7 @@ import { DatabaseMemoryService } from "./db/DatabaseMemoryService.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
 import { LocalPubSubBus } from "./pubsub/LocalPubSubBus.ts";
 import { loadOnnxModel } from "../engines/prediction/onnx.ts";
+import { describeError } from "../shared/errors.ts";
 
 export class AppBootstrapper {
   public static db: DatabaseMemoryService;
@@ -12,45 +13,63 @@ export class AppBootstrapper {
 
   public static async bootstrap(): Promise<void> {
     console.log("[Boot] Initializing Core Components...");
-
     try {
-      // 1. Initialize PubSub
-      this.pubsub = LocalPubSubBus.getInstance();
-      console.log("[Boot] LocalPubSubBus initialized.");
-
-      // 2. Initialize Database with Fallback
-      this.db = DatabaseMemoryService.getInstance();
-      this.isDbConnected = await this.db.connect();
-      if (!this.isDbConnected) {
-        console.warn("[Boot] Running in Database Fallback mode (DB not available).");
-      }
-
-      // 3. Check AI Provider / Gemini
-      const aiStatus = AIProvider.getApiKey();
-      this.aiFallback = aiStatus.isFallback;
-      if (this.aiFallback) {
-        console.log("[Boot] AI Provider / Gemini running in Mock/Fallback mode.");
-      } else {
-        console.log("[Boot] AI Provider / Gemini connected successfully.");
-      }
-
-      // 4. Initialize ONNX Engine
-      try {
-        const modelPath = "models/ma_classifier_q8.onnx";
-        const fileInfo = await Deno.stat(modelPath);
-        if (fileInfo.isFile) {
-          await loadOnnxModel(modelPath);
-          console.log("[Boot] ONNX Model loaded successfully.");
-        } else {
-          console.warn("[Boot] ONNX Model path is not a file. PredictionEngine will fail.");
-        }
-      } catch (e: any) {
-        console.error(`[Boot] Warning: ONNX Model not found or failed to load: ${e.message}`);
-      }
-
+      this.initializePubSub();
+      await this.initializeDatabase();
+      this.initializeAiProvider();
+      await initializeOnnxEngine();
       console.log("[Boot] All Core Components initialized successfully.\n");
-    } catch (e) {
-      console.error("[Boot] Error during bootstrap:", e);
+    } catch (error: unknown) {
+      console.error("[Boot] Error during bootstrap:", error);
     }
   }
+
+  private static initializePubSub(): void {
+    // 1. Initialize PubSub.
+    this.pubsub = LocalPubSubBus.getInstance();
+    console.log("[Boot] LocalPubSubBus initialized.");
+  }
+
+  private static async initializeDatabase(): Promise<void> {
+    // 2. Initialize Database with Fallback.
+    this.db = DatabaseMemoryService.getInstance();
+    this.isDbConnected = await this.db.connect();
+    if (this.isDbConnected) return;
+    console.warn(
+      "[Boot] Running in Database Fallback mode (DB not available).",
+    );
+  }
+
+  private static initializeAiProvider(): void {
+    // 3. Check AI Provider / Gemini.
+    this.aiFallback = AIProvider.getApiKey().isFallback;
+    const status = this.aiFallback
+      ? "running in Mock/Fallback mode."
+      : "connected successfully.";
+    console.log(`[Boot] AI Provider / Gemini ${status}`);
+  }
+}
+
+async function initializeOnnxEngine(): Promise<void> {
+  // 4. Initialize ONNX Engine.
+  const modelPath = "models/ma_classifier_q8.onnx";
+  try {
+    await loadOnnxFile(modelPath);
+  } catch (error: unknown) {
+    console.error(
+      `[Boot] Warning: ONNX Model "${modelPath}" failed to load; expected a readable model file: ${
+        describeError(error)
+      }`,
+    );
+  }
+}
+
+async function loadOnnxFile(modelPath: string): Promise<void> {
+  const fileInfo = await Deno.stat(modelPath);
+  if (!fileInfo.isFile) {
+    console.warn(`[Boot] ONNX Model path "${modelPath}" is not a file.`);
+    return;
+  }
+  await loadOnnxModel(modelPath);
+  console.log("[Boot] ONNX Model loaded successfully.");
 }

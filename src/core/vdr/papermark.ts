@@ -1,5 +1,6 @@
 import { BaseVDRProvider } from "./provider.ts";
 import { SupergoodConfig, VDRDocument } from "./types.ts";
+import { z } from "zod";
 
 export interface PapermarkConfig extends SupergoodConfig {
   apiUrl?: string;
@@ -34,23 +35,10 @@ export class PapermarkAdapter extends BaseVDRProvider {
   async listDocuments(folderId?: string): Promise<VDRDocument[]> {
     const path = folderId ? `/v1/rooms/${folderId}/documents` : `/v1/documents`;
     const response = await this.fetchPapermark(path);
-    const data = await response.json();
-
-    const docs = Array.isArray(data.documents)
-      ? data.documents
-      : Array.isArray(data)
-        ? data
-        : [];
-
-    return docs.map((doc: Record<string, unknown>) => ({
-      id: String(doc.id),
-      name: String(doc.name || doc.title || "document"),
-      size: Number(doc.size || 0),
-      mimeType: String(doc.mimeType || "application/pdf"),
-      folderId: doc.folderId ? String(doc.folderId) : folderId,
-      createdAt: String(doc.createdAt || new Date().toISOString()),
-      updatedAt: String(doc.updatedAt || new Date().toISOString()),
-    }));
+    const payload: unknown = await response.json();
+    return papermarkDocuments(payload).map((document) =>
+      toPapermarkDocument(document, { folderId })
+    );
   }
 
   async downloadDocument(documentId: string): Promise<Uint8Array> {
@@ -63,16 +51,7 @@ export class PapermarkAdapter extends BaseVDRProvider {
 
   async getDocumentMetadata(documentId: string): Promise<VDRDocument> {
     const response = await this.fetchPapermark(`/v1/documents/${documentId}`);
-    const data = await response.json();
-    return {
-      id: data.id,
-      name: data.name || data.title || "document",
-      size: data.size || 0,
-      mimeType: data.mimeType || "application/pdf",
-      folderId: data.folderId,
-      createdAt: data.createdAt || new Date().toISOString(),
-      updatedAt: data.updatedAt || new Date().toISOString(),
-    };
+    return toPapermarkDocument(await response.json());
   }
 
   async uploadDocument(
@@ -80,26 +59,17 @@ export class PapermarkAdapter extends BaseVDRProvider {
     content: Uint8Array,
     folderId?: string,
   ): Promise<VDRDocument> {
-    const formData = new FormData();
-    formData.append("file", new Blob([content as unknown as BlobPart]), name);
-    if (folderId) {
-      formData.append("folderId", folderId);
-    }
-
+    const formData = this.uploadForm(name, content, "folderId", folderId);
     const response = await this.fetchPapermark(`/v1/documents`, {
       method: "POST",
       body: formData,
     });
-    const data = await response.json();
-    return {
-      id: data.id,
-      name: data.name || name,
-      size: data.size || content.length,
-      mimeType: data.mimeType || "application/octet-stream",
-      folderId: data.folderId,
-      createdAt: data.createdAt || new Date().toISOString(),
-      updatedAt: data.updatedAt || new Date().toISOString(),
-    };
+    return toPapermarkDocument(await response.json(), {
+      name,
+      size: content.length,
+      mimeType: "application/octet-stream",
+      folderId,
+    });
   }
 
   async downloadBatch(dealId: string, dataRoomId: string): Promise<void> {
@@ -116,4 +86,44 @@ export class PapermarkAdapter extends BaseVDRProvider {
       await Deno.writeFile(filePath, content);
     }
   }
+}
+
+interface PapermarkFallback {
+  name?: string;
+  size?: number;
+  mimeType?: string;
+  folderId?: string;
+}
+
+function papermarkDocuments(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  const parsed = z.record(z.string(), z.unknown()).safeParse(payload);
+  return parsed.success && Array.isArray(parsed.data.documents)
+    ? parsed.data.documents
+    : [];
+}
+
+function toPapermarkDocument(
+  value: unknown,
+  fallback: PapermarkFallback = {},
+): VDRDocument {
+  const document = z.record(z.string(), z.unknown()).parse(value);
+  const timestamp = new Date().toISOString();
+  return {
+    id: String(document.id),
+    name: String(
+      document.name || document.title || fallback.name || "document",
+    ),
+    size: Number(document.size || fallback.size || 0),
+    mimeType: String(
+      document.mimeType || fallback.mimeType || "application/pdf",
+    ),
+    folderId: optionalString(document.folderId) ?? fallback.folderId,
+    createdAt: String(document.createdAt || timestamp),
+    updatedAt: String(document.updatedAt || timestamp),
+  };
+}
+
+function optionalString(value: unknown): string | undefined {
+  return value === undefined || value === null ? undefined : String(value);
 }

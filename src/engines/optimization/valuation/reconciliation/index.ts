@@ -11,6 +11,21 @@ export interface ReconciliationOutput {
   readonly message?: string;
 }
 
+const METHOD_NAMES: (keyof ValuationReconciliationWeights)[] = [
+  "bookValue",
+  "dcf",
+  "terminalValue",
+  "marketCap",
+  "enterpriseValue",
+  "ebitdaValuation",
+];
+
+interface WeightBounds {
+  minimums: number[];
+  maximums: number[];
+  priors: number[];
+}
+
 export class ReconciliationEngine {
   /**
    * Projects prior weights onto the simplex under box constraints.
@@ -18,104 +33,84 @@ export class ReconciliationEngine {
    * Uses a Lagrange multiplier bisection search.
    */
   public static reconcile(input: ReconciliationInput): ReconciliationOutput {
-    const methods: (keyof ValuationReconciliationWeights)[] = [
-      "bookValue",
-      "dcf",
-      "terminalValue",
-      "marketCap",
-      "enterpriseValue",
-      "ebitdaValuation",
-    ];
-
-    const n = methods.length;
-
-    const minWeights = methods.map((m) => input.weightsConfig[m].minWeight);
-    const maxWeights = methods.map((m) => input.weightsConfig[m].maxWeight);
-    const priorWeights = methods.map((m) => input.weightsConfig[m].priorWeight);
-
-    // Feasibility Validation
-    let sumMin = 0;
-    let sumMax = 0;
-    for (let i = 0; i < n; i++) {
-      if (minWeights[i] > maxWeights[i]) {
-        return this.getUniformFallback(
-          minWeights,
-          maxWeights,
-          "Bounds error: minWeight > maxWeight",
-        );
-      }
-      sumMin += minWeights[i];
-      sumMax += maxWeights[i];
-    }
-
-    if (sumMin > 1.0 + 1e-9 || sumMax < 1.0 - 1e-9) {
-      return this.getUniformFallback(
-        minWeights,
-        maxWeights,
-        `Bounds error: Infeasible space. sum(min)=${
-          sumMin.toFixed(4)
-        }, sum(max)=${sumMax.toFixed(4)}`,
-      );
-    }
-
-    // Binary search for Lagrange multiplier lambda
-    // w_i = clip(prior_i - lambda, min_i, max_i)
-    let lambdaMin = Math.min(...priorWeights.map((p, i) => p - maxWeights[i]));
-    let lambdaMax = Math.max(...priorWeights.map((p, i) => p - minWeights[i]));
-
-    const computeSum = (lambda: number): number => {
-      let sum = 0;
-      for (let i = 0; i < n; i++) {
-        const val = priorWeights[i] - lambda;
-        sum += Math.max(minWeights[i], Math.min(maxWeights[i], val));
-      }
-      return sum;
-    };
-
-    const maxIterations = 100;
-    const tolerance = 1e-12;
-    let lambda = 0;
-
-    for (let iter = 0; iter < maxIterations; iter++) {
-      lambda = (lambdaMin + lambdaMax) / 2;
-      const currentSum = computeSum(lambda);
-
-      if (Math.abs(currentSum - 1.0) < tolerance) {
-        break;
-      }
-
-      if (currentSum > 1.0) {
-        lambdaMin = lambda; // Increase lambda to decrease weights
-      } else {
-        lambdaMax = lambda; // Decrease lambda to increase weights
-      }
-    }
-
-    const finalWeights = priorWeights.map((p, i) =>
-      Math.max(minWeights[i], Math.min(maxWeights[i], p - lambda))
-    );
-
-    return {
-      weights: finalWeights,
-      status: "optimal",
-    };
+    const bounds = weightBounds(input.weightsConfig);
+    const invalid = invalidBoundsMessage(bounds);
+    if (invalid) return this.getUniformFallback(bounds, invalid);
+    const lambda = simplexLambda(bounds);
+    return { weights: projectedWeights(bounds, lambda), status: "optimal" };
   }
 
   private static getUniformFallback(
-    minWeights: number[],
-    maxWeights: number[],
+    bounds: WeightBounds,
     message: string,
   ): ReconciliationOutput {
-    // Falls back to normalized midpoints of constraints
-    const n = minWeights.length;
-    const midpoints = minWeights.map((min, i) => (min + maxWeights[i]) / 2);
+    const midpoints = bounds.minimums.map(
+      (minimum, index) => (minimum + bounds.maximums[index]) / 2,
+    );
     const sum = midpoints.reduce((a, b) => a + b, 0);
-    const weights = midpoints.map((m) => (sum > 0 ? m / sum : 1.0 / n));
-
+    const weights = midpoints.map((midpoint) =>
+      sum > 0 ? midpoint / sum : 1 / midpoints.length
+    );
     return {
       weights,
       status: "fallback",
       message,
     };
   }
+}
+
+function weightBounds(
+  config: ValuationReconciliationWeights,
+): WeightBounds {
+  return {
+    minimums: METHOD_NAMES.map((method) => config[method].minWeight),
+    maximums: METHOD_NAMES.map((method) => config[method].maxWeight),
+    priors: METHOD_NAMES.map((method) => config[method].priorWeight),
+  };
+}
+
+function invalidBoundsMessage(bounds: WeightBounds): string {
+  const invalidIndex = bounds.minimums.findIndex(
+    (minimum, index) => minimum > bounds.maximums[index],
+  );
+  if (invalidIndex >= 0) return "Bounds error: minWeight > maxWeight";
+  const minimumSum = sum(bounds.minimums);
+  const maximumSum = sum(bounds.maximums);
+  if (minimumSum <= 1 + 1e-9 && maximumSum >= 1 - 1e-9) return "";
+  return `Bounds error: Infeasible space. sum(min)=${
+    minimumSum.toFixed(4)
+  }, sum(max)=${maximumSum.toFixed(4)}`;
+}
+
+function sum(values: readonly number[]): number {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function simplexLambda(bounds: WeightBounds): number {
+  let minimum = Math.min(
+    ...bounds.priors.map((prior, index) => prior - bounds.maximums[index]),
+  );
+  let maximum = Math.max(
+    ...bounds.priors.map((prior, index) => prior - bounds.minimums[index]),
+  );
+  for (let iteration = 0; iteration < 100; iteration++) {
+    const lambda = (minimum + maximum) / 2;
+    const currentSum = sum(projectedWeights(bounds, lambda));
+    if (Math.abs(currentSum - 1) < 1e-12) return lambda;
+    if (currentSum > 1) minimum = lambda;
+    else maximum = lambda;
+  }
+  return (minimum + maximum) / 2;
+}
+
+function projectedWeights(
+  bounds: WeightBounds,
+  lambda: number,
+): number[] {
+  return bounds.priors.map((prior, index) =>
+    Math.max(
+      bounds.minimums[index],
+      Math.min(bounds.maximums[index], prior - lambda),
+    )
+  );
 }

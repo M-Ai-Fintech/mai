@@ -8,34 +8,27 @@ import type {
  * Deductible from Enterprise Value to bridge to Equity Value.
  */
 export function computeContingencyDeductions(data: ContingenciesData): number {
-  let totalDeduction = 0;
+  return contingencyTotal(data.taxContingencies) +
+    contingencyTotal(data.laborContingencies);
+}
 
-  const processContingency = (c: ContingencyInput): number => {
-    if (c.probabilityWeight !== undefined) {
-      return c.amount * c.probabilityWeight;
-    }
-    switch (c.probability) {
-      case "PROBABLE":
-        return c.amount * 1.0;
-      case "POSSIBLE":
-        return c.amount * 0.5;
-      case "REMOTE":
-        return c.amount * 0.0;
-      default:
-        return 0.0;
-    }
+function contingencyTotal(
+  contingencies: readonly ContingencyInput[] | undefined,
+): number {
+  return (contingencies ?? []).reduce(
+    (total, contingency) => total + contingencyValue(contingency),
+    0,
+  );
+}
+
+function contingencyValue(contingency: ContingencyInput): number {
+  if (contingency.probabilityWeight !== undefined) {
+    return contingency.amount * contingency.probabilityWeight;
+  }
+  const weights: Record<ContingencyInput["probability"], number> = {
+    PROBABLE: 1,
+    POSSIBLE: 0.5,
+    REMOTE: 0,
   };
-
-  if (data.taxContingencies) {
-    for (const c of data.taxContingencies) {
-      totalDeduction += processContingency(c);
-    }
-  }
-  if (data.laborContingencies) {
-    for (const c of data.laborContingencies) {
-      totalDeduction += processContingency(c);
-    }
-  }
-
-  return totalDeduction;
+  return contingency.amount * weights[contingency.probability];
 }
