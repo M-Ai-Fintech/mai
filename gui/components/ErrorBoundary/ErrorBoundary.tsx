@@ -57,62 +57,136 @@ export class ErrorBoundary extends Component<
 
   public render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
+      if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="min-h-[400px] w-full p-8 flex items-center justify-center bg-canvas-cream text-ink-black select-none">
-          <div className="max-w-md w-full bg-white border border-dust-taupe/40 rounded-2xl p-6 shadow-level-2 text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
-              <Icon name="alert" size="lg" />
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-ink-black">
-                An interface exception occurred
-              </h3>
-              <p className="text-xs text-slate-gray">
-                The execution layer encountered an unexpected error while
-                processing data for this module.
-              </p>
-            </div>
-
-            {this.state.error && (
-              <div className="text-left bg-canvas-cream p-3 rounded-xl border border-dust-taupe/30 space-y-2">
-                <div
-                  onClick={this.toggleDetails}
-                  className="flex items-center justify-between text-xs font-bold text-ink-black cursor-pointer"
-                >
-                  <span>Technical Error Details</span>
-                  <Icon
-                    name="chevronDown"
-                    size="sm"
-                    className={`transition-transform ${
-                      this.state.showDetails ? "rotate-180" : ""
-                    }`}
-                  />
-                </div>
-                {this.state.showDetails && (
-                  <pre className="text-[10px] font-mono text-red-600 overflow-x-auto p-2 bg-white rounded border border-dust-taupe/20 max-h-40">
-                    {this.state.error.toString()}
-                    {"\n\n"}
-                    {this.state.errorInfo?.componentStack}
-                  </pre>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-3 justify-center pt-2">
-              <Button variant="primary" size="md" onClick={this.handleReset}>
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ErrorFallbackView
+          errorInfo={this.state.errorInfo}
+          error={this.state.error}
+          onReset={this.handleReset}
+          onToggleDetails={this.toggleDetails}
+          showDetails={this.state.showDetails}
+        />
       );
     }
 
     return this.props.children;
   }
+}
+
+interface ErrorFallbackViewProps {
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+  onReset: () => void;
+  onToggleDetails: () => void;
+  showDetails: boolean;
+}
+
+function ErrorFallbackView(props: ErrorFallbackViewProps) {
+  return (
+    <div className="min-h-[400px] w-full p-8 flex items-center justify-center bg-canvas-cream text-ink-black select-none">
+      <div className="max-w-md w-full bg-white border border-dust-taupe/40 rounded-2xl p-6 shadow-level-2 text-center space-y-4">
+        <ErrorFallbackIcon />
+        <ErrorFallbackCopy />
+        {props.error && (
+          <ErrorDetails
+            error={props.error}
+            errorInfo={props.errorInfo}
+            onToggleDetails={props.onToggleDetails}
+            showDetails={props.showDetails}
+          />
+        )}
+        <ErrorResetAction onReset={props.onReset} />
+      </div>
+    </div>
+  );
+}
+
+function ErrorFallbackIcon() {
+  return (
+    <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+      <Icon name="alert" size="lg" />
+    </div>
+  );
+}
+
+function ErrorFallbackCopy() {
+  return (
+    <div className="space-y-1">
+      <h3 className="text-lg font-bold text-ink-black">
+        An interface exception occurred
+      </h3>
+      <p className="text-xs text-slate-gray">
+        The execution layer encountered an unexpected error while processing
+        data for this module.
+      </p>
+    </div>
+  );
+}
+
+function ErrorDetails({
+  error,
+  errorInfo,
+  onToggleDetails,
+  showDetails,
+}: {
+  error: Error;
+  errorInfo: ErrorInfo | null;
+  onToggleDetails: () => void;
+  showDetails: boolean;
+}) {
+  return (
+    <div className="text-left bg-canvas-cream p-3 rounded-xl border border-dust-taupe/30 space-y-2">
+      <ErrorDetailsToggle onClick={onToggleDetails} showDetails={showDetails} />
+      {showDetails && <ErrorDetailsStack error={error} errorInfo={errorInfo} />}
+    </div>
+  );
+}
+
+interface ErrorDetailsToggleProps {
+  onClick: () => void;
+  showDetails: boolean;
+}
+
+function ErrorDetailsToggle(props: ErrorDetailsToggleProps) {
+  return (
+    <div
+      onClick={props.onClick}
+      className="flex items-center justify-between text-xs font-bold text-ink-black cursor-pointer"
+    >
+      <span>Technical Error Details</span>
+      <Icon
+        name="chevronDown"
+        size="sm"
+        className={`transition-transform ${
+          props.showDetails ? "rotate-180" : ""
+        }`}
+      />
+    </div>
+  );
+}
+
+function ErrorDetailsStack({
+  error,
+  errorInfo,
+}: {
+  error: Error;
+  errorInfo: ErrorInfo | null;
+}) {
+  return (
+    <pre className="text-[10px] font-mono text-red-600 overflow-x-auto p-2 bg-white rounded border border-dust-taupe/20 max-h-40">
+      {error.toString()}
+      {"\n\n"}
+      {errorInfo?.componentStack}
+    </pre>
+  );
+}
+
+function ErrorResetAction({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="flex gap-3 justify-center pt-2">
+      <Button variant="primary" size="md" onClick={onReset}>
+        Try Again
+      </Button>
+    </div>
+  );
 }

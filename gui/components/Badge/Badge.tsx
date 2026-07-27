@@ -6,6 +6,17 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
 }
 
+const BADGE_BASE_CLASS =
+  "inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider transition-all";
+
+const BADGE_VARIANT_CLASS = {
+  default: "bg-lifted-cream text-ink-black border border-dust-taupe/40",
+  orange:
+    "bg-signal-orange text-white border-none [&_svg]:text-white [&_svg]:fill-current",
+  dark: "bg-ink-black text-canvas-cream border-none",
+  outline: "bg-transparent text-ink-black border border-ink-black",
+} as const;
+
 export const Badge: React.FC<BadgeProps> = ({
   variant = "default",
   icon,
@@ -13,33 +24,19 @@ export const Badge: React.FC<BadgeProps> = ({
   className = "",
   ...props
 }) => {
-  const baseStyles =
-    "inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider transition-all";
-
-  let variantStyles = "";
-
-  switch (variant) {
-    case "default":
-      variantStyles =
-        "bg-lifted-cream text-ink-black border border-dust-taupe/40";
-      break;
-    case "orange":
-      // Signal Orange badge — icon & text must be pure white (#FFFFFF) per user feedback
-      variantStyles =
-        "bg-signal-orange text-white border-none [&_svg]:text-white [&_svg]:fill-current";
-      break;
-    case "dark":
-      variantStyles = "bg-ink-black text-canvas-cream border-none";
-      break;
-    case "outline":
-      variantStyles = "bg-transparent text-ink-black border border-ink-black";
-      break;
-  }
-
   return (
-    <span className={`${baseStyles} ${variantStyles} ${className}`} {...props}>
-      {icon && <span className="mr-1.5 inline-flex">{icon}</span>}
+    <span
+      className={`${BADGE_BASE_CLASS} ${
+        BADGE_VARIANT_CLASS[variant]
+      } ${className}`}
+      {...props}
+    >
+      {icon && <BadgeIcon icon={icon} />}
       {children}
     </span>
   );
 };
+
+function BadgeIcon({ icon }: { icon: React.ReactNode }) {
+  return <span className="mr-1.5 inline-flex">{icon}</span>;
+}

@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React, { useState } from "react";
 import { Footer } from "./Footer";
+import type { CountryCode } from "../CountrySelector/CountrySelector";
 
 const meta: Meta<typeof Footer> = {
   title: "Components/Composites/Footer",
@@ -12,7 +13,7 @@ type Story = StoryObj<typeof Footer>;
 
 export const CompleteFooter: Story = {
   render: () => {
-    const [country, setCountry] = useState<any>("BR");
+    const [country, setCountry] = useState<CountryCode>("BR");
 
     return (
       <Footer

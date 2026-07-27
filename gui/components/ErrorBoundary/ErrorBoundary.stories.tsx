@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 import React, { useState } from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -21,7 +21,6 @@ const BuggyComponent = () => {
 export const FallbackPreview: Story = {
   render: () => {
     const [hasBug, setHasBug] = useState(false);
-
     return (
       <div className="p-8 max-w-xl mx-auto space-y-4">
         <Button variant="secondary" onClick={() => setHasBug(!hasBug)}>

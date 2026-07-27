@@ -17,6 +17,21 @@ export const PHASE_LABELS: Record<DashboardPhase, string> = {
   closing: "Closing",
 };
 
+export const DASHBOARD_STATUS_OPTIONS = [
+  { value: "all", label: "All Statuses" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" },
+];
+
+export const DASHBOARD_PHASE_OPTIONS = [
+  { value: "all", label: "All Stages" },
+  ...DASHBOARD_PHASES.map((item) => ({
+    value: item,
+    label: PHASE_LABELS[item],
+  })),
+];
+
 export interface DealDraft {
   title: string;
   dealType: "buy_side" | "sell_side";
@@ -42,6 +57,26 @@ export const EMPTY_DEAL_DRAFT: DealDraft = {
 };
 
 export type DealDraftErrors = Partial<Record<keyof DealDraft, string>>;
+
+export interface DashboardToast {
+  title: string;
+  message: string;
+  variant: "success" | "error";
+}
+
+export function dashboardInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
+}
+
+export function formatDashboardDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+    new Date(value),
+  );
+}
 
 export function groupDealsByPhase(deals: DealSummary[]) {
   return DASHBOARD_PHASES.reduce<Record<DashboardPhase, DealSummary[]>>(
@@ -78,21 +113,36 @@ export function toDealCreate(draft: DealDraft, code: string): DealCreate {
     title: draft.title.trim(),
     dealType: draft.dealType,
     targetId: draft.targetId,
-    valuationRange: {
-      min: {
-        amountMinor: String(Math.round(Number(draft.valuationMin) * 100)),
-        currency: draft.currency,
-      },
-      max: {
-        amountMinor: String(Math.round(Number(draft.valuationMax) * 100)),
-        currency: draft.currency,
-      },
-    },
+    valuationRange: dealValuationRange(draft),
     leadAdvisorId: draft.leadAdvisorId || null,
     financialStructure: draft.internalNote.trim()
       ? { internalNote: draft.internalNote.trim() }
       : null,
   };
+}
+
+function dealValuationRange(draft: DealDraft): DealCreate["valuationRange"] {
+  return {
+    min: {
+      amountMinor: String(Math.round(Number(draft.valuationMin) * 100)),
+      currency: draft.currency,
+    },
+    max: {
+      amountMinor: String(Math.round(Number(draft.valuationMax) * 100)),
+      currency: draft.currency,
+    },
+  };
+}
+
+export function fieldErrorsToDealDraftErrors(
+  fieldErrors: Record<string, string[]>,
+): DealDraftErrors {
+  return Object.fromEntries(
+    Object.entries(fieldErrors).map(([field, messages]) => [
+      field,
+      messages[0],
+    ]),
+  ) as DealDraftErrors;
 }
 
 export function formatMoneyRange(deal: DealSummary, locale = "en-US") {

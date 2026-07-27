@@ -22,8 +22,23 @@ export const TopBar: React.FC<TopBarProps> = ({
   currentPov = "Banker",
   onPovChange,
   onToggleMobileMenu,
-}) => (
-  <header className="sticky top-0 z-40 flex h-[72px] w-full items-center justify-between border-b border-dust-taupe/60 bg-white/95 px-5 backdrop-blur-md lg:px-8">
+}) => {
+  return (
+    <header className="sticky top-0 z-40 flex h-[72px] w-full items-center justify-between border-b border-dust-taupe/60 bg-white/95 px-5 backdrop-blur-md lg:px-8">
+      <TopBarNavigation
+        breadcrumbs={breadcrumbs}
+        onToggleMobileMenu={onToggleMobileMenu}
+      />
+      <TopBarActions currentPov={currentPov} onPovChange={onPovChange} />
+    </header>
+  );
+};
+
+function TopBarNavigation({
+  breadcrumbs,
+  onToggleMobileMenu,
+}: Pick<TopBarProps, "breadcrumbs" | "onToggleMobileMenu">) {
+  return (
     <div className="flex min-w-0 items-center gap-3">
       <button
         type="button"
@@ -33,53 +48,71 @@ export const TopBar: React.FC<TopBarProps> = ({
       >
         <span className="font-label text-xs font-bold">Menu</span>
       </button>
-      <nav
-        aria-label="Breadcrumb"
-        className="flex min-w-0 items-center gap-2 font-label text-xs text-slate-gray"
-      >
-        {breadcrumbs.map((crumb, index) => (
-          <React.Fragment key={`${crumb.label}-${index}`}>
-            {index > 0 && <span aria-hidden="true">/</span>}
-            {crumb.href
-              ? (
-                <Link
-                  href={crumb.href}
-                  className="truncate hover:text-ink-black"
-                >
-                  {crumb.label}
-                </Link>
-              )
-              : (
-                <span className="truncate font-bold text-ink-black">
-                  {crumb.label}
-                </span>
-              )}
-          </React.Fragment>
-        ))}
-      </nav>
+      <BreadcrumbTrail breadcrumbs={breadcrumbs ?? []} />
     </div>
+  );
+}
 
+function BreadcrumbTrail(
+  { breadcrumbs }: { breadcrumbs: NonNullable<TopBarProps["breadcrumbs"]> },
+) {
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex min-w-0 items-center gap-2 font-label text-xs text-slate-gray"
+    >
+      {breadcrumbs.map((crumb, index) => (
+        <BreadcrumbItem
+          crumb={crumb}
+          index={index}
+          key={crumbKey(crumb, index)}
+        />
+      ))}
+    </nav>
+  );
+}
+
+interface BreadcrumbItemProps {
+  crumb: NonNullable<TopBarProps["breadcrumbs"]>[number];
+  index: number;
+}
+
+function BreadcrumbItem({ crumb, index }: BreadcrumbItemProps) {
+  return (
+    <React.Fragment>
+      {index > 0 && <span aria-hidden="true">/</span>}
+      {crumb.href
+        ? (
+          <Link href={crumb.href} className="truncate hover:text-ink-black">
+            {crumb.label}
+          </Link>
+        )
+        : (
+          <span className="truncate font-bold text-ink-black">
+            {crumb.label}
+          </span>
+        )}
+    </React.Fragment>
+  );
+}
+
+function crumbKey(
+  crumb: NonNullable<TopBarProps["breadcrumbs"]>[number],
+  index: number,
+) {
+  return `${crumb.label}-${index}`;
+}
+
+function TopBarActions({
+  currentPov,
+  onPovChange,
+}: Pick<TopBarProps, "currentPov" | "onPovChange">) {
+  return (
     <div className="flex items-center gap-2 lg:gap-3">
-      <div
-        aria-label="Point of view"
-        className="hidden rounded-full bg-canvas-cream p-1 sm:flex"
-      >
-        {povOptions.map((pov) => (
-          <button
-            type="button"
-            key={pov}
-            aria-pressed={currentPov === pov}
-            onClick={() => onPovChange?.(pov)}
-            className={`min-h-11 rounded-full px-3 font-label text-xs font-bold transition-colors ${
-              currentPov === pov
-                ? "bg-ink-black text-canvas-cream"
-                : "text-slate-gray hover:text-ink-black"
-            }`}
-          >
-            {pov}
-          </button>
-        ))}
-      </div>
+      <PovSelector
+        currentPov={currentPov ?? "Banker"}
+        onPovChange={onPovChange}
+      />
       <div className="hidden xl:block">
         <CountrySelector variant="light" />
       </div>
@@ -88,5 +121,51 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
       <Avatar size="sm" fallback="AC" aria-label="Ana Costa" />
     </div>
-  </header>
-);
+  );
+}
+
+interface PovSelectorProps {
+  currentPov: Pov;
+  onPovChange?: (pov: Pov) => void;
+}
+
+function PovSelector({ currentPov, onPovChange }: PovSelectorProps) {
+  return (
+    <div
+      aria-label="Point of view"
+      className="hidden rounded-full bg-canvas-cream p-1 sm:flex"
+    >
+      {povOptions.map((pov) => (
+        <PovButton
+          currentPov={currentPov}
+          key={pov}
+          onPovChange={onPovChange}
+          pov={pov}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface PovButtonProps {
+  currentPov: Pov;
+  onPovChange?: (pov: Pov) => void;
+  pov: Pov;
+}
+
+function PovButton({ currentPov, onPovChange, pov }: PovButtonProps) {
+  const active = currentPov === pov;
+  const activeStyles = active
+    ? "bg-ink-black text-canvas-cream"
+    : "text-slate-gray hover:text-ink-black";
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={() => onPovChange?.(pov)}
+      className={`min-h-11 rounded-full px-3 font-label text-xs font-bold transition-colors ${activeStyles}`}
+    >
+      {pov}
+    </button>
+  );
+}
