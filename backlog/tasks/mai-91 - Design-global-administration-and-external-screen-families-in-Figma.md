@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 22:24'
+updated_date: '2026-07-28 22:25'
 labels:
   - figma
   - screen-design
@@ -95,4 +95,6 @@ Design the following 12 screen families in the approved Figma system:
 2026-07-28 — PR handoff: draft PR #11 opened at https://github.com/luisfelipeluis49/mai/pull/11 from design/MAI-91-global-admin-external-screens to master. Commit in PR: c3b8f5185f8b9b7f28f94a2eb816932973cda519. Remaining action: one task-level owner review; keep MAI-91 In Progress and do not mark Done until owner review is complete and accepted.
 
 2026-07-28 — PR metadata correction: PR #11 currently contains commit c3b8f514915426b36b8f0dce6421def7d10bd325. The earlier PR handoff note's commit value should be read as superseded by this corrected SHA.
+
+2026-07-28 — Final PR branch commit set after handoff metadata push: c3b8f514915426b36b8f0dce6421def7d10bd325 and c51aa43e04dffeafb97af5167f94891cfd992104. Remaining action unchanged: one task-level owner review.
 <!-- SECTION:NOTES:END -->
