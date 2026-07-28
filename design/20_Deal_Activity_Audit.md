@@ -1,3 +1,23 @@
+---
+canonical_name: "Deal Activity & Audit"
+definition_id: "BD-20"
+definition_status: "Governed for MAI-90"
+screen_family: "deal-governance"
+owning_task: "MAI-93"
+canonical_routes:
+  - "/deals/:dealId/activity"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Planned in MAI-93"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
+figma_nodes: []
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # Deal Activity & Audit
 
 ## 1. Recommended product naming

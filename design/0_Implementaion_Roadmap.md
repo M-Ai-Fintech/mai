@@ -1451,9 +1451,14 @@ Required:
 Defer:
 
 * Complete package builder;
-* secure external distribution;
+* secure external distribution beyond internal-controlled export records;
 * DOCX editing;
 * all deliverable families.
+
+R3 scope is limited to internal-controlled secure export generation and
+distribution records. It does not introduce external portal accounts, broad
+external workspaces or an External Approval Portal before the deferred platform
+expansion stage.
 
 ---
 
@@ -3291,4 +3296,3 @@ It is:
 The defining implementation sequence is:
 
 > **Establish scope and persistence → build the evidence spine → complete one decision-grade vertical slice → expand into the banker workspace → validate on historical deals → harden for controlled live POCs → add enterprise governance only after workflow value is demonstrated**
-

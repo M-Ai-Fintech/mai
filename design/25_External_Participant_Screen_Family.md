@@ -1,3 +1,30 @@
+---
+canonical_name: "External-Participant Screen Family"
+definition_id: "BD-25"
+definition_status: "Governed for MAI-90"
+screen_family: "external-participant"
+owning_task: "MAI-91"
+canonical_routes:
+  - "/portal/project/:externalWorkspaceId"
+  - "/portal/project/:externalWorkspaceId/requests"
+  - "/portal/project/:externalWorkspaceId/approvals"
+  - "/portal/project/:externalWorkspaceId/submissions"
+  - "/portal/project/:externalWorkspaceId/documents"
+  - "/portal/project/:externalWorkspaceId/activity"
+  - "/portal/project/:externalWorkspaceId/security"
+  - "/submit/:submissionToken"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Planned in MAI-91"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
+figma_nodes: []
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # External-Participant Screen Family
 
 ## 1. Recommended product naming

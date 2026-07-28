@@ -1,3 +1,47 @@
+---
+canonical_name: "Application Shell & Navigation"
+definition_id: "BD-01"
+definition_status: "Governed for MAI-90"
+screen_family: "global-foundation"
+owning_task: "MAI-91"
+canonical_routes:
+  - "/home"
+  - "/deals"
+  - "/deals/new"
+  - "/organizations"
+  - "/organizations/:organizationId"
+  - "/contacts/:contactId"
+  - "/tasks"
+  - "/team"
+  - "/notifications"
+  - "/search"
+  - "/settings/profile"
+  - "/settings/institution"
+  - "/settings/roles"
+  - "/settings/integrations"
+  - "/settings/security"
+  - "/settings/templates"
+  - "/settings/commercial"
+  - "/settings/audit"
+  - "/settings/developers"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Existing approved evidence"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
+figma_nodes:
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=41-16"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=43-10"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=44-20"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=44-41"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=44-62"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=44-85"
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # Application Shell & Navigation
 
 ## 1. Definition

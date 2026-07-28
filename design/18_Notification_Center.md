@@ -1,3 +1,23 @@
+---
+canonical_name: "Notification Center"
+definition_id: "BD-18"
+definition_status: "Governed for MAI-90"
+screen_family: "institution-wide"
+owning_task: "MAI-91"
+canonical_routes:
+  - "/notifications"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Planned in MAI-91"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
+figma_nodes: []
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # Notification Center
 
 ## 1. Recommended product naming
@@ -1416,6 +1436,13 @@ Link to the active system alert rather than presenting the notification as resol
 ---
 
 # 57. Figma component architecture
+
+Figma mapping: planned in MAI-91 in the governed file
+`otMJE31OKIxdXogV4RNbGQ`, using the approved Application Shell area as the
+navigation and component context. The intended design area covers the shell bell
+preview, `/notifications` list, selected notification detail, bundles, redacted
+notifications, read/seen/archive states, preferences entry, and mobile
+notification detail behavior.
 
 ## `NotificationControl`
 
