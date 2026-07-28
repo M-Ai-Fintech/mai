@@ -1,11 +1,11 @@
 ---
 id: MAI-90
 title: Complete and govern the 25 banker-workspace design definitions
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 19:50'
+updated_date: '2026-07-28 21:59'
 labels:
   - design
   - product-definition
@@ -102,4 +102,12 @@ Review and normalize the existing definitions, complete every placeholder, resol
 2026-07-28 — MAI-90 verification evidence: four read-only audit agents completed non-overlapping definition reviews; coordinator applied only required corrections. Temporary Deno definition audit passed: 25 canonical definitions, unique canonical names, non-empty definitions, MAI-91/92/93 ownership, frontmatter contract, explicit scope/users/states/permissions/responsive/accessibility/Figma mapping, no route conflicts, Diligence Figma evidence nodes, supporting docs not counted as screens, and no frontend/backend/test changes. git diff --check passed. graphify update . passed and updated generated graphify-out artifacts with known non-blocking extraction/viz warnings. deno task verify passed under escalation after installing GUI dependencies from lockfile: PASS Canonical documentation, PASS I18n Strings Check, PASS Deno tests, PASS GUI unit tests, PASS Next.js production build, PASS Storybook documentation, PASS Storybook build, PASS Storybook interaction tests. Figma read-only inspection verified file key otMJE31OKIxdXogV4RNbGQ, 11 governed pages, and existing Shell/Decision Room nodes including 41:16, 43:10, 52:21, 56:39, 57:87, 58:97, 58:139, 59:115, 59:144, 63:2, and 65:2. MAI-90 remains In Progress pending PR review and merge; MAI-91 screen design was not started.
 
 2026-07-28 — PR handoff: draft PR #10 opened at https://github.com/luisfelipeluis49/mai/pull/10 from design/MAI-90-govern-design-definitions to master. Commits in PR: e9109df8a809fd6524dbe67b736999569551eaa8, e57ecb5deaf7a72324ab2203abbdc0c32571885d, ab4e275cea3d36573bab85ef4e13aa3474dc4abd. GitHub statusCheckRollup is empty at creation time. Remaining action: human PR review and merge; do not mark MAI-90 Done before merge.
+
+2026-07-28 — Post-merge closure: PR #10 merged into master at merge commit b3e5dc79b52432098c95c210a9c2efb75f1ad043. All six acceptance criteria were already completed and verified in the recorded MAI-90 evidence. Governed banker-workspace definitions now authorize MAI-91. No Figma screen creation occurred during MAI-90.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed and governed the 25 banker-workspace design definitions. Verified PR #10 merged into master at b3e5dc79b52432098c95c210a9c2efb75f1ad043; all six acceptance criteria are complete, and MAI-91 is now unblocked. No Figma screen creation occurred during MAI-90.
+<!-- SECTION:FINAL_SUMMARY:END -->
