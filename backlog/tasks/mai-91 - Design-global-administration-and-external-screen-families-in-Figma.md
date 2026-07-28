@@ -1,11 +1,11 @@
 ---
 id: MAI-91
 title: 'Design global, administration, and external screen families in Figma'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 22:25'
+updated_date: '2026-07-28 22:47'
 labels:
   - figma
   - screen-design
@@ -97,4 +97,12 @@ Design the following 12 screen families in the approved Figma system:
 2026-07-28 — PR metadata correction: PR #11 currently contains commit c3b8f514915426b36b8f0dce6421def7d10bd325. The earlier PR handoff note's commit value should be read as superseded by this corrected SHA.
 
 2026-07-28 — Final PR branch commit set after handoff metadata push: c3b8f514915426b36b8f0dce6421def7d10bd325 and c51aa43e04dffeafb97af5167f94891cfd992104. Remaining action unchanged: one task-level owner review.
+
+2026-07-28 — Owner closure accepted: PR #11 merged into master (merge commit 118dcb21a28fc7ba8d8f5de00787445809184157); all 12 families, consolidated state/responsive/permission coverage, engineering handoff, and skipped Higgsfield pilot accepted. Remaining non-blocking P2 refinement is deferred downstream. No frontend implementation occurred.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Owner-approved MAI-91 global, administration, and external screen-family baseline closed after merged PR #11. All twelve families and state, responsive, permission, and handoff coverage were accepted; deferred P2 refinement remains downstream; no frontend implementation occurred.
+<!-- SECTION:FINAL_SUMMARY:END -->
