@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 19:48'
+updated_date: '2026-07-28 19:50'
 labels:
   - design
   - product-definition
@@ -15,6 +15,8 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-89
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/10'
 documentation:
   - design/
   - >-
@@ -98,4 +100,6 @@ Review and normalize the existing definitions, complete every placeholder, resol
 
 <!-- SECTION:NOTES:BEGIN -->
 2026-07-28 — MAI-90 verification evidence: four read-only audit agents completed non-overlapping definition reviews; coordinator applied only required corrections. Temporary Deno definition audit passed: 25 canonical definitions, unique canonical names, non-empty definitions, MAI-91/92/93 ownership, frontmatter contract, explicit scope/users/states/permissions/responsive/accessibility/Figma mapping, no route conflicts, Diligence Figma evidence nodes, supporting docs not counted as screens, and no frontend/backend/test changes. git diff --check passed. graphify update . passed and updated generated graphify-out artifacts with known non-blocking extraction/viz warnings. deno task verify passed under escalation after installing GUI dependencies from lockfile: PASS Canonical documentation, PASS I18n Strings Check, PASS Deno tests, PASS GUI unit tests, PASS Next.js production build, PASS Storybook documentation, PASS Storybook build, PASS Storybook interaction tests. Figma read-only inspection verified file key otMJE31OKIxdXogV4RNbGQ, 11 governed pages, and existing Shell/Decision Room nodes including 41:16, 43:10, 52:21, 56:39, 57:87, 58:97, 58:139, 59:115, 59:144, 63:2, and 65:2. MAI-90 remains In Progress pending PR review and merge; MAI-91 screen design was not started.
+
+2026-07-28 — PR handoff: draft PR #10 opened at https://github.com/luisfelipeluis49/mai/pull/10 from design/MAI-90-govern-design-definitions to master. Commits in PR: e9109df8a809fd6524dbe67b736999569551eaa8, e57ecb5deaf7a72324ab2203abbdc0c32571885d, ab4e275cea3d36573bab85ef4e13aa3474dc4abd. GitHub statusCheckRollup is empty at creation time. Remaining action: human PR review and merge; do not mark MAI-90 Done before merge.
 <!-- SECTION:NOTES:END -->
