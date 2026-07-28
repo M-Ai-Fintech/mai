@@ -1,11 +1,11 @@
 ---
 id: MAI-89
 title: Define and approve the MAI Figma design system
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 18:36'
+updated_date: '2026-07-28 19:10'
 labels:
   - design-system
   - figma
@@ -190,4 +190,12 @@ Visual Polish B1 corrective pass implemented in the governed Figma file otMJE31O
 2026-07-28 — Acceptance-criteria evidence. AC1: linked governed Figma file, authority hierarchy, release governance, and explicit named-version waiver. AC2: Core, Semantic, Responsive, Component, and Motion variables/styles plus documented grid specimens and GridStyle waiver. AC3: 21 approved component families spanning primitives, forms, navigation, data, feedback, financial/evidence, and overlays; publication not required. AC4: anatomy, naming, variants, states, Auto Layout, resizing, accessibility, composition, and engineering handoff documented. AC5: deterministic contrast evidence, focus and keyboard contracts, 44 px controls, responsive behavior, non-color status communication, and permission-safe examples; runtime and assistive-technology conformance remain downstream. AC6: explicit approved non-compatibility with Stitch and current GUI visual authority. AC7: separate Product, Design, and Engineering decisions recorded with limitation dispositions.
 
 2026-07-28 — Repository verification. git diff --check passed. Canonical deno task verify result: PASS Canonical documentation; PASS I18n Strings Check; PASS Deno tests; PASS Storybook documentation. GUI unit tests, Next.js production build, Storybook build, and Storybook interaction tests could not start because local GUI executables vitest, next, and storybook are not installed. No frontend, CSS, Storybook, package, token-export, Code Connect, or legacy-asset file changed; the executable limitation is downstream/environmental and not a Figma P0/P1 blocker under the owner closure rule.
+
+2026-07-28 — Finalization: owner-approved Product, Design, and Engineering decisions are recorded; B1 is approved, Visual Polish C is cancelled, all seven acceptance criteria are checked, final visual gate passed, repository verification is recorded, and PR #9 is open for human review and merge. No further MAI-89 implementation work remains.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Approved and governed the MAI Figma design system through final visual validation, component lifecycle approval, separate Product/Design/Engineering decisions, acceptance-criteria evidence, and PR #9 preparation. Figma remains the unpublished design authority; frontend and runtime conformance are downstream conditions. PR #9 remains open for human review and merge.
+<!-- SECTION:FINAL_SUMMARY:END -->
