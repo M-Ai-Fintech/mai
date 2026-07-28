@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-24 15:50'
+updated_date: '2026-07-28 19:39'
 tags:
   - documentation
   - inventory
@@ -123,6 +123,11 @@ Every project file below is individually classified; removed paths are retained 
 | `docs/architecture.md` | Architecture | Legacy architecture note | none | mixed | English | removed after migration |
 | `docs/prediction_engine.md` | Architecture | Legacy architecture note | none | mixed | English | removed after migration |
 | `graphify-out/GRAPH_REPORT.md` | Graphify | Generated code graph report | none | regenerated | English | generated |
+| `design/` | Product Design | Banker-workspace product-definition set | product-definition authority for MAI-85 design planning | current as of MAI-90 | English | referenced canonical design source |
+| `design/0_Implementaion_Roadmap.md` | Product Design | MAI-85 implementation roadmap | roadmap support for design task sequencing | current as of MAI-90 | English | referenced governance support |
+| `design/1_Application_Shell_Navigation.md` to `design/25_External_Participant_Screen_Family.md` | Product Design | 25 canonical banker-workspace screen definitions | screen-definition authority until implemented in Figma/code | current as of MAI-90 | English | referenced canonical design source |
+| `design/26_Cross_Screen_Interaction_Map.md` | Product Design | Cross-screen route, object-ownership and handoff map | interaction governance support | current as of MAI-90 | English | referenced governance support |
+| `design/27_Shared_State_Model.md` | Product Design | Shared state semantics and permission-state model | state governance support | current as of MAI-90 | English | referenced governance support |
 | `gui/AGENTS.md` | GUI | GUI agent instruction | gui-local | current | English | referenced |
 | `gui/CLAUDE.md` | GUI | GUI agent instruction | gui-local | review-needed | English | referenced |
 | `gui/DESIGN.md` | GUI | GUI design reference | gui-local | review-needed | English | referenced |

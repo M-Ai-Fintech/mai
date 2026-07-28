@@ -1,3 +1,23 @@
+---
+canonical_name: "Target Dossier"
+definition_id: "BD-06"
+definition_status: "Governed for MAI-90"
+screen_family: "deal-execution"
+owning_task: "MAI-92"
+canonical_routes:
+  - "/deals/:dealId/dossier"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Planned in MAI-92"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
+figma_nodes: []
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # Target Dossier
 
 ## 1. Screen definition
@@ -2923,8 +2943,12 @@ Section:
 Selected fact:
 
 ```text
-/deals/:dealId/dossier?section=financial-profile&fact=ltm-revenue
+/deals/:dealId/dossier?section=financial-profile&factId=:factId
 ```
+
+Fact type labels such as `ltm-revenue` may be used as filters or display
+aliases, but the selected fact state is ID-backed because facts can be renamed,
+superseded, localized or duplicated by period.
 
 Contradictions:
 

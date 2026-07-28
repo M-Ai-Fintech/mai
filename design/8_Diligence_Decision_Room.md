@@ -1,3 +1,30 @@
+---
+canonical_name: "Diligence Decision Room"
+definition_id: "BD-08"
+definition_status: "Governed for MAI-90"
+screen_family: "deal-execution"
+owning_task: "MAI-92"
+canonical_routes:
+  - "/deals/:dealId/diligence"
+figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
+figma_status: "Existing approved evidence"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 07 Decision Room Validation"
+figma_nodes:
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=52-21"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=56-39"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=57-87"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=58-97"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=58-139"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=59-115"
+  - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=59-144"
+related_definitions:
+  - "design/26_Cross_Screen_Interaction_Map.md"
+  - "design/27_Shared_State_Model.md"
+  - "design/0_Implementaion_Roadmap.md"
+last_reviewed_task: "MAI-90"
+implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
+mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
+---
 # Diligence Decision Room
 
 ## 1. Screen definition
@@ -1074,3 +1101,120 @@ The ideal visual impression is:
 > “This system has already done the repetitive work, but it has not hidden the evidence or removed the professional from the decision.”
 
 That is the clearest product expression of M&Ai’s differentiation.
+
+---
+
+# 14. Figma component architecture
+
+The approved Figma evidence for this screen lives in the governed file
+`otMJE31OKIxdXogV4RNbGQ` on page `07 Decision Room Validation`.
+
+Authoritative existing nodes:
+
+* Desktop Decision Room: `52:21`;
+* system states: `56:39`;
+* Approval Dialog: `57:87`;
+* Tablet Decision Room: `58:97`;
+* Tablet evidence Drawer: `58:139`;
+* Mobile Decision Room: `59:115`;
+* Mobile evidence inspection: `59:144`.
+
+The implementation should reuse the approved MAI-89 component families for
+navigation, buttons, status indicators, evidence references, provenance labels,
+financial values, tables, dialog and drawer behavior. MAI-90 does not create
+new screen frames or alter Figma components.
+
+---
+
+# 15. Production object model
+
+The Diligence Decision Room should consume normalized deal-scoped objects rather
+than AI narrative blobs.
+
+## `DiligenceFinding`
+
+```text
+id
+dealId
+findingType
+title
+severity
+materiality
+evidenceFactIds
+interpretationId
+calculationRunId
+financialImpactId
+decisionId
+sourceVersionIds
+assignedReviewerId
+status
+createdAt
+updatedAt
+```
+
+## `EvidenceFact`
+
+```text
+id
+dealId
+documentId
+documentVersionId
+sourceLocation
+extractedValue
+extractionMethod
+confidence
+verificationState
+supersededByFactId
+```
+
+## `DiligenceDecision`
+
+```text
+id
+dealId
+findingId
+decisionType
+decisionAuthorityId
+acknowledgementText
+approvalState
+approvedBy
+approvedAt
+auditEventId
+```
+
+The preserved decision chain remains:
+
+> finding → extracted fact → interpretation → deterministic calculation →
+> financial impact → evidence → human decision → audit record
+
+---
+
+# 16. Suggested routes
+
+Primary:
+
+```text
+/deals/:dealId/diligence
+```
+
+Selected finding:
+
+```text
+/deals/:dealId/diligence?findingId=:findingId
+```
+
+Evidence inspection:
+
+```text
+/deals/:dealId/diligence?findingId=:findingId&evidenceId=:evidenceFactId
+```
+
+Approval confirmation:
+
+```text
+/deals/:dealId/diligence?findingId=:findingId&dialog=approval
+```
+
+The route is deal-scoped. Documents owns source files, Target Dossier owns
+canonical facts, Valuation owns standalone valuation scenarios, and Activity &
+Audit owns the immutable event record.

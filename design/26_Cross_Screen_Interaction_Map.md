@@ -357,6 +357,14 @@ EXTERNAL
 /submit/:submissionToken
 ```
 
+The Deal Settings family owns detailed controlled subflows such as archive,
+reopen, pause, terminate and deletion requests under `/deals/:dealId/settings`;
+those subflows do not create separate top-level deal workspaces.
+
+The external block is a family summary. `design/25_External_Participant_Screen_Family.md`
+is the detailed route authority for overview, request detail, submissions,
+documents, activity and security surfaces under the reduced external shell.
+
 The canonical route hierarchy intentionally avoids banker-facing destinations such as `/engines`, `/agents`, `/models`, `/rag` and `/memory`. 
 
 ---
