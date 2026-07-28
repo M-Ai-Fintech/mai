@@ -4,7 +4,7 @@ title: Biblioteca de Componentes Reutilizáveis (Design System Mastercard)
 status: To Do
 assignee: []
 created_date: '2026-07-14 05:32'
-updated_date: '2026-07-22 05:56'
+updated_date: '2026-07-28 02:59'
 labels:
   - GUI
   - components
@@ -60,6 +60,12 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: Storybook is healthy, but the library-level DoD is not satisfied: hardcoded visual values remain and accessibility quality is not proven without warnings. Reopen to align the reusable component contract with evidence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

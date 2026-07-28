@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-14 05:31'
-updated_date: '2026-07-22 05:56'
+updated_date: '2026-07-28 03:00'
 labels:
   - GUI
   - ai
@@ -15,7 +15,6 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-4
-  - MAI-26
   - MAI-85
 references:
   - gui/DESIGN.md
@@ -65,6 +64,12 @@ author: @codex
 created: 2026-07-22 05:31
 ---
 ## Gemini incident dependency\n\nAgentic chat depends on MAI-4 for compatible live Gemini execution and MAI-26 for Browser -> Next.js -> Core transport. The existing artificial stream, empty citations, absent tool traces, and Broker-only routing remain part of this task.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:31'
+updated_date: '2026-07-28 02:59'
 labels:
   - interface
   - gui
@@ -64,6 +64,12 @@ author: @codex
 created: 2026-07-22 05:31
 ---
 ## Gemini incident ownership\n\nNo separate bug task was created. This task owns the frontend transport root cause: absolute browser URLs bypass the Next.js rewrite and server-only MAI_API_BASE_URL. MAI-4 owns the independent Mastra/AI SDK provider incompatibility. Both must pass end-to-end verification before MAI-52 can complete.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

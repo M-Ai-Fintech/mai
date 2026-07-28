@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@antigravity'
 created_date: '2026-07-19 02:00'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-28 02:59'
 labels:
   - revalidation
 milestone: m-12
@@ -40,6 +40,12 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The task claims 100% Storybook E2E play-test coverage but one acceptance criterion remains unchecked and coverage completeness is not demonstrated. Reopen despite the current 89 passing interactions.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

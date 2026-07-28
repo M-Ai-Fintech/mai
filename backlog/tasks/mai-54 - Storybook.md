@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@Luís Silva'
 created_date: '2026-07-14 05:32'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-28 03:00'
 labels:
   - GUI
   - storybook
@@ -13,8 +13,7 @@ labels:
   - documentation
   - revalidated
 milestone: m-12
-dependencies:
-  - MAI-58
+dependencies: []
 references:
   - gui/DESIGN.md
   - gui/package.json
@@ -52,6 +51,12 @@ author: @codex
 created: 2026-07-22 05:30
 ---
 ## Done revalidation — 2026-07-22\n\nDone is preserved. Storybook 10 is configured successfully; 24 MDX documentation files validate, 89/89 Storybook interaction tests pass, and the static Storybook build completes. This verifies Storybook infrastructure, not the completeness of every higher-level GUI capability.
+---
+
+author: Codex
+created: 2026-07-28 02:58
+---
+Retained as completed Storybook infrastructure evidence. Under the 2026-07-27 MAI-85 rebaseline, this task is not design authority; any reuse is subject to the approved Figma system and MAI-85.9 conformance requirements.
 ---
 <!-- COMMENTS:END -->
 

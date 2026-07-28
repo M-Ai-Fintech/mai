@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@antigravity'
 created_date: '2026-07-10 05:33'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-28 02:59'
 labels:
   - revalidation
 milestone: m-12
@@ -61,6 +61,12 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The task claims dynamic PostgreSQL persistence, but deals, entities, chat, engines, and layouts are stored in the mock-backed in-memory MvpStore. Reopen and distinguish prototype state from durable persistence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

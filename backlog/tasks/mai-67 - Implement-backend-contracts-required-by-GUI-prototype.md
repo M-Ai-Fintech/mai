@@ -4,7 +4,7 @@ title: Implement backend contracts required by GUI prototype
 status: Done
 assignee: []
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-22 05:55'
+updated_date: '2026-07-28 02:59'
 labels:
   - backend
   - api
@@ -71,6 +71,12 @@ author: @codex
 created: 2026-07-22 05:30
 ---
 ## Done revalidation — 2026-07-22\n\nDone is preserved because the task explicitly scopes the deliverable as a mock-backed in-memory GUI prototype. The modular API contracts and injected operation routes pass 25/25 focused API tests. This does not claim real PostgreSQL, engines, VDR, documents, or LLM execution.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Retained as completed prototype evidence. Under the 2026-07-27 MAI-85 rebaseline, its backend contracts and mock-backed workflow do not constrain the target frontend or backend architecture; redesign is governed by MAI-85.15.
 ---
 <!-- COMMENTS:END -->
 

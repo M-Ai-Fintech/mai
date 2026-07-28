@@ -4,7 +4,7 @@ title: 'Dashboard Dinâmico: Customização de Layout e Ancoragem de Widgets Gen
 status: To Do
 assignee: []
 created_date: '2026-07-14 05:35'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-28 03:00'
 labels:
   - GUI
   - dashboard
@@ -13,10 +13,7 @@ labels:
   - innovation
   - revalidation
 milestone: m-12
-dependencies:
-  - MAI-51
-  - MAI-57
-  - MAI-53
+dependencies: []
 references:
   - gui/DESIGN.md
   - gui/DESIGN_GUIDELINES.md
@@ -66,6 +63,12 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The dashboard supports basic button-based layout changes but not claimed drag-and-drop or generative-widget anchoring; the localStorage anchor has no consumer. Reopen for a complete integration.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Archived as superseded on 2026-07-27 after the owner-approved MAI-85 rebaseline. Replacement work is tracked by the MAI-85.1 through MAI-85.15 dependency chain; this task's Stitch-first, legacy-GUI, or prototype-contract assumptions must not be implemented.
 ---
 <!-- COMMENTS:END -->
 

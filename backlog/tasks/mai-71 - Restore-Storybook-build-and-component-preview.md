@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-19 23:37'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-28 03:00'
 labels:
   - storybook
   - frontend
@@ -13,8 +13,7 @@ labels:
   - qa
   - revalidated
 milestone: m-12
-dependencies:
-  - MAI-53
+dependencies: []
 references:
   - gui/.storybook/main.ts
   - gui/components
@@ -59,6 +58,12 @@ author: @codex
 created: 2026-07-22 05:30
 ---
 ## Done revalidation — 2026-07-22\n\nDone is preserved. Storybook documentation validation passes for 24 MDX files, 89/89 interaction tests pass, and the static Storybook build succeeds. The missing Stitch validator is unrelated obsolete scope tracked by MAI-83.
+---
+
+author: Codex
+created: 2026-07-28 02:58
+---
+Retained as completed Storybook infrastructure evidence. Under the 2026-07-27 MAI-85 rebaseline, this task is not design authority; any reuse is subject to the approved Figma system and MAI-85.9 conformance requirements.
 ---
 <!-- COMMENTS:END -->
 

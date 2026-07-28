@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-19 06:53'
-updated_date: '2026-07-22 05:55'
+updated_date: '2026-07-28 02:59'
 labels:
   - frontend
   - GUI
@@ -88,6 +88,12 @@ author: @codex
 created: 2026-07-22 05:30
 ---
 ## Done revalidation — 2026-07-22\n\nDone is preserved because the task explicitly delivers stateful screen families for the coherent prototype. GUI unit tests pass 29/29 and the production build succeeds. This does not prove real engines, VDR, persistence, or LLM behavior.
+---
+
+author: Codex
+created: 2026-07-28 02:59
+---
+Retained as completed prototype evidence. Under the 2026-07-27 MAI-85 rebaseline, its GUI shell and screen implementation do not constrain the target frontend; conformance and replacement are governed by MAI-85.7 through MAI-85.14.
 ---
 <!-- COMMENTS:END -->
 
