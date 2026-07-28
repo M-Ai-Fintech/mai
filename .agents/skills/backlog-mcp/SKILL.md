@@ -56,11 +56,22 @@ Read `task-creation`, search for duplicates, and inspect command help:
 backlog task create --help
 ```
 
+### MAI task ID convention
+
+- Create every task as a top-level task with the next global `MAI-<integer>` ID.
+- Never use `--parent`, `-p`, or `parentTaskId`; Backlog parent relationships
+  generate decimal IDs, which this repository does not use.
+- Represent initiative membership with milestones, labels, descriptions,
+  references, and dependencies.
+- For bulk creation, create one task first and verify its ID matches
+  `^MAI-[0-9]+$` before creating the remainder.
+- If any created ID contains a decimal, stop immediately and correct the task
+  structure before continuing.
+
 Create one independently deliverable outcome. Use an action-oriented title, a
 description that states why and bounds scope, and observable acceptance
-criteria. Add priority, assignee, labels, milestone, dependencies, parent,
-references, documentation, and modified files only when supported by known
-context.
+criteria. Add priority, assignee, labels, milestone, dependencies, references,
+documentation, and modified files only when supported by known context.
 
 Split work when independent outcomes can be reviewed or prioritized separately.
 Never invent dependency IDs or use parent relationships for topical grouping.
