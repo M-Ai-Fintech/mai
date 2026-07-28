@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 22:22'
+updated_date: '2026-07-28 22:24'
 labels:
   - figma
   - screen-design
@@ -22,6 +22,7 @@ references:
   - 'https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=199-662'
   - 'https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=200-663'
   - 'https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=202-665'
+  - 'https://github.com/luisfelipeluis49/mai/pull/11'
 documentation:
   - design/
   - >-
@@ -90,4 +91,8 @@ Design the following 12 screen families in the approved Figma system:
 2026-07-28 — Figma delivery evidence: created MAI-91 sections on governed page 06 Application Shell in file otMJE31OKIxdXogV4RNbGQ. Batch boards: Global Foundation 193:662; Work and Discovery 198:662; Organizations and Team 199:662; Administration and External 200:663; Coverage and Handoff 202:665. Validation confirmed all required sections, all 12 screen families, desktop/tablet/mobile frames for every family, four MAI-91 state specimens plus approved Shell states, and handoff board. Rendered reviews performed for each batch: Batch 1 found P1 mobile shell clipping and was repaired; Batch 2 no P0/P1; Batch 3 no P0/P1; Batch 4 found P1 mobile heading overflow and was repaired. Higgsfield pilot was skipped because tool discovery exposed no connected Higgsfield capability. Scope exclusions preserved: no MAI-92/93/94, frontend, token, Storybook, or backend implementation.
 
 2026-07-28 — Verification evidence: git diff --check passed. Initial deno task verify failed under sandbox limits: Next.js production build could not fetch Google Fonts, and Storybook interaction tests hit listen EPERM on 127.0.0.1. Reran deno task verify with escalation; final summary passed Canonical documentation, I18n Strings Check, Deno tests, GUI unit tests, Next.js production build, Storybook documentation, Storybook build, and Storybook interaction tests. Figma read-only validation returned complete=true for required sections, all 12 families with desktop/tablet/mobile frames, state specimens, and handoff board.
+
+2026-07-28 — PR handoff: draft PR #11 opened at https://github.com/luisfelipeluis49/mai/pull/11 from design/MAI-91-global-admin-external-screens to master. Commit in PR: c3b8f5185f8b9b7f28f94a2eb816932973cda519. Remaining action: one task-level owner review; keep MAI-91 In Progress and do not mark Done until owner review is complete and accepted.
+
+2026-07-28 — PR metadata correction: PR #11 currently contains commit c3b8f514915426b36b8f0dce6421def7d10bd325. The earlier PR handoff note's commit value should be read as superseded by this corrected SHA.
 <!-- SECTION:NOTES:END -->
