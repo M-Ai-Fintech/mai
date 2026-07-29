@@ -1,0 +1,89 @@
+name: MAI-98 PR rendered review
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm --prefix gui ci
+
+      - name: Install Chromium
+        working-directory: gui
+        run: npx playwright install --with-deps chromium
+
+      - name: Run frontend verification
+        run: |
+          npm --prefix gui run tokens:check
+          npm --prefix gui run verify:tokens
+          npm --prefix gui run verify:components
+          npm --prefix gui run verify:shell
+          npm --prefix gui run verify:foundation
+          npm --prefix gui run lint
+          npm --prefix gui run test:unit
+          npm --prefix gui run build
+          npm --prefix gui run validate:storybook-docs
+          npm --prefix gui run build-storybook -- --output-dir storybook-static
+          npm --prefix gui run test-storybook
+
+      - name: Serve Storybook
+        run: |
+          python3 -m http.server 6006 --directory gui/storybook-static > /tmp/mai98-storybook.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --fail --silent http://127.0.0.1:6006/index.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/mai98-storybook.log
+          exit 1
+
+      - name: Capture bounded review evidence
+        id: rendered_review
+        continue-on-error: true
+        run: node gui/scripts/mai98-bounded-review.mjs
+
+      - name: Run canonical Deno verification
+        id: deno_verify
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 300s deno task verify 2>&1 | tee visual-review/deno-verify.log
+          status=${PIPESTATUS[0]}
+          echo "exit_status=$status" | tee visual-review/deno-status.txt
+          exit $status
+
+      - name: Upload review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai-98-bounded-visual-review
+          path: visual-review
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce review results
+        if: steps.rendered_review.outcome != 'success' || steps.deno_verify.outcome != 'success'
+        run: exit 1
