@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Public_Sans } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/Navigation/AppShell";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
-});
-
-const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "M&A Low-Touch Middleware",
-  description: "Web Dashboard for M&A Middleware",
+  title: "M&Ai Frontend Foundation",
+  description: "Neutral frontend foundation pending governed implementation.",
 };
 
+/**
+ * Provides the minimal document and i18n boundary for the frontend foundation.
+ *
+ * @example <RootLayout><Page /></RootLayout>
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,13 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${plusJakartaSans.variable} ${publicSans.variable} bg-background font-sans text-foreground antialiased`}
-      >
-        <I18nProvider>
-          <AppShell>{children}</AppShell>
-        </I18nProvider>
-      </body>
+      <body><I18nProvider>{children}</I18nProvider></body>
     </html>
   );
 }

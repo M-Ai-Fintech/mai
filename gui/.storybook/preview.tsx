@@ -1,5 +1,4 @@
 import type { Preview } from '@storybook/nextjs-vite';
-import '../tokens/design-tokens.css';
 import '../app/globals.css';
 
 const preview: Preview = {
@@ -13,14 +12,6 @@ const preview: Preview = {
 
     a11y: {
       test: 'todo',
-      config: {
-        rules: [
-          {
-            id: 'color-contrast',
-            enabled: false,
-          },
-        ],
-      },
     }
   },
 };

@@ -18,12 +18,17 @@ This directory contains the front-end Next.js Web application for MAI.
 - **Framework & Libraries**: Next.js 16.2.10 (App Router), React 19.2.4, TailwindCSS v4, Vitest 4.1.10, Storybook 10.5.0.
 - **IMPORTANT**: The GUI subsystem uses Node.js and `npm`. Do **NOT** use Deno commands inside the `gui/` directory.
 
-## Subdirectory Structure
+## Frontend Foundation Boundary
 
-- **`app/`**: Next.js App Router pages, layouts, API routes, and global CSS styling.
-- **`components/`**: Atomic UI design system components, screen compositions (`screens/`), and template (`_template/`).
-- **`lib/`**: Front-end utility functions, API clients, and state helpers.
-- **`docs/`** & **`tokens/`**: UI design tokens, component guidelines, and Storybook setup.
+- Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction
+  authority.
+- Product definitions `design/1–28` govern behavior and boundaries.
+- `design/28_Critical_Desktop_Banker_Path_Prototype.md` governs the MAI-94
+  critical MVP workflow.
+- Stitch and the retired GUI are historical references only. Never use them,
+  old stories, old styles, or third-party screenshots as implementation input.
+- MAI-96 owns final tokens, MAI-97 owns governed components, and MAI-98 owns the
+  approved Shell, navigation, and route architecture.
 
 ## Key Operational & Testing Commands
 
@@ -40,9 +45,14 @@ All commands can be run from repository root using `npm --prefix gui run <script
 ## Architectural Conventions & Rules
 
 - **Server vs. Client Components**: Components are React Server Components by default. Add the `"use client"` directive at the top of component files only when statefulness, browser hooks, or interactive event handlers are required.
-- **Component Documentation**: Storybook MDX files (`*.mdx`) colocated with components provide local component usage and implementation authority.
-- **Styling**: Use TailwindCSS v4 utility classes. Keep styles modular and responsive.
+- **Component Documentation**: Storybook MDX may describe only the retained
+  implementation beside it. Figma remains the visual authority.
+- **Styling**: Keep MAI-95 styling neutral and minimal. Do not define final
+  semantic tokens before MAI-96.
 
 ## Documentation Governance
 
-Canonical front-end architecture documentation lives under [`backlog/docs/`](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md) (specifically `doc-08-GUI-Architecture.md`). Storybook MDX assets inside `gui/components/` retain local authority over individual UI components.
+Canonical frontend foundation architecture lives in
+[`doc-15`](../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).
+Storybook MDX is local implementation documentation, not cross-project design
+authority.

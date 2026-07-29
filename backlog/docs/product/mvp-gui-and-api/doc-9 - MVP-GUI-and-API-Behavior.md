@@ -3,7 +3,7 @@ id: doc-9
 title: MVP GUI and API Behavior
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:51'
+updated_date: '2026-07-29 13:26'
 tags:
   - product
   - gui
@@ -16,7 +16,7 @@ tags:
 - **Authority ID:** PRODUCT-MVP-001
 - **Owner:** Product Engineering
 - **Authority:** Canonical current-state MVP GUI and API behavior
-- **Freshness:** Current for the Next.js GUI and deterministic MVP API documented by MAI-84
+- **Freshness:** Current for the MAI-95 neutral frontend foundation and deterministic MVP API
 - **Language:** English
 - **Update trigger:** Product routes, API contracts, persistence behavior, streaming behavior, concurrency semantics, or product capability boundaries change.
 
@@ -24,11 +24,11 @@ Route handlers, Zod contracts, tests, and GUI code are authoritative for exact b
 
 ## Product surfaces
 
-The Next.js App Router application is in `gui/`. Current page routes include the dashboard (`/`), deals (`/deals`, `/deals/[id]`), entities (`/entities`, `/entities/[id]`), custom dashboard (`/dashboard/custom`), generative UI (`/generative-ui`), settings (`/settings`), and a `/clients` compatibility page. Route availability and redirects must be verified in source before making navigation claims.
+The Next.js App Router application is in `gui/`. MAI-95 retains only `/` as a neutral frontend-foundation status surface plus framework-provided error and not-found boundaries. The retired dashboard, deal, entity, custom-dashboard, generative-UI, settings, and client page compositions are not active routes. Final Shell, navigation, and product route architecture are deferred to MAI-98.
 
 The GUI calls relative `/api/*` paths. Its Next configuration rewrites these to the Deno API base URL, defaulting to `http://127.0.0.1:8000`. Browser components must not hard-code internal Deno URLs.
 
-Storybook MDX and `gui/docs/` are referenced implementation/design assets. They document component behavior and prototype constraints but do not replace this canonical product/API authority.
+`gui/components/FoundationStatus/FoundationStatus.mdx` is the single retained neutral Storybook specimen. Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction design authority; `design/1` through `design/28` govern behavior and boundaries, with `design/28_Critical_Desktop_Banker_Path_Prototype.md` recording the MAI-94 critical path. Stitch, the retired GUI, and retired stories/styles are not implementation authorities. MAI-96 owns final tokens, MAI-97 owns governed components, and MAI-98 owns the approved Shell and route presentation.
 
 ## Deterministic MVP API
 
@@ -57,4 +57,4 @@ VDR-facing API output exposes controlled metadata/download behavior; it must not
 
 ## Change rules
 
-Add new product routes through the appropriate handler while preserving `mvp_routes.ts` ordering. Update API contracts, tests, and this document together for behavior changes. Keep prototype-only content, visual specifications, and component-level Storybook narratives colocated in the GUI unless their policy becomes product-wide authority.
+Add new product routes through the appropriate handler while preserving `mvp_routes.ts` ordering. Update API contracts, tests, and this document together for behavior changes. Keep product behavior aligned with governed design definitions and preserve explicit mock, fixture, simulated, prototype, or backend-required labels. Do not infer production capability from retained API clients or the neutral foundation surface.

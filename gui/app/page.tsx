@@ -1,7 +1,10 @@
-"use client";
+import { FoundationStatus } from "@/components/FoundationStatus/FoundationStatus";
 
-import { DashboardPageClient } from "./dashboard/dashboard-page-client";
-
-export default function DashboardPage() {
-  return <DashboardPageClient />;
+/**
+ * Renders the only product-facing route retained during MAI-95.
+ *
+ * @example <FoundationPage />
+ */
+export default function FoundationPage() {
+  return <FoundationStatus />;
 }

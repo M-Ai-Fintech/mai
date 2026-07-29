@@ -1,12 +1,17 @@
 # GUI UI Components Agent Instructions (`gui/components/`)
 
-This directory contains the component library and screen-level composition components for the MAI Next.js web application.
+This directory contains only frontend components retained by the current task.
+The MAI-95 foundation status specimen is temporary infrastructure, not the
+final MAI design system.
 
-## Directory Structure & Organization
+## Authority and Scope
 
-- **Atomic UI Components**: Component folders (`Accordion/`, `Avatar/`, `Badge/`, `Button/`, `Card/`, `Checkbox/`, `CountrySelector/`, `Divider/`, `Dropdown/`, `EmptyState/`, `ErrorBoundary/`, `Footer/`, `FormField/`, `Icon/`, `Input/`, `Modal/`, `Navigation/`, `Radio/`, `Skeleton/`, `Spinner/`, `Table/`, `Tabs/`, `Textarea/`, `Toast/`).
-- **Screen Compositions**: `screens/` contains complex screen composition components (`agentic/`, `custom-dashboard/`, `dashboard/`, `entities/`).
-- **Scaffolding Template**: `_template/` contains `ComponentTemplate.mdx` as baseline component documentation structure.
+- Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction
+  authority.
+- Never use Stitch, the retired GUI, old stories, old styles, or third-party
+  screenshots as component design input.
+- MAI-97 owns the final governed component library, variants, states, and
+  Storybook design conformance.
 
 ## Component Triad Pattern
 
@@ -28,8 +33,10 @@ From the repository root or inside `gui/`:
 - **Launch Interactive Storybook**: `npm --prefix gui run storybook`
 - **Validate Component Documentation**: `npm --prefix gui run validate:storybook-docs`
 
-## Local Authority Governance
+## Local Documentation Governance
 
 Per root project governance rules in `AGENTS.md`:
-- **Local MDX Authority**: Storybook MDX files (`gui/components/*/*.mdx`) have **local implementation authority** for component API specifications, props usage, and visual guidelines.
-- **System Architecture**: High-level platform UX and component specifications are governed by [`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md) (`doc-08-GUI-Architecture.md`).
+- **Local MDX scope**: Storybook MDX may document only the implementation beside
+  it. It does not establish visual authority.
+- **System architecture**: The current boundary is governed by
+  [`doc-15`](../../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).

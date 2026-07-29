@@ -1,0 +1,91 @@
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const repositoryRoot = resolve(import.meta.dirname, "../..");
+const trackedOutput = execFileSync(
+  "git",
+  ["ls-files", "--cached", "--others", "--exclude-standard", "gui"],
+  { cwd: repositoryRoot, encoding: "utf8" },
+);
+const activePaths = trackedOutput.trim().split("\n").filter(Boolean);
+const sourcePaths = activePaths.filter((path) =>
+  !path.endsWith("package-lock.json") &&
+  path !== "gui/scripts/verify-frontend-foundation.mjs"
+);
+const bannedTerms = [
+  "Mastercard",
+  "MarkForMC",
+  "Plus Jakarta",
+  "Public Sans",
+  "canvas-cream",
+  "ghost-watermark",
+  "orbital-line",
+  "1310231555884111730",
+  "STITCH_DESIGN",
+  "DESIGN_GUIDELINES.md",
+];
+const retiredPaths = [
+  "gui/DESIGN.md",
+  "gui/DESIGN_GUIDELINES.md",
+  "gui/STITCH_DESIGN.md",
+  "gui/docs/user-flow.md",
+  "gui/tokens/design-tokens.css",
+  "gui/components/Navigation/AppShell.tsx",
+  "gui/components/screens/dashboard/dashboard-model.ts",
+  "gui/app/deals/page.tsx",
+  "gui/app/entities/page.tsx",
+  "gui/app/generative-ui/page.tsx",
+];
+const violations = [];
+
+for (const path of sourcePaths) {
+  if (!/\.(css|json|md|mdx|mjs|ts|tsx)$/.test(path)) continue;
+  const source = readFileSync(resolve(repositoryRoot, path), "utf8");
+  if (!path.endsWith(".test.ts")) {
+    for (const term of bannedTerms) {
+      if (source.includes(term)) violations.push(`${path}: contains ${term}`);
+    }
+  }
+  if (
+    /\.(mjs|ts|tsx)$/.test(path) &&
+    /@\/components\/(?!FoundationStatus\/)/.test(source)
+  ) {
+    violations.push(`${path}: imports a retired component implementation`);
+  }
+}
+
+for (const path of retiredPaths) {
+  if (existsSync(resolve(repositoryRoot, path))) {
+    violations.push(`${path}: retired path still exists`);
+  }
+}
+
+const statusSource = readFileSync(
+  resolve(
+    repositoryRoot,
+    "gui/components/FoundationStatus/FoundationStatus.tsx",
+  ),
+  "utf8",
+);
+for (
+  const statement of [
+    "product screens are not implemented",
+    "does not provide production product",
+    "Figma is the sole visual and interaction authority",
+  ]
+) {
+  if (!statusSource.includes(statement)) {
+    violations.push(`FoundationStatus.tsx: missing "${statement}"`);
+  }
+}
+
+if (violations.length) {
+  console.error("Frontend foundation verification failed:");
+  console.error(violations.join("\n"));
+  process.exitCode = 1;
+} else {
+  console.log(
+    `Frontend foundation verified across ${sourcePaths.length} active paths.`,
+  );
+}
