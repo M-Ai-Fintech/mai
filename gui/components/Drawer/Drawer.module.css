@@ -1,6 +1,7 @@
 .drawer {
   position: fixed;
   inset-block: 0;
+  inset-inline-start: auto;
   inset-inline-end: 0;
   inline-size: min(100%, var(--mai-layout-sidebar-desktop));
   max-inline-size: 100%;
