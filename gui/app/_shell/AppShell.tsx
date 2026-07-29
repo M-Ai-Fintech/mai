@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
 import { Drawer, IconButton, NavigationItem, StatusIndicator } from "@/components";
 import {
@@ -86,9 +87,9 @@ export function AppShell({
 
       {!external ? (
         <aside className={`${styles.brandRail} hidden md:flex`} aria-label="MAI workspace rail">
-          <a className={styles.brandMark} href="/home" aria-label="MAI home">
+          <Link className={styles.brandMark} href="/home" aria-label="MAI home">
             MAI
-          </a>
+          </Link>
           <span className={styles.modeMarker} aria-hidden="true">
             {dealMode ? "D" : route.shellMode === "administration" ? "A" : "G"}
           </span>
