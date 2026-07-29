@@ -32,7 +32,6 @@ export const approvedComponentFamilies = [
 
 const nonPublicDirectories = new Set(["FoundationStatus", "internal"]);
 const forbiddenMai98Paths = [
-  "gui/components/AppShell",
   "gui/components/Sidebar",
   "gui/components/TopBar",
   "gui/app/deals/page.tsx",

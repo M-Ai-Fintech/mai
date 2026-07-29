@@ -39,7 +39,6 @@ const retiredPaths = [
 const deferredImplementationPaths = [
   "gui/components/Card",
   "gui/components/Navigation",
-  "gui/components/AppShell",
   "gui/components/Sidebar",
   "gui/components/TopBar",
   "gui/app/deals/page.tsx",

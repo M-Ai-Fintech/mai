@@ -33,11 +33,8 @@ function expectGovernedOwnershipBoundary(): void {
   expect(html).toContain("MAI-98 owns the approved Shell");
 }
 
-function expectRootRouteUsesFoundationStatus(): void {
-  const html = renderToStaticMarkup(FoundationPage());
-
-  expect(html).toContain("data-foundation-status");
-  expect(html).not.toContain("dashboard");
+function expectRootRouteEntersShellArchitecture(): void {
+  expect(() => FoundationPage()).toThrow("NEXT_REDIRECT");
 }
 
 describe("MAI-95 foundation status", () => {
@@ -54,7 +51,7 @@ describe("MAI-95 foundation status", () => {
     expectGovernedOwnershipBoundary,
   );
   it(
-    "is the only retained product-facing root entry",
-    expectRootRouteUsesFoundationStatus,
+    "redirects the root entry to the MAI-98 shell",
+    expectRootRouteEntersShellArchitecture,
   );
 });

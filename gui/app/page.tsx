@@ -1,4 +1,4 @@
-import { FoundationStatus } from "@/components/FoundationStatus/FoundationStatus";
+import { redirect } from "next/navigation";
 
 /**
  * Renders the only product-facing route retained during MAI-95.
@@ -6,5 +6,5 @@ import { FoundationStatus } from "@/components/FoundationStatus/FoundationStatus
  * @example <FoundationPage />
  */
 export default function FoundationPage() {
-  return <FoundationStatus />;
+  redirect("/home");
 }

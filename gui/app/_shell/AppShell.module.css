@@ -1,0 +1,255 @@
+.shell {
+  min-block-size: 100vh;
+  background: var(--mai-color-surface-canvas);
+  color: var(--mai-color-content-primary);
+}
+
+.brandRail {
+  flex: 0 0 var(--mai-layout-rail);
+  min-block-size: 100vh;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mai-space-layout-panel);
+  padding-block: var(--mai-space-component-lg);
+  background: var(--mai-color-surface-inverse);
+  color: var(--mai-color-content-inverse);
+}
+
+.brandMark {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-family: var(--mai-type-eyebrow-font-family);
+  font-size: var(--mai-type-eyebrow-font-size);
+  font-weight: var(--mai-type-eyebrow-font-weight);
+  line-height: var(--mai-type-eyebrow-line-height);
+  text-decoration: none;
+}
+
+.brandMark:focus-visible,
+.skip:focus-visible,
+.breadcrumbs a:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+
+.modeMarker {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--mai-border-width-default) solid var(--mai-color-border-default);
+  border-radius: var(--mai-radius-control);
+}
+
+.application,
+.contentColumn,
+.main {
+  min-inline-size: 0;
+}
+
+.application {
+  flex: 1 1 auto;
+}
+
+.header {
+  min-block-size: var(--mai-size-control-large);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mai-space-component-md);
+  padding-inline: var(--mai-space-component-lg);
+  border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+  background: var(--mai-color-surface-raised);
+}
+
+.contextIdentity {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+}
+
+.contextIdentity small,
+.externalLabel,
+.headerEntries,
+.dealContext dt,
+.breadcrumbs {
+  color: var(--mai-color-content-secondary);
+}
+
+.headerEntries {
+  margin-inline-start: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mai-space-component-md);
+  font-family: var(--mai-type-metadata-font-family);
+  font-size: var(--mai-type-metadata-font-size);
+  line-height: var(--mai-type-metadata-line-height);
+}
+
+.externalLabel {
+  margin-inline-start: auto;
+}
+
+.workspace {
+  min-block-size: calc(100vh - var(--mai-size-control-large));
+}
+
+.contextSidebar {
+  flex: 0 0 var(--mai-layout-sidebar);
+  padding: var(--mai-space-component-lg);
+  border-inline-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+  background: var(--mai-color-surface-subtle);
+}
+
+.sidebarHeading {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+  margin-block-end: var(--mai-space-layout-panel);
+}
+
+.navigationGroup,
+.secondaryNavigation {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+}
+
+.secondaryNavigation {
+  margin-block-start: var(--mai-space-layout-section);
+  padding-block-start: var(--mai-space-component-lg);
+  border-block-start: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+}
+
+.dealContext {
+  display: grid;
+  gap: var(--mai-space-component-lg);
+  margin: 0;
+}
+
+.dealContext div {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+}
+
+.dealContext dd {
+  margin: 0;
+}
+
+.contentColumn {
+  flex: 1 1 auto;
+}
+
+.dealNavigation,
+.externalNavigation {
+  align-items: stretch;
+  gap: var(--mai-space-component-xs);
+  overflow-x: auto;
+  padding: var(--mai-space-component-xs) var(--mai-space-component-lg);
+  border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+  background: var(--mai-color-surface-raised);
+}
+
+.externalNavigation {
+  display: flex;
+}
+
+.dealNavigation .navigationGroup,
+.externalNavigation .navigationGroup {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--mai-space-component-xs);
+}
+
+.main {
+  padding: var(--mai-space-component-lg);
+}
+
+.breadcrumbs ol {
+  display: flex;
+  gap: var(--mai-space-component-xs);
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.breadcrumbs li {
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumbs a {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mai-color-content-link);
+}
+
+.breadcrumbs li + li::before {
+  content: "/";
+  margin-inline-end: var(--mai-space-component-xs);
+}
+
+.dealHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mai-space-component-lg);
+  margin-block-start: var(--mai-space-layout-panel);
+}
+
+.dealHeader h1,
+.placeholder h2,
+.eyebrow {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--mai-color-content-secondary);
+  font-family: var(--mai-type-eyebrow-font-family);
+  font-size: var(--mai-type-eyebrow-font-size);
+  font-weight: var(--mai-type-eyebrow-font-weight);
+  line-height: var(--mai-type-eyebrow-line-height);
+  text-transform: uppercase;
+}
+
+.placeholder {
+  max-inline-size: var(--mai-layout-content-max);
+  display: grid;
+  gap: var(--mai-space-component-md);
+  margin-block-start: var(--mai-space-layout-section);
+  padding: var(--mai-space-layout-panel);
+  border: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+  border-radius: var(--mai-radius-panel);
+  background: var(--mai-color-surface-raised);
+}
+
+.placeholder p {
+  margin: 0;
+}
+
+.skip {
+  position: fixed;
+  inset-block-start: calc(var(--mai-control-min-target) * -1);
+  inset-inline-start: var(--mai-space-component-xs);
+  z-index: 3;
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--mai-space-component-md);
+  background: var(--mai-color-surface-raised);
+  color: var(--mai-color-content-primary);
+}
+
+.skip:focus {
+  inset-block-start: var(--mai-space-component-xs);
+}
