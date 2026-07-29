@@ -1,0 +1,2 @@
+import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { EvidenceReference } from "./EvidenceReference";
+describe("EvidenceReference", () => { it("renders restricted evidence without source metadata", () => { const html = renderToStaticMarkup(createElement(EvidenceReference, { availability: "restricted", restrictionLabel: "Permission required" })); expect(html).toContain("Permission required"); expect(html).not.toContain("Annual report"); }); });

@@ -1,0 +1,9 @@
+import type { HTMLAttributes } from "react";
+import { classNames } from "../internal/classNames";
+import styles from "./FinancialValue.module.css";
+export type FinancialFormat = "currency" | "percentage" | "multiple" | "count";
+export type FinancialPresentation = "primary" | "compact" | "table" | "unavailable" | "provisional";
+export interface FinancialValueProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> { value?: number; format: FinancialFormat; presentation?: FinancialPresentation; currency?: string; locale?: string; unavailableLabel?: string; provisionalLabel?: string; }
+function formatFinancialValue(value: number, format: FinancialFormat, locale: string, currency: string): string { if (format === "currency") return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value); if (format === "percentage") return new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(value); if (format === "multiple") return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)}×`; return new Intl.NumberFormat(locale).format(value); }
+/** Renders a presentational financial value, preserving unavailable and provisional meanings. @example <FinancialValue value={0} format="currency" /> */
+export function FinancialValue({ className, currency = "USD", format, locale = "en-US", presentation = "primary", provisionalLabel = "Provisional", unavailableLabel = "Unavailable", value, ...props }: FinancialValueProps) { const unavailable = presentation === "unavailable" || value === undefined; const text = unavailable ? unavailableLabel : formatFinancialValue(value, format, locale, currency); return <span className={classNames(styles.value, styles[presentation], className)} {...props}>{text}{presentation === "provisional" && <span className={styles.provisional}> {provisionalLabel}</span>}</span>; }

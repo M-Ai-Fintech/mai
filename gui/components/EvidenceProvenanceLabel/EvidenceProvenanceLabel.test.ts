@@ -1,0 +1,2 @@
+import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { EvidenceProvenanceLabel } from "./EvidenceProvenanceLabel";
+describe("EvidenceProvenanceLabel", () => { it("retains provenance text", () => { expect(renderToStaticMarkup(createElement(EvidenceProvenanceLabel, { use: "table" }, "Extracted source"))).toContain("Extracted source"); }); });

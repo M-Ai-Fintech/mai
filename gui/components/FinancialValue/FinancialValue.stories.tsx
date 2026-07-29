@@ -1,0 +1,3 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite"; import { FinancialValue } from "./FinancialValue";
+const meta = { title: "Financial/Value", component: FinancialValue, args: { value: 1200000, format: "currency" } } satisfies Meta<typeof FinancialValue>; export default meta; type Story = StoryObj<typeof meta>;
+export const Primary: Story = {}; export const Formats: Story = { render: () => <><FinancialValue value={0} format="currency" /><FinancialValue value={0.125} format="percentage" /><FinancialValue value={4.2} format="multiple" /><FinancialValue value={42} format="count" /></> }; export const Unavailable: Story = { args: { presentation: "unavailable" } }; export const Provisional: Story = { args: { presentation: "provisional" } };

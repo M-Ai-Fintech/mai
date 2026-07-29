@@ -1,0 +1,2 @@
+import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { FinancialDelta } from "./FinancialDelta";
+describe("FinancialDelta", () => { it("renders unavailable independently from numeric values", () => { expect(renderToStaticMarkup(createElement(FinancialDelta, { direction: "unavailable" }))).toContain("Unavailable"); }); });

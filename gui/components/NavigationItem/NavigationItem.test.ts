@@ -1,0 +1,2 @@
+import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { NavigationItem } from "./NavigationItem";
+describe("NavigationItem", () => { it("does not render protected link actions when restricted", () => { const html = renderToStaticMarkup(createElement(NavigationItem, { kind: "link", href: "/private", restricted: true }, "Private")); expect(html).not.toContain("href="); expect(html).toContain("Restricted"); }); });

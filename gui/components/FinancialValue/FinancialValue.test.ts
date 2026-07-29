@@ -1,0 +1,2 @@
+import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { FinancialValue } from "./FinancialValue";
+describe("FinancialValue", () => { it("does not confuse zero with unavailable", () => { expect(renderToStaticMarkup(createElement(FinancialValue, { value: 0, format: "count" }))).toContain(">0<"); expect(renderToStaticMarkup(createElement(FinancialValue, { format: "count", presentation: "unavailable" }))).toContain("Unavailable"); }); });

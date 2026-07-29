@@ -1,0 +1,4 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite"; import { EvidenceReference } from "./EvidenceReference";
+const current = { availability: "current" as const, metadata: { source: "Annual report", location: "Page 12", documentVersion: "2026.1", freshness: "Current", action: { href: "#source", label: "Open source" } } };
+const meta = { title: "Evidence/Reference", component: EvidenceReference, args: current } satisfies Meta<typeof EvidenceReference>; export default meta; type Story = StoryObj<typeof meta>;
+export const Current: Story = {}; export const Restricted: Story = { args: { availability: "restricted", restrictionLabel: "Source restricted by permissions" } }; export const Unavailable: Story = { args: { availability: "unavailable" } }; export const Long: Story = { args: { availability: "incomplete", metadata: { ...current.metadata, source: "Very long source name used to validate constrained wrapping and source-action resilience" } } };
