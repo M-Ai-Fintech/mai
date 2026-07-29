@@ -86,6 +86,12 @@ export const SettingsSensitive: Story = {
     state: "sensitive",
   },
 };
+export const TeamSensitive: Story = {
+  args: {
+    resolution: fixture("global.team"),
+    state: "sensitive",
+  },
+};
 export const ExternalUnavailable: Story = {
   args: {
     resolution: fixture("external.workspace", "external"),

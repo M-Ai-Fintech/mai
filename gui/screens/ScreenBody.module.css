@@ -10,3 +10,10 @@
 .table { inline-size: 100%; border-collapse: collapse; background: var(--mai-color-surface-raised); }
 .table th, .table td { padding: var(--mai-space-component-md); text-align: start; border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle); }
 .table button { min-block-size: var(--mai-control-min-target); }
+.page a {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  color: var(--mai-color-content-link);
+}
