@@ -1,0 +1,179 @@
+name: MAI-98 bounded rendered review
+
+on:
+  push:
+    branches:
+      - feat/MAI-98-app-shell-route-architecture
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: npm --prefix gui ci
+
+      - name: Install Chromium
+        working-directory: gui
+        run: npx playwright install --with-deps chromium
+
+      - name: Run focused shell gates
+        run: |
+          npm --prefix gui run tokens:check
+          npm --prefix gui run verify:tokens
+          npm --prefix gui run verify:components
+          npm --prefix gui run verify:shell
+          npm --prefix gui run verify:foundation
+          npm --prefix gui run lint
+          npm --prefix gui run test:unit
+          npm --prefix gui run build
+          npm --prefix gui run validate:storybook-docs
+          npm --prefix gui run build-storybook -- --output-dir storybook-static
+          npm --prefix gui run test-storybook
+
+      - name: Start Storybook
+        run: |
+          python3 -m http.server 6006 --directory gui/storybook-static > /tmp/mai98-storybook.log 2>&1 &
+          echo $! > /tmp/mai98-storybook.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:6006/index.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mai98-storybook.log
+          exit 1
+
+      - name: Capture bounded review evidence
+        run: |
+          mkdir -p visual-review
+          cat > gui/.mai98-review.mjs <<'NODE'
+          import { chromium } from "@playwright/test";
+          import { mkdir, writeFile } from "node:fs/promises";
+
+          const cases = [
+            { name: "global-desktop", id: "shell-appshell--global-desktop", width: 1440, height: 900, mode: "global" },
+            { name: "deal-desktop", id: "shell-appshell--deal-desktop", width: 1440, height: 900, mode: "deal" },
+            { name: "administration-desktop", id: "shell-appshell--administration-desktop", width: 1440, height: 900, mode: "administration" },
+            { name: "external-desktop", id: "shell-appshell--external-participant", width: 1440, height: 900, mode: "external" },
+            { name: "deal-tablet", id: "shell-appshell--deal-desktop", width: 1024, height: 900, mode: "deal" },
+            { name: "long-tablet", id: "shell-appshell--long-names-and-count-overflow", width: 1024, height: 900, mode: "deal" },
+            { name: "deal-mobile", id: "shell-appshell--deal-mobile", width: 390, height: 844, mode: "deal" },
+            { name: "long-mobile", id: "shell-appshell--long-names-and-count-overflow", width: 390, height: 844, mode: "deal" },
+            { name: "restricted-mobile", id: "shell-appshell--restricted-state", width: 390, height: 844 },
+            { name: "invalid-mobile", id: "shell-appshell--invalid-context", width: 390, height: 844 },
+            { name: "unavailable-mobile", id: "shell-appshell--unavailable-state", width: 390, height: 844 },
+            { name: "drawer-mobile-open", id: "shell-appshell--deal-mobile", width: 390, height: 844, mode: "deal", openDrawer: true },
+          ];
+
+          await mkdir("../visual-review", { recursive: true });
+          const browser = await chromium.launch({ headless: true });
+          const report = [];
+          let failed = false;
+
+          for (const item of cases) {
+            const page = await browser.newPage({ viewport: { width: item.width, height: item.height } });
+            const url = `http://127.0.0.1:6006/iframe.html?id=${item.id}&viewMode=story`;
+            await page.goto(url, { waitUntil: "networkidle" });
+            await page.locator("#storybook-root").waitFor({ state: "visible" });
+            if (item.openDrawer) {
+              await page.getByRole("button", { name: "Open navigation" }).click();
+              await page.getByRole("dialog").waitFor({ state: "visible" });
+            }
+
+            const metrics = await page.evaluate((expectedMode) => {
+              const visible = (element) => {
+                const style = getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return style.visibility !== "hidden" && style.display !== "none" && rect.width > 0 && rect.height > 0;
+              };
+              const interactive = [...document.querySelectorAll("a[href], button, input, select, textarea, [role='button']")]
+                .filter(visible)
+                .map((element) => {
+                  const rect = element.getBoundingClientRect();
+                  return {
+                    label: element.getAttribute("aria-label") || element.textContent?.trim().slice(0, 80) || element.tagName,
+                    width: Math.round(rect.width * 100) / 100,
+                    height: Math.round(rect.height * 100) / 100,
+                  };
+                });
+              const clipped = [...document.querySelectorAll("#storybook-root *")]
+                .filter(visible)
+                .filter((element) => {
+                  const style = getComputedStyle(element);
+                  const hides = ["hidden", "clip"].includes(style.overflowX) || ["hidden", "clip"].includes(style.overflowY);
+                  return hides && (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1);
+                })
+                .map((element) => ({
+                  tag: element.tagName,
+                  className: String(element.className).slice(0, 120),
+                  text: element.textContent?.trim().slice(0, 100),
+                }));
+              const shell = document.querySelector("[data-shell-mode]");
+              return {
+                viewport: { width: innerWidth, height: innerHeight },
+                documentWidth: document.documentElement.scrollWidth,
+                pageOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+                smallTargets: interactive.filter((target) => target.width < 44 || target.height < 44),
+                clipped,
+                actualMode: shell?.getAttribute("data-shell-mode"),
+                expectedMode,
+                bodyText: document.body.innerText.slice(0, 500),
+              };
+            }, item.mode ?? null);
+
+            if (metrics.pageOverflow || metrics.smallTargets.length || metrics.clipped.length || (item.mode && metrics.actualMode !== item.mode)) {
+              failed = true;
+            }
+            await page.screenshot({ path: `../visual-review/${item.name}.png`, fullPage: true });
+            report.push({ ...item, url, metrics });
+            await page.close();
+          }
+
+          await browser.close();
+          await writeFile("../visual-review/report.json", JSON.stringify(report, null, 2));
+          if (failed) process.exitCode = 1;
+          NODE
+          (cd gui && node .mai98-review.mjs)
+          rm gui/.mai98-review.mjs
+
+      - name: Run canonical Deno verification with timeout
+        id: deno_verify
+        continue-on-error: true
+        run: |
+          set +e
+          timeout 300s deno task verify 2>&1 | tee visual-review/deno-verify.log
+          status=${PIPESTATUS[0]}
+          echo "exit_status=$status" | tee visual-review/deno-status.txt
+          exit $status
+
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai-98-bounded-visual-review
+          path: visual-review
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce Deno verification result
+        if: steps.deno_verify.outcome != 'success'
+        run: exit 1
