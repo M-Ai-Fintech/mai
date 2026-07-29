@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:07'
-updated_date: '2026-07-28 23:14'
+updated_date: '2026-07-29 01:32'
 labels:
   - figma
   - screen-design
@@ -56,12 +56,12 @@ Import, verify, and link the completed Diligence Decision Room design. Rework it
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Approved Figma frames are linked for all six listed screen families.
+- [x] #1 Approved Figma frames are linked for all six listed screen families.
 - [x] #2 The completed Diligence Decision Room is imported, verified, linked, and assessed for design-system and workflow conformance.
 - [x] #3 Evidence, fact, provenance, confidence, approval, and permission boundaries are visible and consistent wherever relevant.
 - [x] #4 Cross-screen deal data, decisions, and workflow transitions are explicit and internally consistent.
 - [x] #5 Relevant default, loading, empty, error, restricted, stale-data, destructive-action, and approval states are designed.
-- [ ] #6 Required desktop, tablet, and mobile behavior is explicit, and review findings are resolved or tracked.
+- [x] #6 Required desktop, tablet, and mobile behavior is explicit, and review findings are resolved or tracked.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -82,4 +82,6 @@ Import, verify, and link the completed Diligence Decision Room design. Rework it
 2026-07-28 — Quality blocker resolved in existing MAI-92 nodes: inherited Diligence work canvases were hidden in the five affected families; in-place product surfaces now carry deal, dossier, document-control, valuation, and matching anatomy across desktop/tablet/mobile. Decision Room approved nodes 52:21, 56:39, 57:87, 58:97, 58:139, 59:115, and 59:144 were preserved; MAI-92 conformance board records document/evidence/fact/finding/scenario/approval/audit transitions. Read-only reviews found no P0. P1 overlap/sparse-surface findings were corrected in place and all affected nodes were re-rendered at native dimensions. P2: Decision Room conformance board could be formatted more scanably; no blocking action. Documentation check: deno run --allow-read scripts/check_docs.ts (passed). git diff --check (passed). No frontend implementation.
 
 2026-07-28 — Draft PR #12 opened: https://github.com/luisfelipeluis49/mai/pull/12. Commits: 755d4ba, de9ea6a, e333ee2. Branch: design/MAI-92-deal-intelligence-decision-screens. MAI-92 remains In Progress pending owner approval; AC #1 and #6 remain unchecked by design.
+
+Owner decision: MAI-92 is desktop-first for the 12-day MVP. Approved desktop nodes: 205:662, 205:767, 205:3738, 205:4234, 205:4436. Approved Decision Room evidence: 52:21, 56:39, 57:87, 58:97, 58:139, 59:115, 59:144. Tablet/mobile drafts for the five new families are deferred and non-authoritative; implementation owns responsive derivation and runtime verification. No further MAI-92 design pass is required. PR #12 is the review vehicle.
 <!-- SECTION:NOTES:END -->

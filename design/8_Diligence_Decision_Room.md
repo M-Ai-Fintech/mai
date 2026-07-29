@@ -7,7 +7,7 @@ owning_task: "MAI-92"
 canonical_routes:
   - "/deals/:dealId/diligence"
 figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
-figma_status: "Ready for owner review in MAI-92"
+figma_status: "Approved in MAI-92 with existing desktop, tablet, and mobile evidence"
 figma_area: "MAI Banker Workspace — Design System & Product UI / 07 Decision Room Validation"
 figma_nodes:
   - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=52-21"

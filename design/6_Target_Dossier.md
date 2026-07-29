@@ -7,10 +7,11 @@ owning_task: "MAI-92"
 canonical_routes:
   - "/deals/:dealId/dossier"
 figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
-figma_status: "Ready for owner review in MAI-92"
+figma_status: "Approved for desktop MVP in MAI-92; tablet and mobile deferred"
 figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
 figma_nodes:
   - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=205-767"
+figma_non_authoritative_responsive_drafts:
   - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=205-3403"
   - "https://www.figma.com/design/otMJE31OKIxdXogV4RNbGQ?node-id=205-3467"
 related_definitions:
