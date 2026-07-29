@@ -1,11 +1,11 @@
 ---
 id: MAI-99
 title: 'Implement global, administration, and external screen families'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 23:34'
+updated_date: '2026-07-29 23:43'
 labels:
   - frontend
   - screen-implementation
@@ -41,7 +41,7 @@ modified_files:
   - gui/vitest.unit.config.ts
   - scripts/verify.ts
 priority: high
-ordinal: 1200
+ordinal: 86000
 ---
 
 ## Description
