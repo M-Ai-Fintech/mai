@@ -1,10 +1,10 @@
 ---
 id: MAI-94
 title: Prototype and approve end-to-end banker workflows in Figma
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 01:41'
+updated_date: '2026-07-29 11:44'
 labels:
   - figma
   - prototype
@@ -54,18 +54,22 @@ Deferred scope remains recorded for later planning; it is not deleted. No fronte
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A linked desktop prototype covers Command Center → Deals Portfolio → Deal Overview → Documents → Diligence Decision Room → Valuation → Matching → one execution/approval outcome.
-- [ ] #2 The happy path preserves institution, deal, target, evidence, fact, finding, scenario, shortlist, task, approval, and audit context.
-- [ ] #3 One recoverable failure path and one permission-safe restricted-data path are testable without protected metadata leakage.
-- [ ] #4 One human approval boundary, destructive/irreversible confirmation where applicable, and recorded audit output are testable.
-- [ ] #5 Capability labels distinguish designed interaction, prototype simulation, and backend-required behavior.
-- [ ] #6 The MVP is desktop-only; the 25-screen matrix, administration, external participants, tablet/mobile, and noncritical permutations are explicitly deferred.
+- [x] #1 A linked desktop prototype covers Command Center → Deals Portfolio → Deal Overview → Documents → Diligence Decision Room → Valuation → Matching → one execution/approval outcome.
+- [x] #2 The happy path preserves institution, deal, target, evidence, fact, finding, scenario, shortlist, task, approval, and audit context.
+- [x] #3 One recoverable failure path and one permission-safe restricted-data path are testable without protected metadata leakage.
+- [x] #4 One human approval boundary, destructive/irreversible confirmation where applicable, and recorded audit output are testable.
+- [x] #5 Capability labels distinguish designed interaction, prototype simulation, and backend-required behavior.
+- [x] #6 The MVP is desktop-only; the 25-screen matrix, administration, external participants, tablet/mobile, and noncritical permutations are explicitly deferred.
 <!-- AC:END -->
-
-
 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
 1. Prototype the eight-step desktop banker path from Command Center through one execution/approval outcome. 2. Add only the minimum failure, permission, and human-approval paths needed to validate implementation. 3. Preserve object identity and authority across transitions and label simulated/backend-required behavior. 4. Produce a bounded desktop handoff; defer 25-screen comprehensive coverage, administration, external participants, tablet/mobile, and noncritical permutations.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+MAI-94 bounded desktop-only prototype evidence: Figma page 09 Critical Path Prototype, section MAI-94 — Critical Desktop Banker Path; authoritative nodes 251:3323, 251:1355, 251:1455, 251:1575, 251:1909, 251:3238, 251:2275, 251:2524, 251:2773, 251:3319, 251:3396, 251:3778, 251:4043. Named flow start; 13 click reactions; context spine Atlas M&A Advisory → Ana Costa → DL-HOR-042 → Northstar Foods → DOC-120 → FAC-018 → FND-014 → VAL-HOR-03 → CRI-HOR-02 → APR-HOR-07 → AUD-HOR-31; recoverable Documents failure/retry; permission-safe restricted-counterparty path; explicit human approval; recorded audit outcome; capability-boundary labels; no open P0/P1; comprehensive, administration, external, responsive, and noncritical scope deferred. Canonical file: design/28_Critical_Desktop_Banker_Path_Prototype.md. Draft PR #14. Repository verification and push remain blocked because the MAI-94 branch could not be fetched under the environment escalation timeout.
+<!-- SECTION:NOTES:END -->
