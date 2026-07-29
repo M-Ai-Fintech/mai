@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { DataTableCell } from "./DataTableCell";
+const meta = { title: "Data/TableCell", component: DataTableCell, args: { children: "Northstar Holdings" } } satisfies Meta<typeof DataTableCell>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+const renderCell = (args: Story["args"]) => <table><tbody><tr><DataTableCell {...args} /></tr></tbody></table>;
+export const Text: Story = { render: renderCell };
+export const Status: Story = { args: { kind: "status", children: "Current" }, render: renderCell };
+export const Financial: Story = { args: { kind: "financial", children: "$1,250,000.00" }, render: renderCell };
+export const Evidence: Story = { args: { kind: "evidence", children: "Annual report, page 141, version 2026.04" }, render: renderCell };
+export const RowAction: Story = { args: { kind: "rowAction", children: <button type="button">Review</button> }, render: renderCell };

@@ -1,0 +1,26 @@
+.header {
+  padding: var(--mai-space-component-md);
+  border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-strong);
+  color: var(--mai-color-content-primary);
+  font-family: var(--mai-type-label-font-family);
+  font-size: var(--mai-type-label-font-size);
+  line-height: var(--mai-type-label-line-height);
+  font-weight: var(--mai-type-label-font-weight);
+  text-align: start;
+  white-space: nowrap;
+}
+.sortButton {
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  margin-block: calc(var(--mai-space-component-md) * -1);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.sortButton:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
