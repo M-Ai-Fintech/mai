@@ -51,7 +51,8 @@ export const GlobalDesktop: Story = {
   args: { resolution: fixture(["home"]) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+    const breadcrumb = canvas.getByRole("navigation", { name: "Breadcrumb" });
+    await expect(within(breadcrumb).getByText("Home")).toHaveAttribute("aria-current", "page");
     await expect(canvas.getByRole("main")).toBeVisible();
   },
 };
@@ -91,7 +92,11 @@ export const RestrictedAdministrationNavigation: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const restricted = canvas.getByText("Restricted").closest('[aria-disabled="true"]');
+    const restricted = canvas
+      .getAllByText("Restricted")
+      .map((label) => label.closest('[aria-disabled="true"]'))
+      .find((item) => item?.textContent?.includes("Administration"));
+    await expect(restricted).toBeDefined();
     await expect(restricted).toHaveTextContent("Administration");
     await expect(restricted).not.toHaveAttribute("href");
   },
