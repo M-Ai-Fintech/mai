@@ -7,14 +7,15 @@ owning_task: "MAI-93"
 canonical_routes:
   - "/deals/:dealId/team"
 figma_file_key: "otMJE31OKIxdXogV4RNbGQ"
-figma_status: "Planned in MAI-93"
-figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell"
-figma_nodes: []
+figma_status: "Shared-pattern reuse documented in MAI-93"
+figma_area: "MAI Banker Workspace — Design System & Product UI / 06 Application Shell / MAI-93 — Desktop Execution & Agentic MVP"
+figma_nodes:
+  - "239:921"
 related_definitions:
   - "design/26_Cross_Screen_Interaction_Map.md"
   - "design/27_Shared_State_Model.md"
   - "design/0_Implementaion_Roadmap.md"
-last_reviewed_task: "MAI-90"
+last_reviewed_task: "MAI-93"
 implementation_capability_boundary: "Product definition only; no frontend, backend, Storybook, token export, or runtime behavior implemented by this file."
 mock_demo_data_boundary: "Use fictional/demo transaction data only; do not encode real client, counterparty, credential, or confidential deal data."
 ---
