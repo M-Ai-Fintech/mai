@@ -50,6 +50,7 @@ jobs:
       - name: Capture bounded review evidence
         working-directory: gui
         run: |
+          rm -rf visual-review
           mkdir -p visual-review
           node --input-type=module <<'EOF'
           import { chromium } from 'playwright';
@@ -63,35 +64,48 @@ jobs:
           const stories = Object.values(index.entries ?? {}).filter((entry) => entry.type === 'story');
 
           const targets = [
-            { key: 'status-long-mobile', title: /Status\/Indicator/i, story: /long|constrained|roles/i, width: 390, height: 844 },
-            { key: 'notice-wrap-mobile', title: /Feedback\/InlineNotice/i, story: /long|wrap|constrained/i, width: 390, height: 844 },
-            { key: 'evidence-wrap-mobile', title: /Evidence\/Reference/i, story: /long|wrap|constrained|restricted/i, width: 390, height: 844 },
-            { key: 'tabs-overflow-mobile', title: /Navigation\/Tab/i, story: /overflow/i, width: 390, height: 844 },
-            { key: 'table-overflow-mobile', title: /^Data\/Table$/i, story: /overflow|narrow|responsive|default/i, width: 390, height: 844 },
-            { key: 'dialog-desktop', title: /Overlay\/Dialog/i, story: /standard|keyboard dismissal|responsive/i, width: 1440, height: 900 },
-            { key: 'drawer-tablet', title: /Overlay\/Drawer/i, story: /tablet/i, width: 1024, height: 900 },
-            { key: 'drawer-mobile', title: /Overlay\/Drawer/i, story: /mobile/i, width: 390, height: 844 },
-            { key: 'field-long-error-mobile', title: /Form\/TextField/i, story: /long|error|validation|constrained/i, width: 390, height: 844 },
+            { key: 'status-long-mobile', title: /Status\/Indicator/i, story: /roles|long|constrained/i, width: 390, height: 844 },
+            { key: 'notice-wrap-mobile', title: /Feedback\/InlineNotice/i, story: /constrained|long|wrap|information/i, width: 390, height: 844 },
+            { key: 'evidence-wrap-mobile', title: /Evidence\/Reference/i, story: /constrained|long|wrap|current/i, width: 390, height: 844 },
+            { key: 'tabs-overflow-mobile', title: /Navigation\/Tab/i, story: /overflow/i, width: 390, height: 844, expectedScroll: true },
+            { key: 'table-overflow-mobile', title: /^Data\/Table$/i, story: /overflow|narrow|responsive|default/i, width: 390, height: 844, expectedScroll: true },
+            { key: 'dialog-desktop-open', title: /Overlay\/Dialog/i, story: /standard|keyboard dismissal|responsive/i, width: 1440, height: 900, openOverlay: true },
+            { key: 'drawer-tablet-open', title: /Overlay\/Drawer/i, story: /tablet/i, width: 1024, height: 900, openOverlay: true },
+            { key: 'drawer-mobile-open', title: /Overlay\/Drawer/i, story: /mobile/i, width: 390, height: 844, openOverlay: true },
+            { key: 'field-long-mobile', title: /Form\/TextField/i, story: /long|constrained|filled/i, width: 390, height: 844 },
+            { key: 'field-error-mobile', title: /Form\/TextField/i, story: /error|validation/i, width: 390, height: 844 },
+            { key: 'select-mobile', title: /Form\/Select/i, story: /selected|default/i, width: 390, height: 844 },
           ];
 
           function pick(target) {
             const family = stories.filter((entry) => target.title.test(entry.title));
-            return family.find((entry) => target.story.test(entry.name)) ?? family[0];
+            return {
+              story: family.find((entry) => target.story.test(entry.name)) ?? family[0],
+              availableStories: family.map((entry) => ({ id: entry.id, name: entry.name })),
+            };
           }
 
           const browser = await chromium.launch({ headless: true });
           const results = [];
           try {
             for (const target of targets) {
-              const story = pick(target);
+              const selection = pick(target);
+              const story = selection.story;
               if (!story) {
-                results.push({ key: target.key, status: 'missing-story' });
+                results.push({ key: target.key, status: 'missing-story', availableStories: selection.availableStories });
                 continue;
               }
               const page = await browser.newPage({ viewport: { width: target.width, height: target.height }, deviceScaleFactor: 1 });
               const url = `${base}/iframe.html?id=${encodeURIComponent(story.id)}&viewMode=story`;
               await page.goto(url, { waitUntil: 'networkidle' });
               await page.waitForTimeout(500);
+
+              if (target.openOverlay) {
+                const opener = page.getByRole('button', { name: /open (dialog|drawer)/i });
+                await opener.click();
+                await page.locator('dialog[open]').waitFor({ state: 'visible' });
+                await page.waitForTimeout(200);
+              }
 
               const metrics = await page.evaluate(() => {
                 const visible = (element) => {
@@ -136,6 +150,19 @@ jobs:
                     scrollHeight: element.scrollHeight,
                   }));
 
+                const scrollContainers = [...document.querySelectorAll('body *')]
+                  .filter(visible)
+                  .filter((element) => {
+                    const style = getComputedStyle(element);
+                    return element.scrollWidth > element.clientWidth + 1 && ['auto', 'scroll'].includes(style.overflowX);
+                  })
+                  .map((element) => ({
+                    tag: element.tagName.toLowerCase(),
+                    className: String(element.className).slice(0, 120),
+                    clientWidth: element.clientWidth,
+                    scrollWidth: element.scrollWidth,
+                  }));
+
                 const unresolvedVisual = [...document.querySelectorAll('body *')]
                   .filter(visible)
                   .some((element) => {
@@ -150,8 +177,20 @@ jobs:
                   bodyClientHeight: document.documentElement.clientHeight,
                   smallTargets,
                   clippedText,
+                  scrollContainers,
                   unresolvedVisual,
-                  dialogs: [...document.querySelectorAll('dialog')].map((dialog) => ({ open: dialog.open, width: dialog.getBoundingClientRect().width, height: dialog.getBoundingClientRect().height })),
+                  dialogs: [...document.querySelectorAll('dialog')].map((dialog) => {
+                    const rect = dialog.getBoundingClientRect();
+                    return {
+                      open: dialog.open,
+                      width: Math.round(rect.width * 10) / 10,
+                      height: Math.round(rect.height * 10) / 10,
+                      left: Math.round(rect.left * 10) / 10,
+                      top: Math.round(rect.top * 10) / 10,
+                      labelledBy: dialog.getAttribute('aria-labelledby'),
+                      describedBy: dialog.getAttribute('aria-describedby'),
+                    };
+                  }),
                 };
               });
 
@@ -162,7 +201,10 @@ jobs:
                 storyId: story.id,
                 title: story.title,
                 storyName: story.name,
+                availableStories: selection.availableStories,
                 viewport: { width: target.width, height: target.height },
+                expectedScroll: Boolean(target.expectedScroll),
+                openOverlay: Boolean(target.openOverlay),
                 url,
                 metrics,
               });
