@@ -1,9 +1,11 @@
 ---
 id: MAI-96
 title: Implement Figma variables and tokens in the frontend
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@codex'
 created_date: '2026-07-28 03:08'
+updated_date: '2026-07-29 15:56'
 labels:
   - frontend
   - design-tokens
@@ -40,3 +42,17 @@ Implement a versioned frontend token layer derived from the approved Figma varia
 - [ ] #5 New frontend components consume semantic tokens rather than duplicating raw design values.
 - [ ] #6 Token behavior and usage are covered by documentation and focused tests.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+- Baseline verification.
+- Live read-only Figma extraction.
+- Normalized source snapshot.
+- Generated CSS and TypeScript tokens.
+- Responsive and motion behavior.
+- Token verification.
+- Neutral proof consumer.
+- Full repository verification.
+- Draft PR and owner review.
+<!-- SECTION:PLAN:END -->

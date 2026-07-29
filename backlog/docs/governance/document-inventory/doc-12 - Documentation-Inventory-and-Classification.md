@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-29 13:26'
+updated_date: '2026-07-29 16:15'
 tags:
   - documentation
   - inventory
@@ -129,6 +129,7 @@ Every project file below is individually classified; removed paths are retained 
 | `design/26_Cross_Screen_Interaction_Map.md` | Product Design | Cross-screen route, object-ownership and handoff map | interaction governance support | current as of MAI-90 | English | referenced governance support |
 | `design/27_Shared_State_Model.md` | Product Design | Shared state semantics and permission-state model | state governance support | current as of MAI-90 | English | referenced governance support |
 | `backlog/docs/architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | Frontend Engineering | MAI-95 path-level frontend disposition and foundation boundary | ARCH-FRONTEND-001 | current | English | canonical |
+| `backlog/docs/architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md` | Frontend Engineering | MAI-96 live Figma-to-code semantic token mapping and verification contract | ARCH-FRONTEND-TOKENS-001 | current | English | canonical |
 | `gui/AGENTS.md` | GUI | GUI agent instruction | gui-local | current | English | referenced |
 | `gui/CLAUDE.md` | GUI | GUI agent instruction | gui-local | review-needed | English | referenced |
 | `gui/DESIGN.md` | GUI | Retired GUI design authority | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
@@ -305,6 +306,15 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Frontend Engineering",
       "purpose": "MAI-95 path-level frontend disposition and foundation boundary",
       "authority": "ARCH-FRONTEND-001",
+      "freshness": "current",
+      "language": "English",
+      "disposition": "canonical"
+    },
+    {
+      "path": "architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md",
+      "owner": "Frontend Engineering",
+      "purpose": "MAI-96 live Figma-to-code semantic token mapping and verification contract",
+      "authority": "ARCH-FRONTEND-TOKENS-001",
       "freshness": "current",
       "language": "English",
       "disposition": "canonical"
