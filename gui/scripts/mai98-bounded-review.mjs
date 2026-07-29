@@ -1,4 +1,4 @@
-import { chromium } from "@playwright/test";
+import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
 
 const cases = [
