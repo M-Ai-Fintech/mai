@@ -65,6 +65,17 @@ Deno.test("verification runner checks the approved frontend component boundary",
   });
 });
 
+Deno.test("verification runner checks the application shell boundary", () => {
+  const shell = verificationChecks.find((check) => check.id === "frontend-shell");
+
+  assertEquals(shell, {
+    id: "frontend-shell",
+    label: "Frontend shell boundary",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:shell"],
+  });
+});
+
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
     id: "intentional-failure",
