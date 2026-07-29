@@ -4,6 +4,7 @@ title: Retire Stitch and legacy GUI visuals and establish a clean frontend found
 status: To Do
 assignee: []
 created_date: '2026-07-28 03:08'
+updated_date: '2026-07-29 01:42'
 labels:
   - frontend
   - foundation
@@ -42,3 +43,9 @@ Audit the existing GUI and Stitch artifacts into explicit keep, replace, and rem
 - [ ] #5 Prototype-only or mock-backed capability claims are not carried into the clean foundation as production behavior.
 - [ ] #6 Every approved removal is verified after execution, and retained infrastructure has an explicit purpose.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Roadmap re-baseline: MAI-95 is blocked only by the bounded desktop-first MAI-94 MVP prototype. Deferred MAI-93 responsive/noncritical scope and deferred MAI-94 comprehensive/admin/external/tablet/mobile coverage are not dependencies for frontend-foundation start.
+<!-- SECTION:NOTES:END -->
