@@ -19,87 +19,137 @@ export interface RouteDefinition {
   readonly permission: Permission;
   readonly availability: Availability;
   readonly navigation?: RouteNavigation;
-  readonly implementationStatus: "shell-placeholder";
+  readonly implementationStatus: "screen-body" | "shell-placeholder";
   readonly authority: string;
   readonly deferredScreenOwner: string;
 }
 
 type RouteInput = Omit<
   RouteDefinition,
-  "breadcrumbPolicy" | "implementationStatus" | "authority" | "deferredScreenOwner"
+  | "breadcrumbPolicy"
+  | "implementationStatus"
+  | "authority"
+  | "deferredScreenOwner"
 >;
 
 function route(input: RouteInput): RouteDefinition {
   return {
     ...input,
     breadcrumbPolicy: input.shellMode,
-    implementationStatus: "shell-placeholder",
+    implementationStatus: "screen-body",
     authority: "Figma v0.3 / MAI-98",
     deferredScreenOwner: "MAI-99+",
   };
 }
 
-const headerOnlyGlobalRoutes = new Set(["search", "approvals", "notifications"]);
+const headerOnlyGlobalRoutes = new Set([
+  "search",
+  "approvals",
+  "notifications",
+]);
 
 const globalRoute = (
   name: string,
   label: string,
   order: number,
-  options: Partial<Pick<RouteDefinition, "navigationParent" | "availability">> = {},
-): RouteDefinition => route({
-  id: `global.${name}`,
-  label,
-  pattern: [name],
-  shellMode: "global",
-  navigationParent: options.navigationParent ?? (name === "home" ? null : "global.home"),
-  permission: "workspace",
-  availability: options.availability ?? "available",
-  navigation: headerOnlyGlobalRoutes.has(name)
-    ? undefined
-    : { modes: ["global"], order, section: "primary" },
-});
+  options: Partial<Pick<RouteDefinition, "navigationParent" | "availability">> =
+    {},
+): RouteDefinition =>
+  route({
+    id: `global.${name}`,
+    label,
+    pattern: [name],
+    shellMode: "global",
+    navigationParent: options.navigationParent ??
+      (name === "home" ? null : "global.home"),
+    permission: "workspace",
+    availability: options.availability ?? "available",
+    navigation: headerOnlyGlobalRoutes.has(name)
+      ? undefined
+      : { modes: ["global"], order, section: "primary" },
+  });
 
-const dealRoute = (name: string, label: string, order: number): RouteDefinition => route({
-  id: `deal.${name}`,
-  label,
-  pattern: ["deals", ":dealId", name],
-  shellMode: "deal",
-  navigationParent: name === "overview" ? null : "deal.overview",
-  permission: "deal",
-  availability: "available",
-  navigation: { modes: ["deal"], order, section: "primary" },
-});
+const dealRoute = (
+  name: string,
+  label: string,
+  order: number,
+): RouteDefinition =>
+  route({
+    id: `deal.${name}`,
+    label,
+    pattern: ["deals", ":dealId", name],
+    shellMode: "deal",
+    navigationParent: name === "overview" ? null : "deal.overview",
+    permission: "deal",
+    availability: "available",
+    navigation: { modes: ["deal"], order, section: "primary" },
+  });
 
-const administrationRoute = (name: string, label: string, order: number): RouteDefinition => route({
-  id: `administration.${name}`,
-  label,
-  pattern: ["settings", name],
-  shellMode: "administration",
-  navigationParent: name === "profile" ? null : "administration.profile",
-  permission: "administration",
-  availability: "available",
-  navigation: {
-    modes: name === "profile" ? ["global", "administration"] : ["administration"],
-    order: name === "profile" ? 90 : order,
-    section: name === "profile" ? "secondary" : "primary",
-  },
-});
+const administrationRoute = (
+  name: string,
+  label: string,
+  order: number,
+): RouteDefinition =>
+  route({
+    id: `administration.${name}`,
+    label,
+    pattern: ["settings", name],
+    shellMode: "administration",
+    navigationParent: name === "profile" ? null : "administration.profile",
+    permission: "administration",
+    availability: "available",
+    navigation: {
+      modes: name === "profile"
+        ? ["global", "administration"]
+        : ["administration"],
+      order: name === "profile" ? 90 : order,
+      section: name === "profile" ? "secondary" : "primary",
+    },
+  });
 
-const externalRoute = (name: string, label: string, order: number): RouteDefinition => route({
-  id: `external.${name}`,
-  label,
-  pattern: ["portal", "project", ":workspaceId", ...(name === "workspace" ? [] : [name])],
-  shellMode: "external",
-  navigationParent: name === "workspace" ? null : "external.workspace",
-  permission: "external",
-  availability: "available",
-  navigation: { modes: ["external"], order, section: "primary" },
-});
+const externalRoute = (
+  name: string,
+  label: string,
+  order: number,
+): RouteDefinition =>
+  route({
+    id: `external.${name}`,
+    label,
+    pattern: [
+      "portal",
+      "project",
+      ":workspaceId",
+      ...(name === "workspace" ? [] : [name]),
+    ],
+    shellMode: "external",
+    navigationParent: name === "workspace" ? null : "external.workspace",
+    permission: "external",
+    availability: "available",
+    navigation: { modes: ["external"], order, section: "primary" },
+  });
 
 export const routeRegistry: readonly RouteDefinition[] = [
   globalRoute("home", "Home", 10),
   globalRoute("deals", "Deals", 20),
+  route({
+    id: "global.new-deal",
+    label: "New deal",
+    pattern: ["new-deal"],
+    shellMode: "global",
+    navigationParent: "global.deals",
+    permission: "workspace",
+    availability: "available",
+  }),
   globalRoute("organizations", "Organizations", 30),
+  route({
+    id: "global.organization-detail",
+    label: "Organization detail",
+    pattern: ["organizations", ":organizationId"],
+    shellMode: "global",
+    navigationParent: "global.organizations",
+    permission: "workspace",
+    availability: "available",
+  }),
   globalRoute("tasks", "Tasks", 40),
   globalRoute("team", "Team", 50),
   globalRoute("notifications", "Notifications", 60),
@@ -148,24 +198,39 @@ export const shellEntryRouteIds = [
   "global.notifications",
 ] as const;
 
-export function matchRoute(parts: readonly string[]): RouteDefinition | undefined {
-  return routeRegistry.find((item) => item.pattern.length === parts.length && item.pattern.every(
-    (segment, index) => segment.startsWith(":") || segment === parts[index],
-  ));
+export function matchRoute(
+  parts: readonly string[],
+): RouteDefinition | undefined {
+  return routeRegistry.find((item) =>
+    item.pattern.length === parts.length && item.pattern.every(
+      (segment, index) => segment.startsWith(":") || segment === parts[index],
+    )
+  );
 }
 
-export function routePatternConflicts(routes: readonly RouteDefinition[] = routeRegistry): string[] {
-  return routes.flatMap((candidate, index) => routes.slice(index + 1).flatMap((other) =>
-    candidate.pattern.length === other.pattern.length && candidate.pattern.every(
-      (segment, part) => segment.startsWith(":") || other.pattern[part]?.startsWith(":") || segment === other.pattern[part],
-    ) ? [`${candidate.id}/${other.id}`] : [],
-  ));
+export function routePatternConflicts(
+  routes: readonly RouteDefinition[] = routeRegistry,
+): string[] {
+  return routes.flatMap((candidate, index) =>
+    routes.slice(index + 1).flatMap((other) =>
+      candidate.pattern.length === other.pattern.length &&
+        candidate.pattern.every(
+          (segment, part) =>
+            segment.startsWith(":") || other.pattern[part]?.startsWith(":") ||
+            segment === other.pattern[part],
+        )
+        ? [`${candidate.id}/${other.id}`]
+        : []
+    )
+  );
 }
 
 export function navigationRoutes(mode: ShellMode): readonly RouteDefinition[] {
   return routeRegistry
     .filter((definition) => definition.navigation?.modes.includes(mode))
-    .toSorted((left, right) => (left.navigation?.order ?? 0) - (right.navigation?.order ?? 0));
+    .toSorted((left, right) =>
+      (left.navigation?.order ?? 0) - (right.navigation?.order ?? 0)
+    );
 }
 
 export function shellEntryRoutes(): readonly RouteDefinition[] {
