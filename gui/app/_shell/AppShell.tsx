@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { NavigationItem, StatusIndicator } from "@/components";
 import {
+  breadcrumbsForResolution,
   navigationForResolution,
   type RouteResolution,
 } from "@/lib/shell/route-context";
 import {
-  breadcrumbs,
   routePath,
   shellEntryRoutes,
   type RouteDefinition,
@@ -32,6 +32,7 @@ export function AppShell({
   const { route, organization, deal, counts } = resolution;
   const entries = navigationForResolution(resolution);
   const utilityEntries = shellEntryRoutes();
+  const breadcrumbEntries = breadcrumbsForResolution(resolution);
   const external = route.shellMode === "external";
   const dealMode = route.shellMode === "deal";
   const navigationLabel = dealMode
@@ -41,7 +42,6 @@ export function AppShell({
       : route.shellMode === "administration"
         ? "Administration navigation"
         : "Workspace navigation";
-  const breadcrumbLabels = breadcrumbs(route, organization?.name, deal?.name);
 
   return (
     <div className={`${styles.shell} md:flex`} data-shell-mode={route.shellMode}>
@@ -130,12 +130,15 @@ export function AppShell({
             <main id="main-content" className={styles.main}>
               <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
                 <ol>
-                  {breadcrumbLabels.map((label, index) => (
-                    <li
-                      key={`${label}-${index}`}
-                      aria-current={index === breadcrumbLabels.length - 1 ? "page" : undefined}
-                    >
-                      {label}
+                  {breadcrumbEntries.map((breadcrumb) => (
+                    <li key={breadcrumb.routeId}>
+                      {breadcrumb.href ? (
+                        <Link href={breadcrumb.href}>{breadcrumb.label}</Link>
+                      ) : (
+                        <span aria-current={breadcrumb.current ? "page" : undefined}>
+                          {breadcrumb.label}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ol>
