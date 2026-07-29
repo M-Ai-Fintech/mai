@@ -25,6 +25,26 @@ describe("MAI-98 route architecture", () => {
     expect(routePatternConflicts()).toEqual([]);
   });
 
+  it("keeps every deal route deferred to MAI-100", () => {
+    const dealRoutes = routeRegistry.filter((route) => route.id.startsWith("deal."));
+
+    expect(dealRoutes).not.toHaveLength(0);
+    for (const route of dealRoutes) {
+      expect(route.implementationStatus).toBe("shell-placeholder");
+      expect(route.deferredScreenOwner).toBe("MAI-100");
+    }
+  });
+
+  it("marks only MAI-99 global, administration, and external routes as screen bodies", () => {
+    const screenBodyRoutes = routeRegistry
+      .filter((route) => route.implementationStatus === "screen-body")
+      .map((route) => route.id);
+
+    expect(screenBodyRoutes).toEqual(routeRegistry
+      .filter((route) => !route.id.startsWith("deal."))
+      .map((route) => route.id));
+  });
+
   it("derives navigation from the route registry in deterministic order", () => {
     expect(navigationRoutes("global").map((route) => route.id)).toEqual([
       "global.home",

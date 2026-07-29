@@ -14,6 +14,7 @@ export default defineConfig({
       "components/**/*.test.ts",
       "scripts/**/*.test.mjs",
       "app/**/*.test.ts",
+      "screens/**/*.test.ts",
       "tokens/**/*.test.mjs",
     ],
   },
