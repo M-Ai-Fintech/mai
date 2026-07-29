@@ -31,14 +31,40 @@ describe("MAI Figma token source", () => {
 
   it("rejects alias cycles", () => {
     const invalid = structuredClone(source);
+    const aliases = invalid.variables.filter((variable) =>
+      Object.values(variable.valuesByMode)[0].source.kind === "alias"
+    );
+    const first = aliases[0];
+    const second = aliases[1];
+    const firstMode = Object.values(first.valuesByMode)[0];
+    const secondMode = Object.values(second.valuesByMode)[0];
+    firstMode.source = { kind: "alias", target: { id: second.id, name: second.name } };
+    secondMode.source = { kind: "alias", target: { id: first.id, name: first.name } };
+    expect(() => validateTokenSource(invalid)).toThrow("Alias cycle");
+  });
+
+  it("rejects a multi-hop alias with a missing target", () => {
+    const invalid = structuredClone(source);
+    const aliases = invalid.variables.filter((variable) =>
+      Object.values(variable.valuesByMode)[0].source.kind === "alias"
+    );
+    const first = aliases[0];
+    const second = aliases[1];
+    const firstMode = Object.values(first.valuesByMode)[0];
+    const secondMode = Object.values(second.valuesByMode)[0];
+    firstMode.source = { kind: "alias", target: { id: second.id, name: second.name } };
+    secondMode.source = { kind: "alias", target: { id: "missing-variable", name: null } };
+    expect(() => validateTokenSource(invalid)).toThrow("Missing alias target missing-variable");
+  });
+
+  it("rejects inconsistent stored alias-chain metadata", () => {
+    const invalid = structuredClone(source);
     const alias = invalid.variables.find((variable) =>
       Object.values(variable.valuesByMode)[0].source.kind === "alias"
     );
-    Object.values(alias.valuesByMode)[0].aliasChain = [
-      { id: alias.id, name: alias.name },
-      { id: alias.id, name: alias.name },
-    ];
-    expect(() => validateTokenSource(invalid)).toThrow("Alias cycle");
+    const mode = Object.values(alias.valuesByMode)[0];
+    mode.aliasChain = [{ id: alias.id, name: alias.name }];
+    expect(() => validateTokenSource(invalid)).toThrow("Stored aliasChain metadata differs");
   });
 
   it("rejects incompatible aliases", () => {

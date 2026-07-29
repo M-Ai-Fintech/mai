@@ -76,20 +76,45 @@ function assertCollections(source) {
 
 function assertAliases(source) {
   const byId = new Map(source.variables.map((variable) => [variable.id, variable]));
-  for (const variable of source.variables) validateVariableAliases(variable, byId);
+  const collectionsById = new Map(source.collections.map((collection) => [collection.id, collection]));
+  for (const variable of source.variables) {
+    for (const modeId of Object.keys(variable.valuesByMode)) {
+      validateVariableAliases(variable, modeId, byId, collectionsById);
+    }
+  }
 }
 
-function validateVariableAliases(variable, byId) {
-  const modeValue = firstModeValue(variable);
-  const ids = modeValue.aliasChain.map(({ id }) => id);
-  if (new Set(ids).size !== ids.length) throw new Error(`Alias cycle for ${variable.name}`);
-  if (ids.at(-1) && !byId.has(ids.at(-1))) throw new Error(`Missing alias for ${variable.name}`);
-  if (modeValue.source.kind !== "alias") return;
-  const target = byId.get(modeValue.source.target.id);
-  if (!target) throw new Error(`Missing alias target ${modeValue.source.target.id}`);
+function validateVariableAliases(variable, modeId, byId, collectionsById) {
+  const modeValue = variable.valuesByMode[modeId];
+  const resolved = resolveDirectAlias(variable, modeId, byId, collectionsById, new Set());
+  const actualChain = modeValue.aliasChain.map(({ id, name }) => ({ id, name }));
+  if (JSON.stringify(actualChain) !== JSON.stringify(resolved.chain)) {
+    throw new Error(`Stored aliasChain metadata differs for ${variable.name} in mode ${modeId}`);
+  }
+}
+
+function resolveDirectAlias(variable, modeId, byId, collectionsById, visiting) {
+  const visitKey = `${variable.id}:${modeId}`;
+  if (visiting.has(visitKey)) throw new Error(`Alias cycle at ${variable.name} in mode ${modeId}`);
+  const modeValue = variable.valuesByMode[modeId];
+  if (!modeValue) throw new Error(`Missing mode value ${modeId} for ${variable.name}`);
+  visiting.add(visitKey);
+  const ownLink = { id: variable.id, name: variable.name };
+  if (modeValue.source.kind === "raw") {
+    visiting.delete(visitKey);
+    return { value: modeValue.resolvedValue, chain: [ownLink] };
+  }
+  const targetId = modeValue.source.target?.id;
+  const target = byId.get(targetId);
+  if (!target) throw new Error(`Missing alias target ${targetId} from ${variable.name}`);
   if (target.resolvedType !== variable.resolvedType) {
     throw new Error(`Alias type ${variable.resolvedType} -> ${target.resolvedType} for ${variable.name}`);
   }
+  const targetCollection = collectionsById.get(target.collectionId);
+  if (!targetCollection) throw new Error(`Missing collection ${target.collectionId} for ${target.name}`);
+  const resolved = resolveDirectAlias(target, targetCollection.defaultModeId, byId, collectionsById, visiting);
+  visiting.delete(visitKey);
+  return { value: resolved.value, chain: [ownLink, ...resolved.chain] };
 }
 
 function assertCategories(source) {
