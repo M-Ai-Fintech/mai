@@ -15,6 +15,7 @@
     "verify:tokens": "npm run tokens:check && node scripts/verify-design-tokens.mjs",
     "verify:components": "node scripts/verify-components.mjs",
     "verify:shell": "node scripts/verify-shell.mjs",
+    "verify:screens": "node scripts/verify-screens.mjs",
     "verify:foundation": "node scripts/verify-frontend-foundation.mjs",
     "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
     "test-storybook": "vitest --project=storybook",
