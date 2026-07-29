@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - feat/MAI-97-figma-component-library
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
