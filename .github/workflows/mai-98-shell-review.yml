@@ -1,6 +1,8 @@
 name: Temporary MAI-98 shell review
 "on":
   workflow_dispatch: {}
+  push:
+    branches: [feat/MAI-98-app-shell-route-architecture]
 jobs:
   review:
     runs-on: ubuntu-latest
