@@ -1,10 +1,10 @@
 ---
 id: MAI-85
 title: Establish the Figma design system and rebuild the MAI banker workspace from it
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-22 05:55'
-updated_date: '2026-07-28 03:09'
+updated_date: '2026-07-29 15:29'
 labels:
   - design-system
   - figma
@@ -20,7 +20,7 @@ documentation:
     Documentation-Index-and-Information-Architecture.md
   - backlog/docs/product/mvp-gui-and-api/doc-9 - MVP-GUI-and-API-Behavior.md
 priority: high
-ordinal: 100
+ordinal: 1000
 ---
 
 ## Description
