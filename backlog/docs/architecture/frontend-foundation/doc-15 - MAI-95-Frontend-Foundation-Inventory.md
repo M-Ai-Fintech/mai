@@ -3,6 +3,7 @@ id: doc-15
 title: MAI-95 Frontend Foundation Inventory
 type: specification
 created_date: '2026-07-29 13:14'
+updated_date: '2026-07-29 13:37'
 tags:
   - architecture
   - frontend
@@ -15,7 +16,7 @@ tags:
 - **Authority ID:** ARCH-FRONTEND-001
 - **Owner:** Frontend Engineering
 - **Authority:** Canonical path-level disposition and clean-foundation boundary for MAI-95
-- **Freshness:** Current for the pre-MAI-95 GUI baseline on 2026-07-29
+- **Freshness:** Current for the implemented MAI-95 foundation pending owner review on 2026-07-29
 - **Language:** English
 - **Update trigger:** Any MAI-95 disposition, retained owner, route outcome, dependency decision, or verification result changes
 
@@ -57,7 +58,7 @@ A REMOVE decision authorizes deletion only after its listed importers are remove
 | `/api/settings/preferences` | `gui/app/api/settings/preferences/route.ts` | Keep functional | Backend-facing handler preserved |
 | `/api/:path*` rewrite | `gui/next.config.ts` | Keep functional | Relative browser API contract and Deno rewrite preserved |
 
-## Planned clean scaffold paths
+## Implemented clean scaffold paths
 
 | Path | Purpose | Boundary |
 | --- | --- | --- |
@@ -425,4 +426,14 @@ The scaffold must not claim persisted approvals, immutable audit records, connec
 
 ## Verification record
 
-This section is updated after implementation with exact search, focused checks, clean install, build, Storybook, repository verification, and deletion results. Until then, this document records reviewed intent, not completed removal.
+Implementation completed the reviewed inventory: all 283 REMOVE paths are absent, all 8 REPLACE paths have neutral or governed replacements, and the 44 KEEP decisions remain represented by retained framework, API, contract, i18n, error, accessibility, test, Storybook, and repository infrastructure.
+
+- Dependency/import audit: `npm --prefix gui run verify:foundation` passed across 58 active auditable paths; retired paths are absent and no active runtime import targets a retired component.
+- Active authority search: the only surviving GUI mentions of Stitch or the retired GUI are explicit negative governance statements and regression/verifier literals. No active Mastercard, MarkForMC, legacy font, canvas-cream, ghost-watermark, orbital-line, or retired token authority survives.
+- Clean install: `npm --prefix gui ci` passed with 555 packages installed. npm audit reports 15 inherited advisories (3 moderate, 12 high); no framework upgrade or broad audit fix is part of MAI-95.
+- Focused frontend gate: lint passed; 5 unit files/21 tests passed; Next production build passed; 1 Storybook MDX validated; Storybook static build passed; 1 Chromium story test passed.
+- Runtime smoke: the built server became ready on localhost; `/` returned the neutral foundation/capability message; an obsolete route returned HTTP 404 with the MAI-98 deferral message.
+- Canonical repository gate: `deno task verify` passed canonical documentation, i18n, Deno tests, foundation boundary, GUI unit tests, Next build, Storybook documentation/build, and Storybook interaction tests.
+- Graph: `graphify update .` completed; generated warnings are limited to zero-node inputs, one unavailable SQL parser, existing extraction metadata warnings, and the size limit that skips regenerated HTML visualization.
+- Dependency result: package/framework versions and npm are unchanged. Stale lock-only visual snapshot packages were pruned; `aria-query` is pinned to the already-used 5.3.2 transitive version, and Testing Library CommonJS dependencies are explicitly pre-bundled for reproducible clean-install Storybook tests.
+- Result state: ready for one owner review; MAI-95 remains In Progress and is not merged or Done.

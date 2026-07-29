@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-29 13:15'
+updated_date: '2026-07-29 13:26'
 tags:
   - documentation
   - inventory
@@ -131,36 +131,37 @@ Every project file below is individually classified; removed paths are retained 
 | `backlog/docs/architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | Frontend Engineering | MAI-95 path-level frontend disposition and foundation boundary | ARCH-FRONTEND-001 | current | English | canonical |
 | `gui/AGENTS.md` | GUI | GUI agent instruction | gui-local | current | English | referenced |
 | `gui/CLAUDE.md` | GUI | GUI agent instruction | gui-local | review-needed | English | referenced |
-| `gui/DESIGN.md` | GUI | GUI design reference | gui-local | review-needed | English | referenced |
-| `gui/DESIGN_GUIDELINES.md` | GUI | GUI design reference | gui-local | review-needed | English | referenced |
+| `gui/DESIGN.md` | GUI | Retired GUI design authority | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
+| `gui/DESIGN_GUIDELINES.md` | GUI | Retired GUI design authority | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
 | `gui/README.md` | GUI | GUI navigation | gui-local | current | English | referenced |
-| `gui/STITCH_DESIGN.md` | GUI | GUI design reference | gui-local | review-needed | English | referenced |
-| `gui/components/Accordion/Accordion.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Avatar/Avatar.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Badge/Badge.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Button/Button.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Card/Card.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Checkbox/Checkbox.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/CountrySelector/CountrySelector.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Divider/Divider.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Dropdown/Dropdown.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/EmptyState/EmptyState.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/ErrorBoundary/ErrorBoundary.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Footer/Footer.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/FormField/FormField.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Icon/Icon.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Input/Input.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Modal/Modal.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Navigation/Navigation.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Radio/Radio.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Skeleton/Skeleton.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Spinner/Spinner.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Table/Table.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Tabs/Tabs.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Textarea/Textarea.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/Toast/Toast.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/components/_template/ComponentTemplate.mdx` | GUI | Component Storybook documentation | component-local | current | English | referenced |
-| `gui/docs/user-flow.md` | GUI | GUI user-flow reference | gui-local | review-needed | English | referenced |
+| `gui/STITCH_DESIGN.md` | GUI | Retired Stitch design authority | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Accordion/Accordion.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Avatar/Avatar.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Badge/Badge.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Button/Button.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Card/Card.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Checkbox/Checkbox.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/CountrySelector/CountrySelector.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Divider/Divider.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Dropdown/Dropdown.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/EmptyState/EmptyState.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/ErrorBoundary/ErrorBoundary.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Footer/Footer.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/FormField/FormField.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Icon/Icon.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Input/Input.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Modal/Modal.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Navigation/Navigation.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Radio/Radio.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Skeleton/Skeleton.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Spinner/Spinner.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Table/Table.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Tabs/Tabs.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Textarea/Textarea.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/Toast/Toast.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/_template/ComponentTemplate.mdx` | GUI | Retired legacy Storybook visual documentation | none | retired by MAI-95 on 2026-07-29 | English | removed; path-level history preserved in ARCH-FRONTEND-001 |
+| `gui/components/FoundationStatus/FoundationStatus.mdx` | GUI | Neutral foundation Storybook specimen | component-local | current | English | referenced; temporary foundation documentation until MAI-97 |
+| `gui/docs/user-flow.md` | GUI | Retired legacy GUI workflow reference | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
 | `scripts/colab_training_notebook.ipynb` | Prediction engine | Colab training notebook | training reference | review-needed | English | referenced |
 | `src/agent/agents/broker-orchestrator/fonts/broker_preferences_guide.md` | broker-orchestrator | Runtime domain knowledge | runtime-local | current | English | referenced |
 | `src/agent/agents/broker-orchestrator/fonts/memory_taxonomy_ma.md` | broker-orchestrator | Runtime domain knowledge | runtime-local | current | English | referenced |
