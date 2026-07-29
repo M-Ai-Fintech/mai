@@ -18,7 +18,6 @@ const bannedTerms = [
   "MarkForMC",
   "Plus Jakarta",
   "Public Sans",
-  "canvas-cream",
   "ghost-watermark",
   "orbital-line",
   "1310231555884111730",
@@ -36,6 +35,15 @@ const retiredPaths = [
   "gui/app/deals/page.tsx",
   "gui/app/entities/page.tsx",
   "gui/app/generative-ui/page.tsx",
+];
+const deferredImplementationPaths = [
+  "gui/components/Button",
+  "gui/components/Card",
+  "gui/components/Dialog",
+  "gui/components/Drawer",
+  "gui/components/Navigation",
+  "gui/components/AppShell",
+  "gui/app/deals/page.tsx",
 ];
 const violations = [];
 
@@ -58,6 +66,11 @@ for (const path of sourcePaths) {
 for (const path of retiredPaths) {
   if (existsSync(resolve(repositoryRoot, path))) {
     violations.push(`${path}: retired path still exists`);
+  }
+}
+for (const path of deferredImplementationPaths) {
+  if (existsSync(resolve(repositoryRoot, path))) {
+    violations.push(`${path}: MAI-97/98 implementation must remain absent`);
   }
 }
 

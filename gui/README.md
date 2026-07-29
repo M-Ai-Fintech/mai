@@ -50,6 +50,8 @@ deno task verify
 Focused GUI checks:
 
 ```bash
+npm run tokens:check
+npm run verify:tokens
 npm run test:unit
 npm run validate:storybook-docs
 npm run build

@@ -39,6 +39,19 @@ Deno.test("verification runner checks the clean frontend foundation", () => {
   });
 });
 
+Deno.test("verification runner checks generated frontend tokens", () => {
+  const tokens = verificationChecks.find((check) =>
+    check.id === "frontend-tokens"
+  );
+
+  assertEquals(tokens, {
+    id: "frontend-tokens",
+    label: "Frontend design tokens",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:tokens"],
+  });
+});
+
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
     id: "intentional-failure",
