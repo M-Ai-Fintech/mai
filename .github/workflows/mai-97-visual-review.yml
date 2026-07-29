@@ -31,6 +31,13 @@ jobs:
       - name: Install Chromium
         run: npx --prefix gui playwright install --with-deps chromium
 
+      - name: Verify focused component gates
+        run: |
+          npm --prefix gui run verify:components
+          npm --prefix gui run lint
+          npm --prefix gui run test:unit
+          npm --prefix gui run test-storybook
+
       - name: Build Storybook
         run: npm --prefix gui run build-storybook
 
@@ -64,23 +71,23 @@ jobs:
           const stories = Object.values(index.entries ?? {}).filter((entry) => entry.type === 'story');
 
           const targets = [
-            { key: 'status-long-mobile', title: /Status\/Indicator/i, story: /roles|long|constrained/i, width: 390, height: 844 },
-            { key: 'notice-wrap-mobile', title: /Feedback\/InlineNotice/i, story: /constrained|long|wrap|information/i, width: 390, height: 844 },
-            { key: 'evidence-wrap-mobile', title: /Evidence\/Reference/i, story: /constrained|long|wrap|current/i, width: 390, height: 844 },
-            { key: 'tabs-overflow-mobile', title: /Navigation\/Tab/i, story: /overflow/i, width: 390, height: 844, expectedScroll: true },
-            { key: 'table-overflow-mobile', title: /^Data\/Table$/i, story: /overflow|narrow|responsive|default/i, width: 390, height: 844, expectedScroll: true },
-            { key: 'dialog-desktop-open', title: /Overlay\/Dialog/i, story: /standard|keyboard dismissal|responsive/i, width: 1440, height: 900, openOverlay: true },
-            { key: 'drawer-tablet-open', title: /Overlay\/Drawer/i, story: /tablet/i, width: 1024, height: 900, openOverlay: true },
-            { key: 'drawer-mobile-open', title: /Overlay\/Drawer/i, story: /mobile/i, width: 390, height: 844, openOverlay: true },
-            { key: 'field-long-mobile', title: /Form\/TextField/i, story: /long|constrained|filled/i, width: 390, height: 844 },
-            { key: 'field-error-mobile', title: /Form\/TextField/i, story: /error|validation/i, width: 390, height: 844 },
-            { key: 'select-mobile', title: /Form\/Select/i, story: /selected|default/i, width: 390, height: 844 },
+            { key: 'status-long-mobile', title: /Status\/Indicator/i, story: /^Roles$/i, width: 390, height: 844 },
+            { key: 'notice-wrap-mobile', title: /Feedback\/InlineNotice/i, story: /^Information$/i, width: 390, height: 844 },
+            { key: 'evidence-long-mobile', title: /Evidence\/Reference/i, story: /^Long$/i, width: 390, height: 844 },
+            { key: 'tabs-overflow-mobile', title: /Navigation\/Tab/i, story: /^Overflow$/i, width: 390, height: 844, expectedScroll: true },
+            { key: 'table-overflow-mobile', title: /^Data\/Table$/i, story: /^Horizontal Overflow$/i, width: 390, height: 844, expectedScroll: true },
+            { key: 'dialog-desktop-open', title: /Overlay\/Dialog/i, story: /^Standard$/i, width: 1440, height: 900, openOverlay: true },
+            { key: 'drawer-tablet-open', title: /Overlay\/Drawer/i, story: /^Right Tablet$/i, width: 1024, height: 900, openOverlay: true },
+            { key: 'drawer-mobile-open', title: /Overlay\/Drawer/i, story: /^Full Screen Mobile$/i, width: 390, height: 844, openOverlay: true },
+            { key: 'field-long-mobile', title: /Form\/TextField/i, story: /^Filled$/i, width: 390, height: 844 },
+            { key: 'field-error-mobile', title: /Form\/TextField/i, story: /^Error$/i, width: 390, height: 844 },
+            { key: 'select-mobile', title: /Form\/Select/i, story: /^Selected$/i, width: 390, height: 844 },
           ];
 
           function pick(target) {
             const family = stories.filter((entry) => target.title.test(entry.title));
             return {
-              story: family.find((entry) => target.story.test(entry.name)) ?? family[0],
+              story: family.find((entry) => target.story.test(entry.name)),
               availableStories: family.map((entry) => ({ id: entry.id, name: entry.name })),
             };
           }
@@ -186,7 +193,9 @@ jobs:
                       width: Math.round(rect.width * 10) / 10,
                       height: Math.round(rect.height * 10) / 10,
                       left: Math.round(rect.left * 10) / 10,
+                      right: Math.round(rect.right * 10) / 10,
                       top: Math.round(rect.top * 10) / 10,
+                      bottom: Math.round(rect.bottom * 10) / 10,
                       labelledBy: dialog.getAttribute('aria-labelledby'),
                       describedBy: dialog.getAttribute('aria-describedby'),
                     };
@@ -201,7 +210,6 @@ jobs:
                 storyId: story.id,
                 title: story.title,
                 storyName: story.name,
-                availableStories: selection.availableStories,
                 viewport: { width: target.width, height: target.height },
                 expectedScroll: Boolean(target.expectedScroll),
                 openOverlay: Boolean(target.openOverlay),
