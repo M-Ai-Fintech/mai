@@ -1,7 +1,9 @@
 name: MAI-99 temporary rendered review
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - feat/MAI-99-global-admin-external-screens
 
 permissions:
   contents: read
