@@ -3,7 +3,7 @@ id: doc-10
 title: Documentation Index and Information Architecture
 type: readme
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-29 16:15'
+updated_date: '2026-07-29 17:44'
 tags:
   - documentation
   - governance
@@ -14,7 +14,7 @@ tags:
 - Authority ID: DOC-IA-001
 - Owner: Repository maintainers
 - Authority: Canonical navigation for project documentation
-- Freshness: Current as of 2026-07-24
+- Freshness: Current as of 2026-07-29
 - Language: English
 - Update trigger: Any change to a canonical documentation path, ownership rule, or documentation class
 
@@ -32,6 +32,7 @@ tags:
 | System and integration architecture | `architecture/` | Architecture documents |
 | Frontend foundation architecture | `architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | ARCH-FRONTEND-001 |
 | Frontend semantic-token architecture | `architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md` | ARCH-FRONTEND-TOKENS-001 |
+| Frontend component-library architecture | `architecture/frontend-components/doc-17 - MAI-97-Figma-Component-Library-Architecture-and-Conformance.md` | ARCH-FRONTEND-COMPONENTS-001 |
 | Domain model | `domain/` | Domain-model documents |
 | Setup and operations | `operations/` | Operations documents |
 | Product behavior | `product/` | Product documents |

@@ -15,12 +15,11 @@ const governedPaths = [
   "gui/tokens/token-schema.ts",
 ];
 const forbiddenProductPaths = [
-  "gui/components/Button",
   "gui/components/Card",
-  "gui/components/Dialog",
-  "gui/components/Drawer",
   "gui/components/Navigation",
   "gui/components/AppShell",
+  "gui/components/Sidebar",
+  "gui/components/TopBar",
   "gui/app/deals/page.tsx",
 ];
 const rawVisualRules = [

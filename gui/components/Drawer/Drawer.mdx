@@ -1,0 +1,18 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./Drawer.stories.tsx";
+
+<Meta of={Stories} />
+
+# Drawer
+
+Figma file `otMJE31OKIxdXogV4RNbGQ`, node `37:66`, release v0.3, family `Overlay/Drawer`. Figma is authority; this local implementation uses a controlled native modal, an independent scroll region, stable footer actions, and a full-screen mobile layout.
+
+<Canvas of={Stories.RightDesktop} />
+
+## Props and usage
+
+<Controls />
+
+Use only the documented semantic states. Native behavior and CSS pseudo-classes own interaction states. See the component story matrix for variants, constrained content, and accessibility behavior.
+
+Provide `context` to preserve the source context in the drawer header and `footer` for stable actions.

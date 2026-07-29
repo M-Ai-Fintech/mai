@@ -37,12 +37,11 @@ const retiredPaths = [
   "gui/app/generative-ui/page.tsx",
 ];
 const deferredImplementationPaths = [
-  "gui/components/Button",
   "gui/components/Card",
-  "gui/components/Dialog",
-  "gui/components/Drawer",
   "gui/components/Navigation",
   "gui/components/AppShell",
+  "gui/components/Sidebar",
+  "gui/components/TopBar",
   "gui/app/deals/page.tsx",
 ];
 const violations = [];
@@ -57,9 +56,9 @@ for (const path of sourcePaths) {
   }
   if (
     /\.(mjs|ts|tsx)$/.test(path) &&
-    /@\/components\/(?!FoundationStatus\/)/.test(source)
+    /@\/components\/(?:AppShell|Sidebar|TopBar|Navigation\/)/.test(source)
   ) {
-    violations.push(`${path}: imports a retired component implementation`);
+    violations.push(`${path}: imports deferred MAI-98 implementation`);
   }
 }
 

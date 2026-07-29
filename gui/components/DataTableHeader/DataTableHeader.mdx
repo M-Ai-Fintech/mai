@@ -1,0 +1,16 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./DataTableHeader.stories.tsx";
+
+<Meta of={Stories} />
+
+# DataTableHeader
+
+Figma file `otMJE31OKIxdXogV4RNbGQ`, node `37:13`, release v0.3. Figma is authority; this documents the local code implementation only. Supply `onSort` to render a native keyboard-operable button and `sortDirection` for `aria-sort`.
+
+<Canvas of={Stories.Sorted} />
+
+## Props and usage
+
+<Controls />
+
+Use only the documented semantic states. Native behavior and CSS pseudo-classes own interaction states. See the component story matrix for variants, constrained content, and accessibility behavior.

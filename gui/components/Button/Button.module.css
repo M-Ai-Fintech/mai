@@ -1,0 +1,66 @@
+.button {
+  min-block-size: var(--mai-control-min-target);
+  min-inline-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mai-space-component-xs);
+  padding-inline: var(--mai-space-component-md);
+  border: var(--mai-border-width-default) solid transparent;
+  border-radius: var(--mai-radius-control);
+  font-family: var(--mai-type-button-font-family);
+  font-size: var(--mai-type-button-font-size);
+  line-height: var(--mai-type-button-line-height);
+  font-weight: var(--mai-type-button-font-weight);
+  transition: background-color var(--mai-motion-fast)
+    var(--mai-motion-easing-standard), color var(--mai-motion-fast)
+    var(--mai-motion-easing-standard);
+}
+.button:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+.button:disabled {
+  background: var(--mai-color-action-disabled-background);
+  border-color: var(--mai-color-action-disabled-background);
+  color: var(--mai-color-action-disabled-content);
+  cursor: not-allowed;
+}
+.primary {
+  background: var(--mai-color-action-primary-background);
+  color: var(--mai-color-action-primary-content);
+}
+.primary:hover:not(:disabled) {
+  background: var(--mai-color-action-primary-background-hover);
+}
+.primary:active:not(:disabled) {
+  background: var(--mai-color-action-primary-background-pressed);
+}
+.secondary {
+  background: var(--mai-color-action-secondary-background);
+  border-color: var(--mai-color-action-secondary-border);
+  color: var(--mai-color-content-primary);
+}
+.tertiary {
+  background: transparent;
+  color: var(--mai-color-content-link);
+}
+.destructive {
+  background: var(--mai-color-action-destructive-background);
+  color: var(--mai-color-action-destructive-content);
+}
+.spinner {
+  inline-size: var(--mai-size-control-min);
+  block-size: var(--mai-size-control-min);
+  animation: spin var(--mai-motion-standard) linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

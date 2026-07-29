@@ -1,0 +1,29 @@
+.wrapper {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+  color: var(--mai-color-content-primary);
+}
+.label {
+  font-family: var(--mai-type-label-font-family);
+  font-size: var(--mai-type-label-font-size);
+  line-height: var(--mai-type-label-line-height);
+  font-weight: var(--mai-type-label-font-weight);
+}
+.optional,
+.helper {
+  color: var(--mai-color-content-secondary);
+  font-size: var(--mai-type-metadata-font-size);
+  line-height: var(--mai-type-metadata-line-height);
+}
+.optional {
+  margin-inline-start: var(--mai-space-component-xs);
+}
+.helper,
+.error {
+  margin: 0;
+}
+.error {
+  color: var(--mai-color-status-critical-content);
+  font-size: var(--mai-type-metadata-font-size);
+  line-height: var(--mai-type-metadata-line-height);
+}

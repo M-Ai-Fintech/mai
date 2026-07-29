@@ -1,0 +1,25 @@
+.scrollRegion {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border: var(--mai-border-width-default) solid var(--mai-color-border-default);
+  border-radius: var(--mai-radius-panel);
+}
+.scrollRegion:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+.table {
+  inline-size: 100%;
+  min-inline-size: max-content;
+  border-collapse: collapse;
+  background: var(--mai-color-surface-raised);
+  color: var(--mai-color-content-primary);
+  font-family: var(--mai-type-body-font-family);
+  font-size: var(--mai-type-body-font-size);
+  line-height: var(--mai-type-body-line-height);
+}
+.statusCell {
+  padding: var(--mai-space-layout-panel);
+  color: var(--mai-color-content-secondary);
+  text-align: center;
+}

@@ -12,6 +12,7 @@ export default defineConfig({
     include: [
       "lib/**/*.test.ts",
       "components/**/*.test.ts",
+      "scripts/**/*.test.mjs",
       "app/**/*.test.ts",
       "tokens/**/*.test.mjs",
     ],

@@ -1,0 +1,28 @@
+.button {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-grid;
+  place-items: center;
+  padding: var(--mai-space-component-xs);
+  border: var(--mai-border-width-default) solid var(--mai-color-border-default);
+  border-radius: var(--mai-radius-control);
+  background: var(--mai-color-action-secondary-background);
+  color: var(--mai-color-content-primary);
+  transition: background-color var(--mai-motion-fast)
+    var(--mai-motion-easing-standard);
+}
+.button:hover:not(:disabled) {
+  background: var(--mai-color-surface-subtle);
+}
+.button:active:not(:disabled) {
+  color: var(--mai-color-content-link);
+}
+.button:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+.button:disabled {
+  background: var(--mai-color-action-disabled-background);
+  color: var(--mai-color-action-disabled-content);
+  cursor: not-allowed;
+}

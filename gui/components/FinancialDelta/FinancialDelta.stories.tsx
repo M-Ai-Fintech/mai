@@ -1,0 +1,3 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite"; import { FinancialDelta } from "./FinancialDelta";
+const meta = { title: "Financial/Delta", component: FinancialDelta, args: { direction: "positive", children: "+4.2%", interpretation: "Increase" } } satisfies Meta<typeof FinancialDelta>; export default meta; type Story = StoryObj<typeof meta>;
+export const Positive: Story = {}; export const States: Story = { render: () => <><FinancialDelta direction="positive">+4.2%</FinancialDelta><FinancialDelta direction="negative">−4.2%</FinancialDelta><FinancialDelta direction="neutral">0%</FinancialDelta><FinancialDelta direction="not-meaningful" /><FinancialDelta direction="unavailable" /></> };

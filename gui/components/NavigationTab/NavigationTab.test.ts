@@ -1,0 +1,16 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { NavigationTab } from "./NavigationTab";
+describe("NavigationTab", () => {
+  it("uses tab and tabpanel relationships", () => {
+    const html = renderToStaticMarkup(
+      createElement(NavigationTab, {
+        tabs: [{ id: "one", label: "One", panel: "Panel" }],
+      }),
+    );
+    expect(html).toContain('role="tablist"');
+    expect(html).toContain('role="tabpanel"');
+    expect(html).toContain("aria-controls");
+  });
+});

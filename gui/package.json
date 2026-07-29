@@ -13,6 +13,7 @@
     "tokens:generate": "node scripts/generate-design-tokens.mjs",
     "tokens:check": "node scripts/generate-design-tokens.mjs --check",
     "verify:tokens": "npm run tokens:check && node scripts/verify-design-tokens.mjs",
+    "verify:components": "node scripts/verify-components.mjs",
     "verify:foundation": "node scripts/verify-frontend-foundation.mjs",
     "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
     "test-storybook": "vitest --project=storybook",

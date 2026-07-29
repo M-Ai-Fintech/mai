@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { DataTableRow } from "./DataTableRow";
+const meta = { title: "Data/TableRow", component: DataTableRow, args: { children: <td>Northstar</td> } } satisfies Meta<typeof DataTableRow>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+const renderRow = (args: Story["args"]) => <table><tbody><DataTableRow {...args} /></tbody></table>;
+export const Default: Story = { render: renderRow };
+export const Selected: Story = { args: { state: "selected" }, render: renderRow };
+export const FocusWithin: Story = { args: { children: <td><button type="button">Review Northstar</button></td> }, render: renderRow };
+export const Unavailable: Story = { args: { state: "unavailable", children: <td>Unavailable — source permission required</td> }, render: renderRow };
+export const Loading: Story = { args: { state: "loading", children: <td>Loading company data</td> }, render: renderRow };

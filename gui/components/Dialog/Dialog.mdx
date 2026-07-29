@@ -1,0 +1,18 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import * as Stories from "./Dialog.stories.tsx";
+
+<Meta of={Stories} />
+
+# Dialog
+
+Figma file `otMJE31OKIxdXogV4RNbGQ`, node `37:53`, release v0.3, family `Overlay/Dialog`. Figma is authority; this local implementation is a controlled native dialog with focus containment, Escape dismissal, return focus, and semantic title and description relationships.
+
+<Canvas of={Stories.Standard} />
+
+## Props and usage
+
+<Controls />
+
+Use only the documented semantic states. Native behavior and CSS pseudo-classes own interaction states. See the component story matrix for variants, constrained content, and accessibility behavior.
+
+Use `confirmationAction` for the approved confirmation variants. Its loading state disables repeat activation through the shared Button.

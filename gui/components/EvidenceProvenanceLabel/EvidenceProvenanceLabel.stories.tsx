@@ -1,0 +1,3 @@
+import type { Meta, StoryObj } from "@storybook/nextjs-vite"; import { EvidenceProvenanceLabel } from "./EvidenceProvenanceLabel";
+const meta = { title: "Evidence/ProvenanceLabel", component: EvidenceProvenanceLabel, args: { use: "finding", children: "Extracted from source" } } satisfies Meta<typeof EvidenceProvenanceLabel>; export default meta; type Story = StoryObj<typeof meta>;
+export const Finding: Story = {}; export const Uses: Story = { render: () => <><EvidenceProvenanceLabel use="table">Table source</EvidenceProvenanceLabel><EvidenceProvenanceLabel use="financial-value" density="compact">Calculated</EvidenceProvenanceLabel><EvidenceProvenanceLabel use="audit-summary">Human decision</EvidenceProvenanceLabel></> };

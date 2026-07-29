@@ -1,0 +1,20 @@
+.row {
+  background: var(--mai-color-surface-raised);
+  color: var(--mai-color-content-primary);
+}
+.row:hover {
+  background: var(--mai-color-surface-subtle);
+}
+.row:focus-within {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: calc(var(--mai-focus-ring-width) * -1);
+}
+.selected {
+  background: var(--mai-color-status-information-surface);
+}
+.unavailable {
+  color: var(--mai-color-content-muted);
+}
+.loading {
+  color: var(--mai-color-content-secondary);
+}

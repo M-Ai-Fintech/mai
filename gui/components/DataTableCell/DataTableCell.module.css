@@ -1,0 +1,28 @@
+.cell {
+  padding: var(--mai-space-component-md);
+  border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-default);
+  vertical-align: middle;
+}
+.status {
+  white-space: nowrap;
+}
+.financial {
+  font-family: var(--mai-type-financial-table-font-family);
+  font-size: var(--mai-type-financial-table-font-size);
+  line-height: var(--mai-type-financial-table-line-height);
+  font-weight: var(--mai-type-financial-table-font-weight);
+  font-variant-numeric: var(--mai-type-financial-table-numeric);
+  text-align: end;
+  white-space: nowrap;
+}
+.evidence {
+  color: var(--mai-color-content-secondary);
+  font-family: var(--mai-type-metadata-font-family);
+  font-size: var(--mai-type-metadata-font-size);
+  line-height: var(--mai-type-metadata-line-height);
+}
+.rowAction {
+  min-inline-size: var(--mai-control-min-target);
+  text-align: end;
+  white-space: nowrap;
+}

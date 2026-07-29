@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { approvedComponentFamilies } from "./verify-components.mjs";
+
 const componentsDirectory = resolve(import.meta.dirname, "../components");
 const mdxFiles = [];
 
@@ -45,6 +47,25 @@ for (const mdxPath of mdxFiles) {
 
   if (imports === 0) {
     errors.push(`${mdxPath}: no explicit .stories.tsx import found`);
+  }
+}
+
+for (const family of approvedComponentFamilies) {
+  const mdxPath = resolve(componentsDirectory, family, `${family}.mdx`);
+  if (!existsSync(mdxPath)) continue;
+  const source = readFileSync(mdxPath, "utf8");
+  for (
+    const required of [
+      "otMJE31OKIxdXogV4RNbGQ",
+      "release v0.3",
+      "Figma is authority",
+      "<Controls />",
+      "accessibility",
+    ]
+  ) {
+    if (!source.toLowerCase().includes(required.toLowerCase())) {
+      errors.push(`${mdxPath}: missing required documentation trace "${required}"`);
+    }
   }
 }
 
