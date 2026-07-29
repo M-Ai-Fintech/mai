@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 19:23'
+updated_date: '2026-07-29 19:50'
 labels:
   - frontend
   - app-shell
@@ -66,4 +66,6 @@ The shell must support global, deal-context, administration, and external-partic
 
 <!-- SECTION:NOTES:BEGIN -->
 Baseline GUI checks passed; npm ci initially hit sandbox EPERM executing esbuild and passed with approved execution. Read-only Terra Low audit mapped Figma nodes 41:16, 43:10, 44:85 and documented administration/external variants. Implemented typed local fixture adapters, route registry, four shell modes, explicit context states, focused verifier, and route tests. Focused verify:shell, lint, build, and unit tests pass.
+
+Storybook evidence: Shell/AppShell stories cover GlobalDesktop, DealDesktop, DealMobile, AdministrationDesktop, ExternalParticipant, RestrictedState, InvalidContext, UnavailableState, LongNamesAndCountOverflow, and MobileDrawerKeyboard. Storybook interactions passed: 24 files, 94 tests. Temporary Actions workflow runs 30485532287 and 30485647973 failed before jobs/logs/artifacts; no visual evidence was produced. The workflow was removed in commit 3be500c and is absent from origin/master...HEAD. Final GUI checks passed except the explicitly unresolved deno task verify terminal status: it reaches Deno tests but returns no terminal outcome even when wrapped. Do not open PR until rendered review and canonical verification have terminal evidence.
 <!-- SECTION:NOTES:END -->
