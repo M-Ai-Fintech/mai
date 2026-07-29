@@ -5,12 +5,12 @@
 }
 
 .brandRail {
-  flex: 0 0 var(--mai-space-layout-3xl);
+  flex: 0 0 var(--mai-layout-rail);
   min-block-size: 100vh;
   flex-direction: column;
   align-items: center;
-  gap: var(--mai-space-layout-md);
-  padding-block: var(--mai-space-layout-sm);
+  gap: var(--mai-space-layout-panel);
+  padding-block: var(--mai-space-component-lg);
   background: var(--mai-color-surface-inverse);
   color: var(--mai-color-content-inverse);
 }
@@ -41,7 +41,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: var(--mai-border-width-default) solid var(--mai-color-border-inverse);
+  border: var(--mai-border-width-default) solid var(--mai-color-border-default);
   border-radius: var(--mai-radius-control);
 }
 
@@ -61,7 +61,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--mai-space-component-md);
-  padding-inline: var(--mai-space-layout-sm);
+  padding-inline: var(--mai-space-component-lg);
   border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
   background: var(--mai-color-surface-raised);
 }
@@ -99,8 +99,8 @@
 }
 
 .contextSidebar {
-  flex: 0 0 var(--mai-layout-sidebar-desktop);
-  padding: var(--mai-space-layout-sm);
+  flex: 0 0 var(--mai-layout-sidebar);
+  padding: var(--mai-space-component-lg);
   border-inline-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
   background: var(--mai-color-surface-subtle);
 }
@@ -108,7 +108,7 @@
 .sidebarHeading {
   display: grid;
   gap: var(--mai-space-component-xs);
-  margin-block-end: var(--mai-space-layout-md);
+  margin-block-end: var(--mai-space-layout-panel);
 }
 
 .navigationGroup,
@@ -118,14 +118,14 @@
 }
 
 .secondaryNavigation {
-  margin-block-start: var(--mai-space-layout-lg);
-  padding-block-start: var(--mai-space-layout-sm);
+  margin-block-start: var(--mai-space-layout-section);
+  padding-block-start: var(--mai-space-component-lg);
   border-block-start: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
 }
 
 .dealContext {
   display: grid;
-  gap: var(--mai-space-layout-sm);
+  gap: var(--mai-space-component-lg);
   margin: 0;
 }
 
@@ -147,7 +147,7 @@
   align-items: stretch;
   gap: var(--mai-space-component-xs);
   overflow-x: auto;
-  padding: var(--mai-space-component-xs) var(--mai-space-layout-sm);
+  padding: var(--mai-space-component-xs) var(--mai-space-component-lg);
   border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
   background: var(--mai-color-surface-raised);
 }
@@ -164,7 +164,7 @@
 }
 
 .main {
-  padding: var(--mai-space-layout-sm);
+  padding: var(--mai-space-component-lg);
 }
 
 .breadcrumbs ol {
@@ -187,8 +187,8 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mai-space-layout-sm);
-  margin-block-start: var(--mai-space-layout-md);
+  gap: var(--mai-space-component-lg);
+  margin-block-start: var(--mai-space-layout-panel);
 }
 
 .dealHeader h1,
@@ -207,11 +207,11 @@
 }
 
 .placeholder {
-  max-inline-size: var(--mai-size-content-max);
+  max-inline-size: var(--mai-layout-content-max);
   display: grid;
   gap: var(--mai-space-component-md);
-  margin-block-start: var(--mai-space-layout-lg);
-  padding: var(--mai-space-layout-md);
+  margin-block-start: var(--mai-space-layout-section);
+  padding: var(--mai-space-layout-panel);
   border: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
   border-radius: var(--mai-radius-panel);
   background: var(--mai-color-surface-raised);
