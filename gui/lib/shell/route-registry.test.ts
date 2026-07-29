@@ -6,6 +6,7 @@ import {
   routePath,
   routePatternConflicts,
   routeRegistry,
+  shellEntryRoutes,
 } from "./route-registry";
 import { navigationForResolution, resolveRouteContext } from "./route-context";
 
@@ -34,6 +35,15 @@ describe("MAI-98 route architecture", () => {
       "external.workspace",
       "external.requests",
       "external.approvals",
+    ]);
+  });
+
+  it("registers actionable utility entry routes", () => {
+    expect(shellEntryRoutes().map((route) => [route.id, routePath(route)])).toEqual([
+      ["global.search", "/search"],
+      ["global.tasks", "/tasks"],
+      ["global.approvals", "/approvals"],
+      ["global.notifications", "/notifications"],
     ]);
   });
 
