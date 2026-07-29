@@ -39,6 +39,8 @@ function route(input: RouteInput): RouteDefinition {
   };
 }
 
+const headerOnlyGlobalRoutes = new Set(["search", "approvals", "notifications"]);
+
 const globalRoute = (
   name: string,
   label: string,
@@ -52,7 +54,7 @@ const globalRoute = (
   navigationParent: options.navigationParent ?? (name === "home" ? null : "global.home"),
   permission: "workspace",
   availability: options.availability ?? "available",
-  navigation: name === "search" || name === "notifications"
+  navigation: headerOnlyGlobalRoutes.has(name)
     ? undefined
     : { modes: ["global"], order, section: "primary" },
 });
@@ -102,6 +104,7 @@ export const routeRegistry: readonly RouteDefinition[] = [
   globalRoute("team", "Team", 50),
   globalRoute("notifications", "Notifications", 60),
   globalRoute("search", "Search", 70),
+  globalRoute("approvals", "Approvals", 80),
   dealRoute("overview", "Overview", 10),
   dealRoute("dossier", "Target dossier", 20),
   dealRoute("documents", "Documents", 30),
@@ -138,6 +141,13 @@ export const routeRegistry: readonly RouteDefinition[] = [
   }),
 ];
 
+export const shellEntryRouteIds = [
+  "global.search",
+  "global.tasks",
+  "global.approvals",
+  "global.notifications",
+] as const;
+
 export function matchRoute(parts: readonly string[]): RouteDefinition | undefined {
   return routeRegistry.find((item) => item.pattern.length === parts.length && item.pattern.every(
     (segment, index) => segment.startsWith(":") || segment === parts[index],
@@ -156,6 +166,14 @@ export function navigationRoutes(mode: ShellMode): readonly RouteDefinition[] {
   return routeRegistry
     .filter((definition) => definition.navigation?.modes.includes(mode))
     .toSorted((left, right) => (left.navigation?.order ?? 0) - (right.navigation?.order ?? 0));
+}
+
+export function shellEntryRoutes(): readonly RouteDefinition[] {
+  return shellEntryRouteIds.map((id) => {
+    const definition = routeRegistry.find((candidate) => candidate.id === id);
+    if (!definition) throw new Error(`Shell entry route ${id} is missing.`);
+    return definition;
+  });
 }
 
 export function routePath(
