@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { createElement, forwardRef, type HTMLAttributes } from "react";
 
 import { classNames } from "../internal/classNames";
 
@@ -26,11 +26,9 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(
   { as: Element = "section", className, tone = "lifted", ...props },
   ref,
 ) {
-  return (
-    <Element
-      ref={ref}
-      className={classNames(styles.surface, styles[tone], className)}
-      {...props}
-    />
-  );
+  return createElement(Element, {
+    ref,
+    className: classNames(styles.surface, styles[tone], className),
+    ...props,
+  });
 });

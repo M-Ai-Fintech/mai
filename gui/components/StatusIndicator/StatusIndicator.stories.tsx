@@ -23,7 +23,7 @@ export const Roles: Story = {
         "superseded",
       ] as const).map((role) => (
         <StatusIndicator key={role} role={role}>
-          {role} status with long explanatory text
+          {`${role} status with long explanatory text`}
         </StatusIndicator>
       ))}
     </div>

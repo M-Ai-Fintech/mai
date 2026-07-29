@@ -1,4 +1,4 @@
-import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
 import * as Stories from "./NavigationItem.stories.tsx";
 
 <Meta of={Stories} />
@@ -8,3 +8,9 @@ import * as Stories from "./NavigationItem.stories.tsx";
 Figma file `otMJE31OKIxdXogV4RNbGQ`, node `34:22`, release v0.3. Figma is authority; this local implementation provides typed link/button actions and permission-safe restriction.
 
 <Canvas of={Stories.Default} />
+
+## Props and usage
+
+<Controls />
+
+Use only the documented semantic states. Native behavior and CSS pseudo-classes own interaction states. See the component story matrix for variants, constrained content, and accessibility behavior.

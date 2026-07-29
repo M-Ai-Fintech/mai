@@ -7,4 +7,40 @@ export type RestrictedEvidenceReferenceProps = { availability: "restricted"; res
 export type UnavailableEvidenceReferenceProps = { availability: "unavailable"; unavailableLabel?: string };
 export type EvidenceReferenceProps = (AvailableEvidenceReferenceProps | RestrictedEvidenceReferenceProps | UnavailableEvidenceReferenceProps) & Omit<HTMLAttributes<HTMLElement>, "children">;
 /** Shows evidence metadata only when permission permits it. @example <EvidenceReference availability="restricted" restrictionLabel="Access required" /> */
-export function EvidenceReference(props: EvidenceReferenceProps) { const { availability, className, ...attributes } = props; if (availability === "restricted") return <span className={classNames(styles.reference, styles.restricted, className)} {...attributes}>{props.restrictionLabel}</span>; if (availability === "unavailable") return <span className={classNames(styles.reference, styles.unavailable, className)} {...attributes}>{props.unavailableLabel ?? "Evidence unavailable"}</span>; const { metadata } = props; return <span className={classNames(styles.reference, styles[availability], className)} {...attributes}><span>{metadata.source}</span><span>{metadata.location}</span><span>{metadata.documentVersion}</span><span>{metadata.freshness}</span>{metadata.action && <a href={metadata.action.href}>{metadata.action.label}</a>}</span>; }
+export function EvidenceReference(props: EvidenceReferenceProps) {
+  if (props.availability === "restricted") {
+    const { availability, className, restrictionLabel, ...htmlProps } = props;
+    return (
+      <span
+        className={classNames(styles.reference, styles[availability], className)}
+        {...htmlProps}
+      >
+        {restrictionLabel}
+      </span>
+    );
+  }
+  if (props.availability === "unavailable") {
+    const { availability, className, unavailableLabel, ...htmlProps } = props;
+    return (
+      <span
+        className={classNames(styles.reference, styles[availability], className)}
+        {...htmlProps}
+      >
+        {unavailableLabel ?? "Evidence unavailable"}
+      </span>
+    );
+  }
+  const { availability, className, metadata, ...htmlProps } = props;
+  return (
+    <span
+      className={classNames(styles.reference, styles[availability], className)}
+      {...htmlProps}
+    >
+      <span>{metadata.source}</span>
+      <span>{metadata.location}</span>
+      <span>{metadata.documentVersion}</span>
+      <span>{metadata.freshness}</span>
+      {metadata.action && <a href={metadata.action.href}>{metadata.action.label}</a>}
+    </span>
+  );
+}
