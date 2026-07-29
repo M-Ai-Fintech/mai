@@ -10,6 +10,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:unit": "vitest run --config vitest.unit.config.ts",
+    "verify:foundation": "node scripts/verify-frontend-foundation.mjs",
     "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
     "test-storybook": "vitest --project=storybook",
     "test-storybook:update": "vitest --project=storybook --update"
@@ -19,6 +20,9 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
+  },
+  "overrides": {
+    "aria-query": "5.3.2"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",

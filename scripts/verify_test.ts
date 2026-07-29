@@ -26,6 +26,19 @@ Deno.test("verification runner includes the canonical documentation checker", ()
   });
 });
 
+Deno.test("verification runner checks the clean frontend foundation", () => {
+  const foundation = verificationChecks.find((check) =>
+    check.id === "frontend-foundation"
+  );
+
+  assertEquals(foundation, {
+    id: "frontend-foundation",
+    label: "Frontend foundation boundary",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:foundation"],
+  });
+});
+
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
     id: "intentional-failure",
