@@ -1,11 +1,11 @@
 ---
 id: MAI-97
 title: Implement the Figma component library in code and Storybook
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 17:54'
+updated_date: '2026-07-29 19:06'
 labels:
   - frontend
   - component-library
@@ -165,7 +165,7 @@ modified_files:
   - scripts/verify.ts
   - scripts/verify_test.ts
 priority: high
-ordinal: 1000
+ordinal: 85000
 ---
 
 ## Description
