@@ -1,15 +1,24 @@
-# M&Ai Web GUI
+# M&Ai Frontend Foundation
 
-The GUI is a Next.js 16 and React 19 application for the M&Ai MVP.
+The GUI is a Next.js 16 and React 19 foundation for the governed M&Ai
+banker workspace. Product screens and production capabilities are not
+implemented by the current root scaffold.
 
 Project-wide product behavior is governed by the
 [MVP GUI and API Behavior](../backlog/docs/product/mvp-gui-and-api/doc-9%20-%20MVP-GUI-and-API-Behavior.md)
 document. The repository-wide documentation entry point is the
 [Documentation Index](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
 
-Files under `components/**/*.mdx`, `docs/`, and the design Markdown files are
-colocated implementation and design references. They do not override governed
-product or architecture documentation.
+The exact MAI-95 keep, replace, and remove inventory is governed by the
+[Frontend Foundation Inventory](../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).
+
+Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction design
+authority. Product definitions `design/1–28` govern behavior and boundaries,
+and `design/28_Critical_Desktop_Banker_Path_Prototype.md` governs the MAI-94
+critical MVP workflow. Stitch and the retired GUI are historical only.
+
+MAI-96 owns final tokens, MAI-97 owns governed components, and MAI-98 owns the
+approved Shell, navigation, and route architecture.
 
 ## Run locally
 
@@ -47,5 +56,5 @@ npm run build
 npm run test-storybook -- --run
 ```
 
-Storybook component pages remain colocated with their components and must
-reference their corresponding story modules.
+Storybook remains available for neutral infrastructure examples. Final
+component design authority and conformance belong to MAI-97.

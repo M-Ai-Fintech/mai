@@ -13,9 +13,6 @@ const config: StorybookConfig = {
     "@storybook/addon-mcp"
   ],
   "framework": "@storybook/nextjs-vite",
-  "staticDirs": [
-    "../public"
-  ],
   async viteFinal(config) {
     if (config.server) {
       config.server.watch = {
