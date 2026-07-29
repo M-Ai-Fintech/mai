@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 13:41'
+updated_date: '2026-07-29 13:44'
 labels:
   - frontend
   - foundation
@@ -15,6 +15,8 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-94
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/15'
 documentation:
   - design/
   - >-
@@ -487,4 +489,16 @@ Dependency decision: framework/package manager versions remain unchanged. Stale 
 Graphify: graphify update . completed. Generated warnings were zero-node inputs, unavailable tree_sitter_sql, existing extraction metadata warnings, and the graph-size HTML limit; no product regression was reported.
 
 Owner review gate: implementation is complete but MAI-95 intentionally remains In Progress pending review and merge. MAI-96, MAI-97, MAI-98, and later work were not started.
+
+Draft PR opened for the single owner-review gate: https://github.com/luisfelipeluis49/mai/pull/15. The PR contains the exact 315-path changed manifest, including all 283 deleted files, baseline/final verification, retained infrastructure purpose, route/dependency changes, capability boundaries, and explicit MAI-96–98 deferrals.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+author: @codex
+created: 2026-07-29 13:44
+---
+Owner review requested on Draft PR #15. MAI-95 remains In Progress; do not merge or mark Done until the owner approves the clean frontend foundation.
+---
+<!-- COMMENTS:END -->
