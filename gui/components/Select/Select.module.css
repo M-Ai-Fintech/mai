@@ -27,6 +27,7 @@
 }
 .select {
   min-inline-size: 0;
+  min-block-size: var(--mai-size-control-standard);
   inline-size: 100%;
   border: 0;
   outline: 0;
