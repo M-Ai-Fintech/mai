@@ -20,9 +20,14 @@ const forbidden = [
   "gui/app/settings",
   "gui/app/portal",
   "gui/app/submit",
-  ".github/workflows/mai-98-bounded-visual-review.yml",
+];
+const temporaryReviewPaths = [
+  ".github/workflows/mai98-pr-review.yml",
+  ".github/workflows/mai98-visual-review.yml",
+  "gui/scripts/mai98-bounded-review.mjs",
 ];
 const governedRoots = ["gui/app/_shell", "gui/lib/shell"];
+const allowTemporaryReview = process.env.MAI98_REVIEW_TEMP === "1";
 const violations = [
   ...required
     .filter((path) => !existsSync(resolve(root, path)))
@@ -30,6 +35,9 @@ const violations = [
   ...forbidden
     .filter((path) => existsSync(resolve(root, path)))
     .map((path) => `${path}: prohibited MAI-98 final-tree path`),
+  ...temporaryReviewPaths
+    .filter((path) => !allowTemporaryReview && existsSync(resolve(root, path)))
+    .map((path) => `${path}: temporary rendered-review path must be absent from the final tree`),
 ];
 
 function filesBelow(relativePath) {
@@ -43,6 +51,10 @@ function filesBelow(relativePath) {
 
 const governedFiles = governedRoots.flatMap(filesBelow).filter((path) =>
   [".css", ".ts", ".tsx"].includes(extname(path)),
+);
+const tokenCss = readFileSync(resolve(root, "gui/tokens/generated/tokens.css"), "utf8");
+const definedTokens = new Set(
+  [...tokenCss.matchAll(/(--mai-[\w-]+)\s*:/g)].map((match) => match[1]),
 );
 const coreTokenPrefix = "--mai-" + "core-";
 const retiredAuthority = new RegExp([
@@ -63,6 +75,13 @@ for (const path of governedFiles) {
   if (rawBreakpoint.test(source)) {
     violations.push(`${path}: raw responsive breakpoint is prohibited`);
   }
+  if (extname(path) === ".css") {
+    for (const match of source.matchAll(/var\((--mai-[\w-]+)/g)) {
+      if (!definedTokens.has(match[1])) {
+        violations.push(`${path}: undefined design token ${match[1]}`);
+      }
+    }
+  }
   violations.push(...hardCodedViolations(path, source));
 }
 
@@ -79,7 +98,7 @@ if (!shell.includes("Drawer") || !shell.includes("Skip to main content") || !she
 
 const registry = readFileSync(resolve(root, "gui/lib/shell/route-registry.ts"), "utf8");
 for (const mode of ["global", "deal", "administration", "external"]) {
-  if (!registry.includes(`\"${mode}\"`)) violations.push(`route-registry: ${mode} shell mode missing`);
+  if (!registry.includes(`"${mode}"`)) violations.push(`route-registry: ${mode} shell mode missing`);
 }
 for (const contract of ["navigationRoutes", "routePath", "navigationParent", "permission", "availability"]) {
   if (!registry.includes(contract)) violations.push(`route-registry: ${contract} contract missing`);
@@ -87,7 +106,7 @@ for (const contract of ["navigationRoutes", "routePath", "navigationParent", "pe
 
 const context = readFileSync(resolve(root, "gui/lib/shell/route-context.ts"), "utf8");
 for (const state of ["invalid-context", "restricted", "unavailable", "not-found", "ready"]) {
-  if (!context.includes(`\"${state}\"`)) violations.push(`route-context: ${state} state missing`);
+  if (!context.includes(`"${state}"`)) violations.push(`route-context: ${state} state missing`);
 }
 if (!context.includes("navigationForResolution") || !context.includes("permissions.includes")) {
   violations.push("route-context: permission-safe navigation resolution missing");
