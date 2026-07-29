@@ -24,7 +24,10 @@ export interface RouteDefinition {
   readonly deferredScreenOwner: string;
 }
 
-interface RouteInput extends Omit<RouteDefinition, "breadcrumbPolicy" | "implementationStatus" | "authority" | "deferredScreenOwner"> {}
+type RouteInput = Omit<
+  RouteDefinition,
+  "breadcrumbPolicy" | "implementationStatus" | "authority" | "deferredScreenOwner"
+>;
 
 function route(input: RouteInput): RouteDefinition {
   return {
