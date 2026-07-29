@@ -46,6 +46,12 @@ export const verificationChecks: VerificationCheck[] = [
     env: { DENO_ENV: "test" },
   },
   {
+    id: "frontend-tokens",
+    label: "Frontend design tokens",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:tokens"],
+  },
+  {
     id: "frontend-foundation",
     label: "Frontend foundation boundary",
     command: "npm",
