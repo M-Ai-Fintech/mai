@@ -1,11 +1,11 @@
 ---
 id: MAI-84
 title: Consolidate all project documentation into one governed source of truth
-status: In Progress
+status: Done
 assignee:
   - codex
 created_date: '2026-07-22 05:24'
-updated_date: '2026-07-24 16:02'
+updated_date: '2026-07-29 15:27'
 labels:
   - documentation
   - architecture
@@ -84,7 +84,7 @@ modified_files:
   - scripts/verify_test.ts
   - src/agent/ai_provider.ts
 priority: high
-ordinal: 76000
+ordinal: 83000
 ---
 
 ## Description

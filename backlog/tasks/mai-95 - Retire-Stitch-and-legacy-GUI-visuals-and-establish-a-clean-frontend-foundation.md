@@ -1,11 +1,11 @@
 ---
 id: MAI-95
 title: Retire Stitch and legacy GUI visuals and establish a clean frontend foundation
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 13:44'
+updated_date: '2026-07-29 15:27'
 labels:
   - frontend
   - foundation
@@ -440,7 +440,7 @@ modified_files:
   - scripts/verify.ts
   - scripts/verify_test.ts
 priority: high
-ordinal: 800
+ordinal: 82000
 ---
 
 ## Description
