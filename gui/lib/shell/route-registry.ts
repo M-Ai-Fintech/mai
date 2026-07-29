@@ -192,7 +192,3 @@ export function routePath(
   }
   return `/${resolved.join("/")}`;
 }
-
-export function breadcrumbs(routeDefinition: RouteDefinition, organization?: string, deal?: string): readonly string[] {
-  return [organization, deal, routeDefinition.label].filter((label): label is string => Boolean(label));
-}
