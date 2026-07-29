@@ -1,11 +1,11 @@
 ---
 id: MAI-96
 title: Implement Figma variables and tokens in the frontend
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 16:27'
+updated_date: '2026-07-29 16:59'
 labels:
   - frontend
   - design-tokens
@@ -61,7 +61,7 @@ modified_files:
   - scripts/verify.ts
   - scripts/verify_test.ts
 priority: high
-ordinal: 900
+ordinal: 84000
 ---
 
 ## Description
