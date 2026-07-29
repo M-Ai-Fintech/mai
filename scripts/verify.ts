@@ -58,6 +58,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["--prefix", "gui", "run", "verify:foundation"],
   },
   {
+    id: "frontend-components",
+    label: "Frontend component boundary",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:components"],
+  },
+  {
     id: "gui-unit-tests",
     label: "GUI unit tests",
     command: "npm",

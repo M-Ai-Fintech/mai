@@ -1,9 +1,11 @@
 ---
 id: MAI-97
 title: Implement the Figma component library in code and Storybook
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@codex'
 created_date: '2026-07-28 03:08'
+updated_date: '2026-07-29 17:10'
 labels:
   - frontend
   - component-library
@@ -40,3 +42,16 @@ Implement the approved Figma component library in frontend code and document it 
 - [ ] #5 Components and stories link or trace to the relevant Figma definitions.
 - [ ] #6 Focused automated tests and visual review evidence cover the reusable component set.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+- Baseline verification
+- Live read-only Figma component audit
+- Shared component architecture
+- Bounded component implementation waves
+- Storybook and accessibility coverage
+- Visual review
+- Repository verification
+- Draft PR and owner review
+<!-- SECTION:PLAN:END -->

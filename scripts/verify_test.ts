@@ -52,6 +52,19 @@ Deno.test("verification runner checks generated frontend tokens", () => {
   });
 });
 
+Deno.test("verification runner checks the approved frontend component boundary", () => {
+  const components = verificationChecks.find((check) =>
+    check.id === "frontend-components"
+  );
+
+  assertEquals(components, {
+    id: "frontend-components",
+    label: "Frontend component boundary",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:components"],
+  });
+});
+
 Deno.test("verification runner reports a failing child in its component summary", async () => {
   const check: VerificationCheck = {
     id: "intentional-failure",
