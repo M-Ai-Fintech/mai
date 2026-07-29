@@ -6,4 +6,4 @@ const meta = { title: "Data/TableHeader", component: DataTableHeader, args: { ch
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default: Story = { render: (args) => <table><thead><tr><DataTableHeader {...args} /></tr></thead></table> };
-export const Sorted: Story = { args: { sortDirection: "ascending", onSort: fn() }, render: (args) => <table><thead><tr><DataTableHeader {...args} /></tr></thead></table>, play: async ({ canvasElement }) => { const canvas = within(canvasElement); const button = canvas.getByRole("button", { name: "Company" }); await userEvent.click(button); await expect(button).toBeEnabled(); } };
+export const Sorted: Story = { args: { sortDirection: "ascending", onSort: fn() }, render: (args) => <table><thead><tr><DataTableHeader {...args} /></tr></thead></table>, play: async ({ args, canvasElement }) => { const canvas = within(canvasElement); const button = canvas.getByRole("button", { name: "Company" }); await userEvent.click(button); await expect(args.onSort).toHaveBeenCalledTimes(1); } };

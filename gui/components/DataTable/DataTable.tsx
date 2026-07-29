@@ -1,4 +1,10 @@
-import { forwardRef, type TableHTMLAttributes } from "react";
+import {
+  Children,
+  forwardRef,
+  isValidElement,
+  type ReactNode,
+  type TableHTMLAttributes,
+} from "react";
 import { classNames } from "../internal/classNames";
 import styles from "./DataTable.module.css";
 
@@ -31,6 +37,7 @@ export const DataTable = forwardRef<HTMLTableElement, DataTableProps>(
     ref,
   ) {
     const statusMessage = state === "loading" ? loadingMessage : emptyMessage;
+    const header = findTableHeader(children);
     return (
       <div className={styles.scrollRegion} tabIndex={0}>
         <table
@@ -39,17 +46,15 @@ export const DataTable = forwardRef<HTMLTableElement, DataTableProps>(
           aria-busy={state === "loading" || undefined}
           {...props}
         >
-          {state === "default" ? children : (
-            <tbody>
-              <tr>
-                <td className={styles.statusCell} colSpan={columnCount}>
-                  {statusMessage}
-                </td>
-              </tr>
-            </tbody>
-          )}
+          {state === "default" ? children : <>{header}<tbody><tr><td className={styles.statusCell} colSpan={columnCount}>{statusMessage}</td></tr></tbody></>}
         </table>
       </div>
     );
   },
 );
+
+function findTableHeader(children: ReactNode) {
+  return Children.toArray(children).find((child) =>
+    isValidElement(child) && child.type === "thead"
+  );
+}
