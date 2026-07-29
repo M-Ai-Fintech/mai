@@ -103,15 +103,22 @@ export function breadcrumbsForResolution(
   const { route, organization, deal } = resolution;
   const crumbs: Array<ShellBreadcrumb | undefined> = [];
 
-  if (route.shellMode !== "external" && organization) {
-    const home = routeById("global.home");
-    crumbs.push(breadcrumbForRoute(resolution, home, organization.name, route.id === home.id));
-  }
-
-  if (route.shellMode === "deal" && deal) {
-    const overview = routeById("deal.overview");
-    crumbs.push(breadcrumbForRoute(resolution, overview, deal.name, route.id === overview.id));
+  if (route.shellMode === "global") {
+    if (route.id !== "global.home" && organization) {
+      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+    }
+  } else if (route.shellMode === "deal") {
+    if (organization) {
+      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+    }
+    if (deal) {
+      const overview = routeById("deal.overview");
+      crumbs.push(breadcrumbForRoute(resolution, overview, deal.name, route.id === overview.id));
+    }
   } else if (route.shellMode === "administration") {
+    if (organization) {
+      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+    }
     const administration = routeById("administration.profile");
     crumbs.push(breadcrumbForRoute(
       resolution,
@@ -119,7 +126,7 @@ export function breadcrumbsForResolution(
       administration.label,
       route.id === administration.id,
     ));
-  } else if (route.shellMode === "external" && route.id !== "external.submit") {
+  } else if (route.id !== "external.submit") {
     const workspace = routeById("external.workspace");
     crumbs.push(breadcrumbForRoute(
       resolution,
@@ -129,8 +136,7 @@ export function breadcrumbsForResolution(
     ));
   }
 
-  const parentIsCurrent = crumbs.at(-1)?.current === true;
-  if (!parentIsCurrent) {
+  if (crumbs.at(-1)?.current !== true) {
     crumbs.push({ routeId: route.id, label: route.label, current: true });
   }
 
