@@ -1,11 +1,208 @@
 "use client";
-import { useRef, useState } from "react";
-import { Drawer, NavigationItem, StatusIndicator } from "@/components";
-import type { RouteResolution } from "@/lib/shell/route-context";
+
+import { useRef, useState, type ReactNode } from "react";
+import { Drawer, IconButton, NavigationItem, StatusIndicator } from "@/components";
+import {
+  navigationForResolution,
+  type RouteResolution,
+  type ShellNavigationEntry,
+} from "@/lib/shell/route-context";
+import { breadcrumbs } from "@/lib/shell/route-registry";
 import styles from "./AppShell.module.css";
-const globalItems = ["home", "deals", "organizations", "tasks", "team"];
-const dealItems = ["overview", "dossier", "documents", "diligence", "valuation", "matching", "negotiation", "closing"];
-const administrationItems = ["profile", "institution", "roles", "integrations", "security", "templates", "audit"];
-const externalItems = ["workspace", "requests", "approvals"];
-function title(value: string): string { return value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
-export function AppShell({ resolution }: { resolution: Extract<RouteResolution, { kind: "ready" }> }) { const [open, setOpen] = useState(false); const triggerRef = useRef<HTMLButtonElement>(null); const { route, organization, deal, counts } = resolution; const items = route.shellMode === "deal" ? dealItems : route.shellMode === "administration" ? administrationItems : route.shellMode === "external" ? externalItems : globalItems; const href = (item: string) => route.shellMode === "deal" ? `/deals/${deal?.id}/${item}` : route.shellMode === "administration" ? `/settings/${item}` : route.shellMode === "external" ? `/portal/project/fixture-workspace${item === "workspace" ? "" : `/${item}`}` : `/${item}`; const navigation = <nav aria-label={route.shellMode === "deal" ? "Deal navigation" : route.shellMode === "external" ? "Participant navigation" : "Workspace navigation"}>{items.map((item) => <NavigationItem key={item} kind="link" href={href(item)} active={route.id.endsWith(`.${item}`)}>{title(item)}</NavigationItem>)}</nav>; return <div className={styles.shell}><a className={styles.skip} href="#main-content">Skip to main content</a><aside className={styles.rail}>{navigation}</aside><header className={styles.header}><button ref={triggerRef} className={styles.menu} onClick={() => setOpen(true)}>Open navigation</button>{organization && <strong>{organization.name} <small>Fixture</small></strong>}{route.shellMode !== "external" && <><span>Search (fixture)</span><span>Tasks {counts?.tasks} · Approvals {counts?.approvals} · Notifications {counts?.notifications}</span></>}</header><Drawer open={open} onOpenChange={setOpen} title="Navigation" returnFocusRef={triggerRef}>{navigation}</Drawer><main id="main-content" className={styles.main}><nav aria-label="Breadcrumb"><ol>{organization && <li>{organization.name}</li>}{deal && <li>{deal.name}</li>}<li aria-current="page">{title(route.id.split(".").at(-1) ?? route.id)}</li></ol></nav>{deal && <header><h1>{deal.name}</h1><StatusIndicator role="information">{deal.phase}</StatusIndicator></header>}<section className={styles.placeholder}><StatusIndicator role="incomplete">Fixture shell route</StatusIndicator><h2>{title(route.id)}</h2><p>This neutral placeholder is intentionally deferred to {route.deferredScreenOwner}. Local fixture data does not prove production access or availability.</p></section></main></div>; }
+
+function navigationItem(entry: ShellNavigationEntry): ReactNode {
+  if (entry.state === "restricted") {
+    return (
+      <NavigationItem key={entry.routeId} kind="button" restricted>
+        {entry.label}
+      </NavigationItem>
+    );
+  }
+  if (entry.state === "unavailable" || entry.state === "disabled" || !entry.href) {
+    return (
+      <NavigationItem key={entry.routeId} kind="button" disabled status="Unavailable">
+        {entry.label}
+      </NavigationItem>
+    );
+  }
+  return (
+    <NavigationItem
+      key={entry.routeId}
+      kind="link"
+      href={entry.href}
+      active={entry.state === "active"}
+    >
+      {entry.label}
+    </NavigationItem>
+  );
+}
+
+function Navigation({
+  entries,
+  label,
+  className,
+}: {
+  entries: readonly ShellNavigationEntry[];
+  label: string;
+  className?: string;
+}) {
+  const primary = entries.filter((entry) => entry.section === "primary");
+  const secondary = entries.filter((entry) => entry.section === "secondary");
+  return (
+    <nav aria-label={label} className={className}>
+      <div className={styles.navigationGroup}>{primary.map(navigationItem)}</div>
+      {secondary.length > 0 ? (
+        <div className={styles.secondaryNavigation}>{secondary.map(navigationItem)}</div>
+      ) : null}
+    </nav>
+  );
+}
+
+export function AppShell({
+  resolution,
+}: {
+  resolution: Extract<RouteResolution, { kind: "ready" }>;
+}) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { route, organization, deal, counts } = resolution;
+  const entries = navigationForResolution(resolution);
+  const external = route.shellMode === "external";
+  const dealMode = route.shellMode === "deal";
+  const navigationLabel = dealMode
+    ? "Deal navigation"
+    : external
+      ? "Participant navigation"
+      : route.shellMode === "administration"
+        ? "Administration navigation"
+        : "Workspace navigation";
+  const breadcrumbLabels = breadcrumbs(route, organization?.name, deal?.name);
+
+  return (
+    <div className={`${styles.shell} md:flex`} data-shell-mode={route.shellMode}>
+      <a className={styles.skip} href="#main-content">
+        Skip to main content
+      </a>
+
+      {!external ? (
+        <aside className={`${styles.brandRail} hidden md:flex`} aria-label="MAI workspace rail">
+          <a className={styles.brandMark} href="/home" aria-label="MAI home">
+            MAI
+          </a>
+          <span className={styles.modeMarker} aria-hidden="true">
+            {dealMode ? "D" : route.shellMode === "administration" ? "A" : "G"}
+          </span>
+        </aside>
+      ) : null}
+
+      <div className={styles.application}>
+        <header className={styles.header}>
+          <IconButton
+            ref={triggerRef}
+            className="xl:hidden"
+            label="Open navigation"
+            onClick={() => setOpen(true)}
+          >
+            <span aria-hidden="true">☰</span>
+          </IconButton>
+          <div className={styles.contextIdentity}>
+            <strong>
+              {external ? "Shared workspace" : organization?.name ?? "MAI"}
+            </strong>
+            <small>Fixture adapter</small>
+          </div>
+          {!external ? (
+            <div className={styles.headerEntries} aria-label="Fixture shell entry points">
+              <span>Search</span>
+              <span>Tasks {counts?.tasks ?? 0}</span>
+              <span>Approvals {counts?.approvals ?? 0}</span>
+              <span>Notifications {counts?.notifications ?? 0}</span>
+            </div>
+          ) : (
+            <span className={styles.externalLabel}>External participant</span>
+          )}
+        </header>
+
+        <Drawer
+          open={open}
+          onOpenChange={setOpen}
+          title="Navigation"
+          description={`${navigationLabel}. Fixture-only routes.`}
+          returnFocusRef={triggerRef}
+        >
+          <Navigation entries={entries} label={navigationLabel} />
+        </Drawer>
+
+        <div className={`${styles.workspace} xl:flex`}>
+          {!external ? (
+            <aside className={`${styles.contextSidebar} hidden xl:block`}>
+              <div className={styles.sidebarHeading}>
+                <span>{dealMode ? "Deal room" : route.shellMode === "administration" ? "Administration" : "MAI · Home"}</span>
+                {deal ? <strong>{deal.name}</strong> : null}
+              </div>
+              {!dealMode ? (
+                <Navigation entries={entries} label={navigationLabel} />
+              ) : (
+                <dl className={styles.dealContext}>
+                  <div><dt>Deal</dt><dd>{deal?.name}</dd></div>
+                  <div><dt>Phase</dt><dd>{deal?.phase}</dd></div>
+                </dl>
+              )}
+            </aside>
+          ) : null}
+
+          <div className={styles.contentColumn}>
+            {dealMode ? (
+              <Navigation
+                entries={entries}
+                label={navigationLabel}
+                className={`${styles.dealNavigation} hidden md:flex`}
+              />
+            ) : null}
+            {external ? (
+              <Navigation
+                entries={entries}
+                label={navigationLabel}
+                className={styles.externalNavigation}
+              />
+            ) : null}
+
+            <main id="main-content" className={styles.main}>
+              <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
+                <ol>
+                  {breadcrumbLabels.map((label, index) => (
+                    <li
+                      key={`${label}-${index}`}
+                      aria-current={index === breadcrumbLabels.length - 1 ? "page" : undefined}
+                    >
+                      {label}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+
+              {deal ? (
+                <header className={styles.dealHeader}>
+                  <div>
+                    <p className={styles.eyebrow}>Deal context</p>
+                    <h1>{deal.name}</h1>
+                  </div>
+                  <StatusIndicator role="information">{deal.phase}</StatusIndicator>
+                </header>
+              ) : null}
+
+              <section className={styles.placeholder} aria-labelledby="shell-placeholder-title">
+                <StatusIndicator role="incomplete">Fixture shell route</StatusIndicator>
+                <h2 id="shell-placeholder-title">{route.label}</h2>
+                <p>
+                  This neutral placeholder is intentionally deferred to {route.deferredScreenOwner}.
+                  Local fixture data does not prove production access, authorization, or availability.
+                </p>
+              </section>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
