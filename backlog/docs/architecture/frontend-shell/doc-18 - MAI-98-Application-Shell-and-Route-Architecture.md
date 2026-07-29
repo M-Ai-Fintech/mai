@@ -3,7 +3,7 @@ id: doc-18
 title: MAI-98 Application Shell and Route Architecture
 type: specification
 created_date: '2026-07-29 19:22'
-updated_date: '2026-07-29 19:22'
+updated_date: '2026-07-29 19:48'
 tags:
   - MAI-98
   - frontend
@@ -12,8 +12,12 @@ tags:
 ---
 # MAI-98 Application Shell and Route Architecture
 
-## Authority
-Figma v0.3 approved references: global `41:16`; deal desktop `43:10`; deal mobile `44:85`; Decision Room `52:21`; critical desktop path `251:3323`. Product behavior is governed by the MVP GUI/API behavior document and cross-screen interaction map.
+- **Authority ID:** ARCH-FRONTEND-SHELL-001
+- **Owner:** Frontend Engineering
+- **Authority:** Figma v0.3 nodes `41:16`, `43:10`, and `44:85`; MVP GUI/API behavior and cross-screen interaction documents.
+- **Freshness:** current
+- **Language:** English
+- **Update trigger:** Update when a MAI-98 route, shell mode, adapter boundary, or verification contract changes.
 
 ## Shell modes
 The typed registry discriminates Global, Deal, Administration, and External modes. External mode receives only external permission data; it never receives internal navigation, counts, approval, notification, or organization metadata.
@@ -31,4 +35,4 @@ The desktop rail becomes a Drawer navigation on mobile. The shell provides a ski
 Route bodies remain explicit neutral placeholders owned by MAI-99+. Downstream screen work must consume the route registry and adapter interfaces; it must not add backend assumptions or duplicate shell components.
 
 ## Evidence
-Baseline GUI verification passed before implementation. Focused MAI-98 verifier, lint, and Next build passed after implementation. Rendered visual review and full final suite remain owner-handoff evidence for this in-progress task.
+Fixture-labelled stories cover all four shell modes, error states, long names, count overflow, and Drawer behavior. Focused route and accessibility tests are part of the MAI-98 verification boundary.

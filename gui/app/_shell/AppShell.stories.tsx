@@ -15,6 +15,6 @@ export const AdministrationDesktop: Story = { args: { resolution: fixture(["sett
 export const ExternalParticipant: Story = { args: { resolution: fixture(["portal", "project", "fixture-workspace"]) } };
 export const LongNamesAndCountOverflow: Story = { args: { resolution: fixture(["deals", "demo-deal", "documents"], "A deliberately long fixture advisory organization name for overflow review", "A deliberately long fixture transaction name for breadcrumb overflow review", { tasks: 9999, approvals: 9999, notifications: 9999 }) } };
 export const MobileDrawerKeyboard: Story = { args: { resolution: fixture(["deals", "demo-deal", "overview"]) }, parameters: { viewport: { defaultViewport: "mobile1" } }, play: async ({ canvasElement }) => { const canvas = within(canvasElement); const trigger = canvas.getByRole("button", { name: "Open navigation" }); await userEvent.click(trigger); await expect(within(document.body).getByRole("dialog")).toBeVisible(); await userEvent.keyboard("{Escape}"); await waitFor(() => expect(within(document.body).queryByRole("dialog")).toBeNull()); await expect(trigger).toHaveFocus(); } };
-export const RestrictedState: Story = { render: () => <ShellState result={{ kind: "restricted" }} /> };
-export const InvalidContext: Story = { render: () => <ShellState result={{ kind: "invalid-context", reason: "Fixture malformed route identifier." }} /> };
-export const UnavailableState: Story = { render: () => <ShellState result={{ kind: "unavailable" }} /> };
+export const RestrictedState: Story = { args: { resolution: fixture(["home"]) }, render: () => <ShellState result={{ kind: "restricted" }} /> };
+export const InvalidContext: Story = { args: { resolution: fixture(["home"]) }, render: () => <ShellState result={{ kind: "invalid-context", reason: "Fixture malformed route identifier." }} /> };
+export const UnavailableState: Story = { args: { resolution: fixture(["home"]) }, render: () => <ShellState result={{ kind: "unavailable" }} /> };

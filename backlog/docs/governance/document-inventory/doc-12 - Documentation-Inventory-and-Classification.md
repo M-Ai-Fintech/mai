@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-29 17:44'
+updated_date: '2026-07-29 19:47'
 tags:
   - documentation
   - inventory
@@ -131,6 +131,7 @@ Every project file below is individually classified; removed paths are retained 
 | `backlog/docs/architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | Frontend Engineering | MAI-95 path-level frontend disposition and foundation boundary | ARCH-FRONTEND-001 | current | English | canonical |
 | `backlog/docs/architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md` | Frontend Engineering | MAI-96 live Figma-to-code semantic token mapping and verification contract | ARCH-FRONTEND-TOKENS-001 | current | English | canonical |
 | `backlog/docs/architecture/frontend-components/doc-17 - MAI-97-Figma-Component-Library-Architecture-and-Conformance.md` | Frontend Engineering | MAI-97 component-library architecture, traceability, accessibility, and verification contract | ARCH-FRONTEND-COMPONENTS-001 | current | English | canonical |
+| `backlog/docs/architecture/frontend-shell/doc-18 - MAI-98-Application-Shell-and-Route-Architecture.md` | Frontend Engineering | MAI-98 typed shell, route, navigation, and permission boundary | ARCH-FRONTEND-SHELL-001 | current | English | canonical |
 | `gui/AGENTS.md` | GUI | GUI agent instruction | gui-local | current | English | referenced |
 | `gui/CLAUDE.md` | GUI | GUI agent instruction | gui-local | review-needed | English | referenced |
 | `gui/DESIGN.md` | GUI | Retired GUI design authority | none | retired by MAI-95 on 2026-07-29 | English | removed; history preserved in ARCH-FRONTEND-001 |
@@ -325,6 +326,15 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Frontend Engineering",
       "purpose": "MAI-97 component-library architecture, traceability, accessibility, and verification contract",
       "authority": "ARCH-FRONTEND-COMPONENTS-001",
+      "freshness": "current",
+      "language": "English",
+      "disposition": "canonical"
+    },
+    {
+      "path": "architecture/frontend-shell/doc-18 - MAI-98-Application-Shell-and-Route-Architecture.md",
+      "owner": "Frontend Engineering",
+      "purpose": "MAI-98 typed shell, route, navigation, and permission boundary",
+      "authority": "ARCH-FRONTEND-SHELL-001",
       "freshness": "current",
       "language": "English",
       "disposition": "canonical"
