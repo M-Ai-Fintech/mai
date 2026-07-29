@@ -1,0 +1,68 @@
+.shell {
+  min-block-size: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--mai-layout-grid-margin);
+  background: var(--mai-color-surface-canvas);
+  color: var(--mai-color-content-primary);
+  font-family: var(--mai-type-body-font-family);
+}
+
+.surface {
+  inline-size: 100%;
+  max-inline-size: var(--mai-layout-content-max);
+  display: grid;
+  gap: var(--mai-space-layout-panel);
+  padding: var(--mai-space-layout-panel);
+  border: var(--mai-border-width-default) solid var(--mai-color-border-default);
+  border-radius: var(--mai-radius-panel);
+  background: var(--mai-color-surface-raised);
+  box-shadow: var(--mai-elevation-panel);
+  transition: background-color var(--mai-motion-standard) var(--mai-motion-easing-standard);
+}
+
+.surface:focus-visible {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--mai-color-content-secondary);
+  font-size: var(--mai-type-eyebrow-font-size);
+  line-height: var(--mai-type-eyebrow-line-height);
+  font-weight: var(--mai-type-eyebrow-font-weight);
+  letter-spacing: var(--mai-type-eyebrow-letter-spacing);
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mai-type-page-title-font-size);
+  line-height: var(--mai-type-page-title-line-height);
+  font-weight: var(--mai-type-page-title-font-weight);
+}
+
+.body,
+.list {
+  margin: 0;
+  color: var(--mai-color-content-secondary);
+  font-size: var(--mai-type-body-font-size);
+  line-height: var(--mai-type-body-line-height);
+  font-weight: var(--mai-type-body-font-weight);
+}
+
+.section {
+  min-block-size: var(--mai-size-control-min);
+  display: grid;
+  gap: var(--mai-space-component-sm);
+  padding-block-start: var(--mai-space-component-md);
+  border-block-start: var(--mai-border-width-default) solid var(--mai-color-border-subtle);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--mai-type-section-heading-font-size);
+  line-height: var(--mai-type-section-heading-line-height);
+  font-weight: var(--mai-type-section-heading-font-weight);
+}
