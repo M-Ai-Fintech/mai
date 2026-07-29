@@ -1,0 +1,75 @@
+name: MAI-99 temporary rendered review
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+      - name: Install dependencies
+        run: npm --prefix gui ci
+      - name: Install review browser
+        run: npm --prefix gui exec -- playwright install --with-deps chromium
+      - name: Verify review tree
+        run: deno task verify
+      - name: Start review surfaces
+        run: |
+          npm --prefix gui run build
+          npm --prefix gui run start > /tmp/mai99-next.log 2>&1 &
+          npm --prefix gui run storybook -- --ci -p 6006 > /tmp/mai99-storybook.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/home >/dev/null &&
+              curl --fail --silent http://127.0.0.1:6006 >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Capture approved matrix
+        run: node gui/scripts/mai99-rendered-review.mjs
+      - name: Upload review evidence
+        id: artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai99-rendered-review
+          path: mai99-rendered-review
+          if-no-files-found: error
+      - name: Record artifact identity
+        if: always()
+        run: |
+          echo "artifact-id=${{ steps.artifact.outputs.artifact-id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "artifact-digest=${{ steps.artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Wait for cleanup branch tip
+        if: always()
+        run: |
+          for attempt in $(seq 1 60); do
+            git fetch origin feat/MAI-99-global-admin-external-screens
+            if [ "$(git rev-parse FETCH_HEAD)" != "$GITHUB_SHA" ]; then
+              git checkout --detach FETCH_HEAD
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
+      - name: Verify exact final PR tree
+        run: |
+          test ! -e .github/workflows/mai99-rendered-review.yml
+          test ! -e gui/scripts/mai99-rendered-review.mjs
+          deno task verify
