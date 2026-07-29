@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  breadcrumbs,
   matchRoute,
   navigationRoutes,
   routePath,
@@ -8,7 +7,11 @@ import {
   routeRegistry,
   shellEntryRoutes,
 } from "./route-registry";
-import { navigationForResolution, resolveRouteContext } from "./route-context";
+import {
+  breadcrumbsForResolution,
+  navigationForResolution,
+  resolveRouteContext,
+} from "./route-context";
 
 describe("MAI-98 route architecture", () => {
   it("has unique IDs and all four shell modes", () => {
@@ -59,12 +62,49 @@ describe("MAI-98 route architecture", () => {
     await expect(resolveRouteContext(["missing"])).resolves.toMatchObject({ kind: "not-found" });
   });
 
-  it("builds breadcrumbs without leaking unavailable context", () => {
-    const route = matchRoute(["deals", "demo-deal", "documents"]);
-    expect(route && breadcrumbs(route, "Fixture organization", "Fixture deal")).toEqual([
-      "Fixture organization",
-      "Fixture deal",
-      "Documents",
+  it("builds linked breadcrumbs with the exact deal context", async () => {
+    const result = await resolveRouteContext(["deals", "demo-deal", "documents"]);
+    expect(result.kind).toBe("ready");
+    if (result.kind !== "ready") return;
+
+    expect(breadcrumbsForResolution(result)).toEqual([
+      {
+        routeId: "global.home",
+        label: "Demo Advisory",
+        current: false,
+        href: "/home",
+      },
+      {
+        routeId: "deal.overview",
+        label: "Demo transaction",
+        current: false,
+        href: "/deals/demo-deal/overview",
+      },
+      {
+        routeId: "deal.documents",
+        label: "Documents",
+        current: true,
+      },
+    ]);
+  });
+
+  it("omits breadcrumb links when their permission is absent", async () => {
+    const result = await resolveRouteContext(["deals", "demo-deal", "documents"]);
+    expect(result.kind).toBe("ready");
+    if (result.kind !== "ready") return;
+
+    expect(breadcrumbsForResolution({ ...result, permissions: ["deal"] })).toEqual([
+      {
+        routeId: "deal.overview",
+        label: "Demo transaction",
+        current: false,
+        href: "/deals/demo-deal/overview",
+      },
+      {
+        routeId: "deal.documents",
+        label: "Documents",
+        current: true,
+      },
     ]);
   });
 
@@ -89,5 +129,12 @@ describe("MAI-98 route architecture", () => {
     expect(result.deal).toBeUndefined();
     expect(result.counts).toBeUndefined();
     expect(navigationForResolution(result).every((entry) => entry.routeId.startsWith("external."))).toBe(true);
+    expect(breadcrumbsForResolution(result)).toEqual([
+      {
+        routeId: "external.workspace",
+        label: "Shared workspace",
+        current: true,
+      },
+    ]);
   });
 });
