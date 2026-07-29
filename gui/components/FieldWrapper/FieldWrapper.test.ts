@@ -1,2 +1,18 @@
-import { createElement } from "react"; import { renderToStaticMarkup } from "react-dom/server"; import { describe, expect, it } from "vitest"; import { FieldWrapper } from "./FieldWrapper";
-describe("FieldWrapper", () => { it("connects error text to its field", () => { const html = renderToStaticMarkup(createElement(FieldWrapper, { label: "Name", error: "Name is required", children: (attributes) => createElement("input", attributes) })); expect(html).toContain("aria-describedby"); expect(html).toContain("aria-invalid=\"true\""); expect(html).toContain("role=\"alert\""); }); });
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { FieldWrapper } from "./FieldWrapper";
+describe("FieldWrapper", () => {
+  it("connects error text to its field", () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        FieldWrapper,
+        { label: "Name", error: "Name is required" },
+        (attributes) => createElement("input", attributes),
+      ),
+    );
+    expect(html).toContain("aria-describedby");
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('role="alert"');
+  });
+});

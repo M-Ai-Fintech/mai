@@ -1,2 +1,17 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite"; import { FieldWrapper } from "./FieldWrapper";
-const meta = { title: "Form/FieldWrapper", component: FieldWrapper, args: { label: "Company name", helperText: "Use the registered legal name.", children: (attributes) => <input {...attributes} /> } } satisfies Meta<typeof FieldWrapper>; export default meta; type Story = StoryObj<typeof meta>; export const Default: Story = {}; export const Required: Story = { args: { required: true } }; export const Optional: Story = { args: { optional: true } }; export const Error: Story = { args: { error: "Company name is required." } };
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { FieldWrapper } from "./FieldWrapper";
+const meta = {
+  title: "Form/FieldWrapper",
+  component: FieldWrapper,
+  args: {
+    label: "Company name",
+    helperText: "Use the registered legal name.",
+    children: (attributes) => <input {...attributes} />,
+  },
+} satisfies Meta<typeof FieldWrapper>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Default: Story = {};
+export const Required: Story = { args: { required: true } };
+export const Optional: Story = { args: { optional: true } };
+export const Error: Story = { args: { error: "Company name is required." } };

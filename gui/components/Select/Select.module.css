@@ -1,1 +1,44 @@
-.shell { min-block-size: var(--mai-size-control-standard); display: flex; align-items: center; padding-inline: var(--mai-space-component-md); border: var(--mai-border-width-default) solid var(--mai-color-border-control); border-radius: var(--mai-radius-control); background: var(--mai-color-action-secondary-background); color: var(--mai-color-content-primary); }.shell:hover { border-color: var(--mai-color-border-strong); }.shell:focus-within { outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring); outline-offset: var(--mai-focus-ring-width); }.invalid { border-color: var(--mai-color-form-error-border); }.disabled { background: var(--mai-color-form-disabled-surface); color: var(--mai-color-action-disabled-content); }.readOnly { background: var(--mai-color-form-read-only-surface); }.select { min-inline-size: 0; inline-size: 100%; border: 0; outline: 0; appearance: none; background: transparent; color: inherit; font-family: var(--mai-type-body-font-family); font-size: var(--mai-type-body-font-size); line-height: var(--mai-type-body-line-height); }.icon { inline-size: var(--mai-size-control-min); block-size: var(--mai-size-control-min); pointer-events: none; }
+.shell {
+  min-block-size: var(--mai-size-control-standard);
+  display: flex;
+  align-items: center;
+  padding-inline: var(--mai-space-component-md);
+  border: var(--mai-border-width-default) solid var(--mai-color-border-control);
+  border-radius: var(--mai-radius-control);
+  background: var(--mai-color-action-secondary-background);
+  color: var(--mai-color-content-primary);
+}
+.shell:hover {
+  border-color: var(--mai-color-border-strong);
+}
+.shell:focus-within {
+  outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
+  outline-offset: var(--mai-focus-ring-width);
+}
+.invalid {
+  border-color: var(--mai-color-form-error-border);
+}
+.disabled {
+  background: var(--mai-color-form-disabled-surface);
+  color: var(--mai-color-action-disabled-content);
+}
+.readOnly {
+  background: var(--mai-color-form-read-only-surface);
+}
+.select {
+  min-inline-size: 0;
+  inline-size: 100%;
+  border: 0;
+  outline: 0;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mai-type-body-font-family);
+  font-size: var(--mai-type-body-font-size);
+  line-height: var(--mai-type-body-line-height);
+}
+.icon {
+  inline-size: var(--mai-size-control-min);
+  block-size: var(--mai-size-control-min);
+  pointer-events: none;
+}

@@ -1,5 +1,21 @@
-.divider { border: 0; margin: 0; flex: none; }
-.horizontal { inline-size: 100%; border-block-start: var(--mai-border-width-default) solid var(--mai-color-border-subtle); }
-.vertical { align-self: stretch; border-inline-start: var(--mai-border-width-default) solid var(--mai-color-border-subtle); }
-.strong.horizontal { border-color: var(--mai-color-border-strong); }
-.strong.vertical { border-color: var(--mai-color-border-strong); }
+.divider {
+  border: 0;
+  margin: 0;
+  flex: none;
+}
+.horizontal {
+  inline-size: 100%;
+  border-block-start: var(--mai-border-width-default) solid
+    var(--mai-color-border-subtle);
+}
+.vertical {
+  align-self: stretch;
+  border-inline-start: var(--mai-border-width-default) solid
+    var(--mai-color-border-subtle);
+}
+.strong.horizontal {
+  border-color: var(--mai-color-border-strong);
+}
+.strong.vertical {
+  border-color: var(--mai-color-border-strong);
+}

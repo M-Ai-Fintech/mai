@@ -13,7 +13,7 @@ const dirname =
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   optimizeDeps: {
-    include: ['@testing-library/dom', 'aria-query', 'lz-string'],
+    include: ['@testing-library/dom', 'aria-query', 'lz-string', 'storybook/test'],
   },
   test: {
     projects: [

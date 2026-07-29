@@ -2,6 +2,55 @@
 import { type ReactNode } from "react";
 import { useComponentId } from "../internal/ids";
 import styles from "./FieldWrapper.module.css";
-export interface FieldWrapperProps { children: (attributes: { "aria-describedby"?: string; "aria-invalid"?: boolean; id: string }) => ReactNode; id?: string; label: string; helperText?: string; error?: string; required?: boolean; optional?: boolean; }
+export interface FieldWrapperProps {
+  children: (
+    attributes: {
+      "aria-describedby"?: string;
+      "aria-invalid"?: boolean;
+      id: string;
+    },
+  ) => ReactNode;
+  id?: string;
+  label: string;
+  helperText?: string;
+  error?: string;
+  required?: boolean;
+  optional?: boolean;
+}
 /** Establishes persistent label and validation relationships for a native field. @example <FieldWrapper label="Name">{(field) => <input {...field} />}</FieldWrapper> */
-export function FieldWrapper({ children, error, helperText, id, label, optional = false, required = false }: FieldWrapperProps) { const fieldId = useComponentId(id, "field"); const helpId = `${fieldId}-help`; const errorId = `${fieldId}-error`; const describedBy = error ? errorId : helperText ? helpId : undefined; return <div className={styles.wrapper}><label className={styles.label} htmlFor={fieldId}>{label}{required ? <span aria-hidden="true"> *</span> : null}{optional ? <span className={styles.optional}>Optional</span> : null}</label>{children({ id: fieldId, "aria-describedby": describedBy, "aria-invalid": Boolean(error) || undefined })}{helperText && !error ? <p className={styles.helper} id={helpId}>{helperText}</p> : null}{error ? <p className={styles.error} id={errorId} role="alert">{error}</p> : null}</div>; }
+export function FieldWrapper(
+  {
+    children,
+    error,
+    helperText,
+    id,
+    label,
+    optional = false,
+    required = false,
+  }: FieldWrapperProps,
+) {
+  const fieldId = useComponentId(id, "field");
+  const helpId = `${fieldId}-help`;
+  const errorId = `${fieldId}-error`;
+  const describedBy = error ? errorId : helperText ? helpId : undefined;
+  return (
+    <div className={styles.wrapper}>
+      <label className={styles.label} htmlFor={fieldId}>
+        {label}
+        {required ? <span aria-hidden="true">*</span> : null}
+        {optional ? <span className={styles.optional}>Optional</span> : null}
+      </label>
+      {children({
+        id: fieldId,
+        "aria-describedby": describedBy,
+        "aria-invalid": Boolean(error) || undefined,
+      })}
+      {helperText && !error
+        ? <p className={styles.helper} id={helpId}>{helperText}</p>
+        : null}
+      {error
+        ? <p className={styles.error} id={errorId} role="alert">{error}</p>
+        : null}
+    </div>
+  );
+}
