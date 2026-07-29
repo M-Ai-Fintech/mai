@@ -10,6 +10,8 @@ const required = [
   "gui/app/_shell/AppShell.tsx",
   "gui/app/_shell/AppShell.module.css",
   "gui/app/_shell/AppShell.stories.tsx",
+  "gui/app/_shell/MobileNavigation.tsx",
+  "gui/app/_shell/ShellNavigation.tsx",
   "gui/app/[route]/[[...segments]]/page.tsx",
 ];
 const forbidden = [
@@ -86,21 +88,44 @@ for (const path of governedFiles) {
 }
 
 const shell = readFileSync(resolve(root, "gui/app/_shell/AppShell.tsx"), "utf8");
-if (!shell.includes("navigationForResolution")) {
-  violations.push("AppShell: navigation must derive from the typed route registry");
+if (/^[\s\S]*?["']use client["']/.test(shell)) {
+  violations.push("AppShell: shared shell must remain server-first");
+}
+if (!shell.includes("navigationForResolution") || !shell.includes("breadcrumbsForResolution")) {
+  violations.push("AppShell: navigation and breadcrumbs must derive from resolved route context");
 }
 if (/const\s+(?:global|deal|administration|external)Items\b/.test(shell)) {
   violations.push("AppShell: duplicated navigation arrays are prohibited");
 }
-if (!shell.includes("Drawer") || !shell.includes("Skip to main content") || !shell.includes("aria-current")) {
-  violations.push("AppShell: required keyboard and navigation semantics are missing");
+if (!shell.includes("Skip to main content") || !shell.includes("aria-current")) {
+  violations.push("AppShell: required landmark and current-route semantics are missing");
+}
+
+const mobileNavigation = readFileSync(resolve(root, "gui/app/_shell/MobileNavigation.tsx"), "utf8");
+if (!mobileNavigation.includes('"use client"')) {
+  violations.push("MobileNavigation: interactive boundary must be explicitly client-side");
+}
+if (!mobileNavigation.includes("Drawer") || !mobileNavigation.includes("returnFocusRef")) {
+  violations.push("MobileNavigation: Drawer and focus-return behavior are required");
+}
+
+const staticNavigation = readFileSync(resolve(root, "gui/app/_shell/ShellNavigation.tsx"), "utf8");
+if (staticNavigation.includes('"use client"')) {
+  violations.push("ShellNavigation: static navigation must remain server-compatible");
 }
 
 const registry = readFileSync(resolve(root, "gui/lib/shell/route-registry.ts"), "utf8");
 for (const mode of ["global", "deal", "administration", "external"]) {
   if (!registry.includes(`"${mode}"`)) violations.push(`route-registry: ${mode} shell mode missing`);
 }
-for (const contract of ["navigationRoutes", "routePath", "navigationParent", "permission", "availability"]) {
+for (const contract of [
+  "navigationRoutes",
+  "routePath",
+  "shellEntryRoutes",
+  "navigationParent",
+  "permission",
+  "availability",
+]) {
   if (!registry.includes(contract)) violations.push(`route-registry: ${contract} contract missing`);
 }
 
@@ -108,8 +133,12 @@ const context = readFileSync(resolve(root, "gui/lib/shell/route-context.ts"), "u
 for (const state of ["invalid-context", "restricted", "unavailable", "not-found", "ready"]) {
   if (!context.includes(`"${state}"`)) violations.push(`route-context: ${state} state missing`);
 }
-if (!context.includes("navigationForResolution") || !context.includes("permissions.includes")) {
-  violations.push("route-context: permission-safe navigation resolution missing");
+if (
+  !context.includes("navigationForResolution") ||
+  !context.includes("breadcrumbsForResolution") ||
+  !context.includes("permissions.includes")
+) {
+  violations.push("route-context: permission-safe navigation and breadcrumb resolution missing");
 }
 
 const adapter = readFileSync(resolve(root, "gui/lib/shell/adapters.ts"), "utf8");
