@@ -1,9 +1,11 @@
 ---
 id: MAI-98
 title: 'Implement application shell, navigation, and route architecture'
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@codex'
 created_date: '2026-07-28 03:08'
+updated_date: '2026-07-29 19:23'
 labels:
   - frontend
   - app-shell
@@ -19,6 +21,9 @@ documentation:
     backlog/docs/index/doc-10 -
     Documentation-Index-and-Information-Architecture.md
   - backlog/docs/product/mvp-gui-and-api/doc-9 - MVP-GUI-and-API-Behavior.md
+  - >-
+    backlog/docs/architecture/frontend-shell/doc-18 -
+    MAI-98-Application-Shell-and-Route-Architecture.md
 priority: high
 ordinal: 1100
 ---
@@ -42,3 +47,23 @@ The shell must support global, deal-context, administration, and external-partic
 - [ ] #5 Route, context-preservation, navigation, and access behavior have focused automated tests.
 - [ ] #6 Typed local adapters isolate screen implementation from unapproved backend contract assumptions.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Baseline
+2. Shell and route audit
+3. Typed context architecture
+4. Shell implementation
+5. Navigation and access states
+6. Focused tests
+7. Bounded rendered review
+8. Full verification
+9. Draft PR
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Baseline GUI checks passed; npm ci initially hit sandbox EPERM executing esbuild and passed with approved execution. Read-only Terra Low audit mapped Figma nodes 41:16, 43:10, 44:85 and documented administration/external variants. Implemented typed local fixture adapters, route registry, four shell modes, explicit context states, focused verifier, and route tests. Focused verify:shell, lint, build, and unit tests pass.
+<!-- SECTION:NOTES:END -->
