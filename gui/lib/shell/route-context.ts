@@ -8,6 +8,7 @@ import {
   matchRoute,
   navigationRoutes,
   routePath,
+  routeRegistry,
   type Permission,
   type RouteDefinition,
 } from "./route-registry";
@@ -27,6 +28,7 @@ export type RouteResolution =
       readonly counts?: ShellCounts;
     };
 
+export type ReadyRouteResolution = Extract<RouteResolution, { kind: "ready" }>;
 export type ShellNavigationState = "available" | "active" | "restricted" | "unavailable" | "disabled";
 
 export interface ShellNavigationEntry {
@@ -37,6 +39,13 @@ export interface ShellNavigationEntry {
   readonly section: "primary" | "secondary";
 }
 
+export interface ShellBreadcrumb {
+  readonly routeId: string;
+  readonly label: string;
+  readonly current: boolean;
+  readonly href?: string;
+}
+
 const identifier = /^[a-z0-9-]+$/;
 
 function routeParameters(route: RouteDefinition, parts: readonly string[]): Readonly<Record<string, string>> {
@@ -45,8 +54,26 @@ function routeParameters(route: RouteDefinition, parts: readonly string[]): Read
   ));
 }
 
+function routeById(routeId: string): RouteDefinition {
+  const definition = routeRegistry.find((candidate) => candidate.id === routeId);
+  if (!definition) throw new Error(`Route ${routeId} is missing from the registry.`);
+  return definition;
+}
+
+function breadcrumbForRoute(
+  resolution: ReadyRouteResolution,
+  definition: RouteDefinition,
+  label = definition.label,
+  current = false,
+): ShellBreadcrumb | undefined {
+  if (!resolution.permissions.includes(definition.permission)) return undefined;
+  if (definition.availability === "unavailable") return { routeId: definition.id, label, current };
+  const href = current ? undefined : routePath(definition, resolution.routeParameters);
+  return { routeId: definition.id, label, current, href };
+}
+
 export function navigationForResolution(
-  resolution: Extract<RouteResolution, { kind: "ready" }>,
+  resolution: ReadyRouteResolution,
 ): readonly ShellNavigationEntry[] {
   return navigationRoutes(resolution.route.shellMode).map((definition) => {
     const section = definition.navigation?.section ?? "primary";
@@ -68,6 +95,46 @@ export function navigationForResolution(
       section,
     };
   });
+}
+
+export function breadcrumbsForResolution(
+  resolution: ReadyRouteResolution,
+): readonly ShellBreadcrumb[] {
+  const { route, organization, deal } = resolution;
+  const crumbs: Array<ShellBreadcrumb | undefined> = [];
+
+  if (route.shellMode !== "external" && organization) {
+    const home = routeById("global.home");
+    crumbs.push(breadcrumbForRoute(resolution, home, organization.name, route.id === home.id));
+  }
+
+  if (route.shellMode === "deal" && deal) {
+    const overview = routeById("deal.overview");
+    crumbs.push(breadcrumbForRoute(resolution, overview, deal.name, route.id === overview.id));
+  } else if (route.shellMode === "administration") {
+    const administration = routeById("administration.profile");
+    crumbs.push(breadcrumbForRoute(
+      resolution,
+      administration,
+      administration.label,
+      route.id === administration.id,
+    ));
+  } else if (route.shellMode === "external" && route.id !== "external.submit") {
+    const workspace = routeById("external.workspace");
+    crumbs.push(breadcrumbForRoute(
+      resolution,
+      workspace,
+      workspace.label,
+      route.id === workspace.id,
+    ));
+  }
+
+  const parentIsCurrent = crumbs.at(-1)?.current === true;
+  if (!parentIsCurrent) {
+    crumbs.push({ routeId: route.id, label: route.label, current: true });
+  }
+
+  return crumbs.filter((crumb): crumb is ShellBreadcrumb => Boolean(crumb));
 }
 
 export async function resolveRouteContext(parts: readonly string[]): Promise<RouteResolution> {
