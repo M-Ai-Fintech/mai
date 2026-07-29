@@ -30,7 +30,8 @@
 }
 
 .brandMark:focus-visible,
-.skip:focus-visible {
+.skip:focus-visible,
+.breadcrumbs a:focus-visible {
   outline: var(--mai-focus-ring-width) solid var(--mai-color-focus-ring);
   outline-offset: var(--mai-focus-ring-width);
 }
@@ -175,6 +176,21 @@
   padding: 0;
   list-style: none;
   white-space: nowrap;
+}
+
+.breadcrumbs li {
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumbs a {
+  min-inline-size: var(--mai-control-min-target);
+  min-block-size: var(--mai-control-min-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mai-color-content-link);
 }
 
 .breadcrumbs li + li::before {
