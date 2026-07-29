@@ -1,7 +1,9 @@
 .dialog {
-  inline-size: min(100%, var(--mai-layout-content-max-mobile));
-  max-inline-size: var(--mai-layout-content-max-tablet);
+  position: fixed;
+  inset: 0;
+  inline-size: min(calc(100% - (2 * var(--mai-space-layout-panel))), 560px);
   max-block-size: min(100%, var(--mai-layout-validation-canvas-height));
+  margin: auto;
   padding: 0;
   border: 0;
   border-radius: var(--mai-radius-panel-large);
