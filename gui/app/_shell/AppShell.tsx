@@ -8,7 +8,12 @@ import {
   type RouteResolution,
   type ShellNavigationEntry,
 } from "@/lib/shell/route-context";
-import { breadcrumbs } from "@/lib/shell/route-registry";
+import {
+  breadcrumbs,
+  routePath,
+  shellEntryRoutes,
+  type RouteDefinition,
+} from "@/lib/shell/route-registry";
 import styles from "./AppShell.module.css";
 
 function navigationItem(entry: ShellNavigationEntry): ReactNode {
@@ -59,6 +64,16 @@ function Navigation({
   );
 }
 
+function entryCount(
+  definition: RouteDefinition,
+  counts: Extract<RouteResolution, { kind: "ready" }>["counts"],
+): number | undefined {
+  if (definition.id === "global.tasks") return counts?.tasks;
+  if (definition.id === "global.approvals") return counts?.approvals;
+  if (definition.id === "global.notifications") return counts?.notifications;
+  return undefined;
+}
+
 export function AppShell({
   resolution,
 }: {
@@ -68,6 +83,7 @@ export function AppShell({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { route, organization, deal, counts } = resolution;
   const entries = navigationForResolution(resolution);
+  const utilityEntries = shellEntryRoutes();
   const external = route.shellMode === "external";
   const dealMode = route.shellMode === "deal";
   const navigationLabel = dealMode
@@ -113,12 +129,23 @@ export function AppShell({
             <small>Fixture adapter</small>
           </div>
           {!external ? (
-            <div className={styles.headerEntries} aria-label="Fixture shell entry points">
-              <span>Search</span>
-              <span>Tasks {counts?.tasks ?? 0}</span>
-              <span>Approvals {counts?.approvals ?? 0}</span>
-              <span>Notifications {counts?.notifications ?? 0}</span>
-            </div>
+            <nav className={styles.headerEntries} aria-label="Fixture shell entry points">
+              {utilityEntries.map((definition) => {
+                const href = routePath(definition);
+                if (!href) return null;
+                return (
+                  <NavigationItem
+                    key={definition.id}
+                    kind="link"
+                    href={href}
+                    active={route.id === definition.id}
+                    count={entryCount(definition, counts)}
+                  >
+                    {definition.label}
+                  </NavigationItem>
+                );
+              })}
+            </nav>
           ) : (
             <span className={styles.externalLabel}>External participant</span>
           )}
