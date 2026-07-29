@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 17:52'
+updated_date: '2026-07-29 17:54'
 labels:
   - frontend
   - component-library
@@ -15,6 +15,8 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-96
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/17'
 documentation:
   - design/
   - >-
@@ -201,4 +203,6 @@ Implement the approved Figma component library in frontend code and document it 
 
 <!-- SECTION:NOTES:BEGIN -->
 Implemented and committed all 21 approved Figma component families with strongly typed native APIs, semantic-token-only CSS, complete Storybook triads, focused unit tests, Chromium interactions, bounded compositions, exact Figma traceability, and the MAI-98 exclusion verifier. Baseline: clean install passed outside sandbox after the initial esbuild EPERM was classified as environmental; all requested baseline gates passed. Final: clean install passed; tokens:check, verify:tokens (21 contrast pairs), verify:components (21 exact families), verify:foundation (182 paths), lint, 57 unit tests, Next build, 22 MDX validation, Storybook build, 84 Chromium story tests, and deno task verify all passed. npm reported 15 existing dependency advisories (3 moderate, 12 high); no upgrades were made because dependency upgrades are out of scope. Graphify update completed; graph HTML was skipped because 15,465 nodes exceeded its 5,000-node visualization limit, while graph.json and GRAPH_REPORT.md regenerated. Visual-review limitation: responsive/constrained stories exist, but the approved in-app browser-control surface was unavailable, so screenshot-level clipping/overlap inspection at 1440/1024/390 remains unclaimed and acceptance criterion #6 stays unchecked pending owner review.
+
+Draft PR #17 opened for one owner review: https://github.com/luisfelipeluis49/mai/pull/17. Branch head before PR-reference record: 8ffccd4. PR is Draft; no self-approval or merge performed. Remaining owner action: run the bounded 1440/1024/390 rendered inspection, record criterion #6 evidence, approve the component library, then authorize final MAI-97 closure.
 <!-- SECTION:NOTES:END -->
