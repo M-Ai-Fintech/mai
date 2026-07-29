@@ -1,12 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useRef, useState, type ReactNode } from "react";
-import { Drawer, IconButton, NavigationItem, StatusIndicator } from "@/components";
+import { NavigationItem, StatusIndicator } from "@/components";
 import {
   navigationForResolution,
   type RouteResolution,
-  type ShellNavigationEntry,
 } from "@/lib/shell/route-context";
 import {
   breadcrumbs,
@@ -14,55 +10,9 @@ import {
   shellEntryRoutes,
   type RouteDefinition,
 } from "@/lib/shell/route-registry";
+import { MobileNavigation } from "./MobileNavigation";
+import { ShellNavigation } from "./ShellNavigation";
 import styles from "./AppShell.module.css";
-
-function navigationItem(entry: ShellNavigationEntry): ReactNode {
-  if (entry.state === "restricted") {
-    return (
-      <NavigationItem key={entry.routeId} kind="button" restricted>
-        {entry.label}
-      </NavigationItem>
-    );
-  }
-  if (entry.state === "unavailable" || entry.state === "disabled" || !entry.href) {
-    return (
-      <NavigationItem key={entry.routeId} kind="button" disabled status="Unavailable">
-        {entry.label}
-      </NavigationItem>
-    );
-  }
-  return (
-    <NavigationItem
-      key={entry.routeId}
-      kind="link"
-      href={entry.href}
-      active={entry.state === "active"}
-    >
-      {entry.label}
-    </NavigationItem>
-  );
-}
-
-function Navigation({
-  entries,
-  label,
-  className,
-}: {
-  entries: readonly ShellNavigationEntry[];
-  label: string;
-  className?: string;
-}) {
-  const primary = entries.filter((entry) => entry.section === "primary");
-  const secondary = entries.filter((entry) => entry.section === "secondary");
-  return (
-    <nav aria-label={label} className={className}>
-      <div className={styles.navigationGroup}>{primary.map(navigationItem)}</div>
-      {secondary.length > 0 ? (
-        <div className={styles.secondaryNavigation}>{secondary.map(navigationItem)}</div>
-      ) : null}
-    </nav>
-  );
-}
 
 function entryCount(
   definition: RouteDefinition,
@@ -79,8 +29,6 @@ export function AppShell({
 }: {
   resolution: Extract<RouteResolution, { kind: "ready" }>;
 }) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const { route, organization, deal, counts } = resolution;
   const entries = navigationForResolution(resolution);
   const utilityEntries = shellEntryRoutes();
@@ -114,14 +62,7 @@ export function AppShell({
 
       <div className={styles.application}>
         <header className={styles.header}>
-          <IconButton
-            ref={triggerRef}
-            className="xl:hidden"
-            label="Open navigation"
-            onClick={() => setOpen(true)}
-          >
-            <span aria-hidden="true">☰</span>
-          </IconButton>
+          <MobileNavigation entries={entries} label={navigationLabel} />
           <div className={styles.contextIdentity}>
             <strong>
               {external ? "Shared workspace" : organization?.name ?? "MAI"}
@@ -131,6 +72,7 @@ export function AppShell({
           {!external ? (
             <nav className={styles.headerEntries} aria-label="Fixture shell entry points">
               {utilityEntries.map((definition) => {
+                if (!resolution.permissions.includes(definition.permission)) return null;
                 const href = routePath(definition);
                 if (!href) return null;
                 return (
@@ -151,16 +93,6 @@ export function AppShell({
           )}
         </header>
 
-        <Drawer
-          open={open}
-          onOpenChange={setOpen}
-          title="Navigation"
-          description={`${navigationLabel}. Fixture-only routes.`}
-          returnFocusRef={triggerRef}
-        >
-          <Navigation entries={entries} label={navigationLabel} />
-        </Drawer>
-
         <div className={`${styles.workspace} xl:flex`}>
           {!external ? (
             <aside className={`${styles.contextSidebar} hidden xl:block`}>
@@ -169,7 +101,7 @@ export function AppShell({
                 {deal ? <strong>{deal.name}</strong> : null}
               </div>
               {!dealMode ? (
-                <Navigation entries={entries} label={navigationLabel} />
+                <ShellNavigation entries={entries} label={navigationLabel} />
               ) : (
                 <dl className={styles.dealContext}>
                   <div><dt>Deal</dt><dd>{deal?.name}</dd></div>
@@ -181,14 +113,14 @@ export function AppShell({
 
           <div className={styles.contentColumn}>
             {dealMode ? (
-              <Navigation
+              <ShellNavigation
                 entries={entries}
                 label={navigationLabel}
                 className={`${styles.dealNavigation} hidden md:flex`}
               />
             ) : null}
             {external ? (
-              <Navigation
+              <ShellNavigation
                 entries={entries}
                 label={navigationLabel}
                 className={styles.externalNavigation}
