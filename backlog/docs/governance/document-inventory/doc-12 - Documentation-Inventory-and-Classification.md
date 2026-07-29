@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-28 19:39'
+updated_date: '2026-07-29 13:15'
 tags:
   - documentation
   - inventory
@@ -14,7 +14,7 @@ tags:
 - Authority ID: DOC-INV-001
 - Owner: Repository maintainers
 - Authority: Canonical classification inventory
-- Freshness: Current as of 2026-07-24
+- Freshness: Current as of 2026-07-29
 - Language: English
 - Update trigger: Addition, deletion, relocation, or reclassification of tracked documentation-like assets
 
@@ -128,6 +128,7 @@ Every project file below is individually classified; removed paths are retained 
 | `design/1_Application_Shell_Navigation.md` to `design/25_External_Participant_Screen_Family.md` | Product Design | 25 canonical banker-workspace screen definitions | screen-definition authority until implemented in Figma/code | current as of MAI-90 | English | referenced canonical design source |
 | `design/26_Cross_Screen_Interaction_Map.md` | Product Design | Cross-screen route, object-ownership and handoff map | interaction governance support | current as of MAI-90 | English | referenced governance support |
 | `design/27_Shared_State_Model.md` | Product Design | Shared state semantics and permission-state model | state governance support | current as of MAI-90 | English | referenced governance support |
+| `backlog/docs/architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | Frontend Engineering | MAI-95 path-level frontend disposition and foundation boundary | ARCH-FRONTEND-001 | current | English | canonical |
 | `gui/AGENTS.md` | GUI | GUI agent instruction | gui-local | current | English | referenced |
 | `gui/CLAUDE.md` | GUI | GUI agent instruction | gui-local | review-needed | English | referenced |
 | `gui/DESIGN.md` | GUI | GUI design reference | gui-local | review-needed | English | referenced |
@@ -294,6 +295,15 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Repository maintainers",
       "purpose": "English identifiers and i18n decision",
       "authority": "ADR-0001",
+      "freshness": "current",
+      "language": "English",
+      "disposition": "canonical"
+    },
+    {
+      "path": "architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md",
+      "owner": "Frontend Engineering",
+      "purpose": "MAI-95 path-level frontend disposition and foundation boundary",
+      "authority": "ARCH-FRONTEND-001",
       "freshness": "current",
       "language": "English",
       "disposition": "canonical"

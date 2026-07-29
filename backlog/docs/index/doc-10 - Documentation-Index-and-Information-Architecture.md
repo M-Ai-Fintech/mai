@@ -3,7 +3,7 @@ id: doc-10
 title: Documentation Index and Information Architecture
 type: readme
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-24 15:40'
+updated_date: '2026-07-29 13:15'
 tags:
   - documentation
   - governance
@@ -30,6 +30,7 @@ tags:
 | Governance and inventory | `governance/` | DOC-GOV-001 and DOC-INV-001 |
 | Decisions and ADRs | `decisions/` | ADR documents |
 | System and integration architecture | `architecture/` | Architecture documents |
+| Frontend foundation architecture | `architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | ARCH-FRONTEND-001 |
 | Domain model | `domain/` | Domain-model documents |
 | Setup and operations | `operations/` | Operations documents |
 | Product behavior | `product/` | Product documents |
