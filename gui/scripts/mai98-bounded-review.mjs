@@ -19,7 +19,7 @@ const cases = [
 await mkdir("visual-review", { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const report = [];
-let failed = false;
+const failures = [];
 
 for (const item of cases) {
   const page = await browser.newPage({ viewport: { width: item.width, height: item.height } });
@@ -74,15 +74,14 @@ for (const item of cases) {
     };
   }, item.mode ?? null);
 
-  if (
+  const failed =
     metrics.pageOverflow ||
-    metrics.smallTargets.length ||
-    metrics.clipped.length ||
+    metrics.smallTargets.length > 0 ||
+    metrics.clipped.length > 0 ||
     (item.mode && metrics.actualMode !== item.mode) ||
-    (item.mode && !metrics.currentBreadcrumb)
-  ) {
-    failed = true;
-  }
+    (item.mode && !metrics.currentBreadcrumb);
+  if (failed) failures.push({ name: item.name, metrics });
+
   await page.screenshot({ path: `visual-review/${item.name}.png`, fullPage: true });
   report.push({ ...item, url, metrics });
   await page.close();
@@ -90,4 +89,7 @@ for (const item of cases) {
 
 await browser.close();
 await writeFile("visual-review/report.json", JSON.stringify(report, null, 2));
-if (failed) process.exitCode = 1;
+if (failures.length) {
+  console.error(JSON.stringify({ renderedReviewFailures: failures }, null, 2));
+  process.exitCode = 1;
+}
