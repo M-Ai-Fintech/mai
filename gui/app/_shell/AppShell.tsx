@@ -211,11 +211,30 @@ export function AppShell({
                 )
                 : null}
 
-              <ScreenBody resolution={resolution} />
+              {route.implementationStatus === "screen-body"
+                ? <ScreenBody resolution={resolution} />
+                : <DeferredScreenPlaceholder owner={route.deferredScreenOwner} />}
             </main>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function DeferredScreenPlaceholder({ owner }: { owner: string }) {
+  return (
+    <section
+      className={styles.placeholder}
+      data-deferred-screen-owner={owner}
+      aria-labelledby="deferred-screen-title"
+    >
+      <p className={styles.eyebrow}>Screen deferred</p>
+      <h2 id="deferred-screen-title">This screen is deferred to {owner}.</h2>
+      <p>
+        The approved Shell, route context, navigation, and breadcrumbs remain
+        available while the screen body is not yet in scope.
+      </p>
+    </section>
   );
 }

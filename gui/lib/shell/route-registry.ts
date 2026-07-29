@@ -32,13 +32,23 @@ type RouteInput = Omit<
   | "deferredScreenOwner"
 >;
 
-function route(input: RouteInput): RouteDefinition {
+function screenBodyRoute(input: RouteInput): RouteDefinition {
   return {
     ...input,
     breadcrumbPolicy: input.shellMode,
     implementationStatus: "screen-body",
     authority: "Figma v0.3 / MAI-98",
-    deferredScreenOwner: "MAI-99+",
+    deferredScreenOwner: "MAI-99",
+  };
+}
+
+function deferredRoute(input: RouteInput): RouteDefinition {
+  return {
+    ...input,
+    breadcrumbPolicy: input.shellMode,
+    implementationStatus: "shell-placeholder",
+    authority: "Figma v0.3 / MAI-98",
+    deferredScreenOwner: "MAI-100",
   };
 }
 
@@ -55,7 +65,7 @@ const globalRoute = (
   options: Partial<Pick<RouteDefinition, "navigationParent" | "availability">> =
     {},
 ): RouteDefinition =>
-  route({
+  screenBodyRoute({
     id: `global.${name}`,
     label,
     pattern: [name],
@@ -74,7 +84,7 @@ const dealRoute = (
   label: string,
   order: number,
 ): RouteDefinition =>
-  route({
+  deferredRoute({
     id: `deal.${name}`,
     label,
     pattern: ["deals", ":dealId", name],
@@ -90,7 +100,7 @@ const administrationRoute = (
   label: string,
   order: number,
 ): RouteDefinition =>
-  route({
+  screenBodyRoute({
     id: `administration.${name}`,
     label,
     pattern: ["settings", name],
@@ -112,7 +122,7 @@ const externalRoute = (
   label: string,
   order: number,
 ): RouteDefinition =>
-  route({
+  screenBodyRoute({
     id: `external.${name}`,
     label,
     pattern: [
@@ -131,7 +141,7 @@ const externalRoute = (
 export const routeRegistry: readonly RouteDefinition[] = [
   globalRoute("home", "Home", 10),
   globalRoute("deals", "Deals", 20),
-  route({
+  screenBodyRoute({
     id: "global.new-deal",
     label: "New deal",
     pattern: ["new-deal"],
@@ -141,7 +151,7 @@ export const routeRegistry: readonly RouteDefinition[] = [
     availability: "available",
   }),
   globalRoute("organizations", "Organizations", 30),
-  route({
+  screenBodyRoute({
     id: "global.organization-detail",
     label: "Organization detail",
     pattern: ["organizations", ":organizationId"],
@@ -180,7 +190,7 @@ export const routeRegistry: readonly RouteDefinition[] = [
   externalRoute("workspace", "Shared workspace", 10),
   externalRoute("requests", "Requests", 20),
   externalRoute("approvals", "Approvals", 30),
-  route({
+  screenBodyRoute({
     id: "external.submit",
     label: "Submit documents",
     pattern: ["submit", ":submissionToken"],

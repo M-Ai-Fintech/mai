@@ -9,6 +9,8 @@ const files = [
   "gui/screens/ScreenBody.test.ts",
   "gui/screens/ScreenBody.stories.tsx",
   "gui/.storybook/main.ts",
+  "gui/lib/shell/route-registry.ts",
+  "gui/app/_shell/AppShell.tsx",
 ];
 const sources = files.map((file) =>
   existsSync(resolve(root, file))
@@ -54,6 +56,28 @@ if (!text.includes("stateCoverage") || !text.includes("data-screen-family")) {
 }
 if (!sources[6].includes("../screens/**/*.stories")) {
   errors.push("Storybook does not discover MAI-99 screen stories");
+}
+const registry = sources[7];
+const screenBody = sources[0];
+const appShell = sources[8];
+const dealRouteSource = registry.slice(
+  registry.indexOf("const dealRoute"),
+  registry.indexOf("const administrationRoute"),
+);
+if (
+  !dealRouteSource.includes("deferredRoute({") ||
+  dealRouteSource.includes("screenBodyRoute({") ||
+  !registry.includes('implementationStatus: "shell-placeholder"') ||
+  !registry.includes('deferredScreenOwner: "MAI-100"')
+) errors.push("deal routes are not explicitly deferred to MAI-100");
+if (!screenBody.includes('implementationStatus !== "screen-body"')) {
+  errors.push("ScreenBody can capture MAI-100 deferred routes");
+}
+if (/routeScreens\[resolution\.route\.id\]\s*\?\?\s*\{\s*family:\s*"command-center"/s.test(screenBody)) {
+  errors.push("ScreenBody has a default Command Center fallback");
+}
+if (!appShell.includes('route.implementationStatus === "screen-body"')) {
+  errors.push("AppShell does not preserve the MAI-100 placeholder boundary");
 }
 if (errors.length) {
   console.error(`MAI-99 screen verification failed:\n${errors.join("\n")}`);

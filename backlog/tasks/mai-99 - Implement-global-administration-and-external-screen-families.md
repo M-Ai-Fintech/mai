@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-29 22:42'
+updated_date: '2026-07-29 23:34'
 labels:
   - frontend
   - screen-implementation
@@ -27,7 +27,9 @@ documentation:
 modified_files:
   - gui/.storybook/main.ts
   - gui/app/_shell/AppShell.tsx
+  - gui/app/_shell/AppShell.test.ts
   - gui/lib/shell/route-registry.ts
+  - gui/lib/shell/route-registry.test.ts
   - gui/screens/ScreenBody.tsx
   - gui/screens/ScreenBody.module.css
   - gui/screens/screen-contracts.ts
@@ -96,6 +98,8 @@ Focused verification: verify:screens PASS; verify:shell PASS; lint PASS; screen 
 Rendered review: initial run 30496183348, job 90725457291, artifact 8741757904, digest sha256:d3f17974a80c3d109b588670a7950f53ec43338dc8c2952f1fa4dae8b19a3142 captured all 33 approved views and report.json. It found one P1 class: link targets below 44 px in Deals, Tasks, Notifications, Search, and Organizations; no P0. Correction added governed 44 px link targets, screen-story discovery, Team destructive coverage, and verifier enforcement. Targeted run 30496639496, job 90726904380, artifact 8741873248, digest sha256:9c083b6e1ee243efbf704a5b8ff4c46229c129cbf999e017c7b8dedd95d0d15f reran all 15 affected responsive views and five edge views: New Deal validation, Team destructive action, Settings secret/policy, External expired/submitted, and Organization restricted history. All corrected views passed overflow, clipping, 44 px targets, semantic token, protected-data, external privacy, destructive-accessibility, and long-content checks. The job removed temporary machinery and its exact-final-tree deno task verify step exited successfully.
 
 Temporary review workflows, runners, screenshots, caches, and artifacts have no final-tree diff. MAI-100 remains absent. verify:screens remains in canonical deno task verify. MAI-99 remains In Progress pending owner review and merge.
+
+Owner-review P1 comment 5124397313 corrected: only MAI-99 global, administration, and external routes are screen-body. Every deal.* route is shell-placeholder with deferredScreenOwner MAI-100. AppShell now renders ScreenBody only for screen-body routes and otherwise shows the neutral MAI-100 deferred placeholder. resolveScreenFamily has no Command Center fallback. Added route, resolver, AppShell, and verifier coverage. Terminal PASS: verify:screens; verify:shell; unit tests 76/76 across 32 files; lint; production build; deno task verify.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -105,6 +109,18 @@ author: @codex
 created: 2026-07-29 22:42
 ---
 Draft PR #19 opened: https://github.com/luisfelipeluis49/mai/pull/19. Final exact-tree verification is being recorded before owner handoff; no merge or self-approval requested.
+---
+
+author: @codex
+created: 2026-07-29 22:50
+---
+Final exact-tree verification: GitHub Actions run 30497262425, job 90728857895, cleanup commit d7310ff, terminal success (exit 0). npm ci plus Chromium installation succeeded; tokens:check, verify:tokens, verify:components, verify:shell, verify:screens, verify:foundation, lint, test:unit, build, validate:storybook-docs, build-storybook, test-storybook, and deno task verify all completed successfully. The first final-only run 30497134279 failed solely because its temporary workflow omitted Playwright browser installation; corrected workflow setup resolved that CI-only defect. No application change followed d7310ff.
+---
+
+author: @codex
+created: 2026-07-29 23:34
+---
+Owner-review P1 comment 5124397313 corrected: only MAI-99 global, administration, and external routes are screen-body. Every deal.* route is shell-placeholder with deferredScreenOwner MAI-100. AppShell now renders ScreenBody only for screen-body routes and otherwise shows the neutral MAI-100 deferred placeholder. resolveScreenFamily has no Command Center fallback. Added route, resolver, AppShell, and verifier coverage. Terminal PASS: verify:screens; verify:shell; unit tests 76/76 across 32 files; lint; production build; deno task verify.
 ---
 <!-- COMMENTS:END -->
 

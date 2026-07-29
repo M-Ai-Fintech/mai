@@ -2,13 +2,21 @@ import { describe, expect, it } from "vitest";
 import { externalFixture, fixtureFor } from "./fixtures";
 import { resolveScreenFamily } from "./ScreenBody";
 import { stateCoverage } from "./screen-contracts";
+import { routeRegistry } from "@/lib/shell/route-registry";
 
 describe("MAI-99 screen resolution", () => {
   it("maps all eleven approved families from registry-owned routes", () => {
     const route = (
       id: string,
       shellMode: "global" | "administration" | "external",
-    ) => ({ route: { id, shellMode, availability: "available" } }) as never;
+    ) => ({
+      route: {
+        id,
+        shellMode,
+        availability: "available",
+        implementationStatus: "screen-body",
+      },
+    }) as never;
     expect(resolveScreenFamily(route("global.home", "global")).family).toBe(
       "command-center",
     );
@@ -40,6 +48,42 @@ describe("MAI-99 screen resolution", () => {
     ).toBe("settings");
     expect(resolveScreenFamily(route("external.workspace", "external")).family)
       .toBe("external-participant");
+  });
+  it("does not resolve deferred deal routes to MAI-99 families", () => {
+    const route = (id: string) => ({
+      route: {
+        id,
+        shellMode: "deal",
+        availability: "available",
+        implementationStatus: "shell-placeholder",
+      },
+    }) as never;
+
+    for (const definition of routeRegistry.filter((item) => item.id.startsWith("deal."))) {
+      expect(resolveScreenFamily(route(definition.id))).toBeUndefined();
+    }
+  });
+  it("resolves every approved screen-body registry route", () => {
+    for (const definition of routeRegistry.filter((item) =>
+      item.implementationStatus === "screen-body"
+    )) {
+      const resolution = {
+        route: definition,
+      } as never;
+      expect(resolveScreenFamily(resolution)).toBeDefined();
+    }
+  });
+  it("does not fall back unknown routes to Command Center", () => {
+    const unknown = {
+      route: {
+        id: "unknown.route",
+        shellMode: "global",
+        availability: "available",
+        implementationStatus: "screen-body",
+      },
+    } as never;
+
+    expect(resolveScreenFamily(unknown)).toBeUndefined();
   });
   it("keeps fixture-only disclosure and external data exclusion structural", () => {
     expect(fixtureFor("command-center", "workspace").disclosure).toContain(

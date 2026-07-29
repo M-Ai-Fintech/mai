@@ -36,15 +36,15 @@ const routeScreens: Readonly<Record<string, RouteScreen>> = {
   "global.team": { family: "team-workspace", permission: "workspace" },
 };
 
-function familyFor(resolution: ReadyRouteResolution): RouteScreen {
+function familyFor(resolution: ReadyRouteResolution): RouteScreen | undefined {
+  if (resolution.route.implementationStatus !== "screen-body") return undefined;
   if (resolution.route.id.startsWith("administration.")) {
     return { family: "settings", permission: "administration" };
   }
   if (resolution.route.id.startsWith("external.")) {
     return { family: "external-participant", permission: "external" };
   }
-  return routeScreens[resolution.route.id] ??
-    { family: "command-center", permission: "workspace" };
+  return routeScreens[resolution.route.id];
 }
 
 function stateFor(resolution: ReadyRouteResolution): ScreenState {
@@ -61,6 +61,7 @@ export function ScreenBody(
   },
 ) {
   const screen = familyFor(resolution);
+  if (!screen) return null;
   const state = stateOverride ?? stateFor(resolution);
   const fixture = screen.family === "external-participant"
     ? externalFixture(state)
