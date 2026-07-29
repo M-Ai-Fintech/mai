@@ -1,0 +1,183 @@
+name: MAI-97 bounded visual review
+
+on:
+  push:
+    branches:
+      - feat/MAI-97-figma-component-library
+
+permissions:
+  contents: read
+
+jobs:
+  visual-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Install dependencies
+        run: npm --prefix gui ci
+
+      - name: Install Chromium
+        run: npx --prefix gui playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: npm --prefix gui run build-storybook
+
+      - name: Start static Storybook
+        run: |
+          python3 -m http.server 6006 --directory gui/storybook-static > /tmp/mai-storybook.log 2>&1 &
+          echo $! > /tmp/mai-storybook.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:6006/index.json > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mai-storybook.log
+          exit 1
+
+      - name: Capture bounded review evidence
+        working-directory: gui
+        run: |
+          mkdir -p visual-review
+          node --input-type=module <<'EOF'
+          import { chromium } from 'playwright';
+          import { writeFile } from 'node:fs/promises';
+
+          const base = 'http://127.0.0.1:6006';
+          const index = await fetch(`${base}/index.json`).then((response) => {
+            if (!response.ok) throw new Error(`Storybook index failed: ${response.status}`);
+            return response.json();
+          });
+          const stories = Object.values(index.entries ?? {}).filter((entry) => entry.type === 'story');
+
+          const targets = [
+            { key: 'status-long-mobile', title: /Status\/Indicator/i, story: /long|constrained|roles/i, width: 390, height: 844 },
+            { key: 'notice-wrap-mobile', title: /Feedback\/InlineNotice/i, story: /long|wrap|constrained/i, width: 390, height: 844 },
+            { key: 'evidence-wrap-mobile', title: /Evidence\/Reference/i, story: /long|wrap|constrained|restricted/i, width: 390, height: 844 },
+            { key: 'tabs-overflow-mobile', title: /Navigation\/Tab/i, story: /overflow/i, width: 390, height: 844 },
+            { key: 'table-overflow-mobile', title: /^Data\/Table$/i, story: /overflow|narrow|responsive|default/i, width: 390, height: 844 },
+            { key: 'dialog-desktop', title: /Overlay\/Dialog/i, story: /standard|keyboard dismissal|responsive/i, width: 1440, height: 900 },
+            { key: 'drawer-tablet', title: /Overlay\/Drawer/i, story: /tablet/i, width: 1024, height: 900 },
+            { key: 'drawer-mobile', title: /Overlay\/Drawer/i, story: /mobile/i, width: 390, height: 844 },
+            { key: 'field-long-error-mobile', title: /Form\/TextField/i, story: /long|error|validation|constrained/i, width: 390, height: 844 },
+          ];
+
+          function pick(target) {
+            const family = stories.filter((entry) => target.title.test(entry.title));
+            return family.find((entry) => target.story.test(entry.name)) ?? family[0];
+          }
+
+          const browser = await chromium.launch({ headless: true });
+          const results = [];
+          try {
+            for (const target of targets) {
+              const story = pick(target);
+              if (!story) {
+                results.push({ key: target.key, status: 'missing-story' });
+                continue;
+              }
+              const page = await browser.newPage({ viewport: { width: target.width, height: target.height }, deviceScaleFactor: 1 });
+              const url = `${base}/iframe.html?id=${encodeURIComponent(story.id)}&viewMode=story`;
+              await page.goto(url, { waitUntil: 'networkidle' });
+              await page.waitForTimeout(500);
+
+              const metrics = await page.evaluate(() => {
+                const visible = (element) => {
+                  const style = getComputedStyle(element);
+                  const rect = element.getBoundingClientRect();
+                  return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+                };
+                const interactiveSelector = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="tab"], [role="link"]';
+                const smallTargets = [...document.querySelectorAll(interactiveSelector)]
+                  .filter(visible)
+                  .map((element) => {
+                    const rect = element.getBoundingClientRect();
+                    return {
+                      tag: element.tagName.toLowerCase(),
+                      role: element.getAttribute('role'),
+                      name: element.getAttribute('aria-label') || element.textContent?.trim().slice(0, 80) || '',
+                      width: Math.round(rect.width * 10) / 10,
+                      height: Math.round(rect.height * 10) / 10,
+                    };
+                  })
+                  .filter(({ width, height }) => width < 44 || height < 44);
+
+                const clippedText = [...document.querySelectorAll('body *')]
+                  .filter(visible)
+                  .filter((element) => {
+                    const style = getComputedStyle(element);
+                    if (!element.textContent?.trim()) return false;
+                    const xOverflow = element.scrollWidth > element.clientWidth + 1;
+                    const yOverflow = element.scrollHeight > element.clientHeight + 1;
+                    const intentionallyScrollable = ['auto', 'scroll'].includes(style.overflowX) || ['auto', 'scroll'].includes(style.overflowY);
+                    const intentionalEllipsis = style.textOverflow === 'ellipsis';
+                    return (xOverflow || yOverflow) && !intentionallyScrollable && !intentionalEllipsis;
+                  })
+                  .slice(0, 20)
+                  .map((element) => ({
+                    tag: element.tagName.toLowerCase(),
+                    className: String(element.className).slice(0, 120),
+                    text: element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 120),
+                    clientWidth: element.clientWidth,
+                    scrollWidth: element.scrollWidth,
+                    clientHeight: element.clientHeight,
+                    scrollHeight: element.scrollHeight,
+                  }));
+
+                const unresolvedVisual = [...document.querySelectorAll('body *')]
+                  .filter(visible)
+                  .some((element) => {
+                    const style = getComputedStyle(element);
+                    return [style.color, style.backgroundColor, style.borderColor].some((value) => value.includes('var('));
+                  });
+
+                return {
+                  bodyScrollWidth: document.documentElement.scrollWidth,
+                  bodyClientWidth: document.documentElement.clientWidth,
+                  bodyScrollHeight: document.documentElement.scrollHeight,
+                  bodyClientHeight: document.documentElement.clientHeight,
+                  smallTargets,
+                  clippedText,
+                  unresolvedVisual,
+                  dialogs: [...document.querySelectorAll('dialog')].map((dialog) => ({ open: dialog.open, width: dialog.getBoundingClientRect().width, height: dialog.getBoundingClientRect().height })),
+                };
+              });
+
+              await page.screenshot({ path: `visual-review/${target.key}.png`, fullPage: true });
+              results.push({
+                key: target.key,
+                status: 'captured',
+                storyId: story.id,
+                title: story.title,
+                storyName: story.name,
+                viewport: { width: target.width, height: target.height },
+                url,
+                metrics,
+              });
+              await page.close();
+            }
+          } finally {
+            await browser.close();
+          }
+
+          await writeFile('visual-review/results.json', JSON.stringify(results, null, 2));
+          console.log(JSON.stringify(results, null, 2));
+          if (results.some((result) => result.status !== 'captured')) process.exitCode = 1;
+          EOF
+
+      - name: Upload visual-review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai-97-bounded-visual-review
+          path: gui/visual-review
+          if-no-files-found: error
+          retention-days: 7
