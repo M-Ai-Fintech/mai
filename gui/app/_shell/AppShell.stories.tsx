@@ -63,7 +63,14 @@ export const GlobalDesktop: Story = {
 };
 
 export const DealDesktop: Story = {
-  args: { resolution: fixture(["deals", "demo-deal", "overview"]) },
+  args: { resolution: fixture(["deals", "demo-deal", "documents"]) },
+  play: async ({ canvasElement }) => {
+    const breadcrumb = within(canvasElement).getByRole("navigation", { name: "Breadcrumb" });
+    const scoped = within(breadcrumb);
+    await expect(scoped.getByRole("link", { name: "Demo Advisory" })).toHaveAttribute("href", "/home");
+    await expect(scoped.getByRole("link", { name: "Demo transaction" })).toHaveAttribute("href", "/deals/demo-deal/overview");
+    await expect(scoped.getByText("Documents")).toHaveAttribute("aria-current", "page");
+  },
 };
 
 export const DealMobile: Story = {
