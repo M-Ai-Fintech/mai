@@ -53,6 +53,11 @@ export const GlobalDesktop: Story = {
     const canvas = within(canvasElement);
     const breadcrumb = canvas.getByRole("navigation", { name: "Breadcrumb" });
     await expect(within(breadcrumb).getByText("Home")).toHaveAttribute("aria-current", "page");
+    const utilityEntries = within(canvas.getByRole("navigation", { name: "Fixture shell entry points" }));
+    await expect(utilityEntries.getByRole("link", { name: "Search" })).toHaveAttribute("href", "/search");
+    await expect(utilityEntries.getByRole("link", { name: "Tasks 3" })).toHaveAttribute("href", "/tasks");
+    await expect(utilityEntries.getByRole("link", { name: "Approvals 1" })).toHaveAttribute("href", "/approvals");
+    await expect(utilityEntries.getByRole("link", { name: "Notifications 2" })).toHaveAttribute("href", "/notifications");
     await expect(canvas.getByRole("main")).toBeVisible();
   },
 };
@@ -74,6 +79,7 @@ export const ExternalParticipant: Story = {
   args: { resolution: fixture(["portal", "project", "fixture-workspace"]) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("navigation", { name: "Fixture shell entry points" })).not.toBeInTheDocument();
     await expect(canvas.queryByText(/Tasks \d/)).not.toBeInTheDocument();
     await expect(canvas.queryByText(/Approvals \d/)).not.toBeInTheDocument();
     await expect(canvas.queryByText(/Notifications \d/)).not.toBeInTheDocument();
