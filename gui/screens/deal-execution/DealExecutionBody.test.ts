@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { routeBodyOwner, routeRegistry } from "@/lib/shell/route-registry";
 import { DealExecutionBody } from "./DealExecutionBody";
+import { AppShell } from "@/app/_shell/AppShell";
 function resolution(
   routeId: string,
   permissions: readonly ("workspace" | "deal")[] = ["workspace", "deal"],
@@ -53,6 +54,25 @@ describe("MAI-101 execution boundary", () => {
     expect(html).toContain("Deal horizon-01");
     expect(html).toContain("Buy-side position");
     expect(html).toContain("No external communication before approval");
+  });
+
+  it("renders the negotiation operational hierarchy and integrated shell", () => {
+    const body = renderToStaticMarkup(
+      createElement(DealExecutionBody, {
+        resolution: resolution("deal.negotiation"),
+      }),
+    );
+    const integrated = renderToStaticMarkup(
+      createElement(AppShell, { resolution: resolution("deal.negotiation") }),
+    );
+    expect(body).toContain("Proposal and round registry");
+    expect(body).toContain("Normalized terms and economics");
+    expect(body).toContain("Risk-adjusted value");
+    expect(body).toContain("Restricted authority context");
+    expect(body).toContain("Submit counterproposal for approval");
+    expect(integrated).toContain("Deal navigation");
+    expect(integrated).toContain('data-screen-family="deal-negotiation"');
+    expect(integrated).toContain("Deal horizon-01");
   });
   it("does not construct protected execution props before permission", () => {
     const html = renderToStaticMarkup(

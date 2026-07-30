@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { routeRegistry } from "@/lib/shell/route-registry";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { DealExecutionBody } from "./DealExecutionBody";
+import { AppShell } from "@/app/_shell/AppShell";
 function resolution(routeId: string): ReadyRouteResolution {
   const route = routeRegistry.find((item) => item.id === routeId);
   if (!route) throw new Error(`Missing ${routeId}`);
@@ -30,6 +31,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const NegotiationDesktop: Story = {
   args: { resolution: resolution("deal.negotiation") },
+  render: ({ resolution }) => <AppShell resolution={resolution} />,
 };
 export const AgenticDesktop: Story = {
   args: { resolution: resolution("deal.workspace") },

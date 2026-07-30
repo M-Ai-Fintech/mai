@@ -12,6 +12,42 @@
   gap: var(--mai-space-component-md);
   align-items: start;
 }
+
+.negotiationLayout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--mai-layout-panel-min)), 1fr));
+  gap: var(--mai-space-component-md);
+  align-items: start;
+}
+
+.negotiationLayout .card {
+  min-inline-size: 0;
+}
+
+.registryList,
+.metrics {
+  display: grid;
+  gap: var(--mai-space-component-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.registryList li,
+.metrics div {
+  display: grid;
+  gap: var(--mai-space-component-xs);
+  padding-block: var(--mai-space-component-sm);
+  border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-default);
+}
+
+.registryList span,
+.metrics dt {
+  color: var(--mai-color-content-secondary);
+}
+
+.metrics dd { margin: 0; font-weight: var(--mai-type-label-font-weight); }
+.control { display: flex; gap: var(--mai-space-component-sm); align-items: center; min-block-size: var(--mai-control-min-target); }
 .header {
   justify-content: space-between;
 }

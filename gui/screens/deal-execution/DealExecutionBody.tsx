@@ -214,35 +214,93 @@ function Family(
   );
   if (family === "negotiation") {
     return (
-      <div className={styles.grid}>
-        <Card
-          title={`Proposal ${negotiation.proposalId} · ${negotiation.roundId}`}
-        >
+      <div className={styles.negotiationLayout}>
+        <Card title="Proposal and round registry">
           <p>
+            Round 4 · {negotiation.counterparty} ·{" "}
             {negotiation.transactionSide === "buy-side"
               ? "Buy-side position"
-              : "Sell-side position"} · {negotiation.lifecycle}
+              : "Sell-side position"} · Awaiting approval
           </p>
-          <ul>
-            {negotiation.normalizedTerms.map((term) => (
-              <li key={term}>{term}</li>
-            ))}
+          <ul className={styles.registryList}>
+            <li>
+              <strong>Round 4</strong>
+              <span>Current · DOC-148/v4</span>
+            </li>
+            <li>
+              <strong>Round 3</strong>
+              <span>Superseded · DOC-148/v3</span>
+            </li>
+            <li>
+              <strong>Project Atlas alternative</strong>
+              <span>Open ask · source review</span>
+            </li>
+            <li>
+              <strong>Restricted internal counter</strong>
+              <span>Internal only</span>
+            </li>
           </ul>
-          <p>
-            Source{" "}
-            {negotiation.source.version}; differences-only comparison available.
-          </p>
         </Card>
-        <Card title="Internal mandate and concession">
+        <Card title="Normalized terms and economics">
+          <p>Current Round 4 · {negotiation.counterparty}</p>
+          <StatusIndicator role="warning">Awaiting approval</StatusIndicator>
+          <Button onClick={onConfirm}>
+            Submit counterproposal for approval
+          </Button>
+          <p>Immutable external source: DOC-148 · Term Sheet v4 · p. 2–7.</p>
+          <label className={styles.control}>
+            <input type="checkbox" defaultChecked /> Differences only
+          </label>
+          <dl className={styles.metrics}>
+            <div>
+              <dt>Risk-adjusted value</dt>
+              <dd>R$ 474 mi</dd>
+            </div>
+            <div>
+              <dt>Cash at closing</dt>
+              <dd>R$ 420 mi</dd>
+            </div>
+            <div>
+              <dt>Contingent value</dt>
+              <dd>R$ 54 mi</dd>
+            </div>
+            <div>
+              <dt>Execution confidence</dt>
+              <dd>Medium</dd>
+            </div>
+          </dl>
+          <p>Concession ledger: {negotiation.concession}</p>
+          <p>Open asks: escrow step-down and exclusivity confirmation.</p>
+          <EvidenceReference
+            availability="current"
+            metadata={{
+              source: negotiation.source.id,
+              location: negotiation.source.citation,
+              documentVersion: negotiation.source.version,
+              freshness: "current",
+            }}
+          />
+        </Card>
+        <Card title="Restricted authority context">
           <p>{negotiation.internalMandate}</p>
-          <p>{negotiation.concession} · {negotiation.economicConsequence}</p>
+          <p>
+            Mandate constraints: approval route requires Vice President review.
+          </p>
+          <p>Proposed counteroffer: escrow may reduce after counsel review.</p>
+          <p>
+            BATNA and alternatives: Project Atlas remains an unapproved
+            alternative.
+          </p>
           <InlineNotice
             role="warning"
             title="No external communication before approval"
           >
-            Counterproposal draft is not sent; communication is{" "}
-            {negotiation.communication}.
+            AI may draft and analyze. It cannot approve, send, or communicate
+            externally.
           </InlineNotice>
+          <p>
+            Approval route: Deal Lead → Vice President → human confirmation.
+          </p>
           {action}
         </Card>
       </div>
