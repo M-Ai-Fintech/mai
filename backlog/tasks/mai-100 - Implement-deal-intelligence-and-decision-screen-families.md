@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 00:02'
+updated_date: '2026-07-30 00:08'
 labels:
   - frontend
   - screen-implementation
@@ -91,4 +91,6 @@ Baseline: master contains 3ee491ab4600b92512bf63132674cb6005b05209. Initial cano
 Implemented MAI-100 local-only typed contracts, six owned route bodies, cross-screen DOC-120/v18 -> FAC-018 stale -> FND-014 review -> VAL-HOR-03 provisional -> Overview blocker -> human decision trace, state matrix, Storybook coverage, and verification gate. Focused evidence: npm --prefix gui run test:unit (33 files, 81 tests passed); verify:tokens/components/shell/screens/foundation/deal-screens and lint passed; npm --prefix gui run build passed; build-storybook passed; test-storybook (26 files, 124 tests passed).
 
 Rendered review limitation: in-app browser controller was unavailable in this session, so no manual screenshot inspection is claimed. Storybook build and interaction coverage completed. MAI-100 remains In Progress pending final verification, draft PR, and owner review.
+
+Final verification sequence completed its visible GUI gates (including production build and Storybook build/test), then ran canonical deno task verify. The process exited, but the combined command channel lost its terminal summary; therefore canonical verification is not recorded as PASS. No Draft PR was opened: manual rendered inspection and retained canonical terminal output are required owner-gate evidence.
 <!-- SECTION:NOTES:END -->
