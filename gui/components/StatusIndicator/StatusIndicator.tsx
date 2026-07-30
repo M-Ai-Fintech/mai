@@ -16,7 +16,7 @@ export interface StatusIndicatorProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, "role"> {
   role: StatusIndicatorRole;
   size?: "compact" | "standard";
-  children: string;
+  children: string | readonly string[];
 }
 const iconByRole: Record<StatusIndicatorRole, InternalIconName> = {
   neutral: "minus",
