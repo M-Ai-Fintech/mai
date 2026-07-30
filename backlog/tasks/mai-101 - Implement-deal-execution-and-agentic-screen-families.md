@@ -1,9 +1,11 @@
 ---
 id: MAI-101
 title: Implement deal execution and agentic screen families
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@codex'
 created_date: '2026-07-28 03:08'
+updated_date: '2026-07-30 03:08'
 labels:
   - frontend
   - screen-implementation
@@ -19,6 +21,20 @@ documentation:
     backlog/docs/index/doc-10 -
     Documentation-Index-and-Information-Architecture.md
   - backlog/docs/product/mvp-gui-and-api/doc-9 - MVP-GUI-and-API-Behavior.md
+modified_files:
+  - gui/lib/shell/route-registry.ts
+  - gui/lib/shell/route-registry.test.ts
+  - gui/app/_shell/AppShell.tsx
+  - gui/app/_shell/AppShell.test.ts
+  - gui/screens/deal-execution/contracts.ts
+  - gui/screens/deal-execution/fixtures.ts
+  - gui/screens/deal-execution/DealExecutionBody.tsx
+  - gui/screens/deal-execution/DealExecutionBody.module.css
+  - gui/screens/deal-execution/DealExecutionBody.test.ts
+  - gui/screens/deal-execution/DealExecutionBody.stories.tsx
+  - gui/scripts/verify-execution-screens.mjs
+  - gui/package.json
+  - scripts/verify.ts
 priority: high
 ordinal: 1400
 ---
@@ -50,3 +66,23 @@ Use typed local fixtures and adapters where backend behavior has not yet been re
 - [ ] #5 Unapproved backend behavior is isolated behind typed local fixtures and adapters without false production claims.
 - [ ] #6 Each screen family has focused component, interaction, route, state, and accessibility tests.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Preserve MAI-98 shell and MAI-99/100 body ownership while adding an explicit seven-route MAI-101 resolver with no fallback.
+2. Add typed local execution contracts and one deterministic cross-screen fixture graph; implement seven execution families in three waves using existing tokens and components.
+3. Add bounded stories, focused interaction/accessibility tests, and verify:execution-screens; record Figma traceability and governed-board derivations.
+4. Run focused checks and one bounded local rendered review, correct P0/P1 findings, then run the requested final verification once.
+5. Commit cohesive changes, push feat/MAI-101-deal-execution-agentic-screens, open one Draft PR, keep MAI-101 In Progress, and request owner review.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Intake 2026-07-29: MAI-100 squash merge 76aefd49708abddfa4bb924d1da403a826029b30 is present on master. Baseline deno task verify was run once; it reached GUI verification but sandbox spawnSync git EPERM prevented a terminal pass. One-time npm ci completed; Playwright Chromium installation was requested in the same setup command. Figma get_design_context was read for 239:3, 239:551, and 239:921 without mutating Figma. Local graph query scoped AppShell, route registry, existing deal-intelligence body, Dialog, and Drawer.
+
+Implemented initial MAI-101 execution resolver, seven local fixture-backed bodies, contracts, stories, focused tests, and verify:execution-screens registration. Focused evidence: npm --prefix gui run verify:execution-screens PASS; npm --prefix gui run test:unit PASS (85 tests); npm --prefix gui run lint PASS; npm --prefix gui run build PASS. Full final verification, local rendered review, Storybook checks, commit/push, and Draft PR remain outstanding. Baseline deno task verify remains blocked at foundation verification by sandbox spawnSync git EPERM, not treated as passing.
+
+Negotiation P1 correction complete (root causes A+C): integrated screens-deal-execution--negotiation-desktop now renders deal.negotiation through AppShell, and the Negotiation work surface now presents proposal registry, normalized terms/economics, restricted authority, approval status/action, evidence, and explicit no-external-communication-before-approval boundary. Changed gui/screens/deal-execution/DealExecutionBody.tsx, DealExecutionBody.module.css, DealExecutionBody.stories.tsx, and DealExecutionBody.test.ts. Rendered evidence remains 21/21 passing in /tmp/mai101-review/report.json; before/after evidence and inspection are in /tmp/mai101-review/negotiation-p1-correction.json. Browser Chromium 149.0.7827.55, Playwright 1.61.1. Focused tests 19/19; full GUI unit tests 86/86; Storybook docs 22 MDX; Storybook interactions 27 files/133 tests; production and Storybook builds pass. Tokens/shell/screens/deal-screens/execution-screens/foundation/lint pass. Canonical deno task verify reached Deno tests but local process terminated before emitting an exit status; retained logs under /tmp/mai101-review/verification/. Commit 154dce9; Draft PR https://github.com/luisfelipeluis49/mai/pull/21. Keeping MAI-101 In Progress pending owner review.
+<!-- SECTION:NOTES:END -->

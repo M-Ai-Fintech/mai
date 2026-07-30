@@ -21,7 +21,11 @@ export interface RouteDefinition {
   readonly permission: Permission;
   readonly availability: Availability;
   readonly navigation?: RouteNavigation;
-  readonly implementationStatus: "screen-body" | "deal-intelligence" | "shell-placeholder";
+  readonly implementationStatus:
+    | "screen-body"
+    | "deal-intelligence"
+    | "deal-execution"
+    | "shell-placeholder";
   readonly authority: string;
   readonly deferredScreenOwner: string;
 }
@@ -64,6 +68,16 @@ function dealIntelligenceRoute(input: RouteInput): RouteDefinition {
   };
 }
 
+function dealExecutionRoute(input: RouteInput): RouteDefinition {
+  return {
+    ...input,
+    breadcrumbPolicy: input.shellMode,
+    implementationStatus: "deal-execution",
+    authority: "Figma v0.3 / MAI-101",
+    deferredScreenOwner: "MAI-101",
+  };
+}
+
 const headerOnlyGlobalRoutes = new Set([
   "search",
   "approvals",
@@ -96,16 +110,20 @@ const dealRoute = (
   label: string,
   order: number,
 ): RouteDefinition =>
-  (dealIntelligenceNames.has(name) ? dealIntelligenceRoute : deferredRoute)({
-    id: `deal.${name}`,
-    label,
-    pattern: ["deals", ":dealId", name],
-    shellMode: "deal",
-    navigationParent: name === "overview" ? null : "deal.overview",
-    permission: "deal",
-    availability: "available",
-    navigation: { modes: ["deal"], order, section: "primary" },
-  });
+  (dealIntelligenceNames.has(name)
+    ? dealIntelligenceRoute
+    : dealExecutionNames.has(name)
+    ? dealExecutionRoute
+    : deferredRoute)({
+      id: `deal.${name}`,
+      label,
+      pattern: ["deals", ":dealId", name],
+      shellMode: "deal",
+      navigationParent: name === "overview" ? null : "deal.overview",
+      permission: "deal",
+      availability: "available",
+      navigation: { modes: ["deal"], order, section: "primary" },
+    });
 
 const dealIntelligenceNames = new Set([
   "overview",
@@ -115,6 +133,25 @@ const dealIntelligenceNames = new Set([
   "valuation",
   "matching",
 ]);
+
+const dealExecutionNames = new Set([
+  "negotiation",
+  "closing",
+  "workspace",
+  "activity",
+  "team",
+  "deliverables",
+  "settings",
+]);
+
+export function routeBodyOwner(
+  route: RouteDefinition,
+): RouteBodyOwner | undefined {
+  if (route.implementationStatus === "screen-body") return "MAI-99";
+  if (route.implementationStatus === "deal-intelligence") return "MAI-100";
+  if (route.implementationStatus === "deal-execution") return "MAI-101";
+  return undefined;
+}
 
 const administrationRoute = (
   name: string,

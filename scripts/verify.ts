@@ -82,6 +82,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["--prefix", "gui", "run", "verify:deal-screens"],
   },
   {
+    id: "frontend-execution-screens",
+    label: "Frontend deal execution screens",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:execution-screens"],
+  },
+  {
     id: "gui-unit-tests",
     label: "GUI unit tests",
     command: "npm",

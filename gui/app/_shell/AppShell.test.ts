@@ -18,7 +18,7 @@ function dealResolution(routeId: string): ReadyRouteResolution {
   };
 }
 
-describe("MAI-100 AppShell screen boundary", () => {
+describe("MAI-100 and MAI-101 AppShell screen boundary", () => {
   it("selects the explicit MAI-100 deal body without a MAI-99 fallback", () => {
     const html = renderToStaticMarkup(
       createElement(AppShell, { resolution: dealResolution("deal.overview") }),
@@ -28,10 +28,13 @@ describe("MAI-100 AppShell screen boundary", () => {
     expect(html).not.toContain('data-screen-family="command-center"');
   });
 
-  it("keeps MAI-101 routes on a neutral deferred placeholder", () => {
+  it("selects the explicit MAI-101 body without a MAI-99 fallback", () => {
     const html = renderToStaticMarkup(
-      createElement(AppShell, { resolution: dealResolution("deal.negotiation") }),
+      createElement(AppShell, {
+        resolution: dealResolution("deal.negotiation"),
+      }),
     );
-    expect(html).toContain('data-deferred-screen-owner="MAI-101"');
+    expect(html).toContain('data-screen-family="deal-negotiation"');
+    expect(html).not.toContain('data-deferred-screen-owner="MAI-101"');
   });
 });
