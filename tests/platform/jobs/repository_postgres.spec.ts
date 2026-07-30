@@ -215,6 +215,153 @@ Deno.test({
 
 Deno.test({
   name:
+    "expired workers cannot transition or renew while recovered attempts remain fenced",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await new PostgresMigrationRunner(pool).apply(platformMigrations);
+    await truncateJobs(pool);
+    const transactions = transactionRunner(pool);
+    const repository = new JobRepository();
+    const expiredAt = new Date("2026-07-30T12:01:00.000Z");
+    const complete = await claimedFixture(
+      transactions,
+      repository,
+      "job_expired-complete",
+    );
+    const failed = await claimedFixture(
+      transactions,
+      repository,
+      "job_expired-fail",
+    );
+    const cancelled = await claimedFixture(
+      transactions,
+      repository,
+      "job_expired-cancel",
+    );
+    const timedOutJob = {
+      ...fixtureJob("job_expired-timeout", "op_job-expired-timeout"),
+      timeoutAt: new Date("2026-07-30T12:00:30.000Z"),
+    };
+    await transactions.run((transaction) =>
+      repository.enqueue(transaction, timedOutJob)
+    );
+    const timedOut = (await claimJobs(
+      transactions,
+      repository,
+      "worker_job_expired_timeout",
+      "2026-07-30T12:00:00.000Z",
+    ))[0];
+
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.complete(transaction, complete, "late_result", expiredAt)
+        ),
+      Error,
+      "did not match",
+    );
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.fail(transaction, failed, {
+            outcome: "dead_lettered",
+            failure: sanitizedJobFailure("LATE_FAILURE"),
+            completedAt: expiredAt,
+          })
+        ),
+      Error,
+      "did not match",
+    );
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.cancel(transaction, cancelled, expiredAt)
+        ),
+      Error,
+      "did not match",
+    );
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.timeout(transaction, timedOut, expiredAt)
+        ),
+      Error,
+      "did not match",
+    );
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.extendLease(
+            transaction,
+            complete,
+            expiredAt,
+            new Date("2026-07-30T12:02:00.000Z"),
+          )
+        ),
+      Error,
+      "invalid",
+    );
+
+    await truncateJobs(pool);
+    const renewable = await claimedFixture(
+      transactions,
+      repository,
+      "job_renewed",
+    );
+
+    const renewed = await transactions.run((transaction) =>
+      repository.extendLease(
+        transaction,
+        renewable,
+        new Date("2026-07-30T12:00:30.000Z"),
+        new Date("2026-07-30T12:02:00.000Z"),
+      )
+    );
+    assertEquals(
+      await claimJobs(
+        transactions,
+        repository,
+        "worker_recover",
+        "2026-07-30T12:01:01.000Z",
+      ),
+      [],
+    );
+    const recovered = (await claimJobs(
+      transactions,
+      repository,
+      "worker_recover",
+      "2026-07-30T12:02:01.000Z",
+    ))[0];
+    assertEquals(recovered.attemptNumber, 2);
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.complete(
+            transaction,
+            renewed,
+            "stale_renewed_result",
+            new Date("2026-07-30T12:02:02.000Z"),
+          )
+        ),
+      Error,
+      "did not match",
+    );
+    await transactions.run((transaction) =>
+      repository.complete(
+        transaction,
+        recovered,
+        "recovered_result",
+        new Date("2026-07-30T12:02:02.000Z"),
+      )
+    );
+    await assertAppendOnlyAttempts(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
     "job completion, cancellation, timeout, and append-only attempts persist",
   ignore: databaseUrl === undefined,
   async fn() {
@@ -241,7 +388,11 @@ Deno.test({
     ))[0];
     assertEquals(
       await transactions.run((transaction) =>
-        repository.cancellationRequested(transaction, cancelledClaim)
+        repository.cancellationRequested(
+          transaction,
+          cancelledClaim,
+          new Date("2026-07-30T12:00:03.000Z"),
+        )
       ),
       true,
     );
@@ -288,6 +439,7 @@ Deno.test({
       const extended = await repository.extendLease(
         transaction,
         succeededClaim,
+        new Date("2026-07-30T12:00:08.000Z"),
         new Date("2026-07-30T12:02:00.000Z"),
       );
       await repository.complete(
@@ -313,6 +465,21 @@ Deno.test({
     await pool.end();
   },
 });
+
+async function claimedFixture(
+  transactions: PostgresTransactionRunner,
+  repository: JobRepository,
+  jobId: string,
+) {
+  const job = fixtureJob(jobId, `op_${jobId.slice(4).replaceAll("_", "-")}`);
+  await transactions.run((transaction) => repository.enqueue(transaction, job));
+  return (await claimJobs(
+    transactions,
+    repository,
+    `worker_${jobId}`,
+    "2026-07-30T12:00:00.000Z",
+  ))[0];
+}
 
 function transactionRunner(pool: pg.Pool): PostgresTransactionRunner {
   return new PostgresTransactionRunner(new PostgresTestTransactionPool(pool));
@@ -366,7 +533,7 @@ function fixtureJob(jobId: string, operationId: string) {
     initiatingActorId: requiredId(parseActorId("actor_mai106")),
     correlationId: requiredId(parseCorrelationId("cor_mai106")),
     idempotencyKey: requiredId(
-      parseIdempotencyKey(`idem_${jobId.replace("_", "-")}`),
+      parseIdempotencyKey(`idem_${jobId.replaceAll("_", "-")}`),
     ),
     inputVersionReferences: [],
     payload: { fixture: true },

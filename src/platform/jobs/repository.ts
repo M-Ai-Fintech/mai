@@ -8,12 +8,17 @@ import {
 } from "./model.ts";
 import {
   attemptSelectColumns,
-  completedAttemptFromStartSql,
   jobClaimSql,
   jobInsertSql,
   jobInsertValues,
   jobSelectColumns,
 } from "./repository_sql.ts";
+import {
+  appendCompletedAttempt,
+  appendExpiredAttempt,
+  appendStartedAttempt,
+  type ClaimedJobAttemptRow,
+} from "./repository_attempts.ts";
 import {
   assertJobClaim,
   assertJobFailure,
@@ -87,16 +92,7 @@ export interface JobFailure {
   readonly nextAttemptAt?: Date;
 }
 
-interface ClaimedJobRow extends StoredJob {
-  previousState: "queued" | "retry_scheduled" | "running";
-  previousAttemptNumber: number;
-  previousLeaseOwner: string | null;
-  previousLeaseExpiresAt: Date | null;
-  attemptNumber: number;
-  workerId: string;
-  attemptStartedAt: Date;
-  leaseExpiresAt: Date;
-}
+interface ClaimedJobRow extends StoredJob, ClaimedJobAttemptRow {}
 
 export class JobRepository {
   /**
@@ -198,19 +194,20 @@ export class JobRepository {
   /**
    * Observes cancellation immediately before a worker side effect.
    *
-   * @example await repository.cancellationRequested(transaction, job)
+   * @example await repository.cancellationRequested(transaction, job, now)
    */
   async cancellationRequested(
     transaction: TransactionHandle,
     job: ClaimedJob,
+    now: Date,
   ): Promise<boolean> {
     const result = await transaction.query<{ requested: boolean }>(
       `SELECT cancellation_requested_at IS NOT NULL AS requested
        FROM platform.jobs
        WHERE job_id = $1 AND tenant_id = $2 AND state = 'running'
          AND lease_owner = $3 AND attempt_count = $4
-         AND lease_expires_at = $5`,
-      jobLeaseFenceValues(job),
+         AND lease_expires_at = $5 AND lease_expires_at > $6`,
+      [...jobLeaseFenceValues(job), now],
     );
     const row = result.rows[0];
     if (row !== undefined) return row.requested;
@@ -219,26 +216,47 @@ export class JobRepository {
   }
 
   /**
+   * Verifies the claimed lease before a worker reaches an external side effect.
+   *
+   * @example await repository.assertActiveLease(transaction, job, now)
+   */
+  async assertActiveLease(
+    transaction: TransactionHandle,
+    job: ClaimedJob,
+    now: Date,
+  ): Promise<void> {
+    const result = await transaction.query(
+      `SELECT 1 FROM platform.jobs
+       WHERE job_id = $1 AND tenant_id = $2 AND state = 'running'
+         AND lease_owner = $3 AND attempt_count = $4
+         AND lease_expires_at = $5 AND lease_expires_at > $6`,
+      [...jobLeaseFenceValues(job), now],
+    );
+    assertJobLeaseUpdate(result.rowCount, job);
+  }
+
+  /**
    * Extends only the active worker's lease.
    *
-   * @example await repository.extendLease(transaction, job, leaseUntil)
+   * @example await repository.extendLease(transaction, job, now, leaseUntil)
    */
   async extendLease(
     transaction: TransactionHandle,
     job: ClaimedJob,
+    now: Date,
     leaseUntil: Date,
   ): Promise<ClaimedJob> {
-    if (leaseUntil <= job.leaseExpiresAt) {
+    if (now >= job.leaseExpiresAt || leaseUntil <= job.leaseExpiresAt) {
       throw new Error(
-        `Job "${job.jobId}" lease extension "${leaseUntil.toISOString()}" is invalid; expected after current expiry.`,
+        `Job "${job.jobId}" lease extension "${leaseUntil.toISOString()}" at "${now.toISOString()}" is invalid; expected an active lease and future expiry.`,
       );
     }
     const result = await transaction.query(
-      `UPDATE platform.jobs SET lease_expires_at = $6
+      `UPDATE platform.jobs SET lease_expires_at = $7
        WHERE job_id = $1 AND tenant_id = $2 AND state = 'running'
          AND lease_owner = $3 AND attempt_count = $4
-         AND lease_expires_at = $5`,
-      [...jobLeaseFenceValues(job), leaseUntil],
+         AND lease_expires_at = $5 AND lease_expires_at > $6`,
+      [...jobLeaseFenceValues(job), now, leaseUntil],
     );
     assertJobLeaseUpdate(result.rowCount, job);
     return { ...job, leaseExpiresAt: leaseUntil };
@@ -342,45 +360,6 @@ export function sanitizedJobFailure(code: string): SanitizedJobFailure {
   );
 }
 
-async function appendExpiredAttempt(
-  transaction: TransactionHandle,
-  row: ClaimedJobRow,
-  completedAt: Date,
-): Promise<void> {
-  if (row.previousState !== "running") return;
-  await transaction.query(
-    `${completedAttemptFromStartSql()}
-     SELECT tenant_id, job_id, attempt_number, 'completed', worker_identity, lease_owner,
-       lease_expires_at, started_at, $4, 'lease_expired', 'LEASE_EXPIRED',
-       'recovered', correlation_id
-     FROM platform.job_attempts
-     WHERE tenant_id = $1 AND job_id = $2 AND attempt_number = $3
-       AND record_kind = 'started'`,
-    [row.tenantId, row.jobId, row.previousAttemptNumber, completedAt],
-  );
-}
-
-function appendStartedAttempt(
-  transaction: TransactionHandle,
-  row: ClaimedJobRow,
-): Promise<unknown> {
-  return transaction.query(
-    `INSERT INTO platform.job_attempts (
-       tenant_id, job_id, attempt_number, record_kind, worker_identity, lease_owner,
-       lease_expires_at, started_at, correlation_id
-     ) VALUES ($1, $2, $3, 'started', $4, $4, $5, $6, $7)`,
-    [
-      row.tenantId,
-      row.jobId,
-      row.attemptNumber,
-      row.workerId,
-      row.leaseExpiresAt,
-      row.attemptStartedAt,
-      row.correlationId,
-    ],
-  );
-}
-
 async function updateFailedJob(
   transaction: TransactionHandle,
   job: ClaimedJob,
@@ -395,43 +374,17 @@ async function updateFailedJob(
        lease_owner = NULL, lease_expires_at = NULL
      WHERE job_id = $1 AND tenant_id = $2 AND state = 'running'
        AND lease_owner = $3 AND attempt_count = $4
-       AND lease_expires_at = $5`,
+       AND lease_expires_at = $5 AND lease_expires_at > $10`,
     [
       ...jobLeaseFenceValues(job),
       failure.outcome,
       failure.failure,
       failure.nextAttemptAt ?? null,
       terminalAt,
+      failure.completedAt,
     ],
   );
   assertJobLeaseUpdate(result.rowCount, job);
-}
-
-function appendCompletedAttempt(
-  transaction: TransactionHandle,
-  job: ClaimedJob,
-  completedAt: Date,
-  outcome: string,
-  failure: string | null,
-  decision: string,
-): Promise<unknown> {
-  return transaction.query(
-    `${completedAttemptFromStartSql()}
-     VALUES ($1, $2, $3, 'completed', $4, $4, $5, $6, $7, $8, $9, $10, $11)`,
-    [
-      job.tenantId,
-      job.jobId,
-      job.attemptNumber,
-      job.workerId,
-      job.leaseExpiresAt,
-      job.attemptStartedAt,
-      completedAt,
-      outcome,
-      failure,
-      decision,
-      job.correlationId,
-    ],
-  );
 }
 
 async function terminateWithoutResult(
@@ -466,11 +419,12 @@ async function updateTerminalJob(
        lease_owner = NULL, lease_expires_at = NULL
      WHERE job_id = $1 AND tenant_id = $2 AND state = 'running'
        AND lease_owner = $3 AND attempt_count = $4
-       AND lease_expires_at = $5`,
+       AND lease_expires_at = $5 AND lease_expires_at > $9`,
     [
       ...jobLeaseFenceValues(job),
       state,
       resultReference ?? null,
+      completedAt,
       completedAt,
     ],
   );

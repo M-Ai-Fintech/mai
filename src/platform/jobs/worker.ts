@@ -16,7 +16,19 @@ export interface JobWorkerStore {
   cancellationRequested(
     transaction: TransactionHandle,
     job: ClaimedJob,
+    now: Date,
   ): Promise<boolean>;
+  assertActiveLease(
+    transaction: TransactionHandle,
+    job: ClaimedJob,
+    now: Date,
+  ): Promise<void>;
+  extendLease(
+    transaction: TransactionHandle,
+    job: ClaimedJob,
+    now: Date,
+    leaseUntil: Date,
+  ): Promise<ClaimedJob>;
   cancel(
     transaction: TransactionHandle,
     job: ClaimedJob,
@@ -42,7 +54,10 @@ export interface JobWorkerStore {
 
 export interface JobExecutionContext {
   readonly deadline: Date;
+  currentLeaseExpiry(): Date;
   cancellationRequested(): Promise<boolean>;
+  heartbeat(): Promise<Date>;
+  beforeExternalEffect(): Promise<void>;
 }
 
 export interface JobExecutor {
@@ -120,7 +135,7 @@ export class JobWorker {
     if (job === undefined) return { status: "idle" };
     const early = await this.preExecutionOutcome(job);
     if (early !== undefined) return early;
-    return await this.executeClaimedJob(job);
+    return await this.executeClaimedJob(job, leaseMilliseconds);
   }
 
   private claimOne(
@@ -144,6 +159,7 @@ export class JobWorker {
     job: ClaimedJob,
   ): Promise<JobWorkerOutcome | undefined> {
     const now = this.dependencies.clock.now();
+    await this.assertActiveLease(job, now);
     if (now >= job.timeoutAt) return await this.recordTimeout(job, now);
     if (await this.isCancellationRequested(job)) {
       return await this.recordCancellation(job, now);
@@ -152,21 +168,53 @@ export class JobWorker {
     return await this.recordStaleInput(job, now);
   }
 
-  private async executeClaimedJob(job: ClaimedJob): Promise<JobWorkerOutcome> {
+  private async executeClaimedJob(
+    job: ClaimedJob,
+    leaseMilliseconds: number,
+  ): Promise<JobWorkerOutcome> {
+    let activeJob = job;
+    const context = executionContext({
+      job: () => activeJob,
+      cancellationRequested: () => this.isCancellationRequested(activeJob),
+      heartbeat: async () => {
+        activeJob = await this.renewLease(activeJob, leaseMilliseconds);
+        return activeJob.leaseExpiresAt;
+      },
+      beforeExternalEffect: () =>
+        this.assertActiveLease(activeJob, this.dependencies.clock.now()),
+    });
     try {
       const result = await this.dependencies.executor.execute(
         job,
-        executionContext(job, () => this.isCancellationRequested(job)),
+        context,
       );
-      return await this.recordSuccess(job, result.resultReference);
+      return await this.recordSuccess(activeJob, result.resultReference);
     } catch (error) {
-      return await this.recordExecutorFailure(job, error);
+      return await this.recordExecutorFailure(activeJob, error);
     }
   }
 
   private isCancellationRequested(job: ClaimedJob): Promise<boolean> {
+    const now = this.dependencies.clock.now();
     return this.dependencies.transactions.run((transaction) =>
-      this.dependencies.store.cancellationRequested(transaction, job)
+      this.dependencies.store.cancellationRequested(transaction, job, now)
+    );
+  }
+
+  private assertActiveLease(job: ClaimedJob, now: Date): Promise<void> {
+    return this.dependencies.transactions.run((transaction) =>
+      this.dependencies.store.assertActiveLease(transaction, job, now)
+    );
+  }
+
+  private renewLease(
+    job: ClaimedJob,
+    leaseMilliseconds: number,
+  ): Promise<ClaimedJob> {
+    const now = this.dependencies.clock.now();
+    const leaseUntil = new Date(now.getTime() + leaseMilliseconds);
+    return this.dependencies.transactions.run((transaction) =>
+      this.dependencies.store.extendLease(transaction, job, now, leaseUntil)
     );
   }
 
@@ -272,13 +320,18 @@ export class JobWorker {
   }
 }
 
-function executionContext(
-  job: ClaimedJob,
-  observeCancellation: () => Promise<boolean>,
-): JobExecutionContext {
+function executionContext(dependencies: {
+  readonly job: () => ClaimedJob;
+  readonly cancellationRequested: () => Promise<boolean>;
+  readonly heartbeat: () => Promise<Date>;
+  readonly beforeExternalEffect: () => Promise<void>;
+}): JobExecutionContext {
   return {
-    deadline: job.timeoutAt,
-    cancellationRequested: observeCancellation,
+    deadline: dependencies.job().timeoutAt,
+    currentLeaseExpiry: () => dependencies.job().leaseExpiresAt,
+    cancellationRequested: dependencies.cancellationRequested,
+    heartbeat: dependencies.heartbeat,
+    beforeExternalEffect: dependencies.beforeExternalEffect,
   };
 }
 

@@ -93,6 +93,28 @@ Deno.test("executor rejection after deadline persists timed_out", async () => {
   assertEquals(store.transitions, ["timed_out"]);
 });
 
+Deno.test("worker exposes heartbeat and lease validation before executor effects", async () => {
+  const store = new RecordingJobStore(fixtureClaimedJob(), false);
+  const executor = new HeartbeatingExecutor();
+  const worker = new JobWorker({
+    transactions: new ImmediateTransactions(),
+    store,
+    executor,
+    versions: new CurrentInputs(),
+    clock: new HeartbeatClock(),
+    failurePolicy: new OneRetryFailurePolicy(),
+    audit: new RecordingAuditPort(),
+  });
+
+  assertEquals(
+    (await worker.executeOne("worker_a", 60_000)).status,
+    "succeeded",
+  );
+  assertEquals(executor.observedLeaseExpiry, "2026-07-30T12:01:30.000Z");
+  assertEquals(store.leaseChecks, 3);
+  assertEquals(store.heartbeats, 1);
+});
+
 function createWorker(
   store: JobWorkerStore,
   executor: JobExecutor,
@@ -140,6 +162,8 @@ function fixtureClaimedJob(): ClaimedJob {
 
 class RecordingJobStore implements JobWorkerStore {
   readonly transitions: string[] = [];
+  heartbeats = 0;
+  leaseChecks = 0;
 
   constructor(
     private readonly job: ClaimedJob,
@@ -152,6 +176,21 @@ class RecordingJobStore implements JobWorkerStore {
 
   cancellationRequested(): Promise<boolean> {
     return Promise.resolve(this.cancellation);
+  }
+
+  assertActiveLease(): Promise<void> {
+    this.leaseChecks++;
+    return Promise.resolve();
+  }
+
+  extendLease(
+    _transaction: unknown,
+    job: ClaimedJob,
+    _now: Date,
+    leaseUntil: Date,
+  ): Promise<ClaimedJob> {
+    this.heartbeats++;
+    return Promise.resolve({ ...job, leaseExpiresAt: leaseUntil });
   }
 
   cancel(): Promise<void> {
@@ -194,6 +233,20 @@ class FailingJobExecutor implements JobExecutor {
   }
 }
 
+class HeartbeatingExecutor implements JobExecutor {
+  observedLeaseExpiry: string | undefined;
+
+  async execute(
+    _job: ClaimedJob,
+    context: Parameters<JobExecutor["execute"]>[1],
+  ): Promise<{ resultReference: string }> {
+    await context.beforeExternalEffect();
+    this.observedLeaseExpiry = (await context.heartbeat()).toISOString();
+    await context.beforeExternalEffect();
+    return { resultReference: "result_heartbeat" };
+  }
+}
+
 class CurrentInputs implements JobInputVersionChecker {
   recheck(): Promise<boolean> {
     return Promise.resolve(true);
@@ -231,6 +284,17 @@ class AdvancingClock {
     return this.calls < 3
       ? new Date("2026-07-30T12:00:00.000Z")
       : new Date("2026-07-30T13:00:01.000Z");
+  }
+}
+
+class HeartbeatClock {
+  private calls = 0;
+
+  now(): Date {
+    this.calls++;
+    return this.calls < 5
+      ? new Date("2026-07-30T12:00:00.000Z")
+      : new Date("2026-07-30T12:00:30.000Z");
   }
 }
 

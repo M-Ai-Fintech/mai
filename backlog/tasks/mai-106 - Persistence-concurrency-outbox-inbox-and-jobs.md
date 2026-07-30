@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 13:22'
+updated_date: '2026-07-30 15:17'
 labels:
   - backend
   - architecture
@@ -52,6 +52,7 @@ modified_files:
   - src/platform/jobs/v1.ts
   - src/platform/jobs/model.ts
   - src/platform/jobs/repository.ts
+  - src/platform/jobs/repository_attempts.ts
   - src/platform/jobs/repository_sql.ts
   - src/platform/jobs/repository_validation.ts
   - src/platform/jobs/worker.ts
@@ -123,12 +124,13 @@ Final RLS scope plus production RPO/RTO values are acceptance gates; production 
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Migration framework: define the versioned persistence seam, owner-scoped ordered migrations, checksum and exclusive-lock rules; add the initial additive platform migration and red/green pure plus PostgreSQL tests.
-2. Transaction and concurrency: add an injected one-connection transaction runner with lifecycle/failure semantics and future scope metadata hook; prove optimistic fixture updates through AggregateVersion boundaries.
-3. Idempotency and events: implement deterministic digests, durable claim/replay/conflict behavior, transactional outbox storage, publisher port, dispatcher claims/leases/retries/dead letters, and durable inbox deduplication.
-4. Durable jobs: implement validated states, append-only attempts, cancellation, timeout, retry/dead-letter/requeue behavior, input-version and future audit contracts, plus bounded worker execution and recovery protocols.
-5. Recovery verification: use the isolated mai_test_mai106 PostgreSQL database, recreated repositories/connections, crash-before/after-commit cases, focused pure/database tests, scoped format/lint, canonical and live integration gates.
-6. Review and handoff: run one compact read-only data/security audit, correct only material P0/P1 findings, update Backlog evidence/files, create focused commits, push only this branch, and open one Draft PR without merging or marking Done.
+1. Preserve the existing additive MAI-106 foundations and public entrypoints; keep the task In Progress, PR #26 Draft, and all exclusions intact.
+2. Add PostgreSQL regression coverage for active-lease enforcement: expired attempts cannot complete, fail, cancel, timeout, or renew; live renewal blocks early reclaim; missed heartbeat permits recovery and permanently fences the stale attempt; append-only evidence remains intact.
+3. Extend the worker protocol with injected-clock lease checks, bounded heartbeat renewal, current lease expiry, and a before-external-effect check; fence every terminal transition on owner, attempt, stored expiry, and transition time.
+4. Run focused worker and PostgreSQL job regressions, then scoped format/lint/diff checks.
+5. Start only the task-scoped PostgreSQL service, initialize only mai_test_mai106 with the established src/core/db/setup.ts prototype schema and seeds through DATABASE_URL, then apply existing MAI-106 platform migrations via focused tests.
+6. Run deno task verify once against that initialized isolated database; classify external-provider integration as unavailable without credentials.
+7. Record exact evidence, update PR #26 description, commit/push only this branch, retain Draft/In Progress, and do not begin downstream tasks.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -145,10 +147,20 @@ Verification evidence: final git diff --check exit 0; scoped deno fmt --check 35
 Final combined read-only data-model/security review: initial audit found 0 P0 and 6 P1 (migration input validation, idempotency digest fencing, outbox lease-attempt fencing, job lease-attempt fencing, tenant-scoped attempt history, post-execution timeout persistence). The coordinator corrected exactly those material findings and added regressions. Final coordinator recheck confirms 0 open P0/P1; migration ownership and atomicity, tenant/workspace/deal scope, concurrency/idempotency/lease races, append-only attempts, restart recovery, dead-letter visibility, sanitization, and retention-safe rollback are evidenced. No business table, RLS policy, provider transport, external broker, authz import, or MVP cutover was introduced.
 
 Git handoff: commits 09f0e13 (PostgreSQL persistence foundation) and 9925f1f (durable outbox, inbox, jobs, protocols, and tests) were pushed only to feat/MAI-106-persistence-concurrency-outbox-inbox-jobs. Draft PR #26 targets master and remains open Draft; no merge, approval, Ready-for-Review transition, Done status, or downstream task was performed.
+
+Owner review continuation 2026-07-30: approved exactly two residual P1 corrections: active job lease validity/heartbeat fencing and complete prototype-schema initialization of the isolated mai_test_mai106 database before canonical verification. No MAI-105-owned path, business table migration, RLS, provider, broker, frontend, dependency, or API-v1 change is authorized.
+
+P1-1 corrected: JobRepository now fences cancellation observation, heartbeat renewal, all terminal transitions, retry failure, dead-letter, and timeout on the current tenant/job/owner/attempt/lease-expiry token plus a deterministic transition timestamp. JobWorker now asserts the active lease before execution and before each executor-declared external side effect; it exposes bounded heartbeat(), currentLeaseExpiry(), and cancellationRequested() through JobExecutionContext. Heartbeat uses the injected clock and preserves the renewed lease token for final persistence.
+
+P1-1 regression evidence: focused worker plus PostgreSQL job/migration suite passed 14/14. PostgreSQL coverage proves expired workers cannot complete, fail, cancel, timeout, or renew; a live heartbeat extends the lease; another worker cannot reclaim before renewed expiry; recovery after a missed heartbeat creates attempt 2 and permanently fences the stale renewed token; normal short jobs complete; job_attempts remains append-only.
+
+P1-2 configuration closure PASS. Classification: isolated test-database lifecycle. Source-to-runtime: DATABASE_URL is consumed by src/core/db/setup.ts to apply src/core/db/schema.sql and seeds; core repository tests consume the same URL; MAI106_DATABASE_URL is restricted to /mai_test_mai106 by tests/platform/support/postgres.ts and focused tests apply platformMigrations. Procedure: start only task-scoped Compose on localhost:55432; set DATABASE_URL to mai_test_mai106; run deno task db:setup; set MAI106_DATABASE_URL to the same database; run focused PostgreSQL tests to apply/validate platform migrations; run deno task verify. Runtime proof: public transaction_type, transaction, and phase tables plus all four platform migration ledger rows were present; canonical deno task verify exit 0. Blast radius is confined to mai_test_mai106; no developer or production database was used.
+
+Final continuation verification: git diff --check exit 0; scoped deno fmt --check exit 0; scoped deno lint exit 0; focused job and PostgreSQL migration suite 14 passed, 0 failed; canonical deno task verify exit 0. External-provider integration remains explicitly unavailable: required real Gemini/Papermark credentials are absent, and no credentials, placeholders, mocks, or certification were used. MAI-106 remains In Progress and PR #26 remains Draft.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implemented the additive MAI-106 PostgreSQL persistence, concurrency, idempotency, outbox, inbox, durable job, append-only attempt, worker/dispatcher, and restart-recovery foundations through versioned platform entrypoints and four owner-scoped migrations. Focused format, lint, and 35 pure/PostgreSQL tests pass; the one data/security audit has 0 open P0/P1 after six material corrections. Canonical and live integration gate limitations are recorded exactly in implementation notes and Draft PR #26. MAI-106 remains In Progress for owner review and final closure authorization.
+Corrected the two owner-review P1s. Active jobs now have timestamp-fenced terminal transitions and renewal, plus worker heartbeat and pre-external-effect lease validation. The isolated mai_test_mai106 database is initialized with the established prototype schema and seeds before MAI-106 migrations. Focused worker/PostgreSQL migration tests passed 14/14 and canonical deno task verify passed with exit 0. External provider integration remains explicitly unavailable without real Gemini/Papermark credentials. PR #26 remains Draft and MAI-106 remains In Progress pending owner approval and closure authorization.
 <!-- SECTION:FINAL_SUMMARY:END -->
