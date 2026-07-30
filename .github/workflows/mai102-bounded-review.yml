@@ -42,13 +42,29 @@ jobs:
       - name: Start review surfaces
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p mai102-evidence
           (cd gui && npm run start -- -H 127.0.0.1 -p 3000) > mai102-evidence/next-server.log 2>&1 &
           echo $! > mai102-evidence/next-server.pid
           python3 -m http.server 6006 --bind 127.0.0.1 --directory gui/storybook-static > mai102-evidence/storybook-server.log 2>&1 &
           echo $! > mai102-evidence/storybook-server.pid
-          curl --fail --retry 30 --retry-delay 1 http://127.0.0.1:3000/home > /dev/null
-          curl --fail --retry 30 --retry-delay 1 http://127.0.0.1:6006/index.json > /dev/null
+
+          wait_for_url() {
+            local url="$1"
+            local log="$2"
+            for attempt in $(seq 1 60); do
+              if curl --silent --show-error --fail "$url" > /dev/null; then
+                return 0
+              fi
+              sleep 1
+            done
+            echo "Timed out waiting for $url" >&2
+            cat "$log" >&2 || true
+            return 1
+          }
+
+          wait_for_url http://127.0.0.1:3000/home mai102-evidence/next-server.log
+          wait_for_url http://127.0.0.1:6006/index.json mai102-evidence/storybook-server.log
 
       - name: Run rendered conformance review
         shell: bash
