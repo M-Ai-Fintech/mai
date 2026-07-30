@@ -1,9 +1,13 @@
 name: MAI-100 bounded rendered review
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/MAI-100-deal-intelligence-decision-screens
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: read
