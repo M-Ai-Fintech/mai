@@ -58,7 +58,7 @@
 }
 
 .primaryColumn {
-  flex: 2 1 var(--mai-layout-content-max-tablet);
+  flex: 2 1 var(--mai-layout-content-max-mobile);
   min-inline-size: 0;
   display: grid;
   gap: var(--mai-space-component-md);
@@ -96,7 +96,7 @@
 }
 
 .registryPanel {
-  flex: 2 1 var(--mai-layout-content-max-tablet);
+  flex: 2 1 var(--mai-layout-content-max-mobile);
 }
 
 .card:focus-within,
