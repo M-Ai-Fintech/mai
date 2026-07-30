@@ -1,10 +1,10 @@
 ---
 id: MAI-104
 title: Shared architecture contracts and API primitives
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-30 09:24'
-updated_date: '2026-07-30 10:48'
+updated_date: '2026-07-30 11:41'
 labels:
   - backend
   - architecture
@@ -102,4 +102,14 @@ Final candidate evidence: git diff --check=0; focused contracts=0 (9 passed); de
 Owner-review handoff: committed 094d323 (feat(MAI-104): add shared architecture and API contracts), pushed feat/MAI-104-shared-architecture-contracts-api-primitives, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/24 against master. MAI-104 remains In Progress pending owner review; no self-approval, merge, or MAI-105/MAI-106 execution.
 
 Owner-review corrections resolved in 6acf8fe: P1-1 strict success metadata validation/preservation; P1-2 closed code-specific errors and disclosure rejection; P1-3 symbol-only result markers with declared typed ports. Final focused verification=0 (10 passed); git diff --check=0; scoped fmt/lint=0; deno task verify=0 (17 checks). PR #24 remains Draft; P0/P1=0; MAI-105/106 not started.
+
+Owner approval received for final corrected MAI-104. Residual envelope-boundary correction commit: 35714128951a59cc2c98df1568a4568ffcb4c280. Final evidence retained: focused contracts 10 passed; git diff --check=0; scoped format/lint=0; deno task verify=0 (all 17 canonical checks). P0/P1=0. Rollout remains additive with no runtime cutover; rollback is removal of consumer imports. MAI-105 and MAI-106 were not started.
+
+Closure confirmation: owner-approved PR #24 was squash-merged as 5d94658cf3d7c0db861371c3a61e8f63388a6e70 from final implementation head 35714128951a59cc2c98df1568a4568ffcb4c280.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Owner-approved MAI-104 shared v1 architecture/API contracts completed. Public imports use src/platform/api/v1.ts; verified with 10 focused tests and all 17 canonical checks. Additive rollout only; rollback removes consumer imports.
+<!-- SECTION:FINAL_SUMMARY:END -->
