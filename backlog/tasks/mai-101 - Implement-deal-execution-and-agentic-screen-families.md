@@ -1,11 +1,11 @@
 ---
 id: MAI-101
 title: Implement deal execution and agentic screen families
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 03:08'
+updated_date: '2026-07-30 03:32'
 labels:
   - frontend
   - screen-implementation
@@ -36,7 +36,7 @@ modified_files:
   - gui/package.json
   - scripts/verify.ts
 priority: high
-ordinal: 1400
+ordinal: 88000
 ---
 
 ## Description
