@@ -88,6 +88,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["--prefix", "gui", "run", "verify:execution-screens"],
   },
   {
+    id: "frontend-conformance",
+    label: "Frontend Figma-to-code conformance",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:conformance"],
+  },
+  {
     id: "gui-unit-tests",
     label: "GUI unit tests",
     command: "npm",
