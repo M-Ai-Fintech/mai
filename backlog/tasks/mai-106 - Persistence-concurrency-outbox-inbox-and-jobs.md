@@ -1,11 +1,11 @@
 ---
 id: MAI-106
 title: 'Persistence, concurrency, outbox, inbox and jobs'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 15:17'
+updated_date: '2026-07-30 15:50'
 labels:
   - backend
   - architecture
