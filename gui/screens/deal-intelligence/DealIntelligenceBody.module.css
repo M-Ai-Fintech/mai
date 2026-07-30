@@ -159,7 +159,7 @@
 
 .navLink:hover,
 .navLink:focus-visible {
-  background: var(--mai-color-surface-interactive-hover);
+  background: var(--mai-color-action-secondary-background);
 }
 
 .operationalRows,
@@ -184,7 +184,7 @@
 
 .definitionRows > div {
   display: grid;
-  grid-template-columns: minmax(var(--mai-layout-panel-min), 1fr) 2fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--mai-layout-panel-min)), 1fr));
   gap: var(--mai-space-component-sm);
   padding-block: var(--mai-space-component-xs);
   border-block-end: var(--mai-border-width-default) solid var(--mai-color-border-default);
