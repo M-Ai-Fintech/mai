@@ -58,15 +58,15 @@
 }
 
 .primaryColumn {
-  flex: 2 1 var(--mai-layout-content-max-mobile);
-  min-inline-size: 0;
+  flex: 2 1 0;
+  min-inline-size: min(100%, var(--mai-layout-panel-min));
   display: grid;
   gap: var(--mai-space-component-md);
 }
 
 .contextRail {
-  flex: 1 1 var(--mai-layout-panel-min);
-  min-inline-size: 0;
+  flex: 1 1 0;
+  min-inline-size: min(100%, var(--mai-layout-panel-min));
   display: grid;
   gap: var(--mai-space-component-md);
 }
@@ -92,11 +92,13 @@
 }
 
 .sidePanel {
-  flex: 1 1 var(--mai-layout-panel-min);
+  flex: 1 1 0;
+  min-inline-size: min(100%, var(--mai-layout-panel-min));
 }
 
 .registryPanel {
-  flex: 2 1 var(--mai-layout-content-max-mobile);
+  flex: 2 1 0;
+  min-inline-size: min(100%, var(--mai-layout-panel-min));
 }
 
 .card:focus-within,
