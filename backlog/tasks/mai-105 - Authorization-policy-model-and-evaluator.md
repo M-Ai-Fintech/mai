@@ -1,10 +1,10 @@
 ---
 id: MAI-105
 title: Authorization policy model and evaluator
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 15:13'
+updated_date: '2026-07-30 15:32'
 labels:
   - backend
   - architecture
@@ -111,4 +111,21 @@ Owner-review handoff: committed e856138 (feat(MAI-105): add authorization policy
 Owner review P1 accepted for correction: temporary and external grants currently require request purpose/sponsor/expiry presence but do not bind purpose or sponsor to the grant. Approved narrow plan: replace the optional-access GrantFact shape with a discriminated standard/temporary/external union; require temporary/external grant purpose, sponsor, expiry and explicit resource/action/field scopes; compare request values exactly and bound decision/token expiry to the grant. Add focused runtime and compile-time regression coverage; preserve all non-authz boundaries and keep MAI-105 In Progress.
 
 Owner-review P1 correction complete: GrantFact is now a discriminated standard, temporary, and external union. Temporary/external grants require a grant-bound purpose (or allowed set), sponsor, expiry, resource IDs, resource kinds, actions, and fields. The evaluator requires exact request purpose/sponsor matches and request expiry at or before grant expiry; the decision and allowed-only scope token use the earliest authorized expiry. Standard grants reject temporary/external constraint fields at compile time. Focused correction evidence: git diff --check = 0; deno fmt --check changed MAI-105 files = 0; deno lint changed MAI-105 TypeScript files = 0; deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts = 0 (22 passed, including grant union compile-time assertions). Canonical verification was run once before test-only extraction: deno task verify = 1 solely because local GUI packages vitest, next, playwright, and storybook are absent; canonical documentation, Deno tests, all frontend boundary checks, Figma conformance, and Storybook documentation passed. No dependency or browser infrastructure was installed. Compact P0/P1 security review: no remaining P0/P1; reviewed exact grant binding, deny-before-load, protected-not-found equivalence, scope isolation, restriction precedence, external classification omission, human authority, token expiry, safe reason codes, and public v1 boundary.
+
+Final closure evidence: implementation head 112030d46288ad2f2cad9d0011b769284c4ff90f. Acceptance criteria 1-3 remain checked with direct evidence. Focused git diff --check, deno fmt --check, deno lint, and deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts passed (22 tests). Canonical deno task verify exited 1 solely because local GUI packages vitest, next, playwright, and storybook are absent; backend, documentation, frontend boundary, Figma conformance, and Storybook-documentation checks passed. Open P0/P1 count is zero. Additive rollout remains shadow-mode comparison before enforcement, with enforcement rollback available without disabling audit. MAI-106 was not modified and remains independent.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-07-30 15:32
+---
+Owner approved the corrected authorization policy model and evaluator and authorized final closure and squash merge.
+---
+<!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Owner-approved MAI-105 authorization model and evaluator completed at 112030d46288ad2f2cad9d0011b769284c4ff90f. Temporary and external grants bind purpose, sponsor, and expiry; focused authorization tests and boundary checks pass. Canonical verification is environment-limited only by absent GUI packages; no dependencies were installed. PR #25 is authorized for Ready-for-Review and squash merge.
+<!-- SECTION:FINAL_SUMMARY:END -->
