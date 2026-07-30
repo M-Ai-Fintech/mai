@@ -31,6 +31,7 @@ export type {
   AuthorizationScope,
   DecisionReasonCode,
   DeniedAuthorizationDecision,
+  ExternalGrant,
   FieldClassification,
   FieldMask,
   FieldName,
@@ -45,6 +46,8 @@ export type {
   RestrictionFact,
   RoleFact,
   Sponsor,
+  StandardGrant,
+  TemporaryGrant,
 } from "./vocabulary.ts";
 export { evaluateAuthorization } from "./evaluator.ts";
 export {

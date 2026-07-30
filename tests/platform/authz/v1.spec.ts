@@ -4,15 +4,18 @@ import {
   type AuthorizationRequest,
   type AuthorizationScope,
   evaluateAuthorization,
+  type ExternalGrant,
   field,
-  type GrantFact,
   type PolicyClock,
   purpose,
   resourceKind,
   sponsor,
+  type StandardGrant,
+  type TemporaryGrant,
 } from "../../../src/platform/authz/v1.ts";
 import { parseRequestContext } from "../../../src/platform/api/v1.ts";
 import { assertEquals } from "@std/assert";
+import "./grant_union.types.ts";
 
 const clock: PolicyClock = { now: () => "2026-07-30T12:00:00.000Z" };
 const readerRole = {
@@ -83,21 +86,15 @@ Deno.test("v1 rejects cross-tenant, workspace, and deal selector mismatches", ()
 });
 
 Deno.test("v1 rejects inactive, revoked, expired, and incomplete temporary access", () => {
-  const temporaryGrant = grant({ access: "temporary" });
+  const temporary = temporaryGrant();
   const cases: ReadonlyArray<Partial<AuthorizationRequest>> = [
-    { actor: { ...actor(), state: "inactive" }, grantFacts: [temporaryGrant] },
-    { actor: { ...actor(), state: "revoked" }, grantFacts: [temporaryGrant] },
-    { grantFacts: [grant({ expiresAt: "2026-07-30T11:59:59.000Z" })] },
-    { grantFacts: [grant({ state: "revoked" })] },
-    { grantFacts: [temporaryGrant] },
-    { grantFacts: [temporaryGrant], purpose: purpose("due-diligence") },
-    { grantFacts: [temporaryGrant], sponsor: sponsor("sponsor-7") },
-    {
-      grantFacts: [grant({ access: "temporary", expiresAt: undefined })],
-      purpose: purpose("due-diligence"),
-      sponsor: sponsor("sponsor-7"),
-      expiresAt: "2026-07-30T13:00:00.000Z",
-    },
+    { actor: { ...actor(), state: "inactive" }, grantFacts: [temporary] },
+    { actor: { ...actor(), state: "revoked" }, grantFacts: [temporary] },
+    { grantFacts: [temporaryGrant({ expiresAt: "2026-07-30T11:59:59.000Z" })] },
+    { grantFacts: [standardGrant({ state: "revoked" })] },
+    { grantFacts: [temporary] },
+    { grantFacts: [temporary], purpose: purpose("due-diligence") },
+    { grantFacts: [temporary], sponsor: sponsor("sponsor-7") },
   ];
 
   for (const overrides of cases) {
@@ -105,13 +102,82 @@ Deno.test("v1 rejects inactive, revoked, expired, and incomplete temporary acces
   }
   assertEquals(
     evaluateAuthorization(request({
-      grantFacts: [temporaryGrant],
+      grantFacts: [temporary],
       purpose: purpose("due-diligence"),
       sponsor: sponsor("sponsor-7"),
       expiresAt: "2026-07-30T13:00:00.000Z",
     })).outcome,
     "allow",
   );
+});
+
+Deno.test("v1 binds temporary purpose, sponsor, and expiry to its grant", () => {
+  const temporary = temporaryGrant();
+  const matching = evaluateAuthorization(request({
+    grantFacts: [temporary],
+    purpose: purpose("due-diligence"),
+    sponsor: sponsor("sponsor-7"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+  const mismatchedPurpose = evaluateAuthorization(request({
+    grantFacts: [temporary],
+    purpose: purpose("document-review"),
+    sponsor: sponsor("sponsor-7"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+  const mismatchedSponsor = evaluateAuthorization(request({
+    grantFacts: [temporary],
+    purpose: purpose("due-diligence"),
+    sponsor: sponsor("sponsor-8"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+  const excessiveExpiry = evaluateAuthorization(request({
+    grantFacts: [temporary],
+    purpose: purpose("due-diligence"),
+    sponsor: sponsor("sponsor-7"),
+    expiresAt: "2026-07-30T13:30:00.000Z",
+  }));
+
+  assertEquals(matching.outcome, "allow");
+  assertEquals(matching.expiresAt, "2026-07-30T12:30:00.000Z");
+  if (matching.outcome !== "allow") throw new Error("Expected temporary allow");
+  assertEquals(matching.approvedScope.expiresAt, "2026-07-30T12:30:00.000Z");
+  assertEquals(mismatchedPurpose.outcome, "deny");
+  assertEquals(mismatchedSponsor.outcome, "deny");
+  assertEquals(excessiveExpiry.outcome, "deny");
+});
+
+Deno.test("v1 standard grants remain independent of temporary constraints", () => {
+  const decision = evaluateAuthorization(request({
+    grantFacts: [standardGrant()],
+    purpose: purpose("due-diligence"),
+    sponsor: sponsor("sponsor-7"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+
+  assertEquals(decision.outcome, "allow");
+  assertEquals(decision.expiresAt, undefined);
+});
+
+Deno.test("v1 binds external grants with the same purpose and sponsor rules", () => {
+  const external = externalGrant();
+  const allowed = evaluateAuthorization(request({
+    actor: { ...actor(), kind: "external" },
+    grantFacts: [external],
+    purpose: purpose("document-review"),
+    sponsor: sponsor("sponsor-7"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+  const denied = evaluateAuthorization(request({
+    actor: { ...actor(), kind: "external" },
+    grantFacts: [external],
+    purpose: purpose("document-review"),
+    sponsor: sponsor("sponsor-8"),
+    expiresAt: "2026-07-30T12:30:00.000Z",
+  }));
+
+  assertEquals(allowed.outcome, "allow");
+  assertEquals(denied.outcome, "deny");
 });
 
 Deno.test("v1 treats membership and assignments as insufficient authority", () => {
@@ -205,10 +271,10 @@ Deno.test("v1 approval authority requires a matching snapshot, not assignment", 
 });
 
 Deno.test("v1 external access requires explicit scope and omits internal classifications", () => {
-  const externalGrant = grant({ access: "external" });
+  const external = externalGrant();
   const allowed = evaluateAuthorization(request({
     actor: { ...actor(), kind: "external" },
-    grantFacts: [externalGrant],
+    grantFacts: [external],
     purpose: purpose("document-review"),
     sponsor: sponsor("sponsor-7"),
     expiresAt: "2026-07-30T13:00:00.000Z",
@@ -219,7 +285,7 @@ Deno.test("v1 external access requires explicit scope and omits internal classif
   }));
   const internalOnly = evaluateAuthorization(request({
     actor: { ...actor(), kind: "external" },
-    grantFacts: [externalGrant],
+    grantFacts: [external],
     purpose: purpose("document-review"),
     sponsor: sponsor("sponsor-7"),
     expiresAt: "2026-07-30T13:00:00.000Z",
@@ -249,7 +315,7 @@ Deno.test("v1 external actors never receive internal classifications", () => {
   ) {
     const decision = evaluateAuthorization(request({
       actor: { ...actor(), kind: "external" },
-      grantFacts: [grant({ access: "external", fields: [field("internal")] })],
+      grantFacts: [externalGrant({ fields: [field("internal")] })],
       purpose: purpose("document-review"),
       sponsor: sponsor("sponsor-7"),
       expiresAt: "2026-07-30T13:00:00.000Z",
@@ -365,7 +431,50 @@ function resource() {
   return { kind: resourceKind("deal"), id: "deal_solar-2026" };
 }
 
-function grant(overrides: Partial<GrantFact> = {}): GrantFact {
+function standardGrant(overrides: Partial<StandardGrant> = {}): StandardGrant {
+  return {
+    id: "deal-reader",
+    scope: scope(),
+    resourceKinds: [resourceKind("deal")],
+    actions: [action("read")],
+    fields: [field("name")],
+    access: "standard",
+    ...overrides,
+  };
+}
+
+function temporaryGrant(
+  overrides: Partial<TemporaryGrant> = {},
+): TemporaryGrant {
+  return {
+    ...boundGrant("temporary"),
+    purpose: purpose("due-diligence"),
+    sponsor: sponsor("sponsor-7"),
+    ...overrides,
+  };
+}
+
+function externalGrant(overrides: Partial<ExternalGrant> = {}): ExternalGrant {
+  return {
+    ...boundGrant("external"),
+    purpose: purpose("document-review"),
+    sponsor: sponsor("sponsor-7"),
+    ...overrides,
+  };
+}
+
+function boundGrant<Access extends "temporary" | "external">(
+  access: Access,
+): {
+  readonly id: string;
+  readonly scope: AuthorizationScope;
+  readonly resourceKinds: readonly ReturnType<typeof resourceKind>[];
+  readonly resourceIds: readonly string[];
+  readonly actions: readonly ReturnType<typeof action>[];
+  readonly fields: readonly ReturnType<typeof field>[];
+  readonly expiresAt: string;
+  readonly access: Access;
+} {
   return {
     id: "external-review",
     scope: scope(),
@@ -374,6 +483,6 @@ function grant(overrides: Partial<GrantFact> = {}): GrantFact {
     actions: [action("read")],
     fields: [field("name")],
     expiresAt: "2026-07-30T13:00:00.000Z",
-    ...overrides,
+    access,
   };
 }

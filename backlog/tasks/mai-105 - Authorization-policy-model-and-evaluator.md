@@ -4,7 +4,7 @@ title: Authorization policy model and evaluator
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 12:38'
+updated_date: '2026-07-30 15:13'
 labels:
   - backend
   - architecture
@@ -34,6 +34,7 @@ modified_files:
   - src/platform/authz/guard.ts
   - src/platform/authz/projection.ts
   - tests/platform/authz/v1.spec.ts
+  - tests/platform/authz/grant_union.types.ts
   - tests/platform/authz/guard_projection.spec.ts
 priority: high
 ordinal: 91000
@@ -106,4 +107,8 @@ TDD implementation slice complete. Added the isolated src/platform/authz v1 publ
 Final security review (read-only): 0 open P0/P1. Verified deny-before-load and canonical protected-not-found equivalence, tenant/workspace/deal context equality, deny/restriction precedence, expiry/revocation plus purpose/sponsor external constraints, human-only authority, external internal-classification omission, classification-bound projection, non-serializing allowed-only tokens, safe reason codes, and v1-only public exports. Corrected one P1 during review: projection now requires an explicit schema field plus an exact approved field-classification match before copying. Final scoped evidence after that correction: git diff --check = 0; deno fmt --check changed MAI-105 files = 0; deno lint changed MAI-105 TypeScript files = 0; deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts = 0 (19 passed). Final deno task verify was executed once outside the sandbox: backend/docs and GUI boundary checks passed, but overall exit 1 because GUI vitest/next/playwright/storybook dependencies are absent; no dependency installation is authorized. Baseline had the same missing-GUI dependency limitation plus sandbox git-spawn EPERM; the escalated final run cleared the EPERM.
 
 Owner-review handoff: committed e856138 (feat(MAI-105): add authorization policy model and evaluator), pushed feat/MAI-105-authorization-policy-model-evaluator, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/25 targeting master. PR is Draft; no self-approval, Ready-for-Review transition, merge, MAI-106 mutation, or MAI-107 start occurred. MAI-105 remains In Progress pending owner review and the environment-independent canonical GUI dependency limitation.
+
+Owner review P1 accepted for correction: temporary and external grants currently require request purpose/sponsor/expiry presence but do not bind purpose or sponsor to the grant. Approved narrow plan: replace the optional-access GrantFact shape with a discriminated standard/temporary/external union; require temporary/external grant purpose, sponsor, expiry and explicit resource/action/field scopes; compare request values exactly and bound decision/token expiry to the grant. Add focused runtime and compile-time regression coverage; preserve all non-authz boundaries and keep MAI-105 In Progress.
+
+Owner-review P1 correction complete: GrantFact is now a discriminated standard, temporary, and external union. Temporary/external grants require a grant-bound purpose (or allowed set), sponsor, expiry, resource IDs, resource kinds, actions, and fields. The evaluator requires exact request purpose/sponsor matches and request expiry at or before grant expiry; the decision and allowed-only scope token use the earliest authorized expiry. Standard grants reject temporary/external constraint fields at compile time. Focused correction evidence: git diff --check = 0; deno fmt --check changed MAI-105 files = 0; deno lint changed MAI-105 TypeScript files = 0; deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts = 0 (22 passed, including grant union compile-time assertions). Canonical verification was run once before test-only extraction: deno task verify = 1 solely because local GUI packages vitest, next, playwright, and storybook are absent; canonical documentation, Deno tests, all frontend boundary checks, Figma conformance, and Storybook documentation passed. No dependency or browser infrastructure was installed. Compact P0/P1 security review: no remaining P0/P1; reviewed exact grant binding, deny-before-load, protected-not-found equivalence, scope isolation, restriction precedence, external classification omission, human authority, token expiry, safe reason codes, and public v1 boundary.
 <!-- SECTION:NOTES:END -->

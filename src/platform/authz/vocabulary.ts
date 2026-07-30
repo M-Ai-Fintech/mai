@@ -79,11 +79,34 @@ export interface RoleFact {
 export type AccessKind = "standard" | "temporary" | "external";
 export type GrantState = "active" | "revoked";
 
-export interface GrantFact extends RoleFact {
+interface GrantBase extends Omit<RoleFact, "expiresAt"> {
   readonly resourceIds?: readonly string[];
-  readonly access?: AccessKind;
   readonly state?: GrantState;
 }
+
+export interface StandardGrant extends GrantBase {
+  readonly access: "standard";
+  readonly purpose?: never;
+  readonly sponsor?: never;
+  readonly expiresAt?: never;
+}
+
+interface BoundAccessGrant extends Omit<GrantBase, "resourceIds"> {
+  readonly resourceIds: readonly string[];
+  readonly purpose: Purpose | readonly Purpose[];
+  readonly sponsor: Sponsor;
+  readonly expiresAt: string;
+}
+
+export interface TemporaryGrant extends BoundAccessGrant {
+  readonly access: "temporary";
+}
+
+export interface ExternalGrant extends BoundAccessGrant {
+  readonly access: "external";
+}
+
+export type GrantFact = StandardGrant | TemporaryGrant | ExternalGrant;
 
 export interface RestrictionFact {
   readonly id: string;
@@ -140,6 +163,7 @@ export type DecisionReasonCode =
   | "GRANT_REVOKED"
   | "GRANT_EXPIRED"
   | "TEMPORARY_CONSTRAINT_REQUIRED"
+  | "TEMPORARY_CONSTRAINT_MISMATCH"
   | "NO_MATCHING_GRANT"
   | "EXPLICIT_RESTRICTION"
   | "FIELD_SCOPE_DENIED";

@@ -4,12 +4,14 @@ import {
   type AuthorizationDecision,
   type AuthorizationRequest,
   deniedDecision,
+  type ExternalGrant,
   type FieldClassification,
   type FieldName,
   type GrantFact,
   type RelationshipFact,
   type RestrictionFact,
   type RoleFact,
+  type TemporaryGrant,
 } from "./vocabulary.ts";
 
 export function evaluateAuthorization(
@@ -30,9 +32,12 @@ export function evaluateAuthorization(
   }
   if (
     requiresTemporaryConstraints(candidates) &&
-    !hasTemporaryConstraints(request, candidates, now)
+    !hasRequestedTemporaryConstraints(request, now)
   ) {
     return deniedDecision(request, "TEMPORARY_CONSTRAINT_REQUIRED");
+  }
+  if (!matchesGrantConstraints(request, candidates)) {
+    return deniedDecision(request, "TEMPORARY_CONSTRAINT_MISMATCH");
   }
   if (hasWholeRestriction(request)) {
     return deniedDecision(request, "EXPLICIT_RESTRICTION");
@@ -106,7 +111,7 @@ function matchesFact(
     !fact.resourceIds.includes(request.resource.id)
   ) return false;
   if (request.actor.kind === "external" && !isExternalGrant(fact)) return false;
-  if (isExternalGrant(fact) && !hasExplicitExternalScope(fact)) return false;
+  if (isBoundAccessGrant(fact) && !hasExplicitBoundScope(fact)) return false;
   if (!matchesAuthorityRequirement(request, fact)) return false;
   return hasRequiredRelationships(request, fact.relationshipRequirements);
 }
@@ -158,15 +163,16 @@ function sameScope(
     fact.scope.dealId === scope.dealId;
 }
 
-function isExternalGrant(fact: RoleFact | GrantFact): boolean {
-  return "access" in fact && fact.access === "external";
+function isExternalGrant(fact: RoleFact | GrantFact): fact is ExternalGrant {
+  return isGrant(fact) && fact.access === "external";
 }
 
-function hasExplicitExternalScope(
-  fact: RoleFact | GrantFact,
-): fact is GrantFact {
-  return "resourceIds" in fact && fact.resourceIds !== undefined &&
-    fact.resourceIds.length > 0 &&
+function isGrant(fact: RoleFact | GrantFact): fact is GrantFact {
+  return "access" in fact;
+}
+
+function hasExplicitBoundScope(fact: TemporaryGrant | ExternalGrant): boolean {
+  return fact.resourceIds.length > 0 && fact.resourceKinds.length > 0 &&
     fact.actions.length > 0 && fact.fields.length > 0;
 }
 
@@ -178,24 +184,44 @@ function expired(expiresAt: string | undefined, now: string): boolean {
 function requiresTemporaryConstraints(
   facts: readonly (RoleFact | GrantFact)[],
 ): boolean {
-  return facts.some(isTemporaryOrExternal);
+  return facts.some(isBoundAccessGrant);
 }
 
-function hasTemporaryConstraints(
+function hasRequestedTemporaryConstraints(
   request: AuthorizationRequest,
-  candidates: readonly (RoleFact | GrantFact)[],
   now: string,
 ): boolean {
-  const temporaryFacts = candidates.filter(isTemporaryOrExternal);
   return request.purpose !== undefined && request.sponsor !== undefined &&
     request.expiresAt !== undefined &&
-    !expired(request.expiresAt, now) &&
-    temporaryFacts.every((fact) => fact.expiresAt !== undefined);
+    !expired(request.expiresAt, now);
 }
 
-function isTemporaryOrExternal(fact: RoleFact | GrantFact): fact is GrantFact {
-  return "access" in fact &&
-    (fact.access === "temporary" || fact.access === "external");
+function matchesGrantConstraints(
+  request: AuthorizationRequest,
+  facts: readonly (RoleFact | GrantFact)[],
+): boolean {
+  return facts.filter(isBoundAccessGrant).every((fact) =>
+    purposeMatches(request.purpose, fact.purpose) &&
+    request.sponsor === fact.sponsor &&
+    request.expiresAt !== undefined &&
+    Date.parse(request.expiresAt) <= Date.parse(fact.expiresAt)
+  );
+}
+
+function isBoundAccessGrant(
+  fact: RoleFact | GrantFact,
+): fact is TemporaryGrant | ExternalGrant {
+  return isGrant(fact) && fact.access !== "standard";
+}
+
+function purposeMatches(
+  requested: AuthorizationRequest["purpose"],
+  authorized: TemporaryGrant["purpose"],
+): boolean {
+  if (requested === undefined) return false;
+  return Array.isArray(authorized)
+    ? authorized.includes(requested)
+    : authorized === requested;
 }
 
 function hasWholeRestriction(request: AuthorizationRequest): boolean {
@@ -271,7 +297,10 @@ function earliestExpiry(
   request: AuthorizationRequest,
   facts: readonly (RoleFact | GrantFact)[],
 ): string | undefined {
-  return [request.expiresAt, ...facts.map((fact) => fact.expiresAt)].filter((
+  const requestExpiry = facts.some(isBoundAccessGrant)
+    ? request.expiresAt
+    : undefined;
+  return [requestExpiry, ...facts.map((fact) => fact.expiresAt)].filter((
     value,
   ): value is string => value !== undefined).sort()[0];
 }
