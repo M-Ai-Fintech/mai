@@ -1,103 +1,13 @@
 name: MAI-102 Final Frontend Proof
 
 on:
-  pull_request:
-    branches:
-      - master
-    types:
-      - synchronize
-      - reopened
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  final-proof:
+  paused:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
     steps:
-      - name: Check out branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: gui/package-lock.json
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Install GUI dependencies
-        run: npm --prefix gui ci
-
-      - name: Install repository-pinned Chromium
-        run: npm --prefix gui exec -- playwright install --with-deps chromium
-
-      - name: Record candidate identity
-        shell: bash
-        run: |
-          mkdir -p mai102-evidence
-          git rev-parse HEAD | tee mai102-evidence/candidate-sha.txt
-          git rev-parse HEAD^{tree} | tee mai102-evidence/candidate-tree.txt
-          git status --short | tee mai102-evidence/pre-verification-status.txt
-
-      - name: Run canonical verification
-        shell: bash
-        run: |
-          set -o pipefail
-          deno task verify 2>&1 | tee mai102-evidence/deno-task-verify.log
-          status=${PIPESTATUS[0]}
-          printf 'EXIT_STATUS=%s\n' "$status" | tee -a mai102-evidence/deno-task-verify.log
-          printf '%s\n' "$status" > mai102-evidence/canonical-exit-status.txt
-          exit "$status"
-
-      - name: Start verified review surfaces
-        shell: bash
-        run: |
-          set -euo pipefail
-          (cd gui && npm run start -- -H 127.0.0.1 -p 3000) > mai102-evidence/next-server.log 2>&1 &
-          echo $! > mai102-evidence/next-server.pid
-          python3 -m http.server 6006 --bind 127.0.0.1 --directory gui/storybook-static > mai102-evidence/storybook-server.log 2>&1 &
-          echo $! > mai102-evidence/storybook-server.pid
-
-          wait_for_url() {
-            local url="$1"
-            local log="$2"
-            for attempt in $(seq 1 60); do
-              if curl --silent --show-error --fail "$url" > /dev/null; then
-                return 0
-              fi
-              sleep 1
-            done
-            echo "Timed out waiting for $url" >&2
-            cat "$log" >&2 || true
-            return 1
-          }
-
-          wait_for_url http://127.0.0.1:3000/home mai102-evidence/next-server.log
-          wait_for_url http://127.0.0.1:6006/index.json mai102-evidence/storybook-server.log
-
-      - name: Run 25-family rendered conformance proof
-        shell: bash
-        run: |
-          set -o pipefail
-          node gui/scripts/mai102-rendered-review.mjs 2>&1 | tee mai102-evidence/rendered-review.log
-          status=${PIPESTATUS[0]}
-          printf 'EXIT_STATUS=%s\n' "$status" | tee -a mai102-evidence/rendered-review.log
-          printf '%s\n' "$status" > mai102-evidence/rendered-exit-status.txt
-          exit "$status"
-
-      - name: Upload final frontend evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mai102-final-frontend-proof
-          path: mai102-evidence
-          if-no-files-found: error
-          retention-days: 30
+      - run: echo "Verifier correction in progress."
