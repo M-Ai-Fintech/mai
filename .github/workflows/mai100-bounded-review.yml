@@ -1,0 +1,113 @@
+name: MAI-100 bounded rendered review
+
+on:
+  push:
+    branches:
+      - feat/MAI-100-deal-intelligence-decision-screens
+
+permissions:
+  contents: read
+
+jobs:
+  review-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+      - name: Install dependencies and Chromium
+        run: |
+          npm --prefix gui ci
+          npm --prefix gui exec -- playwright install --with-deps chromium
+      - name: Build application and Storybook
+        run: |
+          npm --prefix gui run build
+          npm --prefix gui run build-storybook
+      - name: Start review surfaces
+        shell: bash
+        run: |
+          npm --prefix gui run start -- --hostname 127.0.0.1 --port 3000 > /tmp/mai100-next.log 2>&1 &
+          python3 -m http.server 6006 --directory gui/storybook-static > /tmp/mai100-storybook.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/deals/demo-deal/overview >/dev/null && curl -fsS http://127.0.0.1:6006/index.html >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/mai100-next.log || true
+          cat /tmp/mai100-storybook.log || true
+          exit 1
+      - name: Capture bounded rendered review
+        id: rendered
+        shell: bash
+        run: |
+          node gui/scripts/mai100-rendered-review.mjs
+          FAILED=$(node -e "const r=require('./mai100-review/report.json'); process.stdout.write(String(r.failed))")
+          echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai100-bounded-rendered-review
+          path: mai100-review
+          if-no-files-found: error
+          retention-days: 7
+      - name: Wait for Git-aware cleanup commit
+        shell: bash
+        run: |
+          for attempt in {1..90}; do
+            git fetch origin feat/MAI-100-deal-intelligence-decision-screens
+            if ! git cat-file -e origin/feat/MAI-100-deal-intelligence-decision-screens:.github/workflows/mai100-bounded-review.yml 2>/dev/null \
+              && ! git cat-file -e origin/feat/MAI-100-deal-intelligence-decision-screens:gui/scripts/mai100-rendered-review.mjs 2>/dev/null; then
+              git checkout --detach origin/feat/MAI-100-deal-intelligence-decision-screens
+              git reset --hard
+              git clean -fdx
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Cleanup commit was not observed" >&2
+          exit 1
+      - name: Confirm exact final tree
+        shell: bash
+        run: |
+          test ! -e .github/workflows/mai100-bounded-review.yml
+          test ! -e gui/scripts/mai100-rendered-review.mjs
+          test -z "$(git diff master...HEAD -- .github/workflows)"
+          test -z "$(git diff master...HEAD -- gui/scripts/mai100-rendered-review.mjs)"
+      - name: Install exact-final-tree dependencies and Chromium
+        run: |
+          npm --prefix gui ci
+          npm --prefix gui exec -- playwright install --with-deps chromium
+      - name: Run exact-final-tree verification
+        shell: bash
+        run: |
+          git diff --check
+          git diff master...HEAD --check
+          npm --prefix gui run tokens:check
+          npm --prefix gui run verify:tokens
+          npm --prefix gui run verify:components
+          npm --prefix gui run verify:shell
+          npm --prefix gui run verify:screens
+          npm --prefix gui run verify:deal-screens
+          npm --prefix gui run verify:foundation
+          npm --prefix gui run lint
+          npm --prefix gui run test:unit
+          npm --prefix gui run build
+          npm --prefix gui run validate:storybook-docs
+          npm --prefix gui run build-storybook
+          npm --prefix gui run test-storybook
+          deno task verify
+      - name: Assert rendered metrics
+        shell: bash
+        run: |
+          test "${{ steps.rendered.outputs.failed }}" = "0"
