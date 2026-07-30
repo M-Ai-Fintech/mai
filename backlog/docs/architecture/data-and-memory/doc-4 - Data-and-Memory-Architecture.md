@@ -3,7 +3,7 @@ id: doc-4
 title: Data and Memory Architecture
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:50'
+updated_date: '2026-07-30 06:37'
 tags:
   - architecture
   - data
@@ -14,41 +14,31 @@ tags:
 
 - **Authority ID:** ARCH-DATA-001
 - **Owner:** Data Platform
-- **Authority:** Canonical data ownership and memory-boundary architecture
-- **Freshness:** Current for the PostgreSQL schema and MVP stores documented by MAI-84
+- **Authority:** Canonical target data architecture proposed by MAI-103
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Database schema, persistence ownership, memory taxonomy, embedding dimensions, RAG silo behavior, or MVP-store durability changes.
+- **Update trigger:** Context schema ownership, concurrency, truth taxonomy, audit/provenance, retention, object/vector storage or recovery objectives change
 
-`src/core/db/schema.sql`, runtime repositories, and Zod contracts are executable authority.
+## Ownership and transaction truth
 
-## Data stores
+PostgreSQL is transaction truth, durable coordination and projection storage. Each bounded context owns its schema and migrations. A normal transaction writes one versioned aggregate, idempotency result, immutable audit record and outbox events. Cross-context references are IDs plus expected versions, never transactionally owned objects.
 
-PostgreSQL is the relational store defined by `src/core/db/schema.sql`. Core business records include transactions, businesses, advisors, transaction/business roles, financial structures, phases, phase history, and flow checkpoints. The schema enables `uuid-ossp` and `vector` and defines vector columns at dimension 384.
+## Truth taxonomy
 
-The MVP HTTP route adapter has a separate in-memory store in `src/api/store/`. Its entities, deals, notifications, layouts, and chat state reset when the API process restarts. It is intentionally not evidence that these product routes persist to PostgreSQL.
+Source documents and their versions are immutable source records. Evidence/citations bind exact locations and hashes. Approved facts are versioned and superseded, not overwritten. Interpretations, assumptions, calculations and model recommendations remain distinct derived records. Human Decision Records are immutable authority. Generated drafts are not released deliverables; release manifests are immutable. Audit is append-only.
 
-## Memory segregation
+## Staleness and history
 
-`phase_history` records operational phase progression. It must not be used as a substitute for durable agent memory. Separate memory tables are:
+New source versions emit targeted invalidation events. Dependents retain original inputs and history while current projections report `current`, `stale`, `invalidated` or `superseded`. No history is destructively rewritten to create a current view.
 
-- `user_preferences` — broker/user preference records;
-- `domain_knowledge` — reusable domain knowledge by category;
-- `company_culture_memory` — business-linked cultural observations;
-- `vdr_document_chunks` — deal-scoped retrieved-document chunks and embeddings.
+## Storage boundaries
 
-`DatabaseMemoryService` owns pooled PostgreSQL access, JSONB queries, writes, and vector retrieval. Use `getInstance()` for shared process access. The service can be offline; callers must retain safe fallback behavior instead of treating a failed connection as persistence success.
+Document metadata and provenance are relational. Binary objects live in versioned object storage. Vector indexes are derived projections isolated by tenant/workspace/deal/document version/classification and are rebuildable. Cache keys and jobs carry the same scope.
 
-## RAG boundary
+## Durability and lifecycle
 
-`ClientSiloedRAG` in `src/agent/rag_layer.ts` partitions document retrieval by `dealId`. It chunks loaded VDR/local text, creates embeddings through `TransformersEngine`, persists chunks where possible, and falls back to an in-memory per-deal silo when persistence fails. This is a development resilience mechanism, not a cross-process durability guarantee.
+Idempotency, outbox, inbox, jobs, attempts and dead letters are durable. Retention, archive, legal hold and deletion requests coordinate every context/object/index and produce immutable manifests. Proposed objectives are RPO no greater than five minutes and RTO no greater than four hours, subject to production infrastructure approval and recovery exercise.
 
-The present implementation reads local `.txt` and `.md` sources directly, or lists/downloads from supported VDR providers. It does not establish a universal binary-extraction or production document-governance pipeline.
+## Retained current-state evidence
 
-## Data rules
-
-- Keep user preferences, domain knowledge, culture memory, operational history, and VDR chunks distinct.
-- Scope RAG queries by deal ID and do not merge client/document silos without an explicit authorization model.
-- Treat embeddings as sensitive derived data.
-- Use API contracts for browser-facing DTOs; do not leak server file paths in VDR/download behavior.
-
-See M&A Domain Model for business concepts and VDR and Integration Architecture for provider access.
+The current `schema.sql`, TransactionRepository, DatabaseMemoryService and in-memory MVP stores are classified in doc-23. They do not constrain target tables or boundaries. Migration/reconciliation is defined by doc-21, doc-24 and proposed ADR doc-36.

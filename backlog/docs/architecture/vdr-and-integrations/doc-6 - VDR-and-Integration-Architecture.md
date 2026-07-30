@@ -3,7 +3,7 @@ id: doc-6
 title: VDR and Integration Architecture
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:51'
+updated_date: '2026-07-30 06:37'
 tags:
   - architecture
   - vdr
@@ -14,32 +14,29 @@ tags:
 
 - **Authority ID:** ARCH-INT-001
 - **Owner:** Integration Platform
-- **Authority:** Canonical current-state VDR and integration architecture
-- **Freshness:** Current for provider adapters and integration seams documented by MAI-84
+- **Authority:** Canonical target integration architecture proposed by MAI-103
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** VDR provider contracts, proxy behavior, event adapters, external service activation, credential boundaries, or integration maturity changes.
+- **Update trigger:** Provider ports/adapters, credentials, capability, retry, residency, retention, health or readiness changes
 
-Provider implementations and environment configuration are authoritative for credentials and API details.
+## Project-owned integration boundary
 
-## VDR provider contract
+MAI owns interfaces for VDR/document sources, object storage, AI, embeddings, inference, document conversion/OCR, external communication, identity providers, webhooks and future event transport. Provider payloads are translated by anti-corruption adapters before domain commands.
 
-`VDRProvider` in `src/core/vdr/provider.ts` defines four operations: list documents, download document bytes, retrieve metadata, and upload a document. The normalized `VDRDocument` contract contains ID, name, size, MIME type, optional folder ID, and timestamps.
+Connector accounts are tenant/workspace scoped and reference secrets in an approved vault or workload identity. Secrets never enter prompts, browser DTOs, events or logs. Adapters discover capability, enforce request idempotency, bounded retry/timeout/rate limiting, normalize failure, expose health and record audit/provenance.
 
-Current provider implementations include Papermark, iDeals, Intralinks, and a local mock. They are adapters with varying implementation completeness; listing a provider module does not certify a live production integration.
+## VDR and documents
 
-`BaseVDRProvider` can route requests through a configured Supergood proxy. When `proxyUrl` is set, it sends the target URL in `x-supergood-target-url` and forwards configured Supergood API/client headers. Secrets are read from environment configuration and must never be placed in documentation, source, or client responses.
+VDR systems are sources, not transaction truth. Document Source and immutable Document Version record provider object/version/checksum, classification and provenance. Synchronization, conversion, extraction, indexing and embeddings are durable jobs. Evidence binds an exact version/location; a provider update creates a new version and targeted staleness.
 
-## Agent and RAG access
+## External effects
 
-The agent action layer exposes a local Pub/Sub-compatible tool for VDR-access requests and engine triggers. In the MVP this publishes on `LocalPubSubBus`; it may obtain documents from the mock VDR service for its request-access branch. It is not a Google Cloud Pub/Sub client.
+Webhook ingress verifies signature, timestamp and replay before inbox processing. Webhook and communication egress starts only from a persisted human-authorized command, durable job and outbox record. Provider retry cannot broaden recipient, scope or payload.
 
-`ClientSiloedRAG` can retrieve document content from a local folder or an iDeals/Intralinks provider, chunk it, and restrict retrieval by deal. Provider bytes are decoded as text in the current path; rich-document extraction and universal binary processing remain future work.
+## Readiness
 
-## Integration inventory
+No provider is production-ready from an interface or mock. Production-candidate/verified states require environment-specific conformance, isolation, security, recovery, residency, retention, health and operational evidence.
 
-- **AI provider:** Google API-key lookup and dry-run fallback are implemented by `AIProvider`; model and search-grounding capabilities are not guaranteed merely by a historical architecture claim.
-- **PostgreSQL:** `DatabaseMemoryService` is the active database service; it is not an MCP Toolbox server.
-- **Transformers/ONNX:** Local engine packages provide embedding and inference behavior; they are not an installed Hugging Face MCP server.
-- **Events:** `LocalPubSubBus` is an in-process migration seam; Google Cloud Pub/Sub is a future deployment target.
+## Current implementation
 
-Describe a service as integrated only when the corresponding adapter is configured, tested, and active in the target environment. Future GCP/Vertex architecture belongs in a future-state decision or deployment plan, not this current-state document.
+The VDR provider interface and partial adapters are **Adapt**; mocks remain named local fixtures. Direct integrations/tools and local filesystem output are replaced. The complete catalog is doc-22; data/object/vector rules are doc-21 and proposed ADR doc-35.

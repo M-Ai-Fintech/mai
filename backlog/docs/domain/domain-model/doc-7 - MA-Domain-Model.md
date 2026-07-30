@@ -3,7 +3,7 @@ id: doc-7
 title: M&A Domain Model
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:51'
+updated_date: '2026-07-30 06:51'
 tags:
   - domain
   - ma
@@ -13,42 +13,38 @@ tags:
 
 - **Authority ID:** DOMAIN-001
 - **Owner:** Product and Domain Architecture
-- **Authority:** Canonical business-language domain model
-- **Freshness:** Current for business concepts and executable schemas documented by MAI-84
+- **Authority:** Canonical target business language proposed by MAI-103
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Core business concepts, lifecycle phases, domain relationships, valuation vocabulary, or human decision boundaries change.
+- **Update trigger:** Bounded-context ownership, aggregate invariant, workflow state or human-authority terminology changes
 
-The PostgreSQL schema, API contracts, and Zod schemas are authoritative for persistence and transport shapes.
+## Bounded business language
 
-## Core concepts
+MAI separates identity/tenancy, access governance, organization registry, deal management (identity, parties, mandate, lifecycle and milestones), work management (workstreams, tasks and approvals), documents/evidence, diligence decisions (including assumptions and generic calculations), valuation, matching, negotiation, closing, agent execution, external access, deliverables/distribution, deal governance, notifications, integrations and audit/activity.
 
-- **Transaction (deal):** The central M&A process. It has a title, code, type, strategy, status, target valuation, currency, and phase history.
-- **Business:** A company or organization, represented with identity, CNPJ where available, sector, and origin country.
-- **Transaction business role:** A relationship that places a business in a transaction with a named role such as buyer, seller, or target.
-- **Advisor:** A person or firm associated with a transaction, classified by advisor type and side.
-- **Financial structure:** A transaction’s composition of cash, equity, earn-out, and escrow percentages with a total valuation.
-- **Phase and phase history:** A defined lifecycle phase, its status, timing, comments, and structured operational data.
-- **Flow checkpoint:** An event/workflow recovery record associated with a transaction, agent, topic, and state.
-- **VDR document:** A provider-normalized document metadata record; its text chunks can be stored in a deal-scoped retrieval silo.
+Deal is the transaction identity and party/mandate anchor; it is not a universal aggregate. Milestones, tasks, documents, findings, scenarios, proposals, conditions, missions, grants and deliverables are independent aggregate roots or projections in their owning contexts.
 
-## Lifecycle
+## Evidence-to-authority chain
 
-The intended business lifecycle is sourcing/KYB, due diligence, matching/valuation, negotiation, and legal closing. The system’s agent workflow supports those phases, but `phase`, `phase_status`, and active product routes—not a diagram alone—define what is currently executable.
+```text
+Document Version → Evidence/Citation → Fact or Interpretation
+→ Finding/Impact, Assumption/Calculation, Recommendation
+→ exact-version human Decision Record
+→ separately authorized consequential command
+```
 
-A transaction can associate multiple businesses and advisors. A business may have distinct roles in different transactions. Financial structure records model proposed deal consideration; they are not legal execution instruments by themselves.
+Facts are not interpretations; assumptions are not facts; calculations and model recommendations are not decisions. Provenance records origin and derivation across every link.
 
-## Decision-support boundaries
+## Transaction workflow
 
-Prediction, portfolio optimization, valuation ranges, and negotiation scenarios support human judgment. They do not establish binding valuation, legal advice, credit approval, or an autonomous closing decision. Closing artifacts require an explicit human approval boundary.
+Deal Phase, Milestone and Workstream coordinate progression without owning downstream records. Task and Approval Request assign work and exact review packages. Valuation Scenario, Matching Run, Negotiation Round/Proposal and Closing Condition each enforce their own lifecycle and expected-version boundary.
 
-## Valuation vocabulary
+## Participation and distribution
 
-Use the following terms consistently:
+Membership is institution/workspace participation; Deal Participation is deal scope; external access is purpose-bound with sponsor, expiry and object/field restrictions. Deliverable drafts, redactions, approvals, releases, exports and distributions are distinct states.
 
-- **Equity value:** Value attributable to equity holders.
-- **Enterprise value:** Equity value plus debt-like claims less applicable cash adjustments; exact adjustments depend on the deal model.
-- **EBITDA:** A performance metric that needs normalization and documented adjustments.
-- **Valuation range:** A floor/mid/ceiling or other explicitly parameterized range, rather than an implied single authoritative price.
-- **Earn-out and escrow:** Consideration/protection mechanisms whose economics and legal terms must be separately specified.
+## Human authority
 
-Document assumptions, source dates, currency, and jurisdiction with any valuation output. Reference colocated financial and legal agent knowledge for jurisdiction-specific guidance; it is not duplicated here.
+Approval/rejection, price, external communication, waiver, signature, invitation/offboarding, permission changes, release, archive/restore/termination/deletion and irreversible closing confirmation are human-only transitions. Agents propose or calculate through application services.
+
+Doc-20 is the detailed context/aggregate/state-machine catalog; doc-19 supplies product traceability and doc-21 supplies isolation/persistence semantics. Earlier prototype terms remain historical evidence in doc-23 rather than target constraints.

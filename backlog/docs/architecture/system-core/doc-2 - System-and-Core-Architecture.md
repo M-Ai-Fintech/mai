@@ -3,7 +3,7 @@ id: doc-2
 title: System and Core Architecture
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:50'
+updated_date: '2026-07-30 06:37'
 tags:
   - architecture
   - core
@@ -13,44 +13,39 @@ tags:
 
 - **Authority ID:** ARCH-SYS-001
 - **Owner:** Platform Architecture
-- **Authority:** Canonical current-state architecture
-- **Freshness:** Current for the Deno MVP documented by MAI-84
+- **Authority:** Canonical target system boundary proposed by MAI-103; implementation remains future work
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Runtime entry points, core service boundaries, bootstrap behavior, persistence mode, event transport, or deployment-state classification changes.
+- **Update trigger:** Bounded contexts, deployment boundary, persistence, event/job transport, security boundary, or migration decision changes
 
-Source code is authoritative where this document and implementation differ.
+## Target architecture
 
-## Runtime boundary
+MAI is a modular monolith with explicit bounded contexts, context-owned schemas/repositories/application services, one versioned HTTP API and durable API/worker processes. PostgreSQL provides transaction truth, aggregate versions, idempotency, audit, jobs, outbox/inbox and relational projections. Binary content is object-store owned; vector indexes are derived and scope/version keyed.
 
-The MVP is a TypeScript/Deno monolith. `src/main.ts` boots the CLI application through `AppBootstrapper`; `src/api/server.ts` starts the HTTP server on port 8000. The Next.js GUI is a separate `gui/` application and reaches the Deno API through its configured `/api/*` rewrite.
+The shared platform is deliberately small: typed identities/scopes, authentication adapter, authorization evaluator, transaction runner, error/HTTP contracts, durable jobs/events and observability. Domain modules expose public commands, queries and events. They do not share repositories or mutate each other’s tables.
 
-The core initialization sequence in `src/core/boot.ts` creates the process-local `LocalPubSubBus`, obtains the singleton `DatabaseMemoryService`, checks the AI-provider configuration, and attempts to load `models/ma_classifier_q8.onnx`. Database, AI, and ONNX availability are independently degradable: bootstrap logs failures and keeps the process running. Individual callers must still handle unavailable dependencies.
+Cross-context workflows use stable references, expected versions, orchestration and events. One aggregate plus its idempotency, audit and outbox records is the normal transaction boundary. There is no universal Deal aggregate and no initial microservice split.
 
-## Current component map
+## Security and authority
 
-```text
-CLI / HTTP API / GUI adapter
-        │
-        ├── Agent layer (src/agent)
-        ├── Domain API adapter and in-memory MVP store (src/api)
-        ├── Core: PostgreSQL repositories, local event bus, VDR providers
-        └── Engines: prediction, optimization, document generation
-```
+Authentication binds an IdP subject to a MAI ActorContext. RBAC+ABAC+relationship policy denies before protected loading; field restrictions are applied before DTO assembly. Every resource is tenant/workspace/deal scoped. Human-only and irreversible commands are enforced server-side.
 
-`LocalPubSubBus` in `src/core/pubsub/` is the current in-process asynchronous-event abstraction. `AgentFlowWrapper` can record flow checkpoints, but a complete externally durable, at-least-once workflow is not a current production guarantee.
+## Synchronous and asynchronous boundary
 
-The HTTP server also retains several legacy endpoints (`/api/kyb`, `/api/predict`, `/api/portfolio`, `/api/negotiate`, and `/api/document`) after trying the deterministic MVP route adapter. New product-facing route work belongs in `src/api/mvp_routes.ts` and its ordered domain handlers; handler ordering is observable matching behavior.
+Fast single-aggregate commands and queries use HTTP. Long, retryable, cancellable or external work uses durable jobs. Domain events are committed through the outbox; integration messages pass through outbox/inbox adapters. Polling is default; SSE is limited to material long-running progress.
 
-## Dependency and resilience rules
+## Deployment evolution
 
-- Obtain agent-memory persistence via `DatabaseMemoryService.getInstance()`; `src/core/db/memory_service.ts` is a compatibility re-export.
-- The PostgreSQL service has a real `pg` pool and caches an offline state after connection failure. It is not the persistence backend for the in-memory MVP route store.
-- The local event bus is a migration seam, not Google Cloud Pub/Sub itself.
-- The ONNX artifact is optional at boot but required for live ONNX inference calls.
-- AI calls use the provider configuration documented in Local Setup; without a key, the agent entry point substitutes dry-run behavior.
+The modular monolith may be split only after measured scaling, isolation, ownership or availability evidence and an approved extraction plan. Provider adapters and future event transport remain behind project-owned ports.
 
-## Future architecture boundary
+## Retained current-state evidence
 
-GCP services, Vertex AI, Cloud Run, Cloud Storage, BigQuery, Cloud Pub/Sub, replicas, and CMEK are future-target architecture, not deployed MVP components. Preserve abstraction boundaries so those adapters can be introduced deliberately; do not document them as active services.
+The Deno server, `src/api/mvp_routes.ts`, in-memory stores, `src/core/db/schema.sql`, LocalPubSubBus and AgentFlowWrapper remain implementation evidence, not target authority. Their complete migration disposition and retirement conditions are in doc-23 and doc-36.
 
-See also: Agent Architecture and Workflows, Data and Memory Architecture, Engine Architecture, VDR and Integration Architecture, and MVP GUI and API Behavior.
+## Detailed authority
+
+- doc-19: product-to-backend gap matrix
+- doc-20: contexts, aggregates and state machines
+- doc-21: security, persistence, audit and provenance
+- doc-22: APIs, jobs, events, agents and integrations
+- doc-25–36: proposed decisions

@@ -3,7 +3,7 @@ id: doc-5
 title: Engine Architecture
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:51'
+updated_date: '2026-07-30 06:37'
 tags:
   - architecture
   - engines
@@ -13,33 +13,29 @@ tags:
 
 - **Authority ID:** ARCH-ENGINE-001
 - **Owner:** Engine Platform
-- **Authority:** Canonical computational-engine architecture
-- **Freshness:** Current for the prediction, optimization, and document engines documented by MAI-84
+- **Authority:** Canonical target engine boundary proposed by MAI-103
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Engine inputs/outputs, model-loading behavior, optimization constraints, failure semantics, artifact requirements, or document-generation boundaries change.
+- **Update trigger:** Calculation/model ports, provenance, asynchronous execution, approval boundaries or artifact maturity changes
 
-Engine source and tests are authoritative for exact inputs, outputs, constraints, and failure semantics.
+## Target boundary
 
-## Prediction
+Prediction, optimization, valuation, matching and document-rendering code is adapted as pure, typed calculation capability behind the owning bounded context’s application service. Engines do not own workflow state, authorization, approval, persistence, external communication or transaction truth.
 
-`src/engines/prediction/onnx.ts` runs ONNX Runtime Web through the Transformers package’s Deno/WASM configuration. `loadOnnxModel(path)` establishes a process-local inference session. `ONNXEngine.runModelInference()` maps six financial inputs—EBITDA, revenue, total assets, total liabilities, operating cash flow, and historical volatility—to a float tensor and returns insolvency risk plus a derived Z-score label (`Safe`, `Grey`, or `Distress`).
+Every execution records exact input and source versions, algorithm/model/artifact checksum, configuration, output, timing and limitations. Deterministic work may complete synchronously within the API budget; slow/model/provider work uses durable jobs. Stale input invalidates the resulting calculation or draft without deleting it.
 
-`MLEngine.analyzeProfile()` adds best-effort text embedding generation and derives a DCF-risk label from the reported insolvency risk. It does not supply a mathematical fallback when ONNX loading or inference fails; callers must handle that failure. `AppBootstrapper` attempts to load `models/ma_classifier_q8.onnx` but permits startup when the artifact is absent.
+## Domain ownership
 
-The historical Colab/PyTorch material describes an intended training/export path. It is not proof that a checked-in model, reproducible training data, or a specific model architecture is currently available. Validate artifact provenance before using predictions in decisions.
+- Valuation owns scenario, inputs, computation result and human approval; no engine sets transaction price.
+- Matching owns criteria/run/candidate projection; Conflict and Shortlist authority remain explicit human workflows.
+- Negotiation optimization can calculate alternatives/BATNA but internal strategy is field restricted and an engine cannot approve or send.
+- Document generators render versioned deliverable drafts; redaction, approval, release and distribution are separate human-controlled states.
+- Prediction output is a versioned model recommendation with artifact provenance, never a fact or decision.
 
-## Portfolio and matching optimization
+## Integration maturity
 
-The optimization area provides constraint, valuation, matching, and genetic-search code under `src/engines/optimization/`. The portfolio workflow evaluates acquisition targets against budget, risk tolerance, optional tax-debt and sector-allocation caps, and mutual exclusions. The agent tool adapts inputs to `PortfolioSolver`; its public output is selected target IDs, spend, synergy, status, and evaluated profiles.
+Maturity is one of interface only, local fixture, sandbox, partially implemented, production candidate or production verified. Fallbacks are explicit result types and audited; a heuristic or local fixture is never silently labeled provider success.
 
-These results are decision support. They are not an autonomous investment mandate and must be reviewed with input assumptions.
+## Current implementation
 
-## Negotiation optimization
-
-`optimizeTermSheetTool` calls `optimizeDeal` in `src/engines/optimization/genetic.ts` with valuation bounds and preferences for cash, equity, earn-out, and escrow. The HTTP negotiation route combines the genetic result with KYB, leverage, and coverage constraints through `optimizeWithConstraints`. Agent behavior adds the policy layer: negotiation should present multiple strategic alternatives rather than select a binding deal.
-
-## Documents
-
-`src/engines/document-generator/` uses `pdf-lib` and includes PDF, LaTeX, and hybrid implementations. The current global PDF tool writes a term-sheet PDF to its requested path after validation. Closing workflow policy requires preview and human approval; no documentation may claim a LaTeX/PDF binary flow beyond what the invoked code and approval path implement.
-
-See Local Setup and Runtime Operations for artifact prerequisites and Agent Architecture and Workflows for workflow-level constraints.
+Existing valuation/optimization/prediction/generator algorithms and tests are **Adapt** candidates. Generic engine routes/stores are **Replace**. KYC solver ownership requires product/domain confirmation. Detailed disposition, API/job contracts and implementation tasks are in doc-22–24.

@@ -3,7 +3,7 @@ id: doc-3
 title: Agent Architecture and Workflows
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-24 15:50'
+updated_date: '2026-07-30 06:37'
 tags:
   - architecture
   - agents
@@ -13,42 +13,27 @@ tags:
 
 - **Authority ID:** ARCH-AGENT-001
 - **Owner:** Agent Platform
-- **Authority:** Canonical agent topology and workflow responsibilities
-- **Freshness:** Current for the modular agent implementation documented by MAI-84
+- **Authority:** Canonical target agent architecture proposed by MAI-103
+- **Freshness:** Proposed as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Agent directories, exported agents, workflow-role mapping, orchestration boundaries, schemas, or cross-agent guardrails change.
+- **Update trigger:** Mission/run/tool/evidence boundary, model policy, human authority or agent inventory changes
 
-Colocated instructions, playbooks, rules, schemas, tools, and `fonts/` knowledge remain the detailed operating assets for each agent.
+## Target execution model
 
-## Seven workflow roles, eight deployed agents
+Agent work is Mission → versioned Plan → durable Run → Step → Tool Activity → Result/Generated Artifact. Missions declare tenant/workspace/deal/object/evidence scope, allowed tools, prohibited effects, model/provider policy and cost ceiling. Plans are versioned and require human approval when policy demands it.
 
-The product workflow has seven roles. Due diligence is one workflow role, implemented by a supervisor plus two specialist agents; therefore `src/agent/agents/` contains eight deployable agent directories.
+The durable runner persists attempts, retries, cancellation, failures, model/prompt/tool metadata, evidence access, usage/cost and output provenance. Permission and source versions are rechecked at every retrieval and before any effect. Stale or revoked inputs block execution and invalidate dependent outputs without deleting history.
 
-| Workflow role | Implemented module(s) | Responsibility |
-| --- | --- | --- |
-| Broker orchestration | `broker-orchestrator` | Entry point, semantic routing, and preference/domain-context retrieval. |
-| Sourcing and KYB | `sourcing-kyb` | Counterparty qualification and KYB workflow. |
-| Due diligence | `general-dd`, `financial-risk`, `legal-dd` | DD coordinator plus financial-risk and legal-DD specialists. |
-| Deal matching | `deal-matching` | Target/portfolio matching and valuation-range support. |
-| Negotiation | `negotiation` | Advisory term-sheet alternatives and negotiation framing. |
-| Legal closing | `legal-closing` | Closing-document preparation and approval-aware generation. |
+## Tool and evidence boundary
 
-`src/agent/index.ts` exports all eight agents and the broker service. It is the composition point for agent execution, not a claim that every agent is independently exposed as a public HTTP endpoint.
+Tools receive trusted ActorContext and mission/run scope. Reads go through permission-safe application queries; domain writes can create only proposals or drafts through the owning context service. Agents never access repositories, SQL, secrets, raw provider clients, event transport or external communication directly. Secrets remain within tenant-scoped provider adapters and never enter prompts.
 
-## Module contract
+## Human authority
 
-Each agent directory normally contains `index.ts`, `instructions.md`, `playbook.md`, `rules.md`, schemas, tool adapters, and a `fonts/` directory. These colocated files are controlled implementation knowledge, not duplicate canonical architecture documents. Update the canonical architecture when responsibility, boundary, or workflow policy changes; update colocated assets when the agent’s detailed prompt, procedure, or domain reference changes.
+AI cannot approve/reject, establish price, send proposals, communicate externally, waive, sign, invite/offboard, grant/revoke access, release deliverables, archive/restore/terminate/delete, or make an equivalent consequential transition. AI output remains a proposal, recommendation, calculation or reversible artifact until a distinct human-authorized command.
 
-## Guardrails
+## Current agent disposition
 
-- The broker context separates user preferences from domain knowledge before prompt assembly.
-- General DD coordinates evidence; financial and legal specialists own their respective analyses.
-- Negotiation is advisory: its instructions require alternatives rather than an imposed final agreement.
-- Legal closing must preserve an explicit human approval boundary before producing legal artifacts. Current code and tests define the exact available interaction mechanics.
-- Zod schemas define structured agent inputs and outputs where present; they are the executable contract.
+The eight specialist definitions, schemas and knowledge assets are **Adapt** candidates. Direct orchestration, RAG storage/retrieval boundaries and tools are **Replace**. LocalPubSubBus is **Remove** from production; AgentFlowWrapper is **Replace** with the durable runner. No agent/provider is production verified without implemented environment evidence.
 
-## Model configuration
-
-Do not treat historical model names in agent prose as a runtime promise. `src/agent/ai_provider.ts` resolves credentials, while concrete model construction is in the agent modules. This document intentionally avoids a version-specific model claim because provider configuration can change independently of the architecture.
-
-See Data and Memory Architecture for the broker’s memory boundary and Engine Architecture for computational tools.
+Detailed state, tool and migration contracts are in doc-20, doc-22, doc-23 and proposed ADR doc-34.
