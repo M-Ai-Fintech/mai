@@ -5,6 +5,7 @@ import {
   type Command,
   type CommandPort,
   createAcceptedJobEnvelope,
+  createApiError,
   createProtectedNotFoundError,
   createSuccessEnvelope,
   formatEtag,
@@ -57,6 +58,32 @@ Deno.test("v1 success, cursor, and accepted-job envelopes serialize predictably"
 });
 
 Deno.test("v1 envelope parsers reject unknown and disclosure metadata", () => {
+  const context = requestContext();
+  assertEquals(
+    createApiError({
+      code: "UNAUTHENTICATED",
+      message: "No session.",
+      correlationId: context.correlationId,
+      retryable: false,
+    }).error.code,
+    "UNAUTHENTICATED",
+  );
+  assertRejected(
+    parseApiEnvelope({
+      error: {
+        code: "UNAUTHENTICATED",
+        message: "No session.",
+        correlationId: "cor_request-7",
+        retryable: false,
+      },
+      extra: true,
+    }),
+    "INVALID_ENVELOPE",
+  );
+  assertRejected(
+    parseApiEnvelope({ meta: { correlationId: "cor_request-7" } }),
+    "INVALID_ENVELOPE",
+  );
   assertRejected(
     parseApiEnvelope({
       data: {},
@@ -105,6 +132,41 @@ Deno.test("v1 envelope parsers reject unknown and disclosure metadata", () => {
     "INVALID_ERROR_FIELD",
   );
 });
+
+function _assertClosedErrorConstruction(context: RequestContext): void {
+  createApiError({
+    code: "UNAUTHENTICATED",
+    message: "No",
+    correlationId: context.correlationId,
+    retryable: false,
+    // @ts-expect-error Basic errors cannot carry aggregate versions.
+    expectedVersion: expectValue(parseEtag('"v1"')),
+  });
+  createApiError({
+    code: "VALIDATION_FAILED",
+    message: "No",
+    correlationId: context.correlationId,
+    retryable: false,
+    fieldErrors: {},
+    // @ts-expect-error Validation errors cannot carry operation references.
+    operationId: expectValue(parseOperationId("op_x")),
+  });
+  // @ts-expect-error Version conflicts require both aggregate versions.
+  createApiError({
+    code: "VERSION_CONFLICT",
+    message: "No",
+    correlationId: context.correlationId,
+    retryable: false,
+    expectedVersion: expectValue(parseEtag('"v1"')),
+  });
+  createApiError({
+    // @ts-expect-error Protected errors use the dedicated constructor only.
+    code: "PROTECTED_NOT_FOUND",
+    message: "No",
+    correlationId: context.correlationId,
+    retryable: false,
+  });
+}
 
 Deno.test("v1 error catalog has stable protected and version-conflict contracts", () => {
   const context = requestContext();

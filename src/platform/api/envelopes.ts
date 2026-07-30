@@ -172,20 +172,51 @@ export function createProtectedNotFoundError(
   };
 }
 
-export function createApiError(
-  error: Omit<ApiError, "code"> & {
-    readonly code: Exclude<ApiErrorCode, "PROTECTED_NOT_FOUND">;
-  },
-): ErrorEnvelope {
+type ErrorBase<Code extends ApiErrorCode> = {
+  readonly code: Code;
+  readonly message: string;
+  readonly correlationId: CorrelationId;
+  readonly retryable: boolean;
+};
+
+export type ApiErrorInput =
+  | ErrorBase<
+    Exclude<
+      ApiErrorCode,
+      | "PROTECTED_NOT_FOUND"
+      | "VALIDATION_FAILED"
+      | "VERSION_CONFLICT"
+      | "DEPENDENCY_UNAVAILABLE"
+      | "ASYNC_OPERATION_FAILED"
+    >
+  >
+  | (ErrorBase<"VALIDATION_FAILED"> & { readonly fieldErrors: FieldErrors })
+  | (ErrorBase<"VERSION_CONFLICT"> & {
+    readonly expectedVersion: AggregateVersion;
+    readonly currentVersion: AggregateVersion;
+    readonly safeComparisonUrl?: string;
+  })
+  | (ErrorBase<"DEPENDENCY_UNAVAILABLE" | "ASYNC_OPERATION_FAILED"> & {
+    readonly operationId?: OperationId;
+  });
+
+export function createApiError(error: ApiErrorInput): ErrorEnvelope {
   return { error };
 }
 
 export function parseApiEnvelope(value: unknown): EnvelopeParseResult {
   if (!isRecord(value)) return envelopeFailure("INVALID_ENVELOPE");
+  if (!hasOnlyFields(value, ["data", "meta", "error"])) {
+    return envelopeFailure("INVALID_ENVELOPE");
+  }
   if ("data" in value && "error" in value) {
     return envelopeFailure("AMBIGUOUS_ENVELOPE");
   }
-  if ("error" in value) return parseErrorEnvelope(value.error);
+  if ("error" in value) {
+    return Object.keys(value).length === 1
+      ? parseErrorEnvelope(value.error)
+      : envelopeFailure("INVALID_ENVELOPE");
+  }
   if ("data" in value) return parseSuccessEnvelope(value);
   return envelopeFailure("INVALID_ENVELOPE");
 }
