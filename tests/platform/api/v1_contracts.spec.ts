@@ -49,11 +49,61 @@ Deno.test("v1 success, cursor, and accepted-job envelopes serialize predictably"
   assertEquals(serializeOpaqueCursor(cursor), "next-page_7");
   assertEquals(success.meta.nextCursor, "next-page_7");
   assertEquals(
-    expectSuccessEnvelope(parseApiEnvelope(success)).meta.correlationId,
-    "cor_request-7",
+    expectSuccessEnvelope(parseApiEnvelope(success)),
+    success,
   );
   assertEquals(accepted.data.statusUrl, "/api/v1/jobs/job_work-7");
   assertEquals(accepted.meta.correlationId, "cor_request-7");
+});
+
+Deno.test("v1 envelope parsers reject unknown and disclosure metadata", () => {
+  assertRejected(
+    parseApiEnvelope({
+      data: {},
+      meta: { correlationId: "cor_request-7", extra: true },
+    }),
+    "INVALID_ENVELOPE",
+  );
+  for (const unsafe of ["resourceId", "stack", "rawProviderResponse"]) {
+    assertRejected(
+      parseApiEnvelope({
+        error: {
+          code: "PROTECTED_NOT_FOUND",
+          message: "Not found.",
+          correlationId: "cor_request-7",
+          retryable: false,
+          [unsafe]: "secret",
+        },
+      }),
+      "FORBIDDEN_ERROR_FIELD",
+    );
+  }
+  assertRejected(
+    parseApiEnvelope({
+      error: {
+        code: "UNAUTHENTICATED",
+        message: "No session.",
+        correlationId: "cor_request-7",
+        retryable: false,
+        expectedVersion: 1,
+      },
+    }),
+    "FORBIDDEN_ERROR_FIELD",
+  );
+  assertRejected(
+    parseApiEnvelope({
+      error: {
+        code: "VERSION_CONFLICT",
+        message: "Conflict.",
+        correlationId: "cor_request-7",
+        retryable: false,
+        expectedVersion: 1,
+        currentVersion: 2,
+        safeComparisonUrl: "/api/v1evil",
+      },
+    }),
+    "INVALID_ERROR_FIELD",
+  );
 });
 
 Deno.test("v1 error catalog has stable protected and version-conflict contracts", () => {
@@ -195,22 +245,18 @@ Deno.test("v1 validation primitives return typed, safe field failures", () => {
 });
 
 function _compileTimeConsumerFixture(
-  commandPort: CommandPort,
-  queryPort: QueryPort,
+  commandPort: CommandPort<PublishNote>,
+  queryPort: QueryPort<GetNote>,
   context: RequestContext,
 ): void {
-  const command: Command<
-    "notes.publish",
-    { body: string },
-    { noteId: string }
-  > = {
+  const command: PublishNote = {
     name: "notes.publish",
     payload: { body: "Reviewed" },
     context,
     idempotencyKey: expectValue(parseIdempotencyKey("idem_command-7")),
     expectedVersion: expectValue(parseEtag('"v3"')),
   };
-  const query: Query<"notes.get", { noteId: string }, { body: string }> = {
+  const query: GetNote = {
     name: "notes.get",
     input: { noteId: "note_7" },
     context,
@@ -220,10 +266,26 @@ function _compileTimeConsumerFixture(
   );
   const queryResult: Promise<{ body: string }> = queryPort.execute(query);
 
+  const unrelated: Command<"notes.archive", { reason: string }, void> = {
+    name: "notes.archive",
+    payload: { reason: "duplicate" },
+    context,
+    idempotencyKey: command.idempotencyKey,
+  };
+  // @ts-expect-error A publish-only port must not accept an unrelated command.
+  commandPort.execute(unrelated);
+
   void commandResult;
   void queryResult;
   assertEquals(API_V1_BASE_PATH, "/api/v1");
 }
+
+type PublishNote = Command<
+  "notes.publish",
+  { body: string },
+  { noteId: string }
+>;
+type GetNote = Query<"notes.get", { noteId: string }, { body: string }>;
 
 function requestContext(): RequestContext {
   return expectValue(parseRequestContext({

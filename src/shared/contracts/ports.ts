@@ -2,20 +2,23 @@ import type { IdempotencyKey } from "./identifiers.ts";
 import type { RequestContext } from "./request_context.ts";
 import type { AggregateVersion } from "./aggregate_version.ts";
 
+export declare const commandResultType: unique symbol;
+export declare const queryResultType: unique symbol;
+
 export interface Command<Name extends string, Payload, Result> {
   readonly name: Name;
   readonly payload: Payload;
   readonly context: RequestContext;
   readonly idempotencyKey: IdempotencyKey;
   readonly expectedVersion?: AggregateVersion;
-  readonly result?: Result;
+  readonly [commandResultType]?: Result;
 }
 
 export interface Query<Name extends string, Input, Result> {
   readonly name: Name;
   readonly input: Input;
   readonly context: RequestContext;
-  readonly result?: Result;
+  readonly [queryResultType]?: Result;
 }
 
 export type CommandResult<T extends Command<string, unknown, unknown>> =
@@ -24,14 +27,12 @@ export type CommandResult<T extends Command<string, unknown, unknown>> =
 export type QueryResult<T extends Query<string, unknown, unknown>> = T extends
   Query<string, unknown, infer Result> ? Result : never;
 
-export interface CommandPort {
-  execute<T extends Command<string, unknown, unknown>>(
-    command: T,
-  ): Promise<CommandResult<T>>;
+export interface CommandPort<
+  TCommand extends Command<string, unknown, unknown>,
+> {
+  execute(command: TCommand): Promise<CommandResult<TCommand>>;
 }
 
-export interface QueryPort {
-  execute<T extends Query<string, unknown, unknown>>(
-    query: T,
-  ): Promise<QueryResult<T>>;
+export interface QueryPort<TQuery extends Query<string, unknown, unknown>> {
+  execute(query: TQuery): Promise<QueryResult<TQuery>>;
 }

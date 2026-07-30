@@ -193,7 +193,19 @@ export function parseApiEnvelope(value: unknown): EnvelopeParseResult {
 function parseSuccessEnvelope(
   value: Record<string, unknown>,
 ): EnvelopeParseResult {
+  if (!hasOnlyFields(value, ["data", "meta"]) || !("meta" in value)) {
+    return envelopeFailure("INVALID_ENVELOPE");
+  }
   if (!isRecord(value.meta)) return envelopeFailure("INVALID_ENVELOPE");
+  if (
+    !hasOnlyFields(value.meta, [
+      "correlationId",
+      "nextCursor",
+      "projectionAsOf",
+      "freshness",
+      "warnings",
+    ])
+  ) return envelopeFailure("INVALID_ENVELOPE");
   const correlation = parseCorrelationId(value.meta.correlationId);
   if (!correlation.ok) return envelopeFailure("INVALID_ENVELOPE");
   const cursor = value.meta.nextCursor === undefined
@@ -202,6 +214,14 @@ function parseSuccessEnvelope(
   if (cursor !== undefined && !cursor.ok) {
     return envelopeFailure("INVALID_ENVELOPE");
   }
+  if (!isProjectionTimestamp(value.meta.projectionAsOf)) {
+    return envelopeFailure("INVALID_ENVELOPE");
+  }
+  if (!isFreshness(value.meta.freshness)) {
+    return envelopeFailure("INVALID_ENVELOPE");
+  }
+  const warnings = parseWarnings(value.meta.warnings);
+  if (!warnings.ok) return envelopeFailure("INVALID_ENVELOPE");
   return {
     ok: true,
     value: {
@@ -209,6 +229,13 @@ function parseSuccessEnvelope(
       meta: {
         correlationId: correlation.value,
         ...(cursor === undefined ? {} : { nextCursor: cursor.value }),
+        ...(value.meta.projectionAsOf === undefined ? {} : {
+          projectionAsOf: value.meta.projectionAsOf,
+        }),
+        ...(value.meta.freshness === undefined ? {} : {
+          freshness: value.meta.freshness,
+        }),
+        ...(warnings.value === undefined ? {} : { warnings: warnings.value }),
       },
     },
   };
@@ -217,6 +244,9 @@ function parseSuccessEnvelope(
 function parseErrorEnvelope(value: unknown): EnvelopeParseResult {
   if (!isRecord(value)) return envelopeFailure("INVALID_ENVELOPE");
   if (!isApiErrorCode(value.code)) return envelopeFailure("INVALID_ERROR_CODE");
+  if (!hasOnlyFields(value, allowedErrorFields(value.code))) {
+    return envelopeFailure("FORBIDDEN_ERROR_FIELD");
+  }
   if (!isSafeError(value)) return envelopeFailure("INVALID_ERROR_FIELD");
   if (value.code === "PROTECTED_NOT_FOUND" && hasProtectedDetail(value)) {
     return envelopeFailure("FORBIDDEN_ERROR_FIELD");
@@ -238,6 +268,17 @@ function parseErrorEnvelope(value: unknown): EnvelopeParseResult {
     (expectedVersion.value === undefined || currentVersion.value === undefined)
   ) {
     return envelopeFailure("INVALID_ERROR_FIELD");
+  }
+  if (
+    value.code !== "VERSION_CONFLICT" &&
+    (expectedVersion.value !== undefined ||
+      currentVersion.value !== undefined ||
+      value.safeComparisonUrl !== undefined)
+  ) {
+    return envelopeFailure("FORBIDDEN_ERROR_FIELD");
+  }
+  if (value.code !== "VALIDATION_FAILED" && fieldErrors.value !== undefined) {
+    return envelopeFailure("FORBIDDEN_ERROR_FIELD");
   }
   return {
     ok: true,
@@ -284,8 +325,7 @@ function isSafeError(value: Record<string, unknown>): value is {
   if (typeof value.retryable !== "boolean") return false;
   if (!parseCorrelationId(value.correlationId).ok) return false;
   return value.safeComparisonUrl === undefined ||
-    (typeof value.safeComparisonUrl === "string" &&
-      value.safeComparisonUrl.startsWith(API_V1_BASE_PATH));
+    isCanonicalApiPath(value.safeComparisonUrl);
 }
 
 function hasProtectedDetail(value: Record<string, unknown>): boolean {
@@ -334,7 +374,10 @@ function parseFieldIssues(
 ): readonly ValidationIssue[] | undefined {
   if (field.trim().length === 0 || !Array.isArray(value)) return undefined;
   const issues = value.filter(isValidationIssue);
-  return issues.length === value.length ? issues : undefined;
+  return issues.length === value.length &&
+      issues.every((issue) => issue.field === field)
+    ? issues
+    : undefined;
 }
 
 function isValidationIssue(value: unknown): value is ValidationIssue {
@@ -343,6 +386,59 @@ function isValidationIssue(value: unknown): value is ValidationIssue {
     value.code === "TOO_LONG") &&
     typeof value.message === "string" &&
     value.message.trim().length > 0 && typeof value.field === "string";
+}
+
+function allowedErrorFields(code: ApiErrorCode): readonly string[] {
+  const basic = ["code", "message", "correlationId", "retryable"];
+  if (code === "VALIDATION_FAILED") return [...basic, "fieldErrors"];
+  if (code === "VERSION_CONFLICT") {
+    return [...basic, "expectedVersion", "currentVersion", "safeComparisonUrl"];
+  }
+  if (code === "DEPENDENCY_UNAVAILABLE" || code === "ASYNC_OPERATION_FAILED") {
+    return [...basic, "operationId"];
+  }
+  return basic;
+}
+
+function hasOnlyFields(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowed.includes(key));
+}
+
+function isProjectionTimestamp(value: unknown): value is string | undefined {
+  if (value === undefined) return true;
+  return typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) &&
+    !Number.isNaN(Date.parse(value));
+}
+
+function isFreshness(value: unknown): value is Freshness | undefined {
+  return value === undefined || value === "current" || value === "stale" ||
+    value === "unknown";
+}
+
+function parseWarnings(
+  value: unknown,
+): OptionalParseResult<readonly ApiWarning[]> {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (!Array.isArray(value) || !value.every(isApiWarning)) return { ok: false };
+  return { ok: true, value };
+}
+
+function isApiWarning(value: unknown): value is ApiWarning {
+  if (!isRecord(value) || !hasOnlyFields(value, ["code", "message"])) {
+    return false;
+  }
+  return typeof value.code === "string" &&
+    /^[A-Z][A-Z0-9_]{0,63}$/.test(value.code) &&
+    typeof value.message === "string" && value.message.trim().length > 0;
+}
+
+function isCanonicalApiPath(value: unknown): value is string {
+  return typeof value === "string" &&
+    /^\/api\/v1(?:\/[A-Za-z0-9_-]+)*$/.test(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
