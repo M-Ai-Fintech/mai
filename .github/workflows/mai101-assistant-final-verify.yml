@@ -1,0 +1,59 @@
+name: MAI-101 Assistant Final Verify
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: canonical-verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install GUI dependencies
+        run: npm --prefix gui ci
+
+      - name: Install repository-pinned Chromium
+        run: npm --prefix gui exec -- playwright install --with-deps chromium
+
+      - name: Run canonical verification
+        shell: bash
+        run: |
+          mkdir -p mai101-final-verify
+          set -o pipefail
+          deno task verify 2>&1 | tee mai101-final-verify/deno-task-verify.log
+          status=${PIPESTATUS[0]}
+          printf 'EXIT_STATUS=%s\n' "$status" | tee -a mai101-final-verify/deno-task-verify.log
+          printf '%s\n' "$status" > mai101-final-verify/exit-status.txt
+          exit "$status"
+
+      - name: Upload canonical verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai101-assistant-final-verify
+          path: mai101-final-verify
+          if-no-files-found: error
+          retention-days: 30
