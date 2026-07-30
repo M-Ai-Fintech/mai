@@ -4,7 +4,7 @@ title: Shared architecture contracts and API primitives
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:24'
-updated_date: '2026-07-30 10:32'
+updated_date: '2026-07-30 10:48'
 labels:
   - backend
   - architecture
@@ -100,4 +100,6 @@ TDD slices 2-4: added data-only request-context validation, typed command/query 
 Final candidate evidence: git diff --check=0; focused contracts=0 (9 passed); deno task verify=0 (all 17 canonical checks passed). Global deno fmt --check=1 due 801 pre-existing repository files and global deno lint=1 due 609 pre-existing repository-wide violations, including GUI and installed skill assets; scoped MAI-104 format and lint checks both passed. Final boundary audit found 0 open P0/P1. Additive rollout: future MAI-105/MAI-106 consumers import only src/platform/api/v1.ts; rollback is removal of those consumer imports, with no runtime cutover or data migration. MAI-105 and MAI-106 were not started.
 
 Owner-review handoff: committed 094d323 (feat(MAI-104): add shared architecture and API contracts), pushed feat/MAI-104-shared-architecture-contracts-api-primitives, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/24 against master. MAI-104 remains In Progress pending owner review; no self-approval, merge, or MAI-105/MAI-106 execution.
+
+Owner-review corrections resolved in 6acf8fe: P1-1 strict success metadata validation/preservation; P1-2 closed code-specific errors and disclosure rejection; P1-3 symbol-only result markers with declared typed ports. Final focused verification=0 (10 passed); git diff --check=0; scoped fmt/lint=0; deno task verify=0 (17 checks). PR #24 remains Draft; P0/P1=0; MAI-105/106 not started.
 <!-- SECTION:NOTES:END -->
