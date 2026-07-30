@@ -75,8 +75,9 @@ for (const testCase of cases) {
       return [{ label: element.getAttribute("aria-label") || element.textContent?.trim().slice(0, 80) || element.tagName, left: Math.round(rect.left), right: Math.round(rect.right) }];
     });
     const bodyText = document.body.innerText;
-    const family = document.querySelector("[data-screen-family]")?.getAttribute("data-screen-family") ?? null;
-    const heading = document.querySelector("h1")?.textContent?.trim() ?? null;
+    const screenRoot = document.querySelector("[data-screen-family]");
+    const family = screenRoot?.getAttribute("data-screen-family") ?? null;
+    const heading = screenRoot?.querySelector("h1")?.textContent?.trim() ?? null;
     const horizontalOverflow = document.documentElement.scrollWidth > document.documentElement.clientWidth + 1;
     const unresolvedContent = [...new Set(bodyText.match(/\b(?:undefined|NaN|\[object Object\])\b/g) ?? [])];
     const protectedExposure = expectedFamily === "matching" && /CP-002|Brazilian consumer platform; R\$ 1\.6bn revenue.{0,120}CP-002/s.test(bodyText);
