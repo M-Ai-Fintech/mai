@@ -1,0 +1,15 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+const root = resolve(import.meta.dirname, "../..");
+const files = ["gui/lib/shell/route-registry.ts", "gui/app/_shell/AppShell.tsx", "gui/screens/deal-intelligence/contracts.ts", "gui/screens/deal-intelligence/fixtures.ts", "gui/screens/deal-intelligence/DealIntelligenceBody.tsx", "gui/screens/deal-intelligence/DealIntelligenceBody.module.css", "gui/screens/deal-intelligence/state-coverage.ts", "gui/screens/deal-intelligence/DealIntelligenceBody.stories.tsx"];
+const source = files.map((file) => existsSync(resolve(root, file)) ? readFileSync(resolve(root, file), "utf8") : "").join("\n");
+const registry = readFileSync(resolve(root, "gui/lib/shell/route-registry.ts"), "utf8");
+const errors = files.filter((file) => !existsSync(resolve(root, file))).map((file) => `${file}: missing`);
+const approved = ["overview", "dossier", "documents", "diligence", "valuation", "matching"];
+const deferred = ["negotiation", "closing", "workspace", "activity", "team", "deliverables", "settings"];
+for (const family of approved) if (!registry.includes(`dealRoute("${family}"`) || !source.includes(`"${family}"`)) errors.push(`${family}: approved body missing`);
+for (const family of deferred) if (!registry.includes(`dealRoute("${family}"`)) errors.push(`${family}: MAI-101 route missing`);
+for (const contract of ["EvidenceReference", "DealFact", "Interpretation", "Finding", "HumanDecision", "ValuationScenario", "CounterpartyCandidate"]) if (!source.includes(contract)) errors.push(`${contract}: local contract missing`);
+for (const phrase of ["Local demonstration adapter", "AI cannot approve", "not an AI-selected price", "Shortlist approval does not authorize outreach"]) if (!source.includes(phrase)) errors.push(`${phrase}: authority/disclosure missing`);
+if (/var\(--mai-core-|#[0-9a-f]{3,8}\b/i.test(readFileSync(resolve(root, "gui/screens/deal-intelligence/DealIntelligenceBody.module.css"), "utf8"))) errors.push("raw governed visual value or Core token");
+if (errors.length) { console.error(`MAI-100 deal-screen verification failed:\n${errors.join("\n")}`); process.exitCode = 1; } else console.log("MAI-100 routes, contracts, disclosures, state matrix, and authority boundaries verified.");

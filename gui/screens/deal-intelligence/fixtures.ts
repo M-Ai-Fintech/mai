@@ -1,0 +1,13 @@
+import type { CounterpartyCandidate, DealFact, EvidenceReference, Finding, HumanDecision, Interpretation, ValuationScenario } from "./contracts";
+
+export const fixtureDisclosure = "Local demonstration adapter — no live VDR synchronization, persistence, production authorization, counterparty data, calculation engine, or outreach is claimed.";
+export const horizonEvidence: EvidenceReference = { evidenceId: "EVD-120-18", documentId: "DOC-120", documentVersionId: "DOC-120/v18", location: "QoE workbook, EBITDA bridge row 42", freshness: "stale", access: "available", processingState: "ready" };
+export const horizonFact: DealFact = { factId: "FAC-018", value: "R$ 42", unit: "million normalized EBITDA adjustment", state: "stale", evidence: [horizonEvidence], approvingAuthority: "Ana Costa, Vice President", version: "v18" };
+export const horizonAssumption: Interpretation = { interpretationId: "ASM-009", kind: "assumption", statement: "Customer-concentration adjustment remains provisional.", author: "Ana Costa", rationale: "New document version requires review.", downstreamUsage: "Valuation scenario VAL-HOR-03", reviewState: "approval-pending" };
+export const horizonFinding: Finding = { findingId: "FND-014", category: "Revenue quality", severity: "material", evidence: [horizonEvidence], coverageMeaning: "Confidence reflects evidence coverage, not truth.", transactionImpact: "Requires deterministic EBITDA adjustment review.", state: "review-required", requiredAuthority: "Vice President" };
+export const horizonDecision: HumanDecision = { decisionId: "DEC-031", state: "approval-pending", actor: "Ana Costa", authority: "Vice President", timestamp: "2026-07-29T14:20:00Z", auditRecordId: "AUD-901" };
+export const horizonScenario: ValuationScenario = { scenarioId: "VAL-HOR-03", version: "v3", approvedFacts: [horizonFact], assumptions: [horizonAssumption], calculationId: "CALC-31", methodOutputs: ["DCF R$ 440–470m", "Trading comps R$ 428–462m", "Precedents R$ 420–455m"], sensitivity: "WACC 10.5%–11.5%; EBITDA -5% to +5%", range: "Provisional R$ 428–462m", approvalState: "approval-pending" };
+export const candidates: readonly CounterpartyCandidate[] = [
+  { candidateId: "CP-001", sourcedAttributes: "Brazilian consumer platform; R$ 1.6bn revenue", inferredFit: "92/100, high distribution overlap", modelRecommendation: "Provisional shortlist recommendation", conflictStatus: "clear", shortlistDecision: "approval-pending", outreachAuthority: "Ana Costa, Vice President" },
+  { candidateId: "CP-002", sourcedAttributes: "Identity withheld", inferredFit: "Restricted", modelRecommendation: "Not available", conflictStatus: "excluded", shortlistDecision: "rejected", outreachAuthority: "No outreach authority" },
+];

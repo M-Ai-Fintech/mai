@@ -5,9 +5,9 @@ import { routeRegistry } from "@/lib/shell/route-registry";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { AppShell } from "./AppShell";
 
-function deferredDealResolution(): ReadyRouteResolution {
-  const route = routeRegistry.find((item) => item.id === "deal.overview");
-  if (!route) throw new Error("Expected deal.overview in the route registry.");
+function dealResolution(routeId: string): ReadyRouteResolution {
+  const route = routeRegistry.find((item) => item.id === routeId);
+  if (!route) throw new Error(`Expected ${routeId} in the route registry.`);
   return {
     kind: "ready",
     route,
@@ -18,14 +18,20 @@ function deferredDealResolution(): ReadyRouteResolution {
   };
 }
 
-describe("MAI-99 AppShell screen boundary", () => {
-  it("keeps MAI-100 deal routes on the neutral deferred placeholder", () => {
+describe("MAI-100 AppShell screen boundary", () => {
+  it("selects the explicit MAI-100 deal body without a MAI-99 fallback", () => {
     const html = renderToStaticMarkup(
-      createElement(AppShell, { resolution: deferredDealResolution() }),
+      createElement(AppShell, { resolution: dealResolution("deal.overview") }),
     );
 
-    expect(html).toContain('data-deferred-screen-owner="MAI-100"');
-    expect(html).toContain("This screen is deferred to MAI-100.");
+    expect(html).toContain('data-screen-family="deal-overview"');
     expect(html).not.toContain('data-screen-family="command-center"');
+  });
+
+  it("keeps MAI-101 routes on a neutral deferred placeholder", () => {
+    const html = renderToStaticMarkup(
+      createElement(AppShell, { resolution: dealResolution("deal.negotiation") }),
+    );
+    expect(html).toContain('data-deferred-screen-owner="MAI-101"');
   });
 });

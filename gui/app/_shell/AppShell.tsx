@@ -13,6 +13,7 @@ import {
 import { MobileNavigation } from "./MobileNavigation";
 import { ShellNavigation } from "./ShellNavigation";
 import { ScreenBody } from "@/screens/ScreenBody";
+import { DealIntelligenceBody } from "@/screens/deal-intelligence/DealIntelligenceBody";
 import styles from "./AppShell.module.css";
 
 function entryCount(
@@ -213,6 +214,8 @@ export function AppShell({
 
               {route.implementationStatus === "screen-body"
                 ? <ScreenBody resolution={resolution} />
+                : route.implementationStatus === "deal-intelligence"
+                ? <DealIntelligenceBody resolution={resolution} />
                 : <DeferredScreenPlaceholder owner={route.deferredScreenOwner} />}
             </main>
           </div>
