@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 13:20'
+updated_date: '2026-07-30 13:22'
 labels:
   - backend
   - architecture
@@ -18,6 +18,8 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-104
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/26'
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
@@ -141,4 +143,12 @@ Final implementation evidence: versioned public entrypoints src/platform/persist
 Verification evidence: final git diff --check exit 0; scoped deno fmt --check 35 files exit 0; scoped deno lint 35 files exit 0; final focused pure and PostgreSQL suite 35 passed, 0 failed, exit 0. Baseline deno task verify was run exactly once before implementation and exited 1 for sandbox GUI git EPERM and missing GUI packages. Final deno task verify exited 1 after 215 tests plus 11 steps: all MAI-106 and all frontend gates passed; four legacy TransactionRepository steps failed because the isolated database intentionally lacks prototype tables transaction_type, transaction, and phase. deno task verify:integration exited 1 before live calls because real GEMINI_API_KEY, PAPERMARK_API_KEY, and PAPERMARK_ROOM_ID were unavailable; no mocks or placeholder certification used.
 
 Final combined read-only data-model/security review: initial audit found 0 P0 and 6 P1 (migration input validation, idempotency digest fencing, outbox lease-attempt fencing, job lease-attempt fencing, tenant-scoped attempt history, post-execution timeout persistence). The coordinator corrected exactly those material findings and added regressions. Final coordinator recheck confirms 0 open P0/P1; migration ownership and atomicity, tenant/workspace/deal scope, concurrency/idempotency/lease races, append-only attempts, restart recovery, dead-letter visibility, sanitization, and retention-safe rollback are evidenced. No business table, RLS policy, provider transport, external broker, authz import, or MVP cutover was introduced.
+
+Git handoff: commits 09f0e13 (PostgreSQL persistence foundation) and 9925f1f (durable outbox, inbox, jobs, protocols, and tests) were pushed only to feat/MAI-106-persistence-concurrency-outbox-inbox-jobs. Draft PR #26 targets master and remains open Draft; no merge, approval, Ready-for-Review transition, Done status, or downstream task was performed.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented the additive MAI-106 PostgreSQL persistence, concurrency, idempotency, outbox, inbox, durable job, append-only attempt, worker/dispatcher, and restart-recovery foundations through versioned platform entrypoints and four owner-scoped migrations. Focused format, lint, and 35 pure/PostgreSQL tests pass; the one data/security audit has 0 open P0/P1 after six material corrections. Canonical and live integration gate limitations are recorded exactly in implementation notes and Draft PR #26. MAI-106 remains In Progress for owner review and final closure authorization.
+<!-- SECTION:FINAL_SUMMARY:END -->
