@@ -71,6 +71,8 @@ export function DealIntelligenceBody({
   if (!resolution.permissions.includes("deal")) return <Restricted />;
 
   const replacesBody = state === "loading" || state === "restricted" || state === "error";
+  const dealName = resolution.deal?.name ?? "Deal context";
+  const dealPhase = resolution.deal?.phase ?? "Review";
   return (
     <section
       className={styles.page}
@@ -82,7 +84,7 @@ export function DealIntelligenceBody({
           <p className={styles.eyebrow}>Deal intelligence · Figma v0.3</p>
           <h1>{titles[family]}</h1>
           <p className={styles.contextLine}>
-            {resolution.deal.name} · {resolution.deal.phase} · deal {resolution.routeParameters.dealId}
+            {dealName} · {dealPhase} · deal {resolution.routeParameters.dealId}
           </p>
         </div>
         <StatusIndicator role={state === "stale" || state === "invalidated" ? "warning" : "information"}>
@@ -225,8 +227,8 @@ function Dossier() {
     <div className={styles.threePane}>
       <nav className={styles.sidePanel} aria-label="Dossier sections">
         <h2>Dossier sections</h2>
-        {['Profile', 'Ownership', 'Business model', 'Markets', 'Financial profile', 'Management', 'Open questions'].map((label) => (
-          <a className={styles.navLink} href={`#${label.toLowerCase().replaceAll(' ', '-')}`} key={label}>{label}</a>
+        {["Profile", "Ownership", "Business model", "Markets", "Financial profile", "Management", "Open questions"].map((label) => (
+          <a className={styles.navLink} href={`#${label.toLowerCase().replaceAll(" ", "-")}`} key={label}>{label}</a>
         ))}
         <p className={styles.meta}>Fact, interpretation, assumption, and open question remain distinct.</p>
       </nav>
@@ -273,7 +275,13 @@ const documents = [
 
 function Documents() {
   const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
+  const rowTrigger = useRef<HTMLButtonElement>(null);
+  const inspectorTrigger = useRef<HTMLButtonElement>(null);
+  const [returnFocusRef, setReturnFocusRef] = useState(rowTrigger);
+  const openEvidence = (trigger: typeof rowTrigger) => {
+    setReturnFocusRef(trigger);
+    setOpen(true);
+  };
   return (
     <>
       <InlineNotice role="information" title="Simulated source boundary">
@@ -285,7 +293,7 @@ function Documents() {
           <StatusIndicator role="warning">Version changed</StatusIndicator>
           <DefinitionRows rows={[["Source", "Horizon VDR fixture"], ["Connection", "Simulation only"], ["Sync", "Not connected"]]} />
           <h3>Folders</h3>
-          {['Financial · 12', 'Commercial · 8', 'Legal · restricted', 'Tax · 4', 'Management · 6'].map((label) => (
+          {["Financial · 12", "Commercial · 8", "Legal · restricted", "Tax · 4", "Management · 6"].map((label) => (
             <a href="#document-registry" className={styles.navLink} key={label}>{label}</a>
           ))}
           <Button hierarchy="secondary">Prepare missing-document request</Button>
@@ -301,7 +309,7 @@ function Documents() {
                 {documents.map(([name, version, category, processing, access], index) => (
                   <tr key={version}>
                     <td>{name}</td><td>{version}</td><td>{category}</td><td>{processing}</td><td>{access}</td>
-                    <td>{index === 0 ? <button ref={trigger} className={styles.actionButton} onClick={() => setOpen(true)}>Inspect {horizonEvidence.evidenceId}</button> : 'Not selected'}</td>
+                    <td>{index === 0 ? <button ref={rowTrigger} className={styles.actionButton} onClick={() => openEvidence(rowTrigger)}>Inspect {horizonEvidence.evidenceId}</button> : "Not selected"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -312,10 +320,10 @@ function Documents() {
           <h2>Selected document</h2>
           <p className={styles.label}>Audited financial statements</p>
           <DefinitionRows rows={[["Document", horizonEvidence.documentId], ["Version", horizonEvidence.documentVersionId], ["Location", horizonEvidence.location], ["Freshness", horizonEvidence.freshness], ["Finding", horizonFinding.findingId]]} />
-          <Button ref={trigger} hierarchy="secondary" onClick={() => setOpen(true)}>Open exact source</Button>
+          <Button ref={inspectorTrigger} hierarchy="secondary" onClick={() => openEvidence(inspectorTrigger)}>Open exact source</Button>
         </aside>
       </div>
-      <Drawer open={open} onOpenChange={setOpen} returnFocusRef={trigger} title="Exact evidence" description="Local fixture evidence inspection">
+      <Drawer open={open} onOpenChange={setOpen} returnFocusRef={returnFocusRef} title="Exact evidence" description="Local fixture evidence inspection">
         <EvidenceReference availability="superseded" metadata={{ source: horizonEvidence.documentId, location: horizonEvidence.location, documentVersion: horizonEvidence.documentVersionId, freshness: horizonEvidence.freshness }} />
         <p>Access classification: available. This inspection is not a live VDR connection.</p>
       </Drawer>
@@ -384,7 +392,7 @@ function Valuation() {
         <h2 id="valuation-analysis-heading" className={styles.visuallyIntegratedHeading}>Analytical workspace</h2>
         <Card title="Scenario comparison">
           <p className={styles.label}>{horizonScenario.scenarioId} · {horizonScenario.version} · {horizonScenario.approvalState}</p>
-          <OperationalRows rows={horizonScenario.methodOutputs.map((output) => [output.split(' ')[0], output.slice(output.indexOf(' ') + 1), horizonScenario.calculationId, 'Provisional'])} />
+          <OperationalRows rows={horizonScenario.methodOutputs.map((output) => [output.split(" ")[0], output.slice(output.indexOf(" ") + 1), horizonScenario.calculationId, "Provisional"])} />
         </Card>
         <div className={styles.grid}>
           <Card title="Financial bridge"><DefinitionRows rows={[["Normalized EBITDA", "R$ 96.4m"], ["Net debt", "−R$ 42m"], ["Finding adjustment", `${horizonFinding.findingId} · review required`]]} /></Card>
@@ -457,7 +465,7 @@ function OperationalRows({ rows }: { rows: readonly (readonly string[])[] }) {
   return (
     <div className={styles.operationalRows}>
       {rows.map((row) => (
-        <div className={styles.operationalRow} key={row.join('|')}>
+        <div className={styles.operationalRow} key={row.join("|")}>
           {row.map((cell, index) => <span className={index === 0 ? styles.rowLead : styles.meta} key={`${cell}-${index}`}>{cell}</span>)}
         </div>
       ))}
