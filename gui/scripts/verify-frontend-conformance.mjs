@@ -161,10 +161,11 @@ for (
 }
 
 const retiredGuide = ["STITCH", "DESIGN"].join("_");
+const retiredGuidelines = ["DESIGN", "GUIDELINES"].join("_");
 const retiredPaths = [
   `gui/${retiredGuide}.md`,
   "gui/DESIGN.md",
-  "gui/DESIGN_GUIDELINES.md",
+  `gui/${retiredGuidelines}.md`,
   "gui/docs/user-flow.md",
   "gui/components/screens",
   "gui/app/clients",
