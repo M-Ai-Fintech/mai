@@ -11,6 +11,7 @@ const fixture = (
       label: id.replaceAll(".", " "),
       shellMode,
       availability: "available",
+      implementationStatus: "screen-body",
     },
     routeParameters: {},
     permissions: shellMode === "external"
