@@ -1,0 +1,75 @@
+name: MAI-100 exact final tree verification
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  verify-final-tree:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+      - name: Wait for workflow cleanup commit
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            git fetch origin master feat/MAI-100-deal-intelligence-decision-screens
+            if ! git cat-file -e origin/feat/MAI-100-deal-intelligence-decision-screens:.github/workflows/mai100-final-tree.yml 2>/dev/null; then
+              git checkout --detach origin/feat/MAI-100-deal-intelligence-decision-screens
+              git branch -f master origin/master
+              git reset --hard
+              git clean -fdx
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Cleanup commit was not observed" >&2
+          exit 1
+      - name: Confirm exact final tree
+        shell: bash
+        run: |
+          test ! -e .github/workflows/mai100-final-tree.yml
+          test ! -e .github/workflows/mai100-bounded-review.yml
+          test ! -e gui/scripts/mai100-rendered-review.mjs
+          test -z "$(git diff master...HEAD -- .github/workflows)"
+          test -z "$(git diff master...HEAD -- gui/scripts/mai100-rendered-review.mjs)"
+      - name: Install GUI dependencies and Chromium
+        run: |
+          npm --prefix gui ci
+          npm --prefix gui exec -- playwright install --with-deps chromium
+      - name: Run exact-final-tree verification
+        shell: bash
+        run: |
+          git diff --check
+          git diff master...HEAD --check
+          npm --prefix gui run tokens:check
+          npm --prefix gui run verify:tokens
+          npm --prefix gui run verify:components
+          npm --prefix gui run verify:shell
+          npm --prefix gui run verify:screens
+          npm --prefix gui run verify:deal-screens
+          npm --prefix gui run verify:foundation
+          npm --prefix gui run lint
+          npm --prefix gui run test:unit
+          npm --prefix gui run build
+          npm --prefix gui run validate:storybook-docs
+          npm --prefix gui run build-storybook
+          npm --prefix gui run test-storybook
+          deno task verify
