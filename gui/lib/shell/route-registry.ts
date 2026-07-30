@@ -9,6 +9,8 @@ export interface RouteNavigation {
   readonly section: NavigationSection;
 }
 
+export type RouteBodyOwner = "MAI-99" | "MAI-100" | "MAI-101";
+
 export interface RouteDefinition {
   readonly id: string;
   readonly label: string;
@@ -19,7 +21,7 @@ export interface RouteDefinition {
   readonly permission: Permission;
   readonly availability: Availability;
   readonly navigation?: RouteNavigation;
-  readonly implementationStatus: "screen-body" | "shell-placeholder";
+  readonly implementationStatus: "screen-body" | "deal-intelligence" | "shell-placeholder";
   readonly authority: string;
   readonly deferredScreenOwner: string;
 }
@@ -48,6 +50,16 @@ function deferredRoute(input: RouteInput): RouteDefinition {
     breadcrumbPolicy: input.shellMode,
     implementationStatus: "shell-placeholder",
     authority: "Figma v0.3 / MAI-98",
+    deferredScreenOwner: "MAI-101",
+  };
+}
+
+function dealIntelligenceRoute(input: RouteInput): RouteDefinition {
+  return {
+    ...input,
+    breadcrumbPolicy: input.shellMode,
+    implementationStatus: "deal-intelligence",
+    authority: "Figma v0.3 / MAI-100",
     deferredScreenOwner: "MAI-100",
   };
 }
@@ -84,7 +96,7 @@ const dealRoute = (
   label: string,
   order: number,
 ): RouteDefinition =>
-  deferredRoute({
+  (dealIntelligenceNames.has(name) ? dealIntelligenceRoute : deferredRoute)({
     id: `deal.${name}`,
     label,
     pattern: ["deals", ":dealId", name],
@@ -94,6 +106,15 @@ const dealRoute = (
     availability: "available",
     navigation: { modes: ["deal"], order, section: "primary" },
   });
+
+const dealIntelligenceNames = new Set([
+  "overview",
+  "dossier",
+  "documents",
+  "diligence",
+  "valuation",
+  "matching",
+]);
 
 const administrationRoute = (
   name: string,

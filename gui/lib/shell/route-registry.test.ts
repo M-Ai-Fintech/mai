@@ -25,17 +25,20 @@ describe("MAI-98 route architecture", () => {
     expect(routePatternConflicts()).toEqual([]);
   });
 
-  it("keeps every deal route deferred to MAI-100", () => {
-    const dealRoutes = routeRegistry.filter((route) => route.id.startsWith("deal."));
+  it("keeps only six approved deal routes in the MAI-100 body boundary", () => {
+    const implemented = routeRegistry.filter((route) => route.implementationStatus === "deal-intelligence");
+    const deferred = routeRegistry.filter((route) => route.id.startsWith("deal.") && route.implementationStatus === "shell-placeholder");
 
-    expect(dealRoutes).not.toHaveLength(0);
-    for (const route of dealRoutes) {
-      expect(route.implementationStatus).toBe("shell-placeholder");
-      expect(route.deferredScreenOwner).toBe("MAI-100");
-    }
+    expect(implemented.map((route) => route.id)).toEqual([
+      "deal.overview", "deal.dossier", "deal.documents", "deal.diligence", "deal.valuation", "deal.matching",
+    ]);
+    expect(deferred.map((route) => route.id)).toEqual([
+      "deal.negotiation", "deal.closing", "deal.workspace", "deal.activity", "deal.team", "deal.deliverables", "deal.settings",
+    ]);
+    expect(deferred.every((route) => route.deferredScreenOwner === "MAI-101")).toBe(true);
   });
 
-  it("marks only MAI-99 global, administration, and external routes as screen bodies", () => {
+  it("keeps MAI-99 global, administration, and external routes as screen bodies", () => {
     const screenBodyRoutes = routeRegistry
       .filter((route) => route.implementationStatus === "screen-body")
       .map((route) => route.id);

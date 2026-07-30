@@ -65,11 +65,11 @@ const dealRouteSource = registry.slice(
   registry.indexOf("const administrationRoute"),
 );
 if (
-  !dealRouteSource.includes("deferredRoute({") ||
   dealRouteSource.includes("screenBodyRoute({") ||
   !registry.includes('implementationStatus: "shell-placeholder"') ||
-  !registry.includes('deferredScreenOwner: "MAI-100"')
-) errors.push("deal routes are not explicitly deferred to MAI-100");
+  !registry.includes('implementationStatus: "deal-intelligence"') ||
+  !registry.includes('deferredScreenOwner: "MAI-101"')
+) errors.push("MAI-99 shell boundary does not preserve MAI-100/101 route ownership");
 if (!screenBody.includes('implementationStatus !== "screen-body"')) {
   errors.push("ScreenBody can capture MAI-100 deferred routes");
 }
