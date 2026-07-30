@@ -277,9 +277,9 @@ function Documents() {
   const [open, setOpen] = useState(false);
   const rowTrigger = useRef<HTMLButtonElement>(null);
   const inspectorTrigger = useRef<HTMLButtonElement>(null);
-  const [returnFocusRef, setReturnFocusRef] = useState(rowTrigger);
-  const openEvidence = (trigger: typeof rowTrigger) => {
-    setReturnFocusRef(trigger);
+  const [returnFocusTarget, setReturnFocusTarget] = useState<"row" | "inspector">("row");
+  const openEvidence = (target: "row" | "inspector") => {
+    setReturnFocusTarget(target);
     setOpen(true);
   };
   return (
@@ -309,7 +309,7 @@ function Documents() {
                 {documents.map(([name, version, category, processing, access], index) => (
                   <tr key={version}>
                     <td>{name}</td><td>{version}</td><td>{category}</td><td>{processing}</td><td>{access}</td>
-                    <td>{index === 0 ? <button ref={rowTrigger} className={styles.actionButton} onClick={() => openEvidence(rowTrigger)}>Inspect {horizonEvidence.evidenceId}</button> : "Not selected"}</td>
+                    <td>{index === 0 ? <button ref={rowTrigger} className={styles.actionButton} onClick={() => openEvidence("row")}>Inspect {horizonEvidence.evidenceId}</button> : "Not selected"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -320,10 +320,10 @@ function Documents() {
           <h2>Selected document</h2>
           <p className={styles.label}>Audited financial statements</p>
           <DefinitionRows rows={[["Document", horizonEvidence.documentId], ["Version", horizonEvidence.documentVersionId], ["Location", horizonEvidence.location], ["Freshness", horizonEvidence.freshness], ["Finding", horizonFinding.findingId]]} />
-          <Button ref={inspectorTrigger} hierarchy="secondary" onClick={() => openEvidence(inspectorTrigger)}>Open exact source</Button>
+          <Button ref={inspectorTrigger} hierarchy="secondary" onClick={() => openEvidence("inspector")}>Open exact source</Button>
         </aside>
       </div>
-      <Drawer open={open} onOpenChange={setOpen} returnFocusRef={returnFocusRef} title="Exact evidence" description="Local fixture evidence inspection">
+      <Drawer open={open} onOpenChange={setOpen} returnFocusRef={returnFocusTarget === "row" ? rowTrigger : inspectorTrigger} title="Exact evidence" description="Local fixture evidence inspection">
         <EvidenceReference availability="superseded" metadata={{ source: horizonEvidence.documentId, location: horizonEvidence.location, documentVersion: horizonEvidence.documentVersionId, freshness: horizonEvidence.freshness }} />
         <p>Access classification: available. This inspection is not a live VDR connection.</p>
       </Drawer>
