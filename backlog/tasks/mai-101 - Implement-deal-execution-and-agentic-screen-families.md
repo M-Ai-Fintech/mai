@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 01:50'
+updated_date: '2026-07-30 03:08'
 labels:
   - frontend
   - screen-implementation
@@ -83,4 +83,6 @@ Use typed local fixtures and adapters where backend behavior has not yet been re
 Intake 2026-07-29: MAI-100 squash merge 76aefd49708abddfa4bb924d1da403a826029b30 is present on master. Baseline deno task verify was run once; it reached GUI verification but sandbox spawnSync git EPERM prevented a terminal pass. One-time npm ci completed; Playwright Chromium installation was requested in the same setup command. Figma get_design_context was read for 239:3, 239:551, and 239:921 without mutating Figma. Local graph query scoped AppShell, route registry, existing deal-intelligence body, Dialog, and Drawer.
 
 Implemented initial MAI-101 execution resolver, seven local fixture-backed bodies, contracts, stories, focused tests, and verify:execution-screens registration. Focused evidence: npm --prefix gui run verify:execution-screens PASS; npm --prefix gui run test:unit PASS (85 tests); npm --prefix gui run lint PASS; npm --prefix gui run build PASS. Full final verification, local rendered review, Storybook checks, commit/push, and Draft PR remain outstanding. Baseline deno task verify remains blocked at foundation verification by sandbox spawnSync git EPERM, not treated as passing.
+
+Negotiation P1 correction complete (root causes A+C): integrated screens-deal-execution--negotiation-desktop now renders deal.negotiation through AppShell, and the Negotiation work surface now presents proposal registry, normalized terms/economics, restricted authority, approval status/action, evidence, and explicit no-external-communication-before-approval boundary. Changed gui/screens/deal-execution/DealExecutionBody.tsx, DealExecutionBody.module.css, DealExecutionBody.stories.tsx, and DealExecutionBody.test.ts. Rendered evidence remains 21/21 passing in /tmp/mai101-review/report.json; before/after evidence and inspection are in /tmp/mai101-review/negotiation-p1-correction.json. Browser Chromium 149.0.7827.55, Playwright 1.61.1. Focused tests 19/19; full GUI unit tests 86/86; Storybook docs 22 MDX; Storybook interactions 27 files/133 tests; production and Storybook builds pass. Tokens/shell/screens/deal-screens/execution-screens/foundation/lint pass. Canonical deno task verify reached Deno tests but local process terminated before emitting an exit status; retained logs under /tmp/mai101-review/verification/. Commit 154dce9; Draft PR https://github.com/luisfelipeluis49/mai/pull/21. Keeping MAI-101 In Progress pending owner review.
 <!-- SECTION:NOTES:END -->
