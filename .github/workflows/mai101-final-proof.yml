@@ -1,0 +1,53 @@
+name: MAI-101 temporary final proof
+on:
+  push:
+    branches: [feat/MAI-101-deal-execution-agentic-screens]
+jobs:
+  verify-candidate:
+    runs-on: ubuntu-latest
+    env:
+      VERIFIED_CANDIDATE_SHA: f19869e7c8f2870cfacfac0c26e95562b5e0bafc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Copy temporary runner
+        run: cp scripts/mai101-final-review.mjs /tmp/mai101-final-review.mjs
+      - name: Check out verified candidate
+        run: |
+          git checkout "${{ github.event.before }}"
+          test "$(git rev-parse HEAD)" = "$VERIFIED_CANDIDATE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+      - uses: denoland/setup-deno@v2
+      - name: Install browser
+        run: npx --prefix gui playwright install --with-deps chromium
+      - name: Candidate canonical verification and rendered review
+        run: |
+          set -o pipefail
+          mkdir -p mai101-evidence
+          git diff master...HEAD --check |& tee mai101-evidence/diff-check.log
+          npm --prefix gui ci |& tee mai101-evidence/npm-ci.log
+          npm --prefix gui run tokens:check |& tee mai101-evidence/tokens-check.log
+          npm --prefix gui run verify:tokens |& tee mai101-evidence/verify-tokens.log
+          npm --prefix gui run verify:components |& tee mai101-evidence/verify-components.log
+          npm --prefix gui run verify:shell |& tee mai101-evidence/verify-shell.log
+          npm --prefix gui run verify:screens |& tee mai101-evidence/verify-screens.log
+          npm --prefix gui run verify:deal-screens |& tee mai101-evidence/verify-deal-screens.log
+          npm --prefix gui run verify:execution-screens |& tee mai101-evidence/verify-execution-screens.log
+          npm --prefix gui run verify:foundation |& tee mai101-evidence/verify-foundation.log
+          npm --prefix gui run lint |& tee mai101-evidence/lint.log
+          npm --prefix gui run test:unit |& tee mai101-evidence/unit.log
+          npm --prefix gui run build |& tee mai101-evidence/build.log
+          npm --prefix gui run validate:storybook-docs |& tee mai101-evidence/storybook-docs.log
+          npm --prefix gui run build-storybook |& tee mai101-evidence/storybook-build.log
+          npm --prefix gui run test-storybook |& tee mai101-evidence/storybook-test.log
+          node /tmp/mai101-final-review.mjs |& tee mai101-evidence/rendered-review.log
+          deno task verify |& tee mai101-evidence/canonical.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mai101-final-proof
+          path: mai101-evidence
