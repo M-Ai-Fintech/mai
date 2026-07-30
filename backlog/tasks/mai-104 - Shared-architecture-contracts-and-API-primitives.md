@@ -4,7 +4,7 @@ title: Shared architecture contracts and API primitives
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:24'
-updated_date: '2026-07-30 10:30'
+updated_date: '2026-07-30 10:32'
 labels:
   - backend
   - architecture
@@ -96,4 +96,6 @@ TDD slice 1: added the additive src/platform/api/v1.ts public entrypoint and sha
 TDD slices 2-4: added data-only request-context validation, typed command/query ports, typed validation failures, /api/v1 success/error/opaque-cursor/accepted-job envelopes, stable error-status catalog, correlation/idempotency header conventions, and strong ETag/If-Match parsing. The v1 public entrypoint is the sole intended consumer import. Focused test after formatting: DENO_ENV=test deno test --allow-read tests/shared/architecture_contracts.spec.ts tests/platform/api/v1_contracts.spec.ts (exit 0; 9 passed). Graphify hook outputs were restored to HEAD because they are explicitly out of scope.
 
 Final candidate evidence: git diff --check=0; focused contracts=0 (9 passed); deno task verify=0 (all 17 canonical checks passed). Global deno fmt --check=1 due 801 pre-existing repository files and global deno lint=1 due 609 pre-existing repository-wide violations, including GUI and installed skill assets; scoped MAI-104 format and lint checks both passed. Final boundary audit found 0 open P0/P1. Additive rollout: future MAI-105/MAI-106 consumers import only src/platform/api/v1.ts; rollback is removal of those consumer imports, with no runtime cutover or data migration. MAI-105 and MAI-106 were not started.
+
+Owner-review handoff: committed 094d323 (feat(MAI-104): add shared architecture and API contracts), pushed feat/MAI-104-shared-architecture-contracts-api-primitives, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/24 against master. MAI-104 remains In Progress pending owner review; no self-approval, merge, or MAI-105/MAI-106 execution.
 <!-- SECTION:NOTES:END -->
