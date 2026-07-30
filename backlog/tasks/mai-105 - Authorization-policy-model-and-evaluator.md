@@ -4,7 +4,7 @@ title: Authorization policy model and evaluator
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-30 12:36'
+updated_date: '2026-07-30 12:38'
 labels:
   - backend
   - architecture
@@ -15,6 +15,8 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-104
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/25'
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
@@ -102,4 +104,6 @@ Intake recorded: starting SHA 9986b368ea7a0f1ce15d96345feb505197b7c17a; dedicate
 TDD implementation slice complete. Added the isolated src/platform/authz v1 public surface, trusted pre-load policy vocabulary/evaluator, immutable allowed-only non-serializing scope token, MAI-104 protected-not-found guard, permission-safe projection, and additive shadow/enforce/rollback rollout contract. Focused verification: deno fmt --check src/platform/authz tests/platform/authz = 0; deno lint src/platform/authz tests/platform/authz = 0; deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts = 0 (19 passed). No persistence, events, jobs, API routes, GUI, Figma, lockfile, or Graphify file was changed.
 
 Final security review (read-only): 0 open P0/P1. Verified deny-before-load and canonical protected-not-found equivalence, tenant/workspace/deal context equality, deny/restriction precedence, expiry/revocation plus purpose/sponsor external constraints, human-only authority, external internal-classification omission, classification-bound projection, non-serializing allowed-only tokens, safe reason codes, and v1-only public exports. Corrected one P1 during review: projection now requires an explicit schema field plus an exact approved field-classification match before copying. Final scoped evidence after that correction: git diff --check = 0; deno fmt --check changed MAI-105 files = 0; deno lint changed MAI-105 TypeScript files = 0; deno test --allow-read tests/platform/authz/v1.spec.ts tests/platform/authz/guard_projection.spec.ts = 0 (19 passed). Final deno task verify was executed once outside the sandbox: backend/docs and GUI boundary checks passed, but overall exit 1 because GUI vitest/next/playwright/storybook dependencies are absent; no dependency installation is authorized. Baseline had the same missing-GUI dependency limitation plus sandbox git-spawn EPERM; the escalated final run cleared the EPERM.
+
+Owner-review handoff: committed e856138 (feat(MAI-105): add authorization policy model and evaluator), pushed feat/MAI-105-authorization-policy-model-evaluator, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/25 targeting master. PR is Draft; no self-approval, Ready-for-Review transition, merge, MAI-106 mutation, or MAI-107 start occurred. MAI-105 remains In Progress pending owner review and the environment-independent canonical GUI dependency limitation.
 <!-- SECTION:NOTES:END -->
