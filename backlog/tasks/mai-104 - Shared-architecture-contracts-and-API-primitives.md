@@ -13,6 +13,8 @@ labels:
   - mai-85-initiative
 milestone: m-12
 dependencies: []
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/24'
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
