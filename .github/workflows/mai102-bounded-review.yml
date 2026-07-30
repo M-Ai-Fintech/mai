@@ -1,9 +1,13 @@
 name: MAI-102 Bounded Frontend Review
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/MAI-102-frontend-conformance
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: read
