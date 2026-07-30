@@ -3,7 +3,7 @@ id: doc-10
 title: Documentation Index and Information Architecture
 type: readme
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-30 06:37'
+updated_date: '2026-07-30 09:33'
 tags:
   - documentation
   - governance
@@ -30,8 +30,8 @@ tags:
 4. Security/data authority: doc-4 and doc-21.
 5. API/async/agent/integration authority: doc-3, doc-5, doc-6 and doc-22.
 6. Current-state migration inventory: doc-23.
-7. Proposed implementation sequence: doc-24.
-8. Proposed decisions: doc-25–36.
+7. Approved implementation sequence: doc-24.
+8. Accepted decisions: doc-25–36.
 
 ## Canonical architecture and product documents
 
@@ -47,7 +47,7 @@ tags:
 | doc-9 MVP GUI and API Behavior | Approved frontend authority and backend alignment |
 | doc-15–18 | Frontend foundation, tokens, components and shell |
 | doc-19–24 | MAI-103 target specification and plan |
-| doc-25–36 | MAI-103 proposed ADRs; not accepted until owner approval |
+| doc-25–36 | MAI-103 accepted ADR baseline |
 
 ## MAI-103 authority map
 
@@ -56,8 +56,8 @@ tags:
 - doc-21: tenancy, authorization, persistence, concurrency, audit and provenance.
 - doc-22: synchronous API, errors, jobs, events, agent execution and integrations.
 - doc-23: Keep/Adapt/Replace/Remove inventory.
-- doc-24: dependency-ordered temporary implementation plan.
-- doc-25–36: twelve explicit proposed decisions with alternatives, migration, risks and validation.
+- doc-24: owner-approved dependency-ordered implementation plan and BE-Pxx-to-MAI mapping.
+- doc-25–36: twelve accepted decisions with alternatives, migration, risks and validation; deferred implementation inputs remain task gates.
 
 ## Historical and local material
 

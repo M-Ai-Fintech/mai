@@ -3,12 +3,18 @@ id: doc-30
 title: 'Proposed ADR: Concurrency and Aggregate Versioning'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:32'
 ---
 # Proposed ADR: Concurrency and Aggregate Versioning
 
+- **Authority ID:** doc-30
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Concurrency and Aggregate Versioning
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-30
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

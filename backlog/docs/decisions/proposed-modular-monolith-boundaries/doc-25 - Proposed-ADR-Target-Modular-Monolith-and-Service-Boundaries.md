@@ -3,12 +3,18 @@ id: doc-25
 title: 'Proposed ADR: Target Modular Monolith and Service Boundaries'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:32'
 ---
 # Proposed ADR: Target Modular Monolith and Service Boundaries
 
+- **Authority ID:** doc-25
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Target Modular Monolith and Service Boundaries
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-25
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

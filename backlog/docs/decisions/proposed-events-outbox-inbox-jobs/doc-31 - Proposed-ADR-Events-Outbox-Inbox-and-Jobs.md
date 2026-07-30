@@ -3,12 +3,18 @@ id: doc-31
 title: 'Proposed ADR: Events, Outbox, Inbox, and Jobs'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:32'
 ---
 # Proposed ADR: Events, Outbox, Inbox, and Jobs
 
+- **Authority ID:** doc-31
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Events, Outbox, Inbox, and Jobs
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-31
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

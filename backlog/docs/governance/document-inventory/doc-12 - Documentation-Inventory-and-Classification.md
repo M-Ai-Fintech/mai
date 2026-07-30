@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-30 06:52'
+updated_date: '2026-07-30 09:33'
 tags:
   - documentation
   - inventory
@@ -245,19 +245,19 @@ Every project file below is individually classified; removed paths are retained 
 | `backlog/docs/architecture/backend-redesign/security-persistence/doc-21 - MAI-103-Tenancy-Authorization-Persistence-Audit-and-Provenance-Architecture.md` | Security and Data Architecture | Target tenancy, authorization, persistence, audit, evidence, and provenance | doc-21 | proposed 2026-07-30 | English | canonical |
 | `backlog/docs/architecture/backend-redesign/api-async-agent-integrations/doc-22 - MAI-103-API-Jobs-Events-Agent-Execution-and-Integration-Catalog.md` | API, Agent, and Integration Architecture | Target API, job, event, agent execution, and integration contracts | doc-22 | proposed 2026-07-30 | English | canonical |
 | `backlog/docs/architecture/backend-redesign/current-state-disposition/doc-23 - MAI-103-Current-Backend-Disposition.md` | Platform Architecture | Complete current backend Keep, Adapt, Replace, or Remove inventory | doc-23 | proposed 2026-07-30 | English | canonical |
-| `backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 - MAI-103-Backend-Implementation-Plan.md` | Backend Architecture and Delivery | Owner-gated dependency-ordered backend implementation plan | doc-24 | proposed 2026-07-30 | English | canonical |
-| `backlog/docs/decisions/proposed-modular-monolith-boundaries/doc-25 - Proposed-ADR-Target-Modular-Monolith-and-Service-Boundaries.md` | Architecture | Proposed ADR: Target modular monolith and service boundaries | doc-25 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-bounded-contexts-aggregate-ownership/doc-26 - Proposed-ADR-Bounded-Contexts-and-Aggregate-Ownership.md` | Architecture | Proposed ADR: Bounded contexts and aggregate ownership | doc-26 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-tenancy-authorization/doc-27 - Proposed-ADR-Tenancy-and-Authorization-Model.md` | Architecture | Proposed ADR: Tenancy and authorization model | doc-27 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-postgresql-schema-transactions/doc-28 - Proposed-ADR-PostgreSQL-Schema-and-Transaction-Strategy.md` | Architecture | Proposed ADR: PostgreSQL schema and transaction strategy | doc-28 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-postgresql-row-level-security/doc-29 - Proposed-ADR-PostgreSQL-Row-Level-Security.md` | Architecture | Proposed ADR: Partial PostgreSQL row-level-security adoption | doc-29 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-concurrency-versioning/doc-30 - Proposed-ADR-Concurrency-and-Aggregate-Versioning.md` | Architecture | Proposed ADR: Concurrency and aggregate versioning | doc-30 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-events-outbox-inbox-jobs/doc-31 - Proposed-ADR-Events-Outbox-Inbox-and-Jobs.md` | Architecture | Proposed ADR: Events, outbox, inbox, and durable jobs | doc-31 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 - Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md` | Architecture | Proposed ADR: Audit, evidence, versioning, and provenance | doc-32 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-api-contracts/doc-33 - Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md` | Architecture | Proposed ADR: API style, errors, idempotency, and concurrency | doc-33 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-agent-human-authority/doc-34 - Proposed-ADR-Agent-Execution-and-Human-Authority.md` | Architecture | Proposed ADR: Agent execution and human authority | doc-34 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 - Proposed-ADR-Documents-VDR-and-Object-Storage.md` | Architecture | Proposed ADR: Documents, VDR, and object storage | doc-35 | proposed 2026-07-30 | English | proposed |
-| `backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 - Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md` | Architecture | Proposed ADR: Migration and retirement of the mock-backed MVP API | doc-36 | proposed 2026-07-30 | English | proposed |
+| `backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 - MAI-103-Backend-Implementation-Plan.md` | Backend Architecture and Delivery | Owner-approved dependency-ordered backend implementation plan | doc-24 | approved 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-modular-monolith-boundaries/doc-25 - Proposed-ADR-Target-Modular-Monolith-and-Service-Boundaries.md` | Architecture | Accepted ADR: Target modular monolith and service boundaries | doc-25 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-bounded-contexts-aggregate-ownership/doc-26 - Proposed-ADR-Bounded-Contexts-and-Aggregate-Ownership.md` | Architecture | Accepted ADR: Bounded contexts and aggregate ownership | doc-26 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-tenancy-authorization/doc-27 - Proposed-ADR-Tenancy-and-Authorization-Model.md` | Architecture | Accepted ADR: Tenancy and authorization model | doc-27 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-postgresql-schema-transactions/doc-28 - Proposed-ADR-PostgreSQL-Schema-and-Transaction-Strategy.md` | Architecture | Accepted ADR: PostgreSQL schema and transaction strategy | doc-28 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-postgresql-row-level-security/doc-29 - Proposed-ADR-PostgreSQL-Row-Level-Security.md` | Architecture | Accepted ADR: Partial PostgreSQL row-level-security adoption | doc-29 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-concurrency-versioning/doc-30 - Proposed-ADR-Concurrency-and-Aggregate-Versioning.md` | Architecture | Accepted ADR: Concurrency and aggregate versioning | doc-30 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-events-outbox-inbox-jobs/doc-31 - Proposed-ADR-Events-Outbox-Inbox-and-Jobs.md` | Architecture | Accepted ADR: Events, outbox, inbox, and durable jobs | doc-31 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 - Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md` | Architecture | Accepted ADR: Audit, evidence, versioning, and provenance | doc-32 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-api-contracts/doc-33 - Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md` | Architecture | Accepted ADR: API style, errors, idempotency, and concurrency | doc-33 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-agent-human-authority/doc-34 - Proposed-ADR-Agent-Execution-and-Human-Authority.md` | Architecture | Accepted ADR: Agent execution and human authority | doc-34 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 - Proposed-ADR-Documents-VDR-and-Object-Storage.md` | Architecture | Accepted ADR: Documents, VDR, and object storage | doc-35 | accepted 2026-07-30 | English | canonical |
+| `backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 - Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md` | Architecture | Accepted ADR: Migration and retirement of the mock-backed MVP API | doc-36 | accepted 2026-07-30 | English | canonical |
 
 ## Managed work-record families and exclusions
 
@@ -480,7 +480,7 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Product, Domain, Security, and Platform Architecture",
       "purpose": "Complete approved frontend-to-backend requirements and gap traceability",
       "authority": "doc-19",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
@@ -489,7 +489,7 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Domain Architecture",
       "purpose": "Target bounded contexts, aggregates, commands, events, and state machines",
       "authority": "doc-20",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
@@ -498,7 +498,7 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Security and Data Architecture",
       "purpose": "Target tenancy, authorization, persistence, audit, evidence, and provenance",
       "authority": "doc-21",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
@@ -507,7 +507,7 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "API, Agent, and Integration Architecture",
       "purpose": "Target API, job, event, agent execution, and integration contracts",
       "authority": "doc-22",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
@@ -516,126 +516,126 @@ The following manifest is authoritative for automated documentation checks. Path
       "owner": "Platform Architecture",
       "purpose": "Complete current backend Keep, Adapt, Replace, or Remove inventory",
       "authority": "doc-23",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
     {
       "path": "architecture/backend-redesign/implementation-plan/doc-24 - MAI-103-Backend-Implementation-Plan.md",
       "owner": "Backend Architecture and Delivery",
-      "purpose": "Owner-gated dependency-ordered backend implementation plan",
+      "purpose": "Owner-approved dependency-ordered backend implementation plan",
       "authority": "doc-24",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
       "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-modular-monolith-boundaries/doc-25 - Proposed-ADR-Target-Modular-Monolith-and-Service-Boundaries.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Target modular monolith and service boundaries",
+      "purpose": "Accepted ADR: Target modular monolith and service boundaries",
       "authority": "doc-25",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-bounded-contexts-aggregate-ownership/doc-26 - Proposed-ADR-Bounded-Contexts-and-Aggregate-Ownership.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Bounded contexts and aggregate ownership",
+      "purpose": "Accepted ADR: Bounded contexts and aggregate ownership",
       "authority": "doc-26",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-tenancy-authorization/doc-27 - Proposed-ADR-Tenancy-and-Authorization-Model.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Tenancy and authorization model",
+      "purpose": "Accepted ADR: Tenancy and authorization model",
       "authority": "doc-27",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-postgresql-schema-transactions/doc-28 - Proposed-ADR-PostgreSQL-Schema-and-Transaction-Strategy.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: PostgreSQL schema and transaction strategy",
+      "purpose": "Accepted ADR: PostgreSQL schema and transaction strategy",
       "authority": "doc-28",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-postgresql-row-level-security/doc-29 - Proposed-ADR-PostgreSQL-Row-Level-Security.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Partial PostgreSQL row-level-security adoption",
+      "purpose": "Accepted ADR: Partial PostgreSQL row-level-security adoption",
       "authority": "doc-29",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-concurrency-versioning/doc-30 - Proposed-ADR-Concurrency-and-Aggregate-Versioning.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Concurrency and aggregate versioning",
+      "purpose": "Accepted ADR: Concurrency and aggregate versioning",
       "authority": "doc-30",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-events-outbox-inbox-jobs/doc-31 - Proposed-ADR-Events-Outbox-Inbox-and-Jobs.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Events, outbox, inbox, and durable jobs",
+      "purpose": "Accepted ADR: Events, outbox, inbox, and durable jobs",
       "authority": "doc-31",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-audit-evidence-provenance/doc-32 - Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Audit, evidence, versioning, and provenance",
+      "purpose": "Accepted ADR: Audit, evidence, versioning, and provenance",
       "authority": "doc-32",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-api-contracts/doc-33 - Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: API style, errors, idempotency, and concurrency",
+      "purpose": "Accepted ADR: API style, errors, idempotency, and concurrency",
       "authority": "doc-33",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-agent-human-authority/doc-34 - Proposed-ADR-Agent-Execution-and-Human-Authority.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Agent execution and human authority",
+      "purpose": "Accepted ADR: Agent execution and human authority",
       "authority": "doc-34",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-documents-vdr-object-storage/doc-35 - Proposed-ADR-Documents-VDR-and-Object-Storage.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Documents, VDR, and object storage",
+      "purpose": "Accepted ADR: Documents, VDR, and object storage",
       "authority": "doc-35",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     },
     {
       "path": "decisions/proposed-mvp-api-retirement/doc-36 - Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md",
       "owner": "Architecture",
-      "purpose": "Proposed ADR: Migration and retirement of the mock-backed MVP API",
+      "purpose": "Accepted ADR: Migration and retirement of the mock-backed MVP API",
       "authority": "doc-36",
-      "freshness": "proposed 2026-07-30",
+      "freshness": "accepted 2026-07-30",
       "language": "English",
-      "disposition": "proposed"
+      "disposition": "canonical"
     }
   ]
 }

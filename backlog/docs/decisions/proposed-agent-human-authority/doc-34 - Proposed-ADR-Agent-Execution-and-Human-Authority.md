@@ -3,12 +3,18 @@ id: doc-34
 title: 'Proposed ADR: Agent Execution and Human Authority'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:33'
 ---
 # Proposed ADR: Agent Execution and Human Authority
 
+- **Authority ID:** doc-34
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Agent Execution and Human Authority
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-34
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

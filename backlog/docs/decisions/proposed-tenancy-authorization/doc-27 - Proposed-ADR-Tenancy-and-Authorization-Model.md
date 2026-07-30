@@ -3,12 +3,18 @@ id: doc-27
 title: 'Proposed ADR: Tenancy and Authorization Model'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:32'
 ---
 # Proposed ADR: Tenancy and Authorization Model
 
+- **Authority ID:** doc-27
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Tenancy and Authorization Model
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-27
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

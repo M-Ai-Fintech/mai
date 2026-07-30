@@ -3,12 +3,18 @@ id: doc-29
 title: 'Proposed ADR: PostgreSQL Row-Level Security'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:32'
 ---
 # Proposed ADR: PostgreSQL Row-Level Security
 
+- **Authority ID:** doc-29
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: PostgreSQL Row-Level Security
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-29
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

@@ -3,12 +3,18 @@ id: doc-32
 title: 'Proposed ADR: Audit, Evidence, Versioning, and Provenance'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:34'
+updated_date: '2026-07-30 09:33'
 ---
 # Proposed ADR: Audit, Evidence, Versioning, and Provenance
 
+- **Authority ID:** doc-32
+- **Owner:** Architecture
+- **Authority:** Accepted ADR: Audit, Evidence, Versioning, and Provenance
+- **Status:** Accepted
+- **Freshness:** Accepted as of 2026-07-30; original decision content retained
+- **Language:** English
+- **Update trigger:** A superseding owner-approved architecture decision, implementation evidence, or a material boundary change
 - **Document ID:** doc-32
-- **Status:** Proposed
 - **Decision owner:** MAI owner
 
 ## Context

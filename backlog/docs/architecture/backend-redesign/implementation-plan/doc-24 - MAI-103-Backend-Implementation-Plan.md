@@ -3,20 +3,20 @@ id: doc-24
 title: MAI-103 Backend Implementation Plan
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 06:51'
+updated_date: '2026-07-30 09:32'
 ---
 # MAI-103 Dependency-Ordered Backend Implementation Plan
 
 - **Document ID:** doc-24
 - **Authority ID:** doc-24
-- **Authority:** Proposed plan only
+- **Authority:** Approved implementation plan
 - **Owner:** Backend Architecture and Delivery
-- **Freshness:** Proposed as of 2026-07-30
+- **Freshness:** Approved as of 2026-07-30
 - **Language:** English
 - **Update trigger:** Owner decision, architecture dependency, task scope, delivery order, or rollout constraint changes
-- **Status:** Awaiting owner approval
+- **Status:** Approved
 - **Identifier rule:** `BE-Pxx` identifiers are temporary and are not Backlog IDs
-- **Creation rule:** No implementation task may be created until the owner approves this plan; approved tasks receive the next available Backlog IDs at creation time
+- **Creation rule:** Owner approval on 2026-07-30 authorized task creation; real IDs below preserve the approved dependency graph.
 
 ## 1. Delivery graph and waves
 
@@ -159,11 +159,41 @@ Required approvals/inputs:
 - Integration credentials: P15 delivery, P16 signature provider if selected, P20 channels and P24.
 - Production infrastructure: P03, P08–P10, P15–P22, P24–P26.
 
-## 5. Plan approval gate
+## 5. Owner approval record
 
-Owner approval may accept, amend, split or reject any temporary task. Only the approved version may be converted to Backlog tasks, using then-current sequential IDs and preserving dependencies. Until that approval:
+The owner approved this plan and the target architecture baseline on 2026-07-30. The deferred implementation inputs remain explicit dependencies, approval gates or acceptance conditions in the applicable tasks: provider/infrastructure selections, PostgreSQL RLS rollout scope, production IdP, break-glass policy, RPO/RTO, model/prompt retention, migration/cutover windows, credentials and production-readiness evidence.
 
-- MAI-103 acceptance criterion 7 remains incomplete;
-- no `BE-Pxx` is executable work;
-- no downstream task exists;
-- no migration, handler, schema, repository, service, worker, adapter or infrastructure change is authorized.
+No task was started by this approval. MAI-103 closure authorizes the plan only; implementation begins only when a later owner-directed execution task is set In Progress.
+
+## 6. Approved Backlog mapping
+
+| Temporary plan ID | Backlog task |
+| --- | --- |
+| BE-P01 | MAI-104 |
+| BE-P02 | MAI-105 |
+| BE-P03 | MAI-106 |
+| BE-P04 | MAI-107 |
+| BE-P05 | MAI-108 |
+| BE-P06 | MAI-110 |
+| BE-P07 | MAI-111 |
+| BE-P08 | MAI-109 |
+| BE-P09 | MAI-112 |
+| BE-P10 | MAI-113 |
+| BE-P11 | MAI-114 |
+| BE-P12 | MAI-115 |
+| BE-P13 | MAI-116 |
+| BE-P14 | MAI-117 |
+| BE-P15 | MAI-118 |
+| BE-P16 | MAI-119 |
+| BE-P17 | MAI-120 |
+| BE-P18 | MAI-121 |
+| BE-P19 | MAI-122 |
+| BE-P20 | MAI-123 |
+| BE-P21 | MAI-124 |
+| BE-P22 | MAI-125 |
+| BE-P23 | MAI-126 |
+| BE-P24 | MAI-127 |
+| BE-P25 | MAI-129 |
+| BE-P26 | MAI-131 |
+
+The mapping is one-to-one. The dependency graph in Sections 1–4 remains authoritative; real IDs replace temporary identifiers in the corresponding Backlog task dependencies.

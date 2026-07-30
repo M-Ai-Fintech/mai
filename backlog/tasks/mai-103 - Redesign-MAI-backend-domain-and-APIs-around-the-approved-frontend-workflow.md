@@ -1,11 +1,11 @@
 ---
 id: MAI-103
 title: 'Redesign MAI backend, domain, and APIs around the approved frontend workflow'
-status: In Progress
+status: Done
 assignee:
   - '@chatgpt'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 07:01'
+updated_date: '2026-07-30 09:33'
 labels:
   - backend
   - architecture
@@ -196,7 +196,7 @@ This is an architecture and implementation-planning task, not backend implementa
 - [x] #4 Synchronous APIs, asynchronous jobs, event or streaming needs, and external-integration contracts are defined.
 - [x] #5 Current MVP and prototype routes, stores, services, and contracts are classified as keep, replace, or remove without treating them as constraints.
 - [x] #6 Canonical architecture, product, domain, and ADR documentation is updated through governed Backlog workflows.
-- [ ] #7 An independently deliverable, dependency-ordered backend implementation task plan is approved; only then may those tasks be created with the next available IDs.
+- [x] #7 An independently deliverable, dependency-ordered backend implementation task plan is approved; only then may those tasks be created with the next available IDs.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -225,4 +225,12 @@ This is an architecture and implementation-planning task, not backend implementa
 2026-07-30 final verification: initial sandboxed pass retained git status --short=0, git diff --check=0, documentation check=0, deno task verify=1 because Node subprocess execution was sandbox-blocked and locked GUI dependencies were absent. Applied the smallest environment-only correction: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm --prefix gui ci (exit 0; no browser installed), then reran outside the sandbox. Final retained statuses: git status --short=0; git diff --check=0; deno run --allow-read scripts/check_docs.ts=0 (Documentation check passed); deno task verify=0 (all 17 canonical checks passed, including Deno tests, GUI unit/build/workflows, Storybook build and interaction tests). The dependency install reported 15 existing audit findings (3 moderate, 12 high); no dependency file changed and no audit-fix/upgrade was performed because it is outside MAI-103.
 
 2026-07-30 owner-review handoff: committed architecture proposal as ef11e9820cf395d15b6c3fb9b499f20739376e9c, pushed feat/MAI-103-backend-domain-api-redesign, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/23 targeting master. MAI-103 remains In Progress; acceptance criterion 7 is unchecked; no merge, self-approval, downstream task creation, or MAI-104 work was performed.
+
+2026-07-30 owner approval: the owner approved the MAI-103 backend, domain, persistence, permissions, workflow, API, asynchronous, agent and integration redesign; approved doc-24 and accepted ADRs doc-25 through doc-36 as the target baseline; and authorized final closure plus approved implementation-task creation. Created the approved, dependency-preserving active task mapping: BE-P01=MAI-104, BE-P02=MAI-105, BE-P03=MAI-106, BE-P04=MAI-107, BE-P05=MAI-108, BE-P06=MAI-110, BE-P07=MAI-111, BE-P08=MAI-109, BE-P09=MAI-112, BE-P10=MAI-113, BE-P11=MAI-114, BE-P12=MAI-115, BE-P13=MAI-116, BE-P14=MAI-117, BE-P15=MAI-118, BE-P16=MAI-119, BE-P17=MAI-120, BE-P18=MAI-121, BE-P19=MAI-122, BE-P20=MAI-123, BE-P21=MAI-124, BE-P22=MAI-125, BE-P23=MAI-126, BE-P24=MAI-127, BE-P25=MAI-129, BE-P26=MAI-131. All 26 active tasks are To Do and unassigned; no implementation started. A concurrent CLI allocation overlap produced 12 duplicate active records, which were immediately archived through Backlog; the original one-to-one active set and its dependency graph were retained. Documentation statuses are doc-24 Approved and doc-25 through doc-36 Accepted. Focused post-mutation documentation check: deno run --allow-read scripts/check_docs.ts = 0. Retained prior final evidence: git status --short=0; git diff --check=0; documentation check=0; deno task verify=0; open architecture P0/P1=0. Existing npm audit findings (3 moderate, 12 high) remain unresolved and out of scope.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Owner-approved MAI-103 architecture baseline finalized: doc-24 is Approved, ADRs doc-25 through doc-36 are Accepted, and the approved 26-task dependency plan is materialized in Backlog. No backend or frontend implementation began; deferred provider, RLS, identity, retention, recovery, cutover and readiness inputs remain explicit task gates.
+<!-- SECTION:FINAL_SUMMARY:END -->
