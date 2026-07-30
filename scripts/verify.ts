@@ -106,6 +106,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["--prefix", "gui", "run", "build"],
   },
   {
+    id: "frontend-workflows",
+    label: "Frontend principal workflows",
+    command: "npm",
+    args: ["--prefix", "gui", "run", "verify:workflows"],
+  },
+  {
     id: "storybook-docs",
     label: "Storybook documentation",
     command: "npm",
