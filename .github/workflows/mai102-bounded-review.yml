@@ -1,0 +1,66 @@
+name: MAI-102 Bounded Frontend Review
+
+on:
+  push:
+    branches:
+      - feat/MAI-102-frontend-conformance
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Install GUI dependencies
+        run: npm --prefix gui ci
+
+      - name: Install repository-pinned Chromium
+        run: npm --prefix gui exec -- playwright install --with-deps chromium
+
+      - name: Build application
+        run: npm --prefix gui run build
+
+      - name: Build Storybook
+        run: npm --prefix gui run build-storybook
+
+      - name: Start review surfaces
+        shell: bash
+        run: |
+          mkdir -p mai102-evidence
+          (cd gui && npm run start -- -H 127.0.0.1 -p 3000) > mai102-evidence/next-server.log 2>&1 &
+          echo $! > mai102-evidence/next-server.pid
+          python3 -m http.server 6006 --bind 127.0.0.1 --directory gui/storybook-static > mai102-evidence/storybook-server.log 2>&1 &
+          echo $! > mai102-evidence/storybook-server.pid
+          curl --fail --retry 30 --retry-delay 1 http://127.0.0.1:3000/home > /dev/null
+          curl --fail --retry 30 --retry-delay 1 http://127.0.0.1:6006/index.json > /dev/null
+
+      - name: Run rendered conformance review
+        shell: bash
+        run: |
+          set -o pipefail
+          node gui/scripts/mai102-rendered-review.mjs 2>&1 | tee mai102-evidence/review.log
+          status=${PIPESTATUS[0]}
+          printf 'EXIT_STATUS=%s\n' "$status" | tee -a mai102-evidence/review.log
+          printf '%s\n' "$status" > mai102-evidence/exit-status.txt
+          exit "$status"
+
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mai102-bounded-frontend-review
+          path: mai102-evidence
+          if-no-files-found: error
+          retention-days: 30
