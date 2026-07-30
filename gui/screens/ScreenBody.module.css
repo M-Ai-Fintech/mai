@@ -3,6 +3,8 @@
   gap: var(--mai-space-layout-section);
   max-inline-size: var(--mai-layout-content-max);
   margin-block-start: var(--mai-space-layout-panel);
+  container-name: screen-body;
+  container-type: inline-size;
 }
 .header,
 .headerActions,
@@ -43,7 +45,7 @@
 }
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 21.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
   gap: var(--mai-space-layout-section);
   align-items: start;
 }
@@ -132,16 +134,7 @@
   color: var(--mai-color-content-link);
 }
 
-@media (max-width: 72rem) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .inspector {
-    position: static;
-  }
-}
-
-@media (max-width: 47.99rem) {
+@container screen-body (inline-size < 48rem) {
   .page {
     margin-block-start: var(--mai-space-component-md);
   }
@@ -151,6 +144,9 @@
   }
   .headerActions {
     justify-content: flex-start;
+  }
+  .inspector {
+    position: static;
   }
   .registryTable {
     overflow: visible;
