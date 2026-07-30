@@ -15,7 +15,9 @@ import {
 
 describe("MAI-98 route architecture", () => {
   it("has unique IDs and all four shell modes", () => {
-    expect(new Set(routeRegistry.map((route) => route.id)).size).toBe(routeRegistry.length);
+    expect(new Set(routeRegistry.map((route) => route.id)).size).toBe(
+      routeRegistry.length,
+    );
     expect(new Set(routeRegistry.map((route) => route.shellMode))).toEqual(
       new Set(["global", "deal", "administration", "external"]),
     );
@@ -25,17 +27,34 @@ describe("MAI-98 route architecture", () => {
     expect(routePatternConflicts()).toEqual([]);
   });
 
-  it("keeps only six approved deal routes in the MAI-100 body boundary", () => {
-    const implemented = routeRegistry.filter((route) => route.implementationStatus === "deal-intelligence");
-    const deferred = routeRegistry.filter((route) => route.id.startsWith("deal.") && route.implementationStatus === "shell-placeholder");
+  it("keeps six MAI-100 routes and seven explicit MAI-101 routes", () => {
+    const implemented = routeRegistry.filter((route) =>
+      route.implementationStatus === "deal-intelligence"
+    );
+    const execution = routeRegistry.filter((route) =>
+      route.id.startsWith("deal.") &&
+      route.implementationStatus === "deal-execution"
+    );
 
     expect(implemented.map((route) => route.id)).toEqual([
-      "deal.overview", "deal.dossier", "deal.documents", "deal.diligence", "deal.valuation", "deal.matching",
+      "deal.overview",
+      "deal.dossier",
+      "deal.documents",
+      "deal.diligence",
+      "deal.valuation",
+      "deal.matching",
     ]);
-    expect(deferred.map((route) => route.id)).toEqual([
-      "deal.negotiation", "deal.closing", "deal.workspace", "deal.activity", "deal.team", "deal.deliverables", "deal.settings",
+    expect(execution.map((route) => route.id)).toEqual([
+      "deal.negotiation",
+      "deal.closing",
+      "deal.workspace",
+      "deal.activity",
+      "deal.team",
+      "deal.deliverables",
+      "deal.settings",
     ]);
-    expect(deferred.every((route) => route.deferredScreenOwner === "MAI-101")).toBe(true);
+    expect(execution.every((route) => route.deferredScreenOwner === "MAI-101"))
+      .toBe(true);
   });
 
   it("keeps MAI-99 global, administration, and external routes as screen bodies", () => {
@@ -43,9 +62,11 @@ describe("MAI-98 route architecture", () => {
       .filter((route) => route.implementationStatus === "screen-body")
       .map((route) => route.id);
 
-    expect(screenBodyRoutes).toEqual(routeRegistry
-      .filter((route) => !route.id.startsWith("deal."))
-      .map((route) => route.id));
+    expect(screenBodyRoutes).toEqual(
+      routeRegistry
+        .filter((route) => !route.id.startsWith("deal."))
+        .map((route) => route.id),
+    );
   });
 
   it("derives navigation from the route registry in deterministic order", () => {
@@ -65,28 +86,39 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("registers actionable utility entry routes", () => {
-    expect(shellEntryRoutes().map((route) => [route.id, routePath(route)])).toEqual([
-      ["global.search", "/search"],
-      ["global.tasks", "/tasks"],
-      ["global.approvals", "/approvals"],
-      ["global.notifications", "/notifications"],
-    ]);
+    expect(shellEntryRoutes().map((route) => [route.id, routePath(route)]))
+      .toEqual([
+        ["global.search", "/search"],
+        ["global.tasks", "/tasks"],
+        ["global.approvals", "/approvals"],
+        ["global.notifications", "/notifications"],
+      ]);
   });
 
   it("preserves the exact deal identifier across modules", () => {
     const route = matchRoute(["deals", "demo-deal", "documents"]);
     expect(route?.id).toBe("deal.documents");
-    expect(route && routePath(route, { dealId: "demo-deal" })).toBe("/deals/demo-deal/documents");
+    expect(route && routePath(route, { dealId: "demo-deal" })).toBe(
+      "/deals/demo-deal/documents",
+    );
   });
 
   it("distinguishes malformed, unavailable, and unknown context", async () => {
-    await expect(resolveRouteContext(["deals", "BAD!", "documents"])).resolves.toMatchObject({ kind: "invalid-context" });
-    await expect(resolveRouteContext(["deals", "missing-deal", "documents"])).resolves.toMatchObject({ kind: "unavailable" });
-    await expect(resolveRouteContext(["missing"])).resolves.toMatchObject({ kind: "not-found" });
+    await expect(resolveRouteContext(["deals", "BAD!", "documents"])).resolves
+      .toMatchObject({ kind: "invalid-context" });
+    await expect(resolveRouteContext(["deals", "missing-deal", "documents"]))
+      .resolves.toMatchObject({ kind: "unavailable" });
+    await expect(resolveRouteContext(["missing"])).resolves.toMatchObject({
+      kind: "not-found",
+    });
   });
 
   it("builds linked breadcrumbs with the exact deal context", async () => {
-    const result = await resolveRouteContext(["deals", "demo-deal", "documents"]);
+    const result = await resolveRouteContext([
+      "deals",
+      "demo-deal",
+      "documents",
+    ]);
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
@@ -112,30 +144,38 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("omits breadcrumb links when their permission is absent", async () => {
-    const result = await resolveRouteContext(["deals", "demo-deal", "documents"]);
+    const result = await resolveRouteContext([
+      "deals",
+      "demo-deal",
+      "documents",
+    ]);
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
-    expect(breadcrumbsForResolution({ ...result, permissions: ["deal"] })).toEqual([
-      {
-        routeId: "deal.overview",
-        label: "Demo transaction",
-        current: false,
-        href: "/deals/demo-deal/overview",
-      },
-      {
-        routeId: "deal.documents",
-        label: "Documents",
-        current: true,
-      },
-    ]);
+    expect(breadcrumbsForResolution({ ...result, permissions: ["deal"] }))
+      .toEqual([
+        {
+          routeId: "deal.overview",
+          label: "Demo transaction",
+          current: false,
+          href: "/deals/demo-deal/overview",
+        },
+        {
+          routeId: "deal.documents",
+          label: "Documents",
+          current: true,
+        },
+      ]);
   });
 
   it("keeps administration navigation non-actionable without permission", async () => {
     const result = await resolveRouteContext(["home"]);
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
-    const restrictedResult = { ...result, permissions: ["workspace", "deal"] as const };
+    const restrictedResult = {
+      ...result,
+      permissions: ["workspace", "deal"] as const,
+    };
     expect(navigationForResolution(restrictedResult)).toContainEqual({
       routeId: "administration.profile",
       label: "Administration",
@@ -145,13 +185,21 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("does not construct protected external props or internal navigation", async () => {
-    const result = await resolveRouteContext(["portal", "project", "fixture-workspace"]);
+    const result = await resolveRouteContext([
+      "portal",
+      "project",
+      "fixture-workspace",
+    ]);
     expect(result).toMatchObject({ kind: "ready" });
     if (result.kind !== "ready") return;
     expect(result.organization).toBeUndefined();
     expect(result.deal).toBeUndefined();
     expect(result.counts).toBeUndefined();
-    expect(navigationForResolution(result).every((entry) => entry.routeId.startsWith("external."))).toBe(true);
+    expect(
+      navigationForResolution(result).every((entry) =>
+        entry.routeId.startsWith("external.")
+      ),
+    ).toBe(true);
     expect(breadcrumbsForResolution(result)).toEqual([
       {
         routeId: "external.workspace",
