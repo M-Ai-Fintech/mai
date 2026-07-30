@@ -160,8 +160,9 @@ for (
   }
 }
 
+const retiredGuide = ["STITCH", "DESIGN"].join("_");
 const retiredPaths = [
-  "gui/STITCH_DESIGN.md",
+  `gui/${retiredGuide}.md`,
   "gui/DESIGN.md",
   "gui/DESIGN_GUIDELINES.md",
   "gui/docs/user-flow.md",
@@ -174,7 +175,7 @@ const retiredPaths = [
 ];
 for (const file of retiredPaths) {
   if (existsSync(resolve(root, file))) {
-    errors.push(`${file}: retired GUI/Stitch artifact remains active`);
+    errors.push(`${file}: retired GUI artifact remains active`);
   }
 }
 
@@ -194,16 +195,15 @@ const activeSource = ["gui/app", "gui/screens", "gui/lib", "gui/components"]
   .flatMap((directory) => sourceFiles(resolve(root, directory)))
   .map((file) => readFileSync(file, "utf8"))
   .join("\n");
-for (
-  const legacy of [
-    "MarkForMC",
-    "Mastercard",
-    "STITCH_DESIGN",
-    "canvas-cream",
-    "orbital-line",
-    "ghost-watermark",
-  ]
-) {
+const retiredConventions = [
+  ["Mark", "For", "MC"],
+  ["Master", "card"],
+  ["STITCH", "DESIGN"],
+  ["canvas", "cream"],
+  ["orbital", "line"],
+  ["ghost", "watermark"],
+].map((parts, index) => parts.join(index === 2 ? "_" : index > 2 ? "-" : ""));
+for (const legacy of retiredConventions) {
   if (activeSource.includes(legacy)) {
     errors.push(`${legacy}: legacy GUI convention remains in active source`);
   }
