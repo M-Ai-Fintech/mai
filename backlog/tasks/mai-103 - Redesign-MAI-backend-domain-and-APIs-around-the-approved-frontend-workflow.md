@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@chatgpt'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 06:58'
+updated_date: '2026-07-30 07:01'
 labels:
   - backend
   - architecture
@@ -16,6 +16,9 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-102
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/23'
+  - ef11e9820cf395d15b6c3fb9b499f20739376e9c
 documentation:
   - design/
   - gui/conformance/mai102-authority-matrix.json
@@ -220,4 +223,6 @@ This is an architecture and implementation-planning task, not backend implementa
 2026-07-30 proposal: created governed doc-19 through doc-24 and proposed ADR doc-25 through doc-36; updated doc-2 through doc-7, doc-9, doc-10, and doc-12 through Backlog workflows. The one permitted read-only architecture audit reported 0 P0 and 6 P1 findings. The coordinator corrected aggregate completeness, bounded-context ownership, the dependency graph/waves, the /api/v1 prefix, governed document identifiers, the missing AppBootstrapper disposition, and an independently found API-catalog Markdown table delimiter issue. Coordinator recheck shows no remaining open architecture P0/P1. No backend/frontend/Figma/Graphify implementation or downstream task was created. Acceptance criterion 7 remains unchecked pending owner approval.
 
 2026-07-30 final verification: initial sandboxed pass retained git status --short=0, git diff --check=0, documentation check=0, deno task verify=1 because Node subprocess execution was sandbox-blocked and locked GUI dependencies were absent. Applied the smallest environment-only correction: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm --prefix gui ci (exit 0; no browser installed), then reran outside the sandbox. Final retained statuses: git status --short=0; git diff --check=0; deno run --allow-read scripts/check_docs.ts=0 (Documentation check passed); deno task verify=0 (all 17 canonical checks passed, including Deno tests, GUI unit/build/workflows, Storybook build and interaction tests). The dependency install reported 15 existing audit findings (3 moderate, 12 high); no dependency file changed and no audit-fix/upgrade was performed because it is outside MAI-103.
+
+2026-07-30 owner-review handoff: committed architecture proposal as ef11e9820cf395d15b6c3fb9b499f20739376e9c, pushed feat/MAI-103-backend-domain-api-redesign, and opened Draft PR https://github.com/luisfelipeluis49/mai/pull/23 targeting master. MAI-103 remains In Progress; acceptance criterion 7 is unchecked; no merge, self-approval, downstream task creation, or MAI-104 work was performed.
 <!-- SECTION:NOTES:END -->
