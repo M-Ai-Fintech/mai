@@ -3,7 +3,7 @@ id: doc-10
 title: Documentation Index and Information Architecture
 type: readme
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-29 17:44'
+updated_date: '2026-07-30 06:37'
 tags:
   - documentation
   - governance
@@ -11,46 +11,54 @@ tags:
 ---
 # Documentation Index and Information Architecture
 
-- Authority ID: DOC-IA-001
-- Owner: Repository maintainers
-- Authority: Canonical navigation for project documentation
-- Freshness: Current as of 2026-07-29
-- Language: English
-- Update trigger: Any change to a canonical documentation path, ownership rule, or documentation class
+- **Authority ID:** DOC-IA-001
+- **Owner:** Repository maintainers
+- **Authority:** Canonical navigation for project documentation
+- **Freshness:** Current as of 2026-07-30
+- **Language:** English
+- **Update trigger:** Any canonical path, authority, ownership rule or documentation class changes
 
-## Canonical root
+## Canonical root and governance
 
-`backlog/docs/` is the canonical, governed documentation root. This index is the authoritative entry point. Documents must be written in English; translation of end-user material follows ADR-0001.
+`backlog/docs/` is the governed documentation root. Use Backlog document workflows for creation, metadata, relocation and content updates. English is canonical. The inventory and machine-readable manifest are doc-12; governance is doc-11; generated/local knowledge classification is doc-13.
 
-## Information architecture
+## Start here
 
-| Area | Canonical location | Authority |
-| --- | --- | --- |
-| Navigation and taxonomy | `index/doc-10 - Documentation-Index-and-Information-Architecture.md` | DOC-IA-001 |
-| Governance and inventory | `governance/` | DOC-GOV-001 and DOC-INV-001 |
-| Decisions and ADRs | `decisions/` | ADR documents |
-| System and integration architecture | `architecture/` | Architecture documents |
-| Frontend foundation architecture | `architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md` | ARCH-FRONTEND-001 |
-| Frontend semantic-token architecture | `architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md` | ARCH-FRONTEND-TOKENS-001 |
-| Frontend component-library architecture | `architecture/frontend-components/doc-17 - MAI-97-Figma-Component-Library-Architecture-and-Conformance.md` | ARCH-FRONTEND-COMPONENTS-001 |
-| Domain model | `domain/` | Domain-model documents |
-| Setup and operations | `operations/` | Operations documents |
-| Product behavior | `product/` | Product documents |
-| Generated reports | source-specific output directories | Non-authoritative |
-| Agent knowledge | colocated `src/agent/agents/**` assets | Referenced, runtime-local knowledge |
+1. Product/frontend authority: doc-9, doc-15–18, design/1–28 and the MAI-102 authority matrix.
+2. Target backend traceability: doc-19.
+3. Domain/context/workflow authority: doc-7 and doc-20.
+4. Security/data authority: doc-4 and doc-21.
+5. API/async/agent/integration authority: doc-3, doc-5, doc-6 and doc-22.
+6. Current-state migration inventory: doc-23.
+7. Proposed implementation sequence: doc-24.
+8. Proposed decisions: doc-25–36.
 
-## Reading order
+## Canonical architecture and product documents
 
-1. This index.
-2. [Documentation Governance and Ownership](../governance/documentation-governance/doc-11%20-%20Documentation-Governance-and-Ownership.md).
-3. [Documentation Inventory](../governance/document-inventory/doc-12%20-%20Documentation-Inventory-and-Classification.md).
-4. [ADR-0001: English Internal Identifiers and i18n](../decisions/adr-0001-english-internal-identifiers-i18n/doc-14%20-%20ADR-0001-English-Internal-Identifiers-and-i18n.md).
-5. The area document needed for the task.
+| Document | Authority |
+| --- | --- |
+| doc-2 System and Core Architecture | Target modular-monolith system boundary |
+| doc-3 Agent Architecture and Workflows | Governed Mission/Plan/Run/Tool model |
+| doc-4 Data and Memory Architecture | Persistence, truth, provenance and staleness |
+| doc-5 Engine Architecture | Pure calculation/model boundaries |
+| doc-6 VDR and Integration Architecture | Provider, secret and readiness boundaries |
+| doc-7 M&A Domain Model | Business language and human authority |
+| doc-8 Local Setup and Runtime Operations | Current operational setup |
+| doc-9 MVP GUI and API Behavior | Approved frontend authority and backend alignment |
+| doc-15–18 | Frontend foundation, tokens, components and shell |
+| doc-19–24 | MAI-103 target specification and plan |
+| doc-25–36 | MAI-103 proposed ADRs; not accepted until owner approval |
 
-## Non-canonical material
+## MAI-103 authority map
 
-Repository readmes and agent instruction files are navigation or execution aids, not competing authority. Storybook MDX describes component usage. Graphify output is generated analysis. Backlog tasks and milestones are work records, not design authority. The inventory defines each disposition.
+- doc-19: complete frontend-to-backend gap matrix.
+- doc-20: bounded contexts, aggregates, commands, events and state machines.
+- doc-21: tenancy, authorization, persistence, concurrency, audit and provenance.
+- doc-22: synchronous API, errors, jobs, events, agent execution and integrations.
+- doc-23: Keep/Adapt/Replace/Remove inventory.
+- doc-24: dependency-ordered temporary implementation plan.
+- doc-25–36: twelve explicit proposed decisions with alternatives, migration, risks and validation.
 
-## Maintenance rule
+## Historical and local material
 
-Create or update canonical documents through Backlog document tooling only. Before adding a document, search and view the closest existing governed document. Update this index and the inventory in the same task whenever a canonical path or documentation class changes.
+Deprecated documents retain historical context but are not current authority. `graphify-out/` is generated and non-authoritative. Storybook MDX and `src/agent/agents/**` knowledge are implementation-local. Backlog tasks/milestones are work records, not architecture authority. Figma/design artifacts retain the product authority assigned by approved frontend tasks.

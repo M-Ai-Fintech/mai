@@ -3,7 +3,7 @@ id: doc-9
 title: MVP GUI and API Behavior
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-29 13:26'
+updated_date: '2026-07-30 06:37'
 tags:
   - product
   - gui
@@ -15,46 +15,29 @@ tags:
 
 - **Authority ID:** PRODUCT-MVP-001
 - **Owner:** Product Engineering
-- **Authority:** Canonical current-state MVP GUI and API behavior
-- **Freshness:** Current for the MAI-95 neutral frontend foundation and deterministic MVP API
+- **Authority:** Approved frontend workflow is product authority; backend target contracts are proposed by MAI-103
+- **Freshness:** Proposed backend alignment as of 2026-07-30
 - **Language:** English
-- **Update trigger:** Product routes, API contracts, persistence behavior, streaming behavior, concurrency semantics, or product capability boundaries change.
+- **Update trigger:** Approved screen state/action/permission semantics, frontend route ownership, backend contracts or fixture cutover changes
 
-Route handlers, Zod contracts, tests, and GUI code are authoritative for exact behavior.
+## Product authority
 
-## Product surfaces
+The 25 banker-workspace screen families, application shell/route architecture, MAI-102 authority matrix, screen contracts, MAI-99/100/101 fixtures/stories/tests/verifiers, design/1–28 and accepted MAI-102 deviations define visible states, actions, permissions, evidence/provenance, staleness, human authority and external isolation.
 
-The Next.js App Router application is in `gui/`. MAI-95 retains only `/` as a neutral frontend-foundation status surface plus framework-provided error and not-found boundaries. The retired dashboard, deal, entity, custom-dashboard, generative-UI, settings, and client page compositions are not active routes. Final Shell, navigation, and product route architecture are deferred to MAI-98.
+Accepted MAI-102 deviations remain valid: MAI-100 responsive non-Decision states and MAI-101 shared-pattern derived responsive families are implementation-owned governed derivations. MAI-103 does not change frontend behavior, Figma or route ownership.
 
-The GUI calls relative `/api/*` paths. Its Next configuration rewrites these to the Deno API base URL, defaulting to `http://127.0.0.1:8000`. Browser components must not hard-code internal Deno URLs.
+## Backend contract direction
 
-`gui/components/FoundationStatus/FoundationStatus.mdx` is the single retained neutral Storybook specimen. Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction design authority; `design/1` through `design/28` govern behavior and boundaries, with `design/28_Critical_Desktop_Banker_Path_Prototype.md` recording the MAI-94 critical path. Stitch, the retired GUI, and retired stories/styles are not implementation authorities. MAI-96 owns final tokens, MAI-97 owns governed components, and MAI-98 owns the approved Shell and route presentation.
+The target API uses semantic commands and permission-safe read models under `/api/v1`, stable protected errors, ETag/If-Match, idempotency and durable jobs. It does not treat an existing MVP route, in-memory state or database table as canonical.
 
-## Deterministic MVP API
+Every protected request is tenant/workspace/deal scoped and authorized before data loading. AI output stays proposed/draft until a separate human-authorized state change. External portal DTOs omit internal strategy and require purpose, sponsor, expiry and object scope.
 
-`src/api/mvp_routes.ts` composes ordered handlers for entities/team, deals, chat, engines/documents, notifications, and dashboards. The API uses Zod contracts and stable JSON error envelopes. The server identifies mock-backed in-memory persistence with `X-MAI-Persistence` and exposes resource-version headers for optimistic-concurrency workflows.
+Doc-19 is the complete screen/action/state/permission/workflow gap matrix. Doc-22 is the API/job/event catalog. Doc-20 and doc-21 define workflow, authority, persistence and isolation.
 
-Current route families include:
+## Current implementation boundary
 
-| Family | Examples |
-| --- | --- |
-| Entities and team | `/api/entities`, `/api/entities/:id`, `/api/team-members`, deal team assignments |
-| Deals | `/api/deals`, `/api/deals/:id`, phase transitions |
-| Chat | deal chat threads, messages, and stream endpoint |
-| Engine/document/VDR | deal engine runs, VDR documents, document creation/download metadata |
-| Notifications | `/api/notifications`, notification updates |
-| Dashboard layouts | `/api/users/me/dashboard-layouts/:slug` |
+The Deno MVP API, legacy endpoints, mock stores, seeded dashboard/chat/engine runs and frontend fixtures are deterministic prototype evidence only. The frontend remains fixture-backed until separately approved implementation tasks migrate each typed adapter. Current routes continue to be documented in doc-23 for migration and retirement; they are not target compatibility constraints.
 
-Read the route modules under `src/api/routes/` for exact methods and payload contracts. The adapter returns `null` for paths outside its boundary, allowing the HTTP server’s retained legacy endpoints to handle their existing routes.
+## Verification boundary
 
-## Interaction and persistence behavior
-
-The MVP store is process-local in memory. Optimistic updates apply to supported deal, entity, assignment, and layout operations; a version conflict must preserve local edits and request explicit reload rather than silently overwrite them.
-
-Chat supports a streaming endpoint and uses injected execution dependencies. In the running server, chat invokes the broker orchestration path; without an API key, that path is dry-run/fallback. The API must not claim citations, external search grounding, or persisted chat history beyond the code path actually configured.
-
-VDR-facing API output exposes controlled metadata/download behavior; it must not disclose server filesystem paths. Authentication and authorization are not implemented by the current deterministic MVP route layer.
-
-## Change rules
-
-Add new product routes through the appropriate handler while preserving `mvp_routes.ts` ordering. Update API contracts, tests, and this document together for behavior changes. Keep product behavior aligned with governed design definitions and preserve explicit mock, fixture, simulated, prototype, or backend-required labels. Do not infer production capability from retained API clients or the neutral foundation surface.
+Existing frontend tests and `gui/scripts/verify-frontend-workflows.mjs` protect the approved experience during later adapter migration. Backend implementation must add contract, state-machine, authorization, isolation, concurrency, job, audit and end-to-end evidence before any production-readiness claim.
