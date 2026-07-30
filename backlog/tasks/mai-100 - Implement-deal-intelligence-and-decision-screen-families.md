@@ -1,11 +1,11 @@
 ---
 id: MAI-100
 title: Implement deal intelligence and decision screen families
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 00:18'
+updated_date: '2026-07-30 01:34'
 labels:
   - frontend
   - screen-implementation
@@ -38,7 +38,7 @@ modified_files:
   - gui/package.json
   - scripts/verify.ts
 priority: high
-ordinal: 1300
+ordinal: 87000
 ---
 
 ## Description
