@@ -4,7 +4,7 @@ title: 'Documents, sources and processing'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 20:11'
+updated_date: '2026-07-31 20:13'
 labels:
   - backend
   - architecture
@@ -132,4 +132,29 @@ Papermark adapter migration boundary
 9. Provider implementation and environment certification remain under MAI-127.
 
 10. Existing adapter code remains migration evidence until the new contracts and consumers exist.
+
+VDR source integration ownership boundary
+
+1. MAI-112 owns provider-neutral document-source contracts, immutable Document Versions, source synchronization, object references, and durable processing.
+
+2. A VDR is a source system and is not authoritative Deal, evidence, transaction, or document-domain truth.
+
+3. Each provider connection uses a tenant-scoped Connector Account.
+
+4. Source synchronization uses:
+   - explicit capabilities;
+   - provider workspace identity;
+   - normalized cursors;
+   - idempotent durable jobs;
+   - normalized errors;
+   - source-version information;
+   - checksums;
+   - immutable Document Versions;
+   - object-store references.
+
+5. No provider may directly initialize an authoritative RAG silo.
+
+6. No provider may silently overwrite a Document Version.
+
+7. Named fixture adapters may prove internal contracts but cannot satisfy provider certification.
 <!-- SECTION:NOTES:END -->

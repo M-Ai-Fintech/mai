@@ -4,7 +4,7 @@ title: Governed agent definitions and tools
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:09'
+updated_date: '2026-07-31 20:13'
 labels:
   - backend
   - architecture
@@ -162,4 +162,21 @@ Agent document-tool capability boundary
 6. Unsupported capabilities return explicit denied or unavailable results.
 
 7. The direct `vdrStructuredAccessTool` is migration evidence, not the target ToolGateway contract.
+
+VDR agent-integration ownership boundary
+
+1. Agent definitions use governed ToolGateway capabilities rather than direct provider clients, direct RAG initialization, Pub/Sub shortcuts, or local filesystem access.
+
+2. Agent capabilities consume MAI-112 and MAI-113 application ports.
+
+3. Agents receive only authorized, classified, exact-version document or evidence projections.
+
+4. Agents cannot:
+   - access provider credentials;
+   - select arbitrary tenant sources;
+   - initialize a global or Deal silo directly;
+   - upload, delete, invite, release, or change provider permissions without separately authorized human commands;
+   - represent fixture content as real-provider evidence.
+
+5. Tool outputs preserve source and evidence provenance.
 <!-- SECTION:NOTES:END -->

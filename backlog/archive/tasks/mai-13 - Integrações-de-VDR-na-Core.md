@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 20:13'
 labels:
   - core
   - vdr
@@ -62,6 +62,48 @@ Desenvolver a integração da Core API com provedores de Virtual Data Room (VDR)
 - Criar testes mockados simulando respostas da API da Papermark e do proxy do Supergood.
 - Validar se o silo do RAG indexa corretamente os textos extraídos.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded through separated Documents, Evidence, Agent ToolGateway, Integration Certification, and Migration ownership.
+
+Requirements carried forward:
+
+- provider-neutral source abstraction;
+- Papermark integration;
+- authenticated source synchronization;
+- pagination;
+- document listing and download;
+- immutable document provenance;
+- provider failure handling;
+- evidence indexing;
+- authorized agent access;
+- fixture and live integration tests.
+
+Replacement ownership:
+
+- MAI-112 owns Documents, Document Sources, Document Versions, synchronization and processing;
+- MAI-113 owns evidence, citations, chunks, provenance and vector isolation;
+- MAI-121 owns governed agent capabilities;
+- MAI-127 owns provider implementation and environment certification;
+- MAI-129 owns physical retirement.
+
+Architecture changed:
+
+- Papermark is the only current MVP VDR candidate;
+- iDeals and Intralinks remain deferred and uncertified;
+- Supergood is not the universal project VDR boundary;
+- providers implement `DocumentSourceProvider`;
+- VDRs are source systems, not authoritative product truth;
+- providers do not directly initialize RAG;
+- direct agent actions and Pub/Sub shortcuts are not authoritative integration boundaries;
+- fixtures and mocks cannot satisfy live certification.
+
+Existing code and tests remain migration evidence until replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

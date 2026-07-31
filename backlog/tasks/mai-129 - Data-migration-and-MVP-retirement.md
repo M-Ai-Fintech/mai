@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:11'
+updated_date: '2026-07-31 20:13'
 labels:
   - backend
   - architecture
@@ -208,4 +208,23 @@ Legacy Papermark adapter retirement ownership
 3. The provider port, parsing logic, error handling, and useful contract tests may be adapted rather than deleted.
 
 4. Physical retirement preserves useful fixtures, migration evidence, Git history, and audit evidence.
+
+Legacy VDR core epic retirement ownership
+
+1. MAI-129 owns physical retirement after MAI-112, MAI-113, MAI-121, and MAI-127 establish replacement coverage.
+
+2. Retirement candidates include:
+   - generic legacy VDR provider abstractions that conflict with `DocumentSourceProvider`;
+   - obsolete Supergood proxy coupling;
+   - iDeals and Intralinks runtime registrations without approved provider requirements;
+   - direct provider-to-RAG initialization;
+   - direct provider downloads used as authoritative document storage;
+   - direct Pub/Sub VDR synchronization shortcuts;
+   - mock or fallback success behavior;
+   - obsolete environment variables;
+   - compatibility tests with no target consumer.
+
+3. Useful parsing, HTTP normalization, pagination, fixture, and error-handling code may be adapted.
+
+4. Physical retirement preserves historical evidence and Git history.
 <!-- SECTION:NOTES:END -->

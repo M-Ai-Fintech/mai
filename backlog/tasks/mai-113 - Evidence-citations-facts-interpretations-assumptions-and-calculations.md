@@ -4,7 +4,7 @@ title: 'Evidence, citations, facts, interpretations, assumptions and calculation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 20:09'
+updated_date: '2026-07-31 20:13'
 labels:
   - backend
   - architecture
@@ -123,4 +123,20 @@ Agent document-retrieval boundary
 7. Missing evidence must not be replaced by fixture, mock, local-file, or process-memory content in a configured real-provider flow.
 
 8. MAI-113 owns evidence retrieval and citation semantics, not provider credentials or agent registration.
+
+VDR-derived evidence and index boundary
+
+1. Evidence always binds to exact Document Versions rather than generic VDR filenames or provider folders.
+
+2. Vector indexes are derived projections keyed by tenant, workspace, Deal, Document Version, classification, processing version, and index version.
+
+3. Vector or chunk results are not authoritative source truth.
+
+4. Reprocessing or reindexing creates a new derived version.
+
+5. Provider synchronization failure, stale processing, unavailable indexes, and inaccessible source content remain explicit.
+
+6. No shared vector index with filter-only isolation is permitted.
+
+7. Retrieval cannot cross tenant, workspace, Deal, classification, or permission boundaries.
 <!-- SECTION:NOTES:END -->
