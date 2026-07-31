@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ONNXEngine } from "../../engines/prediction/onnx.ts";
 import { TransformersEngine } from "../../engines/prediction/transformers.ts";
 import { describeError } from "../../shared/errors.ts";
+import type { RiskSeverity } from "../../shared/schemas/risk-severity.ts";
 import { AIProvider } from "../ai_provider.ts";
 
 const GeminiSearchResponseSchema = z.object({
@@ -184,7 +185,7 @@ function predictionResult(
   };
 }
 
-function insolvencyRiskLevel(risk: number): string {
+function insolvencyRiskLevel(risk: number): RiskSeverity {
   if (risk > 0.8) return "critical";
   if (risk > 0.5) return "high";
   if (risk > 0.25) return "medium";

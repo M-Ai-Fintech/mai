@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
+import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
 
 export const riskmatrixSchema = z.object({
   dealId: z.string().describe("Unique identifier of the deal/transaction."),
@@ -10,7 +11,7 @@ export const riskmatrixSchema = z.object({
       description: z.string().describe(
         "Literal detail of the found risk or contingent liability.",
       ),
-      severity: z.enum(["low", "medium", "high", "critical"]).describe(
+      severity: riskSeveritySchema.describe(
         "Severity of the risk impact.",
       ),
       probability: z.enum(["low", "medium", "high"]).describe(

@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
 
 export const insolvencySchema = z.object({
   insolvencyRiskScore: z.number().min(0).max(1).describe(
     "Calculated probability of financial insolvency (from 0 to 1).",
   ),
-  riskLevel: z.enum(["low", "medium", "high", "critical"]).describe(
+  riskLevel: riskSeveritySchema.describe(
     "Qualitative classification of the financial risk level.",
   ),
   kanitzTermometroScore: z.number().describe(

@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
+import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
 
 export const contingencySchema = z.object({
   contingencyTitle: z.string().describe("Title of the contingency."),
   category: domainAreaSchema.describe("Domain area of the contingency."),
-  severity: z.enum(["low", "medium", "high", "critical"]).describe(
+  severity: riskSeveritySchema.describe(
     "Severity level of the contingency.",
   ),
   legalBasis: z.string().describe("Legal basis for the contingency."),

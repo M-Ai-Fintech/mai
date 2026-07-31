@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
 
 export const contractanalysisSchema = z.object({
   contractTitle: z.string().describe(
@@ -29,7 +30,7 @@ export const contractanalysisSchema = z.object({
   ]).describe(
     "Arbitration chamber elected for dispute resolution (e.g., CAM-CCBC, B3).",
   ),
-  riskRating: z.enum(["low", "medium", "high", "critical"]).describe(
+  riskRating: riskSeveritySchema.describe(
     "Classification of the contractual risk level.",
   ),
   recommendations: z.array(z.string()).describe(
