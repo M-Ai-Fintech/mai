@@ -11,7 +11,7 @@ export const googleCloudPubSubTool = createTool({
     "Simulates VDR access requests and asynchronous engine triggers on the local event bus.",
   inputSchema: z.object({
     topic: z.string().describe("Pub/Sub topic to publish the message."),
-    dealId: z.string().optional().describe("Associated deal/transaction ID."),
+    dealId: z.string().optional().describe("Associated deal ID."),
     requester: z.string().optional().describe(
       "Identity of the requesting agent or service.",
     ),

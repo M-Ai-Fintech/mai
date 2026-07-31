@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const synergySchema = z.object({
-  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   targetCompany: z.string().describe("Name of the target company."),
   standaloneValue: z.number().describe(
     "Standalone value of the target company in millions of reais (BRL).",
@@ -37,7 +37,7 @@ export const synergySchema = z.object({
     "Recommended total purchase price (Standalone + Seller Premium) in millions of BRL.",
   ),
   isFeasible: z.boolean().describe(
-    "Indicates whether the transaction is viable considering a positive net synergy value.",
+    "Indicates whether the deal is viable considering a positive net synergy value.",
   ),
   comments: z.string().optional().describe(
     "Additional strategic notes and observations on the synergies.",

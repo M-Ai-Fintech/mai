@@ -9,7 +9,7 @@ event bus, system bootstrapper, and Virtual Data Room (VDR) integration layer.
   services, PubSub, database connection (with fallback mode), Gemini AI provider
   check, and ONNX model loading.
 - **`db/`**: Database persistence layer (`DatabaseMemoryService.ts`,
-  `TransactionRepository.ts`, `memory_service.ts`, `schema.sql`, `setup.ts`).
+  `DealRepository.ts`, `memory_service.ts`, `schema.sql`, `setup.ts`).
   Provides PostgreSQL connection with graceful in-memory fallback.
 - **`pubsub/`**: Asynchronous event-driven messaging infrastructure
   (`LocalPubSubBus.ts`, `MessageBus.ts`, `AgentFlowWrapper.ts`). Handles topic

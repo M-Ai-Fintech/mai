@@ -2,7 +2,7 @@ import { z } from "zod";
 import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
 
 export const conditionsprecedentSchema = z.object({
-  dealId: z.string().describe("Unique transaction ID."),
+  dealId: z.string().describe("Unique deal ID."),
   conditions: z.array(
     z.object({
       id: z.string().describe("Condition ID."),

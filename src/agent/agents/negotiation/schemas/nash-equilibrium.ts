@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const nashequilibriumSchema = z.object({
-  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   buyerReservationUtility: z.number().describe(
     "Minimum acceptable reservation utility for the buyer (e.g., 0.3).",
   ),

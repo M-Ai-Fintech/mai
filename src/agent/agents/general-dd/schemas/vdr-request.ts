@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const vdrrequestSchema = z.object({
-  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   requester: z.string().describe(
     "Identity of the requesting agent or service (e.g., LegalDueDiligenceAgent).",
   ),
