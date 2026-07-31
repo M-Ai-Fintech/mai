@@ -4,7 +4,7 @@ title: Integration adapters and certification
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 06:10'
+updated_date: '2026-07-31 17:43'
 labels:
   - backend
   - architecture
@@ -116,4 +116,43 @@ Current classification:
 - provider-specific commercial access, credentials, official documentation, approved sandbox, and support boundaries remain unresolved.
 
 A new provider-specific certification task may be created later when an approved commercial or customer requirement exists.
+
+Local fixture and test-adapter boundary
+
+1. Local filesystem VDR directories, local database rows, seed records, deterministic documents, and in-memory adapters may remain as explicit test fixtures.
+
+2. A local fixture or test adapter is not:
+   - a configured provider;
+   - a real VDR integration;
+   - a real KYB integration;
+   - a certified environment;
+   - production evidence;
+   - proof of provider availability.
+
+3. Fixture adapters must be selected explicitly through test configuration, dependency injection, or a clearly named development boundary.
+
+4. Failure of a configured real provider must not silently select a fixture adapter.
+
+5. Responses produced by fixtures must be labelled as fixture, fake, synthetic, test, or unavailable as appropriate.
+
+6. Fixture-backed tests may prove internal contracts and deterministic behavior, but cannot satisfy MAI-127’s provider-certification criteria.
+
+7. Real provider readiness requires:
+   - approved provider documentation;
+   - approved environment;
+   - credentials;
+   - authenticated connectivity;
+   - real read/write behavior where applicable;
+   - pagination;
+   - permission behavior;
+   - rate-limit behavior;
+   - error behavior;
+   - data-handling assessment;
+   - environment-specific evidence.
+
+8. Papermark or any selected MVP provider remains subject to MAI-127’s real certification requirements.
+
+9. Deferred candidate providers remain unconfigured and uncertified until a separate approved requirement exists.
+
+10. MAI-151 owns deterministic fast-preflight behavior.
 <!-- SECTION:NOTES:END -->
