@@ -3,10 +3,11 @@ id: MAI-75
 title: >-
   Introduce Target Dossier as a first-class domain artifact and remove
   company_culture from agent Memory
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@luis'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 12:10'
 labels:
   - revalidation
 milestone: m-10
@@ -23,12 +24,33 @@ Domain modeling revealed that 'company_culture' was incorrectly placed inside th
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 memorySchema category enum contains exactly 'domain_knowledge' and 'user_preference' — 'company_culture' is removed
-- [ ] #2 BrokerOrchestratorService.processUserCorrection no longer handles 'company_culture' as a memory category
-- [ ] #3 A new TargetDossierSchema (or equivalent) is defined, containing: VDR document references, business knowledge, Company Culture profile, and dealId
-- [ ] #4 Company Culture profile is stored as a sub-field of Target Dossier, not as a standalone memory entry
-- [ ] #5 SourcingAndKYBAgent produces a Target Dossier output (or partial dossier) rather than a flat KYB report
+- [x] #1 memorySchema category enum contains exactly 'domain_knowledge' and 'user_preference' — 'company_culture' is removed
+- [x] #2 BrokerOrchestratorService.processUserCorrection no longer handles 'company_culture' as a memory category
+- [x] #3 A new TargetDossierSchema (or equivalent) is defined, containing: VDR document references, business knowledge, Company Culture profile, and dealId
+- [x] #4 Company Culture profile is stored as a sub-field of Target Dossier, not as a standalone memory entry
+- [x] #5 SourcingAndKYBAgent produces a Target Dossier output (or partial dossier) rather than a flat KYB report
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+ARCHITECTURE CORRECTION:
+- Target Dossier is a deal-scoped product artifact/projection.
+- It is not agent memory.
+- An agent may produce a typed partial dossier proposal.
+- An agent does not own or authoritatively persist the final Target Dossier.
+- Authoritative persistence, evidence linkage, concurrency, and projections belong to the new bounded-context architecture.
+- Physical removal of legacy database tables belongs to MAI-129.
+
+IMPLEMENTATION EVIDENCE & VERIFICATION:
+1. memorySchema accepts domain_knowledge & user_preference; rejects company_culture.
+2. Active memory tools (databaseMemoryServiceTool) expose no company-culture actions.
+3. BrokerOrchestratorService.processUserCorrection validates correctionType and rejects company_culture.
+4. Target Dossier proposal schema (targetDossierDraftSchema) defined under src/shared/schemas/target-dossier.ts with dealId, targetIdentity, documentReferences, businessKnowledge, cultureProfile (sub-object), completeness, provenance, and proposalStatus (isProposed: true, isApproved: false, isAuthoritative: false).
+5. SourcingAndKYBAgent outputSchema & instructions updated to produce targetDossierProposal.
+6. Legacy tables (company_culture_memory) remain intact in SQL schema for MAI-129 physical cleanup; no active memory code path loads or persists company culture as agent memory.
+7. Verification gate 'deno task verify' ran and passed all 17 verification steps cleanly.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

@@ -11,8 +11,7 @@ type FeedbackVariable = Parameters<
 >[0]["variableName"];
 type CorrectionType =
   | "domain_knowledge"
-  | "user_preference"
-  | "company_culture";
+  | "user_preference";
 
 interface OrchestratorContext {
   preferences: unknown;
@@ -65,6 +64,16 @@ export class BrokerOrchestratorService {
     data: Record<string, unknown>,
     feedbackText?: string,
   ): Promise<{ success: boolean; conflict: boolean; conflictReason?: string }> {
+    if (
+      correctionType !== "domain_knowledge" &&
+      correctionType !== "user_preference"
+    ) {
+      throw new Error(
+        `Invalid memory correction category: "${
+          String(correctionType)
+        }". Only "domain_knowledge" and "user_preference" are supported.`,
+      );
+    }
     return await this.processCorrection({
       userId,
       type: correctionType,
@@ -168,7 +177,7 @@ export class BrokerOrchestratorService {
   }
 
   private async saveOrganizationalMemory(
-    correctionType: "domain_knowledge" | "company_culture",
+    correctionType: "domain_knowledge",
     categoryOrKey: string,
     data: Record<string, unknown>,
     embedding: number[],
@@ -178,7 +187,6 @@ export class BrokerOrchestratorService {
         await this.saveDomainKnowledge(categoryOrKey, data, embedding);
         return;
       }
-      await this.saveCompanyCulture(categoryOrKey, data, embedding);
     } catch (error: unknown) {
       console.warn(
         `[BrokerOrchestratorService] Failed to save ${correctionType} to DB.`,
@@ -193,18 +201,6 @@ export class BrokerOrchestratorService {
     embedding: number[],
   ): Promise<void> {
     await this.memoryService.saveDomainKnowledge(category, data, embedding);
-  }
-
-  private async saveCompanyCulture(
-    category: string,
-    data: Record<string, unknown>,
-    embedding: number[],
-  ): Promise<void> {
-    await this.memoryService.saveCompanyCultureMemory(
-      category,
-      data,
-      embedding,
-    );
   }
 
   private async semanticContext(
