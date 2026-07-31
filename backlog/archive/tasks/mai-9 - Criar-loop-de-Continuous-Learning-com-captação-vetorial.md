@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 18:32'
 labels:
   - agent
   - database
@@ -55,6 +55,43 @@ Implementar um loop de aprendizado contínuo (Continuous Learning) no ecossistem
 5. Testes Unitários, de Integração e Smoke Tests:
    - Adicionar uma suíte de testes no Deno para testar o loop de Continuous Learning completo (ingestão de feedback -> vetorização -> busca por similaridade -> injeção -> detecção de conformidade).
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded by MAI-152.
+
+Requirements carried forward:
+
+- structured specialist feedback;
+- user preferences;
+- factual corrections;
+- feedback lineage;
+- quality evaluation;
+- compliance and policy escalation;
+- model and prompt improvement;
+- retrieval and comparison of relevant prior feedback;
+- human review;
+- automated regression tests.
+
+Architecture changed:
+
+- runtime feedback does not automatically change production prompts, knowledge, tools, model configuration, or model weights;
+- company culture is not agent memory;
+- feedback is not automatically authoritative domain knowledge;
+- semantic similarity is not compliance policy;
+- process-local fallback caches are not authoritative;
+- CLI is not the target feedback workflow;
+- promotion is offline, versioned, audited, and human-approved;
+- MAI-120 owns execution records;
+- MAI-121 owns governed definitions and tools;
+- MAI-125 owns retention and deletion;
+- MAI-129 owns final physical retirement.
+
+Existing Continuous Learning code and tests remain migration evidence until replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

@@ -4,7 +4,7 @@ title: Governed agent definitions and tools
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 05:07'
+updated_date: '2026-07-31 18:32'
 labels:
   - backend
   - architecture
@@ -87,3 +87,42 @@ Model/provider certification and prompt retention policy remain acceptance gates
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Legacy learning and model-adaptation migration boundary
+
+1. MAI-121 must migrate agent definitions and tools away from automatic runtime self-learning.
+
+2. The target agent runtime must not register or depend on behavior that:
+   - automatically injects unreviewed corrections into prompts;
+   - writes feedback as generic authoritative preferences or domain knowledge;
+   - uses process-local feedback caches as authority;
+   - treats vector similarity or keywords as compliance policy;
+   - modifies prompts, knowledge, tools, models, or weights without a governed promotion decision.
+
+3. MAI-152 owns the target audited feedback, evaluation-dataset, and offline improvement workflow.
+
+4. MAI-121 must remove, deny, or fence legacy runtime access to:
+   - ContinuousLearningEngine production registration;
+   - automatic correction-to-prompt behavior;
+   - ungoverned correction persistence;
+   - direct feedback-driven domain-knowledge mutation.
+
+5. MAI-121 must remove or deny tool actions that falsely claim:
+   - LoRA adapter loading;
+   - adapted-model loading;
+   - fine-tuned inference;
+   - successful model adaptation.
+
+6. `load_lora_adapter` and `fine_tuned_inference` must not remain active governed tool capabilities unless a later approved implementation and MAI-127 certification prove real behavior.
+
+7. Gemini or canned text cannot be returned under a fine-tuned-inference label.
+
+8. Unsupported model-adaptation capability must return an explicit unavailable or unsupported result.
+
+9. MAI-153 owns the future model-adaptation strategy decision.
+
+10. Legacy code and tests remain migration evidence until MAI-129 cutover.
+<!-- SECTION:NOTES:END -->

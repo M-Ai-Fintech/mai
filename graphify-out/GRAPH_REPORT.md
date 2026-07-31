@@ -1,16 +1,16 @@
 # Graph Report - mai  (2026-07-31)
 
 ## Corpus Check
-- 1229 files · ~1,021,836 words
+- 1232 files · ~1,025,671 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 16669 nodes · 25469 edges · 1655 communities (1361 shown, 294 thin omitted)
+- 16687 nodes · 25484 edges · 1660 communities (1367 shown, 293 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 316 edges (avg confidence: 0.68)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7a804136`
+- Built from commit: `004526ad`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1422,6 +1422,7 @@
 - 80. Approval actions
 - 81. Authority thresholds
 - 48. Assignment removal
+- 13. Mission creation
 - 100. MOCKED — Pitch and demo specification
 - 114. UX prototype tasks to validate
 - 12. Mission model
@@ -1429,6 +1430,7 @@
 - 27. Deal-scope indicator
 - 37. Citation states
 - 39. Claim classification
+- 92. Contextual Copilot
 - 43. Tool states
 - 49. Generated artifacts
 - 52. User corrections
@@ -1440,6 +1442,7 @@
 - 70. Specialized-workspace handoff
 - 78. Permissions
 - 80. Prompt-injection defense
+- 97. UI design direction
 - 86. Recommended desktop layout
 - 8. Primary job to be done
 - 91. Color application
@@ -1482,6 +1485,7 @@
 - 52. Conflict and restriction summary
 - 54. Identity review
 - 57. Duplicate detection
+- 13. Mission creation
 - 63. Change detection
 - 73. Restricted organizations
 - 76. Contextual Copilot
@@ -1512,15 +1516,16 @@
 - 88. Contextual Copilot
 - 93. UI design direction
 - 95. Color application
+- 61. Source provenance
 - 116. Mocked selected-member preview
 - 13. Primary job to be done
 - 16. Deal-assignment lifecycle
+- 63. Invite-member flow
 - 41. Staffing gaps
 - 52. Workstream coverage
 - 68. Temporary suspension
-- 69. Offboarding workflow
+- 76. Delegation
 - 71. Offboarding states
-- 82. Member preview panel
 - 99. Color application
 - 11. Primary job to be done
 - Notification Center
@@ -1651,7 +1656,7 @@
 ## Import Cycles
 - 4-file cycle: `gui/lib/api-client.ts -> gui/lib/api-client/client.ts -> gui/lib/api-client/chat-client.ts -> gui/lib/event-stream.ts -> gui/lib/api-client.ts`
 
-## Communities (1655 total, 294 thin omitted)
+## Communities (1660 total, 293 thin omitted)
 
 ### Community 0 - "pipeline.ts"
 Cohesion: 0.01
@@ -1659,11 +1664,11 @@ Nodes (139): 100. Template editor, 101. Validation, 102. Test deal, 103. Templat
 
 ### Community 1 - "VDRDocument"
 Cohesion: 0.03
-Nodes (124): acceptedDomAlreadyClean(), addManualContextText(), applyGlobalBarLabelState(), applyParamDefaults(), applyParamValue(), applyPlaceholderSizingStyles(), applySvelteComponentVariantStyle(), averageRgb01() (+116 more)
+Nodes (128): applyGlobalBarLabelState(), applyParamValue(), applyPlaceholderSizingStyles(), applySvelteComponentVariantStyle(), bufferToBase64(), buildCollapsible(), buildColorModels(), buildDesignHeader() (+120 more)
 
 ### Community 2 - "UUID"
 Cohesion: 0.04
-Nodes (117): DashboardWidgetType, AssignmentSide, EngineRunStatus, ApiErrorResponse, ApiListSuccess, ApiSuccess, CursorMeta, FieldErrors (+109 more)
+Nodes (115): DashboardWidgetType, AssignmentSide, EngineRunStatus, ApiErrorResponse, ApiListSuccess, ApiSuccess, CursorMeta, FieldErrors (+107 more)
 
 ### Community 3 - "src::ref_zod"
 Cohesion: 0.02
@@ -1671,11 +1676,11 @@ Nodes (125): 100. Decision confirmation, 101. Decision receipt, 102. Decision in
 
 ### Community 4 - "types.ts"
 Cohesion: 0.04
-Nodes (109): createProtectedNotFoundError(), allowedActions(), approvedFields(), earliestExpiry(), evaluateAuthorization(), expired(), hasExplicitBoundScope(), hasRequestedTemporaryConstraints() (+101 more)
+Nodes (114): createProtectedNotFoundError(), allowedActions(), approvedFields(), earliestExpiry(), evaluateAuthorization(), expired(), hasExplicitBoundScope(), hasRequestedTemporaryConstraints() (+106 more)
 
 ### Community 5 - "vocabulary.ts"
-Cohesion: 0.03
-Nodes (113): ANIMATION_VALUE_KEYWORDS, borderColorsFromStyle(), borderWidthsFromStyle(), checkClippedOverflow(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementClippedOverflow(), checkElementClippedOverflowDOM() (+105 more)
+Cohesion: 0.04
+Nodes (114): ANIMATION_VALUE_KEYWORDS, borderColorsFromStyle(), borderWidthsFromStyle(), checkClippedOverflow(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementClippedOverflow(), checkElementClippedOverflowDOM() (+106 more)
 
 ### Community 6 - "outbox_postgres.spec.ts"
 Cohesion: 0.02
@@ -1722,8 +1727,8 @@ Cohesion: 0.04
 Nodes (66): ShellRoute(), AppShell(), entryCount(), AdministrationDesktop, DealDesktop, DealMobile, ExternalParticipant, fixture() (+58 more)
 
 ### Community 17 - "index.ts"
-Cohesion: 0.05
-Nodes (65): formatEtag(), parseEtag(), parseIfMatch(), parseVersion(), versionFailure(), VersionIssueCode, VersionParseResult, allowedErrorFields() (+57 more)
+Cohesion: 0.04
+Nodes (79): formatEtag(), parseEtag(), parseIfMatch(), parseVersion(), versionFailure(), VersionIssueCode, VersionParseResult, AcceptedJobEnvelope (+71 more)
 
 ### Community 18 - "ClaimedJob"
 Cohesion: 0.02
@@ -1739,19 +1744,19 @@ Nodes (31): ClaimedJob, JobFailure, sanitizedJobFailure, assertWorkerLease(), ex
 
 ### Community 21 - "I18nProvider.tsx"
 Cohesion: 0.02
-Nodes (80): 18. Criterion weighting, 19. Criteria approval, 1. Recommended product naming, 21. Candidate record, 25. Candidate fit model, 27. Evidence coverage, 29. Rationale states, 2. Screen definition (+72 more)
+Nodes (86): 16. Criteria architecture, 18. Criterion weighting, 19. Criteria approval, 1. Recommended product naming, 21. Candidate record, 25. Candidate fit model, 27. Evidence coverage, 29. Rationale states (+78 more)
 
 ### Community 22 - "envelopes.ts"
 Cohesion: 0.05
-Nodes (93): appendAutonomyCounterDirective(), appendDetectorFallback(), appendImageGenDirective(), appendStalenessDirective(), appendSubagentAuthorizationDirective(), appendSurfaceBriefContext(), automaticHookMode(), buildMissingTargetDirective() (+85 more)
+Nodes (95): appendAutonomyCounterDirective(), appendDetectorFallback(), appendImageGenDirective(), appendStalenessDirective(), appendSubagentAuthorizationDirective(), appendSurfaceBriefContext(), automaticHookMode(), buildMissingTargetDirective() (+87 more)
 
 ### Community 23 - "generate-design-tokens.mjs"
-Cohesion: 0.08
-Nodes (66): applyOriginalAttrsToSvelteAnchor(), applyPlaceholderDimensions(), applySavedSessionMeta(), clampVariantIndex(), closedClipPath(), commitAcceptedSvelteComponentToDom(), completeParameterPublication(), connectSSE() (+58 more)
+Cohesion: 0.07
+Nodes (71): applyParamDefaults(), applySavedSessionMeta(), buildInsertPlaceholderSnapshotFromDom(), checkpointPayload(), clampVariantIndex(), clearHandled(), closedClipPath(), completeParameterPublication() (+63 more)
 
 ### Community 24 - "mvp_store.ts"
 Cohesion: 0.03
-Nodes (74): 100. Mocked filters, 101. Recommended static pitch composition, 105. Design validation criteria, 106. Final design target, 15. Organization taxonomy, 16. Institutional relationship model, 17. Transaction-role model, 1. Recommended product naming (+66 more)
+Nodes (74): 100. Mocked filters, 101. Recommended static pitch composition, 104. UX prototype tasks to validate, 105. Design validation criteria, 106. Final design target, 15. Organization taxonomy, 16. Institutional relationship model, 17. Transaction-role model (+66 more)
 
 ### Community 25 - "pubsub.spec.ts"
 Cohesion: 0.03
@@ -1762,12 +1767,12 @@ Cohesion: 0.03
 Nodes (70): 13. Permission boundary, 16. Command Search, 17. Full Global Search page, 18. Entry points, 19. Query lifecycle, 21. Query interpretation, 22. Exact matches, 23. Semantic retrieval (+62 more)
 
 ### Community 27 - "interface.ts"
-Cohesion: 0.07
-Nodes (46): parseOptionalVersion(), assertLeaseUpdate(), assertSanitizedFailure(), leaseFenceValues(), outboxFailureSql(), OutboxRepository, aggregateUpdateSql(), aggregateUpdateValues() (+38 more)
+Cohesion: 0.06
+Nodes (58): parseOptionalVersion(), assertClaim(), assertLeaseUpdate(), assertOutboxEvent(), assertSanitizedFailure(), assertText(), leaseFenceValues(), OutboxClaim (+50 more)
 
 ### Community 28 - "migration_runner.ts"
-Cohesion: 0.09
-Nodes (33): assertJobTransition(), isTerminalJobState(), JobState, JobStateTransitionError, appendCompletedAttempt(), appendExpiredAttempt(), appendStartedAttempt(), ClaimedJobAttemptRow (+25 more)
+Cohesion: 0.08
+Nodes (42): ALLOWED_TRANSITIONS, assertInputVersionReferences(), assertJobDefinition(), assertJobScope(), assertJobTransition(), assertPositiveInteger(), assertText(), DurableJob (+34 more)
 
 ### Community 29 - "ScreenBody.tsx"
 Cohesion: 0.03
@@ -1783,11 +1788,11 @@ Nodes (59): AssistantChatMessage, ChatMessageBase, ChatMessagePage, ChatStreamEv
 
 ### Community 32 - "tests::ref_std_assert"
 Cohesion: 0.07
-Nodes (62): assembleLiveBrowserScript(), assertLiveBrowserScriptParts(), LIVE_BROWSER_SCRIPT_PARTS, readLiveBrowserScriptParts(), resolveLiveBrowserScriptParts(), eventPriority(), selectAvailablePendingEvent(), acknowledgePendingEvent() (+54 more)
+Nodes (61): assembleLiveBrowserScript(), assertLiveBrowserScriptParts(), LIVE_BROWSER_SCRIPT_PARTS, readLiveBrowserScriptParts(), resolveLiveBrowserScriptParts(), eventPriority(), selectAvailablePendingEvent(), acknowledgePendingEvent() (+53 more)
 
 ### Community 33 - "DealExecutionBody.tsx"
 Cohesion: 0.07
-Nodes (65): addClampEndpoints(), addColorObject(), addDesignColor(), addFontSizeStep(), addRoundedScale(), addRoundedToken(), addSidecarColors(), addSidecarRadii() (+57 more)
+Nodes (67): addClampEndpoints(), addColorObject(), addDesignColor(), addFontSizeStep(), addRoundedScale(), addRoundedToken(), addSidecarColors(), addSidecarRadii() (+59 more)
 
 ### Community 34 - "clone"
 Cohesion: 0.09
@@ -1811,15 +1816,15 @@ Nodes (43): distinctAlternatives(), fillAlternativeSlots(), isDistinct(), percen
 
 ### Community 39 - "mvp_routes.ts"
 Cohesion: 0.06
-Nodes (55): browserColorsClose(), browserDesignSystemConfig(), browserHasDirectText(), browserPrimaryFont(), browserRadiusTokens(), browserSampleText(), checkBrowserDesignSystemSources(), checkClippedOverflow() (+47 more)
+Nodes (57): browserColorsClose(), browserDesignSystemConfig(), browserHasDirectText(), browserPrimaryFont(), browserRadiusTokens(), browserSampleText(), buildSelectorSegment(), checkBrowserDesignSystemSources() (+49 more)
 
 ### Community 40 - "gui::ref_react"
-Cohesion: 0.08
-Nodes (62): applyEditing(), buildLocatorForLeaf(), cancelEditing(), cancelEditingToPicking(), cancelInsertConfigure(), clearAnnotations(), clearInsertPicking(), closeTunePopover() (+54 more)
+Cohesion: 0.10
+Nodes (61): abortSvelteComponentInjection(), buildPickedAnchorSnapshot(), cancelEditing(), cancelEditingToPicking(), cancelInsertConfigure(), cleanup(), cleanupAcceptedSession(), clearAnnotations() (+53 more)
 
 ### Community 41 - "chat-client.ts"
-Cohesion: 0.10
-Nodes (50): describeCommandError(), printSectionHeader(), renderOutputTable(), TableCell, createCommandProgress(), compileTermSheetArtifacts(), generateTermSheetDocument(), optimizeDocumentTerms() (+42 more)
+Cohesion: 0.09
+Nodes (57): describeCommandError(), printSectionHeader(), renderOutputTable(), TableCell, createCommandProgress(), compileTermSheetArtifacts(), DocumentGenerationOptions, generateTermSheetDocument() (+49 more)
 
 ### Community 42 - "integration_tools.ts"
 Cohesion: 0.03
@@ -1835,7 +1840,7 @@ Nodes (39): closeDialog(), DialogConfirmationAction, DialogProps, DialogVariant,
 
 ### Community 45 - "types.ts"
 Cohesion: 0.06
-Nodes (56): ACK_EXTS, ADVISORY_RULES, applyConfigSource(), applyDetectorConfigSource(), applyPatchText(), clampByte(), cleanIgnoreValueDisplay(), CO_SCAN_STYLE_NAMES (+48 more)
+Nodes (58): ACK_EXTS, applyConfigSource(), applyDetectorConfigSource(), applyPatchText(), clampByte(), cloneDefaultConfig(), CO_SCAN_STYLE_NAMES, coLocatedStylesheets() (+50 more)
 
 ### Community 46 - "seed.ts"
 Cohesion: 0.05
@@ -1850,8 +1855,8 @@ Cohesion: 0.21
 Nodes (12): assertEngineRunHistory(), assertInitialUnreadNotification(), assertResetLayout(), assertSavedLayout(), assertStaleLayoutRejected(), completeAndMutateRun(), markNotificationRead(), markNotificationUnread() (+4 more)
 
 ### Community 49 - "route-context.ts"
-Cohesion: 0.09
-Nodes (31): CLIChat, CLICommands, DocumentGenerationOptions, chatCommand, debugEnabled(), documentCommand, generatePromptedDocument(), INTERACTIVE_CHOICES (+23 more)
+Cohesion: 0.06
+Nodes (39): CLIChat, CLICommands, CLIError, CLIErrorHandler, chatCommand, debugEnabled(), documentCommand, generatePromptedDocument() (+31 more)
 
 ### Community 50 - "compilerOptions"
 Cohesion: 0.04
@@ -1862,24 +1867,24 @@ Cohesion: 0.10
 Nodes (44): documentationRoot(), runDocumentationCheck(), canonicalMetadataFiles(), entry(), governedDoc(), inventory(), missingGovernanceFiles(), authorityDiagnostics() (+36 more)
 
 ### Community 52 - "ComponentCompositions.stories.tsx"
-Cohesion: 0.12
-Nodes (27): getLegacyLiveSessionsDir(), readLiveServerInfo(), safeSessionId(), completeCli(), completeThroughServer(), parseArgs(), readServerInfo(), collectManualApplyFiles() (+19 more)
+Cohesion: 0.07
+Nodes (49): firstExisting(), getDesignSidecarCandidates(), getDesignSidecarPath(), getImpeccableDir(), getLegacyLiveConfigPath(), getLegacyLiveServerPath(), getLegacyLiveSessionsDir(), getLiveAnnotationsDir() (+41 more)
 
 ### Community 53 - "entities_team.ts"
 Cohesion: 0.08
-Nodes (52): armPageChatForTyping(), attachSteerFocusDebug(), attachSteerFocusGuard(), clearSteerAwaitTimer(), clearSteerFocusRecoverTimer(), collapsePageChat(), dismissToast(), expandPageChat() (+44 more)
+Nodes (51): armPageChatForTyping(), attachSteerFocusDebug(), attachSteerFocusGuard(), clearSteerAwaitTimer(), clearSteerFocusRecoverTimer(), collapsePageChat(), expandPageChat(), finishVoiceSession() (+43 more)
 
 ### Community 54 - "DatabaseMemoryService.ts"
-Cohesion: 0.10
-Nodes (51): allEntryIds(), argVal(), buildRepairBatch(), candidatesForEntry(), changedFilesSinceSnapshot(), clearAppliedEntries(), collectApplyOwnedFiles(), collectRollbackFiles() (+43 more)
+Cohesion: 0.11
+Nodes (48): allEntryIds(), argVal(), buildRepairBatch(), candidatesForEntry(), changedFilesSinceSnapshot(), collectApplyOwnedFiles(), collectRollbackFiles(), commitManualEdits() (+40 more)
 
 ### Community 55 - "dispatcher.spec.ts"
 Cohesion: 0.11
 Nodes (25): NotificationType, createDealState(), createdHistory(), dealWorkflow(), toAdvisorSummary(), assertLayoutVersion(), DashboardLayoutRepository, DEFAULT_WIDGETS (+17 more)
 
 ### Community 56 - "ai_tools.ts"
-Cohesion: 0.13
-Nodes (20): initializeOnnxEngine(), loadOnnxFile(), PredictionEngine, boundedProbability(), distressProbability(), InputSchema, loadOnnxModel(), modelArray() (+12 more)
+Cohesion: 0.10
+Nodes (27): initializeOnnxEngine(), loadOnnxFile(), applySchema(), initializeDatabase(), REFERENCE_SEEDS, reportSetupFailure(), seedReferenceData(), setupDatabase() (+19 more)
 
 ### Community 57 - "document-command.ts"
 Cohesion: 0.09
@@ -1907,19 +1912,19 @@ Nodes (45): 15. Current-phase execution panel, 16. Preparation-phase panel, 17. 
 
 ### Community 63 - "memory_tools.ts"
 Cohesion: 0.04
-Nodes (47): 18. Markets & Geography, 1. Screen definition, 20. Suppliers & Partners, 25. Operations, 27. Legal, Tax & Regulatory, 36. Downstream dependency map, 3. What the Target Dossier is not, 42. Contextual Copilot (+39 more)
+Nodes (48): 18. Markets & Geography, 1. Screen definition, 20. Suppliers & Partners, 25. Operations, 28. Strategic Context, 36. Downstream dependency map, 3. What the Target Dossier is not, 42. Contextual Copilot (+40 more)
 
 ### Community 64 - "engines_documents.ts"
-Cohesion: 0.07
-Nodes (32): ChatCitation, ChatMessage, ChatThread, EngineKind, GeneratedDocumentType, MvpStore, ChatExecutionInput, ChatExecutionResult (+24 more)
+Cohesion: 0.06
+Nodes (34): ChatCitation, ChatMessage, ChatThread, EngineKind, GeneratedDocumentType, routeContext(), MvpStore, ChatExecutionInput (+26 more)
 
 ### Community 65 - "pdf_layout.ts"
 Cohesion: 0.13
-Nodes (40): ACTIONS, addIgnoreFile(), addIgnoreRule(), addIgnoreValue(), DETECTOR_CONFIG_KEYS, detectorSection(), fileHasImpeccableHookMarker(), HOOK_MANIFEST_TARGETS (+32 more)
+Nodes (41): ACTIONS, addIgnoreFile(), addIgnoreRule(), addIgnoreValue(), DETECTOR_CONFIG_KEYS, detectorSection(), fileHasImpeccableHookMarker(), HOOK_MANIFEST_TARGETS (+33 more)
 
 ### Community 66 - "devDependencies"
 Cohesion: 0.16
-Nodes (26): analyzeSourceHint(), buildCandidatesForOp(), buildContextHintsByRef(), buildManualEditEvidence(), collectSearchFiles(), countOps(), decodeBasicHtml(), escapeRegExp() (+18 more)
+Nodes (24): analyzeSourceHint(), buildCandidatesForOp(), buildContextHintsByRef(), collectSearchFiles(), decodeBasicHtml(), escapeRegExp(), findContextMatches(), findLiteralMatches() (+16 more)
 
 ### Community 67 - "legacy.ts"
 Cohesion: 0.08
@@ -1934,24 +1939,24 @@ Cohesion: 0.07
 Nodes (19): assertLeaseDuration(), DispatchOutcome, EventTransactionRunner, OutboxDispatcher, OutboxDispatcherDependencies, OutboxFailureSanitizer, OutboxPublisher, OutboxRetryPolicy (+11 more)
 
 ### Community 70 - "event-stream.ts"
-Cohesion: 0.23
-Nodes (17): detectUrl(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), captureVisualContrastCandidate(), compareScreenshotContrast(), sanitizeScreenshotClip(), createDetectorProfile() (+9 more)
+Cohesion: 0.11
+Nodes (36): mergeDesignSystemFindings(), detectUrl(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), detectText(), extFromFilePath(), runRegexMatchers() (+28 more)
 
 ### Community 71 - "scripts"
-Cohesion: 0.19
-Nodes (24): clearStoredManualApplyState(), fetchPendingCount(), handleManualEditActivity(), hidePendingApplyDock(), manualApplyLoadingText(), manualApplyStateKey(), manualEditEventForCurrentPage(), numberOrNull() (+16 more)
+Cohesion: 0.10
+Nodes (44): agentHasWorkInFlight(), agentStatusText(), barPaletteForTheme(), brandMarkSvg(), buildParamsPanel(), buildSteerProcessingDots(), clearStoredManualApplyState(), detectPageTheme() (+36 more)
 
 ### Community 72 - "verify-frontend-conformance.mjs"
 Cohesion: 0.10
 Nodes (44): applyLegacyDeferredAcceptsOnStartup(), appendCssToSvelteStyle(), appendSanitizedCssRule(), applyDeferredSvelteComponentAccepts(), bakeParamValuesInCss(), buildInsertVariantStub(), buildPropContract(), buildPropsScript() (+36 more)
 
 ### Community 73 - "genetic.ts"
-Cohesion: 0.10
-Nodes (30): assertMigrationIdentity(), assertMigrationNotes(), assertStatementOwnership(), changesResolutionContext(), ContextMigration, defineMigration(), MigrationStatement, orderMigrations() (+22 more)
+Cohesion: 0.09
+Nodes (31): parseProjectionWatermark(), assertMigrationIdentity(), assertMigrationNotes(), assertStatementOwnership(), changesResolutionContext(), ContextMigration, defineMigration(), MigrationStatement (+23 more)
 
 ### Community 74 - "smoke.spec.ts"
-Cohesion: 0.08
-Nodes (47): mergeDesignSystemFindings(), blankCssComments(), CSS_IN_JS_EXTENSIONS, detectText(), extFromFilePath(), extractCSSinJS(), extractStyleBlocks(), hexChannels() (+39 more)
+Cohesion: 0.09
+Nodes (30): blankCssComments(), CSS_IN_JS_EXTENSIONS, extractCSSinJS(), extractStyleBlocks(), firstOverusedGoogleFont(), hexChannels(), insetStripeColorIsChromatic(), isNeutralAuthoredColor() (+22 more)
 
 ### Community 75 - "operations.spec.ts"
 Cohesion: 0.13
@@ -1962,8 +1967,8 @@ Cohesion: 0.05
 Nodes (43): @chromatic-com/storybook, eslint, eslint-config-next, eslint-plugin-storybook, devDependencies, @chromatic-com/storybook, eslint, eslint-config-next (+35 more)
 
 ### Community 77 - "verify-design-tokens.mjs"
-Cohesion: 0.14
-Nodes (25): abortSvelteComponentInjection(), buildInsertPlaceholderSnapshotFromDom(), buildPickedAnchorSnapshot(), captureAndEmit(), checkpointPayload(), cleanup(), cleanupAcceptedSession(), clearHandled() (+17 more)
+Cohesion: 0.11
+Nodes (30): addManualContextText(), applyEditing(), buildCyclingRow(), buildLocatorForLeaf(), canRestoreManualEditElement(), contextElementForManualEdit(), copyEditContainerContext(), copyEditLeafContext() (+22 more)
 
 ### Community 78 - "inbox.ts"
 Cohesion: 0.05
@@ -1974,40 +1979,40 @@ Cohesion: 0.07
 Nodes (32): BrokerOrchestratorService, categoryFallbackContext(), CorrectionRequest, CorrectionType, feedbackFrom(), FeedbackVariable, includesBoth(), instructions (+24 more)
 
 ### Community 80 - "route"
-Cohesion: 0.09
-Nodes (53): checkBorders(), checkColors(), checkCreamPalette(), checkElementAIPaletteDOM(), checkElementBorders(), checkElementBordersDOM(), checkElementColors(), checkElementColorsDOM() (+45 more)
+Cohesion: 0.11
+Nodes (40): checkBorders(), checkColors(), checkCreamPalette(), checkElementAIPaletteDOM(), checkElementBorders(), checkElementBordersDOM(), checkElementColors(), checkElementColorsDOM() (+32 more)
 
 ### Community 81 - "ScreenBody.stories.tsx"
 Cohesion: 0.06
 Nodes (29): DataTableHeaderProps, DataTableSortDirection, Default, Sorted, Story, DataTableHeader, FinancialDelta(), FinancialDeltaDirection (+21 more)
 
 ### Community 82 - "Minuta Orientativa e Cláusulas Bilaterais de SPA / QPA no M&A Brasileiro"
-Cohesion: 0.07
-Nodes (38): brokerOrchestratorAgent, DealMatchingAgent, instructions, FinancialRiskAgent, instructions, GeneralDueDiligenceAgent, instructions, instructions (+30 more)
+Cohesion: 0.09
+Nodes (28): brokerOrchestratorAgent, DealMatchingAgent, instructions, FinancialRiskAgent, instructions, GeneralDueDiligenceAgent, instructions, instructions (+20 more)
 
 ### Community 83 - "main"
-Cohesion: 0.12
-Nodes (36): confirm(), detectCli(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody(), formatFindingSummary() (+28 more)
+Cohesion: 0.13
+Nodes (34): confirm(), detectCli(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody(), formatFindingSummary() (+26 more)
 
 ### Community 84 - "DealRepository.ts"
-Cohesion: 0.11
-Nodes (19): payload(), databaseFallback(), databaseSchemas, DatabaseToolInput, executeDatabaseAction(), fallbackQuery(), inspectDatabaseTable(), listDatabaseTables() (+11 more)
+Cohesion: 0.10
+Nodes (27): databaseFallback(), databaseSchemas, DatabaseToolInput, executeDatabaseAction(), fallbackQuery(), inspectDatabaseTable(), listDatabaseTables(), localActionResponse() (+19 more)
 
 ### Community 85 - "write_operations.ts"
 Cohesion: 0.18
 Nodes (38): createChatThread(), listChatThreads(), archiveDeal(), createDeal(), getDealDetail(), listDeals(), transitionDealPhase(), updateDeal() (+30 more)
 
 ### Community 86 - "AppShell.tsx"
-Cohesion: 0.09
-Nodes (35): auditVdrCompliance(), calculateSynergyPrice(), discountedSynergyYear(), executeVdrAction(), getDomainKnowledge(), getUserPreferences(), listVdrFiles(), MemoryAction (+27 more)
+Cohesion: 0.17
+Nodes (22): auditVdrCompliance(), calculateSynergyPrice(), discountedSynergyYear(), executeVdrAction(), getDomainKnowledge(), getUserPreferences(), listVdrFiles(), MemoryAction (+14 more)
 
 ### Community 87 - "AppShell.stories.tsx"
 Cohesion: 0.08
 Nodes (22): FORBIDDEN_MANUAL_EDIT_TEXT_CHARS, INSERT_POSITIONS, isValidId(), isValidVariantId(), validateAnnotationFields(), validateEvent(), validateInsertGenerate(), validateManualEditEvent() (+14 more)
 
 ### Community 88 - "verify-components.mjs"
-Cohesion: 0.11
-Nodes (23): verifyTransformers(), RagDocument, ClientSiloedRAG, cacheChunk(), chunkText(), cosineSimilarity(), databaseRagResults(), indexChunk() (+15 more)
+Cohesion: 0.19
+Nodes (10): verifyTransformers(), CompanyFinancialProfile, generateProfileEmbedding(), MLEngine, MLPredictionReport, modelInput(), riskLabel(), ONNXPredictionResult (+2 more)
 
 ### Community 89 - "route-registry.ts"
 Cohesion: 0.12
@@ -2022,8 +2027,8 @@ Cohesion: 0.05
 Nodes (36): 16.1 Purpose, 16.2 Recommended default columns, 16.3 Optional columns, 16. Deal registry table, 1. Screen definition, 20. Grouping, 21. Deal creation entry point, 23. Tags and classifications (+28 more)
 
 ### Community 92 - "Brazilian Corporate OSINT Playbook: Advanced Techniques for KYB & Due Diligence"
-Cohesion: 0.09
-Nodes (34): DealPhase, DealType, UpdateDealRequest, EntityRole, KybStatus, EntityListQuery, assertArchivedDeal(), assertCreatedDeal() (+26 more)
+Cohesion: 0.07
+Nodes (42): ChatStreamEvent, Currency, DealPhase, DealStatus, DealType, UpdateDealRequest, EntityRole, KybStatus (+34 more)
 
 ### Community 93 - "index.ts"
 Cohesion: 0.09
@@ -2047,11 +2052,11 @@ Nodes (31): Antigravity usage and quotas, Claude models actually available in An
 
 ### Community 98 - "Guide to Brazilian Public Databases for Due Diligence & KYB"
 Cohesion: 0.12
-Nodes (33): checkBorders(), checkCreamPalette(), checkElementBorders(), checkElementBordersDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM(), checkElementHoverContrast() (+25 more)
+Nodes (34): checkBorders(), checkElementBorders(), checkElementBordersDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM(), checkElementHoverContrast(), checkElementIconTile() (+26 more)
 
 ### Community 99 - "portfolio-command.ts"
 Cohesion: 0.08
-Nodes (52): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), bindConfigureModifierPillHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow() (+44 more)
+Nodes (44): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), bindConfigureModifierPillHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow() (+36 more)
 
 ### Community 100 - "vdr_provider.spec.ts"
 Cohesion: 0.06
@@ -2063,11 +2068,11 @@ Nodes (36): checkColors(), checkElementAIPaletteDOM(), checkElementGlow(), check
 
 ### Community 102 - "gui::ref_node_path"
 Cohesion: 0.14
-Nodes (30): applyMockWrites(), buildCopyEditBatchPrompt(), checkFrameworkSourceSyntax(), chooseCopyEditAgent(), COMMAND_AUTH_CACHE, commandAuthed(), commandExists(), compactBatchForPrompt() (+22 more)
+Nodes (31): applyMockWrites(), buildCopyEditBatchPrompt(), checkFrameworkSourceSyntax(), chooseCopyEditAgent(), COMMAND_AUTH_CACHE, commandAuthed(), commandExists(), compactBatchForPrompt() (+23 more)
 
 ### Community 103 - "4. Duties and Liabilities of Administrators (Arts. 153 to 158)"
-Cohesion: 0.15
-Nodes (19): browserFindingsFromMap(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementTextOverflowDOM(), checkFirstViewportColumnOverflowDOM(), checkHeadingRhythmDOM(), checkRepeatedContainerTextDOM(), checkRepeatedContainerTextFromDoc() (+11 more)
+Cohesion: 0.14
+Nodes (20): browserFindingsFromMap(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementTextOverflowDOM(), checkEmDashOveruse(), checkEmDashOveruseDOM(), checkFirstViewportColumnOverflowDOM(), checkHeadingRhythmDOM() (+12 more)
 
 ### Community 104 - "DatabaseConnection.ts"
 Cohesion: 0.11
@@ -2090,8 +2095,8 @@ Cohesion: 0.09
 Nodes (19): Craft (deprecated alias), Craft floor, Refuse, Verify, Pitfalls, Seed mode, Step 1: Route through new-work's workshop, Step 2: Write seed DESIGN.md (+11 more)
 
 ### Community 109 - "M&A Due Diligence Risk Synthesis & Valuation Impact Framework"
-Cohesion: 0.14
-Nodes (20): checkElementHeroEyebrow(), checkElementHeroEyebrowDOM(), checkElementQualityDOM(), checkHeroEyebrow(), checkNumberedSectionLabels(), checkNumberedSectionLabelsDOM(), checkNumberedSectionLabelsFromDoc(), checkRepeatedSectionKickers() (+12 more)
+Cohesion: 0.15
+Nodes (19): checkElementHeroEyebrow(), checkElementHeroEyebrowDOM(), checkHeroEyebrow(), checkNumberedSectionLabels(), checkNumberedSectionLabelsDOM(), checkNumberedSectionLabelsFromDoc(), checkRepeatedSectionKickers(), checkRepeatedSectionKickersDOM() (+11 more)
 
 ### Community 110 - "registry-command.ts"
 Cohesion: 0.14
@@ -2110,8 +2115,8 @@ Cohesion: 0.07
 Nodes (28): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+20 more)
 
 ### Community 114 - "FinancialValue.tsx"
-Cohesion: 0.13
-Nodes (28): appendOriginToDirective(), applyNuxtLiveAdapter(), buildLiveScriptSrc(), buildNuxtPlugin(), buildTagBlock(), commentClose(), commentOpen(), CONFIG_PATH (+20 more)
+Cohesion: 0.12
+Nodes (30): appendOriginToDirective(), applyNuxtLiveAdapter(), buildLiveScriptSrc(), buildNuxtPlugin(), buildTagBlock(), commentClose(), commentOpen(), CONFIG_PATH (+22 more)
 
 ### Community 115 - "DealExecutionBody.stories.tsx"
 Cohesion: 0.07
@@ -2122,24 +2127,24 @@ Cohesion: 0.10
 Nodes (19): MobileNavigation(), navigationItem(), ShellNavigation(), CommonProps, NavigationItem, NavigationItemButtonProps, NavigationItemLinkProps, NavigationItemProps (+11 more)
 
 ### Community 117 - "DealIntelligenceBody.stories.tsx"
-Cohesion: 0.07
-Nodes (35): synergySchema, valuationSchema, insolvencySchema, riskmatrixSchema, vdrrequestSchema, conditionsprecedentSchema, spaSchema, assembleBindingTermSheet() (+27 more)
+Cohesion: 0.21
+Nodes (13): insolvencySchema, riskmatrixSchema, conditionsprecedentSchema, contingencySchema, contractanalysisSchema, DomainArea, domainAreaSchema, LEGACY_MAPPINGS (+5 more)
 
 ### Community 118 - "1. Automatic Deal-Breakers (Red Lines)"
 Cohesion: 0.18
 Nodes (21): coerceSlug(), listSnapshotsForSlug(), main(), nowFilenameStamp(), parseFrontmatter(), readLatestSnapshot(), readTrend(), serializeFrontmatter() (+13 more)
 
 ### Community 119 - "chat_stream.ts"
-Cohesion: 0.19
-Nodes (26): main(), ALLOWED_EXTS, appendDesignSystemNote(), bumpEditCount(), dedupeAgainstCache(), depthIsSet(), designSystemOptions(), ensureFile() (+18 more)
+Cohesion: 0.21
+Nodes (24): main(), ALLOWED_EXTS, appendDesignSystemNote(), bumpEditCount(), dedupeAgainstCache(), depthIsSet(), designSystemOptions(), ensureFile() (+16 more)
 
 ### Community 120 - "concurrency.ts"
 Cohesion: 0.14
 Nodes (19): disclosure, externalFixture(), ExternalParticipantFixture, fixtureFor(), ScreenFamily, ScreenFixture, ScreenState, stateCoverage (+11 more)
 
 ### Community 121 - "entities.spec.ts"
-Cohesion: 0.13
-Nodes (25): AIProvider, firstConfiguredKey(), warnAboutMissingApiKey(), executeGroundedSearch(), executeHuggingFaceTask(), GeminiSearchResponseSchema, groundedSearchRequest(), groundedSources() (+17 more)
+Cohesion: 0.14
+Nodes (24): AIProvider, firstConfiguredKey(), warnAboutMissingApiKey(), executeGroundedSearch(), executeHuggingFaceTask(), GeminiSearchResponseSchema, groundedSearchRequest(), groundedSources() (+16 more)
 
 ### Community 122 - "DataTableCell.tsx"
 Cohesion: 0.08
@@ -2154,12 +2159,12 @@ Cohesion: 0.11
 Nodes (29): geminiGoogleSearchTool, huggingFaceMcpTool, analyzeCompanyRisksTool, generatePdfTermSheetTool, optimizePortfolio(), optimizePortfolioTool, optimizeTermSheetTool, portfolioConstraints() (+21 more)
 
 ### Community 125 - "2. Preventing Post-Closing Accounting Manipulation (_Gerenciamento de Resultados_)"
-Cohesion: 0.20
-Nodes (17): beginEditPin(), buildAnnotationsForCapture(), buildPinElement(), cancelEditingPin(), clampPlaceholderSize(), finalizeEditingPin(), initAnnotOverlay(), localCoords() (+9 more)
+Cohesion: 0.18
+Nodes (19): applyPlaceholderDimensions(), beginEditPin(), buildAnnotationsForCapture(), buildPinElement(), cancelEditingPin(), finalizeEditingPin(), initAnnotOverlay(), localCoords() (+11 more)
 
 ### Community 126 - "M&A Negotiation Dynamics: Game Theory Applications & Nash Equilibrium"
-Cohesion: 0.16
-Nodes (20): LaTeXDocumentParams, drawHeader(), drawHeaderText(), drawNote(), drawParagraph(), drawSectionContent(), drawSectionTitle(), drawSignatureBlock() (+12 more)
+Cohesion: 0.19
+Nodes (18): LaTeXDocumentParams, drawHeader(), drawHeaderText(), drawNote(), drawParagraph(), drawSectionContent(), drawSectionTitle(), drawSignatureBlock() (+10 more)
 
 ### Community 127 - "DashboardLayout"
 Cohesion: 0.08
@@ -2190,20 +2195,20 @@ Cohesion: 0.15
 Nodes (21): APIError, APIErrorKind, kindForStatus(), sanitizeErrorMessage(), abortedError(), abortForTimeout(), apiErrorFromResponse(), AttemptFailure (+13 more)
 
 ### Community 134 - "Select.tsx"
-Cohesion: 0.18
-Nodes (15): assertDigest(), assertRecoveryCode(), assertReference(), assertTerminalUpdate(), canonicalPayload(), canonicalRecord(), claimIdentity(), existingClaimResult() (+7 more)
+Cohesion: 0.15
+Nodes (18): TokenInput, assertDigest(), assertRecoveryCode(), assertReference(), assertTerminalUpdate(), canonicalPayload(), canonicalRecord(), claimIdentity() (+10 more)
 
 ### Community 135 - "2. The MILP Model"
 Cohesion: 0.09
 Nodes (22): Assess Onboarding Needs, Context Over Ceremony, Contextual Help, Design Onboarding Experiences, Documentation & Help, Empty State Design, Feature Discovery & Adoption, Guided Tours & Walkthroughs (+14 more)
 
 ### Community 136 - "1. Estruturas Comuns de Crédito e Financiamento"
-Cohesion: 0.07
-Nodes (44): AcceptedJobEnvelope, ApiError, SuccessMeta, CorrelationIdGenerator, InternalApprovedScopeToken, TokenInput, assertClaim(), assertOutboxEvent() (+36 more)
+Cohesion: 0.13
+Nodes (21): averageRgb01(), captureAndEmit(), captureChromeNodes(), captureElementFromRenderedAncestor(), captureElementToBlob(), compileShader(), cssColorToRgb01(), dominantRgb01() (+13 more)
 
 ### Community 137 - "3. Identifying the ZOPA (Zone of Possible Agreement)"
 Cohesion: 0.11
-Nodes (14): Catalog, catalogs, CatalogValue, getLocale(), interpolate(), isLocale(), Locale, resolveLocale() (+6 more)
+Nodes (15): Catalog, catalogs, CatalogValue, getLocale(), interpolate(), isLocale(), Locale, lookup() (+7 more)
 
 ### Community 138 - "DealRepository.spec.ts"
 Cohesion: 0.15
@@ -2242,8 +2247,8 @@ Cohesion: 0.10
 Nodes (20): Animate complex properties, Assess What "Extraordinary" Means Here, For data-heavy interfaces, For functional UI, For performance-critical UI, For visual/marketing surfaces, Implement with Discipline, Interact with the device (+12 more)
 
 ### Community 147 - "2. A Perspectiva do Comprador (Buy-Side / Pró-Comprador)"
-Cohesion: 0.07
-Nodes (42): buildCollapsible(), buildColorModels(), buildDesignHeader(), buildListHtml(), buildRadiiModels(), buildTypographyModels(), copyToClipboard(), cssSafe() (+34 more)
+Cohesion: 0.18
+Nodes (13): synergySchema, vdrrequestSchema, spaSchema, assembleBindingTermSheet(), AssembleBindingTermSheetParams, BindingTermSheet, bindingTermSheetSchema, NegotiationProposal (+5 more)
 
 ### Community 148 - "2. Perspectiva e Táticas Contratuais do Comprador (Buy-Side / Pró-Comprador)"
 Cohesion: 0.09
@@ -2290,16 +2295,16 @@ Cohesion: 0.17
 Nodes (18): assertCompleteConfiguration(), buildIntegrationConfig(), Environment, geminiRequest(), geminiUrl(), hasGeneratedGeminiText(), hasPapermarkDocuments(), integrationConfig (+10 more)
 
 ### Community 159 - "Materiality Thresholds (Linhas de Materialidade) in Brazilian M&A Due Diligence"
-Cohesion: 0.08
-Nodes (38): DatabaseQueryResult, DealRepository, allRows(), DealDetailRecord, DealHeader, DealListRecord, findDealById(), findTransaction() (+30 more)
+Cohesion: 0.16
+Nodes (13): DatabaseQueryResult, DealRepository, allRows(), DealDetailRecord, DealHeader, DealListRecord, findDealById(), findTransaction() (+5 more)
 
 ### Community 160 - "1. Corporate Culture Signals & Forensic Extraction"
 Cohesion: 0.14
 Nodes (10): ActiveTransactionHandle, assertHandleDidNotEscape(), executeTransaction(), NoopTransactionScopeInstaller, PgTransactionPool, rollbackAndRethrow(), TransactionConnection, TransactionPool (+2 more)
 
 ### Community 161 - "Surface.tsx"
-Cohesion: 0.11
-Nodes (28): resolveProjectRoot(), firstExisting(), getDesignSidecarCandidates(), getDesignSidecarPath(), getImpeccableDir(), getLegacyLiveAnnotationsDir(), getLegacyLiveConfigPath(), getLegacyLiveServerPath() (+20 more)
+Cohesion: 0.20
+Nodes (14): resolveProjectRoot(), getLegacyLiveAnnotationsDir(), parseTargetOptions(), parseTargetPath(), TargetArgError, __dirname, ensureServerRunning(), globToRegex() (+6 more)
 
 ### Community 162 - "dependencies"
 Cohesion: 0.10
@@ -2331,7 +2336,7 @@ Nodes (20): 97. Figma component architecture, `ContentBlock`, `DeliverableDetail
 
 ### Community 169 - "RecordingJobStore"
 Cohesion: 0.08
-Nodes (23): 16. Quick actions, 17. Recommended desktop layout, 18. Alternative layout for senior users, 1. Screen definition, 23. Responsive behavior, 24. Accessibility requirements, 28. What not to include, 30. Pitch-specific simplification (+15 more)
+Nodes (23): 16. Quick actions, 17. Recommended desktop layout, 18. Alternative layout for senior users, 1. Screen definition, 24. Accessibility requirements, 28. What not to include, 30. Pitch-specific simplification, 32. UX prototype tasks to validate (+15 more)
 
 ### Community 170 - "Divider.tsx"
 Cohesion: 0.10
@@ -2346,8 +2351,8 @@ Cohesion: 0.17
 Nodes (19): documentInput, fallbackPortfolioTargets(), handleDocument(), handleKyb(), handleNegotiation(), handlePortfolio(), handlePrediction(), jsonResponse() (+11 more)
 
 ### Community 173 - "verify-screens.mjs"
-Cohesion: 0.14
-Nodes (26): agentHasWorkInFlight(), agentStatusText(), barPaletteForTheme(), brandMarkSvg(), buildParamsPanel(), buildSteerProcessingDots(), detectPageTheme(), ensureAgentPollTooltip() (+18 more)
+Cohesion: 0.20
+Nodes (19): completeCurrentPhase(), CreateDealInput, createDealRecord(), createDealTransaction(), dealReferenceIds(), insertBusiness(), insertInitialPhase(), insertPhaseTransition() (+11 more)
 
 ### Community 174 - "token-schema.ts"
 Cohesion: 0.11
@@ -2382,8 +2387,8 @@ Cohesion: 0.11
 Nodes (18): 1. Introduction & Methodology, 2.1 Extracting the QSA (Quadro de Sócios e Administradores), 2.2 Corporate Document Traversal, 2. Corporate Registries & UBO (Ultimate Beneficial Owner) Extraction, 3.1 Indicators of Hidden Corporate Groups, 3.2 Identifying "Laranjas" (Straw Men / Proxy Partners), 3. Relational Mapping & Hidden Structures (_Grupo Econômico de Fato_), 4. Search Engine Optimization (Dorks) for Brazilian Corporate OSINT (+10 more)
 
 ### Community 182 - "alternatives.ts"
-Cohesion: 0.16
-Nodes (5): mockDocument(), MockVDRProvider, VDRDocument, RecordingFetch, TestVDRProvider
+Cohesion: 0.13
+Nodes (6): mockDocument(), MockVDRProvider, VDRProvider, VDRDocument, RecordingFetch, TestVDRProvider
 
 ### Community 183 - "Test Suite Agent Instructions (`tests/`)"
 Cohesion: 0.24
@@ -2419,19 +2424,19 @@ Nodes (18): 48. Component architecture for Figma, `CurrentPhasePanel`, `DealAtte
 
 ### Community 191 - "prediction.spec.ts"
 Cohesion: 0.11
-Nodes (19): 11.1 Purpose of the pitch mock, 11.2 Pitch narrative, 11.3 Mocked deal context, 11.4 Mocked findings navigator, 11.5 Mocked selected finding, 11.6 Mocked evidence inspector, 11.8 Mocked approval gate, 11.9 Mocked audit trail (+11 more)
+Nodes (18): 11.1 Purpose of the pitch mock, 11.2 Pitch narrative, 11.3 Mocked deal context, 11.4 Mocked findings navigator, 11.6 Mocked evidence inspector, 11.7 Mocked deterministic impact, 11.8 Mocked approval gate, 11.9 Mocked audit trail (+10 more)
 
 ### Community 192 - "eslint.config.mjs"
 Cohesion: 0.11
-Nodes (18): 5.1 Application shell, 5.2 Deal context header, 5.3 Findings navigator, 5.7 Human approval gate, 5.8 Audit trail, 5.9 Contextual copilot, 5. Screen architecture, Approval behavior (+10 more)
+Nodes (18): 5.1 Application shell, 5.2 Deal context header, 5.3 Findings navigator, 5.6 Deterministic impact panel, 5.8 Audit trail, 5.9 Contextual copilot, 5. Screen architecture, Calculation explanation (+10 more)
 
 ### Community 193 - "package.json"
 Cohesion: 0.20
-Nodes (10): providerCollection(), toIDealsDocument(), IDealsVDRProvider, IDealsDocument, IDealsDocumentSchema, IntralinksDocument, SupergoodConfigSchema, VDRDocumentSchema (+2 more)
+Nodes (10): providerCollection(), toIntralinksDocument(), IntralinksVDRProvider, IDealsDocument, IntralinksDocument, IntralinksDocumentSchema, SupergoodConfigSchema, VDRDocumentSchema (+2 more)
 
 ### Community 194 - "instructions.md"
-Cohesion: 0.23
-Nodes (12): latexEarnOut(), LaTeXGenerator, latexIntroduction(), latexNonCompete(), latexParties(), latexPreamble(), latexSignatures(), latexStructure() (+4 more)
+Cohesion: 0.18
+Nodes (14): latexEarnOut(), LaTeXGenerator, latexIntroduction(), latexNonCompete(), latexParties(), latexPreamble(), latexSignatures(), latexStructure() (+6 more)
 
 ### Community 195 - "playbook.md"
 Cohesion: 0.22
@@ -2558,8 +2563,8 @@ Cohesion: 0.12
 Nodes (15): 1. Mergers, Amalgamations, and Spin-offs, 2. Merger of Shares (_Incorporação de Ações_), 3. Withdrawal Rights (_Direito de Retirada / Recesso_), 4. Duties and Liabilities of Administrators (Arts. 153 to 158), Art. 137 - Grounds and Exercise, Art. 153 - Duty of Care (_Dever de Diligência_), Art. 154 - Duty of Loyalty (_Dever de Lealdade_), Art. 155 - Duty of Secrecy & Insider Trading (+7 more)
 
 ### Community 226 - "Evidence Reference"
-Cohesion: 0.19
-Nodes (19): args, cwd, pageUrlFilter, remaining, compactManualLogText(), summarizeManualApplyFailures(), summarizeManualDiagnostics(), summarizeManualLogFile() (+11 more)
+Cohesion: 0.17
+Nodes (23): clearAppliedEntries(), args, cwd, pageUrlFilter, remaining, compactManualLogText(), summarizeManualApplyFailures(), summarizeManualDiagnostics() (+15 more)
 
 ### Community 227 - "FieldWrapper"
 Cohesion: 0.21
@@ -2570,8 +2575,8 @@ Cohesion: 0.13
 Nodes (14): 1. Accessibility (A11y), 2. Performance, 3. Theming, 4. Responsive Design, 5. Implementation Integrity (CRITICAL), Audit Health Score, Detailed Findings by Severity, Diagnostic Scan (+6 more)
 
 ### Community 229 - "Financial Value"
-Cohesion: 0.14
-Nodes (23): extractPlatform(), loadContext(), cli(), COMMON_DEV_PORTS, devServerSignals(), gatherSignals(), gitSignals(), hasCode() (+15 more)
+Cohesion: 0.27
+Nodes (11): cli(), COMMON_DEV_PORTS, devServerSignals(), gatherSignals(), gitSignals(), hasCode(), latestCritique(), probePort() (+3 more)
 
 ### Community 230 - "IconButton"
 Cohesion: 0.26
@@ -2610,12 +2615,12 @@ Cohesion: 0.13
 Nodes (14): 1. Executive Synthesis Methodology, 1. QoE (Quality of Earnings) / EBITDA Normalization, 2. Enterprise Value to Equity Value Bridge (Net Debt), 2. Risk Classification & CPC 25 Matrix, 3. Escrow Retention (Possível Contingencies), 3. Severity Ranking Framework, 4. Mathematical Valuation Impact Model, 5. Standard Synthesis Output Schema (Markdown Format) (+6 more)
 
 ### Community 239 - "Foundation status"
-Cohesion: 0.20
-Nodes (10): createProvider(), downloadDocument(), FALLBACK_DOCUMENTS, fallbackDocuments(), isTextDocument(), loadLocalDocuments(), loadProviderDocuments(), loadRagDocuments() (+2 more)
+Cohesion: 0.14
+Nodes (22): createProvider(), downloadDocument(), FALLBACK_DOCUMENTS, fallbackDocuments(), isTextDocument(), loadLocalDocuments(), loadProviderDocuments(), loadRagDocuments() (+14 more)
 
 ### Community 240 - "eslint"
-Cohesion: 0.13
-Nodes (12): DatabaseConnection, databaseErrorCode(), exhaustedRetries(), retryDelay(), TRANSIENT_DATABASE_CODES, applySchema(), initializeDatabase(), REFERENCE_SEEDS (+4 more)
+Cohesion: 0.21
+Nodes (5): DatabaseConnection, databaseErrorCode(), exhaustedRetries(), retryDelay(), TRANSIENT_DATABASE_CODES
 
 ### Community 241 - "playwright"
 Cohesion: 0.14
@@ -2626,12 +2631,12 @@ Cohesion: 0.14
 Nodes (13): Animation Performance, Assess Performance Issues, Core Web Vitals Optimization, Cumulative Layout Shift (CLS < 0.1), First Input Delay (FID < 100ms) / INP (< 200ms), Largest Contentful Paint (LCP < 2.5s), Loading Performance, Network Optimization (+5 more)
 
 ### Community 243 - "@storybook/addon-vitest"
-Cohesion: 0.15
-Nodes (7): CLIError, CLIErrorHandler, main(), requestedLocale(), AppBootstrapper, bootAndRun(), SecretSanitizer
+Cohesion: 0.29
+Nodes (11): ADVISORY_RULES, cleanIgnoreValueDisplay(), extractFindingIgnoreValue(), extractFindingIgnoreValueRaw(), extractMotionIgnoreValue(), filterFindings(), findingMatchesScopedIgnoreFile(), formatFindingIgnoreCommand() (+3 more)
 
 ### Community 244 - "tailwindcss"
-Cohesion: 0.09
-Nodes (29): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), analyzeVisualContrast(), analyzeVisualContrastCandidate(), blendRgba(), buildSelectorSegment(), clampByte() (+21 more)
+Cohesion: 0.14
+Nodes (18): addBrowserFindings(), addVisualContrastFindings(), addVisualContrastResult(), analyzeVisualContrast(), analyzeVisualContrastCandidate(), blendRgba(), clampByte(), clearOverlays() (+10 more)
 
 ### Community 245 - "@types/react"
 Cohesion: 0.13
@@ -2694,24 +2699,24 @@ Cohesion: 0.14
 Nodes (13): 1. Automatic Deal-Breakers (Red Lines), 1. Cumulative Contingency Cap, 1. Tax Fraud & Evasion (Sonegação / "Caixa Dois"), 2. EBITDA Normalization Limit, 2. Quantitative No-Go Thresholds, 2. Systemic Labor "Pejotização", 3. Active Environmental Crimes & Licensing Deficits, 3. Escalation & Action Protocol (+5 more)
 
 ### Community 260 - "rules.md"
-Cohesion: 0.16
-Nodes (16): checkPageTypography(), resolveSerif(), firstOverusedGoogleFont(), checkPageTypography(), checkTypography(), resolveSerif(), BRAND_FONT_DOMAINS, GENERIC_FONTS (+8 more)
+Cohesion: 0.11
+Nodes (26): checkPageTypography(), checkStaticPageTypography(), checkElementMotion(), checkElementMotionDOM(), checkLayout(), checkMotion(), checkPageTypography(), checkTypography() (+18 more)
 
 ### Community 261 - "instructions.md"
-Cohesion: 0.16
-Nodes (21): ChatStreamEvent, Currency, DealStatus, appendDelta(), ChatStreamInput, completeAssistant(), createChatStreamResponse(), createSession() (+13 more)
+Cohesion: 0.30
+Nodes (13): appendDelta(), ChatStreamInput, completeAssistant(), createChatStreamResponse(), createSession(), encodeEvent(), enqueueEvent(), executeAssistant() (+5 more)
 
 ### Community 262 - "playbook.md"
-Cohesion: 0.26
-Nodes (6): optionalString(), PapermarkAdapter, PapermarkConfig, papermarkDocuments(), PapermarkFallback, toPapermarkDocument()
+Cohesion: 0.29
+Nodes (5): optionalString(), PapermarkAdapter, papermarkDocuments(), PapermarkFallback, toPapermarkDocument()
 
 ### Community 263 - "rules.md"
 Cohesion: 0.15
 Nodes (13): Component translation rules, Narrative mapping, Scan mode (approach C: auto-extract, then confirm descriptive language), Schema, Step 1: Find the design assets, Step 2: Auto-extract what can be auto-extracted, Step 2b: Stage the frontmatter, Step 3: Ask the user for qualitative language (+5 more)
 
 ### Community 265 - "playbook.md"
-Cohesion: 0.21
-Nodes (12): allow(), deny(), done(), isStopEvent(), cloneDefaultConfig(), detectorSection(), hookSection(), readConfig() (+4 more)
+Cohesion: 0.39
+Nodes (7): allow(), deny(), done(), isStopEvent(), writeAuditLog(), main(), readStdin()
 
 ### Community 266 - "rules.md"
 Cohesion: 0.23
@@ -2822,8 +2827,12 @@ Cohesion: 0.15
 Nodes (12): 1. Modeling Negotiations: Cooperative vs. Non-Cooperative Games, 2. Handling Bluffing and Strategic Deception, 3. Optimizing Payouts under Information Asymmetry, 4. Summary of Strategic Playbook, A. Cheap Talk vs. Costly Signaling, A. Non-Cooperative Games (Strategic Stances), A. The Winner's Curse in M&A Auctions, B. Adverse Selection (The Lemons Problem) (+4 more)
 
 ### Community 293 - "AgentFlowWrapper.ts"
-Cohesion: 0.28
-Nodes (10): AgentFlowWrapper, completeRegistration(), executeRegisteredStep(), failRegistration(), failStep(), finishStep(), FlowMessage, publishResult() (+2 more)
+Cohesion: 0.12
+Nodes (15): payload(), AgentFlowWrapper, completeRegistration(), executeRegisteredStep(), failRegistration(), failStep(), finishStep(), FlowMessage (+7 more)
+
+### Community 294 - "BaseVDRProvider"
+Cohesion: 0.22
+Nodes (3): PapermarkConfig, BaseVDRProvider, SupergoodConfig
 
 ### Community 295 - "index.ts"
 Cohesion: 0.23
@@ -2938,8 +2947,8 @@ Cohesion: 0.35
 Nodes (10): detectCsp(), INLINE_HEADER_SIGNALS, LAYOUT_EXTS, MONOREPO_HELPER_SIGNALS, NUXT_ROUTE_RULES_SIGNALS, NUXT_SECURITY_SIGNALS, SCAN_EXTS, SKIP_DIRS (+2 more)
 
 ### Community 323 - "generation-preflight.mjs"
-Cohesion: 0.35
-Nodes (9): buildGenerationPreflight(), compactError(), execFileAsync, insertTarget(), normalizeTarget(), replaceTarget(), runGenerationPreflight(), sourceResolutionCache (+1 more)
+Cohesion: 0.30
+Nodes (10): buildGenerationPreflight(), compactError(), execFileAsync, insertTarget(), normalizeTarget(), replaceTarget(), runGenerationPreflight(), sourceResolutionCache (+2 more)
 
 ### Community 324 - "palette.mjs"
 Cohesion: 0.24
@@ -3050,8 +3059,8 @@ Cohesion: 0.20
 Nodes (12): extensionCache, LIVE_TEMPLATE_EXTENSIONS, matchesTemplateExtension(), normalizeExtensionEntries(), readLiveTemplateExtensions(), resolveLiveTemplateExtensions(), safeReadJson(), findSessionFile() (+4 more)
 
 ### Community 351 - "term-sheet-command.ts"
-Cohesion: 0.36
-Nodes (9): optimizeScenario(), optimizeTermSheetAlternatives(), printAlternativePercent(), printAlternativeValue(), printAlternativeValues(), printTermSheetScenario(), TERM_SHEET_SCENARIOS, TermSheetPreferences (+1 more)
+Cohesion: 0.33
+Nodes (10): handleLegacyRoute(), connectRepository(), corsHeaders(), jsonResponse(), routedResponse(), routeRequest(), startServer(), unexpectedResponse() (+2 more)
 
 ### Community 352 - "transaction.spec.ts"
 Cohesion: 0.18
@@ -3070,12 +3079,12 @@ Cohesion: 0.46
 Nodes (7): cachePath(), filterFreshFindings(), pruneCache(), readCache(), readJson(), stalenessCheckDisabled(), writeCache()
 
 ### Community 356 - "expandScanTargets"
-Cohesion: 0.40
-Nodes (6): coLocatedStylesheets(), expandScanTargets(), isInsideProject(), parseStaticStyleImports(), STYLE_EXTS, UI_CODE_EXTS
+Cohesion: 0.27
+Nodes (10): bindEditBadgeProxy(), editBadgeProxyTargets(), initEditBadge(), initEditBadgeHitProxies(), positionEditBadge(), proxyMouseEvent(), setImportantStyle(), styleEditBadgeProxy() (+2 more)
 
 ### Community 357 - "checkQuality"
-Cohesion: 0.18
-Nodes (13): checkElementOversizedH1(), checkElementOversizedH1DOM(), checkElementQuality(), checkOversizedH1(), checkQuality(), colorsNearlyMatch(), cssColorIsTransparent(), getComputedStyleFor() (+5 more)
+Cohesion: 0.15
+Nodes (15): checkElementOversizedH1(), checkElementOversizedH1DOM(), checkElementQuality(), checkElementQualityDOM(), checkOversizedH1(), checkQuality(), colorsNearlyMatch(), cssColorAlpha() (+7 more)
 
 ### Community 358 - "Proposed ADR: Agent Execution and Human Authority"
 Cohesion: 0.20
@@ -3414,8 +3423,8 @@ Cohesion: 0.22
 Nodes (8): 1. Classification & Valuation Framework, 2. Synergy Allocation and Purchase Price, A. Operational Synergies, A. The Pricing Formula, B. Financial Synergies, B. Negotiation Scenarios and the Sharing Coefficient ($\alpha$), C. Risk-Adjusted Synergy Pricing, Financial Models for Pricing Synergies in M&A
 
 ### Community 442 - "renderGroupedTemplate"
-Cohesion: 0.23
-Nodes (12): cursorBlockMessage(), clampGroupedToBudget(), clampToBudget(), directiveFooter(), formatFindingIgnoreCommand(), formatFindingLine(), quoteCommandArg(), relativize() (+4 more)
+Cohesion: 0.24
+Nodes (11): cursorBlockMessage(), clampGroupedToBudget(), clampToBudget(), directiveFooter(), formatFindingLine(), quoteCommandArg(), relativize(), renderCleanAck() (+3 more)
 
 ### Community 443 - "Guia de Mecânica de Fechamento (Closing Mechanics) no M&A Brasileiro"
 Cohesion: 0.22
@@ -3430,16 +3439,16 @@ Cohesion: 0.22
 Nodes (8): 1. Executive Summary, 2. Key Person Risk Matrix, 3.1 Non-Compete Covenants (_Cláusula de Não-Concorrência_), 3.2 Key Person Insurance (_Seguro de Vida Homem-Chave_), 3.3 Earn-Out and Escrow Structuring, 3.4 Professionalization and Transition of Control, 3. Structural and Legal Mitigation Mechanisms under Brazilian Law, Key Person Risk Matrix: Brazilian Middle-Market Firms
 
 ### Community 446 - "IntralinksVDRProvider"
-Cohesion: 0.33
-Nodes (3): toIntralinksDocument(), IntralinksVDRProvider, IntralinksDocumentSchema
+Cohesion: 0.39
+Nodes (3): toIDealsDocument(), IDealsVDRProvider, IDealsDocumentSchema
 
 ### Community 447 - "weights.ts"
 Cohesion: 0.28
 Nodes (8): fallbackWeights, privateMatureWeights, profileWeights(), publicWeights, resolveWeightsConfig(), startupWeights, weightKeys(), CompanyProfile
 
 ### Community 448 - "resolveLiveInjectionAnchor"
-Cohesion: 0.62
-Nodes (7): elementMatchesOriginalMarkup(), findLiveElementForOriginalMarkup(), findLiveElementFromAnchorSnapshot(), isUsableInjectionAnchor(), normalizeElementClassName(), parseOriginalMarkupElement(), resolveLiveInjectionAnchor()
+Cohesion: 0.20
+Nodes (17): acceptedDomAlreadyClean(), applyOriginalAttrsToSvelteAnchor(), buildSveltePropValuesFromLiveElement(), commitAcceptedSvelteComponentToDom(), elementMatchesOriginalMarkup(), ensureAcceptedDomClean(), findAcceptedRuntimeWrappers(), findLiveElementForOriginalMarkup() (+9 more)
 
 ### Community 449 - "Process"
 Cohesion: 0.25
@@ -3462,8 +3471,8 @@ Cohesion: 0.25
 Nodes (8): Cadence, Confirm and stop, Phase 1: Discovery interview, Phase 2: Resolve the design direction, Phase 3: Write the brief, Round 1: purpose, people, and outcome, Round 2: material, behavior, and boundaries, Shape
 
 ### Community 454 - "checkElementGptBorderShadowDOM"
-Cohesion: 0.32
-Nodes (8): borderColorsFromStyle(), borderWidthsFromStyle(), checkElementGptBorderShadow(), checkElementGptBorderShadowDOM(), checkGptThinBorderWideShadow(), cssColorAlpha(), shadowLayerAlpha(), shadowMaxBlurPx()
+Cohesion: 0.38
+Nodes (7): borderColorsFromStyle(), borderWidthsFromStyle(), checkElementGptBorderShadow(), checkElementGptBorderShadowDOM(), checkGptThinBorderWideShadow(), shadowLayerAlpha(), shadowMaxBlurPx()
 
 ### Community 455 - "Investigate"
 Cohesion: 0.25
@@ -3838,8 +3847,8 @@ Cohesion: 0.29
 Nodes (7): Cognitive Load Assessment, Cognitive Load Checklist, Extraneous Load: Bad Design, Germane Load: Learning Effort, Intrinsic Load: The Task Itself, The Working Memory Rule, Three Types of Cognitive Load
 
 ### Community 549 - "isScreenReaderOnlyTextStyle"
-Cohesion: 0.47
-Nodes (6): clippedByInset(), clippedByRect(), expandBoxShorthand(), firstMetricLengthPx(), isScreenReaderOnlyTextStyle(), metricLengthPx()
+Cohesion: 0.22
+Nodes (11): checkTextOcclusionDOM(), clippedByInset(), clippedByRect(), elementDirectText(), expandBoxShorthand(), firstMetricLengthPx(), isLayeredElement(), isOpaqueDecoratedBox() (+3 more)
 
 ### Community 550 - "6.5 Command search"
 Cohesion: 0.33
@@ -3978,8 +3987,8 @@ Cohesion: 0.29
 Nodes (6): Acceptance Criteria, Comments, Description, Final Summary, Implementation Notes, Implementation Plan
 
 ### Community 584 - "mai-10 - Estruturar-pipeline-de-Fine-tuning-Juridiquês-Financês-brasileiro.md"
-Cohesion: 0.29
-Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The fine-tuning path does not load or execute LoRA adapters: load actions report success without loading weights and inference falls back to Gemini or canned output. Reopen and state whether the deliverable is only an offline training artifact or real runtime inference.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+Cohesion: 0.36
+Nodes (6): advancePhaseStep(), assertAdvancedPhase(), createDealStep(), retrieveActiveDealsStep(), retrieveDealDetailsStep(), runRepositorySteps()
 
 ### Community 585 - "mai-12 - Criar-ferramenta-de-acesso-estruturado-de-VDR-pelos-agentes.md"
 Cohesion: 0.29
@@ -3990,16 +3999,16 @@ Cohesion: 0.29
 Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The Papermark adapter is fetch-mocked and its test currently fails because configuration resolves the placeholder key instead of the test key. Reopen and validate it against the live local Papermark instance tracked by MAI-80.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 
 ### Community 587 - "mai-3 - Orquestração-de-Testes-Rápidos-e-Smoke-Tests-no-MVP.md"
-Cohesion: 0.29
-Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The smoke suite only exercises the in-memory MvpStore lifecycle, while the CLI health output is static. It does not actively prove PostgreSQL, Pub/Sub, ONNX, Gemini, or the real deal pipeline.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+Cohesion: 0.25
+Nodes (7): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Notes, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The fine-tuning path does not load or execute LoRA adapters: load actions report success without loading weights and inference falls back to Gemini or canned output. Reopen and state whether the deliverable is only an offline training artifact or real runtime inference.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 
 ### Community 588 - "mai-54 - Storybook.md"
 Cohesion: 0.29
 Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Done revalidation — 2026-07-22\n\nDone is preserved. Storybook 10 is configured successfully; 24 MDX documentation files validate, 89/89 Storybook interaction tests pass, and the static Storybook build completes. This verifies Storybook infrastructure, not the completeness of every higher-level GUI capability., Implementation Plan
 
 ### Community 589 - "mai-5 - Implementação-e-Desmocking-Inicial-de-APIs-locais.md"
-Cohesion: 0.29
-Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The task explicitly allowed structured mocks, but the claimed desmocking remains materially incomplete: KYB and VDR payloads are hardcoded and RAG silently falls back to in-memory fixtures. Rebaseline this work under the Papermark MVP integration.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+Cohesion: 0.25
+Nodes (7): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Notes, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The task explicitly allowed structured mocks, but the claimed desmocking remains materially incomplete: KYB and VDR payloads are hardcoded and RAG silently falls back to in-memory fixtures. Rebaseline this work under the Papermark MVP integration.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 
 ### Community 590 - "mai-96 - Implement-Figma-variables-and-tokens-in-the-frontend.md"
 Cohesion: 0.29
@@ -4010,8 +4019,8 @@ Cohesion: 0.29
 Nodes (6): Acceptance Criteria, Comments, Description, Final Summary, Implementation Notes, Implementation Plan
 
 ### Community 592 - "mai-9 - Criar-loop-de-Continuous-Learning-com-captação-vetorial.md"
-Cohesion: 0.29
-Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: Continuous-learning tests currently fail through the Broker model mismatch; user/deal identity remains defaulted and company culture is still treated as memory contrary to the Target Dossier decision. Reopen for governed persistence and retrieval.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+Cohesion: 0.25
+Nodes (7): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Notes, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: Continuous-learning tests currently fail through the Broker model mismatch; user/deal identity remains defaulted and company culture is still treated as memory contrary to the Target Dossier decision. Reopen for governed persistence and retrieval.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 
 ### Community 593 - "Recommended MVP team"
 Cohesion: 0.29
@@ -4370,8 +4379,8 @@ Cohesion: 0.50
 Nodes (4): 14. Company Identity, Duplicate and mismatch behavior, Fact provenance, Recommended fields
 
 ### Community 682 - "11.7 Mocked deterministic impact"
-Cohesion: 0.50
-Nodes (4): 11.7 Mocked deterministic impact, Adjustment explanation, Card title, Values
+Cohesion: 0.32
+Nodes (5): valuationSchema, nashequilibriumSchema, VALID_NASH_EQUILIBRIUM, VALID_RISK_MATRIX, VALID_VALUATION
 
 ### Community 683 - "Intake"
 Cohesion: 0.33
@@ -5010,8 +5019,8 @@ Cohesion: 0.40
 Nodes (5): 15.1 Expanded sidebar, 15.2 Compact sidebar, 15.3 Mobile navigation, 15.4 Browser navigation, 15. Navigation behavior
 
 ### Community 842 - "5.6 Deterministic impact panel"
-Cohesion: 0.50
-Nodes (4): 5.6 Deterministic impact panel, Calculation explanation, Purpose, Required information
+Cohesion: 0.29
+Nodes (6): Acceptance Criteria, Comments, Definition of Done, Description, Implementation Plan, Rebaseline audit — 2026-07-22\n\nCurrent status: The smoke suite only exercises the in-memory MvpStore lifecycle, while the CLI health output is static. It does not actively prove PostgreSQL, Pub/Sub, ONNX, Gemini, or the real deal pipeline.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 
 ### Community 844 - "Recommended destinations"
 Cohesion: 0.40
@@ -5276,6 +5285,10 @@ Nodes (5): 38. Access and permissions, Access dimensions, Example, Recommended d
 ### Community 909 - "70. Repository direction"
 Cohesion: 0.40
 Nodes (5): 70. Repository direction, Add, Avoid, Keep, Reposition
+
+### Community 910 - "35. Purchase-price mechanics"
+Cohesion: 0.33
+Nodes (5): outputSchema, CompanyCultureProfile, companyCultureProfileSchema, TargetDossierDraft, targetDossierDraftSchema
 
 ### Community 911 - "5.5 Evidence inspector"
 Cohesion: 0.40
@@ -5554,8 +5567,8 @@ Cohesion: 0.50
 Nodes (3): Acceptance Criteria, Description, Implementation Plan
 
 ### Community 980 - "mai-121 - Governed-agent-definitions-and-tools.md"
-Cohesion: 0.50
-Nodes (3): Acceptance Criteria, Description, Implementation Plan
+Cohesion: 0.40
+Nodes (4): Acceptance Criteria, Description, Implementation Notes, Implementation Plan
 
 ### Community 981 - "mai-122 - Deliverables-redaction-release-and-exports.md"
 Cohesion: 0.50
@@ -5578,8 +5591,8 @@ Cohesion: 0.50
 Nodes (3): Acceptance Criteria, Description, Implementation Plan
 
 ### Community 986 - "mai-129 - Data-migration-and-MVP-retirement.md"
-Cohesion: 0.50
-Nodes (3): Acceptance Criteria, Description, Implementation Plan
+Cohesion: 0.40
+Nodes (4): Acceptance Criteria, Description, Implementation Notes, Implementation Plan
 
 ### Community 987 - "mai-131 - End-to-end-security-and-operational-release-gate.md"
 Cohesion: 0.50
@@ -6037,6 +6050,10 @@ Nodes (4): 12. Mutable versus immutable records, Append-only, Immutable after ap
 Cohesion: 0.50
 Nodes (4): 15.1 Purpose, 15.2 Distinction from notifications, 15.3 Required anatomy, 15. Material Changes and Exceptions
 
+### Community 1101 - "60. ZOPA representation"
+Cohesion: 0.40
+Nodes (4): Acceptance Criteria, Definition of Done, Description, Implementation Notes
+
 ### Community 1102 - "27. Current repository direction"
 Cohesion: 0.50
 Nodes (4): 27. Current repository direction, Add, Keep, Replace or reconsider
@@ -6046,8 +6063,8 @@ Cohesion: 0.50
 Nodes (4): 2. Intention of the screen, Primary intention, Product outcome, User outcome
 
 ### Community 1104 - "4. Relationship to adjacent screens"
-Cohesion: 0.50
-Nodes (4): 4. Relationship to adjacent screens, Command Center versus Deals Portfolio, Command Center versus Notifications, Command Center versus Tasks & Approvals
+Cohesion: 0.40
+Nodes (5): 11.5 Mocked selected finding, Explanation, Materiality block, Provenance, Title
 
 ### Community 1105 - "7. Prioritization model"
 Cohesion: 0.50
@@ -6179,7 +6196,7 @@ Nodes (4): 26. Technology & Intellectual Property, Evidence states, Recommended 
 
 ### Community 1137 - "28. Strategic Context"
 Cohesion: 0.50
-Nodes (4): 28. Strategic Context, Evidence distinction, Purpose, Recommended information
+Nodes (3): Acceptance Criteria, Description, Implementation Notes
 
 ### Community 1138 - "30. Missing-information requests"
 Cohesion: 0.50
@@ -6276,6 +6293,10 @@ Nodes (4): 83. Pitch-specific simplification, Hide, Keep visible, Readability re
 ### Community 1161 - "12. Pitch-specific visual simplification"
 Cohesion: 0.50
 Nodes (4): 12. Pitch-specific visual simplification, Hide or collapse, Keep visible, Readability requirement
+
+### Community 1162 - "88. Term-sheet status"
+Cohesion: 0.50
+Nodes (3): Acceptance Criteria, Description, Implementation Notes
 
 ### Community 1163 - "101. Pitch-specific simplification"
 Cohesion: 0.50
@@ -6382,8 +6403,8 @@ Cohesion: 0.67
 Nodes (3): 88. Release R6 — Enterprise Foundation, Objective, Target
 
 ### Community 1204 - "16. Criteria architecture"
-Cohesion: 0.67
-Nodes (3): 16. Criteria architecture, Evaluation types, Example
+Cohesion: 0.50
+Nodes (4): 23. Responsive behavior, Desktop — 1280 px and above, Mobile — below 768 px, Tablet — 768–1279 px
 
 ### Community 1205 - "20. Universe construction"
 Cohesion: 0.67
@@ -6434,8 +6455,8 @@ Cohesion: 0.67
 Nodes (3): 55. Evidence freshness, Stale state, UX principle
 
 ### Community 1217 - "57. Criteria-driven recommendations"
-Cohesion: 0.67
-Nodes (3): 57. Criteria-driven recommendations, Example, Recommendation anatomy
+Cohesion: 0.50
+Nodes (4): 5.7 Human approval gate, Approval behavior, Primary actions, Supporting controls
 
 ### Community 1218 - "63. Candidate export"
 Cohesion: 0.67
@@ -6850,16 +6871,16 @@ Cohesion: 0.67
 Nodes (3): 67. Pitch-specific simplification, Readability requirement, Recommended static composition
 
 ### Community 1323 - "36. Document period and entity"
-Cohesion: 0.67
-Nodes (3): 36. Document period and entity, Example, UX rule
+Cohesion: 1.00
+Nodes (3): checkCreamPalette(), creamFromClassList(), isCreamColor()
 
 ### Community 1324 - "50. Disconnection behavior"
 Cohesion: 0.67
-Nodes (3): 50. Disconnection behavior, Confirmation should explain, Options
+Nodes (3): 27. Legal, Tax & Regulatory, Boundary with diligence, Recommended information
 
 ### Community 1325 - "81. Mocked processing exceptions"
 Cohesion: 0.67
-Nodes (3): 81. Mocked processing exceptions, Aging_Contas_Receber_Jun-2026.xlsx, Contratos_Materiais_Clientes.zip
+Nodes (3): 37. Document authority, Example, Source classifications
 
 ### Community 1326 - "11. Scenario model"
 Cohesion: 0.67
@@ -6909,10 +6930,18 @@ Nodes (3): 61. Review and approval, Review actions, Review sequence
 Cohesion: 0.67
 Nodes (3): 65. Version history, Recommended version list, Version detail
 
+### Community 1405 - "104. UX prototype tasks to validate"
+Cohesion: 0.67
+Nodes (3): 62. Geometry and density, Avoid, Recommended
+
+### Community 1410 - "13. Mission creation"
+Cohesion: 0.67
+Nodes (3): 8. Provider strategy, MVP boundary, Pitch treatment
+
 ## Knowledge Gaps
-- **9300 isolated node(s):** `here`, `API_BASE`, `API_TIMEOUT_MS`, `localStates`, `COMMON_DEV_PORTS` (+9295 more)
+- **9315 isolated node(s):** `here`, `API_BASE`, `API_TIMEOUT_MS`, `localStates`, `COMMON_DEV_PORTS` (+9310 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **294 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **293 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Work-memory lessons
 
@@ -6922,17 +6951,17 @@ Nodes (3): 65. Version history, Recommended version list, Version detail
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `value()` connect `DealExecutionBody.tsx` to `VDRDocument`, `rules.md`, `vocabulary.ts`, `translate`, `onnx.ts`, `2. A Perspectiva do Comprador (Buy-Side / Pró-Comprador)`, `generate-design-tokens.mjs`, `generateTypescript`, `1. Condições Precedentes Legais, Regulatórias e de Mercado`, `isScreenReaderOnlyTextStyle`, `mvp_routes.ts`, `Test Suite Agent Instructions (`tests/`)`, `document-command.ts`, `verify-frontend-conformance.mjs`, `smoke.spec.ts`, `Minuta Orientativa e Cláusulas Bilaterais de SPA / QPA no M&A Brasileiro`, `write_operations.ts`, `verify-components.mjs`, `outbox.ts`, `FoundationStatus.test.ts`, `M&A Due Diligence Risk Synthesis & Valuation Impact Framework`, `@types/react`, `1. Automatic Deal-Breakers (Red Lines)`?**
+- **Why does `value()` connect `DealExecutionBody.tsx` to `VDRDocument`, `vocabulary.ts`, `translate`, `onnx.ts`, `generate-design-tokens.mjs`, `generateTypescript`, `1. Condições Precedentes Legais, Regulatórias e de Mercado`, `isScreenReaderOnlyTextStyle`, `mvp_routes.ts`, `Test Suite Agent Instructions (`tests/`)`, `document-command.ts`, `event-stream.ts`, `verify-frontend-conformance.mjs`, `smoke.spec.ts`, `write_operations.ts`, `verify-components.mjs`, `outbox.ts`, `term-sheet-command.ts`, `expandScanTargets`, `FoundationStatus.test.ts`, `M&A Due Diligence Risk Synthesis & Valuation Impact Framework`, `@types/react`, `1. Automatic Deal-Breakers (Red Lines)`?**
   _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **Why does `resolveRouteContext()` connect `onnx.ts` to `DealExecutionBody.tsx`?**
   _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `t()` connect `chat-client.ts` to `instructions.md`, `clone`, `3. Identifying the ZOPA (Zone of Possible Agreement)`, `v1_contracts.spec.ts`, `2. A Perspectiva do Comprador (Buy-Side / Pró-Comprador)`, `M&A Negotiation Dynamics: Game Theory Applications & Nash Equilibrium`, `term-sheet-command.ts`?**
+- **Why does `t()` connect `chat-client.ts` to `VDRDocument`, `clone`, `instructions.md`, `3. Identifying the ZOPA (Zone of Possible Agreement)`, `v1_contracts.spec.ts`, `M&A Negotiation Dynamics: Game Theory Applications & Nash Equilibrium`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
 - **Are the 43 inferred relationships involving `el()` (e.g. with `browserFindingsFromMap()` and `collectVisualContrastCandidates()`) actually correct?**
   _`el()` has 43 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 4 inferred relationships involving `t()` (e.g. with `buildStaticStyleMap()` and `expandStaticDeclaration()`) actually correct?**
   _`t()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `here`, `API_BASE`, `API_TIMEOUT_MS` to the rest of the system?**
-  _9300 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _9315 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `pipeline.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.014285714285714285 - nodes in this community are weakly interconnected._

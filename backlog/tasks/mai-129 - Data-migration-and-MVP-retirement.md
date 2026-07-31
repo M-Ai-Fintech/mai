@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 06:17'
+updated_date: '2026-07-31 18:32'
 labels:
   - backend
   - architecture
@@ -114,3 +114,33 @@ Approved migration/cutover windows, production RPO/RTO and environment readiness
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Legacy agent-learning and fine-tuning retirement ownership
+
+1. MAI-129 owns physical retirement after target replacement coverage and cutover are proven.
+
+2. Retirement candidates include, subject to final consumer inventory:
+   - src/agent/continuous_learning.ts;
+   - obsolete ContinuousLearningEngine registrations and imports;
+   - automatic correction-to-prompt compatibility behavior;
+   - process-local feedback caches;
+   - obsolete feedback persistence conventions;
+   - fake LoRA adapter-loading paths;
+   - fake or Gemini-backed responses labelled as fine-tuned inference;
+   - obsolete FineTuningRegistry compatibility code;
+   - tests that prove mocked capability rather than real governed behavior.
+
+3. MAI-129 must not delete useful evidence, datasets, prompts, scripts, or tests before:
+   - MAI-121 replacement coverage exists;
+   - MAI-152 feedback/evaluation lineage exists where required;
+   - MAI-153 records a Go or No-go decision;
+   - active consumers are inventoried;
+   - rollback and migration evidence exists.
+
+4. Useful offline training scripts or sample datasets may be retained as explicitly labelled research evidence when legally and operationally permitted.
+
+5. Physical retirement must preserve historical audit and Git evidence.
+<!-- SECTION:NOTES:END -->

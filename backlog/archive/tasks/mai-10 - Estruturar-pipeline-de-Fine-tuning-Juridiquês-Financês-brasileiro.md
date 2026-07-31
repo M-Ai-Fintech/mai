@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 18:32'
 labels:
   - agent
   - ai
@@ -41,6 +41,42 @@ Estruturar o pipeline de fine-tuning para LLMs (como Llama-3-8B-Instruct ou vari
 4. Conexão com o Hugging Face MCP: Mapear a leitura do modelo fine-tunado na 'huggingFaceMcpTool' para permitir que o GeneralDueDiligenceAgent / FinancialRiskAgent usem as novas habilidades preditivas.
 5. Validação de Inferência Local: Escrever um teste simples de ponta a ponta que valide a resposta dos mocks com a carga fictícia do novo modelo.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded by MAI-153.
+
+Requirements carried forward:
+
+- Brazilian M&A legal and financial evaluation scope;
+- versioned datasets;
+- reproducible model-adaptation research;
+- prompt, retrieval, tool, few-shot, and fine-tuning comparison;
+- quality and safety validation;
+- artifact lineage;
+- quantization and runtime evaluation where justified;
+- model documentation;
+- rollback;
+- provider/runtime certification.
+
+Architecture changed:
+
+- fine-tuning is not assumed to be required;
+- MAI-153 may conclude Go or No-go;
+- a Go decision requires a separate implementation task;
+- direct Hugging Face MCP tool ownership is not the target runtime boundary;
+- adapter loading cannot report success without loading an artifact;
+- Gemini or canned output cannot be labelled as fine-tuned inference;
+- mock results cannot prove model adaptation;
+- model execution must use governed provider and ToolGateway boundaries;
+- MAI-127 owns environment-specific certification;
+- MAI-129 owns final physical retirement.
+
+Existing scripts, datasets, registry code, tools, and tests remain migration evidence until the decision and cutover requirements are satisfied.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 
