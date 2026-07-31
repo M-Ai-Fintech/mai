@@ -4,6 +4,7 @@ title: 'Findings, impacts and decisions'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 20:09'
 labels:
   - backend
   - architecture
@@ -89,3 +90,30 @@ High complexity; Wave 8 follows BE-P10/BE-P11. Recommended model: gpt-5.6-sol, H
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+VDR completeness and missing-document finding boundary
+
+1. Document-completeness checks produce proposed Findings, not automatic compliance conclusions.
+
+2. Every completeness result references:
+   - checklist or rule-set version;
+   - exact Document Versions evaluated;
+   - missing expected document categories;
+   - unavailable or inaccessible sources;
+   - evaluation timestamp;
+   - actor or automated producer;
+   - provenance.
+
+3. The presence or absence of a folder or tag is not by itself a legal, financial, tax, regulatory, or compliance conclusion.
+
+4. A missing document is not automatically a deal-breaker.
+
+5. Findings remain proposed until reviewed through the approved Finding and Decision lifecycle.
+
+6. Approval, invalidation, waiver, risk acceptance, and final disposition remain human decisions.
+
+7. Re-evaluation creates a new version or superseding Finding rather than rewriting prior evidence.
+<!-- SECTION:NOTES:END -->

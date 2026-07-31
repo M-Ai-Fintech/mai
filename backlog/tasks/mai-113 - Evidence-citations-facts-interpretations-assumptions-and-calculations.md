@@ -4,6 +4,7 @@ title: 'Evidence, citations, facts, interpretations, assumptions and calculation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 20:09'
 labels:
   - backend
   - architecture
@@ -93,3 +94,33 @@ Embedding provider, data residency and model/prompt retention choices remain exp
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Agent document-retrieval boundary
+
+1. Agent and application retrieval always references an exact Document Version and source location.
+
+2. Tenant, institution, workspace, Deal, classification, permission, and evidence authorization checks occur before document content, chunks, or vector results are loaded.
+
+3. Vector indexes are derived, versioned, replaceable projections and are not authoritative document truth.
+
+4. Retrieval results identify:
+   - Document ID;
+   - Document Version ID;
+   - source or provider;
+   - object or source location;
+   - checksum;
+   - processing version;
+   - index version;
+   - evidence freshness or staleness state.
+
+5. No generic, unscoped `query_silo` capability is part of the target architecture.
+
+6. Missing, inaccessible, unprocessed, stale, or unsupported evidence returns an explicit state.
+
+7. Missing evidence must not be replaced by fixture, mock, local-file, or process-memory content in a configured real-provider flow.
+
+8. MAI-113 owns evidence retrieval and citation semantics, not provider credentials or agent registration.
+<!-- SECTION:NOTES:END -->

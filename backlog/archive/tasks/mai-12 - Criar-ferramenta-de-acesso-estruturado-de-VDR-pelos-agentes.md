@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 20:09'
 labels:
   - agent
   - vdr
@@ -54,6 +54,46 @@ Principais Funcionalidades a Desenvolver:
 4. **Passo 4 (Testes Unitários):** Criar tests/agents/vdr_tools.spec.ts para exercitar a ferramenta isoladamente e validar as respostas de sucesso/falha de cada ação.
 5. **Passo 5 (Revisão e Clean Up):** Executar os testes via Deno (deno test) para garantir a integridade da suíte.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded through separated document, evidence, finding, agent-tool, and retirement ownership.
+
+Requirements carried forward:
+
+- structured document listing;
+- exact document reads;
+- evidence search;
+- document metadata and classification;
+- completeness assessment;
+- specialist-agent access;
+- typed tool inputs and outputs;
+- failure handling;
+- tests for authorized document access.
+
+Replacement ownership:
+
+- MAI-113 owns exact-version evidence retrieval and citations;
+- MAI-115 owns proposed missing-document and completeness Findings;
+- MAI-121 owns authorized, capability-scoped agent tools;
+- MAI-129 owns physical retirement after cutover.
+
+Architecture changed:
+
+- agents do not read directly from `./vdr_rooms`;
+- agents do not access `VDRService` mocks as product behavior;
+- generic unscoped `query_silo` is not a target capability;
+- folder presence does not prove compliance;
+- missing documents are not automatically deal-breakers;
+- tools cannot approve Findings or Decisions;
+- provider credentials and local paths are not exposed to agents;
+- fixture or fallback results cannot be represented as real-provider success.
+
+Existing code and tests remain migration evidence until replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

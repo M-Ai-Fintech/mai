@@ -4,7 +4,7 @@ title: Governed agent definitions and tools
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 18:32'
+updated_date: '2026-07-31 20:09'
 labels:
   - backend
   - architecture
@@ -125,4 +125,41 @@ Legacy learning and model-adaptation migration boundary
 9. MAI-153 owns the future model-adaptation strategy decision.
 
 10. Legacy code and tests remain migration evidence until MAI-129 cutover.
+
+Agent document-tool capability boundary
+
+1. Agents receive capability-scoped read or proposal tools through the governed ToolGateway boundary.
+
+2. Agents do not access:
+   - provider credentials;
+   - connector secrets;
+   - local filesystem paths;
+   - raw object-store credentials;
+   - unrestricted provider clients;
+   - unscoped vector indexes.
+
+3. Supported agent capabilities may include authorized:
+   - document listing;
+   - exact-version metadata retrieval;
+   - exact-version content retrieval;
+   - evidence search;
+   - citation proposal;
+   - missing-document Finding proposal.
+
+4. Tools return exact evidence and Document Version references.
+
+5. Tools cannot:
+   - upload without separate authorization;
+   - delete;
+   - invite;
+   - change provider permissions;
+   - release;
+   - approve a Finding;
+   - declare compliance;
+   - declare a deal-breaker;
+   - create a final Decision Record.
+
+6. Unsupported capabilities return explicit denied or unavailable results.
+
+7. The direct `vdrStructuredAccessTool` is migration evidence, not the target ToolGateway contract.
 <!-- SECTION:NOTES:END -->

@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 19:58'
+updated_date: '2026-07-31 20:09'
 labels:
   - backend
   - architecture
@@ -172,4 +172,23 @@ Legacy optimization-engine retirement ownership
 7. KYC, sanctions, PEP, and compliance conclusions remain evidence-backed findings and human decisions rather than optimizer-owned booleans.
 
 8. Physical retirement must preserve Git and audit history.
+
+Legacy agent VDR-tool retirement ownership
+
+1. MAI-129 owns physical retirement after MAI-112, MAI-113, MAI-115, and MAI-121 provide replacement coverage.
+
+2. Retirement candidates include, subject to final consumer inventory:
+   - direct `vdrStructuredAccessTool` registration;
+   - `src/agent/vdr_mock.ts`;
+   - direct `VDRService` mock calls;
+   - direct `ClientSiloedRAG.querySilo` calls from generic agent tools;
+   - direct reads from `./vdr_rooms`;
+   - folder-tag compliance heuristics;
+   - automatic `COMPLIANT` or `NON_COMPLIANT` conclusions;
+   - direct specialist-agent tool registrations;
+   - tests that prove only mock, fixture, or in-memory behavior.
+
+3. Useful schemas, fixtures, checklist examples, and test vectors remain migration evidence until replacement coverage exists.
+
+4. Physical retirement preserves Git and audit history.
 <!-- SECTION:NOTES:END -->
