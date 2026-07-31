@@ -3,11 +3,11 @@ id: MAI-72
 title: >-
   Canonicalize Deal terminology across business-domain identifiers while
   preserving bounded contexts and transaction semantics
-status: In Progress
+status: Done
 assignee:
   - '@antigravity'
 created_date: '2026-07-20 17:18'
-updated_date: '2026-07-31 16:59'
+updated_date: '2026-07-31 17:30'
 labels:
   - revalidation
 milestone: m-14
@@ -141,3 +141,9 @@ created: 2026-07-22 05:29
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: Canonical Deal terminology is not verified repository-wide and TransactionRepository remains present. All criteria are unchecked. Reopen for exhaustive identifier checks and migration evidence.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Initial implementation merged in PR #30 and corrective terminology enforcement merged in PR #31. Post-merge architecture verification confirmed DealRepository authority, zero TransactionRepository exports, clean Deal terminology in domain schemas, intact transactional outbox/inbox semantics, and legacy SQL tables isolated for MAI-129. Verified with focused tests (tests/unit/deal_terminology_enforcement.spec.ts, tests/unit/term_sheet_schema_test.ts, tests/core/target_dossier_memory.spec.ts, tests/shared/domain-area.spec.ts, tests/core/db/DatabaseMemoryService.spec.ts, tests/core/db/DealRepository.spec.ts), deno lint src/ tests/ scripts/, git diff --check, and deno task verify (17/17 gates passed).
+<!-- SECTION:FINAL_SUMMARY:END -->

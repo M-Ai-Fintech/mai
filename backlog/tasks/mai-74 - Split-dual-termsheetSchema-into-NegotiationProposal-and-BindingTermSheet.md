@@ -1,11 +1,11 @@
 ---
 id: MAI-74
 title: Split dual termsheetSchema into NegotiationProposal and BindingTermSheet
-status: In Progress
+status: Done
 assignee:
   - '@luisfelipeluis49'
 created_date: '2026-07-20 17:19'
-updated_date: '2026-07-31 12:01'
+updated_date: '2026-07-31 17:30'
 labels:
   - revalidation
 milestone: m-14
@@ -90,5 +90,5 @@ created: 2026-07-22 05:29
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Split dual termsheetSchema into NegotiationProposal and BindingTermSheet contracts with pure assembly function and comprehensive unit tests.
+Split dual termsheetSchema into NegotiationProposal and BindingTermSheet contracts, merged in PR #27. Post-merge verification confirmed negotiationProposalSchema and bindingTermSheetSchema export boundaries, pure assembleBindingTermSheet assembly function, complete removal of ambiguous termsheetSchema exports, and non-interchangeable parsing contracts. Validated via unit test suite tests/unit/term_sheet_schema_test.ts (8 passed) and deno task verify (17/17 gates passed).
 <!-- SECTION:FINAL_SUMMARY:END -->

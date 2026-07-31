@@ -3,11 +3,11 @@ id: MAI-75
 title: >-
   Introduce Target Dossier as a first-class domain artifact and remove
   company_culture from agent Memory
-status: In Progress
+status: Done
 assignee:
   - '@antigravity'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-31 17:12'
+updated_date: '2026-07-31 17:30'
 labels:
   - revalidation
 milestone: m-10
@@ -86,9 +86,9 @@ Domain modeling revealed that 'company_culture' was incorrectly placed inside th
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every applicable acceptance criterion is checked with current evidence
-- [ ] #2 All focused tests and the repository-wide verification gate pass
-- [ ] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
+- [x] #1 Every applicable acceptance criterion is checked with current evidence
+- [x] #2 All focused tests and the repository-wide verification gate pass
+- [x] #3 No mock, fallback, or prototype behavior is represented as a real integrated capability
 <!-- DOD:END -->
 
 ## Comments
@@ -134,3 +134,9 @@ created: 2026-07-22 05:29
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The implementation contradicts the task: company_culture remains accepted and persisted as agent memory, while Target Dossier lacks the complete VDR/business/culture artifact and agent production path. Reopen.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Initial implementation merged in PR #28 and active company-culture memory API removal merged in PR #32. Post-merge verification confirmed: 1) Target Dossier is a first-class proposed domain artifact containing VDR references, business knowledge, and Company Culture sub-object; 2) Active memory categories are strictly domain_knowledge and user_preference; 3) All company-culture memory APIs/methods/tools were completely removed from runtime services; 4) Physical table company_culture_memory remains solely as isolated SQL storage deferred to MAI-129 data migration. Verified with tests/core/target_dossier_memory.spec.ts (15 steps passed), tests/core/db/DatabaseMemoryService.spec.ts (2 steps passed), and deno task verify (17/17 gates passed).
+<!-- SECTION:FINAL_SUMMARY:END -->
