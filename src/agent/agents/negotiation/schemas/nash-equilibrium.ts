@@ -24,7 +24,7 @@ export const nashequilibriumSchema = z.object({
         nonCompeteMonths: z.number().describe(
           "Non-compete clause term in months (e.g., 60 months).",
         ),
-      }).describe("Transaction structure proposal evaluated in this round."),
+      }).describe("Deal structure proposal evaluated in this round."),
       buyerUtility: z.number().describe(
         "Calculated utility for the buyer (0.0 to 1.0).",
       ),
