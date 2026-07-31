@@ -292,7 +292,7 @@ export class DatabaseMemoryService extends DatabaseConnection {
    * Salva um checkpoint de fluxo de um agente
    */
   public async saveFlowCheckpoint(
-    transactionId: string,
+    dealId: string,
     agentId: string,
     topic: string,
     state: Record<string, unknown>,
@@ -302,7 +302,7 @@ export class DatabaseMemoryService extends DatabaseConnection {
       VALUES ($1, $2, $3, $4);
     `;
     await this.query(sql, [
-      transactionId,
+      dealId,
       agentId,
       topic,
       JSON.stringify(state),
@@ -311,10 +311,10 @@ export class DatabaseMemoryService extends DatabaseConnection {
   }
 
   /**
-   * Gets an agent's latest checkpoint for a transaction.
+   * Gets an agent's latest checkpoint for a deal.
    */
   public async getLatestFlowCheckpoint(
-    transactionId: string,
+    dealId: string,
     agentId: string,
   ): Promise<Record<string, unknown> | null> {
     const sql = `
@@ -325,7 +325,7 @@ export class DatabaseMemoryService extends DatabaseConnection {
       LIMIT 1;
     `;
     const res = await this.query<{ state: Record<string, unknown> }>(sql, [
-      transactionId,
+      dealId,
       agentId,
     ]);
     if (res.rows.length > 0) {

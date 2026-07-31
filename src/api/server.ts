@@ -1,5 +1,5 @@
 import { AgentOrchestrator } from "../agent/index.ts";
-import { TransactionRepository } from "../core/db/TransactionRepository.ts";
+import { DealRepository } from "../core/db/DealRepository.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
 
@@ -30,7 +30,7 @@ function withMvpHeaders(response: Response, cors: Headers): Response {
 
 async function routeRequest(
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
 ): Promise<Response> {
   const headers = corsHeaders();
   if (request.method === "OPTIONS") return new Response(null, { headers });
@@ -43,7 +43,7 @@ async function routeRequest(
 
 async function routedResponse(
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const mvpResponse = await handleMvpRoute(request, {
@@ -76,7 +76,7 @@ function jsonResponse(
 }
 
 async function connectRepository(
-  repository: TransactionRepository,
+  repository: DealRepository,
 ): Promise<void> {
   const connected = await repository.connect();
   const message = connected
@@ -88,7 +88,7 @@ async function connectRepository(
 }
 
 export function startServer(): Deno.HttpServer {
-  const repository = TransactionRepository.getRepoInstance();
+  const repository = DealRepository.getRepoInstance();
   void connectRepository(repository);
   console.log(`[API Server] Starting on http://localhost:${PORT}`);
   return Deno.serve(
@@ -96,6 +96,7 @@ export function startServer(): Deno.HttpServer {
     (request) => routeRequest(request, repository),
   );
 }
+
 
 if (import.meta.main) startServer();
 

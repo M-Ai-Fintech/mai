@@ -3,6 +3,7 @@ import { DatabaseMemoryService } from "../db/DatabaseMemoryService.ts";
 import { LocalPubSubBus } from "./LocalPubSubBus.ts";
 
 interface FlowMessage {
+  dealId?: string;
   transactionId?: string;
   [key: string]: unknown;
 }
@@ -68,17 +69,17 @@ async function runAgentStep<
   registration: FlowRegistration<TInput, TResult>,
   input: TInput,
 ): Promise<void> {
-  const transactionId = input.transactionId || "unknown_tx";
+  const dealId = input.dealId || input.transactionId || "unknown_deal";
   const agentId = registration.agent.id || registration.agent.name ||
     "unknown_agent";
   await startCheckpoint(
     registration.db,
-    transactionId,
+    dealId,
     agentId,
     registration.inputTopic,
     input,
   );
-  await executeRegisteredStep(registration, input, transactionId, agentId);
+  await executeRegisteredStep(registration, input, dealId, agentId);
 }
 
 async function executeRegisteredStep<
@@ -87,15 +88,15 @@ async function executeRegisteredStep<
 >(
   registration: FlowRegistration<TInput, TResult>,
   input: TInput,
-  transactionId: string,
+  dealId: string,
   agentId: string,
 ): Promise<void> {
   try {
     const result = await registration.executeStep(registration.agent, input);
-    await completeRegistration(registration, transactionId, agentId, result);
+    await completeRegistration(registration, dealId, agentId, result);
     publishResult(registration, input, result);
   } catch (error: unknown) {
-    await failRegistration(registration, transactionId, agentId, error);
+    await failRegistration(registration, dealId, agentId, error);
   }
 }
 
@@ -104,13 +105,13 @@ function failRegistration<
   TResult extends Record<string, unknown>,
 >(
   registration: FlowRegistration<TInput, TResult>,
-  transactionId: string,
+  dealId: string,
   agentId: string,
   error: unknown,
 ): Promise<void> {
   return failStep(
     registration.db,
-    transactionId,
+    dealId,
     agentId,
     registration.inputTopic,
     error,
@@ -122,13 +123,13 @@ async function completeRegistration<
   TResult extends Record<string, unknown>,
 >(
   registration: FlowRegistration<TInput, TResult>,
-  transactionId: string,
+  dealId: string,
   agentId: string,
   result: TResult,
 ): Promise<void> {
   await finishStep(
     registration.db,
-    transactionId,
+    dealId,
     agentId,
     registration.outputTopic,
     result,
@@ -151,13 +152,13 @@ function publishResult<
 
 async function startCheckpoint(
   db: DatabaseMemoryService,
-  transactionId: string,
+  dealId: string,
   agentId: string,
   topic: string,
   input: FlowMessage,
 ): Promise<void> {
   console.log(`[${agentId}] Starting step: ${topic}`);
-  await db.saveFlowCheckpoint(transactionId, agentId, topic, {
+  await db.saveFlowCheckpoint(dealId, agentId, topic, {
     status: "STARTED",
     data: input,
   });
@@ -165,12 +166,12 @@ async function startCheckpoint(
 
 async function finishStep(
   db: DatabaseMemoryService,
-  transactionId: string,
+  dealId: string,
   agentId: string,
   topic: string,
   result: Record<string, unknown>,
 ): Promise<void> {
-  await db.saveFlowCheckpoint(transactionId, agentId, topic, {
+  await db.saveFlowCheckpoint(dealId, agentId, topic, {
     status: "COMPLETED",
     result,
   });
@@ -179,13 +180,13 @@ async function finishStep(
 
 async function failStep(
   db: DatabaseMemoryService,
-  transactionId: string,
+  dealId: string,
   agentId: string,
   topic: string,
   error: unknown,
 ): Promise<void> {
   console.error(`[${agentId}] Error in step ${topic}:`, error);
-  await db.saveFlowCheckpoint(transactionId, agentId, topic, {
+  await db.saveFlowCheckpoint(dealId, agentId, topic, {
     status: "FAILED",
     error: String(error),
   });

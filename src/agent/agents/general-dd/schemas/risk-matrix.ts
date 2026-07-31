@@ -3,7 +3,7 @@ import { domainAreaSchema } from "../../../../shared/schemas/domain-area.ts";
 import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
 
 export const riskmatrixSchema = z.object({
-  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   risks: z.array(
     z.object({
       id: z.string().describe("Identifier of the audited risk."),
@@ -24,13 +24,13 @@ export const riskmatrixSchema = z.object({
         "Suggested strategy or contingency for mitigation (e.g., Escrow, indemnification, renegotiation).",
       ),
       isDealBreaker: z.boolean().describe(
-        "Marks if the risk violates the transaction's Go/No-Go criteria.",
+        "Marks if the risk violates the deal's Go/No-Go criteria.",
       ),
     }),
   ).describe(
     "Matrix of unified risks and contingent liabilities identified in the audit.",
   ),
   overallRiskScore: z.number().min(0).max(10).describe(
-    "Consolidated overall transaction risk score (0 to 10).",
+    "Consolidated overall deal risk score (0 to 10).",
   ),
 });

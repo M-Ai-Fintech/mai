@@ -1,8 +1,15 @@
 import pg from "pg";
 
+/**
+ * Legacy SQL table compatibility evidence (MAI-72 / MAI-129):
+ * Active domain APIs use Deal/DealId terminology while legacy Postgres tables
+ * (`transaction`, `transaction_business_role`, `financial_structure`, `phase_history`)
+ * remain physical SQL names until MAI-129 data migration.
+ */
+
 export interface PhaseTransitionRecord {
   id: string;
-  transactionId: string;
+  dealId: string;
   phaseId: string;
   phaseStatusId: string;
   comments: string | null;
@@ -47,16 +54,16 @@ async function createDealRecord(
 ): Promise<string> {
   const [typeId, strategyId, statusId] = await dealReferenceIds(client, input);
   const businessId = await insertBusiness(client, input.title);
-  const transactionId = await insertTransaction(
+  const dealId = await insertTransaction(
     client,
     input,
     typeId,
     strategyId,
     statusId,
   );
-  await linkTargetBusiness(client, transactionId, businessId);
-  await insertInitialPhase(client, transactionId);
-  return transactionId;
+  await linkTargetBusiness(client, dealId, businessId);
+  await insertInitialPhase(client, dealId);
+  return dealId;
 }
 
 async function dealReferenceIds(
@@ -165,19 +172,19 @@ function transactionValues(
 
 function linkTargetBusiness(
   client: pg.PoolClient,
-  transactionId: string,
+  dealId: string,
   businessId: string,
 ): Promise<pg.QueryResult> {
   return client.query(
     `INSERT INTO transaction_business_role
        (transaction_id, business_id, role_name) VALUES ($1, $2, 'TARGET')`,
-    [transactionId, businessId],
+    [dealId, businessId],
   );
 }
 
 async function insertInitialPhase(
   client: pg.PoolClient,
-  transactionId: string,
+  dealId: string,
 ): Promise<void> {
   const phaseId = await resolveOrderedPhase(client, "Sourcing & KYB");
   const statusId = await upsertNamedId(client, "phase_status", "In Progress");
@@ -185,7 +192,7 @@ async function insertInitialPhase(
     `INSERT INTO phase_history
        (transaction_id, phase_id, phase_status_id, data, started_at)
      VALUES ($1, $2, $3, '{}'::jsonb, CURRENT_TIMESTAMP)`,
-    [transactionId, phaseId, statusId],
+    [dealId, phaseId, statusId],
   );
 }
 
@@ -234,7 +241,7 @@ async function insertPhaseTransition(
     `INSERT INTO phase_history
        (transaction_id, phase_id, phase_status_id, comments, data)
      VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, transaction_id AS "transactionId",
+     RETURNING id, transaction_id AS "dealId",
        phase_id AS "phaseId", phase_status_id AS "phaseStatusId",
        comments, data, started_at AS "startedAt"`,
     transitionValues(input, phaseId, statusId),
@@ -255,3 +262,4 @@ function transitionValues(
     JSON.stringify(input.data ?? {}),
   ];
 }
+

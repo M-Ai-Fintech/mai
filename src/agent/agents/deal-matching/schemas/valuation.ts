@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const valuationSchema = z.object({
-  dealId: z.string().describe("Unique identifier of the deal/transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   targetCompany: z.string().describe("Name of the analyzed target company."),
   ebitda: z.number().describe(
     "Reference EBITDA for valuation in millions of reais (BRL).",

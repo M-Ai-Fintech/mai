@@ -1,8 +1,8 @@
 import { assertEquals, assertExists } from "@std/assert";
-import { TransactionRepository } from "../../../src/core/db/TransactionRepository.ts";
+import { DealRepository } from "../../../src/core/db/DealRepository.ts";
 
 interface RepositoryTestState {
-  readonly repo: TransactionRepository;
+  readonly repo: DealRepository;
   readonly title: string;
   readonly code: string;
   dealId: string;
@@ -10,7 +10,7 @@ interface RepositoryTestState {
 
 function createTestState(): RepositoryTestState {
   return {
-    repo: new TransactionRepository(),
+    repo: new DealRepository(),
     title: "Alpha Acquisitions Ltd",
     code: "ALPHA_ACQ_" +
       Math.random().toString(36).substring(2, 7).toUpperCase(),
@@ -19,7 +19,7 @@ function createTestState(): RepositoryTestState {
 }
 
 async function connectRepository(
-  repo: TransactionRepository,
+  repo: DealRepository,
 ): Promise<boolean> {
   const connected = await repo.connect();
   if (connected) return true;
@@ -91,7 +91,7 @@ async function retrieveDealDetailsStep(
 }
 
 function assertAdvancedPhase(
-  deal: NonNullable<Awaited<ReturnType<TransactionRepository["getDealById"]>>>,
+  deal: NonNullable<Awaited<ReturnType<DealRepository["getDealById"]>>>,
 ): void {
   assertEquals(deal.phase_history.length, 2);
   // Check old phase is marked completed (completedAt is not null)
@@ -108,7 +108,7 @@ async function advancePhaseStep(
   state: RepositoryTestState,
 ): Promise<void> {
   await context.step(
-    "should advance transaction phase and record history",
+    "should advance deal phase and record history",
     async () => {
       await state.repo.updateDealPhase(
         state.dealId,
@@ -139,8 +139,9 @@ async function runRepositorySteps(
   );
 }
 
-Deno.test("TransactionRepository Integration Tests", async (context) => {
+Deno.test("DealRepository Integration Tests", async (context) => {
   const state = createTestState();
   if (!await connectRepository(state.repo)) return;
   await runRepositorySteps(context, state);
 });
+

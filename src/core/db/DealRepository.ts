@@ -4,27 +4,33 @@ import {
   DealListRecord,
   findDealById,
   listDealRecords,
-} from "./transactions/read_operations.ts";
+} from "./deals/read_operations.ts";
 import {
   createDealTransaction,
   PhaseTransitionRecord,
   transitionDealPhase,
-} from "./transactions/write_operations.ts";
+} from "./deals/write_operations.ts";
 
 export type { DealDetailRecord, DealListRecord, PhaseTransitionRecord };
 
-export class TransactionRepository extends DatabaseMemoryService {
-  private static repoInstance: TransactionRepository | null = null;
+/**
+ * Primary Deal Repository for banker-facing M&A deal operations.
+ *
+ * Governed domain authority: MAI-103
+ * @see backlog/docs/architecture/backend-redesign/domain-workflows/doc-20 - MAI-103-Bounded-Contexts-Aggregates-and-Workflow-State-Machines.md
+ */
+export class DealRepository extends DatabaseMemoryService {
+  private static repoInstance: DealRepository | null = null;
 
-  public static getRepoInstance(): TransactionRepository {
-    if (!TransactionRepository.repoInstance) {
-      TransactionRepository.repoInstance = new TransactionRepository();
+  public static getRepoInstance(): DealRepository {
+    if (!DealRepository.repoInstance) {
+      DealRepository.repoInstance = new DealRepository();
     }
-    return TransactionRepository.repoInstance;
+    return DealRepository.repoInstance;
   }
 
   /**
-   * Creates a transaction and its target with an initial sourcing phase.
+   * Creates a deal and its target with an initial sourcing phase.
    *
    * @example await repository.createDeal("Target", "D-1", "M&A", "Buy", "Active", 10)
    */
@@ -87,3 +93,4 @@ export class TransactionRepository extends DatabaseMemoryService {
     });
   }
 }
+

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { verifyRegistryTool } from "../../agent/actions.ts";
-import { TransactionRepository } from "../../core/db/TransactionRepository.ts";
+import { DealRepository } from "../../core/db/DealRepository.ts";
 import { PDFGenerator } from "../../engines/document-generator/pdf.ts";
 import {
   CoverageConstraint,
@@ -67,7 +67,7 @@ const documentInput = z.object({
 
 type LegacyRoute = (
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
   headers: Headers,
 ) => Promise<Response>;
 
@@ -81,7 +81,7 @@ const legacyRoutes: Record<string, LegacyRoute> = {
 
 export async function handleLegacyRoute(
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
   headers: Headers,
 ): Promise<Response | null> {
   if (request.method !== "POST") return null;
@@ -104,7 +104,7 @@ async function handleKyb(
 
 async function handlePrediction(
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const input = predictionInput.parse(await request.json());
@@ -125,7 +125,7 @@ async function handlePrediction(
 
 async function handlePortfolio(
   request: Request,
-  repository: TransactionRepository,
+  repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const input = portfolioInput.parse(await request.json());
@@ -231,7 +231,7 @@ function termSheetInput(input: z.infer<typeof documentInput>) {
 }
 
 async function persistKnowledge(
-  repository: TransactionRepository,
+  repository: DealRepository,
   category: string,
   knowledge: Record<string, unknown>,
 ): Promise<void> {
