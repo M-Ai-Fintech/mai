@@ -7,7 +7,9 @@ import { vdrrequestSchema } from "../../src/agent/agents/general-dd/schemas/vdr-
 import { nashequilibriumSchema } from "../../src/agent/agents/negotiation/schemas/nash-equilibrium.ts";
 import { conditionsprecedentSchema } from "../../src/agent/agents/legal-closing/schemas/conditions-precedent.ts";
 import { targetDossierDraftSchema } from "../../src/shared/schemas/target-dossier.ts";
+import { termSheetCoreSchema } from "../../src/shared/schemas/term-sheet.ts";
 import { bindingTermSheetSchema } from "../../src/agent/agents/legal-closing/schemas/term-sheet.ts";
+import { spaSchema } from "../../src/agent/agents/legal-closing/schemas/spa.ts";
 import { negotiationProposalSchema } from "../../src/agent/agents/negotiation/schemas/term-sheet.ts";
 import { domainAreaSchema } from "../../src/shared/schemas/domain-area.ts";
 import { OutboxRepository } from "../../src/platform/events/v1.ts";
@@ -40,7 +42,11 @@ Deno.test("MAI-72 Enforcement - No active TransactionRepository class remains", 
   } catch {
     hasLegacyClass = false;
   }
-  assertEquals(hasLegacyClass, false, "TransactionRepository must not be exported");
+  assertEquals(
+    hasLegacyClass,
+    false,
+    "TransactionRepository must not be exported",
+  );
 });
 
 Deno.test("MAI-72 Enforcement - Agent and domain schemas use clean DealId descriptions", () => {
@@ -50,6 +56,10 @@ Deno.test("MAI-72 Enforcement - Agent and domain schemas use clean DealId descri
   const vdrrequestDealDesc = vdrrequestSchema.shape.dealId.description;
   const nashDealDesc = nashequilibriumSchema.shape.dealId.description;
   const conditionsDealDesc = conditionsprecedentSchema.shape.dealId.description;
+  const termSheetCoreDealDesc = termSheetCoreSchema.shape.dealId.description;
+  const negotiationProposalDealDesc =
+    negotiationProposalSchema.shape.dealId.description;
+  const spaDealDesc = spaSchema.shape.dealId.description;
 
   assertEquals(synergyDealDesc, "Unique identifier of the deal.");
   assertEquals(valuationDealDesc, "Unique identifier of the deal.");
@@ -57,11 +67,37 @@ Deno.test("MAI-72 Enforcement - Agent and domain schemas use clean DealId descri
   assertEquals(vdrrequestDealDesc, "Unique identifier of the deal.");
   assertEquals(nashDealDesc, "Unique identifier of the deal.");
   assertEquals(conditionsDealDesc, "Unique deal ID.");
+  assertEquals(termSheetCoreDealDesc, "Unique identifier of the deal.");
+  assertEquals(negotiationProposalDealDesc, "Unique identifier of the deal.");
+  assertEquals(spaDealDesc, "Unique identifier of the deal.");
+});
+
+Deno.test("MAI-72 Enforcement - Target and proposal descriptions use Deal terminology", () => {
+  const targetNameDesc = termSheetCoreSchema.shape.targetName.description;
+  const nashProposalDesc =
+    nashequilibriumSchema.shape.payoffMatrix.element.shape.proposal.description;
+
+  assertEquals(
+    targetNameDesc,
+    "Name or brand of the target company of the deal.",
+  );
+  assertEquals(
+    nashProposalDesc,
+    "Deal structure proposal evaluated in this round.",
+  );
 });
 
 Deno.test("MAI-72 Enforcement - MAI-74 schemas preserve Deal & Term Sheet contract split", () => {
   assertExists(negotiationProposalSchema.shape.dealId);
   assertExists(bindingTermSheetSchema.shape.dealId);
+  assertEquals(
+    negotiationProposalSchema.shape.dealId.description,
+    "Unique identifier of the deal.",
+  );
+  assertEquals(
+    bindingTermSheetSchema.shape.dealId.description,
+    "Unique identifier of the deal.",
+  );
 });
 
 Deno.test("MAI-72 Enforcement - MAI-75 Target Dossier contracts use DealId", () => {
@@ -79,9 +115,15 @@ Deno.test("MAI-72 Enforcement - Platform transaction runner & transactional outb
 });
 
 Deno.test("MAI-72 Enforcement - Legacy SQL table naming is isolated and documented behind repository", async () => {
-  const fileContent = await Deno.readTextFile(new URL("../../src/core/db/deals/write_operations.ts", import.meta.url));
-  const containsSqlIsolationDoc = fileContent.includes("Legacy SQL table compatibility evidence");
-  const containsTransactionSqlTable = fileContent.includes("INSERT INTO transaction (");
+  const fileContent = await Deno.readTextFile(
+    new URL("../../src/core/db/deals/write_operations.ts", import.meta.url),
+  );
+  const containsSqlIsolationDoc = fileContent.includes(
+    "Legacy SQL table compatibility evidence",
+  );
+  const containsTransactionSqlTable = fileContent.includes(
+    "INSERT INTO transaction (",
+  );
   assertEquals(containsSqlIsolationDoc, true);
   assertEquals(containsTransactionSqlTable, true);
 });
