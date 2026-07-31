@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:09'
+updated_date: '2026-07-31 20:11'
 labels:
   - backend
   - architecture
@@ -191,4 +191,21 @@ Legacy agent VDR-tool retirement ownership
 3. Useful schemas, fixtures, checklist examples, and test vectors remain migration evidence until replacement coverage exists.
 
 4. Physical retirement preserves Git and audit history.
+
+Legacy Papermark adapter retirement ownership
+
+1. MAI-129 owns physical retirement after MAI-112 and MAI-127 establish replacement coverage and consumers are migrated.
+
+2. Retirement or adaptation candidates include:
+   - direct `downloadBatch` writes to `./vdr_rooms`;
+   - local-directory binary authority;
+   - Papermark configuration inherited from Supergood-specific types;
+   - fallback metadata that fabricates current timestamps or missing provider fields;
+   - direct runtime-directory naming conventions;
+   - mocked-fetch tests presented as live certification;
+   - compatibility exports with no remaining consumer.
+
+3. The provider port, parsing logic, error handling, and useful contract tests may be adapted rather than deleted.
+
+4. Physical retirement preserves useful fixtures, migration evidence, Git history, and audit evidence.
 <!-- SECTION:NOTES:END -->

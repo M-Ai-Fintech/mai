@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 20:11'
 labels:
   - core
   - vdr
@@ -43,6 +43,42 @@ Criar um adaptador de integração direta com a API REST do Papermark para lista
 4. Criar a suíte de testes unitários mockando o fetch em tests/core/papermark.spec.ts.
 5. Documentar variáveis de ambiente necessárias e integrá-lo com as demais actions da core.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded by MAI-112 and MAI-127, with physical retirement owned by MAI-129.
+
+Requirements carried forward:
+
+- authenticated Papermark access;
+- custom environment URL support;
+- document listing;
+- metadata retrieval;
+- upload and download;
+- pagination where supported;
+- normalized provider errors;
+- safe credential handling;
+- typed provider contracts;
+- contract tests;
+- authenticated live-environment certification.
+
+Architecture changed:
+
+- the provider adapter implements `DocumentSourceProvider`;
+- Document and Document Version ownership belongs to MAI-112;
+- provider implementation and certification belong to MAI-127;
+- binaries are referenced through approved object storage rather than `./vdr_rooms`;
+- connector credentials belong to tenant-scoped Connector Accounts;
+- missing provider fields cannot be fabricated;
+- mocked HTTP tests cannot satisfy live provider certification;
+- Supergood-specific configuration is not the universal VDR contract;
+- MAI-129 owns obsolete compatibility retirement.
+
+Existing adapter code and tests remain migration evidence until replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Comments
 

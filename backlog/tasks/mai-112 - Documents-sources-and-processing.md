@@ -4,6 +4,7 @@ title: 'Documents, sources and processing'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 20:11'
 labels:
   - backend
   - architecture
@@ -96,3 +97,39 @@ Object storage/VDR provider selection, credentials and production readiness evid
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Papermark adapter migration boundary
+
+1. MAI-112 owns the project-level Document Source and Document Version contracts used by VDR adapters.
+
+2. Provider-specific code implements the project-owned `DocumentSourceProvider` port rather than defining document-domain truth.
+
+3. A Papermark source connection references a tenant-scoped Connector Account and explicit provider/source identity.
+
+4. Sync and ingestion record:
+   - provider workspace or data-room identity;
+   - provider document identity;
+   - folder or hierarchy identity where available;
+   - cursor or continuation state;
+   - source version or update marker;
+   - checksum supplied by the provider or calculated by MAI;
+   - immutable Document Version;
+   - object-store reference;
+   - processing state;
+   - exact failure state.
+
+5. Sync, upload negotiation, download, checksum, storage, and processing use idempotent durable jobs.
+
+6. Downloaded files are not authoritative merely because they exist in a local runtime directory.
+
+7. `./vdr_rooms/[dealId]` is not the target binary-storage authority.
+
+8. Missing provider metadata is explicit and must not be replaced with fabricated identifiers or timestamps.
+
+9. Provider implementation and environment certification remain under MAI-127.
+
+10. Existing adapter code remains migration evidence until the new contracts and consumers exist.
+<!-- SECTION:NOTES:END -->
