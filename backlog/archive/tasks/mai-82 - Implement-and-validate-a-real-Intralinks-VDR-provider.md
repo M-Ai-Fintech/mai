@@ -4,6 +4,7 @@ title: Implement and validate a real Intralinks VDR provider
 status: To Do
 assignee: []
 created_date: '2026-07-22 05:24'
+updated_date: '2026-07-31 06:10'
 labels:
   - vdr
   - intralinks
@@ -29,6 +30,16 @@ Post-MVP integration for Intralinks. Replace the current fetch-mocked shell and 
 - [ ] #4 Provider-specific fields are translated without leaking Intralinks terminology into the canonical VDR domain model
 - [ ] #5 Operational setup, credentials, limitations, and support boundary are documented
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+The Intralinks-specific capability is deferred under the MAI-127 provider readiness register.
+
+Its requirements for official documentation, regional endpoints, authentication, permissions, pagination, downloads, rate limits, errors, operational setup, and non-mocked certification are retained as candidate-provider requirements.
+
+Archive does not assert that Intralinks is implemented, configured, certified, or unsupported.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

@@ -4,7 +4,7 @@ title: Integration adapters and certification
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 05:51'
+updated_date: '2026-07-31 06:10'
 labels:
   - backend
   - architecture
@@ -98,3 +98,22 @@ Concrete providers, credentials, data-residency decisions and production readine
 3. Implement only the exact bounded scope with named fakes and focused tests.
 4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Deferred candidate VDR providers:
+
+- iDeals;
+- Intralinks.
+
+Current classification:
+
+- not an MVP launch requirement;
+- not configured;
+- not certified;
+- no production-readiness claim;
+- provider-specific commercial access, credentials, official documentation, approved sandbox, and support boundaries remain unresolved.
+
+A new provider-specific certification task may be created later when an approved commercial or customer requirement exists.
+<!-- SECTION:NOTES:END -->
