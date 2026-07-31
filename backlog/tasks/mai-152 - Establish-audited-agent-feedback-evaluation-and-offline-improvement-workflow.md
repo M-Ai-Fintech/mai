@@ -4,6 +4,7 @@ title: 'Establish audited agent feedback, evaluation, and offline improvement wo
 status: To Do
 assignee: []
 created_date: '2026-07-31 18:32'
+updated_date: '2026-07-31 19:44'
 labels:
   - backend
   - architecture
@@ -111,3 +112,18 @@ A user preference cannot override:
 - `src/agent/continuous_learning.ts` remains migration evidence until MAI-121 replaces its runtime ownership and MAI-129 retires obsolete code.
 - Semantic retrieval may support dataset analysis, but similarity is not a compliance or policy authority.
 <!-- SECTION:NOTES:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Every acceptance criterion is checked with current evidence.
+- [ ] #2 Structured feedback is attached to exact governed execution records.
+- [ ] #3 Feedback and original outputs are immutable and versioned.
+- [ ] #4 Dataset eligibility, provenance, classification, retention, and deletion decisions are explicit.
+- [ ] #5 At least one versioned offline evaluation dataset and regression suite exists.
+- [ ] #6 No production prompt, tool, knowledge bundle, model configuration, or model weight changes automatically from runtime feedback.
+- [ ] #7 Improvement proposals require separate review and approval.
+- [ ] #8 Human authority and policy boundaries have regression coverage.
+- [ ] #9 Legacy Continuous Learning runtime behavior has a documented migration and retirement path through MAI-121 and MAI-129.
+- [ ] #10 MAI-152 remains outside the MAI-131 MVP release dependency graph.
+- [ ] #11 The canonical repository verification gate passes.
+<!-- DOD:END -->

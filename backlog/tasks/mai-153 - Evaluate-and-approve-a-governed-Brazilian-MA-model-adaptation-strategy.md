@@ -4,6 +4,7 @@ title: Evaluate and approve a governed Brazilian M&A model-adaptation strategy
 status: To Do
 assignee: []
 created_date: '2026-07-31 18:32'
+updated_date: '2026-07-31 19:44'
 labels:
   - backend
   - architecture
@@ -108,3 +109,18 @@ This task does not own:
 - Existing fake adapter-loading and mock fine-tuned responses are not valid capability evidence.
 - A future implementation task must be separately approved after a Go decision.
 <!-- SECTION:NOTES:END -->
+
+## Definition of Done
+<!-- DOD:BEGIN -->
+- [ ] #1 Every acceptance criterion is checked with current evidence.
+- [ ] #2 A common evaluation dataset and methodology have been approved.
+- [ ] #3 All required strategies have been compared.
+- [ ] #4 Data provenance, licensing, privacy, retention, and deletion decisions are explicit.
+- [ ] #5 Expert review evidence is recorded.
+- [ ] #6 A formal Go or No-go decision exists.
+- [ ] #7 A Go decision creates a separate implementation task rather than silently expanding MAI-153.
+- [ ] #8 A No-go decision records the approved alternative strategy.
+- [ ] #9 Current fake LoRA and fine-tuned-inference capabilities have an explicit retirement path through MAI-121 and MAI-129.
+- [ ] #10 MAI-153 remains outside the MAI-131 MVP release dependency graph.
+- [ ] #11 The canonical repository verification gate passes.
+<!-- DOD:END -->
