@@ -4,6 +4,7 @@ title: Run Papermark locally as the MVP VDR and validate its complete API lifecy
 status: To Do
 assignee: []
 created_date: '2026-07-22 05:24'
+updated_date: '2026-07-31 20:14'
 labels:
   - vdr
   - papermark
@@ -33,6 +34,41 @@ Adopt one real VDR for the MVP by running the open-source Papermark application 
 - [ ] #6 Failure cases cover invalid credentials, unavailable Papermark, missing documents, rate limits where applicable, and malformed API responses
 - [ ] #7 The supported Papermark license/version, API endpoints, known self-hosting limitations, and upgrade procedure are documented
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded by MAI-127 for Papermark adapter certification and by MAI-148 when self-hosting infrastructure is explicitly selected.
+
+Requirements carried forward:
+
+- pinned Papermark version;
+- reproducible approved environment;
+- documented PostgreSQL, authentication, and blob-storage prerequisites;
+- safe secret configuration;
+- authenticated lifecycle tests;
+- document upload, list, metadata, download, and cleanup;
+- provider failure tests;
+- license and API documentation;
+- upgrade and rollback procedure;
+- prohibition of mock or fallback success.
+
+Architecture changed:
+
+- Papermark is the selected MVP VDR candidate, not automatically certified;
+- a locally self-hosted instance is optional non-production certification infrastructure;
+- local deployment is not automatically the production topology;
+- provider certification belongs to MAI-127;
+- approved self-hosting infrastructure belongs to MAI-148;
+- document synchronization and immutable versions belong to MAI-112;
+- fixtures and mocked fetches cannot satisfy live certification;
+- failure cannot silently fall back to local documents;
+- production readiness requires environment-specific evidence.
+
+Existing local deployment notes, scripts, adapters, tests, and fixtures remain migration evidence until replacement coverage exists.
+
+Archive does not authorize immediate code or infrastructure deletion.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

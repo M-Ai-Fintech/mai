@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:51'
+updated_date: '2026-07-31 20:14'
 labels:
   - backend
   - architecture
@@ -120,6 +121,37 @@ Implementation Notes:
 - Becomes a dependency of MAI-131.
 
 MAI-148 may execute in parallel with bounded-context domain work after MAI-106, subject to exclusive ownership of infrastructure and deployment paths.
+
+Papermark self-hosting infrastructure boundary
+
+1. MAI-148 owns Papermark infrastructure only when self-hosting is explicitly selected for an approved MAI environment.
+
+2. A local developer Papermark instance does not define staging or production topology.
+
+3. Approved self-hosting must define:
+   - pinned version;
+   - runtime packaging;
+   - managed PostgreSQL or approved persistence;
+   - blob or object storage;
+   - secrets;
+   - identity and administrative access;
+   - ingress and egress;
+   - backups;
+   - restoration;
+   - monitoring;
+   - alerts;
+   - capacity;
+   - upgrade;
+   - rollback;
+   - cost ownership.
+
+4. Provider behavior and certification remain under MAI-127.
+
+5. Document and source-domain behavior remains under MAI-112.
+
+6. Papermark must not be provisioned merely because it is the selected MVP candidate.
+
+7. Production self-hosting requires explicit infrastructure, security, operations, data-residency, and cost approval.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

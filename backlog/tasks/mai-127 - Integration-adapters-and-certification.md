@@ -4,7 +4,7 @@ title: Integration adapters and certification
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 17:43'
+updated_date: '2026-07-31 20:14'
 labels:
   - backend
   - architecture
@@ -155,4 +155,77 @@ Local fixture and test-adapter boundary
 9. Deferred candidate providers remain unconfigured and uncertified until a separate approved requirement exists.
 
 10. MAI-151 owns deterministic fast-preflight behavior.
+
+Papermark MVP VDR certification profile
+
+1. Papermark is the sole currently selected MVP VDR candidate.
+
+2. Candidate selection does not mean configured, certified, production-ready, or enabled.
+
+3. Papermark remains disabled outside explicitly configured environments.
+
+4. Certification records the exact:
+   - Papermark version or commit;
+   - license and permitted deployment model;
+   - API version and endpoint set;
+   - environment;
+   - region;
+   - Connector Account;
+   - authentication mechanism;
+   - storage topology;
+   - supported capabilities;
+   - unsupported capabilities;
+   - known limitations;
+   - upgrade and rollback procedure.
+
+5. The authenticated lifecycle suite covers, when supported:
+   - account or session authentication;
+   - data-room selection or creation;
+   - folder creation and listing;
+   - document upload;
+   - pagination;
+   - document listing;
+   - metadata retrieval;
+   - binary download;
+   - permission behavior;
+   - cleanup of test fixtures.
+
+6. Failure and operational tests cover:
+   - invalid credentials;
+   - expired credentials;
+   - unavailable provider;
+   - missing room;
+   - missing folder;
+   - missing document;
+   - forbidden access;
+   - rate limits;
+   - malformed responses;
+   - timeout;
+   - retry behavior;
+   - health and capability discovery.
+
+7. Data-handling certification covers:
+   - tenant isolation;
+   - workspace and Deal isolation;
+   - classification;
+   - residency;
+   - retention;
+   - deletion;
+   - legal holds;
+   - backup and recovery expectations;
+   - logging and secret redaction.
+
+8. No fixture, mocked fetch, hardcoded payload, local file, or in-memory result can be presented as successful Papermark certification.
+
+9. Failure of configured Papermark must not silently select a fixture provider.
+
+10. A local self-hosted Papermark instance may be used as an approved non-production certification environment.
+
+11. Local certification is not sufficient production-readiness evidence.
+
+12. Production readiness requires environment-specific security, infrastructure, recovery, operational, and residency evidence.
+
+13. Unsupported capability returns an explicit denied or unavailable result.
+
+14. iDeals and Intralinks remain deferred candidate providers and are not MVP dependencies.
 <!-- SECTION:NOTES:END -->
