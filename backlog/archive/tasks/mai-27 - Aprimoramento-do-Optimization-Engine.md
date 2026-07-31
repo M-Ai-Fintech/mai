@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 05:09'
 labels:
   - engine
   - optimization
@@ -78,6 +78,39 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: Optimization components exist, but a colocated genetic-selection test fails and is excluded by the canonical Deno test include pattern. Reopen until all optimizer tests are discovered, deterministic, and green.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+created: 2026-07-31 05:09
+---
+Superseded by:
+
+- MAI-144 — deterministic valuation and synergy calculations;
+- MAI-145 — matching and portfolio-selection optimization;
+- MAI-146 — negotiation term-sheet proposal optimization.
+
+Carried forward:
+
+- centralization of mathematical logic;
+- typed APIs;
+- budget, risk, tax, sector, and exclusion constraints;
+- buyer and seller utility constraints;
+- feasible and infeasible tests;
+- deterministic behavior;
+- performance evidence;
+- removal of duplicate mathematical implementations.
+
+Changed architecture:
+
+- no generic Optimization Engine business boundary;
+- valuation, matching, and negotiation own separate algorithms;
+- pure mathematical modules do not own agents, APIs, persistence, approvals, or frontend workflows;
+- negotiation optimizer cannot send, approve, or accept terms;
+- randomness must be removed or explicitly seeded;
+- KYC/valuation naming cannot own matching portfolio selection.
+
+Existing mathematical code and tests remain migration evidence.
+
+Archive does not authorize code deletion or file movement.
 ---
 <!-- COMMENTS:END -->
 

@@ -4,7 +4,7 @@ title: Standardize Arbitration Chamber enum across all schemas to canonical valu
 status: To Do
 assignee: []
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 05:09'
 labels:
   - revalidation
 milestone: m-14
@@ -72,5 +72,31 @@ author: @codex
 created: 2026-07-22 05:29
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The implementation diverges from the canonical enum by adding values and does not prove a single shared type across all required schemas. All criteria are unchecked. Reopen for one authoritative contract.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+created: 2026-07-31 05:09
+---
+Superseded by MAI-147.
+
+Carried forward:
+
+- need for one shared legal contract;
+- elimination of contradictory local enums;
+- normalization of `B3` and `CAM-B3`;
+- compatibility across Contract Analysis, Term Sheet, and SPA;
+- focused parsing and migration tests.
+
+Changed architecture:
+
+- the authoritative concept is dispute-resolution mechanism, not arbitration chamber;
+- arbitration and court litigation are structurally distinct;
+- `Judicial-Court` is not an arbitration institution;
+- non-canonical institutions use an explicit named structure rather than an authoritative `Other` enum value;
+- unknown or ambiguous values are not silently guessed;
+- migration and compatibility responsibilities are explicit.
+
+Existing schemas and historical implementation evidence remain available for migration.
+
+Archive does not authorize schema changes or code deletion.
 ---
 <!-- COMMENTS:END -->

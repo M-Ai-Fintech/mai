@@ -4,6 +4,7 @@ title: Valuation scenarios and approval
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 05:02'
 labels:
   - backend
   - architecture
@@ -17,6 +18,7 @@ milestone: m-12
 dependencies:
   - MAI-113
   - MAI-115
+  - MAI-144
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -

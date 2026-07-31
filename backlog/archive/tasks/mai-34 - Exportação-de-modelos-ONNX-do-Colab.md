@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 05:08'
 labels:
   - engine
   - prediction
@@ -47,6 +47,25 @@ Estruturar e validar o notebook Jupyter (scripts/colab_training_notebook.ipynb) 
 
 <!-- SECTION:NOTES:BEGIN -->
 [POC Orchestrator Note] Grupo A (Paralelo): Focar no Jupyter notebook e em compilar o .onnx na pasta models/.
+
+Superseded by MAI-142.
+
+Carried forward:
+
+- training notebook;
+- ONNX export;
+- dynamic batch axes;
+- quantization;
+- six-input and four-output model intention;
+- reproducibility requirements;
+- documentation;
+- artifact generation evidence.
+
+Reason for supersession:
+
+The existing task treated prototype scaffolding and a synthetic reference artifact as sufficient completion evidence. MAI-142 replaces it with reproducible artifact generation, manifest, checksum, tensor validation, complete output mapping, typed failures, and explicit readiness classification.
+
+Archive does not authorize deletion of the notebook, artifact, tests, or historical evidence.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

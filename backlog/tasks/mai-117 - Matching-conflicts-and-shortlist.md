@@ -4,6 +4,7 @@ title: 'Matching, conflicts and shortlist'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 05:03'
 labels:
   - backend
   - architecture
@@ -18,6 +19,7 @@ dependencies:
   - MAI-110
   - MAI-113
   - MAI-115
+  - MAI-145
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -

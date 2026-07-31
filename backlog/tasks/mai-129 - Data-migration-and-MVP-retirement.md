@@ -4,6 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 05:07'
 labels:
   - backend
   - architecture
@@ -16,9 +17,9 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-106
+  - MAI-109
   - MAI-110
   - MAI-111
-  - MAI-109
   - MAI-112
   - MAI-113
   - MAI-114
@@ -35,6 +36,7 @@ dependencies:
   - MAI-125
   - MAI-126
   - MAI-127
+  - MAI-147
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -

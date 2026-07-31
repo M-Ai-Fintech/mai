@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 05:09'
 labels:
   - engine
   - prediction
@@ -65,6 +65,36 @@ author: @codex
 created: 2026-07-22 05:28
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: Only part of the prediction-engine criteria is implemented: runtime mapping consumes only the first of four ONNX outputs, integrity verification is unconditional, and fallback semantics are inconsistent. Reopen for the complete contract.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+created: 2026-07-31 05:09
+---
+Superseded by:
+
+- MAI-142 — model artifact and local inference runtime;
+- MAI-143 — governed product and domain integration.
+
+Carried forward:
+
+- complete six-input contract;
+- complete model-output contract;
+- runtime initialization;
+- product integration;
+- explicit failure behavior;
+- tests;
+- documentation;
+- agent and user-facing consumption requirements.
+
+Intentionally rejected or changed:
+
+- silent simulation fallback represented as successful inference;
+- direct model calls from CLI or agent actions as the target architecture;
+- technical /predict, /onnx, /model, or /engine product APIs;
+- combining model generation, runtime, domain integration, and human workflow in one task.
+
+Existing code and tests remain migration evidence.
+
+Archive does not authorize code deletion.
 ---
 <!-- COMMENTS:END -->
 

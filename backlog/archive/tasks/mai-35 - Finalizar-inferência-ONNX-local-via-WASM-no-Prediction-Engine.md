@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 05:08'
 labels:
   - engine
   - prediction
@@ -55,6 +55,23 @@ Alternativa investigada: onnxruntime-web via Deno FFI – descartar se o import 
 Thresholds Z-Score de Altman (1968): Safe ≥ 2.99 | Grey Zone 1.81–2.99 | Distress < 1.81.
 
 [POC Orchestrator Note] Grupo B (Síncrono após A): Usar o modelo de MAI-34. Focar em src/engines/prediction/onnx.ts.
+
+Superseded by MAI-142.
+
+Carried forward:
+
+- Deno/WASM runtime;
+- real artifact loading;
+- inference;
+- input validation;
+- benchmark evidence;
+- initialization and failure tests.
+
+Reason for supersession:
+
+The runtime must be reviewed together with the model artifact and complete tensor contract. The old task did not own the required artifact manifest, six-input validation, four-output mapping, typed compatibility failures, or explicit fallback classification.
+
+Archive does not authorize deletion of runtime code or tests.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

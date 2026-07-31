@@ -4,6 +4,7 @@ title: Closing control
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 05:07'
 labels:
   - backend
   - architecture
@@ -20,6 +21,7 @@ dependencies:
   - MAI-113
   - MAI-114
   - MAI-115
+  - MAI-147
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
