@@ -16,7 +16,7 @@ export const termSheetFinancialSchema = z.object({
 });
 
 export const termSheetCoreSchema = z.object({
-  dealId: z.string().describe("Unique identification of the transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   buyerName: z.string().describe(
     "Corporate name or name of the buyer (Buy-Side).",
   ).optional(),
@@ -24,7 +24,7 @@ export const termSheetCoreSchema = z.object({
     "Corporate name or name of the seller (Sell-Side).",
   ).optional(),
   targetName: z.string().describe(
-    "Name or brand of the target company of the transaction.",
+    "Name or brand of the target company of the deal.",
   ).optional(),
   valuationAmount: z.number().describe(
     "Total value attributed to the company (Enterprise Value) in millions of reais (BRL).",

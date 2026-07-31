@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@antigravity'
 created_date: '2026-07-20 17:18'
-updated_date: '2026-07-31 13:23'
+updated_date: '2026-07-31 16:59'
 labels:
   - revalidation
 milestone: m-14
@@ -32,121 +32,58 @@ During the domain modeling session, 'Deal' was established as the canonical term
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-## MAI-72 Execution & Audit Notes
+## MAI-72 Terminology Normalization Correction Notes
 
-### 1. Repository-Wide Inventory & Classification
-- **TransactionRepository**: Refactored to  in . Consumers (, , ) updated.
-- **transactionId**: Refactored to  in active TypeScript APIs (, , , , , , , , , ).
-- **transactions directory**: Renamed  to .
-- **schema descriptions**: Updated 'deal/transaction' and 'Unique transaction ID' to 'deal' / 'Unique deal ID'.
-- **Legitimate Technical/Financial Usages Preserved**: Platform DB transaction runners (//, ), transactional outbox/inbox (), and legal/financial terminology in i18n/docs preserved.
-- **Legacy Database Boundary**: Physical Postgres SQL table names (, , , ) isolated behind repository SQL queries with explicit MAI-129 compatibility evidence docstrings.
+### 1. Classified Repository Search
+- **Deal-domain terminology requiring correction**:
+  - `src/shared/schemas/term-sheet.ts` (`termSheetCoreSchema.shape.dealId`, `targetName`)
+  - `src/agent/agents/negotiation/schemas/term-sheet.ts` (`negotiationProposalSchema.shape.dealId`)
+  - `src/agent/agents/legal-closing/schemas/spa.ts` (`spaSchema.shape.dealId`)
+  - `src/agent/agents/negotiation/schemas/nash-equilibrium.ts` (`nashequilibriumSchema.shape.payoffMatrix.element.shape.proposal`)
+  - `src/api/routes/legacy.ts` (`handleKyb`, `handleNegotiation`, `handleDocument` parameter types referencing non-existent `TransactionRepository` export instead of `DealRepository`)
+- **Legitimate technical/database transaction terminology preserved**:
+  - Platform database runners (`PostgresTransactionRunner`, `withTransaction`)
+  - Transactional outbox/inbox (`OutboxRepository`, `InboxRepository`)
+  - DB isolation level callbacks (`pg.PoolClient` transaction callbacks)
+- **Legitimate legal/financial transaction terminology preserved**:
+  - `Licença de Operação (LO)` environmental license standards
+  - Legal/regulatory precedent transaction context and M&A documentation guides
+- **Legacy SQL table names deferred to MAI-129**:
+  - Physical SQL tables (`transaction`, `financial_structure`, `phase_history`, `transaction_business_role`, `transaction_advisor`) and their `transaction_id` columns isolated behind `DealRepository` SQL queries and `integration_tools.ts` fallback tables.
 
-### 2. Governed Domain Authority
-- Cites  in .
+### 2. Files Corrected
+- `src/shared/schemas/term-sheet.ts`
+- `src/agent/agents/negotiation/schemas/term-sheet.ts`
+- `src/agent/agents/legal-closing/schemas/spa.ts`
+- `src/agent/agents/negotiation/schemas/nash-equilibrium.ts`
+- `src/api/routes/legacy.ts`
+- `tests/unit/deal_terminology_enforcement.spec.ts`
 
-### 3. Verification
-- 
-▶ Canonical documentation
+### 3. Focused Test Results
+- `tests/unit/deal_terminology_enforcement.spec.ts`: 10 passed, 0 failed
+- `tests/unit/term_sheet_schema_test.ts`: 8 passed, 0 failed
+- `tests/core/target_dossier_memory.spec.ts`: 1 passed (12 steps), 0 failed
+- `tests/shared/domain-area.spec.ts`: 10 passed, 0 failed
 
-▶ I18n Strings Check
-
-▶ Deno tests
-
-▶ Frontend design tokens
-
-▶ Frontend foundation boundary
-
-▶ Frontend component boundary
-
-▶ Frontend shell boundary
-
-▶ Frontend screen families
-
-▶ Frontend deal intelligence screens
-
-▶ Frontend deal execution screens
-
-▶ Frontend Figma-to-code conformance
-
-▶ GUI unit tests
-
-▶ Next.js production build
-
-▶ Frontend principal workflows
-
-▶ Storybook documentation
-
-▶ Storybook build
-
-▶ Storybook interaction tests
-
-Verification summary:
-  PASS Canonical documentation
-  PASS I18n Strings Check
-  FAIL Deno tests
-  PASS Frontend design tokens
-  PASS Frontend foundation boundary
-  PASS Frontend component boundary
-  PASS Frontend shell boundary
-  PASS Frontend screen families
-  PASS Frontend deal intelligence screens
-  PASS Frontend deal execution screens
-  PASS Frontend Figma-to-code conformance
-  PASS GUI unit tests
-  PASS Next.js production build
-  PASS Frontend principal workflows
-  PASS Storybook documentation
-  PASS Storybook build
-  PASS Storybook interaction tests: 125 files formatted, 126 files linted, 46 tests passed.
-- 
-> gui@0.1.0 test:unit
-> vitest run --config vitest.unit.config.ts
-
- RUN  v4.1.10 /home/luis/mai/gui
-
- ✓ tokens/token-system.test.mjs (10 tests) 71ms
- ✓ lib/shell/route-registry.test.ts (12 tests) 21ms
- ✓ components/Button/Button.test.ts (1 test) 25ms
- ✓ components/FoundationStatus/FoundationStatus.test.ts (4 tests) 36ms
- ✓ components/InlineNotice/InlineNotice.test.ts (1 test) 25ms
- ✓ components/FinancialValue/FinancialValue.test.ts (1 test) 71ms
- ✓ components/Dialog/Dialog.test.ts (1 test) 29ms
- ✓ components/Drawer/Drawer.test.ts (1 test) 31ms
- ✓ components/NavigationItem/NavigationItem.test.ts (1 test) 25ms
- ✓ app/foundation-boundaries.test.ts (4 tests) 36ms
- ✓ components/FinancialDelta/FinancialDelta.test.ts (1 test) 27ms
- ✓ components/internal/internal.test.ts (3 tests) 22ms
- ✓ lib/event-stream.test.ts (5 tests) 77ms
- ✓ lib/api-client.test.ts (5 tests) 95ms
- ✓ components/StatusIndicator/StatusIndicator.test.ts (1 test) 25ms
- ✓ components/Surface/Surface.test.ts (1 test) 23ms
- ✓ components/component-boundary.test.ts (2 tests) 24ms
- ✓ components/TextField/TextField.test.ts (1 test) 27ms
- ✓ components/DataTable/DataTable.test.ts (1 test) 29ms
- ✓ components/Select/Select.test.ts (1 test) 28ms
- ✓ components/EvidenceProvenanceLabel/EvidenceProvenanceLabel.test.ts (1 test) 21ms
- ✓ screens/ScreenBody.test.ts (12 tests) 97ms
- ✓ components/NavigationTab/NavigationTab.test.ts (1 test) 43ms
- ✓ screens/deal-intelligence/DealIntelligenceBody.test.ts (4 tests) 143ms
- ✓ components/DataTableCell/DataTableCell.test.ts (1 test) 23ms
- ✓ components/FieldWrapper/FieldWrapper.test.ts (1 test) 28ms
- ✓ app/_shell/AppShell.test.ts (2 tests) 121ms
- ✓ components/EvidenceReference/EvidenceReference.test.ts (1 test) 23ms
- ✓ components/DataTableHeader/DataTableHeader.test.ts (1 test) 24ms
- ✓ lib/i18n/translation.test.ts (3 tests) 11ms
- ✓ screens/deal-execution/DealExecutionBody.test.ts (5 tests) 128ms
- ✓ components/IconButton/IconButton.test.ts (1 test) 21ms
- ✓ components/Divider/Divider.test.ts (1 test) 16ms
- ✓ components/DataTableRow/DataTableRow.test.ts (1 test) 15ms
-
- Test Files  34 passed (34)
-      Tests  92 passed (92)
-   Start at  10:23:27
-   Duration  2.37s (transform 10.79s, setup 0ms, import 18.44s, tests 1.46s, environment 10ms): 34 test files, 92 tests passed.
-- 
-> gui@0.1.0 lint
-> eslint: clean.
+### 4. Canonical Verification Result
+`deno task verify` exited 0 (ALL 17 GATES PASSED):
+- PASS Canonical documentation
+- PASS I18n Strings Check
+- PASS Deno tests
+- PASS Frontend design tokens
+- PASS Frontend foundation boundary
+- PASS Frontend component boundary
+- PASS Frontend shell boundary
+- PASS Frontend screen families
+- PASS Frontend deal intelligence screens
+- PASS Frontend deal execution screens
+- PASS Frontend Figma-to-code conformance
+- PASS GUI unit tests
+- PASS Next.js production build
+- PASS Frontend principal workflows
+- PASS Storybook documentation
+- PASS Storybook build
+- PASS Storybook interaction tests
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

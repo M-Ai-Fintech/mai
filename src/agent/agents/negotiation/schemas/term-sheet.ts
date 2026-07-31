@@ -2,7 +2,7 @@ import { z } from "zod";
 import { termSheetFinancialSchema } from "../../../../shared/schemas/term-sheet.ts";
 
 export const negotiationProposalSchema = termSheetFinancialSchema.extend({
-  dealId: z.string().describe("Unique identification of the transaction."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   escrowPercentage: z.number().min(0).max(0.5).describe(
     "Percentage of the purchase price retained in an Escrow account.",
   ),

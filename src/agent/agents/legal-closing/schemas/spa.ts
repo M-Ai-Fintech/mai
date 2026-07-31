@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const spaSchema = z.object({
-  dealId: z.string().describe("Unique transaction identification."),
+  dealId: z.string().describe("Unique identifier of the deal."),
   contractType: z.enum(["SPA", "QPA", "Trespasse"]).describe(
     "Type of definitive closing contract (Share/Quota Purchase Agreement or Transfer).",
   ),

@@ -91,7 +91,7 @@ export async function handleLegacyRoute(
 
 async function handleKyb(
   request: Request,
-  _repository: TransactionRepository,
+  _repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const { cnpj } = z.object({ cnpj: z.string() }).parse(await request.json());
@@ -164,7 +164,7 @@ function fallbackPortfolioTargets(): Parameters<
 
 async function handleNegotiation(
   request: Request,
-  _repository: TransactionRepository,
+  _repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const input = negotiationInput.parse(await optionalJson(request));
@@ -206,7 +206,7 @@ function negotiationConstraints(input: z.infer<typeof negotiationInput>) {
 
 async function handleDocument(
   request: Request,
-  _repository: TransactionRepository,
+  _repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
   const input = documentInput.parse(await request.json());
