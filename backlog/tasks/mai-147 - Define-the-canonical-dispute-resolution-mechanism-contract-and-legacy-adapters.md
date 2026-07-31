@@ -4,7 +4,7 @@ title: Define the canonical dispute-resolution mechanism contract and legacy ada
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:06'
-updated_date: '2026-07-31 05:07'
+updated_date: '2026-07-31 05:24'
 labels:
   - backend
   - architecture
@@ -46,14 +46,7 @@ This task owns:
 - [ ] #4 Non-canonical institutions use an explicit structure containing their supplied name rather than a literal authoritative enum value of `Other`.
 - [ ] #5 Court litigation supports the jurisdiction and forum fields required by the approved legal workflow.
 - [ ] #6 The canonical arbitration-institution list is explicitly reviewed against existing product and legal requirements.
-- [ ] #7 Existing legacy values are inventoried, including at minimum: B3; CAM-B3; CAM-CCBC; CCI; FGV; Judicial-Court; Other.
-- B3;
-- CAM-B3;
-- CAM-CCBC;
-- CCI;
-- FGV;
-- Judicial-Court;
-- Other.
+- [ ] #7 Existing legacy values are inventoried, including at minimum: B3, CAM-B3, CAM-CCBC, CCI, FGV, Judicial-Court, and Other.
 - [ ] #8 Legacy adapters normalize unambiguous values.
 - [ ] #9 Unknown or ambiguous legacy values are rejected or require explicit human resolution; they are never silently guessed.
 - [ ] #10 `Judicial-Court` maps to the court variant, not an arbitration institution.
@@ -61,50 +54,9 @@ This task owns:
 - [ ] #12 Agent proposal schemas reference the canonical contract.
 - [ ] #13 API and persistence representations are versioned and documented.
 - [ ] #14 Migration ownership is recorded for MAI-129.
-- [ ] #15 Tests cover: every canonical arbitration institution; court representation; explicit other institution; each legacy normalization; ambiguous input rejection; serialization and parsing; compatibility behavior.
-- every canonical arbitration institution;
-- court representation;
-- explicit other institution;
-- each legacy normalization;
-- ambiguous input rejection;
-- serialization and parsing;
-- compatibility behavior.
+- [ ] #15 Tests cover every canonical arbitration institution, court representation, explicit other institution, every legacy normalization, ambiguous-input rejection, serialization and parsing, and compatibility behavior.
 - [ ] #16 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
