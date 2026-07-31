@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 19:58'
 labels:
   - engine
   - optimization
@@ -49,6 +49,46 @@ Aprimorar os modelos matemáticos aplicando regras e limites rígidos de complia
 
 <!-- SECTION:NOTES:BEGIN -->
 [POC Orchestrator Note] Grupo B (Síncrono após A): Basear-se em MAI-40. Focar em constraints.ts e index.ts.
+
+Superseded through separated architecture ownership.
+
+Requirements carried forward:
+
+- leverage calculations;
+- interest-coverage calculations;
+- valuation-floor calculations;
+- eligibility and restriction inputs;
+- configurable constraints;
+- infeasible-result explanations;
+- tests for constraint violations;
+- representative performance evidence;
+- integration with authoritative matching and negotiation workflows.
+
+Replacement ownership:
+
+- MAI-144 owns pure deterministic financial calculations;
+- MAI-145 owns deterministic matching eligibility and restriction handling;
+- MAI-146 owns negotiation proposal-feasibility constraints;
+- MAI-115 owns evidence-backed Findings and immutable human Decision Records;
+- MAI-117 owns conflicts, restrictions, shortlist, and outreach authority;
+- MAI-118 owns negotiation lifecycle, mandate comparison, approval, and separately authorized delivery;
+- MAI-129 owns final physical retirement.
+
+Architecture changed:
+
+- KYC, sanctions, PEP, and compliance policy do not belong to a generic optimization engine;
+- PEP exposure is not automatically an unconditional rejection;
+- missing KYC information is not feasible by default;
+- missing or invalid financial information is not feasible by default;
+- constraints reference exact policy, evidence, calculation, mandate, or decision versions;
+- violated constraints are explicit rather than silently filtered;
+- protected counterparty information cannot leak through explanations;
+- pure optimizers have no workflow or human-decision authority;
+- no Pub/Sub, CLI, or direct agent call is an authoritative integration boundary.
+
+Existing constraint code and tests remain migration evidence until replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 18:32'
+updated_date: '2026-07-31 19:58'
 labels:
   - backend
   - architecture
@@ -143,4 +143,33 @@ Legacy agent-learning and fine-tuning retirement ownership
 4. Useful offline training scripts or sample datasets may be retained as explicitly labelled research evidence when legally and operationally permitted.
 
 5. Physical retirement must preserve historical audit and Git evidence.
+
+Legacy optimization-engine retirement ownership
+
+1. MAI-129 owns physical retirement of obsolete optimization implementations after MAI-144, MAI-145, and MAI-146 establish replacement coverage and all consumers are migrated.
+
+2. Retirement candidates include, subject to final consumer inventory:
+   - src/engines/optimization/genetic.ts;
+   - src/engines/optimization/constraints.ts;
+   - legacy optimization configuration;
+   - generic optimization/index.ts entry points;
+   - duplicate term-sheet optimizer implementations;
+   - direct CLI and agent-tool optimizer registrations;
+   - unseeded genetic tests;
+   - tests that treat missing KYC or financial data as feasible;
+   - tests that prove only silent candidate filtering;
+   - benchmark files generated as side effects of ordinary unit tests;
+   - compatibility exports with no remaining consumer.
+
+3. MAI-129 must not delete useful mathematical logic, golden vectors, benchmarks, fixtures, or migration evidence before authoritative replacements exist.
+
+4. Useful formulas may move to MAI-144.
+
+5. Matching eligibility and restriction logic may move to MAI-145.
+
+6. Negotiation proposal optimization may move to MAI-146.
+
+7. KYC, sanctions, PEP, and compliance conclusions remain evidence-backed findings and human decisions rather than optimizer-owned booleans.
+
+8. Physical retirement must preserve Git and audit history.
 <!-- SECTION:NOTES:END -->

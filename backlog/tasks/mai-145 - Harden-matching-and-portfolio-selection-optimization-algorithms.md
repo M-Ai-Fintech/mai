@@ -4,6 +4,7 @@ title: Harden matching and portfolio-selection optimization algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:03'
+updated_date: '2026-07-31 19:58'
 labels:
   - backend
   - architecture
@@ -55,6 +56,39 @@ MAI-117 owns the matching workflow, conflicts, shortlist lifecycle, and business
 - [ ] #12 Performance evidence is recorded for representative portfolio sizes.
 - [ ] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Legacy KYC and restriction-input boundary
+
+1. MAI-145 may consume eligibility and restriction inputs only through explicit, versioned domain contracts.
+
+2. Eligibility and restriction inputs must reference the exact supporting:
+   - evidence versions;
+   - Finding;
+   - Decision Record;
+   - policy version;
+   - actor or approval authority;
+   - effective date;
+   - staleness state.
+
+3. A PEP indicator is not automatically equivalent to rejection.
+
+4. Sanctions, PEP exposure, KYC status, and other restrictions follow the approved policy and decision records owned by the applicable upstream contexts.
+
+5. MAI-145 must not recreate KYC, sanctions, legal, or compliance policy inside the matching algorithm.
+
+6. Missing, stale, unauthorized, or unresolved restriction evidence produces an explicit unavailable, unresolved, restricted, or infeasible result.
+
+7. Missing restriction information must not silently pass as eligible.
+
+8. Infeasible results explain the applicable constraint without exposing protected counterparty data.
+
+9. Result ordering and tie-breaking remain deterministic.
+
+10. The legacy KYC booleans and generic constraint-filter implementation remain migration evidence only.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

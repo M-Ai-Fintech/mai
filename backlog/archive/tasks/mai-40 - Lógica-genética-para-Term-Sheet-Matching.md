@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 19:58'
 labels:
   - engine
   - optimization
@@ -52,6 +52,40 @@ Validar a convergência do algoritmo genético sob faixas flexíveis de valuatio
 Referências úteis: NSGA-II para otimização multi-objetivo caso seja necessário lidar com mais de uma função de fitness; biblioteca `simple-statistics` disponível no ecossistema Deno para geração de números aleatórios com distribuição gaussiana. Manter parâmetros (tamanho da população, taxa de mutação, número de gerações) configuráveis via variável de ambiente ou objeto de configuração injetável para facilitar ajuste fino sem recompilação.
 
 [POC Orchestrator Note] Grupo A (Paralelo): Focar apenas na genética base em src/engines/optimization/genetic.ts.
+
+Superseded by MAI-146.
+
+Requirements carried forward:
+
+- generation of negotiation proposal alternatives;
+- explicit financial-term dimensions;
+- buyer and seller utility or preference inputs;
+- convergence and termination behavior;
+- ranked results;
+- proposal diversity where it provides demonstrable value;
+- boundary and invalid-input tests;
+- representative performance evidence;
+- deterministic replay;
+- integration through approved application-service and ToolGateway boundaries.
+
+Architecture changed:
+
+- the capability is negotiation proposal optimization, not generic Term Sheet Matching;
+- the optimizer belongs to the Negotiation context;
+- hidden Math.random behavior is prohibited;
+- randomness must be removed or explicitly seeded;
+- direct CLI integration is not a target product boundary;
+- direct agent-tool ownership is replaced by governed proposal capabilities;
+- the optimizer cannot approve, accept, send, release, or finalize terms;
+- producing exactly three alternatives is not an unconditional product invariant;
+- universal timing claims require a documented reference runner and representative benchmark;
+- ordinary unit tests must not write mutable benchmark artifacts;
+- MAI-146 owns the authoritative replacement;
+- MAI-129 owns physical retirement.
+
+Existing genetic code, tests, benchmarks, and consumers remain migration evidence until MAI-146 replacement coverage and cutover are proven.
+
+Archive does not authorize immediate code deletion.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

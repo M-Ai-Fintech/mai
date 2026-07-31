@@ -4,6 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:04'
+updated_date: '2026-07-31 19:58'
 labels:
   - backend
   - architecture
@@ -81,6 +82,62 @@ Record relationships:
 - [ ] #14 Representative benchmark evidence is recorded.
 - [ ] #15 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Legacy proposal-constraint migration boundary
+
+1. MAI-146 must inventory the proposal-generation and proposal-filtering logic currently spread across:
+   - genetic.ts;
+   - constraints.ts;
+   - optimization/index.ts;
+   - term_sheet_optimizer.ts;
+   - direct agent or tool consumers;
+   - related tests and benchmarks.
+
+2. Proposal-feasibility constraints must be explicit and versioned.
+
+3. Each constraint records, where applicable:
+   - source;
+   - policy or mandate version;
+   - units;
+   - currency;
+   - percentage representation;
+   - effective date;
+   - evidence or calculation version;
+   - whether the constraint is mandatory or advisory.
+
+4. Supported proposal constraints may include approved:
+   - valuation ranges or floors;
+   - buyer and seller reservation utilities;
+   - leverage ceilings;
+   - interest-coverage floors;
+   - cash, equity, earn-out, escrow, timing, and non-compete bounds;
+   - mandatory or prohibited structures.
+
+5. Zero and negative denominators have explicit typed semantics.
+
+6. Missing required inputs must not silently pass as feasible.
+
+7. The result can report all material violated constraints rather than only removing a candidate through a silent boolean filter.
+
+8. No KYC, sanctions, PEP, legal, compliance, shortlist, approval, or sending policy is implemented inside the proposal optimizer.
+
+9. Random behavior is removed or supplied through an explicit seeded source.
+
+10. Identical inputs and seed produce identical results.
+
+11. The optimizer cannot:
+    - approve;
+    - accept;
+    - send;
+    - release;
+    - finalize;
+    - create an authoritative negotiation decision.
+
+12. Existing genetic and constraint code remains migration evidence until MAI-146 establishes replacement coverage.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

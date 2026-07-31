@@ -4,6 +4,7 @@ title: Harden deterministic valuation and synergy calculation algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:02'
+updated_date: '2026-07-31 19:57'
 labels:
   - backend
   - architecture
@@ -70,6 +71,37 @@ Record relationships:
 
 <!-- SECTION:NOTES:BEGIN -->
 Record that MAI-144, MAI-145, MAI-146, and MAI-147 are intended to be parallel-safe when their exclusive file ownership is respected.
+
+Legacy financial-constraint calculation boundary
+
+1. MAI-144 must inventory deterministic financial formulas currently located in the legacy optimization constraint engine.
+
+2. The inventory includes, where present:
+   - leverage or debt-to-EBITDA calculations;
+   - interest-coverage calculations;
+   - valuation-floor calculations;
+   - denominator and missing-data handling;
+   - units, percentages, currency, rounding, and precision behavior.
+
+3. Pure mathematical formulas may survive only as typed deterministic calculations.
+
+4. MAI-144 does not own:
+   - KYC policy;
+   - sanctions policy;
+   - PEP treatment;
+   - eligibility decisions;
+   - policy thresholds;
+   - shortlist decisions;
+   - proposal approval;
+   - negotiation authority.
+
+5. A threshold such as maximum leverage or minimum coverage is a versioned policy or scenario input, not an implicit global constant owned by the calculation module.
+
+6. Zero, negative, missing, stale, or mathematically invalid denominators must return explicit typed results or errors.
+
+7. Missing required data must not silently produce a successful or feasible result.
+
+8. Existing formulas and tests remain migration evidence until MAI-144 establishes authoritative replacement coverage.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
