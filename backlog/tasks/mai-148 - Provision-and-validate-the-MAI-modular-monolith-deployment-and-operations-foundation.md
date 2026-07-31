@@ -6,7 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:51'
-updated_date: '2026-07-31 20:14'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -19,11 +19,12 @@ labels:
   - persistence
   - testing
   - mai-85-initiative
+  - delivery-wave-a
 milestone: m-12
 dependencies:
   - MAI-106
 priority: high
-ordinal: 134000
+ordinal: 10800
 ---
 
 ## Description

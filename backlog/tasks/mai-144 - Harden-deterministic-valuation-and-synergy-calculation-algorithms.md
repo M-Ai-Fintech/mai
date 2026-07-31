@@ -4,7 +4,7 @@ title: Harden deterministic valuation and synergy calculation algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:02'
-updated_date: '2026-07-31 19:57'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -13,10 +13,11 @@ labels:
   - finance
   - optimization
   - testing
+  - delivery-wave-a
 milestone: m-12
 dependencies: []
 priority: high
-ordinal: 130000
+ordinal: 10400
 ---
 
 ## Description

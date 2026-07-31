@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-07-31 19:58'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -12,10 +12,11 @@ labels:
   - optimization
   - calculations
   - testing
+  - delivery-wave-a
 milestone: m-12
 dependencies: []
 priority: high
-ordinal: 132000
+ordinal: 10600
 ---
 
 ## Description

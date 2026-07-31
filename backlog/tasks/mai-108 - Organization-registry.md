@@ -4,15 +4,16 @@ title: Organization registry
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-3
   - mai-85-initiative
   - organization
   - security
   - persistence
   - api
+  - delivery-wave-a
 milestone: m-12
 dependencies:
   - MAI-105
@@ -37,7 +38,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: medium
-ordinal: 94000
+ordinal: 10100
 ---
 
 ## Description

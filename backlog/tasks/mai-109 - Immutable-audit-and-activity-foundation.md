@@ -4,15 +4,16 @@ title: Immutable audit and activity foundation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-3
   - mai-85-initiative
   - audit
   - security
   - persistence
   - api
+  - delivery-wave-a
 milestone: m-12
 dependencies:
   - MAI-105
@@ -34,7 +35,7 @@ documentation:
     backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 -
     Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md
 priority: high
-ordinal: 95000
+ordinal: 10200
 ---
 
 ## Description

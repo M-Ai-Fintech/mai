@@ -4,16 +4,16 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:13'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-14
   - mai-85-initiative
   - migration
   - persistence
   - security
   - frontend-coordination
+  - delivery-wave-l
 milestone: m-12
 dependencies:
   - MAI-106
@@ -56,7 +56,7 @@ documentation:
     backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 -
     Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md
 priority: high
-ordinal: 115000
+ordinal: 120000
 ---
 
 ## Description

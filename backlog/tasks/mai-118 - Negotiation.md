@@ -4,17 +4,17 @@ title: Negotiation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 05:07'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-10
   - mai-85-initiative
   - negotiation
   - security
   - api
   - integration
   - frontend-coordination
+  - delivery-wave-h
 milestone: m-12
 dependencies:
   - MAI-110
@@ -34,7 +34,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 104000
+ordinal: 80000
 ---
 
 ## Description

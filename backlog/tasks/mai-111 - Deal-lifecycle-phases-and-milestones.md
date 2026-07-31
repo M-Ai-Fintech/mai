@@ -4,15 +4,16 @@ title: 'Deal lifecycle, phases and milestones'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-5
   - mai-85-initiative
   - deal-domain
   - workflow
   - api
   - frontend-coordination
+  - delivery-wave-c
 milestone: m-12
 dependencies:
   - MAI-110
@@ -37,7 +38,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 97000
+ordinal: 30000
 ---
 
 ## Description

@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:02'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
@@ -16,6 +17,7 @@ labels:
   - model-governance
   - api
   - security
+  - delivery-wave-j
 milestone: m-12
 dependencies:
   - MAI-142
@@ -25,7 +27,7 @@ dependencies:
   - MAI-121
   - MAI-127
 priority: high
-ordinal: 129000
+ordinal: 100100
 ---
 
 ## Description

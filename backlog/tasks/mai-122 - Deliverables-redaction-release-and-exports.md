@@ -4,16 +4,17 @@ title: 'Deliverables, redaction, release and exports'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-11
   - mai-85-initiative
   - deliverables
   - security
   - api
   - integration
   - frontend-coordination
+  - delivery-wave-g
 milestone: m-12
 dependencies:
   - MAI-109
@@ -31,7 +32,7 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 priority: high
-ordinal: 108000
+ordinal: 70300
 ---
 
 ## Description

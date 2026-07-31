@@ -4,15 +4,16 @@ title: Deal team and external-participant access
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-11
   - mai-85-initiative
   - external-access
   - security
   - api
   - frontend-coordination
+  - delivery-wave-f
 milestone: m-12
 dependencies:
   - MAI-107
@@ -33,7 +34,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 110000
+ordinal: 60200
 ---
 
 ## Description

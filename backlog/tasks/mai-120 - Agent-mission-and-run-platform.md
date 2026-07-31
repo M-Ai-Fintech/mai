@@ -4,16 +4,17 @@ title: Agent mission and run platform
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-10
   - mai-85-initiative
   - agent-architecture
   - security
   - persistence
   - jobs
   - api
+  - delivery-wave-f
 milestone: m-12
 dependencies:
   - MAI-106
@@ -35,7 +36,7 @@ documentation:
     backlog/docs/decisions/proposed-agent-human-authority/doc-34 -
     Proposed-ADR-Agent-Execution-and-Human-Authority.md
 priority: high
-ordinal: 106000
+ordinal: 60100
 ---
 
 ## Description

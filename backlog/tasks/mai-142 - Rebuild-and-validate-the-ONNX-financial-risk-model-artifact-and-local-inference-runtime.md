@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:00'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -13,10 +14,11 @@ labels:
   - inference
   - model-governance
   - testing
+  - delivery-wave-a
 milestone: m-12
 dependencies: []
 priority: high
-ordinal: 128000
+ordinal: 10300
 ---
 
 ## Description

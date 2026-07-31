@@ -4,7 +4,7 @@ title: 'Establish audited agent feedback, evaluation, and offline improvement wo
 status: To Do
 assignee: []
 created_date: '2026-07-31 18:32'
-updated_date: '2026-07-31 19:44'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
@@ -16,6 +16,7 @@ labels:
   - evidence
   - privacy
   - post-mvp
+  - delivery-wave-j
 milestone: m-13
 dependencies:
   - MAI-109
@@ -24,7 +25,7 @@ dependencies:
   - MAI-121
   - MAI-125
 priority: medium
-ordinal: 138000
+ordinal: 100300
 ---
 
 ## Description

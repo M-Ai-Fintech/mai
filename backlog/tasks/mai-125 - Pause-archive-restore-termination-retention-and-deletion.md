@@ -4,16 +4,17 @@ title: 'Pause, archive, restore, termination, retention and deletion'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-12
   - mai-85-initiative
   - governance
   - security
   - persistence
   - migration
   - api
+  - delivery-wave-g
 milestone: m-12
 dependencies:
   - MAI-110
@@ -33,7 +34,7 @@ documentation:
     backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 -
     Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md
 priority: high
-ordinal: 111000
+ordinal: 70400
 ---
 
 ## Description

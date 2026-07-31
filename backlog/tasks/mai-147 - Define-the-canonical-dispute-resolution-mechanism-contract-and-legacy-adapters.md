@@ -4,7 +4,7 @@ title: Define the canonical dispute-resolution mechanism contract and legacy ada
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:06'
-updated_date: '2026-07-31 05:24'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -13,10 +13,11 @@ labels:
   - negotiation
   - closing
   - migration
+  - delivery-wave-a
 milestone: m-12
 dependencies: []
 priority: high
-ordinal: 133000
+ordinal: 10700
 ---
 
 ## Description

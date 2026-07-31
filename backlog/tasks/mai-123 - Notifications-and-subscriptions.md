@@ -4,15 +4,16 @@ title: Notifications and subscriptions
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-11
   - mai-85-initiative
   - notifications
   - jobs
   - integration
   - security
+  - delivery-wave-c
 milestone: m-12
 dependencies:
   - MAI-106
@@ -33,7 +34,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: medium
-ordinal: 109000
+ordinal: 30200
 ---
 
 ## Description

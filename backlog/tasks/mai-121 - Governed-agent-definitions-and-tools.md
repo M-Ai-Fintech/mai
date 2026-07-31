@@ -4,15 +4,15 @@ title: Governed agent definitions and tools
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:13'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-11
   - mai-85-initiative
   - agent-architecture
   - security
   - integration
+  - delivery-wave-i
 milestone: m-12
 dependencies:
   - MAI-116
@@ -29,7 +29,7 @@ documentation:
     backlog/docs/decisions/proposed-agent-human-authority/doc-34 -
     Proposed-ADR-Agent-Execution-and-Human-Authority.md
 priority: high
-ordinal: 107000
+ordinal: 90000
 ---
 
 ## Description

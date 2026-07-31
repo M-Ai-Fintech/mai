@@ -4,16 +4,16 @@ title: 'Matching, conflicts and shortlist'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 05:03'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-9
   - mai-85-initiative
   - matching
   - security
   - api
   - workflow
+  - delivery-wave-g
 milestone: m-12
 dependencies:
   - MAI-110
@@ -37,7 +37,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 103000
+ordinal: 70100
 ---
 
 ## Description

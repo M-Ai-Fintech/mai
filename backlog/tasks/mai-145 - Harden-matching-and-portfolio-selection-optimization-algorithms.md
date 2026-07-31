@@ -4,7 +4,7 @@ title: Harden matching and portfolio-selection optimization algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:03'
-updated_date: '2026-07-31 19:58'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -12,10 +12,11 @@ labels:
   - optimization
   - calculations
   - testing
+  - delivery-wave-a
 milestone: m-12
 dependencies: []
 priority: high
-ordinal: 131000
+ordinal: 10500
 ---
 
 ## Description

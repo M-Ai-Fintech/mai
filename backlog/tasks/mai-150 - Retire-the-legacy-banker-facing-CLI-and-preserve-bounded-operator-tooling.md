@@ -4,6 +4,7 @@ title: Retire the legacy banker-facing CLI and preserve bounded operator tooling
 status: To Do
 assignee: []
 created_date: '2026-07-31 06:17'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
@@ -14,11 +15,12 @@ labels:
   - operations
   - cleanup
   - mvp
+  - delivery-wave-k
 milestone: m-12
 dependencies:
   - MAI-126
 priority: high
-ordinal: 136000
+ordinal: 110000
 ---
 
 ## Description

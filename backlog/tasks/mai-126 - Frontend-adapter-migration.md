@@ -4,14 +4,15 @@ title: Frontend adapter migration
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-13
   - mai-85-initiative
   - frontend-coordination
   - api
   - migration
+  - delivery-wave-j
 milestone: m-12
 dependencies:
   - MAI-110
@@ -42,7 +43,7 @@ documentation:
     backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 -
     Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md
 priority: high
-ordinal: 112000
+ordinal: 100000
 ---
 
 ## Description

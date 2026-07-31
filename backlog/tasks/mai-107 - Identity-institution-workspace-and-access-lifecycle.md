@@ -4,15 +4,16 @@ title: 'Identity, institution, workspace and access lifecycle'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:15'
 labels:
   - backend
   - architecture
-  - wave-3
   - mai-85-initiative
   - security
   - identity
   - persistence
   - api
+  - delivery-wave-a
 milestone: m-12
 dependencies:
   - MAI-105
@@ -28,7 +29,7 @@ documentation:
     backlog/docs/decisions/proposed-events-outbox-inbox-jobs/doc-31 -
     Proposed-ADR-Events-Outbox-Inbox-and-Jobs.md
 priority: high
-ordinal: 93000
+ordinal: 10000
 ---
 
 ## Description

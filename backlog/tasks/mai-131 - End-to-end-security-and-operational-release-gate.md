@@ -4,16 +4,16 @@ title: 'End-to-end, security and operational release gate'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 17:33'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-15
   - mai-85-initiative
   - release-verification
   - security
   - integration
   - frontend-coordination
+  - delivery-wave-m
 milestone: m-12
 dependencies:
   - MAI-126
@@ -32,7 +32,7 @@ documentation:
     backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 -
     Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md
 priority: high
-ordinal: 117000
+ordinal: 130000
 ---
 
 ## Description

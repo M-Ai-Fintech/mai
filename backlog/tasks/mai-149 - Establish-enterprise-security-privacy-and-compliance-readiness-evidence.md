@@ -4,7 +4,7 @@ title: 'Establish enterprise security, privacy, and compliance readiness evidenc
 status: To Do
 assignee: []
 created_date: '2026-07-31 06:08'
-updated_date: '2026-07-31 06:08'
+updated_date: '2026-07-31 21:17'
 labels:
   - enterprise
   - security
@@ -16,6 +16,7 @@ labels:
   - operations
   - evidence
   - post-mvp
+  - delivery-wave-j
 milestone: m-15
 dependencies:
   - MAI-105
@@ -25,7 +26,7 @@ dependencies:
   - MAI-127
   - MAI-148
 priority: medium
-ordinal: 135000
+ordinal: 100200
 ---
 
 ## Description

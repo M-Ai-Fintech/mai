@@ -4,11 +4,10 @@ title: 'Evidence, citations, facts, interpretations, assumptions and calculation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 20:13'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-6
   - mai-85-initiative
   - evidence
   - provenance
@@ -16,6 +15,7 @@ labels:
   - persistence
   - api
   - frontend-coordination
+  - delivery-wave-d
 milestone: m-12
 dependencies:
   - MAI-112
@@ -36,7 +36,7 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 priority: high
-ordinal: 99000
+ordinal: 40000
 ---
 
 ## Description

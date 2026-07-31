@@ -4,16 +4,16 @@ title: Integration adapters and certification
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 20:14'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
-  - wave-12
   - mai-85-initiative
   - integration
   - security
   - infrastructure
   - api
+  - delivery-wave-i
 milestone: m-12
 dependencies:
   - MAI-107
@@ -40,7 +40,7 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 priority: high
-ordinal: 113000
+ordinal: 90100
 ---
 
 ## Description

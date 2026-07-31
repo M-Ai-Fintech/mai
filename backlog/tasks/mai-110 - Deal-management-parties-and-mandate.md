@@ -4,15 +4,16 @@ title: 'Deal management, parties and mandate'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-4
   - mai-85-initiative
   - deal-domain
   - persistence
   - api
   - frontend-coordination
+  - delivery-wave-b
 milestone: m-12
 dependencies:
   - MAI-107
@@ -28,7 +29,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 96000
+ordinal: 20000
 ---
 
 ## Description

@@ -4,11 +4,10 @@ title: 'Documents, sources and processing'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 20:13'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-5
   - mai-85-initiative
   - documents
   - persistence
@@ -16,6 +15,7 @@ labels:
   - integration
   - api
   - frontend-coordination
+  - delivery-wave-c
 milestone: m-12
 dependencies:
   - MAI-106
@@ -39,7 +39,7 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 priority: high
-ordinal: 98000
+ordinal: 30100
 ---
 
 ## Description

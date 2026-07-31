@@ -4,16 +4,17 @@ title: 'Workstreams, tasks and approval requests'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
-  - wave-7
   - mai-85-initiative
   - workflow
   - approvals
   - security
   - api
   - frontend-coordination
+  - delivery-wave-e
 milestone: m-12
 dependencies:
   - MAI-110
@@ -36,7 +37,7 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 priority: high
-ordinal: 100000
+ordinal: 50000
 ---
 
 ## Description

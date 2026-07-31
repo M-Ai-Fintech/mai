@@ -4,6 +4,7 @@ title: Establish a fast deterministic developer preflight for the modular monoli
 status: To Do
 assignee: []
 created_date: '2026-07-31 17:33'
+updated_date: '2026-07-31 21:16'
 labels:
   - backend
   - architecture
@@ -12,12 +13,13 @@ labels:
   - reliability
   - preflight
   - mvp
+  - delivery-wave-a
 milestone: m-12
 dependencies:
   - MAI-79
   - MAI-106
 priority: high
-ordinal: 137000
+ordinal: 10900
 ---
 
 ## Description

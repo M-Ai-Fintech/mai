@@ -4,7 +4,7 @@ title: Evaluate and approve a governed Brazilian M&A model-adaptation strategy
 status: To Do
 assignee: []
 created_date: '2026-07-31 18:32'
-updated_date: '2026-07-31 19:44'
+updated_date: '2026-07-31 21:17'
 labels:
   - backend
   - architecture
@@ -16,6 +16,7 @@ labels:
   - finance
   - privacy
   - post-mvp
+  - delivery-wave-k
 milestone: m-13
 dependencies:
   - MAI-121
@@ -23,7 +24,7 @@ dependencies:
   - MAI-127
   - MAI-152
 priority: medium
-ordinal: 139000
+ordinal: 110100
 ---
 
 ## Description
