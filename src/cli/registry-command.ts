@@ -1,10 +1,7 @@
 import { verifyRegistryTool } from "../agent/actions.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
 import { AgentOrchestrator } from "../agent/index.ts";
-import {
-  CompanyCultureMemoryRecord,
-  DatabaseMemoryService,
-} from "../core/db/DatabaseMemoryService.ts";
+
 import { RegistryRecord } from "../agent/vdr_mock.ts";
 import { t, tList } from "../i18n/index.ts";
 import {
@@ -14,10 +11,6 @@ import {
   TableCell,
 } from "./command-output.ts";
 import { createCommandProgress } from "./command-progress.ts";
-
-interface RegistryBusinessRow {
-  id: string;
-}
 
 type RegistryExecutionContext = Parameters<
   NonNullable<typeof verifyRegistryTool.execute>
@@ -83,42 +76,10 @@ function registryRows(registry: RegistryRecord): TableCell[][] {
 }
 
 async function printRegistryCulture(
-  cnpj: string,
+  _cnpj: string,
   registry: RegistryRecord,
 ): Promise<void> {
-  const cultureMemory = await loadCultureMemory(cnpj);
-  if (cultureMemory) {
-    printStoredCulture(cultureMemory.cultureData);
-    return;
-  }
   await printGeneratedCulture(registry);
-}
-
-async function loadCultureMemory(
-  cnpj: string,
-): Promise<CompanyCultureMemoryRecord | undefined> {
-  try {
-    const database = DatabaseMemoryService.getInstance();
-    const businesses = await database.executeRawQuery<RegistryBusinessRow>(
-      "SELECT id FROM business WHERE cnpj = $1 LIMIT 1",
-      [cnpj],
-    );
-    if (!businesses[0]) return undefined;
-    return (await database.getCompanyCultureMemory(businesses[0].id))[0];
-  } catch {
-    return undefined;
-  }
-}
-
-function printStoredCulture(culture: Record<string, unknown>): void {
-  printCultureFields(
-    firstText(culture.corporateCulture, culture.culture) ??
-      t("cli.messages.defaultCultureGood"),
-    firstText(culture.pastMovements, culture.history) ??
-      t("cli.messages.defaultMovementsGood"),
-    firstText(culture.negotiatorProfile, culture.negotiators) ??
-      t("cli.messages.defaultNegotiatorsGood"),
-  );
 }
 
 async function printGeneratedCulture(registry: RegistryRecord): Promise<void> {
@@ -162,8 +123,4 @@ function printCultureFields(
   console.log(t("cli.messages.culture", { value: culture }));
   console.log(t("cli.messages.pastMovements", { value: movements }));
   console.log(t("cli.messages.negotiators", { value: negotiators }));
-}
-
-function firstText(...values: unknown[]): string | undefined {
-  return values.find((value): value is string => typeof value === "string");
 }

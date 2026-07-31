@@ -1,6 +1,5 @@
 import { EmbeddedRow } from "./similarity.ts";
 import type {
-  SimilarCultureMemory,
   SimilarKnowledge,
   SimilarPreference,
   SimilarVdrChunk,
@@ -32,12 +31,6 @@ export interface PreferenceEmbeddingRow extends EmbeddedRow {
   preferences: Record<string, unknown>;
 }
 
-export interface CultureEmbeddingRow extends EmbeddedRow {
-  id: string;
-  businessId: string;
-  cultureData: Record<string, unknown>;
-}
-
 export interface VdrEmbeddingRow extends EmbeddedRow {
   document_name: string;
   chunk_index: number;
@@ -59,14 +52,6 @@ const PREFERENCE_VECTOR_SQL = `
 const PREFERENCE_FALLBACK_SQL = `
   SELECT id, user_id AS "userId", preferences, embedding
   FROM user_preferences WHERE embedding IS NOT NULL;`;
-const CULTURE_VECTOR_SQL = `
-  SELECT id, business_id AS "businessId", culture_data AS "cultureData",
-    1 - (embedding <=> $1::vector) AS similarity
-  FROM company_culture_memory WHERE embedding IS NOT NULL
-  ORDER BY embedding <=> $1::vector LIMIT $2;`;
-const CULTURE_FALLBACK_SQL = `
-  SELECT id, business_id AS "businessId", culture_data AS "cultureData", embedding
-  FROM company_culture_memory WHERE embedding IS NOT NULL;`;
 const VDR_VECTOR_SQL = `
   SELECT document_name AS "documentName", chunk_index AS "chunkIndex",
     text_chunk AS "textChunk", 1 - (embedding <=> $1::vector) AS similarity
@@ -110,25 +95,6 @@ export function preferenceSearch(
       id: row.id,
       userId: row.userId,
       preferences: row.preferences,
-      similarity,
-    }),
-  );
-}
-
-export function cultureSearch(
-  embedding: number[],
-  limit: number,
-): SimilaritySearchConfig<CultureEmbeddingRow, SimilarCultureMemory> {
-  return searchConfig(
-    CULTURE_VECTOR_SQL,
-    CULTURE_FALLBACK_SQL,
-    embedding,
-    limit,
-    "[DatabaseMemoryService] pgvector culture search failed",
-    (row, similarity) => ({
-      id: row.id,
-      businessId: row.businessId,
-      cultureData: row.cultureData,
       similarity,
     }),
   );

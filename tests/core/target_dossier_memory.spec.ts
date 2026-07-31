@@ -2,9 +2,9 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { memorySchema } from "../../src/agent/agents/broker-orchestrator/schemas/memory.ts";
 import { BrokerOrchestratorService } from "../../src/agent/agents/broker-orchestrator/index.ts";
 import { databaseMemoryServiceTool } from "../../src/agent/tools/memory_tools.ts";
-import {
-  targetDossierDraftSchema,
-} from "../../src/shared/schemas/target-dossier.ts";
+import { DatabaseMemoryService } from "../../src/core/db/DatabaseMemoryService.ts";
+import * as memorySearch from "../../src/core/db/memory_search.ts";
+import { targetDossierDraftSchema } from "../../src/shared/schemas/target-dossier.ts";
 
 Deno.test("MAI-75 Memory & Target Dossier Boundary Tests", async (t) => {
   await t.step("1. memorySchema accepts domain_knowledge", () => {
@@ -194,6 +194,40 @@ Deno.test("MAI-75 Memory & Target Dossier Boundary Tests", async (t) => {
           );
         },
       );
+    },
+  );
+
+  await t.step(
+    "13. DatabaseMemoryService exposes no company-culture memory methods",
+    () => {
+      const proto = DatabaseMemoryService.prototype as unknown as Record<
+        string,
+        unknown
+      >;
+      assertEquals(proto.getCompanyCultureMemory, undefined);
+      assertEquals(proto.saveCompanyCultureMemory, undefined);
+      assertEquals(proto.searchSimilarCultureMemory, undefined);
+    },
+  );
+
+  await t.step(
+    "14. memory_search.ts exports no cultureSearch function",
+    () => {
+      const exports = memorySearch as Record<string, unknown>;
+      assertEquals(exports.cultureSearch, undefined);
+    },
+  );
+
+  await t.step(
+    "15. Legacy SQL table company_culture_memory is commented with MAI-129 isolation notice",
+    async () => {
+      const schemaSql = await Deno.readTextFile(
+        new URL("../../src/core/db/schema.sql", import.meta.url),
+      );
+      const containsNotice = schemaSql.includes(
+        "Legacy company-culture memory storage retained only for MAI-129 migration and retirement",
+      );
+      assertEquals(containsNotice, true);
     },
   );
 });

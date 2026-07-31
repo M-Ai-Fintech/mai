@@ -1,7 +1,6 @@
 import { DatabaseConnection } from "./DatabaseConnection.ts";
 import { EmbeddedRow, rankBySimilarity } from "./similarity.ts";
 import {
-  cultureSearch,
   knowledgeSearch,
   preferenceSearch,
   SimilaritySearchConfig,
@@ -26,15 +25,6 @@ export interface DomainKnowledgeRecord {
   readonly updatedAt: Date;
 }
 
-export interface CompanyCultureMemoryRecord {
-  readonly id: string;
-  readonly businessId: string;
-  readonly cultureData: Record<string, unknown>;
-  readonly embedding?: number[];
-  readonly createdAt: Date;
-  readonly updatedAt: Date;
-}
-
 export interface SimilarKnowledge {
   id: string;
   category: string;
@@ -46,13 +36,6 @@ export interface SimilarPreference {
   id: string;
   userId: string;
   preferences: Record<string, unknown>;
-  similarity: number;
-}
-
-export interface SimilarCultureMemory {
-  id: string;
-  businessId: string;
-  cultureData: Record<string, unknown>;
   similarity: number;
 }
 
@@ -174,41 +157,6 @@ export class DatabaseMemoryService extends DatabaseConnection {
   }
 
   /**
-   * Queries organizational-culture memory for a target company (business_id).
-   */
-  public async getCompanyCultureMemory(
-    businessId: string,
-  ): Promise<CompanyCultureMemoryRecord[]> {
-    const sql = `
-      SELECT id, business_id AS "businessId", culture_data AS "cultureData", created_at AS "createdAt", updated_at AS "updatedAt"
-      FROM company_culture_memory 
-      WHERE business_id = $1;
-    `;
-    const res = await this.query<CompanyCultureMemoryRecord>(sql, [businessId]);
-    return res.rows;
-  }
-
-  /**
-   * Stores cultural-analysis data for a company.
-   */
-  public async saveCompanyCultureMemory(
-    businessId: string,
-    cultureData: Record<string, unknown>,
-    embedding?: number[],
-  ): Promise<boolean> {
-    const sql = `
-      INSERT INTO company_culture_memory (business_id, culture_data, embedding)
-      VALUES ($1, $2, $3);
-    `;
-    await this.query(sql, [
-      businessId,
-      JSON.stringify(cultureData),
-      embedding ? JSON.stringify(embedding) : null,
-    ]);
-    return true;
-  }
-
-  /**
    * Runs a real pgvector query using cosine distance (<=>).
    * Finds domain knowledge and negotiation patterns near the supplied embedding.
    * Falls back to in-memory similarity if pgvector/Postgres fails.
@@ -228,16 +176,6 @@ export class DatabaseMemoryService extends DatabaseConnection {
     limit = 5,
   ): Promise<SimilarPreference[]> {
     return await this.searchEmbeddings(preferenceSearch(queryEmbedding, limit));
-  }
-
-  /**
-   * Runs a real pgvector cosine-distance query on company_culture_memory.
-   */
-  public async searchSimilarCultureMemory(
-    queryEmbedding: number[],
-    limit = 5,
-  ): Promise<SimilarCultureMemory[]> {
-    return await this.searchEmbeddings(cultureSearch(queryEmbedding, limit));
   }
 
   /**
