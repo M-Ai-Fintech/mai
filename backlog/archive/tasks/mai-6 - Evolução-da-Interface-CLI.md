@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 06:18'
 labels:
   - interface
   - cli
@@ -64,6 +64,30 @@ created: 2026-07-22 05:28
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The CLI is not operational end-to-end: the KYB E2E command exits with status 1 because Broker generation fails on the Mastra/AI SDK mismatch. Revalidate every advertised command through its real dependency path.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Superseded by MAI-150.
+
+Carried forward:
+
+- inventory of CLI entry points and commands;
+- proof that supported workflows survive removal;
+- preservation of shared domain and engine logic;
+- operator-tool classification;
+- tests for supported entry points;
+- documentation cleanup.
+
+Changed architecture:
+
+- the interactive CLI is no longer a banker-facing product surface;
+- technical commands such as kyb, predict, portfolio, negotiate, document, and chat must not remain parallel product workflows;
+- product behavior belongs to approved frontend, API, job, and application-service boundaries;
+- useful internal scripts may remain only as explicit operator, migration, diagnostic, or development tools.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

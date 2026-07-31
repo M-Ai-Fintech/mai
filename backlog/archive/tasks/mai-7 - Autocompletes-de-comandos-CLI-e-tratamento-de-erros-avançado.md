@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 06:18'
 labels:
   - interface
   - cli
@@ -77,6 +77,29 @@ created: 2026-07-22 05:28
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: Autocomplete and error handling lack complete behavioral verification across the current command surface, and the CLI currently contains a failing KYB path. Reopen until command discovery, completion, validation, and failure behavior have focused tests.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Superseded by MAI-150.
+
+Carried forward:
+
+- structured error classification;
+- safe exit behavior for retained tools;
+- secret and credential redaction;
+- bounded debug diagnostics;
+- secure operator logging;
+- tests proving failure behavior and redaction.
+
+Changed architecture:
+
+- shell autocomplete and interactive product command history are not target banker-product requirements;
+- retained error-handling utilities should be adapted to shared platform or bounded operator tooling;
+- CLI behavior cannot bypass authorization, audit, idempotency, concurrency, or human-authority controls.
+
+Archive does not authorize immediate code deletion.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
