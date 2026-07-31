@@ -9,8 +9,6 @@ const memoryInputSchema = z.object({
     "save_user_preferences",
     "get_domain_knowledge",
     "save_domain_knowledge",
-    "get_company_culture",
-    "save_company_culture",
     "search_similar_knowledge",
   ]),
   userId: z.string().optional(),
@@ -23,8 +21,7 @@ const memoryInputSchema = z.object({
 
 export const databaseMemoryServiceTool = createTool({
   id: "database-memory-service-tool",
-  description:
-    "Stores and retrieves user preferences, domain knowledge, and company culture.",
+  description: "Stores and retrieves user preferences and domain knowledge.",
   inputSchema: memoryInputSchema,
   outputSchema: z.unknown(),
   execute: executeMemoryAction,
@@ -48,8 +45,6 @@ function memoryAction(action: MemoryInput["action"]): MemoryAction {
     save_user_preferences: saveUserPreferences,
     get_domain_knowledge: getDomainKnowledge,
     save_domain_knowledge: saveDomainKnowledge,
-    get_company_culture: getCompanyCulture,
-    save_company_culture: saveCompanyCulture,
     search_similar_knowledge: searchKnowledge,
   };
   return actions[action];
@@ -95,27 +90,6 @@ async function saveDomainKnowledge(
     input.embedding,
   );
   return savedMemory("Domain knowledge");
-}
-
-async function getCompanyCulture(
-  service: DatabaseMemoryService,
-  input: MemoryInput,
-) {
-  const businessId = requireValue(input.businessId, "businessId", input.action);
-  const culture = await service.getCompanyCultureMemory(businessId);
-  return { success: true, businessId, culture };
-}
-
-async function saveCompanyCulture(
-  service: DatabaseMemoryService,
-  input: MemoryInput,
-) {
-  await service.saveCompanyCultureMemory(
-    requireValue(input.businessId, "businessId", input.action),
-    requireValue(input.data, "data", input.action),
-    input.embedding,
-  );
-  return savedMemory("Company culture memory");
 }
 
 async function searchKnowledge(

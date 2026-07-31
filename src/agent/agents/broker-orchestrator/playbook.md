@@ -1,13 +1,41 @@
-O BrokerOrchestratorAgent não é apenas um roteador tecnológico, mas um auditor autônomo balizado pelos preceitos do *investment banking* e da auditoria corporativa. O *Standard Operating Procedure* (SOP) que o agente deve seguir reflete a intrincada realidade transacional do Brasil em 2026, onde o arcabouço fiscal encontra-se em profunda transição e os litígios trabalhistas representam riscos de ruína financeira se não forem adequadamente mitigados e precificados no valuation.  
-A estrutura de execução da plataforma "M\&Ai" divide o processamento de uma operação de fusão ou aquisição em etapas sequenciais e paralelas, com o orquestrador atuando como o elemento de coordenação central, ativando gatilhos específicos, sinalizando *red flags* e acionando subagentes.
+O BrokerOrchestratorAgent não é apenas um roteador tecnológico, mas um auditor
+autônomo balizado pelos preceitos do _investment banking_ e da auditoria
+corporativa. O _Standard Operating Procedure_ (SOP) que o agente deve seguir
+reflete a intrincada realidade transacional do Brasil em 2026, onde o arcabouço
+fiscal encontra-se em profunda transição e os litígios trabalhistas representam
+riscos de ruína financeira se não forem adequadamente mitigados e precificados
+no valuation.\
+A estrutura de execução da plataforma "M\&Ai" divide o processamento de uma
+operação de fusão ou aquisição em etapas sequenciais e paralelas, com o
+orquestrador atuando como o elemento de coordenação central, ativando gatilhos
+específicos, sinalizando _red flags_ e acionando subagentes.
 
-| Fase Operacional | Gatilho de Início | Lógica de Processamento e Delegação | Red Flags (Sinais de Alerta Críticos) |
-| :---- | :---- | :---- | :---- |
-| **1\. Triagem (Pre-Deal)** | Recebimento do *Teaser* ou *Info Memo* do Target. | O orquestrador aciona a análise documental preliminar. A verificação prioriza a governança corporativa, que deixou de ser um diferencial para se tornar um requisito mandatório17. Requer balanços contábeis dos últimos três anos e a estrutura societária documentada. | Ausência de demonstrações auditadas; irregularidades ESG graves; dependência financeira de incentivos fiscais extintos11. |
-| **2\. Due Diligence Trabalhista** | Abertura do *Virtual Data Room* (VDR). | Delegação ao subagente jurídico (legalAgent). O foco prioritário recai sobre a "Pejotização" (fraude na contratação de pessoas jurídicas). O agente avalia a presença dos elementos celetistas: subordinação jurídica, onerosidade, não eventualidade e pessoalidade19. | Volume atípico de profissionais essenciais operando como PJ; ausência de laudos ocupacionais; litígios ativos em varas do trabalho19. |
-| **3\. Due Diligence Tributária** | Consolidação das rotinas fiscais no VDR. | Delegação ao subagente fiscal (taxAgent). A análise é guiada pela Reforma Tributária (EC 132/2023 e LC 214/2025). O agente verifica a preparação do Target para o regime IVA-Dual (IBS e CBS) e a transição programada entre 2026 e 203312. | Operações altamente dependentes do "float tributário" no modelo pré-reforma; contingências fiscais nos últimos 5 anos11. |
-| **4\. Valuation e Modelagem** | Aprovação preliminar das diligências legal e fiscal. | Delegação ao subagente financeiro (valuationAgent). Exige a conjugação de Fluxo de Caixa Descontado (DCF) com Transações Comparáveis, empregando múltiplos de EBITDA (frequentemente entre 8x e 15x no middle-market)23. | Aumento artificial de margens; falha em precificar a futura perda de capital de giro induzida pelo mecanismo de *Split Payment*22. |
-| **5\. Estruturação Contratual** | Concordância sobre o *Enterprise Value*. | O orquestrador sintetiza os achados e auxilia na formatação das garantias contratuais. Estabelece cálculos de contas *Escrow* (retenções) e mecânicas de indenização, delineando tetos máximos através de *Baskets*13. | Cláusulas genéricas sem delimitação temporal ou monetária para assunção de passivos anteriores ao fechamento13. |
+| Fase Operacional                  | Gatilho de Início                                    | Lógica de Processamento e Delegação                                                                                                                                                                                                                                      | Red Flags (Sinais de Alerta Críticos)                                                                                                 |
+| :-------------------------------- | :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| **1\. Triagem (Pre-Deal)**        | Recebimento do _Teaser_ ou _Info Memo_ do Target.    | O orquestrador aciona a análise documental preliminar. A verificação prioriza a governança corporativa, que deixou de ser um diferencial para se tornar um requisito mandatório17. Requer balanços contábeis dos últimos três anos e a estrutura societária documentada. | Ausência de demonstrações auditadas; irregularidades ESG graves; dependência financeira de incentivos fiscais extintos11.             |
+| **2\. Due Diligence Trabalhista** | Abertura do _Virtual Data Room_ (VDR).               | Delegação ao subagente jurídico (legalAgent). O foco prioritário recai sobre a "Pejotização" (fraude na contratação de pessoas jurídicas). O agente avalia a presença dos elementos celetistas: subordinação jurídica, onerosidade, não eventualidade e pessoalidade19.  | Volume atípico de profissionais essenciais operando como PJ; ausência de laudos ocupacionais; litígios ativos em varas do trabalho19. |
+| **3\. Due Diligence Tributária**  | Consolidação das rotinas fiscais no VDR.             | Delegação ao subagente fiscal (taxAgent). A análise é guiada pela Reforma Tributária (EC 132/2023 e LC 214/2025). O agente verifica a preparação do Target para o regime IVA-Dual (IBS e CBS) e a transição programada entre 2026 e 203312.                              | Operações altamente dependentes do "float tributário" no modelo pré-reforma; contingências fiscais nos últimos 5 anos11.              |
+| **4\. Valuation e Modelagem**     | Aprovação preliminar das diligências legal e fiscal. | Delegação ao subagente financeiro (valuationAgent). Exige a conjugação de Fluxo de Caixa Descontado (DCF) com Transações Comparáveis, empregando múltiplos de EBITDA (frequentemente entre 8x e 15x no middle-market)23.                                                 | Aumento artificial de margens; falha em precificar a futura perda de capital de giro induzida pelo mecanismo de *Split Payment*22.    |
+| **5\. Estruturação Contratual**   | Concordância sobre o _Enterprise Value_.             | O orquestrador sintetiza os achados e auxilia na formatação das garantias contratuais. Estabelece cálculos de contas _Escrow_ (retenções) e mecânicas de indenização, delineando tetos máximos através de *Baskets*13.                                                   | Cláusulas genéricas sem delimitação temporal ou monetária para assunção de passivos anteriores ao fechamento13.                       |
 
-O impacto da Lei Complementar nº 214/2025 sobre a etapa de Due Diligence Tributária é massivo. A introdução do mecanismo de *Split Payment* modifica drasticamente a dinâmica de capital de giro das empresas brasileiras22. Historicamente, as empresas recolhiam o imposto do consumidor e retinham esse valor por 25 a 45 dias antes de repassá-lo ao fisco — um "float tributário" que funcionava como capital de giro não remunerado. O *Split Payment* determina a segregação instantânea dos tributos (IBS e CBS) no momento da liquidação financeira, transferindo-os diretamente à administração tributária sem passar pelo caixa da empresa vendedora22. O BrokerOrchestratorAgent deve estar programado para sinalizar ao subagente de Valuation que o DCF (Fluxo de Caixa Descontado) deve refletir a erosão progressiva deste *float* entre 2027 e 2033, sob pena de ocorrer uma sobrevalorização sistêmica dos ativos avaliados22.  
-No flanco jurídico, a análise de passivos trabalhistas exige perspicácia técnica. Operações de aquisição caracterizam sucessão empresarial, significando que o adquirente herda o histórico trabalhista da empresa alvo. A desconsideração da personalidade jurídica pode, em casos de créditos alimentares, atingir os bens pessoais dos novos sócios26. Portanto, o Orquestrador deve instruir a verificação exaustiva de estabilidades, recolhimento de FGTS e, de forma contundente, as contingências ocultas derivadas de pejotização fraudulenta, que impactam o preço e as garantias exigidas no momento da assinatura do contrato21.
+O impacto da Lei Complementar nº 214/2025 sobre a etapa de Due Diligence
+Tributária é massivo. A introdução do mecanismo de _Split Payment_ modifica
+drasticamente a dinâmica de capital de giro das empresas brasileiras22.
+Historicamente, as empresas recolhiam o imposto do consumidor e retinham esse
+valor por 25 a 45 dias antes de repassá-lo ao fisco — um "float tributário" que
+funcionava como capital de giro não remunerado. O _Split Payment_ determina a
+segregação instantânea dos tributos (IBS e CBS) no momento da liquidação
+financeira, transferindo-os diretamente à administração tributária sem passar
+pelo caixa da empresa vendedora22. O BrokerOrchestratorAgent deve estar
+programado para sinalizar ao subagente de Valuation que o DCF (Fluxo de Caixa
+Descontado) deve refletir a erosão progressiva deste _float_ entre 2027 e 2033,
+sob pena de ocorrer uma sobrevalorização sistêmica dos ativos avaliados22.\
+No flanco jurídico, a análise de passivos trabalhistas exige perspicácia
+técnica. Operações de aquisição caracterizam sucessão empresarial, significando
+que o adquirente herda o histórico trabalhista da empresa alvo. A
+desconsideração da personalidade jurídica pode, em casos de créditos
+alimentares, atingir os bens pessoais dos novos sócios26. Portanto, o
+Orquestrador deve instruir a verificação exaustiva de estabilidades,
+recolhimento de FGTS e, de forma contundente, as contingências ocultas derivadas
+de pejotização fraudulenta, que impactam o preço e as garantias exigidas no
+momento da assinatura do contrato21.

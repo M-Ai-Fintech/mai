@@ -1,13 +1,47 @@
-Para que o NegotiationAgent atue com proficiência no mercado brasileiro de F\&A, as suas regras de inferência não podem ser genéricas. Elas devem emular um Procedimento Operacional Padrão (SOP) rigoroso, oriundo da auditoria de alto nível e da banca de investimento de excelência. As estruturas de *Escrow* e *Earn-out* são os componentes mais litigiosos de qualquer SPA (*Share Purchase Agreement*), e a sua formulação inábil conduz sistematicamente a disputas pós-fechamento, destruindo o valor transacional5.  
-O *Escrow* (Conta Vinculada em Garantia) tem como finalidade primordial a mitigação de contingências passivas não identificadas integralmente durante a *Due Diligence* (passivos fiscais, laborais ou cíveis preexistentes)5. No mercado brasileiro de F\&A contemporâneo, a retenção padrão oscila entre 5% e 15% do valor total da transação (Enterprise Value), retido por períodos que variam tipicamente entre 12 e 24 meses5. O *Playbook* do agente deve determinar invariavelmente a estipulação de contas fiduciárias operadas por terceiros independentes (bancos de primeira linha ou *trustees*), proibindo terminantemente a recomendação de *Holdbacks* diretos (onde o comprador retém o capital na sua própria tesouraria), dada a altíssima propensão para conflitos de interesse e disputas de liquidez6.  
-Paralelamente, o *Earn-out* não é uma garantia contra passivos, mas sim um mecanismo de precificação de *upside*, ajustando o preço de aquisição à capacidade de performance futura da empresa5. O *middle-market* brasileiro aplica habitualmente *Earn-outs* correspondentes a 20% a 40% do *valuation* total, medidos em horizontes temporais de 1 a 3 anos5. O desafio estratégico do agente é mitigar a "Interferência do Comprador". Jurisprudência reiterada no Brasil, nomeadamente no Tribunal de Justiça de São Paulo (TJSP) e no Superior Tribunal de Justiça (STJ), invoca a aplicação do princípio da boa-fé objetiva e do Artigo 129 do Código Civil30. Segundo a jurisprudência consubstanciada no REsp n° 2.117.094/SP, caso o comprador intervenha na gestão pós-aquisição de forma a inviabilizar o alcance das metas do *Earn-out* (por exemplo, ao descontinuar linhas de produto, demitir quadros cruciais ou alterar a estrutura de comissionamento sem base técnica evidente), a condição suspensiva do *Earn-out* é dada como preenchida (cumprimento ficto), obrigando o comprador ao pagamento integral da parcela30.  
-Com base nestes fundamentos jurídicos e de mercado, o SOP do NegotiationAgent é executado através das seguintes lógicas processuais e gatilhos de alerta (*Red Flags*):
+Para que o NegotiationAgent atue com proficiência no mercado brasileiro de F\&A,
+as suas regras de inferência não podem ser genéricas. Elas devem emular um
+Procedimento Operacional Padrão (SOP) rigoroso, oriundo da auditoria de alto
+nível e da banca de investimento de excelência. As estruturas de _Escrow_ e
+_Earn-out_ são os componentes mais litigiosos de qualquer SPA (_Share Purchase
+Agreement_), e a sua formulação inábil conduz sistematicamente a disputas
+pós-fechamento, destruindo o valor transacional5.\
+O _Escrow_ (Conta Vinculada em Garantia) tem como finalidade primordial a
+mitigação de contingências passivas não identificadas integralmente durante a
+_Due Diligence_ (passivos fiscais, laborais ou cíveis preexistentes)5. No
+mercado brasileiro de F\&A contemporâneo, a retenção padrão oscila entre 5% e
+15% do valor total da transação (Enterprise Value), retido por períodos que
+variam tipicamente entre 12 e 24 meses5. O _Playbook_ do agente deve determinar
+invariavelmente a estipulação de contas fiduciárias operadas por terceiros
+independentes (bancos de primeira linha ou _trustees_), proibindo
+terminantemente a recomendação de _Holdbacks_ diretos (onde o comprador retém o
+capital na sua própria tesouraria), dada a altíssima propensão para conflitos de
+interesse e disputas de liquidez6.\
+Paralelamente, o _Earn-out_ não é uma garantia contra passivos, mas sim um
+mecanismo de precificação de _upside_, ajustando o preço de aquisição à
+capacidade de performance futura da empresa5. O _middle-market_ brasileiro
+aplica habitualmente _Earn-outs_ correspondentes a 20% a 40% do _valuation_
+total, medidos em horizontes temporais de 1 a 3 anos5. O desafio estratégico do
+agente é mitigar a "Interferência do Comprador". Jurisprudência reiterada no
+Brasil, nomeadamente no Tribunal de Justiça de São Paulo (TJSP) e no Superior
+Tribunal de Justiça (STJ), invoca a aplicação do princípio da boa-fé objetiva e
+do Artigo 129 do Código Civil30. Segundo a jurisprudência consubstanciada no
+REsp n° 2.117.094/SP, caso o comprador intervenha na gestão pós-aquisição de
+forma a inviabilizar o alcance das metas do _Earn-out_ (por exemplo, ao
+descontinuar linhas de produto, demitir quadros cruciais ou alterar a estrutura
+de comissionamento sem base técnica evidente), a condição suspensiva do
+_Earn-out_ é dada como preenchida (cumprimento ficto), obrigando o comprador ao
+pagamento integral da parcela30.\
+Com base nestes fundamentos jurídicos e de mercado, o SOP do NegotiationAgent é
+executado através das seguintes lógicas processuais e gatilhos de alerta (_Red
+Flags_):
 
-| Fase Operacional do SOP | Ação do Agente | Red Flags (Gatilhos de Rejeição e Alerta) | Mecanismos de Proteção e Resolução |
-| :---- | :---- | :---- | :---- |
-| **Fase 1: Auditoria de Métricas de *Earn-out*** | Analisar o indicador económico selecionado pelo comprador para basear o pagamento futuro. | Submissão de propostas baseadas em **Lucro Líquido**. O Lucro Líquido é altamente manipulável por políticas contábeis de depreciação e juros30. | O agente deve forçar a conversão da métrica para **Receita Recorrente Líquida (ARR)** ou **EBITDA Ajustado**, exigindo a inclusão de memória de cálculo descritiva5. |
-| **Fase 2: Governança Pós-Fechamento** | Avaliar o grau de autonomia do vendedor durante o período probatório do *Earn-out*. | Ausência de garantias operacionais ou de autonomia de gestão para os fundadores que permanecem na operação. | O agente exige a inclusão do direito de acesso à informação (Art. 130 CC) para auditoria contínua e cláusulas de proteção contra interferência discricionária30. |
-| **Fase 3: Parametrização do *Escrow*** | Estruturar a conta em garantia para cobrir contingências da *Due Diligence*. | *Escrows* globais sem prazo de expiração (ad-eternum) ou superiores a 20% do capital negociado. Retenção direta (*Holdback*) sem banco mediador6. | Proposição algorítmica de liberações graduais (ex: 50% ao fim do 1º ano, 50% no 2º ano) para aliviar a pressão psicológica e reter apenas o necessário5. |
-| **Fase 4: Estruturação de Resolução de Disputas** | Desenhar o mecanismo de resolução caso as metas do *Earn-out* ou passivos do *Escrow* sejam disputados. | Cláusulas de eleição de foro tradicional (Tribunais Judiciais Comuns) que carecem de agilidade e especialização técnica31. | Omissão bloqueada: O agente obriga a indicação de Câmaras de Arbitragem (ex: CAM-CCBC, CCI, FGV) e estipulação prévia da intervenção de Peritos Independentes31. |
+| Fase Operacional do SOP                           | Ação do Agente                                                                                          | Red Flags (Gatilhos de Rejeição e Alerta)                                                                                                         | Mecanismos de Proteção e Resolução                                                                                                                                   |
+| :------------------------------------------------ | :------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fase 1: Auditoria de Métricas de _Earn-out_**   | Analisar o indicador económico selecionado pelo comprador para basear o pagamento futuro.               | Submissão de propostas baseadas em **Lucro Líquido**. O Lucro Líquido é altamente manipulável por políticas contábeis de depreciação e juros30.   | O agente deve forçar a conversão da métrica para **Receita Recorrente Líquida (ARR)** ou **EBITDA Ajustado**, exigindo a inclusão de memória de cálculo descritiva5. |
+| **Fase 2: Governança Pós-Fechamento**             | Avaliar o grau de autonomia do vendedor durante o período probatório do _Earn-out_.                     | Ausência de garantias operacionais ou de autonomia de gestão para os fundadores que permanecem na operação.                                       | O agente exige a inclusão do direito de acesso à informação (Art. 130 CC) para auditoria contínua e cláusulas de proteção contra interferência discricionária30.     |
+| **Fase 3: Parametrização do _Escrow_**            | Estruturar a conta em garantia para cobrir contingências da _Due Diligence_.                            | _Escrows_ globais sem prazo de expiração (ad-eternum) ou superiores a 20% do capital negociado. Retenção direta (_Holdback_) sem banco mediador6. | Proposição algorítmica de liberações graduais (ex: 50% ao fim do 1º ano, 50% no 2º ano) para aliviar a pressão psicológica e reter apenas o necessário5.             |
+| **Fase 4: Estruturação de Resolução de Disputas** | Desenhar o mecanismo de resolução caso as metas do _Earn-out_ ou passivos do _Escrow_ sejam disputados. | Cláusulas de eleição de foro tradicional (Tribunais Judiciais Comuns) que carecem de agilidade e especialização técnica31.                        | Omissão bloqueada: O agente obriga a indicação de Câmaras de Arbitragem (ex: CAM-CCBC, CCI, FGV) e estipulação prévia da intervenção de Peritos Independentes31.     |
 
-A aplicação sistemática deste *Playbook* garante que as formulações contratuais simuladas pelo M\&Ai são blindadas legalmente, antecipando e anulando fricções estruturais que, frequentemente, resultam num colapso tardio das operações.
+A aplicação sistemática deste _Playbook_ garante que as formulações contratuais
+simuladas pelo M\&Ai são blindadas legalmente, antecipando e anulando fricções
+estruturais que, frequentemente, resultam num colapso tardio das operações.
