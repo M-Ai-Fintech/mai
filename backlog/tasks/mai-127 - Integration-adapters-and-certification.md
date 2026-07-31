@@ -4,6 +4,7 @@ title: Integration adapters and certification
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
+updated_date: '2026-07-31 05:51'
 labels:
   - backend
   - architecture
@@ -21,6 +22,7 @@ dependencies:
   - MAI-120
   - MAI-122
   - MAI-123
+  - MAI-148
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
