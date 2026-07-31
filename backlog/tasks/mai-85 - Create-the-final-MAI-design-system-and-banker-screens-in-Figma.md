@@ -1,10 +1,10 @@
 ---
 id: MAI-85
 title: Establish the Figma design system and rebuild the MAI banker workspace from it
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-22 05:55'
-updated_date: '2026-07-29 15:29'
+updated_date: '2026-07-31 02:08'
 labels:
   - design-system
   - figma
@@ -47,15 +47,31 @@ The ordered delivery chain is MAI-89 through MAI-103. Backend implementation wor
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The shared Figma source defines variables, typography, color, spacing, grids, elevation, iconography, motion, breakpoints, accessibility rules, and component anatomy, variants, states, responsiveness, and usage.
-- [ ] #2 All 25 banker-workspace design definitions are complete, reviewed, governed, and linked to their corresponding Figma frames.
-- [ ] #3 All screen families are approved at required responsive breakpoints and cover loading, empty, error, permission, destructive-action, and workflow-specific states.
-- [ ] #4 Interactive Figma prototypes validate the principal banker and external-participant journeys.
-- [ ] #5 The frontend is derived from the approved Figma source and is not required to preserve the existing GUI structure, styling, or component implementation.
-- [ ] #6 Stitch artifacts and superseded Stitch-first tasks no longer influence active design or implementation decisions.
-- [ ] #7 Figma-to-code conformance and frontend workflow verification are approved before backend redesign begins.
-- [ ] #8 The backend architecture, domain model, and contracts are redesigned from the approved frontend workflow rather than inherited from the current MVP API.
+- [x] #1 The shared Figma source defines variables, typography, color, spacing, grids, elevation, iconography, motion, breakpoints, accessibility rules, and component anatomy, variants, states, responsiveness, and usage.
+- [x] #2 All 25 banker-workspace design definitions are complete, reviewed, governed, and linked to their corresponding Figma frames.
+- [x] #3 All screen families are approved at required responsive breakpoints and cover loading, empty, error, permission, destructive-action, and workflow-specific states.
+- [x] #4 Interactive Figma prototypes validate the principal banker and external-participant journeys.
+- [x] #5 The frontend is derived from the approved Figma source and is not required to preserve the existing GUI structure, styling, or component implementation.
+- [x] #6 Stitch artifacts and superseded Stitch-first tasks no longer influence active design or implementation decisions.
+- [x] #7 Figma-to-code conformance and frontend workflow verification are approved before backend redesign begins.
+- [x] #8 The backend architecture, domain model, and contracts are redesigned from the approved frontend workflow rather than inherited from the current MVP API.
 <!-- AC:END -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Implementation Plan
 
@@ -109,10 +125,10 @@ ID correction on 2026-07-28: decimal tasks MAI-85.1 through MAI-85.15 were creat
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 The design source and exported handoff package are accessible, versioned, and linked from the canonical Backlog documentation
-- [ ] #2 Accessibility and consistency reviews are completed with findings resolved or tracked
-- [ ] #3 The approved design covers every screen and state required by the Banker Workspace milestone
-- [ ] #4 Every replacement task from MAI-89 through MAI-103 is completed with linked evidence and the required sequence is preserved.
-- [ ] #5 Obsolete active Stitch-first, prototype-constrained, and mistakenly created decimal-ID tasks are archived with a trace to this initiative.
-- [ ] #6 The approved MAI-103 backend redesign records an independently deliverable backend implementation backlog for creation with the next available global integer task IDs.
+- [x] #1 The design source and exported handoff package are accessible, versioned, and linked from the canonical Backlog documentation
+- [x] #2 Accessibility and consistency reviews are completed with findings resolved or tracked
+- [x] #3 The approved design covers every screen and state required by the Banker Workspace milestone
+- [x] #4 Every replacement task from MAI-89 through MAI-103 is completed with linked evidence and the required sequence is preserved.
+- [x] #5 Obsolete active Stitch-first, prototype-constrained, and mistakenly created decimal-ID tasks are archived with a trace to this initiative.
+- [x] #6 The approved MAI-103 backend redesign records an independently deliverable backend implementation backlog for creation with the next available global integer task IDs.
 <!-- DOD:END -->

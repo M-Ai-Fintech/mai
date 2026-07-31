@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 02:02'
 labels:
   - core
   - integration
@@ -13,7 +13,7 @@ labels:
 milestone: m-13
 dependencies: []
 priority: high
-ordinal: 2000
+ordinal: 2500
 ---
 
 ## Description
