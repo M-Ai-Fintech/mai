@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-31 06:14'
 labels:
   - enterprise
   - security
@@ -47,6 +47,16 @@ ordinal: 42000
 
 <!-- SECTION:NOTES:BEGIN -->
 Este épico é pré-requisito para qualquer cliente enterprise que exija conformidade regulatória ou auditoria externa. Prioridade deve ser elevada para 'high' antes do início da fase de vendas B2B. A subtarefa MAI-44 depende da infraestrutura GCP estar provisionada (Milestone m-8). Subtarefas 13.1–13.4 podem ser desenvolvidas em paralelo no monolito Deno antes da migração GCP.
+
+Superseded by MAI-149 for enterprise security, privacy, compliance, and readiness evidence.
+
+Implementation controls remain owned by MAI-105, MAI-107, MAI-109, MAI-125, MAI-127, and MAI-148.
+
+The old epic incorrectly combined implementation, infrastructure, legal approval, monitoring, audit, and compliance claims into one task.
+
+archive does not authorize deletion of useful implementation or evidence;
+no old task remains an active architectural authority;
+no unsupported compliance claim is carried forward.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
