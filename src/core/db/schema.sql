@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS domain_knowledge (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Legacy company-culture memory storage retained only for MAI-129 migration and retirement. It is not an active agent-memory contract.
 CREATE TABLE IF NOT EXISTS company_culture_memory (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id UUID REFERENCES business(id) ON DELETE CASCADE,

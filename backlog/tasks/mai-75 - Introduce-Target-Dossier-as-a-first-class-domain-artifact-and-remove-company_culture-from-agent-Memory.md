@@ -5,9 +5,9 @@ title: >-
   company_culture from agent Memory
 status: In Progress
 assignee:
-  - '@luis'
+  - '@antigravity'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-31 12:10'
+updated_date: '2026-07-31 17:12'
 labels:
   - revalidation
 milestone: m-10
@@ -34,22 +34,54 @@ Domain modeling revealed that 'company_culture' was incorrectly placed inside th
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-ARCHITECTURE CORRECTION:
-- Target Dossier is a deal-scoped product artifact/projection.
-- It is not agent memory.
-- An agent may produce a typed partial dossier proposal.
-- An agent does not own or authoritatively persist the final Target Dossier.
-- Authoritative persistence, evidence linkage, concurrency, and projections belong to the new bounded-context architecture.
-- Physical removal of legacy database tables belongs to MAI-129.
+## MAI-75 Active Company Culture Memory API Removal Notes
 
-IMPLEMENTATION EVIDENCE & VERIFICATION:
-1. memorySchema accepts domain_knowledge & user_preference; rejects company_culture.
-2. Active memory tools (databaseMemoryServiceTool) expose no company-culture actions.
-3. BrokerOrchestratorService.processUserCorrection validates correctionType and rejects company_culture.
-4. Target Dossier proposal schema (targetDossierDraftSchema) defined under src/shared/schemas/target-dossier.ts with dealId, targetIdentity, documentReferences, businessKnowledge, cultureProfile (sub-object), completeness, provenance, and proposalStatus (isProposed: true, isApproved: false, isAuthoritative: false).
-5. SourcingAndKYBAgent outputSchema & instructions updated to produce targetDossierProposal.
-6. Legacy tables (company_culture_memory) remain intact in SQL schema for MAI-129 physical cleanup; no active memory code path loads or persists company culture as agent memory.
-7. Verification gate 'deno task verify' ran and passed all 17 verification steps cleanly.
+### 1. Architectural Correction & Active API Removal
+- The initial MAI-75 implementation removed agent-facing correction routing and tool actions, but left active production service methods and similarity-search exports.
+- Removed active APIs from TypeScript codebase:
+  - `CompanyCultureMemoryRecord`
+  - `SimilarCultureMemory`
+  - `DatabaseMemoryService.getCompanyCultureMemory`
+  - `DatabaseMemoryService.saveCompanyCultureMemory`
+  - `DatabaseMemoryService.searchSimilarCultureMemory`
+  - `CultureEmbeddingRow`
+  - `cultureSearch`
+  - `CULTURE_VECTOR_SQL`
+  - `CULTURE_FALLBACK_SQL`
+  - Removed associated active imports/exports and CLI usage in `src/cli/registry-command.ts`.
+
+### 2. Legacy Storage & MAI-129 Boundary
+- Physical SQL table `company_culture_memory` and its indices remain intact in `src/core/db/schema.sql` carrying an explicit isolation comment:
+  `-- Legacy company-culture memory storage retained only for MAI-129 migration and retirement. It is not an active agent-memory contract.`
+- Physical schema migration and table deletion are owned by MAI-129. No active runtime code path performs reads, writes, vector searches, or tool actions against `company_culture_memory`.
+
+### 3. Target Dossier Boundary Preserved
+- `cultureProfile` sub-object preserved as a domain projection inside `targetDossierDraftSchema` (`src/shared/schemas/target-dossier.ts`).
+- Target Dossier draft remains proposed, unapproved, and non-authoritative (`proposalStatus: { isProposed: true, isApproved: false, isAuthoritative: false }`).
+
+### 4. Focused Test Results
+- `tests/core/target_dossier_memory.spec.ts`: 1 passed (15 steps), 0 failed
+- `tests/core/db/DatabaseMemoryService.spec.ts`: 1 passed (2 steps), 0 failed
+
+### 5. Canonical Verification Result
+`deno task verify` exited 0 (ALL 17 GATES PASSED):
+- PASS Canonical documentation
+- PASS I18n Strings Check
+- PASS Deno tests
+- PASS Frontend design tokens
+- PASS Frontend foundation boundary
+- PASS Frontend component boundary
+- PASS Frontend shell boundary
+- PASS Frontend screen families
+- PASS Frontend deal intelligence screens
+- PASS Frontend deal execution screens
+- PASS Frontend Figma-to-code conformance
+- PASS GUI unit tests
+- PASS Next.js production build
+- PASS Frontend principal workflows
+- PASS Storybook documentation
+- PASS Storybook build
+- PASS Storybook interaction tests
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
