@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@chatgpt'
 created_date: '2026-07-28 03:08'
-updated_date: '2026-07-30 05:34'
+updated_date: '2026-07-31 20:45'
 labels:
   - frontend
   - figma-conformance
