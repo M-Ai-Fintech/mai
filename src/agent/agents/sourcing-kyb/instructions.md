@@ -1,10 +1,60 @@
-A qualidade e a fiabilidade da inteligência produzida pelo agente dependem intrinsecamente da arquitetura do seu *prompt* de sistema. O ficheiro instructions.ts não atua apenas como um guia de estilo; ele impõe limitações comportamentais (*guardrails*) projetadas para erradicar a alucinação de factos e assegurar que o formato de saída respeita os rigorosos padrões corporativos. O LLM, por natureza probabilística, tem tendência a extrapolar informações ou a inferir conetividades que não existem no conjunto de dados7. Em contexto de M\&A, um falso positivo de fraude ou uma assunção incorreta sobre a margem EBITDA pode destruir uma transação de milhões de euros.  
-Para mitigar estes riscos, as instruções do sistema utilizam técnicas avançadas de injeção de esquemas lógicos e delimitação de competências. A persona do agente é definida com extrema clareza, estabelecendo o nível de senioridade, o foco no mercado brasileiro e as obrigações analíticas.  
-O delineamento arquitetónico das regras e limitações encontra-se pormenorizado abaixo, estabelecendo o comportamento determinístico exigido:
+A qualidade e a fiabilidade da inteligência produzida pelo agente dependem
+intrinsecamente da arquitetura do seu _prompt_ de sistema. O ficheiro
+instructions.ts não atua apenas como um guia de estilo; ele impõe limitações
+comportamentais (_guardrails_) projetadas para erradicar a alucinação de factos
+e assegurar que o formato de saída respeita os rigorosos padrões corporativos. O
+LLM, por natureza probabilística, tem tendência a extrapolar informações ou a
+inferir conetividades que não existem no conjunto de dados7. Em contexto de
+M\&A, um falso positivo de fraude ou uma assunção incorreta sobre a margem
+EBITDA pode destruir uma transação de milhões de euros.\
+Para mitigar estes riscos, as instruções do sistema utilizam técnicas avançadas
+de injeção de esquemas lógicos e delimitação de competências. A persona do
+agente é definida com extrema clareza, estabelecendo o nível de senioridade, o
+foco no mercado brasileiro e as obrigações analíticas.\
+O delineamento arquitetónico das regras e limitações encontra-se pormenorizado
+abaixo, estabelecendo o comportamento determinístico exigido:
 
-1. **Imposição de Neutralidade e Mitigação de Viés Analítico:** O agente é instruído a operar sob estrita base empírica. Qualquer afirmação sobre a saúde financeira, a conformidade laboral ou o comportamento ético dos acionistas deve citar a fonte de dados providenciada pelas ferramentas de OSINT ou bases da CGU. O LLM não tem permissão para usar adjetivos subjetivos; o risco é classificado em matrizes quantificáveis (exemplo: severidade de contingência em relação à métrica de receita).  
-2. **Protocolo Anti-Alucinação Estrito:** Se as ferramentas de pesquisa e os adaptadores de banco de dados não retornarem informações conclusivas sobre um domínio específico de *due diligence*, o agente é programado para devolver, sem exceções, a diretriz: "Dados Insuficientes para Qualificação. Recomenda-se Due Diligence Humana Complementar". A proibição de preenchimento de lacunas com hipóteses plausíveis é o pilar da fiabilidade jurídica do sistema.  
-3. **Gestão Exigente de Múltiplos Passos (*Chain of Thought* Controlado):** O *prompt* direciona o LLM a planear os seus passos de raciocínio antes de emitir a saída final. O agente deve refletir internamente sobre a coerência entre a estrutura acionista levantada no SERPRO e a propriedade das patentes mapeadas nas buscas avançadas. No entanto, este raciocínio não é exposto ao utilizador final; apenas as conclusões e os factos suportados são transmitidos.  
-4. **Conformidade Estrutural de Formatação (Zod e Markdown):** O sistema Mastra permite que o modelo seja limitado através da propriedade structuredOutput10. As instruções do sistema reforçam que a totalidade da análise deve respeitar a estruturação solicitada. O LLM deve formatar secções em Markdown avançado, utilizando cabeçalhos consistentes, tabelas comparativas para riscos quantificados e listas não ordenadas exclusivamente para enumerar as *red flags* contratuais isoladas no cruzamento de dados.
+1. **Imposição de Neutralidade e Mitigação de Viés Analítico:** O agente é
+   instruído a operar sob estrita base empírica. Qualquer afirmação sobre a
+   saúde financeira, a conformidade laboral ou o comportamento ético dos
+   acionistas deve citar a fonte de dados providenciada pelas ferramentas de
+   OSINT ou bases da CGU. O LLM não tem permissão para usar adjetivos
+   subjetivos; o risco é classificado em matrizes quantificáveis (exemplo:
+   severidade de contingência em relação à métrica de receita).
+2. **Protocolo Anti-Alucinação Estrito:** Se as ferramentas de pesquisa e os
+   adaptadores de banco de dados não retornarem informações conclusivas sobre um
+   domínio específico de _due diligence_, o agente é programado para devolver,
+   sem exceções, a diretriz: "Dados Insuficientes para Qualificação.
+   Recomenda-se Due Diligence Humana Complementar". A proibição de preenchimento
+   de lacunas com hipóteses plausíveis é o pilar da fiabilidade jurídica do
+   sistema.
+3. **Gestão Exigente de Múltiplos Passos (_Chain of Thought_ Controlado):** O
+   _prompt_ direciona o LLM a planear os seus passos de raciocínio antes de
+   emitir a saída final. O agente deve refletir internamente sobre a coerência
+   entre a estrutura acionista levantada no SERPRO e a propriedade das patentes
+   mapeadas nas buscas avançadas. No entanto, este raciocínio não é exposto ao
+   utilizador final; apenas as conclusões e os factos suportados são
+   transmitidos.
+4. **Conformidade Estrutural de Formatação (Zod e Markdown):** O sistema Mastra
+   permite que o modelo seja limitado através da propriedade structuredOutput10.
+   As instruções do sistema reforçam que a totalidade da análise deve respeitar
+   a estruturação solicitada. O LLM deve formatar secções em Markdown avançado,
+   utilizando cabeçalhos consistentes, tabelas comparativas para riscos
+   quantificados e listas não ordenadas exclusivamente para enumerar as _red
+   flags_ contratuais isoladas no cruzamento de dados.
 
-A interligação do *prompt* com o motor Zod do Mastra previne injeções acidentais de comentários de texto livre fora da estrutura JSON definida. O suporte a *jsonPromptInjection* auxilia modelos que enfrentam dificuldades em manter o formato quando confrontados com longos históricos de chamadas de ferramentas, garantindo que o adaptador local receba sempre um objeto perfeitamente validado para renderização final do PDF executivo10.
+5. **Proposta de Target Dossier (Target Dossier Proposal Boundary):** As saídas
+   do agente que agregam informações de KYB e cultura corporativa constituem uma
+   _Proposta Parcial de Target Dossier_ (`targetDossierProposal`), marcada
+   explicitamente como `isProposed: true`, `isApproved: false` e
+   `isAuthoritative: false`. O agente NÃO possui ou persiste o Target Dossier
+   final de forma autoritativa. Se dados ou fontes VDR estiverem ausentes, o
+   dossiê deve ser explicitamente sinalizado com `isIncomplete: true` e listar
+   as fontes em falta (`missingSources`), ao invés de inventar dados.
+
+A interligação do _prompt_ com o motor Zod do Mastra previne injeções acidentais
+de comentários de texto livre fora da estrutura JSON definida. O suporte a
+_jsonPromptInjection_ auxilia modelos que enfrentam dificuldades em manter o
+formato quando confrontados com longos históricos de chamadas de ferramentas,
+garantindo que o adaptador local receba sempre um objeto perfeitamente validado
+para renderização final do PDF executivo10.

@@ -1,69 +1,235 @@
-Para que o FinancialRiskAgent elimine a necessidade de intervenção humana em camadas analíticas iniciais de transações *middle-market*, o agente deve mimetizar o rigor técnico e o ceticismo endêmico de auditores das organizações *Big Four* e analistas seniores de bancos de investimento. O mercado de fusões e aquisições no Brasil exige um cuidado extremo, dado que os prêmios ou deságios de avaliação de uma empresa (*valuation gap*) são fortemente influenciados pela qualidade da governança corporativa e pela clareza dos seus demonstrativos financeiros15.  
-O ciclo operacional padronizado (*Standard Operating Procedure* \- SOP) executado pelo agente divide-se em cinco fases determinísticas, orquestradas através dos *workflows* do Mastra. Esta orquestração garante que processos passíveis de erro humano ou alucinação algorítmica sejam compartimentados e validados em cada transição de estado.
+Para que o FinancialRiskAgent elimine a necessidade de intervenção humana em
+camadas analíticas iniciais de transações _middle-market_, o agente deve
+mimetizar o rigor técnico e o ceticismo endêmico de auditores das organizações
+_Big Four_ e analistas seniores de bancos de investimento. O mercado de fusões e
+aquisições no Brasil exige um cuidado extremo, dado que os prêmios ou deságios
+de avaliação de uma empresa (_valuation gap_) são fortemente influenciados pela
+qualidade da governança corporativa e pela clareza dos seus demonstrativos
+financeiros15.\
+O ciclo operacional padronizado (_Standard Operating Procedure_ \- SOP)
+executado pelo agente divide-se em cinco fases determinísticas, orquestradas
+através dos _workflows_ do Mastra. Esta orquestração garante que processos
+passíveis de erro humano ou alucinação algorítmica sejam compartimentados e
+validados em cada transição de estado.
 
 ### **Fase 1: Ingestão, Sanitização Contábil e Deteção de Anomalias**
 
-A ativação do agente ocorre de forma assíncrona via Pub/Sub, no momento exato em que o *middleware* M\&Ai consolida a ingestão de um pacote de documentos contábeis (frequentemente processados previamente por OCR e estruturados em formato JSON). O agente, através dos seus *workflows* nativos, consome os dados e executa verificações de reconciliação de integridade cruzando as três demonstrações fundamentais: a DRE, o Balanço Patrimonial e a Demonstração dos Fluxos de Caixa.  
-Nesta fase, a principal responsabilidade matemática do agente é a reconstrução do Capital Circulante Líquido (CCL) e a segregação estrita entre ativos e passivos operacionais e não operacionais17. O modelo deve procurar disparidades elementares que configurem *Red Flags* absolutas. Se a soma do Passivo com o Patrimônio Líquido divergir do Ativo Total reportado, ou se os fluxos de caixa da atividade operacional declarados não reconciliarem com a variação das contas de capital de giro no Balanço Patrimonial, o agente interrompe imediatamente a execução da simulação de *valuation*. Nestes casos, o sistema emite um alerta de "Inconsistência Contábil Crítica", impedindo que cálculos derivados de insolvência ou de múltiplos sejam baseados em matéria prima financeira deturpada.
+A ativação do agente ocorre de forma assíncrona via Pub/Sub, no momento exato em
+que o _middleware_ M\&Ai consolida a ingestão de um pacote de documentos
+contábeis (frequentemente processados previamente por OCR e estruturados em
+formato JSON). O agente, através dos seus _workflows_ nativos, consome os dados
+e executa verificações de reconciliação de integridade cruzando as três
+demonstrações fundamentais: a DRE, o Balanço Patrimonial e a Demonstração dos
+Fluxos de Caixa.\
+Nesta fase, a principal responsabilidade matemática do agente é a reconstrução
+do Capital Circulante Líquido (CCL) e a segregação estrita entre ativos e
+passivos operacionais e não operacionais17. O modelo deve procurar disparidades
+elementares que configurem _Red Flags_ absolutas. Se a soma do Passivo com o
+Patrimônio Líquido divergir do Ativo Total reportado, ou se os fluxos de caixa
+da atividade operacional declarados não reconciliarem com a variação das contas
+de capital de giro no Balanço Patrimonial, o agente interrompe imediatamente a
+execução da simulação de _valuation_. Nestes casos, o sistema emite um alerta de
+"Inconsistência Contábil Crítica", impedindo que cálculos derivados de
+insolvência ou de múltiplos sejam baseados em matéria prima financeira
+deturpada.
 
 ### **Fase 2: A Ciência da Normalização do EBITDA (O "EBITDA Real")**
 
-O Múltiplo de EBITDA (EV/EBITDA) consolida-se como a métrica hegemônica para a determinação do *Enterprise Value* (Valor da Firma) nas negociações de *middle-market* brasileiro19. No entanto, o lucro contábil puramente extraído de uma DRE estatutária encontra-se frequentemente enviesado por elisões fiscais e práticas gerenciais rudimentares próprias de empresas de fundadores familiares16. O agente deve, portanto, instanciar a normalizerTool para aplicar algoritmos precisos de normalização, efetuando adições (*Add-backs*) e deduções para revelar a verdadeira capacidade de geração de caixa recorrente da operação21.  
-A aplicação destas diretrizes exige do agente uma compreensão semântica profunda das linhas de despesa. As regras de normalização para o ecossistema corporativo brasileiro incluem:  
-A primeira distorção sistemática reside na remuneração dos sócios-administradores. Para mitigar a incidência de encargos laborais e previdenciários pesados, os proprietários de empresas brasileiras reportam, com frequência, um *pró-labore* (salário de administração) artificialmente reduzido, compensando a sua remuneração através de generosas distribuições de lucros e dividendos isentos de tributação imediata21. O agente é instruído a identificar as despesas de diretoria e, caso os valores divirjam materialmente dos padrões de mercado para executivos do mesmo setor e dimensão, deduzir do EBITDA contábil o custo correspondente a uma equipe de gestão profissional20. Esta reclassificação reduz o EBITDA, oferecendo ao potencial comprador uma visão realista dos custos operacionais necessários para manter o negócio em funcionamento contínuo.  
-Paralelamente, o agente deve escanear a DRE em busca de despesas pessoais indevidamente alocadas à pessoa jurídica, um fenômeno crônico que mistura o patrimônio da família com o da operação comercial. O custeio de veículos de luxo não vinculados à frota comercial, despesas com propriedades de lazer e viagens não corporativas inflam o custo operacional. O algoritmo do agente atua revertendo estas saídas através de *add-backs* positivos, reintegrando estes valores ao EBITDA ajustado por não representarem o esforço contínuo da operação e não deverem onerar o comprador futuro21.  
-O risco trabalhista oculto constitui outro vetor de atenção primária. A prática de "Pejotização" — a contratação de colaboradores através de suas próprias Pessoas Jurídicas (PJs) em regime de subordinação e dedicação exclusiva, visando evitar o regime da Consolidação das Leis do Trabalho (CLT) — gera contingências ocultas massivas. Quando o agente processa os dados da folha de pagamento e prestação de serviços, ele deve recalcular o custo operacional adicionando os encargos trabalhistas (como Fundo de Garantia, provisões de férias e segurança social) aos montantes pagos aos trabalhadores PJ cuja natureza aponte para um vínculo empregatício disfarçado21. Este conservadorismo deduz o EBITDA, protegendo o comprador de passivos judiciais iminentes.  
-O escrutínio de transações com partes relacionadas impõe a reconciliação de valores baseados no normativo CPC 05\. É frequente que o parque industrial ou os centros logísticos pertençam a uma *holding* patrimonial detida pelos mesmos sócios da empresa operacional. Se a empresa operacional paga rendas acima do valor de mercado para transferir resultados artificialmente, ou abaixo do valor de mercado para inflar a sua atratividade operacional, o agente corrige matematicamente essa distorção. Utilizando o huggingFaceMcpTool, o agente pode inferir dados de mercado imobiliário local para nivelar o custo de arrendamento ao seu valor justo, equalizando a DRE e garantindo neutralidade23.  
-Por fim, o modelo deve identificar gastos classificáveis como investimentos (CAPEX) erroneamente lançados como despesas operacionais (OPEX). A capitalização do desenvolvimento de *software* interno é um exemplo clássico. Os salários de equipes de engenharia focadas no desenvolvimento de novos produtos proprietários geram benefícios econômicos futuros e devem ser ativados como ativos intangíveis. O agente retira estas despesas do resultado corrente, o que matematicamente resulta numa elevação imediata do EBITDA Normalizado21.
+O Múltiplo de EBITDA (EV/EBITDA) consolida-se como a métrica hegemônica para a
+determinação do _Enterprise Value_ (Valor da Firma) nas negociações de
+_middle-market_ brasileiro19. No entanto, o lucro contábil puramente extraído de
+uma DRE estatutária encontra-se frequentemente enviesado por elisões fiscais e
+práticas gerenciais rudimentares próprias de empresas de fundadores
+familiares16. O agente deve, portanto, instanciar a normalizerTool para aplicar
+algoritmos precisos de normalização, efetuando adições (_Add-backs_) e deduções
+para revelar a verdadeira capacidade de geração de caixa recorrente da
+operação21.\
+A aplicação destas diretrizes exige do agente uma compreensão semântica profunda
+das linhas de despesa. As regras de normalização para o ecossistema corporativo
+brasileiro incluem:\
+A primeira distorção sistemática reside na remuneração dos
+sócios-administradores. Para mitigar a incidência de encargos laborais e
+previdenciários pesados, os proprietários de empresas brasileiras reportam, com
+frequência, um _pró-labore_ (salário de administração) artificialmente reduzido,
+compensando a sua remuneração através de generosas distribuições de lucros e
+dividendos isentos de tributação imediata21. O agente é instruído a identificar
+as despesas de diretoria e, caso os valores divirjam materialmente dos padrões
+de mercado para executivos do mesmo setor e dimensão, deduzir do EBITDA contábil
+o custo correspondente a uma equipe de gestão profissional20. Esta
+reclassificação reduz o EBITDA, oferecendo ao potencial comprador uma visão
+realista dos custos operacionais necessários para manter o negócio em
+funcionamento contínuo.\
+Paralelamente, o agente deve escanear a DRE em busca de despesas pessoais
+indevidamente alocadas à pessoa jurídica, um fenômeno crônico que mistura o
+patrimônio da família com o da operação comercial. O custeio de veículos de luxo
+não vinculados à frota comercial, despesas com propriedades de lazer e viagens
+não corporativas inflam o custo operacional. O algoritmo do agente atua
+revertendo estas saídas através de _add-backs_ positivos, reintegrando estes
+valores ao EBITDA ajustado por não representarem o esforço contínuo da operação
+e não deverem onerar o comprador futuro21.\
+O risco trabalhista oculto constitui outro vetor de atenção primária. A prática
+de "Pejotização" — a contratação de colaboradores através de suas próprias
+Pessoas Jurídicas (PJs) em regime de subordinação e dedicação exclusiva, visando
+evitar o regime da Consolidação das Leis do Trabalho (CLT) — gera contingências
+ocultas massivas. Quando o agente processa os dados da folha de pagamento e
+prestação de serviços, ele deve recalcular o custo operacional adicionando os
+encargos trabalhistas (como Fundo de Garantia, provisões de férias e segurança
+social) aos montantes pagos aos trabalhadores PJ cuja natureza aponte para um
+vínculo empregatício disfarçado21. Este conservadorismo deduz o EBITDA,
+protegendo o comprador de passivos judiciais iminentes.\
+O escrutínio de transações com partes relacionadas impõe a reconciliação de
+valores baseados no normativo CPC 05\. É frequente que o parque industrial ou os
+centros logísticos pertençam a uma _holding_ patrimonial detida pelos mesmos
+sócios da empresa operacional. Se a empresa operacional paga rendas acima do
+valor de mercado para transferir resultados artificialmente, ou abaixo do valor
+de mercado para inflar a sua atratividade operacional, o agente corrige
+matematicamente essa distorção. Utilizando o huggingFaceMcpTool, o agente pode
+inferir dados de mercado imobiliário local para nivelar o custo de arrendamento
+ao seu valor justo, equalizando a DRE e garantindo neutralidade23.\
+Por fim, o modelo deve identificar gastos classificáveis como investimentos
+(CAPEX) erroneamente lançados como despesas operacionais (OPEX). A capitalização
+do desenvolvimento de _software_ interno é um exemplo clássico. Os salários de
+equipes de engenharia focadas no desenvolvimento de novos produtos proprietários
+geram benefícios econômicos futuros e devem ser ativados como ativos
+intangíveis. O agente retira estas despesas do resultado corrente, o que
+matematicamente resulta numa elevação imediata do EBITDA Normalizado21.
 
 ### **Fase 3: Reconstrução da Dívida Líquida e o Efeito IFRS 16 / CPC 06 (R2)**
 
-A precificação final para os acionistas vendedores, o *Equity Value*, é o produto residual subtraído da equação baseada no *Enterprise Value*. A métrica fundamental estabelece que o *Equity Value* é igual ao *Enterprise Value* deduzido da Dívida Líquida, acrescido do Caixa e seus equivalentes20. A definição rigorosa da "Dívida Líquida" no mercado brasileiro contemporâneo sofreu um choque sísmico com a adoção da norma internacional IFRS 16, refletida localmente pelo pronunciamento contábil CPC 06 (R2)1.  
-Antes desta norma, os arrendamentos operacionais transitavam diretamente pelo resultado operacional como despesas de aluguer, diminuindo o EBITDA. O advento do CPC 06 (R2) determinou que todos os contratos de arrendamento de longo prazo devem ser capitalizados. Assim, o ativo reflete o "direito de uso" e o passivo reflete a obrigação futura de pagamento ("passivo de arrendamento")28. A despesa de renda desaparece do OPEX, sendo substituída por despesas de depreciação (amortização do direito de uso) e despesas financeiras (juros sobre o passivo). Consequentemente, o EBITDA sofre um incremento puramente contábil, sem que haja qualquer melhoria real na geração de fluxo de caixa31.  
-O FinancialRiskAgent tem a missão inegociável de isolar o efeito desta norma para evitar uma dupla superavaliação e distorções na perceção do índice de alavancagem financeira. O agente é programado para:
+A precificação final para os acionistas vendedores, o _Equity Value_, é o
+produto residual subtraído da equação baseada no _Enterprise Value_. A métrica
+fundamental estabelece que o _Equity Value_ é igual ao _Enterprise Value_
+deduzido da Dívida Líquida, acrescido do Caixa e seus equivalentes20. A
+definição rigorosa da "Dívida Líquida" no mercado brasileiro contemporâneo
+sofreu um choque sísmico com a adoção da norma internacional IFRS 16, refletida
+localmente pelo pronunciamento contábil CPC 06 (R2)1.\
+Antes desta norma, os arrendamentos operacionais transitavam diretamente pelo
+resultado operacional como despesas de aluguer, diminuindo o EBITDA. O advento
+do CPC 06 (R2) determinou que todos os contratos de arrendamento de longo prazo
+devem ser capitalizados. Assim, o ativo reflete o "direito de uso" e o passivo
+reflete a obrigação futura de pagamento ("passivo de arrendamento")28. A despesa
+de renda desaparece do OPEX, sendo substituída por despesas de depreciação
+(amortização do direito de uso) e despesas financeiras (juros sobre o passivo).
+Consequentemente, o EBITDA sofre um incremento puramente contábil, sem que haja
+qualquer melhoria real na geração de fluxo de caixa31.\
+O FinancialRiskAgent tem a missão inegociável de isolar o efeito desta norma
+para evitar uma dupla superavaliação e distorções na perceção do índice de
+alavancagem financeira. O agente é programado para:
 
-1. Extrair os valores atrelados ao passivo de arrendamento identificados nas Notas Explicativas ou nas rubricas de endividamento do Balanço Patrimonial29.  
-2. Adicionar o valor presente deste passivo de arrendamento à totalidade da Dívida Bruta da companhia, compondo assim a Dívida Líquida ajustada2.  
-3. Informar à camada de cálculo que o múltiplo setorial utilizado no *valuation* deve ser calibrado; um EBITDA artificialmente inflado pelo IFRS 16 aplicado a múltiplos históricos (pré-2019) gerará um Valor da Firma irrealista28.
+1. Extrair os valores atrelados ao passivo de arrendamento identificados nas
+   Notas Explicativas ou nas rubricas de endividamento do Balanço Patrimonial29.
+2. Adicionar o valor presente deste passivo de arrendamento à totalidade da
+   Dívida Bruta da companhia, compondo assim a Dívida Líquida ajustada2.
+3. Informar à camada de cálculo que o múltiplo setorial utilizado no _valuation_
+   deve ser calibrado; um EBITDA artificialmente inflado pelo IFRS 16 aplicado a
+   múltiplos históricos (pré-2019) gerará um Valor da Firma irrealista28.
 
 ### **Fase 4: Avaliação Multimodelo de Insolvência e Risco Dinâmico**
 
-Num ambiente económico marcado por taxas de juros elevadas e alto custo de capital16, a previsão de falências assume contornos vitais antes da submissão de Cartas de Intenção (LOIs). O FinancialRiskAgent consome os dados sanitizados e executa uma validação quantitativa em múltiplas frentes. Embora o M\&Ai suporte modelos ONNX profundos via huggingFaceMcpTool, o agente prioriza adicionalmente modelos matemáticos consolidados na literatura financeira ibero-americana para criar uma convergência de análise determinística32.  
-A **Equação de Insolvência de Kanitz (1978)** representa a base empírica para empresas brasileiras. Baseada na Análise Discriminante Multivariada, a fórmula de Stephen Charles Kanitz cruza índices operacionais clássicos atribuindo pesos estatísticos para deduzir o risco de colapso35. A execução do agente computa a equação:  
-![][image1]  
-As variáveis abrangem a Rentabilidade do Patrimônio Líquido (![][image2]), Liquidez Geral (![][image3]), Liquidez Seca (![][image4]), Liquidez Corrente (![][image5]) e o Grau de Endividamento (![][image6])17. O gatilho de decisão é implacável: resultados abaixo de \-3 classificam a *target* em estado de Insolvência iminente; valores entre \-3 e 0 posicionam a empresa numa perigosa zona de Penumbra (*Red Flag* severa); e valores positivos denotam solvência estrutural37.  
-Como matriz de validação cruzada, o **Modelo de Elizabetsky (1976)**, focado originalmente na propensão de *default* para concessão de crédito mercantil, é orquestrado de forma síncrona40. A álgebra adotada é:  
-![][image7]  
-Em que ![][image8] reflete a Margem Líquida (Lucro Líquido / Vendas), ![][image9] cruza o Disponível com Ativos Permanentes, e ![][image10] a ![][image11] mensuram a eficiência do ciclo de recebimentos e a estrutura de liquidez de curto prazo40. O algoritmo emite um alerta vermelho imediato perante pontuações de ![][image12] inferiores a 0,5, sinalizando asfixia no capital de giro ou excesso cíclico de passivos circulantes41.  
-Simultaneamente, para calibrar a visão estatística, o agente aplica o **Modelo Z2 de Altman, Baidya e Dias (1979)**. Trata-se de uma recriação profunda do Z-Score de Edward Altman focada nas assimetrias de economias emergentes, como as dinâmicas inflacionárias e de financiamento do Brasil18. O cálculo estrutural é dado por:  
-![][image13]  
-Este modelo foca intensamente na relação do Lucro antes de Juros e Impostos sobre os Ativos, bem como na robustez dos capitais próprios frente a passivos totais37. A probabilidade preditiva de colapso num horizonte de 12 a 24 meses permite que as equipas operacionais do *middleware* M\&Ai recomendem cenários de *Distressed M\&A* (aquisição de ativos depreciados) ou desestimulem a continuação das rondas de investimento.
+Num ambiente económico marcado por taxas de juros elevadas e alto custo de
+capital16, a previsão de falências assume contornos vitais antes da submissão de
+Cartas de Intenção (LOIs). O FinancialRiskAgent consome os dados sanitizados e
+executa uma validação quantitativa em múltiplas frentes. Embora o M\&Ai suporte
+modelos ONNX profundos via huggingFaceMcpTool, o agente prioriza adicionalmente
+modelos matemáticos consolidados na literatura financeira ibero-americana para
+criar uma convergência de análise determinística32.\
+A **Equação de Insolvência de Kanitz (1978)** representa a base empírica para
+empresas brasileiras. Baseada na Análise Discriminante Multivariada, a fórmula
+de Stephen Charles Kanitz cruza índices operacionais clássicos atribuindo pesos
+estatísticos para deduzir o risco de colapso35. A execução do agente computa a
+equação:\
+![][image1]\
+As variáveis abrangem a Rentabilidade do Patrimônio Líquido (![][image2]),
+Liquidez Geral (![][image3]), Liquidez Seca (![][image4]), Liquidez Corrente
+(![][image5]) e o Grau de Endividamento (![][image6])17. O gatilho de decisão é
+implacável: resultados abaixo de \-3 classificam a _target_ em estado de
+Insolvência iminente; valores entre \-3 e 0 posicionam a empresa numa perigosa
+zona de Penumbra (_Red Flag_ severa); e valores positivos denotam solvência
+estrutural37.\
+Como matriz de validação cruzada, o **Modelo de Elizabetsky (1976)**, focado
+originalmente na propensão de _default_ para concessão de crédito mercantil, é
+orquestrado de forma síncrona40. A álgebra adotada é:\
+![][image7]\
+Em que ![][image8] reflete a Margem Líquida (Lucro Líquido / Vendas),
+![][image9] cruza o Disponível com Ativos Permanentes, e ![][image10] a
+![][image11] mensuram a eficiência do ciclo de recebimentos e a estrutura de
+liquidez de curto prazo40. O algoritmo emite um alerta vermelho imediato perante
+pontuações de ![][image12] inferiores a 0,5, sinalizando asfixia no capital de
+giro ou excesso cíclico de passivos circulantes41.\
+Simultaneamente, para calibrar a visão estatística, o agente aplica o **Modelo
+Z2 de Altman, Baidya e Dias (1979)**. Trata-se de uma recriação profunda do
+Z-Score de Edward Altman focada nas assimetrias de economias emergentes, como as
+dinâmicas inflacionárias e de financiamento do Brasil18. O cálculo estrutural é
+dado por:\
+![][image13]\
+Este modelo foca intensamente na relação do Lucro antes de Juros e Impostos
+sobre os Ativos, bem como na robustez dos capitais próprios frente a passivos
+totais37. A probabilidade preditiva de colapso num horizonte de 12 a 24 meses
+permite que as equipas operacionais do _middleware_ M\&Ai recomendem cenários de
+_Distressed M\&A_ (aquisição de ativos depreciados) ou desestimulem a
+continuação das rondas de investimento.
 
+O comportamento do Gemini 3.5 Flash, capaz de assimilar janelas vastas de
+contexto, necessita de contenção rígida para evitar devaneios narrativos e
+garantir foco na extração lógica de dados. Os _system prompts_, injetados
+dinamicamente no construtor Agent do Mastra4, formam os limites de atuação do
+modelo. As regras de negócio são traduzidas em limitações coercitivas absolutas,
+as quais moldam a interação assíncrona do LLM e formatam a sua cadência
+resolutiva.\
+O seguinte manifesto em TypeScript ilustra a robustez e o grau de detalhe
+exigido na formulação do caráter do agente:
 
-
-O comportamento do Gemini 3.5 Flash, capaz de assimilar janelas vastas de contexto, necessita de contenção rígida para evitar devaneios narrativos e garantir foco na extração lógica de dados. Os *system prompts*, injetados dinamicamente no construtor Agent do Mastra4, formam os limites de atuação do modelo. As regras de negócio são traduzidas em limitações coercitivas absolutas, as quais moldam a interação assíncrona do LLM e formatam a sua cadência resolutiva.  
-O seguinte manifesto em TypeScript ilustra a robustez e o grau de detalhe exigido na formulação do caráter do agente:
-
-TypeScript  
+TypeScript\
 // src/mastra/agents/financialRiskAgent/instructions.ts
 
-export const FINANCIAL\_RISK\_AGENT\_INSTRUCTIONS \= \`  
-Você atua como o "FinancialRiskAgent", um Arquiteto de Modelagem Financeira e Analista Quantitativo Sênior, operando exclusivamente em operações de Fusões e Aquisições (M\&A) no mercado de Middle-Market brasileiro.   
-O seu comportamento é desprovido de abstrações discursivas; deve ser estritamente analítico, determinístico, frio e estruturado. O seu objetivo é auditar demonstrações contábeis (DRE, BP, DFC), realizar a Normalização implacável do EBITDA e diagnosticar riscos sistêmicos de insolvência.
+export const FINANCIAL\_RISK\_AGENT\_INSTRUCTIONS \= \`\
+Você atua como o "FinancialRiskAgent", um Arquiteto de Modelagem Financeira e
+Analista Quantitativo Sênior, operando exclusivamente em operações de Fusões e
+Aquisições (M\&A) no mercado de Middle-Market brasileiro.\
+O seu comportamento é desprovido de abstrações discursivas; deve ser
+estritamente analítico, determinístico, frio e estruturado. O seu objetivo é
+auditar demonstrações contábeis (DRE, BP, DFC), realizar a Normalização
+implacável do EBITDA e diagnosticar riscos sistêmicos de insolvência.
 
-\# DIRETRIZES FUNDAMENTAIS (STRICT GUARDRAILS)  
-1\. DETERMINISMO E INTEGRIDADE ESTRUTURAL: Todos os recálculos contábeis devem preservar o método das partidas dobradas. O Ativo Total deve invariavelmente igualar a soma do Passivo com o Patrimônio Líquido. Em caso de divergência matemática nos documentos fonte fornecidos via contexto, ABORTE o procedimento de valuation e emita o status "FALHA DE INTEGRIDADE CONTÁBIL \- REJEIÇÃO LIMINAR".  
-2\. EXAUSTÃO NA NORMALIZAÇÃO DE EBITDA: Aplique de forma exaustiva as cinco doutrinas de ajustes aceitas na modelagem financeira brasileira:   
-   (a) Substituição de Pró-labore suprimido por Salário Executivo a mercado;   
-   (b) Expurgos absolutos de despesas pessoais de sócios lançadas em CNPJ;   
-   (c) Provisionamento de risco para funcionários "Pejotizados" assumidos como regime CLT;   
-   (d) Regularização de aluguéis pagos a Partes Relacionadas (norma CPC 05\) para o valor justo de mercado imobiliário;   
-   (e) Capitalização de custos intelectuais focados em software que tenham sido lançados incorretamente no OPEX.  
-3\. CONFORMIDADE COM O CPC 06 (R2) / IFRS 16: É estritamente vedada a alavancagem de Enterprise Value baseada no incremento de EBITDA originário da capitalização de arrendamentos. O "Passivo de Arrendamento" correspondente DEVE ser somado à métrica de Dívida Bruta na sua totalidade, inflacionando a Dívida Líquida real da entidade e, em última instância, deprimindo o Equity Value calculado.  
-4\. PARÂMETROS MATEMÁTICOS DE INSOLVÊNCIA: Baseie as predições financeiras nas métricas estritas fornecidas na sua Base de Conhecimento.  
-   \- Aplique o Modelo de KANITZ (1978). Se o Fator resultante for menor que \-3, categorizar como "INSOLVENTE". Entre \-3 e 0, emitir alerta de "PENUMBRA".  
-   \- Valide cruzado com o Z-Score de ELIZABETSKY (1976). Índices abaixo de 0.5 implicam falência eminente por estrangulamento de liquidez de curto prazo.  
-5\. SINTAXE E FORMATO DE SAÍDA: A menos que invocado estritamente por uma ferramenta que requer JSON puro de acordo com esquemas Zod injetados, as suas saudações são proibidas. As suas análises textuais devem ser entregues obrigatoriamente em Markdown fluido e tabelas concisas, abstendo-se de narrativas pessoais, considerações éticas vazias ou recomendações legais evasivas.  
+\# DIRETRIZES FUNDAMENTAIS (STRICT GUARDRAILS)\
+1\. DETERMINISMO E INTEGRIDADE ESTRUTURAL: Todos os recálculos contábeis devem
+preservar o método das partidas dobradas. O Ativo Total deve invariavelmente
+igualar a soma do Passivo com o Patrimônio Líquido. Em caso de divergência
+matemática nos documentos fonte fornecidos via contexto, ABORTE o procedimento
+de valuation e emita o status "FALHA DE INTEGRIDADE CONTÁBIL \- REJEIÇÃO
+LIMINAR".\
+2\. EXAUSTÃO NA NORMALIZAÇÃO DE EBITDA: Aplique de forma exaustiva as cinco
+doutrinas de ajustes aceitas na modelagem financeira brasileira:\
+(a) Substituição de Pró-labore suprimido por Salário Executivo a mercado;\
+(b) Expurgos absolutos de despesas pessoais de sócios lançadas em CNPJ;\
+(c) Provisionamento de risco para funcionários "Pejotizados" assumidos como
+regime CLT;\
+(d) Regularização de aluguéis pagos a Partes Relacionadas (norma CPC 05\) para o
+valor justo de mercado imobiliário;\
+(e) Capitalização de custos intelectuais focados em software que tenham sido
+lançados incorretamente no OPEX.\
+3\. CONFORMIDADE COM O CPC 06 (R2) / IFRS 16: É estritamente vedada a
+alavancagem de Enterprise Value baseada no incremento de EBITDA originário da
+capitalização de arrendamentos. O "Passivo de Arrendamento" correspondente DEVE
+ser somado à métrica de Dívida Bruta na sua totalidade, inflacionando a Dívida
+Líquida real da entidade e, em última instância, deprimindo o Equity Value
+calculado.\
+4\. PARÂMETROS MATEMÁTICOS DE INSOLVÊNCIA: Baseie as predições financeiras nas
+métricas estritas fornecidas na sua Base de Conhecimento.\
+\- Aplique o Modelo de KANITZ (1978). Se o Fator resultante for menor que \-3,
+categorizar como "INSOLVENTE". Entre \-3 e 0, emitir alerta de "PENUMBRA".\
+\- Valide cruzado com o Z-Score de ELIZABETSKY (1976). Índices abaixo de 0.5
+implicam falência eminente por estrangulamento de liquidez de curto prazo.\
+5\. SINTAXE E FORMATO DE SAÍDA: A menos que invocado estritamente por uma
+ferramenta que requer JSON puro de acordo com esquemas Zod injetados, as suas
+saudações são proibidas. As suas análises textuais devem ser entregues
+obrigatoriamente em Markdown fluido e tabelas concisas, abstendo-se de
+narrativas pessoais, considerações éticas vazias ou recomendações legais
+evasivas.\
 \`;
 
-Esta instrução restringe a criatividade linguística do modelo LLM, forçando a adoção de um rigor operacional que mimetiza sistemas especialistas baseados em regras (*Rule-Based Systems*), mas que se beneficia da flexibilidade cognitiva do Gemini para ler o jargão muitas vezes opaco ou mal formatado dos documentos contábeis não auditados típicos do *middle-market*.
+Esta instrução restringe a criatividade linguística do modelo LLM, forçando a
+adoção de um rigor operacional que mimetiza sistemas especialistas baseados em
+regras (_Rule-Based Systems_), mas que se beneficia da flexibilidade cognitiva
+do Gemini para ler o jargão muitas vezes opaco ou mal formatado dos documentos
+contábeis não auditados típicos do _middle-market_.
