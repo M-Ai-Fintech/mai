@@ -3,10 +3,11 @@ id: MAI-77
 title: >-
   Unify Risk, Contingency, and Conditions Precedent categories under a single
   Domain Area taxonomy
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@luis'
 created_date: '2026-07-20 17:20'
-updated_date: '2026-07-22 05:29'
+updated_date: '2026-07-31 12:28'
 labels:
   - revalidation
 milestone: m-14
@@ -23,13 +24,19 @@ Three separate category lists exist for essentially the same domain areas: risk-
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A shared DomainArea type is defined once (e.g., src/agent/shared/types.ts) with canonical lowercase values: 'corporate', 'financial', 'tax', 'labor', 'civil', 'regulatory', 'environmental', 'operational', 'tech', 'commercial'
-- [ ] #2 risk-matrix.ts riskCategory uses DomainArea
-- [ ] #3 contingency.ts category uses DomainArea
-- [ ] #4 conditions-precedent.ts category uses DomainArea
-- [ ] #5 Old disjoint category enums are removed from all three schema files
-- [ ] #6 All agents that produce or consume these schemas are updated to use the new shared type
+- [x] #1 A shared DomainArea type is defined once (e.g., src/agent/shared/types.ts) with canonical lowercase values: 'corporate', 'financial', 'tax', 'labor', 'civil', 'regulatory', 'environmental', 'operational', 'tech', 'commercial'
+- [x] #2 risk-matrix.ts riskCategory uses DomainArea
+- [x] #3 contingency.ts category uses DomainArea
+- [x] #4 conditions-precedent.ts category uses DomainArea
+- [x] #5 Old disjoint category enums are removed from all three schema files
+- [x] #6 All agents that produce or consume these schemas are updated to use the new shared type
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Unified DomainArea taxonomy to exact 10 canonical values (corporate, financial, tax, labor, civil, regulatory, environmental, operational, tech, commercial). Defined normalizeLegacyDomainArea normalizer for legacy values. Added tests/shared/domain-area.spec.ts. All tests and deno task verify passed cleanly.
+<!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
