@@ -4,7 +4,7 @@ title: 'End-to-end, security and operational release gate'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 05:51'
+updated_date: '2026-07-31 17:33'
 labels:
   - backend
   - architecture
@@ -20,6 +20,7 @@ dependencies:
   - MAI-127
   - MAI-129
   - MAI-148
+  - MAI-151
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -

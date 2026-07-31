@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:25'
-updated_date: '2026-07-22 05:28'
+updated_date: '2026-07-31 17:33'
 labels:
   - testing
   - mvp
@@ -69,6 +69,33 @@ author: @codex
 created: 2026-07-22 05:28
 ---
 ## Rebaseline audit — 2026-07-22\n\nCurrent status: The smoke suite only exercises the in-memory MvpStore lifecycle, while the CLI health output is static. It does not actively prove PostgreSQL, Pub/Sub, ONNX, Gemini, or the real deal pipeline.\n\nReason for reopening: the previous Done state does not satisfy the agreed definitive gate. Existing completion checkmarks are cleared pending fresh evidence. Before returning to Done, every applicable acceptance criterion and Definition of Done item must be verified, relevant tests must exist and pass, and mock/prototype boundaries must be explicit.
+---
+
+created: 2026-07-31 17:33
+---
+Superseded by MAI-151.
+
+Requirements carried forward:
+- fast developer feedback;
+- deterministic offline checks;
+- explicit dependency status;
+- real failure propagation;
+- measured execution time;
+- documentation;
+- focused test coverage.
+
+Architecture changed:
+- there is no banker-facing --smoke product command;
+- the fast preflight does not claim real provider or infrastructure health;
+- MAI-79 remains the complete canonical verification gate;
+- live provider checks remain under the explicit integration profile and owning provider tasks;
+- CLI retirement remains under MAI-150;
+- static success messages are prohibited;
+- fixtures must be explicit and cannot be selected through silent fallback.
+
+Existing smoke tests remain migration evidence until MAI-151 executes.
+
+Archive does not authorize code deletion.
 ---
 <!-- COMMENTS:END -->
 
