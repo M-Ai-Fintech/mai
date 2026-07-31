@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 02:26'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-31 06:06'
 labels:
   - cloud
   - infrastructure
@@ -79,6 +79,35 @@ ordinal: 38000
 - Optar por Cloud Run jobs (não services) para os Engines de longa duração (predição ONNX, geração PDF) para evitar timeout de 3600s.
 - Usar Workload Identity Federation no CI/CD em vez de exportar service account keys para o repositório.
 - Vertex AI não é provisionado nesta fase; o endpoint de inferência permanece via Google AI Studio (GEMINI_API_KEY) até milestone de produção.
+
+Superseded by MAI-148.
+
+Requirements carried forward:
+- infrastructure as code;
+- cloud runtime deployment;
+- managed PostgreSQL;
+- object storage;
+- private connectivity;
+- IAM and least privilege;
+- secrets management;
+- encryption controls;
+- observability;
+- backup and restoration;
+- CI/CD;
+- deployment and rollback runbooks;
+- staging smoke tests.
+
+Architecture changed:
+- MAI targets a modular monolith rather than independent Core, Agent, and Engine microservices;
+- PostgreSQL transactional outbox, inbox, and durable jobs remain the authoritative consistency foundation;
+- Cloud Pub/Sub or another broker is optional transport, not transaction truth;
+- business-data migration belongs to MAI-129;
+- provider certification belongs to MAI-127;
+- final production-candidate verification belongs to MAI-131;
+- read replicas, failover, CMEK, and VPC Service Controls require explicit threat-model, availability, regulatory, and cost justification;
+- production promotion is controlled rather than automatic on every push to master.
+
+Archive does not authorize deletion of existing deployment notes, experiments, scripts, or infrastructure evidence.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

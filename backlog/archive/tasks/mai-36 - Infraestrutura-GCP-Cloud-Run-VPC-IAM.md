@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - Luís Silva
 created_date: '2026-07-08 03:03'
-updated_date: '2026-07-22 05:30'
+updated_date: '2026-07-31 06:06'
 labels:
   - cloud
   - infrastructure
@@ -22,3 +22,15 @@ ordinal: 39000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Provisionar infraestrutura serverless no Cloud Run com configurações seguras de VPC e permissões IAM.
 <!-- SECTION:DESCRIPTION:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Superseded by MAI-148.
+
+MAI-36 was a thin child of MAI-33 and did not define an independently testable delivery boundary.
+
+Its Cloud Run, VPC, and IAM requirements are retained within MAI-148 under the approved modular-monolith topology.
+
+Archive does not authorize implementation deletion.
+<!-- SECTION:NOTES:END -->
