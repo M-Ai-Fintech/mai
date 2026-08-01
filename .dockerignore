@@ -1,0 +1,15 @@
+.git
+.github
+.agents
+.codex
+backlog
+design
+graphify-out
+gui
+models
+node_modules
+.env
+.env.*
+*.log
+coverage
+tmp

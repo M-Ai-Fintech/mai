@@ -4,7 +4,7 @@ title: Harden deterministic valuation and synergy calculation algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:02'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -67,6 +67,15 @@ Record relationships:
 - [ ] #12 Performance evidence is recorded for representative calculation sizes.
 - [ ] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory valuation and synergy modules/tests; isolate pure seams and shared numeric ownership.
+2. Harden deterministic typed money/percentage/unit calculations with denominator safety and provenance-ready output.
+3. Preserve policy, approval, persistence, workflow, and provider boundaries through compatibility seams only.
+4. Add golden/property/edge/determinism/performance tests and run focused checks plus deno task verify.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

@@ -3,7 +3,7 @@ id: doc-7
 title: M&A Domain Model
 type: specification
 created_date: '2026-07-24 15:35'
-updated_date: '2026-07-30 06:51'
+updated_date: '2026-08-01 11:45'
 tags:
   - domain
   - ma
@@ -24,6 +24,11 @@ MAI separates identity/tenancy, access governance, organization registry, deal m
 
 Deal is the transaction identity and party/mandate anchor; it is not a universal aggregate. Milestones, tasks, documents, findings, scenarios, proposals, conditions, missions, grants and deliverables are independent aggregate roots or projections in their owning contexts.
 
+## Dispute-resolution mechanism
+
+The shared dispute-resolution mechanism contract is authoritative at src/shared/schemas/dispute-resolution.ts. Its version 1 representation distinguishes type arbitration from type court. Arbitration references either a reviewed canonical institution (CAM-CCBC, CAM-B3, CCI, or FGV) or an explicit { type: other, name } structure; Other is never an authoritative institution value. Court litigation requires non-empty jurisdiction and forum.
+
+The API and persistence envelope uses schemaVersion: 1 and a mechanism member, exposed through the versioned API contract barrel and serialized by the shared schema. Legacy B3/CAM-B3, CAM-CCBC, CCI, FGV, Judicial-Court, and Other values are adapter inputs only. Judicial-Court requires explicit court details, Other requires the supplied institution name, and unknown or ambiguous values are rejected. MAI-129 owns physical migration and retirement after replacement coverage and cutover evidence.
 ## Evidence-to-authority chain
 
 ```text

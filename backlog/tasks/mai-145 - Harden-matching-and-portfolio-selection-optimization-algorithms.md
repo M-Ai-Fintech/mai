@@ -4,7 +4,7 @@ title: Harden matching and portfolio-selection optimization algorithms
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:03'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -57,6 +57,15 @@ MAI-117 owns the matching workflow, conflicts, shortlist lifecycle, and business
 - [ ] #12 Performance evidence is recorded for representative portfolio sizes.
 - [ ] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory matching/portfolio modules and separate legacy routes from pure algorithms.
+2. Define typed eligibility, exclusions, mandatory inclusions, seed, ordering, explanations, and infeasibility contracts.
+3. Implement deterministic/seeded replay without KYC, shortlist/outreach, persistence, or protected-data scope.
+4. Add constraint, tie, exclusion, mandatory, infeasibility, explanation, and replay tests; run focused checks and deno task verify.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
