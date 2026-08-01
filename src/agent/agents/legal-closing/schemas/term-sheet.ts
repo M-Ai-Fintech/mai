@@ -3,6 +3,10 @@ import {
   termSheetCoreSchema,
   termSheetFinancialSchema,
 } from "../../../../shared/schemas/term-sheet.ts";
+import {
+  type DisputeResolutionMechanism,
+  disputeResolutionMechanismSchema,
+} from "../../../../shared/schemas/dispute-resolution.ts";
 import type { NegotiationProposal } from "../../negotiation/schemas/term-sheet.ts";
 
 // Nesting decision:
@@ -17,6 +21,9 @@ export const bindingTermSheetSchema = termSheetCoreSchema.extend({
   governingLaw: z.string().default("Brazil").describe(
     "Governing law and jurisdiction.",
   ),
+  disputeResolution: disputeResolutionMechanismSchema.describe(
+    "Canonical dispute-resolution mechanism for the binding term sheet.",
+  ),
   exclusivityPeriodDays: z.number().describe(
     "Number of days for exclusivity period.",
   ),
@@ -24,7 +31,7 @@ export const bindingTermSheetSchema = termSheetCoreSchema.extend({
     "Whether confidentiality is agreed.",
   ),
   bindingClauses: z.array(z.string()).describe("Clauses that are binding."),
-});
+}).strict();
 
 export type BindingTermSheet = z.infer<typeof bindingTermSheetSchema>;
 
@@ -32,6 +39,7 @@ export interface AssembleBindingTermSheetParams {
   proposal: NegotiationProposal;
   legalTerms: {
     governingLaw?: string;
+    disputeResolution: DisputeResolutionMechanism;
     exclusivityPeriodDays: number;
     confidentialityAgreed: boolean;
     bindingClauses: string[];
@@ -76,6 +84,7 @@ export function assembleBindingTermSheet(
     valuationAmount: params.valuationAmount,
     proposal: proposalFinancial,
     governingLaw: params.legalTerms.governingLaw ?? "Brazil",
+    disputeResolution: params.legalTerms.disputeResolution,
     exclusivityPeriodDays: params.legalTerms.exclusivityPeriodDays,
     confidentialityAgreed: params.legalTerms.confidentialityAgreed,
     bindingClauses: params.legalTerms.bindingClauses,

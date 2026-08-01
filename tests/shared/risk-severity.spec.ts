@@ -102,7 +102,10 @@ Deno.test("Risk Severity - Contract Analysis uses canonical contract", () => {
     requiresConsentForAssignment: false,
     noticePeriodDays: 30,
     hasNonCompeteOrExclusivity: false,
-    arbitrationChamber: "CAM-CCBC",
+    disputeResolution: {
+      type: "arbitration",
+      institution: { type: "canonical", name: "CAM-CCBC" },
+    },
     riskRating: "low",
     recommendations: ["Review termination clause"],
   };
