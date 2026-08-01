@@ -3,10 +3,11 @@ id: MAI-148
 title: >-
   Provision and validate the MAI modular-monolith deployment and operations
   foundation
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@codex'
 created_date: '2026-07-31 05:51'
-updated_date: '2026-08-01 11:14'
+updated_date: '2026-08-01 12:31'
 labels:
   - backend
   - architecture
@@ -23,6 +24,51 @@ labels:
 milestone: m-12
 dependencies:
   - MAI-106
+references:
+  - doc-37
+  - doc-12
+  - MAI-106
+  - ef783f6
+  - 'https://github.com/luisfelipeluis49/mai/pull/35'
+modified_files:
+  - .dockerignore
+  - .github/workflows/mai-148-contract.yml
+  - Dockerfile
+  - deno.json
+  - infra/README.md
+  - infra/environments/development.json
+  - infra/environments/staging.json
+  - infra/environments/production.json
+  - infra/local/docker-compose.yml
+  - infra/schemas/mai-148-infrastructure-plan.schema.json
+  - infra/runbooks/README.md
+  - infra/runbooks/deployment.md
+  - infra/runbooks/migration-coordination.md
+  - infra/runbooks/rollback.md
+  - infra/runbooks/backup-restore.md
+  - infra/runbooks/incident-response.md
+  - infra/runbooks/credential-rotation.md
+  - infra/runbooks/failed-job-recovery.md
+  - infra/runbooks/capacity-escalation.md
+  - scripts/infra_validate.ts
+  - scripts/infra_smoke.ts
+  - src/api/server.ts
+  - src/platform/jobs/v1.ts
+  - src/platform/jobs/worker_process.ts
+  - src/platform/operations/contract.ts
+  - src/platform/operations/health.ts
+  - src/platform/operations/smoke.ts
+  - src/platform/operations/v1.ts
+  - tests/platform/jobs/worker_process.spec.ts
+  - tests/platform/operations/contract.spec.ts
+  - tests/platform/operations/health.spec.ts
+  - tests/platform/operations/smoke.spec.ts
+  - >-
+    backlog/docs/governance/document-inventory/doc-12 -
+    Documentation-Inventory-and-Classification.md
+  - >-
+    backlog/docs/operations/deployment/doc-37 -
+    MAI-148-Deployment-and-Operations-Foundation.md
 priority: high
 ordinal: 10800
 ---
@@ -110,6 +156,7 @@ The final security and operational production-candidate decision remains under M
 2. Add approved modular-monolith IaC/runbooks for environments, database, storage, IAM, secrets, networking, observability, and costs.
 3. Exclude migrations, domain implementation, provider certification, cutover, frontend, and production promotion; retain database-backed consistency.
 4. Prove smoke, recovery, backup/restore, and rollback paths; run focused checks and deno task verify without unearned readiness claims.
+5. Record the implementation evidence, commit the scoped changes, open a draft PR for owner review, keep MAI-148 In Progress, and do not self-merge or mark Done.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -162,6 +209,14 @@ Papermark self-hosting infrastructure boundary
 6. Papermark must not be provisioned merely because it is the selected MVP candidate.
 
 7. Production self-hosting requires explicit infrastructure, security, operations, data-residency, and cost approval.
+
+Discovery 2026-08-01: MAI-106 is Done and supplies the authoritative PostgreSQL, transactional outbox, inbox, and durable-job contracts. No existing infrastructure-as-code, deployment package, staging evidence, provider/region/account approval, or RPO/RTO/security-control approval was found in task/document authority. Per the Wave A plan, implementation must remain provider-neutral until those approvals are recorded; no cloud provisioning or production-readiness claim is authorized. The Backlog CLI encountered the known worktree FETCH_HEAD read-only limitation during concurrent/search reads; sequential task edits remain functional.
+
+Implementation and evidence 2026-08-01: Added the provider-neutral MAI-148 infrastructure contract, separate development/staging/production manifests, modular-monolith API and durable-job worker packaging, health/readiness behavior, local Compose topology, storage/secrets/IAM/network/observability/cost controls, recovery-safe runbooks, migration coordination, and named smoke/recovery/rollback tests. Passed deno fmt --check, deno lint, deno check, deno task test:infra (12 passed, 0 failed), deno task infra:validate, deno task infra:smoke (8 checks), docker compose -f infra/local/docker-compose.yml config --quiet, and scripts/check_docs.ts. Full deno task test passed with 270 tests, 0 failures, and 21 ignored. deno task verify completed the canonical documentation and Deno gates but exited 1 because the GUI environment lacks eslint/vitest/next/playwright/storybook and the foundation script hits sandboxed spawnSync git EPERM; npm --prefix gui run lint also exited 127 for missing eslint. Real staging deployment, provider certification, environment-specific restart recovery, backup restoration, rollback execution, and production readiness remain unexecuted because required owner approvals and environment credentials are absent. MAI-148 remains In Progress; no provider, domain migration, frontend, or production promotion scope was added.
+
+Delivery handoff 2026-08-01: reviewed commit ef783f6b11e034d43132fff5825a5fcedd48ef7d exists locally and the worktree is clean. Branch push and draft PR were not completed: the external-action approval gate rejected pushing the full private code change to origin without explicit destination authorization, and gh auth status reports the configured GitHub token is invalid. No workaround, self-merge, or Done transition was performed; MAI-148 remains In Progress pending explicit push/PR authorization and valid GitHub credentials.
+
+Draft PR #35 opened through the GitHub connector on 2026-08-01: https://github.com/luisfelipeluis49/mai/pull/35. Head branch delivery/MAI-148-deployment-and-operations-foundation targets master and contains the MAI-148 implementation. The PR remains draft; no self-merge or Done transition was performed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

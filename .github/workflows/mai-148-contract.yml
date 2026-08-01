@@ -1,0 +1,44 @@
+name: MAI-148 infrastructure contract
+
+on:
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "infra/**"
+      - "scripts/infra_*.ts"
+      - "src/platform/operations/**"
+      - "src/platform/jobs/worker_process.ts"
+      - "tests/platform/operations/**"
+      - "tests/platform/jobs/worker_process.spec.ts"
+      - "deno.json"
+  push:
+    branches: [master]
+    paths:
+      - "Dockerfile"
+      - "infra/**"
+      - "scripts/infra_*.ts"
+      - "src/platform/operations/**"
+      - "src/platform/jobs/worker_process.ts"
+      - "tests/platform/operations/**"
+      - "tests/platform/jobs/worker_process.spec.ts"
+      - "deno.json"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.3
+      - run: deno task infra:validate
+      - run: deno task infra:smoke
+      - run: deno task test:infra
+
+# The OIDC permission is the only credential surface exposed to a future,
+# approved provider adapter. This workflow provisions nothing until that
+# adapter and its provider/region/account approvals exist.
