@@ -2,6 +2,10 @@ import { AgentOrchestrator } from "../agent/index.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
+import {
+  handleHealthRequest,
+  RuntimeReadiness,
+} from "../platform/operations/health.ts";
 
 const PORT = 8000;
 
@@ -31,9 +35,12 @@ function withMvpHeaders(response: Response, cors: Headers): Response {
 async function routeRequest(
   request: Request,
   repository: DealRepository,
+  readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
   if (request.method === "OPTIONS") return new Response(null, { headers });
+  const healthResponse = handleHealthRequest(request, readiness);
+  if (healthResponse) return healthResponse;
   try {
     return await routedResponse(request, repository, headers);
   } catch (error: unknown) {
@@ -77,8 +84,10 @@ function jsonResponse(
 
 async function connectRepository(
   repository: DealRepository,
+  readiness: RuntimeReadiness,
 ): Promise<void> {
   const connected = await repository.connect();
+  readiness.setDatabaseState(connected);
   const message = connected
     ? "Database connected successfully."
     : "Database not connected. Running in fallback mode.";
@@ -89,14 +98,14 @@ async function connectRepository(
 
 export function startServer(): Deno.HttpServer {
   const repository = DealRepository.getRepoInstance();
-  void connectRepository(repository);
+  const readiness = new RuntimeReadiness("api");
+  void connectRepository(repository, readiness);
   console.log(`[API Server] Starting on http://localhost:${PORT}`);
   return Deno.serve(
     { port: PORT },
-    (request) => routeRequest(request, repository),
+    (request) => routeRequest(request, repository, readiness),
   );
 }
-
 
 if (import.meta.main) startServer();
 
