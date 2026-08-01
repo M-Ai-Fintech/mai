@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-07-31 21:17'
+updated_date: '2026-08-01 11:45'
 labels:
   - backend
   - architecture
@@ -227,4 +227,6 @@ Legacy VDR core epic retirement ownership
 3. Useful parsing, HTTP normalization, pagination, fixture, and error-handling code may be adapted.
 
 4. Physical retirement preserves historical evidence and Git history.
+
+MAI-147 migration ownership: MAI-147 owns the canonical dispute-resolution contract and compatibility adapters; MAI-129 owns physical migration, dual-read/reconciliation, cutover, rollback, and retirement of legacy dispute-resolution values. Do not remove legacy stored fields until MAI-129 proves replacement coverage and cutover evidence.
 <!-- SECTION:NOTES:END -->

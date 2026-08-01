@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { disputeResolutionMechanismSchema } from "../../../../shared/schemas/dispute-resolution.ts";
 
 export const spaSchema = z.object({
   dealId: z.string().describe("Unique identifier of the deal."),
@@ -32,13 +33,10 @@ export const spaSchema = z.object({
       "Survival period for tax contingencies (in months).",
     ),
   }).describe("Specific survival periods by type of contingency."),
-  disputeResolutionMethod: z.enum([
-    "CAM-CCBC",
-    "CAM-B3",
-    "CCI",
-    "Judicial-Court",
-  ]).describe("Elected dispute resolution mechanism."),
+  disputeResolution: disputeResolutionMechanismSchema.describe(
+    "Canonical dispute-resolution mechanism for the definitive agreement.",
+  ),
   closingConditionsPrecedent: z.array(z.string()).describe(
     "List of essential final precedent conditions for closing.",
   ),
-});
+}).strict();
