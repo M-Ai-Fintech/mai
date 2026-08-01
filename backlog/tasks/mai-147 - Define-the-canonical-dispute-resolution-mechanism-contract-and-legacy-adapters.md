@@ -4,7 +4,7 @@ title: Define the canonical dispute-resolution mechanism contract and legacy ada
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:06'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -58,6 +58,15 @@ This task owns:
 - [ ] #15 Tests cover every canonical arbitration institution, court representation, explicit other institution, every legacy normalization, ambiguous-input rejection, serialization and parsing, and compatibility behavior.
 - [ ] #16 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory every dispute enum/schema/serializer/consumer and choose one canonical contract.
+2. Implement clear arbitration versus court model with institutions, validation, and serialization.
+3. Replace contradictions via tested adapters or explicit legacy rejection without negotiation, closing, advice, or provider scope.
+4. Add contract/parser/serializer/ambiguity/compatibility/consumer tests and run focused checks plus deno task verify.
+<!-- SECTION:PLAN:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

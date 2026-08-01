@@ -4,7 +4,7 @@ title: Establish a fast deterministic developer preflight for the modular monoli
 status: To Do
 assignee: []
 created_date: '2026-07-31 17:33'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -82,6 +82,15 @@ Relationships:
 - [ ] #20 Documentation explains the difference between: fast preflight; canonical repository verification; live integration verification; deployed environment health checks.
 - [ ] #21 Focused tests and deno task verify pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory deno configuration, verification scripts, smoke tests, and MAI-106 contracts; define an explicit fast manifest and exclusions.
+2. Add offline minimum-permission verify:fast with explicit deterministic fixtures and component status reporting.
+3. Exclude live DB/network/providers/cloud/browser/builds and fail closed on unavailable live dependencies.
+4. Add determinism, permission, failure, manifest, and ten-run p95 benchmark evidence; run focused checks and deno task verify.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

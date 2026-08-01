@@ -4,7 +4,7 @@ title: Organization registry
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -88,8 +88,8 @@ Low complexity; Wave 3 parallel with BE-P04 and BE-P08. Recommended model: gpt-5
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Re-read doc-24, required ADRs and real task dependencies.
-2. Obtain listed review/approval gates before irreversible or provider-facing work.
-3. Implement only the exact bounded scope with named fakes and focused tests.
-4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
+1. Read BE-P05 and governing ADRs; map existing organization models without Deal Party or portal ownership.
+2. Add isolated organization registry aggregates, scoped repository/read ports, merge history, PII-safe DTO omission, and additive migrations/API projections.
+3. Preserve non-destructive rollback through read routing; use named fakes and avoid provider, Deal, and frontend scope.
+4. Prove invariants, versioning, merge history, tenancy, and PII omission; run focused checks and deno task verify.
 <!-- SECTION:PLAN:END -->
