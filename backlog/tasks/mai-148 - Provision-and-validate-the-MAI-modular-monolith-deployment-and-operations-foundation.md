@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:51'
-updated_date: '2026-08-01 12:29'
+updated_date: '2026-08-01 12:31'
 labels:
   - backend
   - architecture
@@ -152,12 +152,11 @@ The final security and operational production-candidate decision remains under M
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Reconcile MAI-106 persistence/outbox/inbox/jobs contracts and current runtime boundaries; preserve the modular-monolith plus justified worker topology and record the missing provider/region/availability/RPO/RTO/security approvals as a pre-provisioning gate.
-2. Add provider-neutral, version-controlled infrastructure contracts and environment manifests that validate development, staging, and production separation without hard-coding an unapproved cloud provider or production topology.
-3. Add runtime packaging and operational evidence paths for API and durable-job worker processes, health/readiness, migration coordination, storage/secrets/IAM/network/observability/cost controls, backup/restore, restart recovery, and rollback retention safety.
-4. Add focused executable tests for manifest validation and local smoke/recovery/rollback behavior; keep database migrations and domain/provider/frontend work out of scope.
-5. Run focused checks, formatting/linting, git diff hygiene, and the mandatory deno task verify; record exact results and environment-specific limitations.
-6. Review, commit only MAI-148 files, push the task branch, open a draft PR, keep MAI-148 In Progress, and do not self-merge or mark Done.
+1. Read MAI-106 and deployment requirements; obtain approval for provider, topology, availability, RPO/RTO, and security controls.
+2. Add approved modular-monolith IaC/runbooks for environments, database, storage, IAM, secrets, networking, observability, and costs.
+3. Exclude migrations, domain implementation, provider certification, cutover, frontend, and production promotion; retain database-backed consistency.
+4. Prove smoke, recovery, backup/restore, and rollback paths; run focused checks and deno task verify without unearned readiness claims.
+5. Record the implementation evidence, commit the scoped changes, open a draft PR for owner review, keep MAI-148 In Progress, and do not self-merge or mark Done.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
