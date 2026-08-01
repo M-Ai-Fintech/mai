@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { disputeResolutionMechanismSchema } from "../../../../shared/schemas/dispute-resolution.ts";
 import { termSheetFinancialSchema } from "../../../../shared/schemas/term-sheet.ts";
 
 export const negotiationProposalSchema = termSheetFinancialSchema.extend({
@@ -9,14 +10,9 @@ export const negotiationProposalSchema = termSheetFinancialSchema.extend({
   statutoryLimitationsMatching: z.boolean().describe(
     "If the Escrow release deadlines coincide with the Brazilian tax/labor statute of limitations.",
   ),
-  arbitrationChamber: z.enum([
-    "CAM-CCBC",
-    "CAM-B3",
-    "CCI",
-    "FGV",
-    "Judicial-Court",
-    "Other",
-  ]).describe("Elected arbitration chamber (e.g., CAM-CCBC, B3, CCI)."),
+  disputeResolution: disputeResolutionMechanismSchema.describe(
+    "Canonical dispute-resolution mechanism proposed for the term sheet.",
+  ),
   buyerUtility: z.number().describe(
     "Calculated utility for the buyer under the negotiation model.",
   ),
@@ -26,6 +22,6 @@ export const negotiationProposalSchema = termSheetFinancialSchema.extend({
   redFlags: z.array(z.string()).describe(
     "Structural alerts or contractual risks highlighted in the Term Sheet.",
   ),
-});
+}).strict();
 
 export type NegotiationProposal = z.infer<typeof negotiationProposalSchema>;
