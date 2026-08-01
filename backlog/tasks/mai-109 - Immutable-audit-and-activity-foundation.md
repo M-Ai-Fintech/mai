@@ -4,7 +4,7 @@ title: Immutable audit and activity foundation
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 14:28'
+updated_date: '2026-08-01 14:33'
 labels:
   - backend
   - architecture
@@ -116,4 +116,6 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 
 <!-- SECTION:NOTES:BEGIN -->
 Reapplied after the post-MAI-107 task-record conflict during rebase: MAI-105 and MAI-106 are Done; the isolated branch is delivery/MAI-109-immutable-audit-and-activity. Required docs 27, 28, 30, 31, 32 and doc-24 were read. No MAI-107/MAI-106-owned files, shared router/API routes, GUI, Figma, historical import, SIEM certification, or provider certification were added. Focused DENO_ENV=test deno test --env --allow-read tests/audit_activity/*.spec.ts passed 15/15; deno fmt and deno lint passed; deno task test passed 273 with 0 failures and 21 ignored. deno task verify exited 1 only on environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook. Remote PR #36 confirms MAI-107 merged; fetch succeeded and rebase is being completed now.
+
+Post-rebase evidence: after MAI-107 PR #36 merged, `git fetch origin` succeeded and `git rebase origin/master` completed; the only conflict was the governed MAI-109 task record and it was resolved through Backlog CLI. `origin/master` is bdecd20528cb3ae4b17256f09ecb1169cfe03306, rebased HEAD is eb6c80c, and merge-base ancestry check passed. Focused DENO_ENV=test audit_activity tests passed 15/15; `deno check src/audit_activity/v1.ts`, `deno fmt --check`, `deno lint`, and `git diff --check` passed. Post-rebase `deno task test` passed 319 with 0 failures and 22 ignored. Post-rebase `deno task verify` exited 1 only on environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook; canonical docs, i18n, Deno tests, design tokens, component/shell/screen/Figma checks and Storybook docs passed. MAI-109 remains In Progress pending draft-PR owner review; no API routes/shared router seams, MAI-107/MAI-106-owned files, GUI/Figma work, history import, mutation path, provider certification, or SIEM certification were added.
 <!-- SECTION:NOTES:END -->
