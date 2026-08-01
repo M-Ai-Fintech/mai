@@ -6,3 +6,4 @@
 export * from "./model.ts";
 export * from "./repository.ts";
 export * from "./worker.ts";
+export * from "./worker_process.ts";
