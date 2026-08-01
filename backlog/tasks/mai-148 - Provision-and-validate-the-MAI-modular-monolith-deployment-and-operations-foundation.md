@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:51'
-updated_date: '2026-08-01 12:08'
+updated_date: '2026-08-01 12:29'
 labels:
   - backend
   - architecture
@@ -29,6 +29,7 @@ references:
   - doc-12
   - MAI-106
   - ef783f6
+  - 'https://github.com/luisfelipeluis49/mai/pull/35'
 modified_files:
   - .dockerignore
   - .github/workflows/mai-148-contract.yml
@@ -215,6 +216,8 @@ Discovery 2026-08-01: MAI-106 is Done and supplies the authoritative PostgreSQL,
 Implementation and evidence 2026-08-01: Added the provider-neutral MAI-148 infrastructure contract, separate development/staging/production manifests, modular-monolith API and durable-job worker packaging, health/readiness behavior, local Compose topology, storage/secrets/IAM/network/observability/cost controls, recovery-safe runbooks, migration coordination, and named smoke/recovery/rollback tests. Passed deno fmt --check, deno lint, deno check, deno task test:infra (12 passed, 0 failed), deno task infra:validate, deno task infra:smoke (8 checks), docker compose -f infra/local/docker-compose.yml config --quiet, and scripts/check_docs.ts. Full deno task test passed with 270 tests, 0 failures, and 21 ignored. deno task verify completed the canonical documentation and Deno gates but exited 1 because the GUI environment lacks eslint/vitest/next/playwright/storybook and the foundation script hits sandboxed spawnSync git EPERM; npm --prefix gui run lint also exited 127 for missing eslint. Real staging deployment, provider certification, environment-specific restart recovery, backup restoration, rollback execution, and production readiness remain unexecuted because required owner approvals and environment credentials are absent. MAI-148 remains In Progress; no provider, domain migration, frontend, or production promotion scope was added.
 
 Delivery handoff 2026-08-01: reviewed commit ef783f6b11e034d43132fff5825a5fcedd48ef7d exists locally and the worktree is clean. Branch push and draft PR were not completed: the external-action approval gate rejected pushing the full private code change to origin without explicit destination authorization, and gh auth status reports the configured GitHub token is invalid. No workaround, self-merge, or Done transition was performed; MAI-148 remains In Progress pending explicit push/PR authorization and valid GitHub credentials.
+
+Draft PR #35 opened through the GitHub connector on 2026-08-01: https://github.com/luisfelipeluis49/mai/pull/35. Head branch delivery/MAI-148-deployment-and-operations-foundation targets master and contains the MAI-148 implementation. The PR remains draft; no self-merge or Done transition was performed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
