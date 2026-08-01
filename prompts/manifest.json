@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "repository": "luisfelipeluis49/mai",
+  "models": {
+    "orchestrator": "5.6 Terra Medium",
+    "implementer": "5.6 Luna Max",
+    "finisher": "5.6 Terra Medium",
+    "complex_planner": "5.6 Sol High"
+  },
+  "graphify_policy": "Only finish_wave_x.md may run graphify update . after every wave PR is merged and verification is green.",
+  "sol_plan_tasks": ["MAI-107", "MAI-120", "MAI-121", "MAI-126", "MAI-127", "MAI-129"],
+  "waves": {
+    "A": ["MAI-107", "MAI-108", "MAI-109", "MAI-142", "MAI-144", "MAI-145", "MAI-146", "MAI-147", "MAI-148", "MAI-151"],
+    "B": ["MAI-110"],
+    "C": ["MAI-111", "MAI-112", "MAI-123"],
+    "D": ["MAI-113"],
+    "E": ["MAI-114"],
+    "F": ["MAI-115", "MAI-120", "MAI-124"],
+    "G": ["MAI-116", "MAI-117", "MAI-119", "MAI-122", "MAI-125"],
+    "H": ["MAI-118"],
+    "I": ["MAI-121", "MAI-127"],
+    "J": ["MAI-126", "MAI-143", "MAI-149", "MAI-152"],
+    "K": ["MAI-150", "MAI-153"],
+    "L": ["MAI-129"],
+    "M": ["MAI-131"]
+  }
+}

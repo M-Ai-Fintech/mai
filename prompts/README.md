@@ -7,7 +7,11 @@ Each `wave_x/` contains:
 - `maestro_wave_x.md` — 5.6 Terra Medium;
 - `MAI-XXX.md` — 5.6 Luna Max implementation prompt;
 - optional `plan_MAI-XXX.md` — 5.6 Sol High planning-only prompt;
-- `finish_wave_x.md` — 5.6 Terra Medium final review, Graphify, and Done transition;
-- `wave_manifest.json`.
+- `finish_wave_x.md` — 5.6 Terra Medium final review, Graphify, and Done transition.
+
+Root files:
+
+- `OPERATING_RULES.md` — mandatory execution rules;
+- `manifest.json` — machine-readable wave, task, and model index.
 
 Read `OPERATING_RULES.md` before any prompt. Run waves in order. Dependencies remain authoritative.
