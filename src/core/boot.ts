@@ -2,7 +2,10 @@
 import { DatabaseMemoryService } from "./db/DatabaseMemoryService.ts";
 import { AIProvider } from "../agent/ai_provider.ts";
 import { LocalPubSubBus } from "./pubsub/LocalPubSubBus.ts";
-import { loadOnnxModel } from "../engines/prediction/onnx.ts";
+import {
+  DEFAULT_MODEL_PATH,
+  loadOnnxModel,
+} from "../engines/prediction/onnx.ts";
 import { describeError } from "../shared/errors.ts";
 
 export class AppBootstrapper {
@@ -10,6 +13,7 @@ export class AppBootstrapper {
   public static pubsub: LocalPubSubBus;
   public static isDbConnected: boolean = false;
   public static aiFallback: boolean = false;
+  public static onnxReady: boolean = false;
 
   public static async bootstrap(): Promise<void> {
     console.log("[Boot] Initializing Core Components...");
@@ -18,6 +22,7 @@ export class AppBootstrapper {
       await this.initializeDatabase();
       this.initializeAiProvider();
       await initializeOnnxEngine();
+      this.onnxReady = true;
       console.log("[Boot] All Core Components initialized successfully.\n");
     } catch (error: unknown) {
       console.error("[Boot] Error during bootstrap:", error);
@@ -50,9 +55,10 @@ export class AppBootstrapper {
   }
 }
 
-async function initializeOnnxEngine(): Promise<void> {
+export async function initializeOnnxEngine(
+  modelPath: string = DEFAULT_MODEL_PATH,
+): Promise<void> {
   // 4. Initialize ONNX Engine.
-  const modelPath = "models/ma_classifier_q8.onnx";
   try {
     await loadOnnxFile(modelPath);
   } catch (error: unknown) {
@@ -61,15 +67,11 @@ async function initializeOnnxEngine(): Promise<void> {
         describeError(error)
       }`,
     );
+    throw error;
   }
 }
 
 async function loadOnnxFile(modelPath: string): Promise<void> {
-  const fileInfo = await Deno.stat(modelPath);
-  if (!fileInfo.isFile) {
-    console.warn(`[Boot] ONNX Model path "${modelPath}" is not a file.`);
-    return;
-  }
   await loadOnnxModel(modelPath);
   console.log("[Boot] ONNX Model loaded successfully.");
 }
