@@ -6,7 +6,7 @@ title: >-
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:00'
-updated_date: '2026-08-01 12:19'
+updated_date: '2026-08-01 12:22'
 labels:
   - backend
   - architecture
@@ -17,6 +17,8 @@ labels:
   - delivery-wave-a
 milestone: m-12
 dependencies: []
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/34'
 modified_files:
   - backlog/docs/architecture/engines/doc-5 - Engine-Architecture.md
   - models/ma_classifier_q8.onnx
@@ -115,6 +117,8 @@ Intake evidence: branch delivery/MAI-142-onnx-artifact-and-runtime was clean at 
 Implementation slice: regenerated opset-17 dynamic-batch q8 reference artifact with deterministic Python exporter and manifest/checksum; added protobuf tensor inspection, exact six-input validation, complete four-value mapping, typed artifact/input/inference failures, explicit heuristic fallback provenance, and real AppBootstrapper initialization. Focused verification: DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/prediction/onnx.test.ts tests/engines/prediction.spec.ts tests/engines/prediction-artifact.spec.ts => 16 passed, 0 failed. Export verification: PYTHONPATH=/tmp/mai142-python python3 scripts/export_reference_model.py --check-reproducibility => repeated q8 checksum 8c98e803d9a636b886267bca6028237f52f9decccf4f4200d47ad3e13a5f0d66.
 
 Final verification evidence: focused Deno artifact/runtime suite exited 0 with 16 passed and 0 failed; benchmark output on this development machine was P50 0.05 ms and P99 0.10 ms against the test thresholds of <100 ms and <200 ms, and is not a production SLA. Full deno task test exited 0 with 265 passed, 0 failed, and 21 ignored. Elevated deno task verify exited 0 with all 17 checks PASS: canonical docs, i18n, Deno tests, frontend boundaries, GUI units, Next production build, workflows, Storybook docs/build/interactions. Restricted verification initially exposed missing GUI dependencies and then sandbox EPERM on local port binding; npm --prefix gui ci installed the locked 555-package environment, and the elevated run completed the required local-server checks. Export reproducibility exited 0 using PYTHONPATH=/tmp/mai142-python python3 scripts/export_reference_model.py --check-reproducibility --output-dir /tmp/mai142-export-final; repeated and checked-in q8 checksum is 8c98e803d9a636b886267bca6028237f52f9decccf4f4200d47ad3e13a5f0d66. Notebook JSON validation passed with nbformat 4 and 7 cells. deno fmt --check, deno check of the changed runtime modules, and git diff --check exited 0. Configuration closure PASS: checked-in models/ma_classifier_q8.onnx plus manifest and SHA sidecar flow through artifact.ts checksum/protobuf contract validation into onnx.ts load/inference, PredictionEngine, and the real AppBootstrapper initializer; exact consumer inventory remains outside MAI-143 domain integration, no secrets or production provider are required, and missing/unreadable/corrupt/invalid/fallback paths are covered by typed regression tests. Reference-only synthetic limitations and rollback as reverting the artifact/manifest/sidecar pair are documented; PR and human review remain pending, so MAI-142 stays In Progress.
+
+Draft PR handoff: https://github.com/luisfelipeluis49/mai/pull/34 is open against master from delivery/MAI-142-onnx-artifact-and-runtime at commit 9199aaa5341b3ef2609095d08098471bda9ab196; the connector confirms draft=true, merged=false, and no merge commit. Human owner review and any required PR checks remain pending; the agent must not self-approve or merge. GitHub CLI token was invalid, but the connected GitHub action created the PR successfully.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
