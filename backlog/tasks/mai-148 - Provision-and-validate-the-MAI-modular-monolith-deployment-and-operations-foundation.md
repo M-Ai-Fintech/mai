@@ -6,7 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:51'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -102,6 +102,15 @@ The final security and operational production-candidate decision remains under M
 - [ ] #24 No provider, environment, control, or deployment is described as production-ready without executed environment-specific evidence.
 - [ ] #25 Infrastructure-focused verification and the canonical repository verification gate pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Read MAI-106 and deployment requirements; obtain approval for provider, topology, availability, RPO/RTO, and security controls.
+2. Add approved modular-monolith IaC/runbooks for environments, database, storage, IAM, secrets, networking, observability, and costs.
+3. Exclude migrations, domain implementation, provider certification, cutover, frontend, and production promotion; retain database-backed consistency.
+4. Prove smoke, recovery, backup/restore, and rollback paths; run focused checks and deno task verify without unearned readiness claims.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 

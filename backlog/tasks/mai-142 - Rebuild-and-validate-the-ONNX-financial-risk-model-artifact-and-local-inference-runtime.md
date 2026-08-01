@@ -6,7 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:00'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -69,6 +69,15 @@ Those responsibilities belong to MAI-143 and MAI-127.
 - [ ] #13 The task makes no claim of statistical usefulness, production certification, or regulatory suitability without evidence.
 - [ ] #14 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory ONNX loader, model, notebook, boot path, and tests; define reproducible local artifact/manifest scope.
+2. Add versioned export/manifest/checksum, exact six-input contract, four-output mapping, and Deno/WASM boundary.
+3. Add explicit validation, failures, golden vectors, reproducibility, and benchmarks without product certification or workflow integration.
+4. Run focused artifact/runtime/benchmark checks and deno task verify; record provenance and rollback evidence.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
