@@ -1,5 +1,6 @@
 import { AgentOrchestrator } from "../agent/index.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
+import { handleIdentityAccessRoute } from "../identity_access/http.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
 
@@ -9,7 +10,9 @@ function corsHeaders(): Headers {
   return new Headers({
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Last-Event-ID",
+    "Access-Control-Allow-Headers":
+      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id",
+    "Access-Control-Expose-Headers": "ETag, X-Correlation-Id",
   });
 }
 
@@ -46,6 +49,12 @@ async function routedResponse(
   repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
+  const identityAccessResponse = await handleIdentityAccessRoute(
+    request,
+    undefined,
+    headers,
+  );
+  if (identityAccessResponse) return identityAccessResponse;
   const mvpResponse = await handleMvpRoute(request, {
     executeChat: async ({ dealId, message }) => ({
       content: await AgentOrchestrator.executeAgentQuery(dealId, message),
@@ -96,7 +105,6 @@ export function startServer(): Deno.HttpServer {
     (request) => routeRequest(request, repository),
   );
 }
-
 
 if (import.meta.main) startServer();
 
