@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:03'
-updated_date: '2026-08-01 14:23'
+updated_date: '2026-08-01 14:27'
 labels:
   - backend
   - architecture
@@ -19,6 +19,9 @@ dependencies: []
 modified_files:
   - src/engines/optimization/matching/types.ts
   - src/engines/optimization/matching/portfolio_selection.ts
+  - src/engines/optimization/matching/selection_input_validation.ts
+  - src/engines/optimization/matching/selection_constraints.ts
+  - src/engines/optimization/matching/portfolio_model.ts
   - src/engines/optimization/matching/legacy_portfolio_adapter.ts
   - src/engines/optimization/matching/index.ts
   - src/engines/optimization/kyc/kyc_valuation_solver.ts
@@ -116,6 +119,8 @@ Implementation slice: added matching-owned versioned contracts in src/engines/op
 Verification: deno task test --quiet exited 0 with 266 passed, 21 ignored; matching.spec.ts ran 8/8 and optimization.spec.ts ran 8/8. Initial sandbox deno task verify exited 1 because GUI dependencies were absent and gui/scripts/verify-frontend-foundation.mjs hit spawnSync git EPERM. After npm --prefix gui ci (exit 0; npm reported 7 dependency audit vulnerabilities) and an approved escalated rerun, deno task verify exited 0: canonical docs, i18n, Deno, frontend tokens/foundation/boundaries, GUI unit tests, Next build, principal workflows, Storybook docs/build/interaction tests all PASS. TermSheetOptimizer Math.random usage remains intentionally outside this task because it owns excluded negotiation terms; the authoritative portfolio selector has no random behavior. No governed documentation asset or shared/API/CLI/agent/valuation path was changed.
 
 Implementation commit: 62b34dfe58a5b0e230d430eabd9d86334b59d57. Worktree after commit contains only the CLI-managed MAI-145 task record; Graphify hook output was restored and is not part of the change. PR publication remains pending remote push/creation.
+
+Draft PR #38 opened: https://github.com/luisfelipeluis49/mai/pull/38. Branch delivery/MAI-145-matching-and-portfolio-algorithms is pushed; implementation commit 62b34dfe58a5b0e230d430eabd9d86334b59d57 and verification-evidence commit 67f7976 are included. Human review and downstream merge coordination are pending; MAI-145 intentionally remains In Progress.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
