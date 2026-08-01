@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 23:06'
+updated_date: '2026-08-01 23:07'
 labels:
   - backend
   - architecture
@@ -126,4 +126,6 @@ Discovery 2026-08-01: no existing src/organization_registry or registry-owned te
 Verification 2026-08-01: DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/organization_registry/*.spec.ts tests/platform/authz/guard_projection.spec.ts tests/platform/persistence/migration.spec.ts tests/platform/api/v1_contracts.spec.ts exited 0 with 26 passed and 0 failed. deno lint src/organization_registry tests/organization_registry exited 0; deno fmt --check src/organization_registry tests/organization_registry exited 0; git diff --check exited 0. deno task test exited 0 with 271 passed, 0 failed, 21 ignored across 25 steps. deno task verify exited 1: the Deno suite and documentation/i18n/backend-relevant checks passed, while frontend foundation failed on spawnSync git EPERM and GUI unit/build/workflow/Storybook checks lacked vitest, next, playwright, or storybook; no MAI-108 backend failure was observed. No Graphify or provider integration was run per prompt. Local review found only the new organization_registry source/tests plus the Backlog task record. MAI-107 remains To Do and unmerged, so do not register /api/v1 routes, compose shared API infrastructure, push/open the final PR, self-merge, or mark Done. After MAI-107 merges, run git -C /home/luis/mai-worktrees/wave_a/MAI-108 fetch origin and git -C /home/luis/mai-worktrees/wave_a/MAI-108 rebase origin/master, then complete only the authorized shared integration and PR handoff.
 
 Rebase and post-rebase verification 2026-08-01: GitHub confirms MAI-107 PR #36 merged at bdecd20528cb3ae4b17256f09ecb1169cfe03306; git -C /home/luis/mai-worktrees/wave_a/MAI-108 fetch origin updated origin/master, and GRAPHIFY_SKIP_HOOK=1 git -C /home/luis/mai-worktrees/wave_a/MAI-108 rebase origin/master completed. Rebase had only the governed MAI-108 task-record conflict; the committed plan and evidence were retained. No src/identity_access/**, src/api/server.ts, src/platform/api/**, or src/platform/persistence/migrations.ts changes were introduced, and no /api/v1 route or shared-router registration was added. Post-rebase DENO_ENV=test deno task test passed 317, 0 failed, 22 ignored; registry focused tests passed 13, 0 failed; deno lint and deno fmt --check passed; deno task verify exited 1 only for frontend foundation spawnSync git EPERM and missing vitest, next, playwright, or storybook. Task remains In Progress pending human PR review; no Done or merge transition.
+
+PR handoff 2026-08-01: draft PR #40 opened at https://github.com/luisfelipeluis49/mai/pull/40 from delivery/MAI-108-organization-registry against master, initially at commit c12bb9ee6de411c13c58e56d61c0b14b5cf9484c. Task remains In Progress for human data-model/security review and follow-up on unavailable GUI verification dependencies; no self-merge or Done transition was performed.
 <!-- SECTION:NOTES:END -->
