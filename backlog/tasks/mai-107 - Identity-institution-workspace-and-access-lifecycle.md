@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 13:47'
+updated_date: '2026-08-01 13:49'
 labels:
   - backend
   - architecture
@@ -99,4 +99,6 @@ Execution boundary: no Graphify per the task prompt; no Deal participation, brea
 Implementation evidence 2026-08-01: added the bounded src/identity_access vertical slice and tests for Institution, Workspace, UserIdentity, Membership, Invitation token digests, RolePolicy, PermissionGrant, Restriction, terminal Revocation, human-only administration, scoped versions, sponsor/purpose/expiry, deny precedence, safe sessions, provider-neutral authentication, session/job invalidation, reconciliation, guarded deny-before-load authorization, protected-not-found and safe DTO projection. Added context-owned iam/access migrations and repositories with tenant/workspace predicates, immutable history, atomic outbox writes, additive /api/v1 envelopes with ETag/If-Match/idempotency and safe errors. No RLS activation because explicit approval remains pending; no concrete IdP, Deal, Organization Registry, audit implementation, GUI, Figma or break-glass scope.
 
 Final verification evidence before handoff: scoped identity/access suite with MAI106_DATABASE_URL against isolated mai_test_mai106 PostgreSQL passed 21/21, including real migrations/history/outbox behavior; deno task test passed 278, 0 failed, 22 ignored; deno fmt and scoped deno lint passed; deno task verify exited 1 only on existing GUI environment gates: frontend foundation spawnSync git EPERM, missing vitest, next, playwright and storybook. Deno tests, canonical documentation, i18n, frontend boundary checks and Storybook documentation passed. MAI-107 remains In Progress pending commit/PR publication and human security/data-model review.
+
+Draft handoff evidence 2026-08-01: commit 8c06810e7fd0ddab436dd8c1d9b3a970361e2645 was pushed from delivery/MAI-107-identity-access-lifecycle. Draft PR #36 is open against master at https://github.com/luisfelipeluis49/mai/pull/36. MAI-107 intentionally remains In Progress; human security/data-model review and approval are pending, and no merge or Done transition was performed.
 <!-- SECTION:NOTES:END -->
