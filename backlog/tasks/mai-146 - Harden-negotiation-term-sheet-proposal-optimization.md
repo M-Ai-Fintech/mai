@@ -1,10 +1,10 @@
 ---
 id: MAI-146
 title: Harden negotiation term-sheet proposal optimization
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 14:21'
 labels:
   - backend
   - architecture
@@ -84,6 +84,17 @@ Record relationships:
 - [ ] #15 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
 
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory and preserve the legacy genetic, matching, constraint, agent, API, and CLI boundaries; do not modify matching selection/valuation or read-only shared consumers.
+2. Add negotiation-owned typed contracts for proposal dimensions, versioned bounds and constraint metadata, buyer/seller utility definitions with normalized units, reservation floors, seeded replay metadata, and termination limits.
+3. Implement a pure seeded negotiation optimizer with explicit crossoverRate, bounded proposals, all-violation explanations, ranked alternatives, infeasibility reporting, and convergence termination.
+4. Route legacy genetic optimizeDeal calls through an explicit compatibility adapter while preserving existing helper exports and consumer signatures.
+5. Add golden, determinism/replay, convergence, boundary, infeasibility, compatibility, and benchmark tests; run focused checks and deno task verify.
+6. Record exact evidence in Backlog, commit task-scoped changes, push the isolated branch, and open a human-reviewable PR; keep MAI-146 In Progress and do not merge or mark Done.
+<!-- SECTION:PLAN:END -->
+
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
@@ -138,6 +149,12 @@ Legacy proposal-constraint migration boundary
     - create an authoritative negotiation decision.
 
 12. Existing genetic and constraint code remains migration evidence until MAI-146 establishes replacement coverage.
+
+Discovery fallback: Graphify was explicitly disabled by prompts/wave_a/MAI-146.md; focused rg and source/test inspection scoped the implementation. Remote Backlog refresh and GitHub API checks hit the worktree FETCH_HEAD read-only/network limitation; local task reads and edits work. Branch: delivery/MAI-146-negotiation-proposal-optimization.
+
+Ownership handoff: src/engines/optimization/index.ts:41 optimizeWithConstraints, src/api/routes/legacy.ts:171, and src/cli/term-sheet-command.ts:69 remain read-only legacy consumers by the MAI-146 parallel contract. Proposed coordinator migration contract: import optimizeNegotiationProposal from src/engines/optimization/negotiation/index.ts with NegotiationOptimizerInput and consume NegotiationOptimizerResult.alternatives/violations; preserve route-specific DTOs and do not add approval/send/finalization behavior. src/agent/tools/core_tools.ts:171 is routed through genetic.ts optimizeDeal compatibility without editing the read-only agent surface.
+
+Verification evidence: targeted command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 32 tests. deno fmt --check src/engines/optimization/genetic.ts src/engines/optimization/negotiation passed; deno check src/engines/optimization/negotiation/index.ts src/engines/optimization/genetic.ts passed; git diff --check passed. Benchmark bench/ga-convergence.json recorded optimizeDeal with populationSize 100 and generations 10 at 23.055440000000004ms on the reference runner. deno task verify passed canonical docs, i18n, Deno tests, token/component/shell/screen/conformance boundaries; it remains non-passing because frontend-foundation cannot spawn git (EPERM in the sandbox), and the GUI Next build was still running without output when the second retry was interrupted. GUI dependencies were installed into ignored gui/node_modules (555 packages; npm reported 7 audit vulnerabilities).
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
