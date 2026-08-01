@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-01 14:24'
+updated_date: '2026-08-01 14:25'
 labels:
   - backend
   - architecture
@@ -169,6 +169,8 @@ Ownership handoff: src/engines/optimization/index.ts:41 optimizeWithConstraints,
 Verification evidence: targeted command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 32 tests. deno fmt --check src/engines/optimization/genetic.ts src/engines/optimization/negotiation passed; deno check src/engines/optimization/negotiation/index.ts src/engines/optimization/genetic.ts passed; git diff --check passed. Benchmark bench/ga-convergence.json recorded optimizeDeal with populationSize 100 and generations 10 at 23.055440000000004ms on the reference runner. deno task verify passed canonical docs, i18n, Deno tests, token/component/shell/screen/conformance boundaries; it remains non-passing because frontend-foundation cannot spawn git (EPERM in the sandbox), and the GUI Next build was still running without output when the second retry was interrupted. GUI dependencies were installed into ignored gui/node_modules (555 packages; npm reported 7 audit vulnerabilities).
 
 PR handoff: commit bb0b124 pushed to delivery/MAI-146-negotiation-proposal-optimization; draft PR #37 opened at https://github.com/luisfelipeluis49/mai/pull/37 against master. Human review, environment-limited frontend verification, and read-only consumer migration remain pending. Per prompt, MAI-146 stays In Progress and is not marked Done.
+
+Handoff correction: cda63a2 chore(MAI-146): record draft PR handoff was subsequently pushed to PR #37; the remote head is cda63a2710325ea15c683e5e224f842300d35ca3.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
