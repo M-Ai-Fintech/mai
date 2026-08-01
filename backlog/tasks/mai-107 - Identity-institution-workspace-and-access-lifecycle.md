@@ -4,7 +4,7 @@ title: 'Identity, institution, workspace and access lifecycle'
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 21:15'
+updated_date: '2026-08-01 11:15'
 labels:
   - backend
   - architecture
@@ -82,8 +82,8 @@ Production identity-provider choice and break-glass operating policy require own
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Re-read doc-24, required ADRs and real task dependencies.
-2. Obtain listed review/approval gates before irreversible or provider-facing work.
-3. Implement only the exact bounded scope with named fakes and focused tests.
-4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
+1. Reconfirm MAI-105/106 public contracts through v1 entry points; exclude Deal participation, break-glass, concrete IdP, registry, audit, GUI, and Figma.
+2. Build test-first identity/access lifecycle aggregates, provider-neutral auth port, safe SessionContext, scoped commands/queries, idempotency, events, and immediate revocation revalidation.
+3. Add context-owned iam/access migrations and scoped repositories; integrate MAI-105 guarded loading and safe projection, then add additive /api/v1 slices.
+4. Prove lifecycle, session, authorization/leakage, API, migration, concurrency, idempotency, import, and PostgreSQL behavior; record rollout/rollback/review evidence and run focused checks plus deno task verify.
 <!-- SECTION:PLAN:END -->

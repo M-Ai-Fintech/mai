@@ -4,7 +4,7 @@ title: Immutable audit and activity foundation
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -88,8 +88,8 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Re-read doc-24, required ADRs and real task dependencies.
-2. Obtain listed review/approval gates before irreversible or provider-facing work.
-3. Implement only the exact bounded scope with named fakes and focused tests.
-4. Execute task-specific and canonical verification, record migration/rollout/rollback evidence, then hand off.
+1. Read BE-P08 and audit/provenance, event, persistence, and authorization ADRs; preserve MAI-106 ownership.
+2. Add isolated append-only audit, snapshots, redaction overlays, deterministic projections, and export-job boundary.
+3. Add only additive audit migrations and scoped ports/projections; exclude mutation, SIEM certification, and history import.
+4. Prove append-only, atomic audit/outbox, replay, redaction/access, and export authorization; run focused checks and deno task verify.
 <!-- SECTION:PLAN:END -->

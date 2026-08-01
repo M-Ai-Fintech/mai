@@ -15,7 +15,10 @@ const sampleProposal = {
   nonCompeteMonths: 24,
   escrowPercentage: 0.1,
   statutoryLimitationsMatching: true,
-  arbitrationChamber: "CAM-CCBC" as const,
+  disputeResolution: {
+    type: "arbitration" as const,
+    institution: { type: "canonical" as const, name: "CAM-CCBC" as const },
+  },
   buyerUtility: 0.85,
   sellerUtility: 0.78,
   redFlags: ["High tax liability risk"],
@@ -23,6 +26,7 @@ const sampleProposal = {
 
 const sampleLegalTerms = {
   governingLaw: "Brazil",
+  disputeResolution: sampleProposal.disputeResolution,
   exclusivityPeriodDays: 30,
   confidentialityAgreed: true,
   bindingClauses: ["Exclusivity", "Confidentiality", "Governing Law"],
@@ -116,6 +120,10 @@ Deno.test("The assembly function preserves every financial term", () => {
   // Legal terms preserved
   assertEquals(assembled.governingLaw, sampleLegalTerms.governingLaw);
   assertEquals(
+    assembled.disputeResolution,
+    sampleLegalTerms.disputeResolution,
+  );
+  assertEquals(
     assembled.exclusivityPeriodDays,
     sampleLegalTerms.exclusivityPeriodDays,
   );
@@ -136,6 +144,7 @@ Deno.test("Missing required legal terms are rejected", () => {
       proposal: sampleProposal,
       legalTerms: {
         governingLaw: "Brazil",
+        disputeResolution: sampleProposal.disputeResolution,
         // exclusivityPeriodDays missing
         confidentialityAgreed: true,
         bindingClauses: ["Exclusivity"],
@@ -143,6 +152,7 @@ Deno.test("Missing required legal terms are rejected", () => {
         exclusivityPeriodDays: number;
         confidentialityAgreed: boolean;
         bindingClauses: string[];
+        disputeResolution: typeof sampleProposal.disputeResolution;
       },
     });
   });

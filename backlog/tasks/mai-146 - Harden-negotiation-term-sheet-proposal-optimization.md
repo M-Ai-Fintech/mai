@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: To Do
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-07-31 21:16'
+updated_date: '2026-08-01 11:14'
 labels:
   - backend
   - architecture
@@ -83,6 +83,15 @@ Record relationships:
 - [ ] #14 Representative benchmark evidence is recorded.
 - [ ] #15 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Inventory optimizer, schemas, and tests; isolate from proposal lifecycle and send/release routes.
+2. Define typed constraints/utilities, reservation bounds, seed/replay metadata, convergence, alternatives, and explanations.
+3. Harden pure deterministic/seeded optimization without workflow, KYC, approval, acceptance, communication, or finalization.
+4. Add golden, replay, convergence, boundary, and infeasibility tests; run focused checks and deno task verify.
+<!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
 
