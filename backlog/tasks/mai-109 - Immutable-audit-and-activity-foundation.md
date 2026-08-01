@@ -1,10 +1,10 @@
 ---
 id: MAI-109
 title: Immutable audit and activity foundation
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 11:14'
+updated_date: '2026-08-01 14:28'
 labels:
   - backend
   - architecture
@@ -34,6 +34,22 @@ documentation:
   - >-
     backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 -
     Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md
+modified_files:
+  - src/audit_activity/access.ts
+  - src/audit_activity/export_job.ts
+  - src/audit_activity/migrations/audit_0001_events_and_redactions.ts
+  - src/audit_activity/migrations/index.ts
+  - src/audit_activity/model.ts
+  - src/audit_activity/projection.ts
+  - src/audit_activity/repository.ts
+  - src/audit_activity/transaction.ts
+  - src/audit_activity/v1.ts
+  - tests/audit_activity/access_export.spec.ts
+  - tests/audit_activity/migration.spec.ts
+  - tests/audit_activity/model.spec.ts
+  - tests/audit_activity/projection.spec.ts
+  - tests/audit_activity/support.ts
+  - tests/audit_activity/transaction.spec.ts
 priority: high
 ordinal: 10200
 ---
@@ -88,8 +104,16 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Read BE-P08 and audit/provenance, event, persistence, and authorization ADRs; preserve MAI-106 ownership.
-2. Add isolated append-only audit, snapshots, redaction overlays, deterministic projections, and export-job boundary.
-3. Add only additive audit migrations and scoped ports/projections; exclude mutation, SIEM certification, and history import.
-4. Prove append-only, atomic audit/outbox, replay, redaction/access, and export authorization; run focused checks and deno task verify.
+1. Preserve MAI-104/105/106 contracts and read doc-24 plus docs 27, 28, 30, 31 and 32; keep the isolated domain boundary and defer shared API/router integration until MAI-107 is merged and this branch is rebased.
+2. Add src/audit_activity contracts, append-only repository port/implementation, authority and evidence snapshots, redaction overlay storage, and an additive audit-owned migration without changing MAI-106 migration or outbox files.
+3. Add a transaction-scoped audited transition writer that appends audit and existing outbox records on the same TransactionHandle, with regression coverage for append-only enforcement and atomic failure behavior.
+4. Add deterministic activity projection rebuilds with explicit position watermarks, redaction overlays, classification/access filtering, and named fake-based replay tests.
+5. Add an authorization-gated export-job boundary that enqueues only opaque scoped inputs and appends an audited export-request event; do not select or certify providers, register /api/v1 routes, import history, or add mutation paths.
+6. Run focused audit_activity checks, format/lint/diff checks, and deno task verify; record the MAI-107 rebase gate and any environment-limited evidence before PR handoff.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Reapplied after the post-MAI-107 task-record conflict during rebase: MAI-105 and MAI-106 are Done; the isolated branch is delivery/MAI-109-immutable-audit-and-activity. Required docs 27, 28, 30, 31, 32 and doc-24 were read. No MAI-107/MAI-106-owned files, shared router/API routes, GUI, Figma, historical import, SIEM certification, or provider certification were added. Focused DENO_ENV=test deno test --env --allow-read tests/audit_activity/*.spec.ts passed 15/15; deno fmt and deno lint passed; deno task test passed 273 with 0 failures and 21 ignored. deno task verify exited 1 only on environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook. Remote PR #36 confirms MAI-107 merged; fetch succeeded and rebase is being completed now.
+<!-- SECTION:NOTES:END -->
