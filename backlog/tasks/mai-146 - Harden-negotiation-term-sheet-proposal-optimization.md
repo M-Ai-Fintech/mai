@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-01 14:21'
+updated_date: '2026-08-01 14:24'
 labels:
   - backend
   - architecture
@@ -15,6 +15,18 @@ labels:
   - delivery-wave-a
 milestone: m-12
 dependencies: []
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/37'
+modified_files:
+  - src/engines/optimization/genetic.ts
+  - src/engines/optimization/genetic.test.ts
+  - src/engines/optimization/negotiation/constraints.ts
+  - src/engines/optimization/negotiation/index.ts
+  - src/engines/optimization/negotiation/optimizer.test.ts
+  - src/engines/optimization/negotiation/optimizer.ts
+  - src/engines/optimization/negotiation/random.ts
+  - src/engines/optimization/negotiation/types.ts
+  - src/engines/optimization/negotiation/utility.ts
 priority: high
 ordinal: 10600
 ---
@@ -155,6 +167,8 @@ Discovery fallback: Graphify was explicitly disabled by prompts/wave_a/MAI-146.m
 Ownership handoff: src/engines/optimization/index.ts:41 optimizeWithConstraints, src/api/routes/legacy.ts:171, and src/cli/term-sheet-command.ts:69 remain read-only legacy consumers by the MAI-146 parallel contract. Proposed coordinator migration contract: import optimizeNegotiationProposal from src/engines/optimization/negotiation/index.ts with NegotiationOptimizerInput and consume NegotiationOptimizerResult.alternatives/violations; preserve route-specific DTOs and do not add approval/send/finalization behavior. src/agent/tools/core_tools.ts:171 is routed through genetic.ts optimizeDeal compatibility without editing the read-only agent surface.
 
 Verification evidence: targeted command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 32 tests. deno fmt --check src/engines/optimization/genetic.ts src/engines/optimization/negotiation passed; deno check src/engines/optimization/negotiation/index.ts src/engines/optimization/genetic.ts passed; git diff --check passed. Benchmark bench/ga-convergence.json recorded optimizeDeal with populationSize 100 and generations 10 at 23.055440000000004ms on the reference runner. deno task verify passed canonical docs, i18n, Deno tests, token/component/shell/screen/conformance boundaries; it remains non-passing because frontend-foundation cannot spawn git (EPERM in the sandbox), and the GUI Next build was still running without output when the second retry was interrupted. GUI dependencies were installed into ignored gui/node_modules (555 packages; npm reported 7 audit vulnerabilities).
+
+PR handoff: commit bb0b124 pushed to delivery/MAI-146-negotiation-proposal-optimization; draft PR #37 opened at https://github.com/luisfelipeluis49/mai/pull/37 against master. Human review, environment-limited frontend verification, and read-only consumer migration remain pending. Per prompt, MAI-146 stays In Progress and is not marked Done.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
