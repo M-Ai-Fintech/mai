@@ -8,6 +8,7 @@ import type {
   EnterpriseValueInput,
   MethodResult,
 } from "../../../../shared/types.ts";
+import { legacyEnterpriseValue } from "../compatibility.ts";
 
 /**
  * Calculates the Enterprise Value (EV) of a company.
@@ -19,15 +20,5 @@ import type {
 export function computeEnterpriseValue(
   data: EnterpriseValueInput,
 ): MethodResult {
-  if (data.totalDebt < 0 || data.cashAndEquivalents < 0) {
-    throw new RangeError(
-      `[ValuationEngine:EnterpriseValue] debt/cash was ${data.totalDebt}/${data.cashAndEquivalents}; expected non-negative values.`,
-    );
-  }
-  const value = data.marketCap + data.totalDebt - data.cashAndEquivalents;
-  return {
-    method: "Enterprise Value (EV)",
-    value,
-    flags: value < 0 ? ["NEGATIVE_ENTERPRISE_VALUE"] : [],
-  };
+  return legacyEnterpriseValue(data);
 }
