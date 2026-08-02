@@ -139,9 +139,21 @@ function sampleAllocation(
       (sum, laterDimension) => sum + bounds[laterDimension].maximum,
       0,
     );
+    const laterMinimumSum = percentageDimensions.slice(index + 1).reduce(
+      (sum, laterDimension) => sum + bounds[laterDimension].minimum,
+      0,
+    );
     const bound = bounds[dimension];
     const minimum = Math.max(bound.minimum, remaining - laterCapacity);
-    const maximum = Math.min(bound.maximum, remaining);
+    const maximum = Math.min(bound.maximum, remaining - laterMinimumSum);
+    if (minimum > maximum) {
+      throw new Error(
+        `Invalid allocation bounds for ${dimension}: computed minimum ${minimum} ` +
+          `exceeds computed maximum ${maximum}; expected minimum <= maximum ` +
+          `after reserving later minimum ${laterMinimumSum} and maximum ` +
+          `${laterCapacity} from remaining ${remaining}.`,
+      );
+    }
     const value = index === percentageDimensions.length - 1
       ? remaining
       : minimum + random.next() * (maximum - minimum);

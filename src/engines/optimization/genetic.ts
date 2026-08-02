@@ -7,6 +7,13 @@ import {
   UtilityModel,
 } from "./negotiation/index.ts";
 
+const LEGACY_COMPATIBILITY_POLICY_VERSION = "MAI-146-compatibility-v1";
+const LEGACY_COMPATIBILITY_EFFECTIVE_DATE = "2026-08-01";
+const LEGACY_COMPATIBILITY_EVIDENCE_VERSION = "genetic-legacy-v1";
+const LEGACY_COMPATIBILITY_DEFAULT_SOURCE =
+  "legacy genetic compatibility default (not authoritative mandate)";
+const LEGACY_COMPATIBILITY_RESERVATION_UTILITY = 0.2;
+
 export const TermSheetAlternativeSchema = z.object({
   valuation: z.number(),
   cashPercentage: z.number(),
@@ -282,11 +289,11 @@ function legacyBound(
     minimum,
     maximum,
     metadata: {
-      source: "legacy genetic compatibility contract",
-      policyVersion: "MAI-146-compatibility-v1",
+      source: LEGACY_COMPATIBILITY_DEFAULT_SOURCE,
+      policyVersion: LEGACY_COMPATIBILITY_POLICY_VERSION,
       units,
-      effectiveDate: "2026-08-01",
-      evidenceVersion: "genetic-legacy-v1",
+      effectiveDate: LEGACY_COMPATIBILITY_EFFECTIVE_DATE,
+      evidenceVersion: LEGACY_COMPATIBILITY_EVIDENCE_VERSION,
       enforcement: "mandatory",
       percentageRepresentation: units === "fraction" ? "fraction" : undefined,
     },
@@ -294,6 +301,8 @@ function legacyBound(
 }
 
 function legacyUtilities(profile: DealProfile): UtilityModel {
+  // These weights, directions, and targets preserve the legacy adapter
+  // contract only; authoritative mandate policy belongs to negotiation input.
   const weights = {
     valuation: 0.2,
     cashPercentage: 0.2,
@@ -327,7 +336,7 @@ function legacyUtility(
 ): UtilityModel["buyer"] {
   return {
     id: `legacy-${id}`,
-    version: "MAI-146-compatibility-v1",
+    version: LEGACY_COMPATIBILITY_POLICY_VERSION,
     units: NEGOTIATION_UTILITY_UNITS,
     weights,
     directions: {
@@ -346,14 +355,16 @@ function legacyUtility(
 function legacyReservation(
   side: "buyer" | "seller",
 ): UtilityModel["reservation"]["buyer"] {
+  // This floor preserves legacy behavior only and is not an authoritative
+  // negotiation mandate.
   return {
-    minimum: 0.2,
+    minimum: LEGACY_COMPATIBILITY_RESERVATION_UTILITY,
     metadata: {
-      source: `legacy ${side} reservation compatibility contract`,
-      policyVersion: "MAI-146-compatibility-v1",
+      source: `${LEGACY_COMPATIBILITY_DEFAULT_SOURCE}: ${side} reservation`,
+      policyVersion: LEGACY_COMPATIBILITY_POLICY_VERSION,
       units: NEGOTIATION_UTILITY_UNITS,
-      effectiveDate: "2026-08-01",
-      evidenceVersion: "genetic-legacy-v1",
+      effectiveDate: LEGACY_COMPATIBILITY_EFFECTIVE_DATE,
+      evidenceVersion: LEGACY_COMPATIBILITY_EVIDENCE_VERSION,
       enforcement: "mandatory",
     },
   };

@@ -135,6 +135,42 @@ const optimizerInput = {
   },
 };
 
+const tightAllocationBounds: ProposalBounds = {
+  ...bounds,
+  cashPercentage: bound("cash", 0.25, 0.5, "fraction"),
+  equityPercentage: bound("equity", 0.25, 0.5, "fraction"),
+  earnOutPercentage: bound("earn-out", 0.25, 0.5, "fraction"),
+  escrowPercentage: bound("escrow", 0.25, 0.5, "fraction"),
+};
+
+const boundedProposalDimensions = [
+  "valuation",
+  "cashPercentage",
+  "equityPercentage",
+  "earnOutPercentage",
+  "escrowPercentage",
+  "earnOutTargetYears",
+  "nonCompeteMonths",
+] as const;
+
+function assertProposalWithinBounds(
+  proposal: NegotiationProposal,
+  proposalBounds: ProposalBounds,
+): void {
+  for (const dimension of boundedProposalDimensions) {
+    const value = proposal[dimension];
+    const dimensionBound = proposalBounds[dimension];
+    assert(value >= dimensionBound.minimum);
+    assert(value <= dimensionBound.maximum);
+  }
+  assertAlmostEquals(
+    proposal.cashPercentage + proposal.equityPercentage +
+      proposal.earnOutPercentage + proposal.escrowPercentage,
+    1,
+    0.000000001,
+  );
+}
+
 Deno.test("utility evaluation documents normalized buyer and seller units", () => {
   const result = evaluateUtilities(
     {
@@ -233,6 +269,57 @@ Deno.test("optimizer is deterministic and returns replayable ranked alternatives
   assertEquals(first.status, "feasible");
   assertEquals(first.best?.violations.length, 0);
 });
+
+Deno.test(
+  "sampler preserves later minimums when allocation minima exactly fill the total",
+  () => {
+    const result = optimizeNegotiationProposal({
+      ...optimizerInput,
+      bounds: tightAllocationBounds,
+      config: {
+        ...optimizerInput.config,
+        populationSize: 16,
+        maxGenerations: 4,
+        alternativeCount: 4,
+        mutationRate: 1,
+        crossoverRate: 1,
+      },
+    });
+
+    assertEquals(result.status, "feasible");
+    for (const alternative of result.alternatives) {
+      assertProposalWithinBounds(alternative.proposal, tightAllocationBounds);
+    }
+  },
+);
+
+Deno.test(
+  "generated proposals stay bounded, normalized, and replayable across seeds",
+  () => {
+    for (const seed of [0, 1, 2, 17, 146, 999]) {
+      const input = {
+        ...optimizerInput,
+        bounds: tightAllocationBounds,
+        seed,
+        config: {
+          ...optimizerInput.config,
+          populationSize: 12,
+          maxGenerations: 5,
+          alternativeCount: 4,
+          mutationRate: 1,
+          crossoverRate: 1,
+        },
+      };
+      const first = optimizeNegotiationProposal(input);
+      const replay = optimizeNegotiationProposal(input);
+
+      assertEquals(replay, first);
+      for (const alternative of first.alternatives) {
+        assertProposalWithinBounds(alternative.proposal, tightAllocationBounds);
+      }
+    }
+  },
+);
 
 Deno.test("optimizer explains infeasible constraints instead of dropping candidates", () => {
   const result = optimizeNegotiationProposal({

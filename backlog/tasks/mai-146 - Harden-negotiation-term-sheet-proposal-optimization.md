@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-01 14:25'
+updated_date: '2026-08-02 01:37'
 labels:
   - backend
   - architecture
@@ -171,6 +171,10 @@ Verification evidence: targeted command DENO_ENV=test deno test --allow-read --a
 PR handoff: commit bb0b124 pushed to delivery/MAI-146-negotiation-proposal-optimization; draft PR #37 opened at https://github.com/luisfelipeluis49/mai/pull/37 against master. Human review, environment-limited frontend verification, and read-only consumer migration remain pending. Per prompt, MAI-146 stays In Progress and is not marked Done.
 
 Handoff correction: cda63a2 chore(MAI-146): record draft PR handoff was subsequently pushed to PR #37; the remote head is cda63a2710325ea15c683e5e224f842300d35ca3.
+
+Correction (2026-08-01): sampleAllocation now reserves later minimums in the current maximum (remaining minus laterMinimumSum) for initial and resampled allocations, and throws an explicit invalid allocation-bounds error when computed minimum exceeds maximum. Added an exact-minimum tight-bound regression and multi-seed property-style bound, sum, and replay coverage with mutationRate=1. Focused command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 34 tests; targeted type, format, and diff checks passed. Legacy adapter fixed bounds, weights, directions, and 0.2 reservation floors remain named compatibility defaults with metadata explicitly stating they are not authoritative mandate policy; negotiation-owned inputs remain mandate authority. Task remains In Progress pending canonical gate and human review.
+
+Canonical gate rerun for the correction: deno task verify reached all listed backend and intermediate frontend boundaries, then reported spawnSync git EPERM in gui/scripts/verify-frontend-foundation.mjs; the subsequent Next.js production build produced no output and was interrupted with exit 130. This is the existing sandbox/GUI environment limitation, not an optimization test failure.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
