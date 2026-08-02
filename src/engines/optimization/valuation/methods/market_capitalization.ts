@@ -5,6 +5,7 @@
  */
 
 import type { MarketData, MethodResult } from "../../../../shared/types.ts";
+import { legacyMarketCapitalization } from "../compatibility.ts";
 
 /**
  * Calculates the Market Capitalization of a publicly traded company.
@@ -14,22 +15,5 @@ import type { MarketData, MethodResult } from "../../../../shared/types.ts";
  * @throws {RangeError} If share price or outstanding shares are <= 0, or if outstanding shares is fractional.
  */
 export function computeMarketCap(data: MarketData): MethodResult {
-  if (data.sharePrice <= 0 || data.outstandingShares <= 0) {
-    throw new RangeError(
-      "[ValuationEngine:MarketCap] Share price and outstanding shares must be > 0.",
-    );
-  }
-  if (!Number.isInteger(data.outstandingShares)) {
-    throw new RangeError(
-      "[ValuationEngine:MarketCap] Outstanding shares must be an integer.",
-    );
-  }
-
-  const marketCap = data.sharePrice * data.outstandingShares;
-
-  return {
-    method: "Market Capitalization",
-    value: marketCap,
-    flags: [],
-  };
+  return legacyMarketCapitalization(data);
 }
