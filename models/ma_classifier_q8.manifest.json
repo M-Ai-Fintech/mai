@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "modelId": "mai-financial-risk-reference",
+  "modelVersion": "1.0.0",
+  "trainingCodeVersion": "mai142-reference-export-v1",
+  "input": {
+    "name": "financials",
+    "dtype": "float32",
+    "shape": [
+      "batch_size",
+      6
+    ],
+    "features": [
+      "ebitda",
+      "revenue",
+      "totalAssets",
+      "totalLiabilities",
+      "operatingCashFlow",
+      "historicalVolatility"
+    ]
+  },
+  "output": {
+    "name": "predictions",
+    "dtype": "float32",
+    "shape": [
+      "batch_size",
+      4
+    ],
+    "values": [
+      {
+        "name": "insolvencyRisk",
+        "index": 0,
+        "scale": 1,
+        "unit": "probability"
+      },
+      {
+        "name": "churnProbability",
+        "index": 1,
+        "scale": 1,
+        "unit": "probability"
+      },
+      {
+        "name": "dcfVolatility",
+        "index": 2,
+        "scale": 100,
+        "unit": "percent"
+      },
+      {
+        "name": "industry4Score",
+        "index": 3,
+        "scale": 100,
+        "unit": "score"
+      }
+    ]
+  },
+  "onnx": {
+    "opset": 17,
+    "quantization": "dynamic-weight-uint8"
+  },
+  "artifact": {
+    "path": "models/ma_classifier_q8.onnx",
+    "sha256": "8c98e803d9a636b886267bca6028237f52f9decccf4f4200d47ad3e13a5f0d66",
+    "generatedTimestamp": "2026-08-01T00:00:00Z",
+    "readinessClassification": "reference-only"
+  },
+  "dataset": {
+    "source": "synthetic; no production or research dataset was used",
+    "generationMethod": "NumPy default_rng normal samples with seed 142 and deterministic rule-derived sigmoid targets; full-batch gradient descent",
+    "schema": [
+      "ebitda",
+      "revenue",
+      "totalAssets",
+      "totalLiabilities",
+      "operatingCashFlow",
+      "historicalVolatility"
+    ],
+    "limitations": [
+      "Synthetic demonstration data is not representative of Brazilian M&A financials.",
+      "No statistical usefulness, production certification, or regulatory suitability is claimed.",
+      "The artifact is a local runtime and contract reference for MAI-142 only."
+    ]
+  }
+}

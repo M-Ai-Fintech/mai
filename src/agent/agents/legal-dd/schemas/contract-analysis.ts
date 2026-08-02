@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { riskSeveritySchema } from "../../../../shared/schemas/risk-severity.ts";
+import { disputeResolutionMechanismSchema } from "../../../../shared/schemas/dispute-resolution.ts";
 
 export const contractanalysisSchema = z.object({
   contractTitle: z.string().describe(
@@ -20,15 +21,8 @@ export const contractanalysisSchema = z.object({
   hasNonCompeteOrExclusivity: z.boolean().describe(
     "If it has an exclusivity or non-compete restriction clause.",
   ),
-  arbitrationChamber: z.enum([
-    "CAM-CCBC",
-    "CAM-B3",
-    "CCI",
-    "FGV",
-    "Judicial-Court",
-    "Other",
-  ]).describe(
-    "Arbitration chamber elected for dispute resolution (e.g., CAM-CCBC, B3).",
+  disputeResolution: disputeResolutionMechanismSchema.describe(
+    "Canonical dispute-resolution mechanism selected for the contract.",
   ),
   riskRating: riskSeveritySchema.describe(
     "Classification of the contractual risk level.",
@@ -36,4 +30,4 @@ export const contractanalysisSchema = z.object({
   recommendations: z.array(z.string()).describe(
     "List of recommendations for renegotiation or regulatory notifications.",
   ),
-});
+}).strict();

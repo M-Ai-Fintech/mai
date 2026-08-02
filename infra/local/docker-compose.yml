@@ -1,0 +1,60 @@
+services:
+  database:
+    image: pgvector/pgvector:pg15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${MAI148_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${MAI148_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${MAI148_DB_NAME:-mai148_local}
+    ports:
+      - "${MAI148_DB_PORT:-55438}:5432"
+    volumes:
+      - mai148-local-postgres:/var/lib/postgresql/data
+    networks:
+      - private
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${MAI148_DB_USER:-postgres} -d $${MAI148_DB_NAME:-mai148_local}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    command: ["task", "api:start"]
+    environment:
+      DATABASE_URL: postgresql://${MAI148_DB_USER:-postgres}:${MAI148_DB_PASSWORD:-postgres}@database:5432/${MAI148_DB_NAME:-mai148_local}
+      DENO_ENV: test
+    ports:
+      - "${MAI148_API_PORT:-18000}:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - private
+    init: true
+
+  worker:
+    profiles: ["worker"]
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    command: ["task", "worker:start"]
+    environment:
+      DATABASE_URL: postgresql://${MAI148_DB_USER:-postgres}:${MAI148_DB_PASSWORD:-postgres}@database:5432/${MAI148_DB_NAME:-mai148_local}
+      MAI_WORKER_ID: ${MAI148_WORKER_ID:-worker_local}
+      MAI_WORKER_MODULE: ${MAI148_WORKER_MODULE:-}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - private
+    init: true
+
+networks:
+  private:
+    internal: true
+
+volumes:
+  mai148-local-postgres:

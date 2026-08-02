@@ -1,7 +1,12 @@
 import { AgentOrchestrator } from "../agent/index.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
+import { handleIdentityAccessRoute } from "../identity_access/http.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
+import {
+  handleHealthRequest,
+  RuntimeReadiness,
+} from "../platform/operations/health.ts";
 
 const PORT = 8000;
 
@@ -9,7 +14,9 @@ function corsHeaders(): Headers {
   return new Headers({
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Last-Event-ID",
+    "Access-Control-Allow-Headers":
+      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id",
+    "Access-Control-Expose-Headers": "ETag, X-Correlation-Id",
   });
 }
 
@@ -31,9 +38,12 @@ function withMvpHeaders(response: Response, cors: Headers): Response {
 async function routeRequest(
   request: Request,
   repository: DealRepository,
+  readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
   if (request.method === "OPTIONS") return new Response(null, { headers });
+  const healthResponse = handleHealthRequest(request, readiness);
+  if (healthResponse) return healthResponse;
   try {
     return await routedResponse(request, repository, headers);
   } catch (error: unknown) {
@@ -46,6 +56,12 @@ async function routedResponse(
   repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
+  const identityAccessResponse = await handleIdentityAccessRoute(
+    request,
+    undefined,
+    headers,
+  );
+  if (identityAccessResponse) return identityAccessResponse;
   const mvpResponse = await handleMvpRoute(request, {
     executeChat: async ({ dealId, message }) => ({
       content: await AgentOrchestrator.executeAgentQuery(dealId, message),
@@ -77,8 +93,10 @@ function jsonResponse(
 
 async function connectRepository(
   repository: DealRepository,
+  readiness: RuntimeReadiness,
 ): Promise<void> {
   const connected = await repository.connect();
+  readiness.setDatabaseState(connected);
   const message = connected
     ? "Database connected successfully."
     : "Database not connected. Running in fallback mode.";
@@ -89,14 +107,14 @@ async function connectRepository(
 
 export function startServer(): Deno.HttpServer {
   const repository = DealRepository.getRepoInstance();
-  void connectRepository(repository);
+  const readiness = new RuntimeReadiness("api");
+  void connectRepository(repository, readiness);
   console.log(`[API Server] Starting on http://localhost:${PORT}`);
   return Deno.serve(
     { port: PORT },
-    (request) => routeRequest(request, repository),
+    (request) => routeRequest(request, repository, readiness),
   );
 }
-
 
 if (import.meta.main) startServer();
 

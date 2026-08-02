@@ -1,5 +1,10 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertAlmostEquals, assertEquals, assertRejects } from "@std/assert";
 import { PredictionEngine } from "./index.ts";
+import {
+  ArtifactMissingError,
+  PredictionInputError,
+  PredictionNotInitializedError,
+} from "./errors.ts";
 import { loadOnnxModel, onnxInfer, resetSession, ZScoreLabel } from "./onnx.ts";
 
 // The MAI-34 model actually expects 6 features (ebitda, revenue, totalAssets, totalLiabilities, operatingCashFlow, historicalVolatility)
@@ -43,12 +48,11 @@ Deno.test("ONNX Engine - fails to load a missing model", async () => {
     async () => {
       await loadOnnxModel("models/does_not_exist.onnx");
     },
-    Error,
-    "Failed to load ONNX model via WASM",
+    ArtifactMissingError,
   );
 });
 
-Deno.test("ONNX Engine - throws a Zod validation error for empty input", async () => {
+Deno.test("ONNX Engine - throws a typed validation error for empty input", async () => {
   resetSession();
   await loadOnnxModel(MOCK_MODEL_PATH);
 
@@ -56,8 +60,7 @@ Deno.test("ONNX Engine - throws a Zod validation error for empty input", async (
     async () => {
       await onnxInfer(new Float32Array([]));
     },
-    Error,
-    "Input array must not be empty",
+    PredictionInputError,
   );
 });
 
@@ -67,8 +70,7 @@ Deno.test("ONNX Engine - throws when inference runs before model loading", async
     async () => {
       await onnxInfer(VALID_INPUT);
     },
-    Error,
-    "ONNX model not loaded",
+    PredictionNotInitializedError,
   );
 });
 
@@ -79,6 +81,11 @@ Deno.test("ONNX Engine - valid inference returns distressProbability and zScoreL
   const result = await onnxInfer(VALID_INPUT);
 
   assertEquals(typeof result.distressProbability, "number");
+  assertEquals(typeof result.churnProbability, "number");
+  assertEquals(typeof result.dcfVolatility, "number");
+  assertEquals(typeof result.industry4Score, "number");
+  assertEquals(result.resultKind, "model");
+  assertEquals(result.provenance.kind, "reference-model");
   assertEquals(
     result.distressProbability >= 0 && result.distressProbability <= 1,
     true,
@@ -104,4 +111,7 @@ Deno.test("PredictionEngine - integrates with onnxInfer", async () => {
 
   const result = await engine.predict(VALID_INPUT);
   assertEquals(typeof result.distressProbability, "number");
+  assertEquals(typeof result.churnProbability, "number");
+  assertEquals(typeof result.dcfVolatility, "number");
+  assertEquals(typeof result.industry4Score, "number");
 });

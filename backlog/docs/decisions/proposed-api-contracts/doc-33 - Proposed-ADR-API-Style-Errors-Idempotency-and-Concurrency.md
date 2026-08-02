@@ -3,7 +3,7 @@ id: doc-33
 title: 'Proposed ADR: API Style, Errors, Idempotency, and Concurrency'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 09:33'
+updated_date: '2026-08-01 11:45'
 ---
 # Proposed ADR: API Style, Errors, Idempotency, and Concurrency
 
@@ -25,6 +25,8 @@ The approved UI exposes workflow actions and stale/conflict/error states. Curren
 
 Adopt versioned JSON HTTP APIs under `/api/v1`. Use resource queries and named semantic command endpoints for transitions; do not expose generic status updates or destructive Deal delete. Use the envelopes/error codes in doc-22, opaque cursor pagination by default, allow-listed filters/sorts/search, ETag/If-Match, and mandatory idempotency for creates/commands/jobs/side effects. Return identical `404 PROTECTED_NOT_FOUND` for absent and unauthorized protected objects. Slow/external work returns `202` with durable operation/job references.
 
+
+Versioned domain contracts follow the same boundary. Dispute-resolution payloads use the shared version 1 envelope { schemaVersion: 1, mechanism } for both /api/v1 transport and JSON persistence; the mechanism is parsed by one shared schema, not redefined by API or context consumers.
 ## Alternatives
 
 - Preserve MVP routes: rejected because existing shape is not authority.

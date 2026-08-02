@@ -3,7 +3,7 @@ id: doc-30
 title: 'Proposed ADR: Concurrency and Aggregate Versioning'
 type: specification
 created_date: '2026-07-30 06:03'
-updated_date: '2026-07-30 09:32'
+updated_date: '2026-08-01 11:45'
 ---
 # Proposed ADR: Concurrency and Aggregate Versioning
 
@@ -43,6 +43,8 @@ Version conflicts return safe comparison information and preserve user drafts. P
 
 Imported aggregates start with recorded migration version and source manifest. Legacy uncertain updates are not reconstructed as approved history.
 
+
+Versioned value contracts stored inside context records use their schema-version envelope. Dispute-resolution persistence stores the shared schemaVersion: 1 payload and must be migrated through MAI-129 reconciliation rather than guessed from an ambiguous legacy label.
 ## Unresolved risks
 
 Conflict UX for complex multi-aggregate commands and retention duration for idempotency results need measured policy.

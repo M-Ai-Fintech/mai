@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mai.invalid/schemas/mai-148-infrastructure-plan.schema.json",
+  "title": "MAI-148 infrastructure plan",
+  "description": "Provider-neutral deployment contract validated by src/platform/operations/contract.ts.",
+  "type": "object",
+  "required": [
+    "task",
+    "environment",
+    "approval",
+    "providerAdapter",
+    "stateBackend",
+    "topology",
+    "database",
+    "objectStorage",
+    "secrets",
+    "network",
+    "iam",
+    "observability",
+    "costControls",
+    "migration",
+    "cloudTransport",
+    "recovery",
+    "readinessClaim"
+  ],
+  "properties": {
+    "task": { "const": "MAI-148" },
+    "environment": {
+      "enum": ["development", "staging", "production"]
+    },
+    "approval": { "type": "object" },
+    "providerAdapter": { "type": ["string", "null"] },
+    "stateBackend": { "type": "object" },
+    "topology": { "type": "object" },
+    "database": { "type": "object" },
+    "objectStorage": { "type": "object" },
+    "secrets": { "type": "object" },
+    "network": { "type": "object" },
+    "iam": { "type": "object" },
+    "observability": { "type": "object" },
+    "costControls": { "type": "object" },
+    "migration": { "type": "object" },
+    "cloudTransport": { "type": "object" },
+    "recovery": { "type": "object" },
+    "readinessClaim": {
+      "enum": ["not-ready", "candidate", "production-ready"]
+    }
+  },
+  "additionalProperties": false
+}
