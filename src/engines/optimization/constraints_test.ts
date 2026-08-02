@@ -89,6 +89,20 @@ Deno.test("LeverageConstraint checks debt/EBITDA", () => {
   assertEquals(constraint.evaluate(badContext).feasible, false);
 });
 
+Deno.test("LeverageConstraint exposes missing and undefined typed failures", () => {
+  const constraint = new LeverageConstraint(4.0);
+  const missing = constraint.evaluate(valuationContext(100));
+  const undefinedResult = constraint.evaluate({
+    ...valuationContext(100),
+    financial: { ebitda: 0, debt: 10, interestExpense: 1 },
+  });
+
+  assertEquals(missing.feasible, false);
+  assertEquals(missing.error?.code, "REQUIRED_DATA_UNAVAILABLE");
+  assertEquals(undefinedResult.feasible, false);
+  assertEquals(undefinedResult.error?.code, "MATHEMATICALLY_UNDEFINED");
+});
+
 Deno.test("CoverageConstraint checks EBITDA/Interest", () => {
   const constraint = new CoverageConstraint(1.5);
   const goodContext: EvaluationContext = {

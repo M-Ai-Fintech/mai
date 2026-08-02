@@ -4,7 +4,7 @@ title: Data migration and MVP retirement
 status: To Do
 assignee: []
 created_date: '2026-07-30 09:29'
-updated_date: '2026-08-01 11:45'
+updated_date: '2026-08-02 05:38'
 labels:
   - backend
   - architecture
@@ -36,6 +36,9 @@ dependencies:
   - MAI-125
   - MAI-126
   - MAI-127
+  - MAI-144
+  - MAI-145
+  - MAI-146
   - MAI-147
   - MAI-148
   - MAI-150
@@ -229,4 +232,6 @@ Legacy VDR core epic retirement ownership
 4. Physical retirement preserves historical evidence and Git history.
 
 MAI-147 migration ownership: MAI-147 owns the canonical dispute-resolution contract and compatibility adapters; MAI-129 owns physical migration, dual-read/reconciliation, cutover, rollback, and retirement of legacy dispute-resolution values. Do not remove legacy stored fields until MAI-129 proves replacement coverage and cutover evidence.
+
+2026-08-02 dependency reconciliation: physical optimization migration and retirement cannot begin before MAI-144 authoritative valuation replacement coverage, MAI-145 authoritative matching replacement coverage, and MAI-146 authoritative negotiation replacement coverage. Existing MAI-148 environment-readiness dependency and every prior dependency are preserved.
 <!-- SECTION:NOTES:END -->

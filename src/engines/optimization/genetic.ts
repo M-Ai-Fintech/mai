@@ -1,18 +1,8 @@
 import { z } from "zod";
 import {
-  NEGOTIATION_UTILITY_UNITS,
-  optimizeNegotiationProposal,
-  ProposalBound,
-  ProposalBounds,
-  UtilityModel,
-} from "./negotiation/index.ts";
-
-const LEGACY_COMPATIBILITY_POLICY_VERSION = "MAI-146-compatibility-v1";
-const LEGACY_COMPATIBILITY_EFFECTIVE_DATE = "2026-08-01";
-const LEGACY_COMPATIBILITY_EVIDENCE_VERSION = "genetic-legacy-v1";
-const LEGACY_COMPATIBILITY_DEFAULT_SOURCE =
-  "legacy genetic compatibility default (not authoritative mandate)";
-const LEGACY_COMPATIBILITY_RESERVATION_UTILITY = 0.2;
+  LEGACY_NEGOTIATION_DEFAULT_CONFIG,
+  optimizeLegacyNegotiation,
+} from "./negotiation/compatibility.ts";
 
 export const TermSheetAlternativeSchema = z.object({
   valuation: z.number(),
@@ -60,15 +50,7 @@ export interface GeneticConfig {
 }
 
 export const DEFAULT_CONFIG: GeneticConfig = {
-  populationSize: 100,
-  generations: 10,
-  mutationRate: 0.1,
-  tournamentSize: 3,
-  crossoverRate: 0.8,
-  seed: 0,
-  alternativeCount: 3,
-  stagnationGenerations: 8,
-  minimumImprovement: 0.000001,
+  ...LEGACY_NEGOTIATION_DEFAULT_CONFIG,
 };
 
 // Legacy chromosome helpers remain for migration compatibility. New proposal
@@ -242,150 +224,11 @@ export function optimizeDeal(
   profile: DealProfile,
   config: Partial<GeneticConfig> = {},
 ): TermSheetAlternative[] {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  const result = optimizeNegotiationProposal({
-    bounds: legacyBounds(profile),
-    utilities: legacyUtilities(profile),
-    seed: finalConfig.seed ?? 0,
-    config: {
-      populationSize: finalConfig.populationSize,
-      maxGenerations: finalConfig.generations,
-      mutationRate: finalConfig.mutationRate,
-      crossoverRate: finalConfig.crossoverRate ?? 0.8,
-      tournamentSize: finalConfig.tournamentSize,
-      alternativeCount: finalConfig.alternativeCount ?? 3,
-      stagnationGenerations: finalConfig.stagnationGenerations ?? 8,
-      minimumImprovement: finalConfig.minimumImprovement ?? 0.000001,
-    },
-  });
-  return result.alternatives.map(toLegacyAlternative);
-}
-
-function legacyBounds(profile: DealProfile): ProposalBounds {
-  return {
-    valuation: legacyBound(
-      "valuation",
-      profile.valuationMin,
-      profile.valuationMax,
-      "valuation-amount",
-    ),
-    cashPercentage: legacyBound("cash", 0, 1, "fraction"),
-    equityPercentage: legacyBound("equity", 0, 1, "fraction"),
-    earnOutPercentage: legacyBound("earn-out", 0, 1, "fraction"),
-    escrowPercentage: legacyBound("escrow", 0, 1, "fraction"),
-    earnOutTargetYears: legacyBound("earn-out-years", 1, 5, "years"),
-    nonCompeteMonths: legacyBound("non-compete-months", 12, 60, "months"),
-  };
-}
-
-function legacyBound(
-  id: string,
-  minimum: number,
-  maximum: number,
-  units: string,
-): ProposalBound {
-  return {
-    id,
-    minimum,
-    maximum,
-    metadata: {
-      source: LEGACY_COMPATIBILITY_DEFAULT_SOURCE,
-      policyVersion: LEGACY_COMPATIBILITY_POLICY_VERSION,
-      units,
-      effectiveDate: LEGACY_COMPATIBILITY_EFFECTIVE_DATE,
-      evidenceVersion: LEGACY_COMPATIBILITY_EVIDENCE_VERSION,
-      enforcement: "mandatory",
-      percentageRepresentation: units === "fraction" ? "fraction" : undefined,
-    },
-  };
-}
-
-function legacyUtilities(profile: DealProfile): UtilityModel {
-  // These weights, directions, and targets preserve the legacy adapter
-  // contract only; authoritative mandate policy belongs to negotiation input.
-  const weights = {
-    valuation: 0.2,
-    cashPercentage: 0.2,
-    equityPercentage: 0.2,
-    earnOutPercentage: 0.1,
-    escrowPercentage: 0.1,
-    earnOutTargetYears: 0.1,
-    nonCompeteMonths: 0.1,
-  };
-  const targets = {
-    cashPercentage: profile.preferences.cash,
-    equityPercentage: profile.preferences.equity,
-    earnOutPercentage: profile.preferences.earnOut,
-    escrowPercentage: profile.preferences.escrow,
-  };
-  return {
-    buyer: legacyUtility("buyer", "lower", weights, targets),
-    seller: legacyUtility("seller", "higher", weights, targets),
-    reservation: {
-      buyer: legacyReservation("buyer"),
-      seller: legacyReservation("seller"),
-    },
-  };
-}
-
-function legacyUtility(
-  id: string,
-  valuationDirection: "higher" | "lower",
-  weights: UtilityModel["buyer"]["weights"],
-  targets: UtilityModel["buyer"]["targets"],
-): UtilityModel["buyer"] {
-  return {
-    id: `legacy-${id}`,
-    version: LEGACY_COMPATIBILITY_POLICY_VERSION,
-    units: NEGOTIATION_UTILITY_UNITS,
-    weights,
-    directions: {
-      valuation: valuationDirection,
-      cashPercentage: "higher",
-      equityPercentage: "higher",
-      earnOutPercentage: "higher",
-      escrowPercentage: "higher",
-      earnOutTargetYears: "higher",
-      nonCompeteMonths: "higher",
-    },
-    targets,
-  };
-}
-
-function legacyReservation(
-  side: "buyer" | "seller",
-): UtilityModel["reservation"]["buyer"] {
-  // This floor preserves legacy behavior only and is not an authoritative
-  // negotiation mandate.
-  return {
-    minimum: LEGACY_COMPATIBILITY_RESERVATION_UTILITY,
-    metadata: {
-      source: `${LEGACY_COMPATIBILITY_DEFAULT_SOURCE}: ${side} reservation`,
-      policyVersion: LEGACY_COMPATIBILITY_POLICY_VERSION,
-      units: NEGOTIATION_UTILITY_UNITS,
-      effectiveDate: LEGACY_COMPATIBILITY_EFFECTIVE_DATE,
-      evidenceVersion: LEGACY_COMPATIBILITY_EVIDENCE_VERSION,
-      enforcement: "mandatory",
-    },
-  };
-}
-
-function toLegacyAlternative(alternative: {
-  proposal: {
-    valuation: number;
-    cashPercentage: number;
-    equityPercentage: number;
-    earnOutPercentage: number;
-    escrowPercentage: number;
-  };
-  fitness: number;
-}): TermSheetAlternative {
-  return {
-    valuation: alternative.proposal.valuation,
-    cashPercentage: alternative.proposal.cashPercentage,
-    equityPercentage: alternative.proposal.equityPercentage,
-    earnOutPercentage: alternative.proposal.earnOutPercentage,
-    escrowPercentage: alternative.proposal.escrowPercentage,
-    fitness: alternative.fitness,
-  };
+  return optimizeLegacyNegotiation({
+    profile,
+    geneticConfig: config,
+    compatibilityDefaults: [
+      "genetic.ts legacy facade retained for MAI-129 retirement compatibility",
+    ],
+  }).alternatives.slice();
 }

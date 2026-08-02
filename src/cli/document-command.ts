@@ -1,6 +1,6 @@
 import { LaTeXGenerator } from "../engines/document-generator/latex.ts";
 import { PDFGenerator } from "../engines/document-generator/pdf.ts";
-import { TermSheetOptimizer } from "../engines/optimization/matching/index.ts";
+import { optimizeLegacyTermSheet } from "../engines/optimization/negotiation/term_sheet_compatibility.ts";
 import { TermSheetProposal } from "../engines/optimization/types.ts";
 import { t } from "../i18n/index.ts";
 import { describeCommandError, printSectionHeader } from "./command-output.ts";
@@ -34,10 +34,10 @@ function printDocumentStart(target: string): void {
   console.log(t("cli.spinners.closingVerify"));
 }
 
-async function optimizeDocumentTerms(): Promise<TermSheetProposal> {
+function optimizeDocumentTerms(): TermSheetProposal {
   const progress = createCommandProgress(t("cli.spinners.closingOptimize"));
   progress.start();
-  const negotiation = await TermSheetOptimizer.run({
+  const negotiation = optimizeLegacyTermSheet({
     populationSize: 100,
     generations: 50,
     mutationRate: 0.1,

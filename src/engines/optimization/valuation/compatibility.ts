@@ -3,8 +3,12 @@ import {
   calculateDiscountedCashFlow,
   calculateEbitdaMultiple,
   calculateEnterpriseValue,
+  calculateInterestCoverage,
+  calculateLeverage,
   calculateMarketCapitalization,
+  calculateSynergyPrice,
   calculateTerminalValue,
+  evaluateValuationFloor,
 } from "../../valuation/index.ts";
 import type {
   BalanceSheetData,
@@ -17,15 +21,108 @@ import type {
   ValuationFlag,
 } from "../../../shared/types.ts";
 import type {
+  CalculationError,
   CalculationOptions,
   CalculationOutcome,
+  CashFlow,
   Money,
+  RatioResult,
+  SynergyResult,
+  ValuationFloorResult,
   ValuationResult,
 } from "../../valuation/types.ts";
 
 const LEGACY_OPTIONS: CalculationOptions = {
   rounding: { moneyScale: 6, ratioScale: 12, mode: "half-up" },
 };
+
+const LEGACY_SYNERGY_OPTIONS: CalculationOptions = {
+  rounding: { moneyScale: 3, ratioScale: 12, mode: "half-up" },
+};
+
+export interface LegacySynergyPricingInput {
+  readonly standaloneValue: number;
+  readonly costSynergies: readonly number[];
+  readonly revenueSynergies: readonly number[];
+  readonly integrationCosts: readonly number[];
+  readonly wacc: number;
+  readonly taxRate: number;
+  readonly revenueHaircut: number;
+  readonly sharingCoefficient: number;
+}
+
+export type LegacySynergyPricingResult =
+  | {
+    readonly success: true;
+    readonly presentValueCostSynergies: number;
+    readonly presentValueRevenueSynergies: number;
+    readonly presentValueIntegrationCosts: number;
+    readonly netSynergyValue: number;
+    readonly sellerPremium: number;
+    readonly recommendedPurchasePrice: number;
+    readonly sharingCoefficient: number;
+  }
+  | {
+    readonly success: false;
+    readonly error: CalculationError;
+  };
+
+export function legacyLeverageCalculation(
+  debt: number,
+  ebitda: number,
+): CalculationOutcome<RatioResult> {
+  return calculateLeverage({
+    debt: brl(debt),
+    ebitda: brl(ebitda),
+    options: LEGACY_OPTIONS,
+  });
+}
+
+export function legacyInterestCoverageCalculation(
+  ebitda: number,
+  interestExpense: number,
+): CalculationOutcome<RatioResult> {
+  return calculateInterestCoverage({
+    ebitda: brl(ebitda),
+    interestExpense: brl(interestExpense),
+    options: LEGACY_OPTIONS,
+  });
+}
+
+export function legacyValuationFloorCalculation(
+  valuation: number,
+  minimumValuation: number,
+): CalculationOutcome<ValuationFloorResult> {
+  return evaluateValuationFloor({
+    valuation: brl(valuation),
+    minimumValuation: brl(minimumValuation),
+    options: LEGACY_OPTIONS,
+  });
+}
+
+/**
+ * Converts the legacy synergy DTO into the typed valuation calculation.
+ *
+ * @example legacySynergyPricing({ standaloneValue: 100, costSynergies: [5], revenueSynergies: [10], integrationCosts: [2], wacc: 0.1, taxRate: 0.34, revenueHaircut: 0.4, sharingCoefficient: 0.3 })
+ */
+export function legacySynergyPricing(
+  input: LegacySynergyPricingInput,
+): LegacySynergyPricingResult {
+  const outcome = calculateSynergyPrice({
+    standaloneValue: brl(input.standaloneValue),
+    costSynergies: legacyCashFlows(input.costSynergies),
+    revenueSynergies: legacyCashFlows(input.revenueSynergies),
+    integrationCosts: legacyCashFlows(input.integrationCosts),
+    discountRate: { decimal: input.wacc },
+    taxRate: { decimal: input.taxRate },
+    revenueHaircut: { decimal: input.revenueHaircut },
+    sharingCoefficient: { decimal: input.sharingCoefficient },
+    options: LEGACY_SYNERGY_OPTIONS,
+  });
+  return outcome.ok
+    ? legacySynergySuccess(outcome.value)
+    : { success: false, error: outcome.error };
+}
 
 export function legacyBookValue(data: BalanceSheetData): MethodResult {
   return legacyValue(calculateBookValue({
@@ -128,6 +225,28 @@ function legacyValue(
     method: outcome.value.method,
     value: outcome.value.value.amount,
     flags: outcome.value.flags.map((flag) => flag as ValuationFlag),
+  };
+}
+
+function legacyCashFlows(amounts: readonly number[]): CashFlow[] {
+  return amounts.map((amount, index) => ({
+    period: { value: index + 1, unit: "years" },
+    amount: brl(amount),
+  }));
+}
+
+function legacySynergySuccess(
+  result: SynergyResult,
+): LegacySynergyPricingResult {
+  return {
+    success: true,
+    presentValueCostSynergies: result.presentValueCostSynergies.amount,
+    presentValueRevenueSynergies: result.presentValueRevenueSynergies.amount,
+    presentValueIntegrationCosts: result.presentValueIntegrationCosts.amount,
+    netSynergyValue: result.netSynergyValue.amount,
+    sellerPremium: result.sellerPremium.amount,
+    recommendedPurchasePrice: result.recommendedPurchasePrice.amount,
+    sharingCoefficient: result.sharingCoefficient.decimal,
   };
 }
 

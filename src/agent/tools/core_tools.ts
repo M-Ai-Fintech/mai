@@ -153,7 +153,7 @@ function toSolverTarget(target: PortfolioToolTarget) {
 export const optimizeTermSheetTool = createTool({
   id: "optimize-term-sheet-tool",
   description:
-    "Executes a bilateral negotiation genetic algorithm to find the best Term Sheet clauses (Equity, Cash, Earn-out, and Escrow).",
+    "Produces bilateral term-sheet proposals through the negotiation optimizer; it cannot approve, accept, send, finalize, or persist terms.",
   inputSchema: z.object({
     valuationMin: z.number().default(10_000_000),
     valuationMax: z.number().default(50_000_000),
@@ -165,22 +165,33 @@ export const optimizeTermSheetTool = createTool({
     }).optional(),
     populationSize: z.number().optional(),
     generations: z.number().optional(),
+    seed: z.number().int().min(0).max(4294967295).optional(),
   }),
   outputSchema: z.unknown(),
   execute: async (input) => {
-    const { optimizeDeal } = await import(
-      "../../engines/optimization/genetic.ts"
+    const { optimizeLegacyNegotiation } = await import(
+      "../../engines/optimization/negotiation/compatibility.ts"
     );
-    const result = optimizeDeal({
-      valuationMin: input.valuationMin,
-      valuationMax: input.valuationMax,
-      preferences: input.preferences ??
-        { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 },
-    }, {
-      populationSize: input.populationSize ?? 100,
-      generations: input.generations ?? 50,
+    const result = optimizeLegacyNegotiation({
+      profile: {
+        valuationMin: input.valuationMin,
+        valuationMax: input.valuationMax,
+        preferences: input.preferences ??
+          { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 },
+      },
+      geneticConfig: {
+        populationSize: input.populationSize ?? 100,
+        generations: input.generations ?? 50,
+        seed: input.seed,
+      },
     });
-    return { success: true, result };
+    return {
+      success: result.status === "delegated",
+      result: result.alternatives,
+      compatibility: result.compatibility,
+      violations: result.violations,
+      error: result.error,
+    };
   },
 });
 

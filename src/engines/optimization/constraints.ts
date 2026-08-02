@@ -1,8 +1,16 @@
-import { Chromosome, DealProfile } from "./genetic.ts";
+import type { Chromosome, DealProfile } from "./genetic.ts";
+import {
+  legacyInterestCoverageCalculation,
+  legacyLeverageCalculation,
+  legacyValuationFloorCalculation,
+} from "./valuation/compatibility.ts";
+import { invalid, missing } from "../valuation/support.ts";
+import type { CalculationError } from "../valuation/types.ts";
 
 export interface ConstraintResult {
   feasible: boolean;
   reason?: string;
+  error?: CalculationError;
 }
 
 export interface KycData {
@@ -64,11 +72,18 @@ export class LeverageConstraint implements Constraint {
   constructor(public maxLeverage: number) {}
 
   evaluate(context: EvaluationContext): ConstraintResult {
-    if (!context.financial || context.financial.ebitda <= 0) {
-      return { feasible: true };
+    if (!context.financial) {
+      return unavailableFinancial("leverage", "financial debt and EBITDA");
     }
-    // Leverage = Total Debt / EBITDA
-    const leverage = context.financial.debt / context.financial.ebitda;
+    if (!Number.isFinite(this.maxLeverage) || this.maxLeverage < 0) {
+      return invalidThreshold("maxLeverage", this.maxLeverage);
+    }
+    const outcome = legacyLeverageCalculation(
+      context.financial.debt,
+      context.financial.ebitda,
+    );
+    if (!outcome.ok) return calculationFailure(outcome.error);
+    const leverage = outcome.value.ratio.value;
     if (leverage > this.maxLeverage) {
       return {
         feasible: false,
@@ -89,12 +104,21 @@ export class CoverageConstraint implements Constraint {
   constructor(public minCoverage: number) {}
 
   evaluate(context: EvaluationContext): ConstraintResult {
-    if (!context.financial || context.financial.interestExpense <= 0) {
-      return { feasible: true };
+    if (!context.financial) {
+      return unavailableFinancial(
+        "coverage",
+        "financial EBITDA and interest expense",
+      );
     }
-    // Coverage = EBITDA / Interest Expense
-    const coverage = context.financial.ebitda /
-      context.financial.interestExpense;
+    if (!Number.isFinite(this.minCoverage) || this.minCoverage < 0) {
+      return invalidThreshold("minCoverage", this.minCoverage);
+    }
+    const outcome = legacyInterestCoverageCalculation(
+      context.financial.ebitda,
+      context.financial.interestExpense,
+    );
+    if (!outcome.ok) return calculationFailure(outcome.error);
+    const coverage = outcome.value.ratio.value;
     if (coverage < this.minCoverage) {
       return {
         feasible: false,
@@ -115,11 +139,19 @@ export class ValuationFloorConstraint implements Constraint {
   constructor(public minValuation: number) {}
 
   evaluate(context: EvaluationContext): ConstraintResult {
-    if (context.chromosome.valuation < this.minValuation) {
+    if (!Number.isFinite(this.minValuation) || this.minValuation < 0) {
+      return invalidThreshold("minValuation", this.minValuation);
+    }
+    const outcome = legacyValuationFloorCalculation(
+      context.chromosome.valuation,
+      this.minValuation,
+    );
+    if (!outcome.ok) return calculationFailure(outcome.error);
+    if (!outcome.value.meetsFloor) {
       return {
         feasible: false,
         reason: `Valuation ${
-          context.chromosome.valuation.toFixed(2)
+          outcome.value.valuation.amount.toFixed(2)
         } is below floor of ${this.minValuation}.`,
       };
     }
@@ -142,4 +174,21 @@ export function filterFeasible(
     }
     return true;
   });
+}
+
+function unavailableFinancial(
+  name: string,
+  expected: string,
+): ConstraintResult {
+  return calculationFailure(missing(name, expected));
+}
+
+function invalidThreshold(field: string, value: number): ConstraintResult {
+  return calculationFailure(
+    invalid(field, value, "a finite non-negative threshold"),
+  );
+}
+
+function calculationFailure(error: CalculationError): ConstraintResult {
+  return { feasible: false, reason: error.message, error };
 }

@@ -8,6 +8,7 @@ export const TermSheetOptimizerParamsSchema = z.object({
   mutationRate: z.number().min(0).max(1),
   crossoverRate: z.number().min(0).max(1),
   preference: z.enum(["liquidity", "balanced", "retention"]).optional(),
+  seed: z.number().int().min(0).max(4294967295).optional(),
 });
 export type TermSheetOptimizerParams = z.infer<
   typeof TermSheetOptimizerParamsSchema

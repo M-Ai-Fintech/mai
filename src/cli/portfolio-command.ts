@@ -161,7 +161,7 @@ function toPipelineTarget(
   return {
     id: row.id || `T${index + 1}`,
     name: row.name,
-    synergyValue: calculateSynergy(row.name, index),
+    synergyValue: calculateSyntheticSynergyScore(row.name, index),
     acquisitionCost: calculateAcquisitionCost(row, index),
     ebitda: 2000000 + index * 500000,
     revenue: 8000000 + index * 2000000,
@@ -182,7 +182,11 @@ function calculateAcquisitionCost(
   return sourceValue ? Number(sourceValue) / 1000000 : 30 + index * 10;
 }
 
-function calculateSynergy(name: string, index: number): number {
+/**
+ * Supplies a deterministic ranking fixture when the legacy pipeline lacks
+ * financial cash-flow inputs; this is not MAI-144 financial synergy pricing.
+ */
+function calculateSyntheticSynergyScore(name: string, index: number): number {
   return Math.min(99, Math.max(30, name.length * 3 + 20 + (index * 5) % 30));
 }
 

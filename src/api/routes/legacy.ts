@@ -2,13 +2,8 @@ import { z } from "zod";
 import { verifyRegistryTool } from "../../agent/actions.ts";
 import { DealRepository } from "../../core/db/DealRepository.ts";
 import { PDFGenerator } from "../../engines/document-generator/pdf.ts";
-import {
-  CoverageConstraint,
-  KycConstraint,
-  LeverageConstraint,
-  optimizeWithConstraints,
-} from "../../engines/optimization/index.ts";
 import { PortfolioSolver } from "../../engines/optimization/kyc/index.ts";
+import { optimizeLegacyNegotiation } from "../../engines/optimization/negotiation/compatibility.ts";
 import {
   CompanyFinancialProfile,
   MLEngine,
@@ -54,6 +49,7 @@ const negotiationInput = z.object({
   geneticConfig: z.object({
     populationSize: z.number(),
     generations: z.number(),
+    seed: z.number().int().min(0).max(4294967295).optional(),
   }).optional(),
 });
 
@@ -168,22 +164,49 @@ async function handleNegotiation(
   headers: Headers,
 ): Promise<Response> {
   const input = negotiationInput.parse(await optionalJson(request));
-  const result = optimizeWithConstraints(negotiationOptions(input));
-  return jsonResponse(result, headers);
+  const result = optimizeLegacyNegotiation(negotiationOptions(input));
+  return result.status === "delegated"
+    ? jsonResponse(result.alternatives, headers)
+    : jsonResponse({
+      status: result.status,
+      alternatives: result.alternatives,
+      violations: result.violations,
+      compatibility: result.compatibility,
+      error: result.error,
+    }, headers);
 }
 
 function negotiationOptions(
   input: z.infer<typeof negotiationInput>,
-): Parameters<typeof optimizeWithConstraints>[0] {
+): Parameters<typeof optimizeLegacyNegotiation>[0] {
+  const defaults: string[] = [];
+  if (input.valuationMin === undefined) {
+    defaults.push("valuationMin=80 compatibility default");
+  }
+  if (input.valuationMax === undefined) {
+    defaults.push("valuationMax=120 compatibility default");
+  }
+  if (input.preferences === undefined) {
+    defaults.push("balanced preferences compatibility default");
+  }
+  if (input.kyc === undefined) {
+    defaults.push("clean KYC flags compatibility default");
+  }
+  if (input.geneticConfig === undefined) {
+    defaults.push(
+      "populationSize=100 and generations=40 compatibility defaults",
+    );
+  }
   return {
     profile: negotiationProfile(input),
     kyc: input.kyc ??
       { kycBlocked: false, sanctionMatch: false, pepExposure: false },
-    financial: input.financial ??
-      { ebitda: 5, debt: 15, interestExpense: 1 },
-    constraints: negotiationConstraints(input),
-    geneticConfig: input.geneticConfig ??
-      { populationSize: 100, generations: 40 },
+    financial: input.financial,
+    maxLeverage: input.maxLeverage,
+    minCoverage: input.minCoverage,
+    geneticConfig: input.geneticConfig,
+    compatibilityDefaults: defaults,
+    enforceFinancialConstraints: true,
   };
 }
 
@@ -194,14 +217,6 @@ function negotiationProfile(input: z.infer<typeof negotiationInput>) {
     preferences: input.preferences ??
       { cash: 0.4, equity: 0.3, earnOut: 0.2, escrow: 0.1 },
   };
-}
-
-function negotiationConstraints(input: z.infer<typeof negotiationInput>) {
-  return [
-    new KycConstraint(),
-    new LeverageConstraint(input.maxLeverage ?? 4),
-    new CoverageConstraint(input.minCoverage ?? 2.5),
-  ];
 }
 
 async function handleDocument(

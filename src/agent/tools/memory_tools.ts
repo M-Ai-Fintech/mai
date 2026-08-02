@@ -1,6 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { DatabaseMemoryService } from "../../core/db/memory_service.ts";
+import { legacySynergyPricing } from "../../engines/optimization/valuation/compatibility.ts";
 import { VDRService } from "../vdr_mock.ts";
 
 const memoryInputSchema = z.object({
@@ -136,60 +137,11 @@ const synergyInputSchema = z.object({
 export const synergyPricingTool = createTool({
   id: "synergy-pricing-tool",
   description:
-    "Calculates discounted operational synergies, integration costs, and recommended purchase price.",
+    "Calculates discounted operational synergies, integration costs, and recommended purchase price without approving or persisting terms.",
   inputSchema: synergyInputSchema,
   outputSchema: z.unknown(),
-  execute: (input) => Promise.resolve(calculateSynergyPrice(input)),
+  execute: (input) => Promise.resolve(legacySynergyPricing(input)),
 });
-
-type SynergyInput = z.infer<typeof synergyInputSchema>;
-
-function calculateSynergyPrice(input: SynergyInput) {
-  const totals = synergyTotals(input);
-  const net = totals.costs + totals.revenue - totals.integration;
-  const premium = input.sharingCoefficient * net;
-  return {
-    success: true,
-    presentValueCostSynergies: rounded(totals.costs),
-    presentValueRevenueSynergies: rounded(totals.revenue),
-    presentValueIntegrationCosts: rounded(totals.integration),
-    netSynergyValue: rounded(net),
-    sellerPremium: rounded(premium),
-    recommendedPurchasePrice: rounded(input.standaloneValue + premium),
-    sharingCoefficient: input.sharingCoefficient,
-  };
-}
-
-function synergyTotals(input: SynergyInput) {
-  const years = Math.max(
-    input.costSynergies.length,
-    input.revenueSynergies.length,
-    input.integrationCosts.length,
-  );
-  const totals = { costs: 0, revenue: 0, integration: 0 };
-  for (let index = 0; index < years; index++) {
-    const year = discountedSynergyYear(input, index);
-    totals.costs += year.costs;
-    totals.revenue += year.revenue;
-    totals.integration += year.integration;
-  }
-  return totals;
-}
-
-function discountedSynergyYear(input: SynergyInput, index: number) {
-  const discount = Math.pow(1 + input.wacc, index + 1);
-  return {
-    costs: ((input.costSynergies[index] ?? 0) * (1 - input.taxRate)) / discount,
-    revenue: ((input.revenueSynergies[index] ?? 0) *
-      (1 - input.revenueHaircut) * (1 - input.taxRate)) / discount,
-    integration: ((input.integrationCosts[index] ?? 0) *
-      (1 - input.taxRate)) / discount,
-  };
-}
-
-function rounded(value: number): number {
-  return Number(value.toFixed(3));
-}
 
 export const vdrStructuredAccessTool = createTool({
   id: "vdr-structured-access-tool",

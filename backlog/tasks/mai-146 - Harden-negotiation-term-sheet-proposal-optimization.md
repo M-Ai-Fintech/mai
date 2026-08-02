@@ -1,10 +1,10 @@
 ---
 id: MAI-146
 title: Harden negotiation term-sheet proposal optimization
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-02 04:35'
+updated_date: '2026-08-02 05:38'
 labels:
   - backend
   - architecture
@@ -20,13 +20,27 @@ references:
 modified_files:
   - src/engines/optimization/genetic.ts
   - src/engines/optimization/genetic.test.ts
+  - src/engines/optimization/constraints.ts
+  - src/engines/optimization/constraints_test.ts
+  - src/engines/optimization/index.ts
+  - src/engines/optimization/types.ts
+  - src/engines/optimization/matching/term_sheet_optimizer.ts
+  - src/engines/optimization/negotiation/compatibility.ts
+  - src/engines/optimization/negotiation/compatibility.test.ts
+  - src/engines/optimization/negotiation/term_sheet_compatibility.ts
   - src/engines/optimization/negotiation/constraints.ts
   - src/engines/optimization/negotiation/index.ts
-  - src/engines/optimization/negotiation/optimizer.test.ts
   - src/engines/optimization/negotiation/optimizer.ts
+  - src/engines/optimization/negotiation/optimizer.test.ts
   - src/engines/optimization/negotiation/random.ts
   - src/engines/optimization/negotiation/types.ts
   - src/engines/optimization/negotiation/utility.ts
+  - src/api/routes/legacy.ts
+  - src/cli/term-sheet-command.ts
+  - src/cli/document-command.ts
+  - src/agent/tools/core_tools.ts
+  - tests/api/routes/legacy_compatibility.spec.ts
+  - tests/engines/compatibility_consumers.spec.ts
 priority: high
 ordinal: 10600
 ---
@@ -91,7 +105,7 @@ Record relationships:
     - convergence termination;
     - invalid inputs;
     - no-authority behavior.
-- [ ] #13 Existing consumers are migrated or routed through explicit compatibility adapters.
+- [x] #13 Existing consumers are migrated or routed through explicit compatibility adapters.
 - [x] #14 Representative benchmark evidence is recorded.
 - [x] #15 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
@@ -99,12 +113,12 @@ Record relationships:
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inventory and preserve the legacy genetic, matching, constraint, agent, API, and CLI boundaries; do not modify matching selection/valuation or read-only shared consumers.
-2. Add negotiation-owned typed contracts for proposal dimensions, versioned bounds and constraint metadata, buyer/seller utility definitions with normalized units, reservation floors, seeded replay metadata, and termination limits.
-3. Implement a pure seeded negotiation optimizer with explicit crossoverRate, bounded proposals, all-violation explanations, ranked alternatives, infeasibility reporting, and convergence termination.
-4. Route legacy genetic optimizeDeal calls through an explicit compatibility adapter while preserving existing helper exports and consumer signatures.
-5. Add golden, determinism/replay, convergence, boundary, infeasibility, compatibility, and benchmark tests; run focused checks and deno task verify.
-6. Record exact evidence in Backlog, commit task-scoped changes, push the isolated branch, and open a human-reviewable PR; keep MAI-146 In Progress and do not merge or mark Done.
+1. Inventory all active negotiation proposal consumers, including legacy API/CLI routes, document term-sheet generation, genetic compatibility, matching exports, tests, and direct optimizer calls; keep Graphify deferred until finalization.
+2. Add one explicit negotiation-owned compatibility adapter that converts legacy DTOs/defaults into versioned typed optimizer inputs and maps results back without duplicating optimization logic.
+3. Route legacy API, term-sheet CLI, document CLI, and genetic/matching compatibility surfaces through the same negotiation-owned adapter; preserve seeded replay, bounded allocations, constraints, violations, and no-authority behavior.
+4. Add regression tests proving consumer delegation, no active generic optimizer path, deterministic seeded results, missing-data incompatibility, tight bounds, and prohibition of approval/send/finalization.
+5. Run focused checks and the required fast/canonical gates; record exact command statuses and keep unsupported environment evidence explicit.
+6. Reconcile MAI-146 through Backlog, check only proven criteria/DoD items, and finalize status from direct evidence on the current master maintenance operation.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -181,12 +195,22 @@ Published correction commit 3a8f650 after rebasing onto remote merge 096d16e; pu
 The subsequent Backlog-only handoff commit is included in PR #37; the PR remains open, unmerged, and Draft, with no owner approval or merge performed.
 
 Wave A closure audit 2026-08-02: owner-approved PR #37 is merged on master at e7730d22, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. The verified criteria cover the negotiation-owned typed optimizer, utility/reservation contracts, bounded proposal dimensions, seeded replay, crossover behavior, convergence/termination, explanations, no-authority boundary, focused tests, and benchmark evidence. AC #13 and DoD #1/#2 remain intentionally unchecked because src/api/routes/legacy.ts and src/cli/term-sheet-command.ts still invoke the legacy optimizeWithConstraints path rather than an explicit negotiation compatibility adapter. The task remains In Progress; no feature implementation was changed during closure.
+
+2026-08-02 direct-master closure: added the explicit negotiation-owned compatibility boundary under src/engines/optimization/. Legacy API and term-sheet CLI consumers now delegate through optimizeLegacyNegotiation; document generation and the retained matching facade delegate through the same typed seeded optimizer via term_sheet_compatibility.ts; genetic.ts and the agent tool are compatibility facades rather than algorithm owners. Legacy DTO/command outputs remain supported, compatibility defaults are labeled non-authoritative, bounds/reservations/violations/replay metadata are preserved, missing financial data is unavailable rather than feasible, and no approval/send/accept/finalize/persistence capability exists. Generic optimizeWithConstraints remains only as MAI-129 migration evidence and has no active negotiation consumer.
+
+Verification evidence: DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization/negotiation src/engines/optimization/valuation src/engines/optimization/constraints_test.ts src/engines/optimization/genetic.test.ts tests/api/routes/legacy_compatibility.spec.ts tests/engines/compatibility_consumers.spec.ts tests/engines/optimization.spec.ts exited 0 with 47 passed and 0 failed. The exact required focused command exited 0 with 28 passed and 0 failed. Changed-file deno fmt --check and deno lint each exited 0; git diff --check exited 0; deno task verify:fast exited 0; the final escalated DENO_ENV=test deno task verify exited 0 with all 17 categories PASS. AC #13 and DoD #1 and #2 are now supported; no negotiation authority, API lifecycle, persistence, frontend, or external communication scope was added.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed the MAI-146 negotiation compatibility migration. API, CLI, document, genetic, matching, and agent consumers now delegate through the negotiation-owned seeded optimizer; defaults are non-authoritative, constraints are explicit, and canonical verification passed with exit 0.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every acceptance criterion is checked with evidence.
-- [ ] #2 One authoritative negotiation proposal optimizer exists.
+- [x] #1 Every acceptance criterion is checked with evidence.
+- [x] #2 One authoritative negotiation proposal optimizer exists.
 - [x] #3 Reproducibility is demonstrated.
 - [x] #4 Unused or misleading configuration fields are resolved.
 - [x] #5 MAI-118 depends on MAI-146.

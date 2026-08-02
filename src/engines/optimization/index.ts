@@ -7,6 +7,8 @@ export * from "./valuation/index.ts";
 export * from "./genetic.ts";
 export * from "./types.ts";
 export * from "./constraints.ts";
+export * from "./negotiation/compatibility.ts";
+export * from "./negotiation/term_sheet_compatibility.ts";
 
 import { selectTermSheetAlternatives } from "./alternatives.ts";
 import {

@@ -1,11 +1,11 @@
 ---
 id: MAI-144
 title: Harden deterministic valuation and synergy calculation algorithms
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:02'
-updated_date: '2026-08-02 04:35'
+updated_date: '2026-08-02 05:38'
 labels:
   - backend
   - architecture
@@ -28,12 +28,20 @@ modified_files:
   - src/engines/valuation/calculations.ts
   - src/engines/valuation/index.ts
   - src/engines/optimization/valuation/compatibility.ts
+  - src/engines/optimization/valuation/compatibility.test.ts
   - src/engines/optimization/valuation/methods/book_value.ts
   - src/engines/optimization/valuation/methods/discounted_cash_flow.ts
   - src/engines/optimization/valuation/methods/ebitda.ts
   - src/engines/optimization/valuation/methods/enterprise_value.ts
   - src/engines/optimization/valuation/methods/growing_perpetuity.ts
   - src/engines/optimization/valuation/methods/market_capitalization.ts
+  - src/engines/optimization/constraints.ts
+  - src/engines/optimization/constraints_test.ts
+  - src/agent/tools/memory_tools.ts
+  - src/cli/portfolio-command.ts
+  - src/cli/term-sheet-command.ts
+  - src/api/routes/legacy.ts
+  - tests/engines/compatibility_consumers.spec.ts
   - tests/engines/valuation_deterministic.spec.ts
 priority: high
 ordinal: 10400
@@ -82,7 +90,7 @@ Record relationships:
 - [x] #8 Edge cases cover: zero and negative values; missing values; invalid rates; extreme but valid values; rounding boundaries; infeasible assumptions.
 - [x] #9 Results are deterministic for identical inputs.
 - [x] #10 No model, agent, or heuristic output is represented as a deterministic calculation.
-- [ ] #11 Compatibility consumers are either migrated or use an explicit temporary adapter.
+- [x] #11 Compatibility consumers are either migrated or use an explicit temporary adapter.
 - [x] #12 Performance evidence is recorded for representative calculation sizes.
 - [x] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
@@ -90,7 +98,12 @@ Record relationships:
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inventory current valuation, synergy, leverage, coverage, valuation-floor, duplicate, consumer, and test implementations; record baseline and ownership boundaries. 2. Add the context-owned typed deterministic calculation module with explicit money, percentage, unit, rounding, precision, denominator, error, and provenance semantics for approved valuation and synergy formulas. 3. Route owned legacy optimization valuation methods through a thin compatibility adapter while preserving their public raw-number contract; do not edit read-only constraints, agent, CLI, API, or shared-type surfaces. 4. Add golden financial vectors, invalid/missing/negative/rounding/extreme/infeasible edge cases, deterministic/property coverage, and representative performance evidence under tests/engines/valuation*.spec.ts. 5. Run focused checks, formatting/diff checks, and deno task verify; record exact evidence. 6. Commit the scoped change, push the task branch, open a human-review PR, and leave MAI-144 In Progress without self-merge or Done.
+1. Inventory all active valuation, synergy, leverage, coverage, valuation-floor, agent, API, CLI, and test consumers with focused source and architecture evidence; keep Graphify deferred until finalization.
+2. Extend the MAI-144-owned compatibility boundary so legacy raw-number consumers delegate to the typed valuation/synergy implementation with explicit conversion, deterministic rounding, and typed failure preservation.
+3. Migrate the agent synergy tool and legacy financial constraints without adding workflow, policy, persistence, HTTP, or approval authority.
+4. Add regression tests for delegation, compatibility output/error behavior, deterministic replay, missing-data failures, and the agent authority boundary.
+5. Run focused checks and the required fast/canonical gates; record exact command statuses and keep unsupported environment evidence explicit.
+6. Reconcile MAI-144 through Backlog, check only proven criteria/DoD items, and finalize status from direct evidence on the current master maintenance operation.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -146,14 +159,24 @@ Publication retry 2026-08-02: shell git push remained unavailable because both e
 Pre-merge gate 2026-08-02: GitHub branch was rebased onto current master bdecd20528cb3ae4b17256f09ecb1169cfe03306; compare reports 1 commit ahead and 0 behind, with merge base equal to master. Elevated npm --prefix gui ci --no-audit --no-fund completed successfully with 555 packages installed. Complete elevated DENO_ENV=test deno task verify exited 0 and passed canonical documentation, i18n, Deno tests, frontend design tokens, foundation, components, shell, screen families, deal screens, conformance, GUI unit tests, Next production build, frontend workflows, Storybook docs, Storybook build, and Storybook interaction tests. Explicit compatibility command completed with exit 0: 47 passed, 0 failed; .env warning only. PR #41 remains open, draft, unmerged; no self-merge or Done transition.
 
 Wave A closure audit 2026-08-02: owner-approved PR #41 is merged on master at cbdeed4e, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. The verified criteria cover the typed deterministic calculation core, explicit financial semantics/errors, golden and edge vectors, compatibility valuation adapters, performance evidence, and scoped exclusions. AC #11 and DoD #1/#2/#4 remain intentionally unchecked: legacy agent synergy logic in src/agent/tools/memory_tools.ts and read-only legacy consumer migration still require the coordinator follow-up described in the task notes. The task remains In Progress; no feature implementation was changed during closure.
+
+2026-08-02 direct-master closure: completed the active-consumer inventory without Graphify. The typed MAI-144 valuation boundary now owns leverage, interest coverage, valuation-floor, and synergy calculations; src/agent/tools/memory_tools.ts delegates through legacySynergyPricing, and src/engines/optimization/constraints.ts delegates ratio/floor checks while preserving typed failures. The portfolio CLI name/index score is explicitly labeled as a non-financial synthetic ranking fixture because it has no valuation cash-flow inputs. Legacy raw-number outputs retain their supported rounding and DTO shape; missing or invalid data returns explicit typed failure results and cannot become feasible.
+
+Verification evidence: DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/valuation src/engines/optimization/valuation src/engines/optimization/negotiation src/engines/optimization/genetic.test.ts tests/engines exited 0 with 28 passed and 0 failed. Compatibility/API/agent/constraint/optimization focused tests exited 0 with 47 passed and 0 failed. Changed-file deno fmt --check and deno lint each exited 0; git diff --check exited 0; deno task verify:fast exited 0. The final escalated DENO_ENV=test deno task verify exited 0 with all 17 categories PASS. The earlier sandbox canonical attempt was interrupted at exit 130 after the known GUI process boundary and is not used as pass evidence. AC #11 and DoD #1, #2, and #4 are now supported by the implementation and evidence; no workflow, approval, persistence, frontend, or agent authority was added.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Completed the MAI-144 compatibility-consumer migration through the authoritative typed valuation and synergy boundary. Legacy adapters preserve supported DTOs and deterministic rounding while returning explicit typed failures; focused and canonical verification passed with exit 0.
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every acceptance criterion is checked with evidence.
-- [ ] #2 Pure valuation and synergy calculations have one authoritative implementation.
+- [x] #1 Every acceptance criterion is checked with evidence.
+- [x] #2 Pure valuation and synergy calculations have one authoritative implementation.
 - [x] #3 Golden vectors and edge-case tests pass.
-- [ ] #4 Duplicate mathematical logic is removed or routed through explicit compatibility adapters.
+- [x] #4 Duplicate mathematical logic is removed or routed through explicit compatibility adapters.
 - [x] #5 MAI-116 depends on MAI-144.
 - [x] #6 No domain workflow, approval, frontend, or agent scope is implemented in this task.
 - [x] #7 Canonical repository verification passes.

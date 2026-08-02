@@ -1,10 +1,5 @@
-import {
-  CoverageConstraint,
-  KycConstraint,
-  LeverageConstraint,
-  optimizeWithConstraints,
-  TermSheetAlternative,
-} from "../engines/optimization/index.ts";
+import type { TermSheetAlternative } from "../engines/optimization/genetic.ts";
+import { optimizeLegacyNegotiation } from "../engines/optimization/negotiation/compatibility.ts";
 import { t } from "../i18n/index.ts";
 import { describeCommandError, printSectionHeader } from "./command-output.ts";
 
@@ -66,17 +61,22 @@ function printTermSheetScenario(scenario: TermSheetScenario): void {
 function optimizeScenario(
   preferences: TermSheetPreferences,
 ): TermSheetAlternative | undefined {
-  return optimizeWithConstraints({
+  const result = optimizeLegacyNegotiation({
     profile: { valuationMin: 80, valuationMax: 120, preferences },
     kyc: { kycBlocked: false, sanctionMatch: false, pepExposure: false },
     financial: { ebitda: 5.0, debt: 15.0, interestExpense: 1.0 },
-    constraints: [
-      new KycConstraint(),
-      new LeverageConstraint(4.0),
-      new CoverageConstraint(2.5),
-    ],
+    maxLeverage: 4.0,
+    minCoverage: 2.5,
     geneticConfig: { populationSize: 100, generations: 40 },
-  })[0];
+    enforceFinancialConstraints: true,
+  });
+  if (result.status !== "delegated") {
+    throw new Error(
+      result.error?.message ??
+        `Negotiation compatibility returned ${result.status}; expected delegated alternatives.`,
+    );
+  }
+  return result.alternatives[0];
 }
 
 function printAlternativeValues(alternative: TermSheetAlternative): void {
