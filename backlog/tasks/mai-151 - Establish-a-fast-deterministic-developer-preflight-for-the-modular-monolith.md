@@ -4,7 +4,7 @@ title: Establish a fast deterministic developer preflight for the modular monoli
 status: In Progress
 assignee: []
 created_date: '2026-07-31 17:33'
-updated_date: '2026-08-02 03:20'
+updated_date: '2026-08-02 03:22'
 labels:
   - backend
   - architecture
@@ -121,6 +121,8 @@ Discovery evidence (2026-08-02): the current platform/API, authorization, persis
 Implementation and focused verification evidence (2026-08-02): added `deno task verify:fast` and `deno task verify:fast:benchmark`. The fast runner executes 11 included deterministic test-adapter components in parallel, reports 5 explicit skips and 2 explicit unavailable statuses, and passes child tests with `--allow-read` only; the runner has `--allow-read --allow-run` and no network, write, env, FFI, provider, database, or model-download permission. `deno task verify:fast` exited 0. `deno test --no-prompt --allow-read --allow-run scripts/verify_fast_test.ts scripts/verify_fast_benchmark_test.ts tests/platform/events/inbox_contract.spec.ts tests/unit/deal_terminology_contract.spec.ts tests/unit/target_dossier_contract.spec.ts` exited 0 with 16 passed. The controlled-failure case exited 1 and reported `FAILED Core API contract parsing`. `deno task verify:fast:benchmark` recorded 10 runs on linux/x86_64 with Deno 2.9.3: 4035, 4047, 4264, 4052, 3912, 3956, 3851, 3993, 4363, and 3965 ms; p95 4363 ms, local target passed. `deno fmt --check`, `deno check`, and `git diff --check` exited 0.
 
 Canonical gate evidence (2026-08-02): the completed sandbox run `time deno task verify` exited 1 after 45.239s. It passed Canonical documentation, I18n Strings Check, Deno tests, Frontend design tokens, Frontend component boundary, Frontend shell boundary, Frontend screen families, Frontend deal intelligence screens, Frontend deal execution screens, Frontend Figma-to-code conformance, and Storybook documentation. It failed only environment/tooling-dependent GUI checks: `spawnSync git EPERM` in frontend foundation, missing `vitest`, missing `next`, missing `playwright`, missing `storybook`, and the resulting GUI workflow/build/interaction checks. An escalated rerun was stopped with Ctrl-C after 3m05.578s when live test paths produced no completion status; it is not verification evidence. The canonical gate is therefore not passing and remains an owner/environment follow-up; MAI-151 stays In Progress and is not Done.
+
+PR handoff blocker (2026-08-02): local commit `84d915d` was created successfully on `delivery/MAI-151-fast-developer-preflight`. `git push -u origin delivery/MAI-151-fast-developer-preflight` was rejected by the execution safety reviewer because it would externally transmit repository source and task data to `https://github.com/luisfelipeluis49/mai`. No push or PR was created. Explicit owner approval of that exact remote destination is required before continuing; task remains In Progress.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
