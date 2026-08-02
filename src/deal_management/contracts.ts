@@ -238,23 +238,20 @@ export interface DealReceiptStore {
 }
 
 export interface DealProjection {
-  readonly id: DealId;
-  readonly version: AggregateVersion;
-  readonly state: DealState;
-  readonly name: string;
-  readonly dealType: string;
-  readonly confidentiality: DealConfidentiality;
-  readonly currency: string;
+  readonly id?: DealId;
+  readonly version?: AggregateVersion;
+  readonly state?: DealState;
+  readonly name?: string;
+  readonly dealType?: string;
+  readonly confidentiality?: DealConfidentiality;
+  readonly currency?: string;
   readonly parties?: readonly Readonly<Record<string, unknown>>[];
   readonly roles?: readonly Readonly<Record<string, unknown>>[];
   readonly mandate?: Readonly<Record<string, unknown>>;
   readonly authorityConstraints?: readonly Readonly<Record<string, unknown>>[];
 }
 
-export interface DealFieldMaskDecision {
-  readonly include: readonly string[];
-  readonly omit: readonly string[];
-}
+export type DealFieldMaskDecision = FieldMask;
 
 export function dealScope(context: DealCommandContext): DealScope {
   const workspaceId = context.request.workspaceId;
@@ -287,8 +284,7 @@ export function requestedDealFields(): readonly {
 export function allowedDealFields(
   decision: AuthorizationDecision,
 ): DealFieldMaskDecision {
-  const mask: FieldMask = decision.fieldMask;
-  return { include: mask.include, omit: mask.omit };
+  return decision.fieldMask;
 }
 
 export function freezeStoredDeal(deal: Deal): Deal {

@@ -21,6 +21,30 @@ import {
   InMemoryDealRepository,
   readDealProjection,
 } from "../../src/deal_management/v1.ts";
+import {
+  field,
+  type FieldClassification,
+} from "../../src/platform/authz/v1.ts";
+
+function mask(input: {
+  readonly include?: readonly string[];
+  readonly omit?: readonly string[];
+  readonly redact?: readonly string[];
+  readonly approved?: readonly {
+    readonly name: string;
+    readonly classification: FieldClassification;
+  }[];
+} = {}): DealFieldMaskDecision {
+  return {
+    include: (input.include ?? []).map(field),
+    omit: (input.omit ?? []).map(field),
+    redact: (input.redact ?? []).map(field),
+    approvedClassifications: (input.approved ?? []).map((approved) => ({
+      name: field(approved.name),
+      classification: approved.classification,
+    })),
+  };
+}
 
 Deno.test("Deal projection omits mandate ceilings without an approved field mask", () => {
   const ids = new SequentialDealIdFactory();
@@ -61,11 +85,52 @@ Deno.test("Deal projection omits mandate ceilings without an approved field mask
     now: context.now,
   });
 
-  const safe = projectDeal(deal, { include: [], omit: [] });
+  const safe = projectDeal(deal, mask());
+  assertEquals(safe.id, undefined);
+  assertEquals(safe.version, undefined);
+  assertEquals(safe.state, undefined);
+  assertEquals(safe.name, undefined);
+  assertEquals(safe.dealType, undefined);
+  assertEquals(safe.confidentiality, undefined);
+  assertEquals(safe.currency, undefined);
   assertEquals(safe.mandate, undefined);
   assertEquals(safe.authorityConstraints, undefined);
   assertEquals(safe.parties, undefined);
   assertEquals(safe.roles, undefined);
+});
+
+Deno.test("Deal projection requires a matching approved classification for base fields", () => {
+  const context = contextFor();
+  const deal = createDeal({
+    id: new SequentialDealIdFactory().nextDealId(),
+    tenantId: requiredTenantId(context.request.tenantId),
+    workspaceId: requiredWorkspaceId(context.request.workspaceId!),
+    name: "Classified projection",
+    dealType: "acquisition",
+    confidentiality: "standard",
+    currency: "USD",
+    now: context.now,
+  });
+  const unapproved = projectDeal(deal, mask({ include: ["deal"] }));
+  const mismatched = projectDeal(
+    deal,
+    mask({
+      include: ["deal"],
+      approved: [{ name: "deal", classification: "restricted" }],
+    }),
+  );
+  const approved = projectDeal(
+    deal,
+    mask({
+      include: ["deal"],
+      approved: [{ name: "deal", classification: "public" }],
+    }),
+  );
+
+  assertEquals(unapproved.name, undefined);
+  assertEquals(mismatched.name, undefined);
+  assertEquals(approved.name, "Classified projection");
+  assertEquals(approved.id, deal.id);
 });
 
 Deno.test("Deal projection includes parties and roles only when each field is allowed", () => {
@@ -105,10 +170,16 @@ Deno.test("Deal projection includes parties and roles only when each field is al
     now: context.now,
   });
 
-  const relationships = projectDeal(deal, {
-    include: ["parties", "roles"],
-    omit: [],
-  });
+  const relationships = projectDeal(
+    deal,
+    mask({
+      include: ["parties", "roles"],
+      approved: [
+        { name: "parties", classification: "external_shareable" },
+        { name: "roles", classification: "relationship_ownership" },
+      ],
+    }),
+  );
   assertEquals(relationships.parties?.[0].reference, {
     kind: "organization",
     id: "org_projection-owner",
@@ -140,10 +211,13 @@ Deno.test("Deal projection includes authority data only when explicitly allowed"
       now: context.now,
     },
   );
-  const allowed: DealFieldMaskDecision = {
+  const allowed: DealFieldMaskDecision = mask({
     include: ["mandate_ceiling", "authority_constraints"],
-    omit: [],
-  };
+    approved: [
+      { name: "mandate_ceiling", classification: "mandate_ceiling" },
+      { name: "authority_constraints", classification: "mandate_ceiling" },
+    ],
+  });
   const projected = projectDeal(deal, allowed);
   assert(projected.mandate !== undefined);
   assertEquals(projected.mandate?.transactionValueCeiling, {
@@ -174,24 +248,63 @@ Deno.test("Deal projection honors explicit field omissions", () => {
       now: context.now,
     },
   );
-  const projected = projectDeal(deal, {
-    include: [
-      "parties",
-      "roles",
-      "mandate_ceiling",
-      "authority_constraints",
-    ],
-    omit: [
-      "parties",
-      "roles",
-      "mandate_ceiling",
-      "authority_constraints",
-    ],
-  });
+  const projected = projectDeal(
+    deal,
+    mask({
+      include: [
+        "deal",
+        "parties",
+        "roles",
+        "mandate_ceiling",
+        "authority_constraints",
+      ],
+      omit: [
+        "deal",
+        "parties",
+        "roles",
+        "mandate_ceiling",
+        "authority_constraints",
+      ],
+      approved: [
+        { name: "deal", classification: "public" },
+        { name: "parties", classification: "external_shareable" },
+        { name: "roles", classification: "relationship_ownership" },
+        { name: "mandate_ceiling", classification: "mandate_ceiling" },
+        { name: "authority_constraints", classification: "mandate_ceiling" },
+      ],
+    }),
+  );
+  assertEquals(projected.id, undefined);
+  assertEquals(projected.name, undefined);
   assertEquals(projected.parties, undefined);
   assertEquals(projected.roles, undefined);
   assertEquals(projected.mandate, undefined);
   assertEquals(projected.authorityConstraints, undefined);
+});
+
+Deno.test("Deal projection suppresses redacted fields even when classification is approved", () => {
+  const context = contextFor();
+  const deal = createDeal({
+    id: new SequentialDealIdFactory().nextDealId(),
+    tenantId: requiredTenantId(context.request.tenantId),
+    workspaceId: requiredWorkspaceId(context.request.workspaceId!),
+    name: "Redacted projection",
+    dealType: "acquisition",
+    confidentiality: "standard",
+    currency: "USD",
+    now: context.now,
+  });
+  const projected = projectDeal(
+    deal,
+    mask({
+      include: ["deal"],
+      redact: ["deal"],
+      approved: [{ name: "deal", classification: "public" }],
+    }),
+  );
+
+  assertEquals(projected.id, undefined);
+  assertEquals(projected.name, undefined);
 });
 
 Deno.test("Deal read model makes denied and absent protected reads equivalent", async () => {

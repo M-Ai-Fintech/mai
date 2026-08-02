@@ -6,6 +6,7 @@ import {
 } from "../platform/api/v1.ts";
 import type { CorrelationId } from "../platform/api/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
+import { field } from "../platform/authz/v1.ts";
 import { projectDeal } from "./projection.ts";
 import type { DealCommandResult, DealFieldMaskDecision } from "./contracts.ts";
 import {
@@ -61,8 +62,18 @@ export function safeCommandDto(result: DealCommandResult) {
 }
 
 const SAFE_COMMAND_RESPONSE_MASK: DealFieldMaskDecision = Object.freeze({
-  include: [],
-  omit: ["parties", "roles", "mandate_ceiling", "authority_constraints"],
+  include: [field("deal")],
+  omit: [
+    field("parties"),
+    field("roles"),
+    field("mandate_ceiling"),
+    field("authority_constraints"),
+  ],
+  redact: [],
+  approvedClassifications: [{
+    name: field("deal"),
+    classification: "public" as const,
+  }],
 });
 
 function dealErrorResponse(

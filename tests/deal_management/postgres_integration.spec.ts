@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   addDealParty,
   commandReceiptKey,
@@ -161,18 +161,24 @@ Deno.test({
         confidentiality: "standard" as const,
         currency: "USD",
       };
-      const createService = () =>
+      const createService = (ids: SequentialDealIdFactory) =>
         new DealManagementService({
           repository,
           authorization: new RecordingDealAuthorization(),
-          ids: new SequentialDealIdFactory(),
+          ids,
           clock: new FixedDealClock(),
         });
+      const firstIds = new SequentialDealIdFactory("concurrent-first");
+      const secondIds = new SequentialDealIdFactory("concurrent-second");
       const [first, second] = await Promise.all([
-        createService().createDeal(command),
-        createService().createDeal(command),
+        createService(firstIds).createDeal(command),
+        createService(secondIds).createDeal(command),
       ]);
       assertEquals(second, first);
+      assert([
+        "deal_concurrent-first-1",
+        "deal_concurrent-second-1",
+      ].includes(first.deal.id));
       const receiptKey = commandReceiptKey(command, "new");
       assertEquals(await count(pool, "deal_management.deals"), "1");
       assertEquals(await count(pool, "deal_management.aggregate_history"), "1");
@@ -185,6 +191,14 @@ Deno.test({
         ),
         "1",
       );
+      const events = await pool.query<{ eventId: string }>(
+        `SELECT event_id AS "eventId" FROM deal_management.aggregate_history`,
+      );
+      assertEquals(events.rows.length, 1);
+      assert([
+        "event_concurrent-first-1",
+        "event_concurrent-second-1",
+      ].includes(events.rows[0].eventId));
       assertEquals(
         await countWhere(
           pool,
@@ -205,7 +219,8 @@ Deno.test({
       );
       await assertRejects(
         () =>
-          createService().createDeal({ ...command, name: "Different payload" }),
+          createService(new SequentialDealIdFactory("payload-mismatch"))
+            .createDeal({ ...command, name: "Different payload" }),
         DealIdempotencyConflictError,
       );
       assertEquals(await count(pool, "deal_management.deals"), "1");

@@ -3,15 +3,90 @@ import type {
   DealFieldMaskDecision,
   DealProjection,
 } from "./contracts.ts";
+import {
+  field,
+  type FieldClassification,
+  type FieldName,
+} from "../platform/authz/v1.ts";
+
+interface ProjectionField {
+  readonly name: FieldName;
+  readonly classification: FieldClassification;
+}
+
+const DEAL_FIELD: ProjectionField = {
+  name: field("deal"),
+  classification: "public",
+};
+const PARTIES_FIELD: ProjectionField = {
+  name: field("parties"),
+  classification: "external_shareable",
+};
+const ROLES_FIELD: ProjectionField = {
+  name: field("roles"),
+  classification: "relationship_ownership",
+};
+const MANDATE_FIELD: ProjectionField = {
+  name: field("mandate_ceiling"),
+  classification: "mandate_ceiling",
+};
+const CONSTRAINTS_FIELD: ProjectionField = {
+  name: field("authority_constraints"),
+  classification: "mandate_ceiling",
+};
 
 export function projectDeal(
   deal: Deal,
   fields: DealFieldMaskDecision,
 ): DealProjection {
-  const includeParties = fieldAllowed(fields, "parties");
-  const includeRoles = fieldAllowed(fields, "roles");
-  const includeMandate = fieldAllowed(fields, "mandate_ceiling");
-  const includeConstraints = fieldAllowed(fields, "authority_constraints");
+  const permissions = projectionPermissions(fields);
+  return {
+    ...(permissions.deal ? projectBaseDeal(deal) : {}),
+    ...(permissions.parties ? { parties: deal.parties.map(projectParty) } : {}),
+    ...(permissions.roles
+      ? {
+        roles: deal.roles.map((role) =>
+          projectRole(role, permissions.constraints)
+        ),
+      }
+      : {}),
+    ...(permissions.mandate && deal.mandate === undefined
+      ? {}
+      : permissions.mandate
+      ? { mandate: projectMandate(deal) }
+      : {}),
+    ...(permissions.constraints
+      ? {
+        authorityConstraints: deal.authorityConstraints.map(projectConstraint),
+      }
+      : {}),
+  };
+}
+
+function projectionPermissions(fields: DealFieldMaskDecision) {
+  return {
+    deal: fieldAllowed(fields, DEAL_FIELD),
+    parties: fieldAllowed(fields, PARTIES_FIELD),
+    roles: fieldAllowed(fields, ROLES_FIELD),
+    mandate: fieldAllowed(fields, MANDATE_FIELD),
+    constraints: fieldAllowed(fields, CONSTRAINTS_FIELD),
+  };
+}
+
+function fieldAllowed(
+  fields: DealFieldMaskDecision,
+  definition: ProjectionField,
+): boolean {
+  return fields.include.includes(definition.name) &&
+    !fields.omit.includes(definition.name) &&
+    !fields.redact.includes(definition.name) &&
+    fields.approvedClassifications.some((approved) =>
+      approved.name === definition.name &&
+      approved.classification === definition.classification
+    );
+}
+
+function projectBaseDeal(deal: Deal): DealProjection {
   return {
     id: deal.id,
     version: deal.version,
@@ -20,27 +95,7 @@ export function projectDeal(
     dealType: deal.dealType,
     confidentiality: deal.confidentiality,
     currency: deal.currency,
-    ...(includeParties ? { parties: deal.parties.map(projectParty) } : {}),
-    ...(includeRoles
-      ? {
-        roles: deal.roles.map((role) => projectRole(role, includeConstraints)),
-      }
-      : {}),
-    ...(includeMandate && deal.mandate === undefined
-      ? {}
-      : includeMandate
-      ? { mandate: projectMandate(deal) }
-      : {}),
-    ...(includeConstraints
-      ? {
-        authorityConstraints: deal.authorityConstraints.map(projectConstraint),
-      }
-      : {}),
   };
-}
-
-function fieldAllowed(fields: DealFieldMaskDecision, name: string): boolean {
-  return fields.include.includes(name) && !fields.omit.includes(name);
 }
 
 function projectParty(

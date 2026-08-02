@@ -87,6 +87,9 @@ Deno.test("Deal Management HTTP exposes semantic commands, envelopes, and ETags"
   assertEquals(created?.headers.get("ETag"), '"v1"');
   const createdBody = await created!.json();
   const dealId = createdBody.data.id as string;
+  assertEquals(createdBody.data.name, "HTTP deal");
+  assertEquals(createdBody.data.dealType, "acquisition");
+  assertEquals(createdBody.data.version, 1);
   assertEquals(createdBody.data.parties, undefined);
   assertEquals(createdBody.data.roles, undefined);
   assertEquals(createdBody.data.authorityConstraints, undefined);

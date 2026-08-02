@@ -56,36 +56,38 @@ export class SequentialDealIdFactory implements DealIdFactory {
   private constraintSequence = 0;
   private eventSequence = 0;
 
+  constructor(private readonly namespace = "fixture") {}
+
   nextDealId(): DealId {
     this.dealSequence += 1;
-    return dealId(`deal_fixture-${this.dealSequence}`);
+    return dealId(`deal_${this.namespace}-${this.dealSequence}`);
   }
 
   nextDealPartyId(): DealPartyId {
     this.partySequence += 1;
-    return dealPartyId(`party_fixture-${this.partySequence}`);
+    return dealPartyId(`party_${this.namespace}-${this.partySequence}`);
   }
 
   nextDealRoleId(): DealRoleId {
     this.roleSequence += 1;
-    return dealRoleId(`dealrole_fixture-${this.roleSequence}`);
+    return dealRoleId(`dealrole_${this.namespace}-${this.roleSequence}`);
   }
 
   nextMandateId(): MandateId {
     this.mandateSequence += 1;
-    return mandateId(`mandate_fixture-${this.mandateSequence}`);
+    return mandateId(`mandate_${this.namespace}-${this.mandateSequence}`);
   }
 
   nextAuthorityConstraintId(): AuthorityConstraintId {
     this.constraintSequence += 1;
     return authorityConstraintId(
-      `constraint_fixture-${this.constraintSequence}`,
+      `constraint_${this.namespace}-${this.constraintSequence}`,
     );
   }
 
   nextEventId() {
     this.eventSequence += 1;
-    return dealEventId(`event_fixture-${this.eventSequence}`);
+    return dealEventId(`event_${this.namespace}-${this.eventSequence}`);
   }
 }
 
