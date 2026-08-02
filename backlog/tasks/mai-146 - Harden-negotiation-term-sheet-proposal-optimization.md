@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-02 01:47'
+updated_date: '2026-08-02 01:48'
 labels:
   - backend
   - architecture
@@ -177,6 +177,8 @@ Correction (2026-08-01): sampleAllocation now reserves later minimums in the cur
 Canonical gate rerun for the correction: deno task verify reached all listed backend and intermediate frontend boundaries, then reported spawnSync git EPERM in gui/scripts/verify-frontend-foundation.mjs; the subsequent Next.js production build produced no output and was interrupted with exit 130. This is the existing sandbox/GUI environment limitation, not an optimization test failure.
 
 Published correction commit 3a8f650 after rebasing onto remote merge 096d16e; pushed successfully to delivery/MAI-146-negotiation-proposal-optimization. PR #37 now reports head 3a8f650, open, unmerged, and Draft; task remains In Progress.
+
+The subsequent Backlog-only handoff commit is included in PR #37; the PR remains open, unmerged, and Draft, with no owner approval or merge performed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
