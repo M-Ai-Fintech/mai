@@ -53,6 +53,26 @@ Deno.test("projection filters restricted fields even when a redaction overlay is
   assertEquals(projection.entries[0].redactedFields, []);
 });
 
+Deno.test("projection preserves nested JSON payload values after filtering", () => {
+  const event = fixtureEvent(1, {
+    payload: {
+      visible: { items: [{ code: "A", score: 2 }], enabled: true },
+      restricted: "hidden",
+    },
+    classifications: { visible: "public", restricted: "restricted" },
+  });
+  const projection = new ActivityProjectionBuilder().rebuild({
+    scope: fixtureScope(),
+    events: [event],
+    overlays: [],
+    allowedClassifications: ["public"],
+  });
+
+  assertEquals(projection.entries[0].payload, {
+    visible: { items: [{ code: "A", score: 2 }], enabled: true },
+  });
+});
+
 Deno.test("projection rejects a record from another requested scope", () => {
   const event = fixtureEvent(
     1,

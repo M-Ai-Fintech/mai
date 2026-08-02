@@ -1,12 +1,14 @@
 import type {
   AuditEventId,
   AuditFieldClassification,
+  AuditPayload,
   AuditPosition,
   AuditScope,
   ProjectionWatermark,
   StoredAuditEvent,
   StoredRedactionOverlay,
 } from "./model.ts";
+import { normalizeAuditPayload } from "./model.ts";
 
 export interface ActivityProjectionEntry {
   readonly position: AuditPosition;
@@ -22,7 +24,7 @@ export interface ActivityProjectionEntry {
   readonly authoritySnapshotId: string;
   readonly evidenceReferences: readonly string[];
   readonly redactedFields: readonly string[];
-  readonly payload: Readonly<Record<string, unknown>>;
+  readonly payload: AuditPayload;
 }
 
 export interface ActivityProjection {
@@ -154,7 +156,7 @@ function projectEvent(
     authoritySnapshotId: event.authoritySnapshot.snapshotId,
     evidenceReferences: Object.freeze(evidenceReferences(event)),
     redactedFields: Object.freeze([...redactedFields].sort()),
-    payload: freezePayload(payload),
+    payload: normalizeAuditPayload(payload, event.eventId),
   });
 }
 
@@ -223,22 +225,4 @@ function freezeProjection(projection: ActivityProjection): ActivityProjection {
     entries: Object.freeze([...projection.entries]),
     watermark: Object.freeze({ ...projection.watermark }),
   });
-}
-
-function freezePayload(
-  payload: Readonly<Record<string, unknown>>,
-): Readonly<Record<string, unknown>> {
-  return Object.freeze(
-    Object.fromEntries(
-      Object.entries(payload).map(([key, value]) => [key, freezeValue(value)]),
-    ),
-  );
-}
-
-function freezeValue(value: unknown): unknown {
-  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
-  if (typeof value === "object" && value !== null) {
-    return freezePayload(value as Readonly<Record<string, unknown>>);
-  }
-  return value;
 }

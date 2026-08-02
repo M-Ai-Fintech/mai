@@ -126,8 +126,8 @@ Deno.test("authorized export enqueues opaque scoped inputs and audits access", a
       operationId: request.operationId,
       scope: {
         tenantId: request.scope.tenantId,
-        workspaceId: request.scope.workspaceId,
-        dealId: request.scope.dealId,
+        workspaceId: request.scope.workspaceId!,
+        dealId: request.scope.dealId!,
       },
       projectionWatermark: null,
     },

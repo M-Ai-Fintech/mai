@@ -14,6 +14,7 @@ import type { TransactionHandle } from "../platform/persistence/transaction.ts";
 import type {
   AuditEventDraft,
   AuditEventId,
+  AuditPayload,
   AuditScope,
   ProjectionWatermark,
 } from "./model.ts";
@@ -163,15 +164,17 @@ function exportJob(
 
 function exportQueryPayload(
   request: AuditExportJobRequest,
-): Readonly<Record<string, unknown>> {
+): AuditPayload {
   return {
     scope: scopePayload(request.scope),
     filters: filterPayload(request.filters),
-    projectionWatermark: request.projectionWatermark ?? null,
+    projectionWatermark: projectionWatermarkPayload(
+      request.projectionWatermark,
+    ),
   };
 }
 
-function scopePayload(scope: AuditScope): Readonly<Record<string, unknown>> {
+function scopePayload(scope: AuditScope): AuditPayload {
   return {
     tenantId: scope.tenantId,
     ...(scope.workspaceId === undefined
@@ -183,7 +186,7 @@ function scopePayload(scope: AuditScope): Readonly<Record<string, unknown>> {
 
 function filterPayload(
   filters: AuditExportFilters,
-): Readonly<Record<string, unknown>> {
+): AuditPayload {
   return {
     ...(filters.eventTypes === undefined
       ? {}
@@ -197,6 +200,16 @@ function filterPayload(
     ...(filters.occurredBefore === undefined
       ? {}
       : { occurredBefore: filters.occurredBefore.toISOString() }),
+  };
+}
+
+function projectionWatermarkPayload(
+  watermark: ProjectionWatermark | undefined,
+): AuditPayload["projectionWatermark"] {
+  if (watermark === undefined) return null;
+  return {
+    eventPosition: watermark.eventPosition,
+    overlayPosition: watermark.overlayPosition,
   };
 }
 
@@ -237,7 +250,9 @@ async function exportAuditEvent(
       jobId: job.jobId,
       operationId: request.operationId,
       scope: scopePayload(request.scope),
-      projectionWatermark: request.projectionWatermark ?? null,
+      projectionWatermark: projectionWatermarkPayload(
+        request.projectionWatermark,
+      ),
     },
     classifications: {
       auditEventId: "internal",

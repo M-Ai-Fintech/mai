@@ -4,7 +4,7 @@ title: Immutable audit and activity foundation
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 14:35'
+updated_date: '2026-08-02 01:35'
 labels:
   - backend
   - architecture
@@ -112,6 +112,7 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 4. Add deterministic activity projection rebuilds with explicit position watermarks, redaction overlays, classification/access filtering, and named fake-based replay tests.
 5. Add an authorization-gated export-job boundary that enqueues only opaque scoped inputs and appends an audited export-request event; do not select or certify providers, register /api/v1 routes, import history, or add mutation paths.
 6. Run focused audit_activity checks, format/lint/diff checks, and deno task verify; record the MAI-107 rebase gate and any environment-limited evidence before PR handoff.
+7. Tighten the audit payload contract to reject non-JSON values and prove nested special-value rejection, deep record/array support, and digest stability after freezing and JSON persistence.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -122,4 +123,6 @@ Reapplied after the post-MAI-107 task-record conflict during rebase: MAI-105 and
 Post-rebase evidence: after MAI-107 PR #36 merged, `git fetch origin` succeeded and `git rebase origin/master` completed; the only conflict was the governed MAI-109 task record and it was resolved through Backlog CLI. `origin/master` is bdecd20528cb3ae4b17256f09ecb1169cfe03306, rebased HEAD is eb6c80c, and merge-base ancestry check passed. Focused DENO_ENV=test audit_activity tests passed 15/15; `deno check src/audit_activity/v1.ts`, `deno fmt --check`, `deno lint`, and `git diff --check` passed. Post-rebase `deno task test` passed 319 with 0 failures and 22 ignored. Post-rebase `deno task verify` exited 1 only on environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook; canonical docs, i18n, Deno tests, design tokens, component/shell/screen/Figma checks and Storybook docs passed. MAI-109 remains In Progress pending draft-PR owner review; no API routes/shared router seams, MAI-107/MAI-106-owned files, GUI/Figma work, history import, mutation path, provider certification, or SIEM certification were added.
 
 Draft PR #39 is open for owner review at https://github.com/luisfelipeluis49/mai/pull/39. The branch was pushed after the required MAI-107 rebase; MAI-109 remains In Progress and no merge, self-approval, or Done transition was performed.
+
+Payload-freezing correction: replaced generic object freezing with recursive strict JSON-compatible normalization. AuditPayload now rejects nested Date, undefined, functions, symbols, Map/Set/custom instances, nonfinite numbers, sparse/invalid arrays, symbol keys, and non-data properties; finite values and plain nested records/arrays are sorted, cloned, frozen, and -0 is canonicalized to 0. The same normalized payload drives digest calculation, PostgreSQL JSON serialization, stored-event freezing, and projection output. TDD evidence: the pre-fix regression loop was red (5 new rejection cases failed); after the fix focused DENO_ENV=test audit_activity tests passed 22/22, including nested payload projection and digest equality after freezing plus JSON persistence. Typecheck, deno fmt --check, deno lint, and git diff --check passed. Updated full deno task test passed 326 with 0 failures and 22 ignored. Updated deno task verify exited 1 only on the known environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook; canonical documentation, i18n, Deno tests, design tokens, component/shell/screen/Figma checks, and Storybook documentation passed. PR #39 remains Draft/In Review pending owner action; MAI-109 remains In Progress.
 <!-- SECTION:NOTES:END -->

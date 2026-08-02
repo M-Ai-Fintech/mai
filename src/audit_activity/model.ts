@@ -24,6 +24,14 @@ export type AuditPosition = number & {
 
 export type AuditActorKind = "human" | "agent" | "system";
 export type AuditFieldClassification = "public" | "internal" | "restricted";
+export type AuditPayloadValue =
+  | null
+  | boolean
+  | string
+  | number
+  | readonly AuditPayloadValue[]
+  | { readonly [key: string]: AuditPayloadValue };
+export type AuditPayload = Readonly<Record<string, AuditPayloadValue>>;
 export type AuditRedactionReason =
   | "legal_requirement"
   | "privacy_request"
@@ -85,7 +93,7 @@ export interface AuditEventDraft {
   readonly authoritySnapshot: AuthoritySnapshot;
   readonly evidenceSnapshot: EvidenceSnapshot;
   readonly provenance: AuditProvenance;
-  readonly payload: Readonly<Record<string, unknown>>;
+  readonly payload: AuditPayload;
   readonly classifications: Readonly<
     Record<string, AuditFieldClassification>
   >;
@@ -140,7 +148,7 @@ export function assertAuditEvent(event: AuditEventDraft): void {
   assertSnapshot(event.authoritySnapshot, event.eventId);
   assertEvidenceSnapshot(event.evidenceSnapshot, event.eventId);
   assertProvenance(event.provenance, event.eventId);
-  assertClassifications(event.payload, event.classifications, event.eventId);
+  assertAuditEventExceptDigest(event);
   assertDigest(event.contentDigest, event.eventId);
   assertDate(event.occurredAt, "occurred at", event.eventId);
 }
@@ -174,7 +182,7 @@ export function freezeAuditEvent(event: StoredAuditEvent): StoredAuditEvent {
     authoritySnapshot: freezeAuthoritySnapshot(event.authoritySnapshot),
     evidenceSnapshot: freezeEvidenceSnapshot(event.evidenceSnapshot),
     provenance: Object.freeze({ ...event.provenance }),
-    payload: freezeRecord(event.payload),
+    payload: normalizeAuditPayload(event.payload, event.eventId),
     classifications: Object.freeze({ ...event.classifications }),
   });
 }
@@ -193,8 +201,12 @@ export function freezeRedactionOverlay(
 export async function auditEventDigest(
   event: AuditEventDraft,
 ): Promise<string> {
-  assertAuditEventExceptDigest(event);
-  const canonical = stableSerialize({ ...event, contentDigest: undefined });
+  const payload = assertAuditEventExceptDigest(event);
+  const canonical = stableSerialize({
+    ...event,
+    payload,
+    contentDigest: undefined,
+  });
   const bytes = new TextEncoder().encode(canonical);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(
@@ -203,14 +215,23 @@ export async function auditEventDigest(
   ).join("");
 }
 
-function assertAuditEventExceptDigest(event: AuditEventDraft): void {
+function assertAuditEventExceptDigest(event: AuditEventDraft): AuditPayload {
   assertText(event.eventId, "audit event ID", 128);
   assertScope(event, `Audit event "${event.eventId}"`);
   assertActorLink(event, `Audit event "${event.eventId}"`);
   assertSnapshot(event.authoritySnapshot, event.eventId);
   assertEvidenceSnapshot(event.evidenceSnapshot, event.eventId);
   assertProvenance(event.provenance, event.eventId);
-  assertClassifications(event.payload, event.classifications, event.eventId);
+  const payload = normalizeAuditPayload(event.payload, event.eventId);
+  assertClassifications(payload, event.classifications, event.eventId);
+  return payload;
+}
+
+export function normalizeAuditPayload(
+  payload: Readonly<Record<string, unknown>>,
+  subject: string,
+): AuditPayload {
+  return normalizePayloadRecord(payload, "$", subject);
 }
 
 function assertActorLink(
@@ -364,20 +385,136 @@ function freezeEvidenceSnapshot(snapshot: EvidenceSnapshot): EvidenceSnapshot {
   });
 }
 
-function freezeRecord(
-  value: Readonly<Record<string, unknown>>,
-): Readonly<Record<string, unknown>> {
-  return Object.freeze(
-    Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, freezeValue(item)]),
-    ),
+function normalizePayloadRecord(
+  value: unknown,
+  path: string,
+  subject: string,
+): AuditPayload {
+  if (!isPlainRecord(value)) invalidPayloadValue(value, path, subject);
+  const keys = payloadRecordKeys(value, path, subject).sort();
+  const entries = keys.map((key) =>
+    [
+      key,
+      normalizePayloadValue(value[key], `${path}.${key}`, subject),
+    ] as const
+  );
+  return Object.freeze(Object.fromEntries(entries)) as AuditPayload;
+}
+
+function normalizePayloadValue(
+  value: unknown,
+  path: string,
+  subject: string,
+): AuditPayloadValue {
+  if (value === null) return null;
+  if (typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) invalidPayloadValue(value, path, subject);
+    return Object.is(value, -0) ? 0 : value;
+  }
+  if (Array.isArray(value)) return normalizePayloadArray(value, path, subject);
+  if (isPlainRecord(value)) return normalizePayloadRecord(value, path, subject);
+  invalidPayloadValue(value, path, subject);
+}
+
+function normalizePayloadArray(
+  value: readonly unknown[],
+  path: string,
+  subject: string,
+): readonly AuditPayloadValue[] {
+  if (Object.getPrototypeOf(value) !== Array.prototype) {
+    invalidPayloadValue(value, path, subject);
+  }
+  for (const key of Reflect.ownKeys(value)) {
+    if (key === "length") continue;
+    if (typeof key === "symbol") {
+      throw new Error(
+        `Audit event "${subject}" payload array at "${path}" has symbol key "${
+          String(key)
+        }"; expected JSON-compatible array indexes only.`,
+      );
+    }
+    const index = Number(key);
+    if (
+      !Number.isInteger(index) || index < 0 || index >= value.length ||
+      String(index) !== key
+    ) {
+      throw new Error(
+        `Audit event "${subject}" payload array at "${path}" has property "${key}"; expected JSON-compatible array indexes only.`,
+      );
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor?.enumerable || !Object.hasOwn(descriptor, "value")) {
+      throw new Error(
+        `Audit event "${subject}" payload array value at "${path}[${key}]" is not an enumerable data property; expected JSON-compatible values.`,
+      );
+    }
+  }
+  const normalized = [] as AuditPayloadValue[];
+  for (let index = 0; index < value.length; index++) {
+    if (!Object.hasOwn(value, index)) {
+      invalidPayloadValue(undefined, `${path}[${index}]`, subject);
+    }
+    normalized.push(
+      normalizePayloadValue(value[index], `${path}[${index}]`, subject),
+    );
+  }
+  return Object.freeze(normalized);
+}
+
+function payloadRecordKeys(
+  value: Record<string, unknown>,
+  path: string,
+  subject: string,
+): string[] {
+  const keys: string[] = [];
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key === "symbol") {
+      throw new Error(
+        `Audit event "${subject}" payload record at "${path}" has symbol key "${
+          String(key)
+        }"; expected JSON-compatible string keys only.`,
+      );
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor?.enumerable || !Object.hasOwn(descriptor, "value")) {
+      throw new Error(
+        `Audit event "${subject}" payload value at "${path}.${key}" is not an enumerable data property; expected JSON-compatible values.`,
+      );
+    }
+    keys.push(key);
+  }
+  return keys;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function invalidPayloadValue(
+  value: unknown,
+  path: string,
+  subject: string,
+): never {
+  throw new Error(
+    `Audit event "${subject}" payload value at "${path}" is "${
+      describePayloadValue(value)
+    }"; expected JSON-compatible null, boolean, string, finite number, array, or plain object.`,
   );
 }
 
-function freezeValue(value: unknown): unknown {
-  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
-  if (isRecord(value)) return freezeRecord(value);
-  return value;
+function describePayloadValue(value: unknown): string {
+  if (value === null) return "null";
+  if (value instanceof Date) return `Date ${value.toString()}`;
+  if (Array.isArray(value)) return "array";
+  if (typeof value === "object") {
+    return `${value.constructor?.name ?? "object"} object`;
+  }
+  return `${typeof value} ${String(value)}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
