@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 01:30'
+updated_date: '2026-08-02 01:32'
 labels:
   - backend
   - architecture
@@ -130,4 +130,6 @@ Rebase and post-rebase verification 2026-08-01: GitHub confirms MAI-107 PR #36 m
 PR handoff 2026-08-01: draft PR #40 opened at https://github.com/luisfelipeluis49/mai/pull/40 from delivery/MAI-108-organization-registry against master, initially at commit c12bb9ee6de411c13c58e56d61c0b14b5cf9484c. Task remains In Progress for human data-model/security review and follow-up on unavailable GUI verification dependencies; no self-merge or Done transition was performed.
 
 Review correction 2026-08-01: update patches now distinguish undefined (unchanged), null (clear), and a value (validate and replace) for organization externalReference plus Person organizationId, email, phone, and nationalId. Cleared fields are removed from aggregate objects and omitted by approved read projections; versioning and command replay behavior are covered by the new lifecycle regression test. The service no longer defaults to an in-memory receipt store; RegistryCommandReceiptStore is now required and tests explicitly inject InMemoryRegistryCommandReceiptStore. Red test first failed on null type assignments, then passed after the fix. Validation: DENO_ENV=test deno test --allow-read --allow-env tests/organization_registry/*.spec.ts passed 14, 0 failed; DENO_ENV=test deno task test passed 318, 0 failed, 22 ignored; deno check, deno lint, deno fmt --check, and git diff --check passed. deno task verify exited 1 only on frontend foundation spawnSync git EPERM and missing vitest, next, playwright, or storybook.
+
+Correction PR update 2026-08-01: fix(MAI-108) commit 58567f0688cc72e9bea2f7f0604fb218c94157ba was pushed to draft PR #40. The PR description now documents undefined/null/value semantics, cleared-field projection behavior, replay coverage, and required receipt-store injection. PR remains open and draft; task remains In Progress.
 <!-- SECTION:NOTES:END -->
