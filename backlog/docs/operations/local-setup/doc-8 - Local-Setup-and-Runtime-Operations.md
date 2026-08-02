@@ -3,7 +3,7 @@ id: doc-8
 title: Local Setup and Runtime Operations
 type: guide
 created_date: '2026-07-24 15:35'
-updated_date: '2026-08-02 03:15'
+updated_date: '2026-08-02 03:48'
 tags:
   - operations
   - setup
@@ -64,11 +64,11 @@ Run GUI commands from the provided Deno task or `gui/` package scripts. Common G
 
 `deno task verify:fast` is developer/operator tooling only. It is not a banker-facing interactive CLI command and does not replace any complete, integration, or deployed-health gate. It runs the fixed `FAST_CHECK_MANIFEST` in `scripts/verify_fast.ts` with explicit `deterministic-test-adapter` fixtures. A live dependency failure is reported as failed or unavailable; it never selects a fixture silently.
 
-The included manifest covers core API parsing, authorization, Deal terminology, workflow transitions, persistence contracts, durable jobs, outbox/inbox mechanics, Target Dossier proposal status, term-sheet separation, DomainArea/RiskSeverity, and offline operations contract parsing. Every included component runs as a Deno test child with `--allow-read` only. The developer runner itself has only `--allow-read --allow-run`; it has no network, write, FFI, cloud, provider, database, or model-download permission.
+The included manifest covers core API parsing, authorization, Deal terminology, workflow transitions, persistence contracts, durable jobs, outbox/inbox mechanics, Target Dossier proposal status, term-sheet separation, DomainArea/RiskSeverity, and offline operations contract parsing. The task and every child test use `--cached-only --frozen`, so missing cached dependencies fail closed instead of triggering retrieval or lockfile changes. Included children receive only `--allow-read=.`; the developer runner receives `--allow-read=.` plus `--allow-run=deno` so it can launch only Deno child processes. The runner caps execution at four concurrent included components and fails a component after 5000 ms, terminating its child process; this is an execution guardrail, not a universal SLA.
 
 The manifest explicitly skips production builds, Storybook browser execution, cloud infrastructure, external network access, and long-running model downloads. Live PostgreSQL and live provider health are explicitly unavailable in this profile. Those checks remain owned by `deno task verify`, `deno task verify:integration`, deployment verification, or their owning tasks. Output reports `passed`, `failed`, `skipped`, and `unavailable` per component; unavailable and skipped are not health claims.
 
-Reference evidence for the initial runner target: on `linux/x86_64` with Deno 2.9.3, `deno task verify:fast:benchmark` executed 10 runs with durations 4035, 4047, 4264, 4052, 3912, 3956, 3851, 3993, 4363, and 3965 ms; p95 was 4363 ms. The 5000 ms threshold is an initial target for this documented runner, not a universal cross-machine SLA.
+Reference evidence for the hardened runner: on `linux/x86_64` with Deno 2.9.3 and a pre-populated cache, network-disabled `deno task verify:fast:benchmark` executed 10 runs with durations 1135, 1137, 1187, 1148, 1125, 1109, 1153, 1121, 1124, and 1136 ms; p95 was 1187 ms. The 5000 ms threshold is an initial target for this documented runner, not a universal cross-machine SLA.
 
 ## Verification levels
 

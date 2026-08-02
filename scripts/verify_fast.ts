@@ -1,3 +1,7 @@
+import { FAST_CHECK_MANIFEST } from "./verify_fast_manifest.ts";
+
+export { FAST_CHECK_MANIFEST } from "./verify_fast_manifest.ts";
+
 export type FastCheckMode = "included" | "skipped" | "unavailable";
 export type FastCheckStatus =
   | "passed"
@@ -22,8 +26,15 @@ export interface FastCheckExecution {
   readonly output: string;
 }
 
+export interface FastCheckExecutionOptions {
+  readonly timeoutMs: number;
+}
+
 export interface FastCheckExecutor {
-  execute(check: FastCheckDefinition): Promise<FastCheckExecution>;
+  execute(
+    check: FastCheckDefinition,
+    options?: FastCheckExecutionOptions,
+  ): Promise<FastCheckExecution>;
 }
 
 export interface FastCheckResult {
@@ -40,121 +51,18 @@ export interface FastCheckResult {
 export interface FastPreflightOptions {
   readonly manifest?: readonly FastCheckDefinition[];
   readonly executor?: FastCheckExecutor;
+  readonly timeoutMs?: number;
+  readonly concurrency?: number;
 }
 
 export const FAST_RUNNER_PERMISSIONS = [
-  "--allow-read",
-  "--allow-run",
+  "--allow-read=.",
+  "--allow-run=deno",
 ] as const;
 
-export const FAST_TEST_PERMISSIONS = ["--allow-read"] as const;
-
-export const FAST_CHECK_MANIFEST: readonly FastCheckDefinition[] = [
-  includedCheck(
-    "api-contracts",
-    "Core API contract parsing",
-    ["tests/platform/api/v1_contracts.spec.ts"],
-  ),
-  includedCheck(
-    "authorization-policy",
-    "Authorization policy evaluation",
-    [
-      "tests/platform/authz/v1.spec.ts",
-      "tests/platform/authz/guard_projection.spec.ts",
-    ],
-  ),
-  includedCheck(
-    "deal-terminology",
-    "Deal terminology enforcement",
-    ["tests/unit/deal_terminology_contract.spec.ts"],
-  ),
-  includedCheck(
-    "workflow-transitions",
-    "Deterministic workflow transitions",
-    ["tests/smoke.spec.ts"],
-  ),
-  includedCheck(
-    "persistence-contracts",
-    "Persistence contract types",
-    [
-      "tests/platform/persistence/concurrency.spec.ts",
-      "tests/platform/persistence/idempotency.spec.ts",
-      "tests/platform/persistence/migration.spec.ts",
-      "tests/platform/persistence/transaction.spec.ts",
-    ],
-  ),
-  includedCheck(
-    "durable-job-state",
-    "Durable-job state mechanics",
-    [
-      "tests/platform/jobs/model.spec.ts",
-      "tests/platform/jobs/worker.spec.ts",
-    ],
-  ),
-  includedCheck(
-    "outbox-inbox-contracts",
-    "Outbox and inbox contract mechanics",
-    [
-      "tests/platform/events/dispatcher.spec.ts",
-      "tests/platform/events/inbox_contract.spec.ts",
-    ],
-  ),
-  includedCheck(
-    "target-dossier-proposal",
-    "Target Dossier proposal boundary",
-    ["tests/unit/target_dossier_contract.spec.ts"],
-  ),
-  includedCheck(
-    "term-sheet-separation",
-    "Term-sheet contract separation",
-    ["tests/unit/term_sheet_schema_test.ts"],
-  ),
-  includedCheck(
-    "domain-risk-contracts",
-    "DomainArea and RiskSeverity contracts",
-    ["tests/shared/domain-area.spec.ts", "tests/shared/risk-severity.spec.ts"],
-  ),
-  includedCheck(
-    "operations-contract",
-    "Offline operations contract parsing",
-    ["tests/platform/operations/contract.spec.ts"],
-  ),
-  unavailableCheck(
-    "live-postgresql",
-    "Live PostgreSQL health",
-    "Unavailable by the offline profile; use deno task verify:integration.",
-  ),
-  unavailableCheck(
-    "live-providers",
-    "Live provider credentials and health",
-    "Unavailable by the offline profile; use the owning integration gate.",
-  ),
-  skippedCheck(
-    "external-network",
-    "External network access",
-    "Skipped by the explicit offline permission manifest.",
-  ),
-  skippedCheck(
-    "production-build",
-    "Production build",
-    "Skipped by the explicit manifest; covered by canonical verification.",
-  ),
-  skippedCheck(
-    "storybook-browser",
-    "Storybook browser execution",
-    "Skipped by the explicit manifest; covered by GUI verification.",
-  ),
-  skippedCheck(
-    "cloud-infrastructure",
-    "Cloud infrastructure health",
-    "Skipped by the explicit manifest; covered by deployment verification.",
-  ),
-  skippedCheck(
-    "model-downloads",
-    "Long-running model downloads",
-    "Skipped by the explicit manifest; covered by model and integration gates.",
-  ),
-];
+export const FAST_TEST_PERMISSIONS = ["--allow-read=."] as const;
+export const FAST_COMPONENT_TIMEOUT_MS = 5_000;
+export const FAST_MAX_CONCURRENCY = 4;
 
 export const FAST_PREFLIGHT_MANIFEST = FAST_CHECK_MANIFEST;
 
@@ -177,7 +85,15 @@ export function validateFastManifest(
 export function buildDenoTestArgs(
   files: readonly string[],
 ): string[] {
-  return ["test", "--no-prompt", "--quiet", ...FAST_TEST_PERMISSIONS, ...files];
+  return [
+    "test",
+    "--cached-only",
+    "--frozen",
+    "--no-prompt",
+    "--quiet",
+    ...FAST_TEST_PERMISSIONS,
+    ...files,
+  ];
 }
 
 export async function runFastPreflight(
@@ -185,10 +101,63 @@ export async function runFastPreflight(
 ): Promise<FastCheckResult[]> {
   const manifest = options.manifest ?? FAST_CHECK_MANIFEST;
   const executor = options.executor ?? new DenoTestExecutor();
+  const timeoutMs = options.timeoutMs ?? FAST_COMPONENT_TIMEOUT_MS;
+  const concurrency = options.concurrency ?? FAST_MAX_CONCURRENCY;
   validateFastManifest(manifest);
-  return await Promise.all(
-    manifest.map((check) => runFastCheck(check, executor)),
+  validateExecutionOptions(timeoutMs, concurrency);
+  return await runManifest(
+    manifest,
+    executor,
+    timeoutMs,
+    concurrency,
   );
+}
+
+async function runManifest(
+  manifest: readonly FastCheckDefinition[],
+  executor: FastCheckExecutor,
+  timeoutMs: number,
+  concurrency: number,
+): Promise<FastCheckResult[]> {
+  const results = new Array<FastCheckResult>(manifest.length);
+  const cursor = { nextIndex: 0 };
+  const workerCount = Math.min(concurrency, manifest.length);
+  await Promise.all(
+    Array.from(
+      { length: workerCount },
+      () => runManifestWorker(manifest, results, cursor, executor, timeoutMs),
+    ),
+  );
+  return results;
+}
+
+async function runManifestWorker(
+  manifest: readonly FastCheckDefinition[],
+  results: FastCheckResult[],
+  cursor: { nextIndex: number },
+  executor: FastCheckExecutor,
+  timeoutMs: number,
+): Promise<void> {
+  while (cursor.nextIndex < manifest.length) {
+    const index = cursor.nextIndex++;
+    results[index] = await runFastCheck(manifest[index], executor, timeoutMs);
+  }
+}
+
+function validateExecutionOptions(
+  timeoutMs: number,
+  concurrency: number,
+): void {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new Error(
+      `Fast component timeout "${timeoutMs}" is invalid; expected a positive finite number.`,
+    );
+  }
+  if (!Number.isInteger(concurrency) || concurrency <= 0) {
+    throw new Error(
+      `Fast preflight concurrency "${concurrency}" is invalid; expected a positive integer.`,
+    );
+  }
 }
 
 export function hasIncludedFailures(
@@ -213,17 +182,58 @@ export function formatFastPreflight(
 export class DenoTestExecutor implements FastCheckExecutor {
   constructor(private readonly executable = Deno.execPath()) {}
 
-  async execute(check: FastCheckDefinition): Promise<FastCheckExecution> {
-    const command = new Deno.Command(this.executable, {
+  async execute(
+    check: FastCheckDefinition,
+    options: FastCheckExecutionOptions = {
+      timeoutMs: FAST_COMPONENT_TIMEOUT_MS,
+    },
+  ): Promise<FastCheckExecution> {
+    const child = new Deno.Command(this.executable, {
       args: buildDenoTestArgs(check.files),
       stdout: "piped",
       stderr: "piped",
-    });
-    const output = await command.output();
+    }).spawn();
+    return await collectChildOutput(check, child, options.timeoutMs);
+  }
+}
+
+interface ChildExecutionState {
+  timedOut: boolean;
+}
+
+async function collectChildOutput(
+  check: FastCheckDefinition,
+  child: Deno.ChildProcess,
+  timeoutMs: number,
+): Promise<FastCheckExecution> {
+  const state: ChildExecutionState = { timedOut: false };
+  const timeoutId = setTimeout(() => {
+    state.timedOut = true;
+    terminateChild(child);
+  }, timeoutMs);
+  try {
+    return await readChildOutput(check, child, timeoutMs, state);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function readChildOutput(
+  check: FastCheckDefinition,
+  child: Deno.ChildProcess,
+  timeoutMs: number,
+  state: ChildExecutionState,
+): Promise<FastCheckExecution> {
+  try {
+    const output = await child.output();
+    if (state.timedOut) return timeoutExecution(check, timeoutMs);
     return {
       success: output.success,
       output: decodeCommandOutput(output.stdout, output.stderr),
     };
+  } catch (error) {
+    if (state.timedOut) return timeoutExecution(check, timeoutMs);
+    throw error;
   }
 }
 
@@ -233,55 +243,18 @@ class ControlledFailureExecutor implements FastCheckExecutor {
     private readonly failedId: string,
   ) {}
 
-  execute(check: FastCheckDefinition): Promise<FastCheckExecution> {
+  execute(
+    check: FastCheckDefinition,
+    options?: FastCheckExecutionOptions,
+  ): Promise<FastCheckExecution> {
     if (check.id === this.failedId) {
       return Promise.resolve({
         success: false,
         output: "controlled component failure",
       });
     }
-    return this.delegate.execute(check);
+    return this.delegate.execute(check, options);
   }
-}
-
-function includedCheck(
-  id: string,
-  label: string,
-  files: readonly string[],
-): FastCheckDefinition {
-  return {
-    id,
-    label,
-    mode: "included",
-    files,
-    adapter: "deterministic-test-adapter",
-    fallbackPolicy: "forbidden",
-  };
-}
-
-function skippedCheck(
-  id: string,
-  label: string,
-  reason: string,
-): FastCheckDefinition {
-  return manifestOnlyCheck(id, label, "skipped", reason);
-}
-
-function unavailableCheck(
-  id: string,
-  label: string,
-  reason: string,
-): FastCheckDefinition {
-  return manifestOnlyCheck(id, label, "unavailable", reason);
-}
-
-function manifestOnlyCheck(
-  id: string,
-  label: string,
-  mode: "skipped" | "unavailable",
-  reason: string,
-): FastCheckDefinition {
-  return { id, label, mode, files: [], reason, fallbackPolicy: "forbidden" };
 }
 
 function validateUniqueId(
@@ -333,14 +306,37 @@ function validateIncludedCheck(check: FastCheckDefinition): void {
 async function runFastCheck(
   check: FastCheckDefinition,
   executor: FastCheckExecutor,
+  timeoutMs: number,
 ): Promise<FastCheckResult> {
   if (check.mode !== "included") return manifestResult(check);
   const startedAt = performance.now();
   try {
-    const execution = await executor.execute(check);
+    const execution = await executeWithTimeout(check, executor, timeoutMs);
     return executionResult(check, execution, performance.now() - startedAt);
   } catch (error) {
     return executionFailure(check, error, performance.now() - startedAt);
+  }
+}
+
+async function executeWithTimeout(
+  check: FastCheckDefinition,
+  executor: FastCheckExecutor,
+  timeoutMs: number,
+): Promise<FastCheckExecution> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<FastCheckExecution>((resolve) => {
+    timeoutId = setTimeout(
+      () => resolve(timeoutExecution(check, timeoutMs)),
+      timeoutMs,
+    );
+  });
+  try {
+    return await Promise.race([
+      executor.execute(check, { timeoutMs }),
+      timeout,
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 }
 
@@ -386,6 +382,24 @@ function executionFailure(
     { success: false, output: `Failed to execute component: ${message}` },
     durationMs,
   );
+}
+
+function timeoutExecution(
+  check: FastCheckDefinition,
+  timeoutMs: number,
+): FastCheckExecution {
+  return {
+    success: false,
+    output: `Component "${check.id}" timed out after ${timeoutMs}ms.`,
+  };
+}
+
+function terminateChild(child: Deno.ChildProcess): void {
+  try {
+    child.kill("SIGTERM");
+  } catch {
+    // The child may exit between timeout and termination; the result stays failed.
+  }
 }
 
 function roundedMilliseconds(durationMs: number): number {

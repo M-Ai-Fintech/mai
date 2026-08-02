@@ -4,6 +4,7 @@ import {
   REFERENCE_RUN_COUNT,
   runReferenceBenchmark,
 } from "./verify_fast_benchmark.ts";
+import { FAST_CHECK_MANIFEST } from "./verify_fast.ts";
 import type {
   FastCheckDefinition,
   FastCheckExecution,
@@ -25,14 +26,26 @@ Deno.test("reference benchmark executes all ten requested runs", async () => {
 
   assertEquals(result.runs, REFERENCE_RUN_COUNT);
   assertEquals(result.durationsMs.length, REFERENCE_RUN_COUNT);
-  assertEquals(executor.runCount > REFERENCE_RUN_COUNT, true);
+  const includedIds = FAST_CHECK_MANIFEST.filter((check) =>
+    check.mode === "included"
+  )
+    .map((check) => check.id);
+  assertEquals(executor.runCount, REFERENCE_RUN_COUNT * includedIds.length);
+  for (const id of includedIds) {
+    assertEquals(
+      executor.executedIds.filter((executedId) => executedId === id).length,
+      REFERENCE_RUN_COUNT,
+    );
+  }
 });
 
 class CountingFastCheckExecutor implements FastCheckExecutor {
   runCount = 0;
+  executedIds: string[] = [];
 
-  execute(_check: FastCheckDefinition): Promise<FastCheckExecution> {
+  execute(check: FastCheckDefinition): Promise<FastCheckExecution> {
     this.runCount += 1;
+    this.executedIds.push(check.id);
     return Promise.resolve({ success: true, output: "" });
   }
 }

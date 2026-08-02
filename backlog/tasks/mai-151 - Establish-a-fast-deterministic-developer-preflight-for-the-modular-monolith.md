@@ -4,7 +4,7 @@ title: Establish a fast deterministic developer preflight for the modular monoli
 status: In Progress
 assignee: []
 created_date: '2026-07-31 17:33'
-updated_date: '2026-08-02 03:27'
+updated_date: '2026-08-02 03:48'
 labels:
   - backend
   - architecture
@@ -23,6 +23,7 @@ references:
 modified_files:
   - deno.json
   - scripts/verify_fast.ts
+  - scripts/verify_fast_manifest.ts
   - scripts/verify_fast_test.ts
   - scripts/verify_fast_benchmark.ts
   - scripts/verify_fast_benchmark_test.ts
@@ -127,6 +128,10 @@ Canonical gate evidence (2026-08-02): the completed sandbox run `time deno task 
 PR handoff blocker (2026-08-02): local commit `84d915d` was created successfully on `delivery/MAI-151-fast-developer-preflight`. `git push -u origin delivery/MAI-151-fast-developer-preflight` was rejected by the execution safety reviewer because it would externally transmit repository source and task data to `https://github.com/luisfelipeluis49/mai`. No push or PR was created. Explicit owner approval of that exact remote destination is required before continuing; task remains In Progress.
 
 Draft PR #42 created: https://github.com/luisfelipeluis49/mai/pull/42. Branch delivery/MAI-151-fast-developer-preflight is pushed with commits 174cb6f and 84d915d. Owner review is pending; task remains In Progress and no merge or Done transition was performed.
+
+PR review hardening (2026-08-02): added --cached-only and --frozen to both fast tasks and every child test command, scoped runner reads to the repository and subprocess execution to Deno, and added tests for the dependency-resolution boundary. The runner now caps included checks at four concurrent components, applies a 5000 ms component timeout, terminates timed-out Deno children, and reports timeout failures as FAILED. Benchmark coverage now asserts every included manifest ID executes exactly ten times. Hardened network-disabled benchmark on linux/x86_64 with Deno 2.9.3 and a pre-populated cache: 1225, 1199, 1162, 1193, 1086, 1129, 1128, 1140, 1114, 1129 ms; p95 1225 ms, target passed. Focused cached/frozen tests exited 0 with 19 passed. Canonical deno task verify rerun exited 1 after 35.770s: documentation, backend Deno tests, and static GUI checks passed; environment-only GUI checks failed on sandbox spawnSync git EPERM and missing vitest, next, playwright, and storybook. Task remains In Progress; canonical gate is not claimed as passing.
+
+Final post-refactor evidence (2026-08-02): deno task verify:fast exited 0 with 11 passed, 0 failed, 5 skipped, and 2 unavailable under cached/frozen, scoped permissions. Focused cached/frozen tests exited 0 with 19 passed. The final network-disabled ten-run benchmark on linux/x86_64 with Deno 2.9.3 recorded 1135, 1137, 1187, 1148, 1125, 1109, 1153, 1121, 1124, and 1136 ms; p95 1187 ms, target passed. The final canonical deno task verify rerun exited 1 after 34.331s because the environment still lacks GUI tooling and blocks git subprocesses; this remains a non-pass and owner follow-up.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
