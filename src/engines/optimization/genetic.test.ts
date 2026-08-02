@@ -131,3 +131,20 @@ Deno.test("optimizeDeal returns distinct alternatives and generates benchmark", 
   assert(executionTimeMs < 500, "Execution time should be under 500ms");
   await writeBenchmark(executionTimeMs, alternatives);
 });
+
+Deno.test("optimizeDeal compatibility adapter replays a seeded result", () => {
+  const first = optimizeDeal(standardProfile, {
+    populationSize: 30,
+    generations: 12,
+    seed: 146,
+    crossoverRate: 0.8,
+  });
+  const replay = optimizeDeal(standardProfile, {
+    populationSize: 30,
+    generations: 12,
+    seed: 146,
+    crossoverRate: 0.8,
+  });
+
+  assertEquals(replay, first);
+});

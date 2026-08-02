@@ -1,10 +1,10 @@
 ---
 id: MAI-146
 title: Harden negotiation term-sheet proposal optimization
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-01 11:14'
+updated_date: '2026-08-02 01:48'
 labels:
   - backend
   - architecture
@@ -15,6 +15,18 @@ labels:
   - delivery-wave-a
 milestone: m-12
 dependencies: []
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/37'
+modified_files:
+  - src/engines/optimization/genetic.ts
+  - src/engines/optimization/genetic.test.ts
+  - src/engines/optimization/negotiation/constraints.ts
+  - src/engines/optimization/negotiation/index.ts
+  - src/engines/optimization/negotiation/optimizer.test.ts
+  - src/engines/optimization/negotiation/optimizer.ts
+  - src/engines/optimization/negotiation/random.ts
+  - src/engines/optimization/negotiation/types.ts
+  - src/engines/optimization/negotiation/utility.ts
 priority: high
 ordinal: 10600
 ---
@@ -87,10 +99,12 @@ Record relationships:
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inventory optimizer, schemas, and tests; isolate from proposal lifecycle and send/release routes.
-2. Define typed constraints/utilities, reservation bounds, seed/replay metadata, convergence, alternatives, and explanations.
-3. Harden pure deterministic/seeded optimization without workflow, KYC, approval, acceptance, communication, or finalization.
-4. Add golden, replay, convergence, boundary, and infeasibility tests; run focused checks and deno task verify.
+1. Inventory and preserve the legacy genetic, matching, constraint, agent, API, and CLI boundaries; do not modify matching selection/valuation or read-only shared consumers.
+2. Add negotiation-owned typed contracts for proposal dimensions, versioned bounds and constraint metadata, buyer/seller utility definitions with normalized units, reservation floors, seeded replay metadata, and termination limits.
+3. Implement a pure seeded negotiation optimizer with explicit crossoverRate, bounded proposals, all-violation explanations, ranked alternatives, infeasibility reporting, and convergence termination.
+4. Route legacy genetic optimizeDeal calls through an explicit compatibility adapter while preserving existing helper exports and consumer signatures.
+5. Add golden, determinism/replay, convergence, boundary, infeasibility, compatibility, and benchmark tests; run focused checks and deno task verify.
+6. Record exact evidence in Backlog, commit task-scoped changes, push the isolated branch, and open a human-reviewable PR; keep MAI-146 In Progress and do not merge or mark Done.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -147,6 +161,24 @@ Legacy proposal-constraint migration boundary
     - create an authoritative negotiation decision.
 
 12. Existing genetic and constraint code remains migration evidence until MAI-146 establishes replacement coverage.
+
+Discovery fallback: Graphify was explicitly disabled by prompts/wave_a/MAI-146.md; focused rg and source/test inspection scoped the implementation. Remote Backlog refresh and GitHub API checks hit the worktree FETCH_HEAD read-only/network limitation; local task reads and edits work. Branch: delivery/MAI-146-negotiation-proposal-optimization.
+
+Ownership handoff: src/engines/optimization/index.ts:41 optimizeWithConstraints, src/api/routes/legacy.ts:171, and src/cli/term-sheet-command.ts:69 remain read-only legacy consumers by the MAI-146 parallel contract. Proposed coordinator migration contract: import optimizeNegotiationProposal from src/engines/optimization/negotiation/index.ts with NegotiationOptimizerInput and consume NegotiationOptimizerResult.alternatives/violations; preserve route-specific DTOs and do not add approval/send/finalization behavior. src/agent/tools/core_tools.ts:171 is routed through genetic.ts optimizeDeal compatibility without editing the read-only agent surface.
+
+Verification evidence: targeted command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 32 tests. deno fmt --check src/engines/optimization/genetic.ts src/engines/optimization/negotiation passed; deno check src/engines/optimization/negotiation/index.ts src/engines/optimization/genetic.ts passed; git diff --check passed. Benchmark bench/ga-convergence.json recorded optimizeDeal with populationSize 100 and generations 10 at 23.055440000000004ms on the reference runner. deno task verify passed canonical docs, i18n, Deno tests, token/component/shell/screen/conformance boundaries; it remains non-passing because frontend-foundation cannot spawn git (EPERM in the sandbox), and the GUI Next build was still running without output when the second retry was interrupted. GUI dependencies were installed into ignored gui/node_modules (555 packages; npm reported 7 audit vulnerabilities).
+
+PR handoff: commit bb0b124 pushed to delivery/MAI-146-negotiation-proposal-optimization; draft PR #37 opened at https://github.com/luisfelipeluis49/mai/pull/37 against master. Human review, environment-limited frontend verification, and read-only consumer migration remain pending. Per prompt, MAI-146 stays In Progress and is not marked Done.
+
+Handoff correction: cda63a2 chore(MAI-146): record draft PR handoff was subsequently pushed to PR #37; the remote head is cda63a2710325ea15c683e5e224f842300d35ca3.
+
+Correction (2026-08-01): sampleAllocation now reserves later minimums in the current maximum (remaining minus laterMinimumSum) for initial and resampled allocations, and throws an explicit invalid allocation-bounds error when computed minimum exceeds maximum. Added an exact-minimum tight-bound regression and multi-seed property-style bound, sum, and replay coverage with mutationRate=1. Focused command DENO_ENV=test deno test --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net src/engines/optimization tests/engines/optimization.spec.ts passed 34 tests; targeted type, format, and diff checks passed. Legacy adapter fixed bounds, weights, directions, and 0.2 reservation floors remain named compatibility defaults with metadata explicitly stating they are not authoritative mandate policy; negotiation-owned inputs remain mandate authority. Task remains In Progress pending canonical gate and human review.
+
+Canonical gate rerun for the correction: deno task verify reached all listed backend and intermediate frontend boundaries, then reported spawnSync git EPERM in gui/scripts/verify-frontend-foundation.mjs; the subsequent Next.js production build produced no output and was interrupted with exit 130. This is the existing sandbox/GUI environment limitation, not an optimization test failure.
+
+Published correction commit 3a8f650 after rebasing onto remote merge 096d16e; pushed successfully to delivery/MAI-146-negotiation-proposal-optimization. PR #37 now reports head 3a8f650, open, unmerged, and Draft; task remains In Progress.
+
+The subsequent Backlog-only handoff commit is included in PR #37; the PR remains open, unmerged, and Draft, with no owner approval or merge performed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
