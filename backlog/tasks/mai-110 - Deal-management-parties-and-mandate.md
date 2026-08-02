@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 06:53'
+updated_date: '2026-08-02 06:56'
 labels:
   - backend
   - architecture
@@ -19,6 +19,8 @@ milestone: m-12
 dependencies:
   - MAI-107
   - MAI-108
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/43'
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
@@ -121,4 +123,8 @@ Focused evidence: DENO_ENV=test deno test --env --allow-read --allow-write --all
 Broader evidence: deno task test -> 435 passed, 0 failed, 23 ignored. DENO_ENV=test deno task verify -> Deno tests and documentation/i18n/token gates passed, but canonical verification was non-passing because gui/scripts/verify-frontend-foundation.mjs hit spawnSync git EPERM and GUI dependencies vitest, next, playwright, and storybook were unavailable. This is an environment gate, not a pass. Migration tests cover additive ownership, no DROP, rollback retention notes, and unregistered context routing; PostgreSQL Deal integration is present but ignored without MAI106_DATABASE_URL.
 
 Final post-edit evidence: deno task test exited 0 with 435 passed, 0 failed, 23 ignored. DENO_ENV=test deno task verify exited 1; PASS Canonical documentation, I18n Strings Check, Deno tests, frontend design tokens, component/shell/screen/Figma conformance and Storybook documentation; FAIL frontend foundation boundary (spawnSync git EPERM), GUI unit tests (vitest not found), Next.js production build (next not found), frontend principal workflows (playwright not found), Storybook build (storybook not found), and Storybook interaction tests (vitest not found).
+
+Handoff: commit 1c62c2f feat(MAI-110): add deal management core. Draft PR opened at https://github.com/luisfelipeluis49/mai/pull/43. PR is intentionally unapproved and unmerged; owner review, GUI dependency installation/environment repair, and canonical verification rerun remain pending. Task stays In Progress.
+
+Live PR check: PR #43 is OPEN and Draft against master with mergeStateStatus CLEAN, no review decision, and no status checks reported yet. No approval or merge was performed.
 <!-- SECTION:NOTES:END -->
