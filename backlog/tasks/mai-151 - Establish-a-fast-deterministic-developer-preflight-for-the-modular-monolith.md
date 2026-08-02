@@ -1,10 +1,10 @@
 ---
 id: MAI-151
 title: Establish a fast deterministic developer preflight for the modular monolith
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-31 17:33'
-updated_date: '2026-08-02 03:50'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -75,27 +75,27 @@ Relationships:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 One documented command exists, preferably: deno task verify:fast or an equivalently clear non-product name.
-- [ ] #2 The command is explicitly developer/operator tooling and is not registered as a banker-facing interactive CLI command.
-- [ ] #3 The command runs with network access disabled.
-- [ ] #4 The command does not require a live PostgreSQL server.
-- [ ] #5 The command does not require Gemini, Papermark, Transformers downloads, cloud credentials, VDR credentials, or identity-provider credentials.
-- [ ] #6 Every fixture, fake, or in-memory adapter used by the preflight is selected explicitly and labelled as a test adapter.
-- [ ] #7 A failed live dependency must not silently cause selection of a fixture adapter.
-- [ ] #8 The included-check manifest covers the currently approved fast critical boundaries, including as applicable: core API contract parsing; authorization policy evaluation; Deal terminology enforcement; deterministic workflow transitions; persistence contract types; durable-job state mechanics; outbox/inbox contract mechanics; Target Dossier proposal boundary; term-sheet contract separation; DomainArea and RiskSeverity contracts.
-- [ ] #9 The preflight excludes checks that require: live providers; external network access; production builds; Storybook browser execution; cloud infrastructure; long-running model downloads.
-- [ ] #10 Excluded checks are documented and remain covered by deno task verify, deno task verify:integration, or their owning implementation tasks.
-- [ ] #11 The command reports each component as: passed; failed; skipped by explicit manifest; unavailable by explicit configuration.
-- [ ] #12 It never prints a static "database healthy", "network healthy", "provider healthy", or equivalent message without executing the corresponding real check.
-- [ ] #13 Any failed included component causes a non-zero final exit code.
-- [ ] #14 The command uses only the minimum required Deno permissions.
-- [ ] #15 The command is deterministic for identical repository state and fixture inputs.
-- [ ] #16 A controlled failing test proves failure propagation.
-- [ ] #17 A reference-runner benchmark records at least ten runs.
-- [ ] #18 The initial p95 execution target is no more than five seconds on the documented reference runner.
-- [ ] #19 The five-second target is not represented as a universal cross-machine SLA.
-- [ ] #20 Documentation explains the difference between: fast preflight; canonical repository verification; live integration verification; deployed environment health checks.
-- [ ] #21 Focused tests and deno task verify pass.
+- [x] #1 One documented command exists, preferably: deno task verify:fast or an equivalently clear non-product name.
+- [x] #2 The command is explicitly developer/operator tooling and is not registered as a banker-facing interactive CLI command.
+- [x] #3 The command runs with network access disabled.
+- [x] #4 The command does not require a live PostgreSQL server.
+- [x] #5 The command does not require Gemini, Papermark, Transformers downloads, cloud credentials, VDR credentials, or identity-provider credentials.
+- [x] #6 Every fixture, fake, or in-memory adapter used by the preflight is selected explicitly and labelled as a test adapter.
+- [x] #7 A failed live dependency must not silently cause selection of a fixture adapter.
+- [x] #8 The included-check manifest covers the currently approved fast critical boundaries, including as applicable: core API contract parsing; authorization policy evaluation; Deal terminology enforcement; deterministic workflow transitions; persistence contract types; durable-job state mechanics; outbox/inbox contract mechanics; Target Dossier proposal boundary; term-sheet contract separation; DomainArea and RiskSeverity contracts.
+- [x] #9 The preflight excludes checks that require: live providers; external network access; production builds; Storybook browser execution; cloud infrastructure; long-running model downloads.
+- [x] #10 Excluded checks are documented and remain covered by deno task verify, deno task verify:integration, or their owning implementation tasks.
+- [x] #11 The command reports each component as: passed; failed; skipped by explicit manifest; unavailable by explicit configuration.
+- [x] #12 It never prints a static "database healthy", "network healthy", "provider healthy", or equivalent message without executing the corresponding real check.
+- [x] #13 Any failed included component causes a non-zero final exit code.
+- [x] #14 The command uses only the minimum required Deno permissions.
+- [x] #15 The command is deterministic for identical repository state and fixture inputs.
+- [x] #16 A controlled failing test proves failure propagation.
+- [x] #17 A reference-runner benchmark records at least ten runs.
+- [x] #18 The initial p95 execution target is no more than five seconds on the documented reference runner.
+- [x] #19 The five-second target is not represented as a universal cross-machine SLA.
+- [x] #20 Documentation explains the difference between: fast preflight; canonical repository verification; live integration verification; deployed environment health checks.
+- [x] #21 Focused tests and deno task verify pass.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -134,19 +134,27 @@ PR review hardening (2026-08-02): added --cached-only and --frozen to both fast 
 Final post-refactor evidence (2026-08-02): deno task verify:fast exited 0 with 11 passed, 0 failed, 5 skipped, and 2 unavailable under cached/frozen, scoped permissions. Focused cached/frozen tests exited 0 with 19 passed. The final network-disabled ten-run benchmark on linux/x86_64 with Deno 2.9.3 recorded 1135, 1137, 1187, 1148, 1125, 1109, 1153, 1121, 1124, and 1136 ms; p95 1187 ms, target passed. The final canonical deno task verify rerun exited 1 after 34.331s because the environment still lacks GUI tooling and blocks git subprocesses; this remains a non-pass and owner follow-up.
 
 Review handoff complete (2026-08-02): commit 7c4a9c3 is pushed to delivery/MAI-151-fast-developer-preflight and PR #42 body is updated with the blocking review corrections and final evidence. PR remains Draft; task remains In Progress.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #42 is merged on master at d1f2af09; the offline minimum-permission fast preflight, explicit included/excluded manifest, fail-closed dependency boundary, controlled failure propagation, and ten-run benchmark evidence were reviewed. deno task verify:fast completed with 11 passed, 0 failed, 5 skipped, and 2 unavailable; the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the deterministic offline developer preflight in merged PR #42, with explicit manifest statuses, minimum permissions, controlled failure propagation, dependency-boundary tests, and reference-runner benchmark evidence. Verified deno task verify:fast and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every acceptance criterion is checked with current evidence.
-- [ ] #2 The preflight command is documented and reproducible.
-- [ ] #3 The included and excluded check manifests are explicit.
-- [ ] #4 Offline and minimum-permission execution is proven.
-- [ ] #5 Deterministic fixtures cannot be selected through silent production fallback.
-- [ ] #6 Controlled failure propagation is proven.
-- [ ] #7 Reference-runner timing evidence is recorded.
-- [ ] #8 MAI-131 depends on MAI-151.
-- [ ] #9 MAI-79 remains the authoritative complete verification gate.
-- [ ] #10 No banker-facing CLI command was introduced.
-- [ ] #11 The canonical repository verification gate passes.
+- [x] #1 Every acceptance criterion is checked with current evidence.
+- [x] #2 The preflight command is documented and reproducible.
+- [x] #3 The included and excluded check manifests are explicit.
+- [x] #4 Offline and minimum-permission execution is proven.
+- [x] #5 Deterministic fixtures cannot be selected through silent production fallback.
+- [x] #6 Controlled failure propagation is proven.
+- [x] #7 Reference-runner timing evidence is recorded.
+- [x] #8 MAI-131 depends on MAI-151.
+- [x] #9 MAI-79 remains the authoritative complete verification gate.
+- [x] #10 No banker-facing CLI command was introduced.
+- [x] #11 The canonical repository verification gate passes.
 <!-- DOD:END -->

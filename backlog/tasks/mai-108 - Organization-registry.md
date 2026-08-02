@@ -1,11 +1,11 @@
 ---
 id: MAI-108
 title: Organization registry
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 01:32'
+updated_date: '2026-08-02 04:34'
 labels:
   - backend
   - architecture
@@ -100,9 +100,9 @@ Low complexity; Wave 3 parallel with BE-P04 and BE-P08. Recommended model: gpt-5
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Organization, legal entity and person invariants, merge history and restricted PII omission pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Organization, legal entity and person invariants, merge history and restricted PII omission pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -132,4 +132,12 @@ PR handoff 2026-08-01: draft PR #40 opened at https://github.com/luisfelipeluis4
 Review correction 2026-08-01: update patches now distinguish undefined (unchanged), null (clear), and a value (validate and replace) for organization externalReference plus Person organizationId, email, phone, and nationalId. Cleared fields are removed from aggregate objects and omitted by approved read projections; versioning and command replay behavior are covered by the new lifecycle regression test. The service no longer defaults to an in-memory receipt store; RegistryCommandReceiptStore is now required and tests explicitly inject InMemoryRegistryCommandReceiptStore. Red test first failed on null type assignments, then passed after the fix. Validation: DENO_ENV=test deno test --allow-read --allow-env tests/organization_registry/*.spec.ts passed 14, 0 failed; DENO_ENV=test deno task test passed 318, 0 failed, 22 ignored; deno check, deno lint, deno fmt --check, and git diff --check passed. deno task verify exited 1 only on frontend foundation spawnSync git EPERM and missing vitest, next, playwright, or storybook.
 
 Correction PR update 2026-08-01: fix(MAI-108) commit 58567f0688cc72e9bea2f7f0604fb218c94157ba was pushed to draft PR #40. The PR description now documents undefined/null/value semantics, cleared-field projection behavior, replay coverage, and required receipt-store injection. PR remains open and draft; task remains In Progress.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #40 is merged on master at 250ef374; merged organization-registry source and focused invariant, merge-history, migration, and restricted-PII checks were reviewed. The final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the organization, legal-entity, and person registry with versioned lifecycle, merge history, restricted-PII projections, and explicit update semantics in merged PR #40. Verified registry lifecycle/migration/projection checks and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->

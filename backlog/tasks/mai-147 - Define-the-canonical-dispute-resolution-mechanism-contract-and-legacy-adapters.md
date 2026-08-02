@@ -1,11 +1,11 @@
 ---
 id: MAI-147
 title: Define the canonical dispute-resolution mechanism contract and legacy adapters
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:06'
-updated_date: '2026-08-01 12:04'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -106,6 +106,8 @@ Implementation and verification evidence (2026-08-01):
 - Final elevated `deno task verify` passed with exit 0. Every reported gate passed: canonical documentation, i18n, Deno tests, frontend token/foundation/component/shell/screen/conformance checks, GUI unit tests, Next production build, principal workflows, and Storybook documentation/build/interaction tests.
 - GUI dependencies were installed with `npm --prefix gui ci` because the sandbox could not spawn the package installer. npm reported 7 audit findings (3 moderate, 4 high); no audit fixes were applied because dependency remediation is outside this task.
 - The prompt explicitly excluded Graphify, so discovery used focused source inspection and rg. Remote duplicate/PR verification remains unavailable because GitHub/network access failed and Backlog remote fetch could not write the shared worktree FETCH_HEAD; local branch ownership is clear.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #33 is merged on master at f9bf3d86; the shared versioned dispute-resolution contract, arbitration/court separation, legacy adapters, explicit non-canonical institutions, and persistence/API representation were reviewed. All acceptance criteria and Definition of Done items were already checked, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -117,6 +119,12 @@ created: 2026-08-01 12:04
 Draft PR #33 opened from commit 969f837658ffd01e280c3f4b01cc02c5edd1e07d: https://github.com/luisfelipeluis49/mai/pull/33. Human review is required; the PR is intentionally unmerged and MAI-147 remains In Progress. No self-merge or Done transition was performed.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the canonical versioned dispute-resolution contract and tested legacy adapters in merged PR #33. Verified arbitration/court separation, explicit institution handling, serialization/parsing, compatibility behavior, and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->

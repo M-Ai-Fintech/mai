@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:02'
-updated_date: '2026-08-02 01:29'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -87,8 +87,6 @@ Record relationships:
 - [x] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
 
-
-
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
@@ -146,6 +144,8 @@ Local delivery 2026-08-01: implementation commit 24bc5b1 and Backlog evidence co
 Publication retry 2026-08-02: shell git push remained unavailable because both elevated permission reviews timed out before execution. The connected GitHub app successfully recreated the scoped branch from remote merge base b66526ef2410be9d3273f483904dbeddf6aab853 as remote commit e92acb56a5c2b46fb30d14096139f74c0a4c1018, verified 16 scoped files with no graphify-out changes, and opened draft PR #41 at https://github.com/luisfelipeluis49/mai/pull/41. PR is open, draft, unmerged, and MAI-144 remains In Progress.
 
 Pre-merge gate 2026-08-02: GitHub branch was rebased onto current master bdecd20528cb3ae4b17256f09ecb1169cfe03306; compare reports 1 commit ahead and 0 behind, with merge base equal to master. Elevated npm --prefix gui ci --no-audit --no-fund completed successfully with 555 packages installed. Complete elevated DENO_ENV=test deno task verify exited 0 and passed canonical documentation, i18n, Deno tests, frontend design tokens, foundation, components, shell, screen families, deal screens, conformance, GUI unit tests, Next production build, frontend workflows, Storybook docs, Storybook build, and Storybook interaction tests. Explicit compatibility command completed with exit 0: 47 passed, 0 failed; .env warning only. PR #41 remains open, draft, unmerged; no self-merge or Done transition.
+
+Wave A closure audit 2026-08-02: owner-approved PR #41 is merged on master at cbdeed4e, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. The verified criteria cover the typed deterministic calculation core, explicit financial semantics/errors, golden and edge vectors, compatibility valuation adapters, performance evidence, and scoped exclusions. AC #11 and DoD #1/#2/#4 remain intentionally unchecked: legacy agent synergy logic in src/agent/tools/memory_tools.ts and read-only legacy consumer migration still require the coordinator follow-up described in the task notes. The task remains In Progress; no feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:51'
-updated_date: '2026-08-01 12:31'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -123,30 +123,30 @@ The final security and operational production-candidate decision remains under M
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 The selected cloud provider, regions, account/project structure, and deployment topology are explicitly approved and recorded.
-- [ ] #2 The topology deploys the modular monolith and only those worker or job processes justified by runtime, scaling, isolation, or failure-boundary requirements.
-- [ ] #3 The topology does not create arbitrary Core, Agent, or Engine microservices merely to reproduce the prototype structure.
+- [x] #2 The topology deploys the modular monolith and only those worker or job processes justified by runtime, scaling, isolation, or failure-boundary requirements.
+- [x] #3 The topology does not create arbitrary Core, Agent, or Engine microservices merely to reproduce the prototype structure.
 - [ ] #4 Infrastructure as code reproducibly provisions the approved development, staging, and production environment boundaries.
 - [ ] #5 Infrastructure state uses an approved remote backend, access control, locking or concurrency protection, backup, and recovery procedure.
-- [ ] #6 Runtime services and jobs define: ownership; command or entry point; health and readiness behavior; CPU and memory limits; timeout; concurrency; minimum and maximum scaling; shutdown and drain behavior.
+- [x] #6 Runtime services and jobs define: ownership; command or entry point; health and readiness behavior; CPU and memory limits; timeout; concurrency; minimum and maximum scaling; shutdown and drain behavior.
 - [ ] #7 Managed PostgreSQL uses private or otherwise explicitly approved connectivity, approved availability settings, automated backups, point-in-time recovery, and a tested restoration procedure.
 - [ ] #8 The availability topology, replicas, failover behavior, RPO, and RTO are derived from approved requirements rather than enabled by assumption.
-- [ ] #9 Object storage defines: data classifications; tenant and environment boundaries; versioning; lifecycle; retention; legal-hold compatibility; deletion behavior; approved encryption controls.
+- [x] #9 Object storage defines: data classifications; tenant and environment boundaries; versioning; lifecycle; retention; legal-hold compatibility; deletion behavior; approved encryption controls.
 - [ ] #10 Secrets use the approved secrets manager or equivalent. No long-lived cloud-service credential is committed to the repository or required in CI.
 - [ ] #11 CI and deployment automation use workload identity federation or equivalent short-lived credentials.
 - [ ] #12 IAM follows least privilege and contains no production Owner, Editor, or equivalent broad grant without an explicit approved exception.
-- [ ] #13 Public ingress, private connectivity, network egress, administrative access, and service-to-service access are explicit and minimized.
-- [ ] #14 Transactional outbox, inbox, and durable jobs remain correct and recoverable without requiring a cloud message broker.
+- [x] #13 Public ingress, private connectivity, network egress, administrative access, and service-to-service access are explicit and minimized.
+- [x] #14 Transactional outbox, inbox, and durable jobs remain correct and recoverable without requiring a cloud message broker.
 - [ ] #15 Any cloud event or message transport is implemented behind the approved event interface and has explicit retry, dead-letter, idempotency, and operational semantics.
-- [ ] #16 Schema migrations execute through a controlled pre-traffic or compatibility-safe deployment step and are not owned by the deployment runtime itself.
+- [x] #16 Schema migrations execute through a controlled pre-traffic or compatibility-safe deployment step and are not owned by the deployment runtime itself.
 - [ ] #17 Staging smoke tests cover: application health; worker health; database connectivity; object-storage connectivity; secret resolution; durable-job execution; outbox dispatch; restart recovery.
 - [ ] #18 Deployment rollback is tested without deleting authoritative database, outbox, inbox, job, audit, evidence, or object-storage records.
-- [ ] #19 Logs, metrics, traces, correlation IDs, dashboards, alerts, and audit access are defined for application, worker, database, storage, and deployment operations.
-- [ ] #20 Sensitive fields and secrets are redacted from logs, traces, deployment output, and infrastructure state where applicable.
+- [x] #19 Logs, metrics, traces, correlation IDs, dashboards, alerts, and audit access are defined for application, worker, database, storage, and deployment operations.
+- [x] #20 Sensitive fields and secrets are redacted from logs, traces, deployment output, and infrastructure state where applicable.
 - [ ] #21 Budget controls, cost attribution, capacity thresholds, and unexpected spend alerts are configured.
 - [ ] #22 Backup and restoration evidence includes at least one executed restoration test in a non-production environment.
-- [ ] #23 Operational runbooks cover: deployment; rollback; database migration coordination; backup; restoration; incident response; credential rotation; failed-job recovery; capacity escalation.
-- [ ] #24 No provider, environment, control, or deployment is described as production-ready without executed environment-specific evidence.
-- [ ] #25 Infrastructure-focused verification and the canonical repository verification gate pass.
+- [x] #23 Operational runbooks cover: deployment; rollback; database migration coordination; backup; restoration; incident response; credential rotation; failed-job recovery; capacity escalation.
+- [x] #24 No provider, environment, control, or deployment is described as production-ready without executed environment-specific evidence.
+- [x] #25 Infrastructure-focused verification and the canonical repository verification gate pass.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -217,6 +217,8 @@ Implementation and evidence 2026-08-01: Added the provider-neutral MAI-148 infra
 Delivery handoff 2026-08-01: reviewed commit ef783f6b11e034d43132fff5825a5fcedd48ef7d exists locally and the worktree is clean. Branch push and draft PR were not completed: the external-action approval gate rejected pushing the full private code change to origin without explicit destination authorization, and gh auth status reports the configured GitHub token is invalid. No workaround, self-merge, or Done transition was performed; MAI-148 remains In Progress pending explicit push/PR authorization and valid GitHub credentials.
 
 Draft PR #35 opened through the GitHub connector on 2026-08-01: https://github.com/luisfelipeluis49/mai/pull/35. Head branch delivery/MAI-148-deployment-and-operations-foundation targets master and contains the MAI-148 implementation. The PR remains draft; no self-merge or Done transition was performed.
+
+Wave A closure audit 2026-08-02: owner-approved PR #35 is merged on master at 47ea2f6c, focused infrastructure validation/smoke checks passed, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. The verified criteria cover the modular-monolith topology, justified worker boundary, runtime contract, storage/network/security/observability controls, migration ownership, recovery-safe runbooks, explicit non-production-readiness boundary, and canonical verification. The remaining approval/execution gates stay unchecked: provider/topology approval, reproducible environment provisioning, remote state/locking, provider-specific IAM/secrets/network/storage controls, staging smoke/restart recovery, rollback, budget controls, and executed backup restoration. DoD #1-#7 remain open for the same evidence gaps. The task remains In Progress; no feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
@@ -228,7 +230,7 @@ Draft PR #35 opened through the GitHub connector on 2026-08-01: https://github.c
 - [ ] #5 IAM, secrets, ingress, egress, storage, encryption, and database controls have current review evidence.
 - [ ] #6 MAI-127, MAI-129, and MAI-131 depend on MAI-148.
 - [ ] #7 Infrastructure documentation and operational runbooks are current.
-- [ ] #8 No prototype service topology or local Pub/Sub implementation is treated as production authority.
-- [ ] #9 No business-domain, provider-certification, migration, frontend, or final release scope was absorbed into MAI-148.
-- [ ] #10 The canonical repository verification gate passes.
+- [x] #8 No prototype service topology or local Pub/Sub implementation is treated as production authority.
+- [x] #9 No business-domain, provider-certification, migration, frontend, or final release scope was absorbed into MAI-148.
+- [x] #10 The canonical repository verification gate passes.
 <!-- DOD:END -->

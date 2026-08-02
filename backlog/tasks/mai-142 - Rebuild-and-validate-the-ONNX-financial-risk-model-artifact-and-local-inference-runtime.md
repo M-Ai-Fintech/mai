@@ -3,10 +3,10 @@ id: MAI-142
 title: >-
   Rebuild and validate the ONNX financial-risk model artifact and local
   inference runtime
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-31 05:00'
-updated_date: '2026-08-01 12:23'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -121,16 +121,24 @@ Final verification evidence: focused Deno artifact/runtime suite exited 0 with 1
 Draft PR handoff: https://github.com/luisfelipeluis49/mai/pull/34 is open against master from delivery/MAI-142-onnx-artifact-and-runtime at commit 9199aaa5341b3ef2609095d08098471bda9ab196; the connector confirms draft=true, merged=false, and no merge commit. Human owner review and any required PR checks remain pending; the agent must not self-approve or merge. GitHub CLI token was invalid, but the connected GitHub action created the PR successfully.
 
 PR metadata refresh: after recording the reference, commit 077949f was pushed; PR #34 now has two commits, head SHA 077949f1f3df37739a406822b6bae225c386ee1b, remains open/draft/unmerged, and a human-review request comment was added.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #34 is merged on master at d701b183; the reproducible ONNX exporter, manifest/checksum, exact six-input/four-output runtime contract, typed failures, explicit fallback provenance, AppBootstrapper initialization, and benchmark evidence were reviewed. The final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the reproducible reference ONNX artifact and typed runtime contract in merged PR #34, including six-input validation, four-output mapping, checksum/manifest checks, typed failure paths, explicit fallback provenance, and initialization coverage. Verified focused model tests, reproducibility evidence, and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every acceptance criterion is checked with current evidence.
-- [ ] #2 A reproducible model-generation procedure and committed artifact manifest exist.
-- [ ] #3 The runtime enforces the complete six-input and four-output contract.
-- [ ] #4 Failure and fallback behavior is typed and tested.
-- [ ] #5 Existing MAI-34 and MAI-35 code and tests are retained as baseline or migration evidence unless explicitly replaced.
-- [ ] #6 Documentation distinguishes reference-runtime readiness from production model certification.
-- [ ] #7 The canonical repository verification gate passes.
-- [ ] #8 No mock, synthetic, fallback, or prototype capability is presented as production-ready.
+- [x] #1 Every acceptance criterion is checked with current evidence.
+- [x] #2 A reproducible model-generation procedure and committed artifact manifest exist.
+- [x] #3 The runtime enforces the complete six-input and four-output contract.
+- [x] #4 Failure and fallback behavior is typed and tested.
+- [x] #5 Existing MAI-34 and MAI-35 code and tests are retained as baseline or migration evidence unless explicitly replaced.
+- [x] #6 Documentation distinguishes reference-runtime readiness from production model certification.
+- [x] #7 The canonical repository verification gate passes.
+- [x] #8 No mock, synthetic, fallback, or prototype capability is presented as production-ready.
 <!-- DOD:END -->

@@ -1,10 +1,10 @@
 ---
 id: MAI-109
 title: Immutable audit and activity foundation
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 02:19'
+updated_date: '2026-08-02 04:34'
 labels:
   - backend
   - architecture
@@ -98,9 +98,9 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Audit is append-only; redaction is an overlay; projections rebuild deterministically; export access is audited.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Audit is append-only; redaction is an overlay; projections rebuild deterministically; export access is audited.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -128,4 +128,12 @@ Draft PR #39 is open for owner review at https://github.com/luisfelipeluis49/mai
 Payload-freezing correction: replaced generic object freezing with recursive strict JSON-compatible normalization. AuditPayload now rejects nested Date, undefined, functions, symbols, Map/Set/custom instances, nonfinite numbers, sparse/invalid arrays, symbol keys, and non-data properties; finite values and plain nested records/arrays are sorted, cloned, frozen, and -0 is canonicalized to 0. The same normalized payload drives digest calculation, PostgreSQL JSON serialization, stored-event freezing, and projection output. TDD evidence: the pre-fix regression loop was red (5 new rejection cases failed); after the fix focused DENO_ENV=test audit_activity tests passed 22/22, including nested payload projection and digest equality after freezing plus JSON persistence. Typecheck, deno fmt --check, deno lint, and git diff --check passed. Updated full deno task test passed 326 with 0 failures and 22 ignored. Updated deno task verify exited 1 only on the known environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook; canonical documentation, i18n, Deno tests, design tokens, component/shell/screen/Figma checks, and Storybook documentation passed. PR #39 remains Draft/In Review pending owner action; MAI-109 remains In Progress.
 
 Persisted snapshot hydration correction: added explicit parseAuthoritySnapshot, parseEvidenceSnapshot, and parseAuditProvenance parsers that validate complete nested structures and hydrate capturedAt timestamps; redaction overlays use the same authority parser. PostgreSQL NULL optionals are omitted during row conversion so canonical digest input remains unchanged. Added a named-fake database-row regression covering append JSON/JSONB serialization, event/evidence Date hydration, freezeAuditEvent, unchanged digest, redaction-overlay hydration, and projection. Focused deno test --allow-env --allow-read --allow-net tests/audit_activity/*.spec.ts passed 23/23; deno task test passed 327 with 0 failures and 22 ignored; deno check, deno fmt --check, deno lint, and git diff --check passed. deno task verify exited 1 only on known environment-bound GUI gates: frontend foundation spawnSync git EPERM and missing vitest, next, playwright, and storybook; Deno tests and other repository checks passed.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #39 is merged on master at 1cb23392; merged audit/activity source and focused append-only, redaction, hydration, digest, projection, and export checks were reviewed. The final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered append-only audit events, redaction overlays, deterministic projections, provenance, and audited export foundations in merged PR #39. Verified audit/activity checks and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->

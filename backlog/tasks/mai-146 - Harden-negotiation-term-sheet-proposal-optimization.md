@@ -4,7 +4,7 @@ title: Harden negotiation term-sheet proposal optimization
 status: In Progress
 assignee: []
 created_date: '2026-07-31 05:04'
-updated_date: '2026-08-02 01:48'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -64,16 +64,16 @@ Record relationships:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The optimizer is moved to or represented by a negotiation-owned namespace.
-- [ ] #2 Inputs and outputs use explicit typed contracts.
-- [ ] #3 Buyer and seller utility functions and their units are documented.
-- [ ] #4 Reservation utility constraints are enforced.
-- [ ] #5 Cash, equity, earn-out, timing, and non-compete dimensions are bounded by explicit contracts.
-- [ ] #6 Randomness is either removed or injected through a deterministic seeded random source.
-- [ ] #7 Identical inputs and seed produce identical results.
-- [ ] #8 The existing `crossoverRate` contract is either implemented and tested or removed through a versioned compatibility decision.
-- [ ] #9 Convergence and termination behavior is explicit.
-- [ ] #10 Results include sufficient explanation to show:
+- [x] #1 The optimizer is moved to or represented by a negotiation-owned namespace.
+- [x] #2 Inputs and outputs use explicit typed contracts.
+- [x] #3 Buyer and seller utility functions and their units are documented.
+- [x] #4 Reservation utility constraints are enforced.
+- [x] #5 Cash, equity, earn-out, timing, and non-compete dimensions are bounded by explicit contracts.
+- [x] #6 Randomness is either removed or injected through a deterministic seeded random source.
+- [x] #7 Identical inputs and seed produce identical results.
+- [x] #8 The existing `crossoverRate` contract is either implemented and tested or removed through a versioned compatibility decision.
+- [x] #9 Convergence and termination behavior is explicit.
+- [x] #10 Results include sufficient explanation to show:
 
     - objective;
     - constraints;
@@ -81,8 +81,8 @@ Record relationships:
     - seller utility;
     - fitness or selection basis;
     - seed or deterministic execution identity.
-- [ ] #11 The optimizer cannot send, approve, accept, or finalize terms.
-- [ ] #12 Tests cover:
+- [x] #11 The optimizer cannot send, approve, accept, or finalize terms.
+- [x] #12 Tests cover:
 
     - valid proposals;
     - infeasible reservation thresholds;
@@ -92,8 +92,8 @@ Record relationships:
     - invalid inputs;
     - no-authority behavior.
 - [ ] #13 Existing consumers are migrated or routed through explicit compatibility adapters.
-- [ ] #14 Representative benchmark evidence is recorded.
-- [ ] #15 Focused tests and `deno task verify` pass.
+- [x] #14 Representative benchmark evidence is recorded.
+- [x] #15 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -179,15 +179,17 @@ Canonical gate rerun for the correction: deno task verify reached all listed bac
 Published correction commit 3a8f650 after rebasing onto remote merge 096d16e; pushed successfully to delivery/MAI-146-negotiation-proposal-optimization. PR #37 now reports head 3a8f650, open, unmerged, and Draft; task remains In Progress.
 
 The subsequent Backlog-only handoff commit is included in PR #37; the PR remains open, unmerged, and Draft, with no owner approval or merge performed.
+
+Wave A closure audit 2026-08-02: owner-approved PR #37 is merged on master at e7730d22, and the final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. The verified criteria cover the negotiation-owned typed optimizer, utility/reservation contracts, bounded proposal dimensions, seeded replay, crossover behavior, convergence/termination, explanations, no-authority boundary, focused tests, and benchmark evidence. AC #13 and DoD #1/#2 remain intentionally unchecked because src/api/routes/legacy.ts and src/cli/term-sheet-command.ts still invoke the legacy optimizeWithConstraints path rather than an explicit negotiation compatibility adapter. The task remains In Progress; no feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
 - [ ] #1 Every acceptance criterion is checked with evidence.
 - [ ] #2 One authoritative negotiation proposal optimizer exists.
-- [ ] #3 Reproducibility is demonstrated.
-- [ ] #4 Unused or misleading configuration fields are resolved.
-- [ ] #5 MAI-118 depends on MAI-146.
-- [ ] #6 The optimizer has no ability to approve, send, or accept negotiation terms.
-- [ ] #7 Canonical repository verification passes.
+- [x] #3 Reproducibility is demonstrated.
+- [x] #4 Unused or misleading configuration fields are resolved.
+- [x] #5 MAI-118 depends on MAI-146.
+- [x] #6 The optimizer has no ability to approve, send, or accept negotiation terms.
+- [x] #7 Canonical repository verification passes.
 <!-- DOD:END -->

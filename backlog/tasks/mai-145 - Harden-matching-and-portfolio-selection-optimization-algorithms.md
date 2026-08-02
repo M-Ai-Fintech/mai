@@ -1,11 +1,11 @@
 ---
 id: MAI-145
 title: Harden matching and portfolio-selection optimization algorithms
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:03'
-updated_date: '2026-08-02 01:46'
+updated_date: '2026-08-02 04:35'
 labels:
   - backend
   - architecture
@@ -54,19 +54,19 @@ MAI-117 owns the matching workflow, conflicts, shortlist lifecycle, and business
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Current portfolio-selection, matching, eligibility, and constraint logic is inventoried.
-- [ ] #2 The authoritative implementation is located under a matching-owned namespace rather than KYC or valuation.
-- [ ] #3 Inputs and outputs use explicit typed contracts.
-- [ ] #4 Supported constraints include, where approved: budget limits; sector allocation; eligibility; risk thresholds; tax-debt limits; mutual exclusions; mandatory inclusions; maximum or minimum selection sizes.
-- [ ] #5 Infeasible results are explicit and explain which constraints prevented a valid solution.
-- [ ] #6 Result ordering and tie-breaking are deterministic.
-- [ ] #7 Identical inputs produce identical results.
-- [ ] #8 No hidden random behavior affects authoritative results.
-- [ ] #9 Constraint explanations do not leak restricted counterparty information.
-- [ ] #10 Unit and golden-vector tests cover: feasible solutions; infeasible solutions; conflicting constraints; exclusions; caps; thresholds; empty candidate sets; deterministic tie-breaking.
-- [ ] #11 Existing consumers are migrated or routed through explicit compatibility adapters.
-- [ ] #12 Performance evidence is recorded for representative portfolio sizes.
-- [ ] #13 Focused tests and `deno task verify` pass.
+- [x] #1 Current portfolio-selection, matching, eligibility, and constraint logic is inventoried.
+- [x] #2 The authoritative implementation is located under a matching-owned namespace rather than KYC or valuation.
+- [x] #3 Inputs and outputs use explicit typed contracts.
+- [x] #4 Supported constraints include, where approved: budget limits; sector allocation; eligibility; risk thresholds; tax-debt limits; mutual exclusions; mandatory inclusions; maximum or minimum selection sizes.
+- [x] #5 Infeasible results are explicit and explain which constraints prevented a valid solution.
+- [x] #6 Result ordering and tie-breaking are deterministic.
+- [x] #7 Identical inputs produce identical results.
+- [x] #8 No hidden random behavior affects authoritative results.
+- [x] #9 Constraint explanations do not leak restricted counterparty information.
+- [x] #10 Unit and golden-vector tests cover: feasible solutions; infeasible solutions; conflicting constraints; exclusions; caps; thresholds; empty candidate sets; deterministic tie-breaking.
+- [x] #11 Existing consumers are migrated or routed through explicit compatibility adapters.
+- [x] #12 Performance evidence is recorded for representative portfolio sizes.
+- [x] #13 Focused tests and `deno task verify` pass.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -127,15 +127,23 @@ Review correction red loop: added equal-synergy regression at tests/engines/matc
 Tie-break correction implemented: solveCanonicalModel performs a primary synergy optimization, pins the exact primary optimum as an optimalSynergy constraint, and re-solves candidate inclusion decisions in canonical ID or seeded rank order. RankingContract now exposes tieBreakMethod=lexicographic-reoptimization. Regression passes for equal-synergy portfolios (portfolio-a + portfolio-b versus portfolio-c) across 4 input permutations and 3 repeated runs; pre-fix red case selected portfolio-c. Post-fix focused matching suite: 9 passed, including 48-candidate performance at 18.31 ms; legacy optimization suite: 8 passed. deno task test --quiet: 267 passed, 21 ignored. deno task verify: exit 0; all canonical documentation, i18n, Deno, frontend, GUI, Next, workflow, Storybook documentation/build/interaction checks PASS. Scope remains matching-only; MAI-145 remains In Progress pending human review.
 
 Final branch handoff: remote master merge e23e0b872b2cb93efecfc7ae3b81e966c0da9875 was integrated without conflicts; correction rebased and pushed as e6a4e4a489094eaab9d5a38b403839497be4b490. On that exact HEAD, focused matching 9/9 and legacy optimization 8/8 passed; deno task test --quiet passed 313 tests with 22 ignored; deno task verify exited 0 with every verification category PASS. PR #38 is OPEN at https://github.com/luisfelipeluis49/mai/pull/38 and is ready for review (the draft flag changed externally); no merge or Done transition was performed.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #38 is merged on master at d481ef80; matching-owned typed contracts, deterministic selection, feasibility/explanation behavior, privacy-safe infeasibility, seeded tie-breaking, and the legacy compatibility adapter were reviewed. The final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. MAI-117 already declares MAI-145 as a dependency. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered the matching-owned deterministic portfolio selector and compatibility boundary in merged PR #38. Verified feasible/infeasible selection, constraint explanations, deterministic ordering and seeded replay, legacy compatibility, focused tests, and the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Every acceptance criterion is checked with evidence.
-- [ ] #2 One authoritative matching and portfolio-selection implementation exists.
-- [ ] #3 The misleading KYC/valuation ownership is removed or isolated behind a compatibility adapter.
-- [ ] #4 Deterministic and infeasible-result tests pass.
-- [ ] #5 MAI-117 depends on MAI-145.
-- [ ] #6 No shortlist approval, outreach, persistence, frontend, or agent workflow is implemented here.
-- [ ] #7 Canonical repository verification passes.
+- [x] #1 Every acceptance criterion is checked with evidence.
+- [x] #2 One authoritative matching and portfolio-selection implementation exists.
+- [x] #3 The misleading KYC/valuation ownership is removed or isolated behind a compatibility adapter.
+- [x] #4 Deterministic and infeasible-result tests pass.
+- [x] #5 MAI-117 depends on MAI-145.
+- [x] #6 No shortlist approval, outreach, persistence, frontend, or agent workflow is implemented here.
+- [x] #7 Canonical repository verification passes.
 <!-- DOD:END -->

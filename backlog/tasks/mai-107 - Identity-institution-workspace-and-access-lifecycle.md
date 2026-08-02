@@ -1,11 +1,11 @@
 ---
 id: MAI-107
 title: 'Identity, institution, workspace and access lifecycle'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-01 13:49'
+updated_date: '2026-08-02 04:34'
 labels:
   - backend
   - architecture
@@ -75,9 +75,9 @@ Production identity-provider choice and break-glass operating policy require own
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Tenant/workspace/session and all access lifecycles enforce state, sponsor, expiry and revocation; API, repository and policy tests pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Tenant/workspace/session and all access lifecycles enforce state, sponsor, expiry and revocation; API, repository and policy tests pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -101,4 +101,12 @@ Implementation evidence 2026-08-01: added the bounded src/identity_access vertic
 Final verification evidence before handoff: scoped identity/access suite with MAI106_DATABASE_URL against isolated mai_test_mai106 PostgreSQL passed 21/21, including real migrations/history/outbox behavior; deno task test passed 278, 0 failed, 22 ignored; deno fmt and scoped deno lint passed; deno task verify exited 1 only on existing GUI environment gates: frontend foundation spawnSync git EPERM, missing vitest, next, playwright and storybook. Deno tests, canonical documentation, i18n, frontend boundary checks and Storybook documentation passed. MAI-107 remains In Progress pending commit/PR publication and human security/data-model review.
 
 Draft handoff evidence 2026-08-01: commit 8c06810e7fd0ddab436dd8c1d9b3a970361e2645 was pushed from delivery/MAI-107-identity-access-lifecycle. Draft PR #36 is open against master at https://github.com/luisfelipeluis49/mai/pull/36. MAI-107 intentionally remains In Progress; human security/data-model review and approval are pending, and no merge or Done transition was performed.
+
+Wave A closure evidence 2026-08-02: owner-approved PR #36 is merged on master at bdecd205; merged identity/access source and focused security/lifecycle checks were reviewed. The final DENO_ENV=test deno task verify completed with exit 0 and all 17 verification categories PASS. No feature implementation was changed during closure.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered identity, institution, workspace, and access lifecycle foundations in merged PR #36. Verified lifecycle, authorization, persistence, and API boundaries plus the canonical DENO_ENV=test deno task verify gate (17/17 PASS, exit 0).
+<!-- SECTION:FINAL_SUMMARY:END -->
