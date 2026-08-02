@@ -20,6 +20,8 @@ Deno.test("Deal Management migration is additive, scoped, and rollback-safe", ()
   assert(sql.includes("deal_management.deals"));
   assert(sql.includes("deal_management.aggregate_history"));
   assert(sql.includes("deal_management.command_receipts"));
+  assert(sql.includes("deal_management.command_claims"));
+  assert(sql.includes("UNIQUE INDEX deal_management_receipts_global_key_idx"));
   assert(sql.includes("deal_management.reconciliation_manifest"));
   assert(!/\bDROP\s+(TABLE|SCHEMA)\b/i.test(sql));
   assert(

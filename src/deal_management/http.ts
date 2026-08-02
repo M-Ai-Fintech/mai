@@ -11,6 +11,7 @@ import {
 import {
   createDealContext,
   DealAuthenticationError,
+  DealAuthenticationUnavailableError,
   type DealManagementHttpDependencies,
   requestCorrelation,
   RequestInputError,
@@ -77,7 +78,8 @@ async function authenticate(
       credential,
       correlationId,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DealAuthenticationUnavailableError) throw error;
     throw new DealAuthenticationError();
   }
 }

@@ -8,6 +8,8 @@ export function projectDeal(
   deal: Deal,
   fields: DealFieldMaskDecision,
 ): DealProjection {
+  const includeParties = fieldAllowed(fields, "parties");
+  const includeRoles = fieldAllowed(fields, "roles");
   const includeMandate = fieldAllowed(fields, "mandate_ceiling");
   const includeConstraints = fieldAllowed(fields, "authority_constraints");
   return {
@@ -18,16 +20,22 @@ export function projectDeal(
     dealType: deal.dealType,
     confidentiality: deal.confidentiality,
     currency: deal.currency,
-    parties: deal.parties.map(projectParty),
-    roles: deal.roles.map((role) => projectRole(role, includeConstraints)),
+    ...(includeParties ? { parties: deal.parties.map(projectParty) } : {}),
+    ...(includeRoles
+      ? {
+        roles: deal.roles.map((role) => projectRole(role, includeConstraints)),
+      }
+      : {}),
     ...(includeMandate && deal.mandate === undefined
       ? {}
       : includeMandate
       ? { mandate: projectMandate(deal) }
       : {}),
-    authorityConstraints: includeConstraints
-      ? deal.authorityConstraints.map(projectConstraint)
-      : [],
+    ...(includeConstraints
+      ? {
+        authorityConstraints: deal.authorityConstraints.map(projectConstraint),
+      }
+      : {}),
   };
 }
 

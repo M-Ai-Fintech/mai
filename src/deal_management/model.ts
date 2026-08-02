@@ -290,6 +290,7 @@ function assertExistingConstraints(deal: Deal, mandate: Mandate): void {
 }
 
 function assertReference(reference: DealPartyReference): void {
+  // Deal Management owns stable references, not Identity Access or Registry existence reads.
   const valid = reference.kind === "organization"
     ? parseOrganizationId(reference.id).ok
     : reference.kind === "legal_entity"

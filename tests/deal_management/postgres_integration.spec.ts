@@ -1,9 +1,14 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   addDealParty,
+  commandReceiptKey,
   createDeal,
   createReceipt,
+  DealIdempotencyConflictError,
+  DealInvariantError,
   dealManagementMigrations,
+  DealManagementService,
+  DealScopeMismatchError,
   DealVersionConflictError,
   PostgresDealRepository,
 } from "../../src/deal_management/v1.ts";
@@ -19,6 +24,9 @@ import {
 import {
   contextFor,
   eventFor,
+  FixedDealClock,
+  keyFor,
+  RecordingDealAuthorization,
   requiredTenantId,
   requiredWorkspaceId,
   SequentialDealIdFactory,
@@ -37,7 +45,7 @@ Deno.test({
       ...dealManagementMigrations,
     ]);
     await pool.query(
-      "TRUNCATE deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
     );
     const transactions = new PostgresTransactionRunner(pool);
     const repository = new PostgresDealRepository(transactions);
@@ -122,8 +130,199 @@ Deno.test({
       DealVersionConflictError,
     );
     await pool.query(
-      "TRUNCATE deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
     );
     await pool.end();
   },
 });
+
+Deno.test({
+  name:
+    "Deal Management PostgreSQL claims concurrent creates and validates stored integrity",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    try {
+      await new PostgresMigrationRunner(pool).apply([
+        ...platformMigrations,
+        ...dealManagementMigrations,
+      ]);
+      await pool.query(
+        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      );
+      const transactions = new PostgresTransactionRunner(pool);
+      const repository = new PostgresDealRepository(transactions);
+      const command = {
+        type: "create_deal" as const,
+        context: contextFor(),
+        idempotencyKey: keyFor("postgres-concurrent-create"),
+        name: "Concurrent PostgreSQL deal",
+        dealType: "acquisition",
+        confidentiality: "standard" as const,
+        currency: "USD",
+      };
+      const createService = () =>
+        new DealManagementService({
+          repository,
+          authorization: new RecordingDealAuthorization(),
+          ids: new SequentialDealIdFactory(),
+          clock: new FixedDealClock(),
+        });
+      const [first, second] = await Promise.all([
+        createService().createDeal(command),
+        createService().createDeal(command),
+      ]);
+      assertEquals(second, first);
+      const receiptKey = commandReceiptKey(command, "new");
+      assertEquals(await count(pool, "deal_management.deals"), "1");
+      assertEquals(await count(pool, "deal_management.aggregate_history"), "1");
+      assertEquals(
+        await countWhere(
+          pool,
+          "deal_management.command_claims",
+          "idempotency_key",
+          command.idempotencyKey,
+        ),
+        "1",
+      );
+      assertEquals(
+        await countWhere(
+          pool,
+          "deal_management.command_receipts",
+          "idempotency_key",
+          receiptKey,
+        ),
+        "1",
+      );
+      assertEquals(
+        await countWhere(
+          pool,
+          "platform.outbox",
+          "aggregate_id",
+          first.deal.id,
+        ),
+        "1",
+      );
+      await assertRejects(
+        () =>
+          createService().createDeal({ ...command, name: "Different payload" }),
+        DealIdempotencyConflictError,
+      );
+      assertEquals(await count(pool, "deal_management.deals"), "1");
+
+      const scope = {
+        tenantId: requiredTenantId(command.context.request.tenantId),
+        workspaceId: requiredWorkspaceId(command.context.request.workspaceId!),
+      };
+      const stored = first.deal;
+      await assertRejects(
+        () =>
+          repository.save({
+            scope: { ...scope, tenantId: requiredTenantId("tenant_other") },
+            aggregate: stored,
+            event: eventFor(stored, command.context, "scope-mismatch"),
+          }),
+        DealScopeMismatchError,
+      );
+      const event = eventFor(stored, command.context, "integrity");
+      await assertRejects(
+        () =>
+          repository.save({
+            scope,
+            aggregate: stored,
+            event: { ...event, tenantId: requiredTenantId("tenant_other") },
+          }),
+        DealInvariantError,
+      );
+      await assertRejects(
+        () =>
+          repository.save({
+            scope,
+            aggregate: stored,
+            event: {
+              ...event,
+              workspaceId: requiredWorkspaceId("workspace_other"),
+            },
+          }),
+        DealInvariantError,
+      );
+      await assertRejects(
+        () =>
+          repository.save({
+            scope,
+            aggregate: stored,
+            event: { ...event, dealId: "deal_other" as typeof stored.id },
+          }),
+        DealInvariantError,
+      );
+      await assertRejects(
+        () =>
+          repository.save({
+            scope,
+            aggregate: stored,
+            event: { ...event, aggregateVersion: 2 as typeof stored.version },
+          }),
+        DealInvariantError,
+      );
+
+      await pool.query(
+        `UPDATE deal_management.deals SET document = $1 WHERE tenant_id = $2 AND workspace_id = $3 AND deal_id = $4`,
+        [
+          JSON.stringify({ ...stored, name: 42 }),
+          scope.tenantId,
+          scope.workspaceId,
+          stored.id,
+        ],
+      );
+      await assertRejects(
+        () => repository.find(scope, stored.id),
+        DealInvariantError,
+      );
+      await pool.query(
+        `UPDATE deal_management.deals SET document = $1 WHERE tenant_id = $2 AND workspace_id = $3 AND deal_id = $4`,
+        [
+          JSON.stringify({ ...stored, tenantId: "tenant_other" }),
+          scope.tenantId,
+          scope.workspaceId,
+          stored.id,
+        ],
+      );
+      await assertRejects(
+        () => repository.find(scope, stored.id),
+        DealInvariantError,
+      );
+    } finally {
+      await pool.query(
+        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      ).catch(() => {});
+      await pool.end();
+    }
+  },
+});
+
+async function count(
+  pool: {
+    query<T>(sql: string, values?: readonly unknown[]): Promise<{ rows: T[] }>;
+  },
+  table: string,
+): Promise<string> {
+  const result = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM ${table}`,
+  );
+  return result.rows[0].count;
+}
+
+async function countWhere(
+  pool: {
+    query<T>(sql: string, values?: readonly unknown[]): Promise<{ rows: T[] }>;
+  },
+  table: string,
+  column: string,
+  value: string,
+): Promise<string> {
+  const result = await pool.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM ${table} WHERE ${column} = $1`,
+    [value],
+  );
+  return result.rows[0].count;
+}

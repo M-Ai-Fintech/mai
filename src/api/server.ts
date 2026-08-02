@@ -59,6 +59,8 @@ async function routedResponse(
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
     request,
+    // MAI-110 owns route registration; downstream application composition must
+    // provide authentication, authorization, persistence, and service ports.
     undefined,
     headers,
   );

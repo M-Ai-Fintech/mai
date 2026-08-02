@@ -3,7 +3,7 @@ import {
   DealAuthorizationError,
   DealIdempotencyConflictError,
   DealManagementService,
-  InMemoryDealReceiptStore,
+  dealScope,
   InMemoryDealRepository,
 } from "../../src/deal_management/v1.ts";
 import {
@@ -20,15 +20,16 @@ import type { DealAuthorizationPort } from "../../src/deal_management/v1.ts";
 function service(
   authorization: DealAuthorizationPort = new RecordingDealAuthorization(),
 ) {
+  const repository = new InMemoryDealRepository();
   return {
     service: new DealManagementService({
-      repository: new InMemoryDealRepository(),
+      repository,
       authorization,
-      receipts: new InMemoryDealReceiptStore(),
       ids: new SequentialDealIdFactory(),
       clock: new FixedDealClock(),
     }),
     authorization,
+    repository,
   };
 }
 
@@ -78,6 +79,41 @@ Deno.test("Deal Management replays a command and rejects payload mismatch", asyn
   await assertRejects(
     () => dealService.createDeal({ ...command, name: "Changed payload" }),
     DealIdempotencyConflictError,
+  );
+});
+
+Deno.test("Deal Management claims concurrent creates before generating Deal IDs", async () => {
+  const { service: dealService, repository } = service();
+  const command = {
+    type: "create_deal" as const,
+    context: contextFor(),
+    idempotencyKey: keyFor("concurrent-create"),
+    name: "Concurrent deal",
+    dealType: "acquisition",
+    confidentiality: "standard" as const,
+    currency: "USD",
+  };
+  const [first, second] = await Promise.all([
+    dealService.createDeal(command),
+    dealService.createDeal(command),
+  ]);
+  assertEquals(second, first);
+  assertEquals(
+    (await repository.list(dealScope(command.context))).length,
+    1,
+  );
+  assertEquals(
+    (await repository.listEvents(dealScope(command.context), first.deal.id))
+      .length,
+    1,
+  );
+  await assertRejects(
+    () => dealService.createDeal({ ...command, name: "Different deal" }),
+    DealIdempotencyConflictError,
+  );
+  assertEquals(
+    (await repository.list(dealScope(command.context))).length,
+    1,
   );
 });
 

@@ -50,6 +50,13 @@ export class DealAuthenticationError extends Error {
   }
 }
 
+export class DealAuthenticationUnavailableError extends Error {
+  constructor(message = "Authentication provider is unavailable.") {
+    super(message);
+    this.name = "DealAuthenticationUnavailableError";
+  }
+}
+
 export function routeSegments(urlValue: string): readonly string[] | undefined {
   const pathname = new URL(urlValue).pathname;
   if (!pathname.startsWith("/api/v1/")) return undefined;

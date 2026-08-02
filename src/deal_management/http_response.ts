@@ -7,7 +7,7 @@ import {
 import type { CorrelationId } from "../platform/api/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
 import { projectDeal } from "./projection.ts";
-import type { DealCommandResult } from "./contracts.ts";
+import type { DealCommandResult, DealFieldMaskDecision } from "./contracts.ts";
 import {
   DealAuthorizationError,
   DealError,
@@ -15,7 +15,11 @@ import {
   DealProtectedNotFoundError,
   DealVersionConflictError,
 } from "./errors.ts";
-import { DealAuthenticationError, RequestInputError } from "./http_shared.ts";
+import {
+  DealAuthenticationError,
+  DealAuthenticationUnavailableError,
+  RequestInputError,
+} from "./http_shared.ts";
 
 export function writeSuccess(
   data: unknown,
@@ -53,8 +57,13 @@ export function mapDealError(
 }
 
 export function safeCommandDto(result: DealCommandResult) {
-  return projectDeal(result.deal, { include: [], omit: [] });
+  return projectDeal(result.deal, SAFE_COMMAND_RESPONSE_MASK);
 }
+
+const SAFE_COMMAND_RESPONSE_MASK: DealFieldMaskDecision = Object.freeze({
+  include: [],
+  omit: ["parties", "roles", "mandate_ceiling", "authority_constraints"],
+});
 
 function dealErrorResponse(
   error: unknown,
@@ -115,6 +124,17 @@ function dealErrorResponse(
         retryable: false,
       }),
       status: 401,
+    };
+  }
+  if (error instanceof DealAuthenticationUnavailableError) {
+    return {
+      body: createApiError({
+        code: "DEPENDENCY_UNAVAILABLE",
+        message: error.message,
+        correlationId,
+        retryable: true,
+      }),
+      status: 503,
     };
   }
   const message =

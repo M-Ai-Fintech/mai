@@ -21,6 +21,7 @@ import type {
   WorkspaceId,
 } from "../platform/api/v1.ts";
 import type { RequestContext } from "../shared/contracts/request_context.ts";
+import type { OutboxEvent } from "../platform/events/v1.ts";
 import type {
   AuthorityConstraintId,
   DealEventId,
@@ -183,6 +184,31 @@ export interface DealEvent {
   readonly availableAt: Date;
 }
 
+export interface StoredDealEventRow {
+  readonly eventId: string;
+  readonly tenantId: string;
+  readonly workspaceId: string;
+  readonly dealId: string;
+  readonly actorId: string;
+  readonly actorKind: DealEvent["actorKind"];
+  readonly correlationId: string;
+  readonly aggregateVersion: string | number;
+  readonly eventType: string;
+  readonly schemaVersion: number;
+  readonly payload: unknown;
+  readonly occurredAt: Date | string;
+  readonly availableAt: Date | string;
+}
+
+export interface StoredDealRow {
+  readonly tenantId: string;
+  readonly workspaceId: string;
+  readonly dealId: string;
+  readonly version: string | number;
+  readonly state: string;
+  readonly document: unknown;
+}
+
 export type DealOperation =
   | "created"
   | "configured"
@@ -219,10 +245,10 @@ export interface DealProjection {
   readonly dealType: string;
   readonly confidentiality: DealConfidentiality;
   readonly currency: string;
-  readonly parties: readonly Readonly<Record<string, unknown>>[];
-  readonly roles: readonly Readonly<Record<string, unknown>>[];
+  readonly parties?: readonly Readonly<Record<string, unknown>>[];
+  readonly roles?: readonly Readonly<Record<string, unknown>>[];
   readonly mandate?: Readonly<Record<string, unknown>>;
-  readonly authorityConstraints: readonly Readonly<Record<string, unknown>>[];
+  readonly authorityConstraints?: readonly Readonly<Record<string, unknown>>[];
 }
 
 export interface DealFieldMaskDecision {
@@ -263,4 +289,137 @@ export function allowedDealFields(
 ): DealFieldMaskDecision {
   const mask: FieldMask = decision.fieldMask;
   return { include: mask.include, omit: mask.omit };
+}
+
+export function freezeStoredDeal(deal: Deal): Deal {
+  return Object.freeze({
+    ...deal,
+    parties: Object.freeze(deal.parties.map((party) =>
+      Object.freeze({
+        ...party,
+        reference: Object.freeze({ ...party.reference }),
+      })
+    )),
+    roles: Object.freeze(deal.roles.map((role) => Object.freeze({ ...role }))),
+    ...(deal.mandate === undefined ? {} : {
+      mandate: Object.freeze({
+        ...deal.mandate,
+        transactionValueCeiling: Object.freeze({
+          ...deal.mandate.transactionValueCeiling,
+        }),
+      }),
+    }),
+    authorityConstraints: Object.freeze(
+      deal.authorityConstraints.map((constraint) =>
+        Object.freeze({
+          ...constraint,
+          ...(constraint.amountCeiling === undefined ? {} : {
+            amountCeiling: Object.freeze({ ...constraint.amountCeiling }),
+          }),
+        })
+      ),
+    ),
+  });
+}
+
+export function cloneStoredDeal(deal: Deal): Deal {
+  return freezeStoredDeal({
+    ...deal,
+    parties: deal.parties.map((party) => ({
+      ...party,
+      reference: { ...party.reference },
+    })),
+    roles: deal.roles.map((role) => ({ ...role })),
+    ...(deal.mandate === undefined ? {} : {
+      mandate: {
+        ...deal.mandate,
+        transactionValueCeiling: { ...deal.mandate.transactionValueCeiling },
+      },
+    }),
+    authorityConstraints: deal.authorityConstraints.map((constraint) => ({
+      ...constraint,
+      ...(constraint.amountCeiling === undefined ? {} : {
+        amountCeiling: { ...constraint.amountCeiling },
+      }),
+    })),
+  });
+}
+
+export function cloneStoredResult(
+  result: DealCommandResult,
+): DealCommandResult {
+  return { ...result, deal: cloneStoredDeal(result.deal) };
+}
+
+export function cloneStoredEvent(event: DealEvent): DealEvent {
+  return Object.freeze({
+    ...event,
+    payload: Object.freeze({ ...event.payload }),
+  });
+}
+
+export function toStoredEvent(row: StoredDealEventRow): DealEvent {
+  return {
+    eventId: row.eventId as DealEvent["eventId"],
+    tenantId: row.tenantId as DealEvent["tenantId"],
+    workspaceId: row.workspaceId as DealEvent["workspaceId"],
+    dealId: row.dealId as DealEvent["dealId"],
+    actorId: row.actorId as DealEvent["actorId"],
+    actorKind: row.actorKind,
+    correlationId: row.correlationId as DealEvent["correlationId"],
+    aggregateVersion: Number(
+      row.aggregateVersion,
+    ) as DealEvent["aggregateVersion"],
+    eventType: row.eventType,
+    schemaVersion: 1,
+    payload: eventRecord(row.payload),
+    occurredAt: eventDate(row.occurredAt, row.eventId),
+    availableAt: eventDate(row.availableAt, row.eventId),
+  };
+}
+
+export function toDealOutboxEvent(
+  event: DealEvent,
+  auditEventId: string | undefined,
+): OutboxEvent {
+  return {
+    eventId: event.eventId,
+    tenantId: event.tenantId,
+    workspaceId: event.workspaceId,
+    dealId: event.dealId,
+    aggregateType: "deal",
+    aggregateId: event.dealId,
+    aggregateVersion: event.aggregateVersion,
+    eventType: event.eventType,
+    schemaVersion: event.schemaVersion,
+    payload: {
+      ...event.payload,
+      ...(auditEventId === undefined ? {} : { auditEventId }),
+    },
+    correlationId: event.correlationId,
+    occurredAt: event.occurredAt,
+    availableAt: event.availableAt,
+  };
+}
+
+function eventRecord(value: unknown): Readonly<Record<string, unknown>> {
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>;
+  }
+  throw new Error(
+    `Stored Deal event payload "${
+      String(value)
+    }" is invalid; expected an object.`,
+  );
+}
+
+function eventDate(value: Date | string, eventId: string): Date {
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) return date;
+  throw new Error(
+    `Deal event timestamp "${
+      String(value)
+    }" for "${eventId}" is invalid; expected an ISO date.`,
+  );
 }

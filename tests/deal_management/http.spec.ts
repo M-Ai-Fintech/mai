@@ -1,9 +1,9 @@
 import { assertEquals } from "@std/assert";
 import {
+  DealAuthenticationUnavailableError,
   type DealManagementHttpDependencies,
   DealManagementService,
   handleDealManagementRoute,
-  InMemoryDealReceiptStore,
   InMemoryDealRepository,
 } from "../../src/deal_management/v1.ts";
 import {
@@ -30,18 +30,24 @@ class FixedDealAuthentication implements DealAuthenticationPort {
   }
 }
 
+class UnavailableDealAuthentication implements DealAuthenticationPort {
+  authenticate(): never {
+    throw new DealAuthenticationUnavailableError();
+  }
+}
+
 function dependencies(
   authorization: DealAuthorizationPort = new RecordingDealAuthorization(),
+  authentication: DealAuthenticationPort = new FixedDealAuthentication(),
 ): DealManagementHttpDependencies {
   const repository = new InMemoryDealRepository();
   return {
-    authentication: new FixedDealAuthentication(),
+    authentication,
     authorization,
     repository,
     service: new DealManagementService({
       repository,
       authorization,
-      receipts: new InMemoryDealReceiptStore(),
       ids: new SequentialDealIdFactory(),
       clock: new FixedDealClock(),
     }),
@@ -81,6 +87,9 @@ Deno.test("Deal Management HTTP exposes semantic commands, envelopes, and ETags"
   assertEquals(created?.headers.get("ETag"), '"v1"');
   const createdBody = await created!.json();
   const dealId = createdBody.data.id as string;
+  assertEquals(createdBody.data.parties, undefined);
+  assertEquals(createdBody.data.roles, undefined);
+  assertEquals(createdBody.data.authorityConstraints, undefined);
   const read = await handleDealManagementRoute(
     request(`/api/v1/deals/${dealId}`, "GET", undefined, {
       "X-Correlation-Id": "cor_http",
@@ -143,6 +152,20 @@ Deno.test("Deal Management HTTP authenticates and validates read route identifie
   assertEquals(
     (await malformedRoute!.json()).error.code,
     "VALIDATION_FAILED",
+  );
+  const unavailable = await handleDealManagementRoute(
+    request("/api/v1/deals/deal_missing", "GET", undefined, {
+      "X-Correlation-Id": "cor_http",
+    }),
+    dependencies(
+      new RecordingDealAuthorization(),
+      new UnavailableDealAuthentication(),
+    ),
+  );
+  assertEquals(unavailable?.status, 503);
+  assertEquals(
+    (await unavailable!.json()).error.code,
+    "DEPENDENCY_UNAVAILABLE",
   );
 });
 

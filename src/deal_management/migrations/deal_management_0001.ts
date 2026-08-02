@@ -6,7 +6,7 @@ export const dealManagementMigration = defineMigration({
   id: "deal_management-0001-deal-core",
   version: 1,
   forwardNotes:
-    "Create additive tenant/workspace/deal-scoped Deal aggregates, append-only history, command receipts, and legacy reconciliation manifest records.",
+    "Create additive tenant/workspace/deal-scoped Deal aggregates, transactionally claimed commands, append-only history, command receipts, and legacy reconciliation manifest records.",
   rollbackNotes:
     "Disable Deal Management readers and writers, route reads and writes through the legacy adapter, retaining every new record, receipt, history, and outbox row for reconciliation.",
   statements: [
@@ -59,8 +59,28 @@ export const dealManagementMigration = defineMigration({
           PRIMARY KEY (tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key),
           UNIQUE (receipt_id)
         );
-        CREATE INDEX deal_management_receipts_key_idx
+        CREATE UNIQUE INDEX deal_management_receipts_global_key_idx
           ON deal_management.command_receipts (idempotency_key);
+        CREATE TABLE deal_management.command_claims (
+          tenant_id TEXT NOT NULL,
+          workspace_id TEXT NOT NULL,
+          actor_id TEXT NOT NULL,
+          command_type TEXT NOT NULL,
+          target_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          fingerprint TEXT NOT NULL,
+          state TEXT NOT NULL CHECK (state IN ('in_progress', 'completed')),
+          result JSONB,
+          created_at TIMESTAMPTZ NOT NULL,
+          completed_at TIMESTAMPTZ,
+          PRIMARY KEY (tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key),
+          CHECK (
+            (state = 'in_progress' AND result IS NULL AND completed_at IS NULL) OR
+            (state = 'completed' AND result IS NOT NULL AND completed_at IS NOT NULL)
+          )
+        );
+        CREATE INDEX deal_management_claims_key_idx
+          ON deal_management.command_claims (idempotency_key);
         CREATE TABLE deal_management.reconciliation_manifest (
           manifest_id TEXT PRIMARY KEY,
           tenant_id TEXT NOT NULL,

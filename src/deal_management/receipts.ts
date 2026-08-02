@@ -4,9 +4,13 @@ import type {
   DealCommandResult,
   DealReceipt,
   DealReceiptStore,
+  DealScope,
 } from "./contracts.ts";
+import { parseStoredDeal } from "./read_model.ts";
+import { freezeDeal } from "./model.ts";
 import { dealReceiptId } from "./ids.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
+import type { DealCommandClaim } from "./repository.ts";
 
 export interface DealReceiptTransactionRunner {
   run<TResult>(
@@ -49,6 +53,105 @@ export class PostgresDealReceiptStore implements DealReceiptStore {
       await insertReceipt(transaction, receipt);
     });
   }
+}
+
+export interface DealClaimRow {
+  readonly fingerprint: string;
+  readonly state: "in_progress" | "completed";
+  readonly result: unknown;
+}
+
+export async function claimDealCommand(
+  transaction: TransactionHandle,
+  claim: DealCommandClaim,
+): Promise<boolean> {
+  const result = await transaction.query(
+    `INSERT INTO deal_management.command_claims (
+       tenant_id, workspace_id, actor_id, command_type, target_id,
+       idempotency_key, fingerprint, state, created_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'in_progress', CURRENT_TIMESTAMP)
+     ON CONFLICT (
+       tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key
+     ) DO NOTHING RETURNING state`,
+    claimValues(claim).concat(claim.fingerprint),
+  );
+  return result.rowCount === 1;
+}
+
+export async function loadDealCommandClaim(
+  transaction: TransactionHandle,
+  claim: DealCommandClaim,
+): Promise<DealClaimRow> {
+  const result = await transaction.query<DealClaimRow>(
+    `SELECT fingerprint, state, result
+     FROM deal_management.command_claims
+     WHERE tenant_id = $1 AND workspace_id = $2 AND actor_id = $3
+       AND command_type = $4 AND target_id = $5 AND idempotency_key = $6
+     FOR UPDATE`,
+    claimValues(claim),
+  );
+  const row = result.rows[0];
+  if (row !== undefined) return row;
+  throw new Error(
+    `Idempotency key "${claim.key}" disappeared; expected a durable claim row.`,
+  );
+}
+
+export async function completeDealCommand(
+  transaction: TransactionHandle,
+  claim: DealCommandClaim,
+  result: DealCommandResult,
+): Promise<void> {
+  const updated = await transaction.query(
+    `UPDATE deal_management.command_claims
+     SET state = 'completed', result = $7, completed_at = CURRENT_TIMESTAMP
+     WHERE tenant_id = $1 AND workspace_id = $2 AND actor_id = $3
+       AND command_type = $4 AND target_id = $5 AND idempotency_key = $6
+       AND fingerprint = $8 AND state = 'in_progress'`,
+    [...claimValues(claim), JSON.stringify(result), claim.fingerprint],
+  );
+  if (updated.rowCount === 1) return;
+  throw new Error(
+    `Idempotency key "${claim.key}" could not complete; expected one in-progress claim.`,
+  );
+}
+
+export async function persistDealReceipt(
+  transaction: TransactionHandle,
+  scope: DealScope,
+  receipt: DealReceipt | undefined,
+  occurredAt: Date,
+): Promise<void> {
+  if (receipt === undefined) return;
+  await transaction.query(
+    `INSERT INTO deal_management.command_receipts (
+       receipt_id, tenant_id, workspace_id, actor_id, command_type,
+       target_id, idempotency_key, fingerprint, result, created_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [
+      receipt.id,
+      scope.tenantId,
+      scope.workspaceId,
+      receipt.actorId,
+      receipt.commandType,
+      receipt.targetId,
+      receipt.key,
+      receipt.fingerprint,
+      JSON.stringify(receipt.result),
+      occurredAt,
+    ],
+  );
+}
+
+function claimValues(claim: DealCommandClaim): unknown[] {
+  return [
+    claim.scope.tenantId,
+    claim.scope.workspaceId,
+    claim.actorId,
+    claim.commandType,
+    claim.targetId,
+    claim.idempotencyKey,
+  ];
 }
 
 export function commandReceiptKey(
@@ -114,8 +217,7 @@ async function insertReceipt(
        receipt_id, tenant_id, workspace_id, actor_id, command_type,
        target_id, idempotency_key, fingerprint, result, created_at
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-     ON CONFLICT (tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key)
-     DO NOTHING`,
+       `,
     [
       receipt.id,
       receipt.result.deal.tenantId,
@@ -132,14 +234,7 @@ async function insertReceipt(
 }
 
 function deserializeReceipt(row: DealReceiptRow): DealReceipt {
-  const result = typeof row.result === "string"
-    ? JSON.parse(row.result)
-    : row.result;
-  if (!isRecord(result) || !isRecord(result.deal)) {
-    throw new Error(
-      `Stored Deal receipt "${row.id}" has invalid result; expected a command result with a Deal aggregate.`,
-    );
-  }
+  const result = deserializeResult(row.result, row.id);
   return Object.freeze({
     id: dealReceiptId(row.id),
     actorId: row.actorId as DealReceipt["actorId"],
@@ -147,12 +242,38 @@ function deserializeReceipt(row: DealReceiptRow): DealReceipt {
     targetId: row.targetId,
     key: row.key,
     fingerprint: row.fingerprint,
-    result: result as unknown as DealReceipt["result"],
+    result,
   });
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function deserializeResult(
+  value: unknown,
+  receiptId: string,
+): DealCommandResult {
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(
+      `Stored Deal receipt "${receiptId}" has invalid result; expected an object.`,
+    );
+  }
+  const result = parsed as Record<string, unknown>;
+  if (!isOperation(result.operation)) {
+    throw new Error(
+      `Stored Deal receipt "${receiptId}" has operation "${
+        String(result.operation)
+      }"; expected a Deal operation.`,
+    );
+  }
+  return {
+    operation: result.operation,
+    deal: freezeDeal(parseStoredDeal(result.deal)),
+  };
+}
+
+function isOperation(value: unknown): value is DealCommandResult["operation"] {
+  return value === "created" || value === "configured" ||
+    value === "party_added" || value === "role_assigned" ||
+    value === "mandate_set" || value === "authority_constraint_set";
 }
 
 export function replayOrThrow(

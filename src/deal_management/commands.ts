@@ -90,12 +90,9 @@ export type DealCommand =
 
 export type DealMutationCommand = Exclude<DealCommand, CreateDealCommand>;
 
-export function commandTarget(
-  command: DealCommand,
-  generatedId?: DealId,
-): string {
+export function commandTarget(command: DealCommand): string {
   return command.type === "create_deal"
-    ? generatedId ?? command.dealId ?? "new"
+    ? command.dealId ?? "new"
     : command.dealId;
 }
 

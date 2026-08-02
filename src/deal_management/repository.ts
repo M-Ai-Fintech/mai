@@ -2,17 +2,45 @@ import type {
   AuditEventDraft,
   AuditOutboxAppender,
 } from "../audit_activity/v1.ts";
-import { type OutboxEvent, OutboxRepository } from "../platform/events/v1.ts";
-import type { AggregateVersion, DealId } from "../platform/api/v1.ts";
+import { OutboxRepository } from "../platform/events/v1.ts";
+import type {
+  ActorId,
+  AggregateVersion,
+  DealId,
+  IdempotencyKey,
+} from "../platform/api/v1.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
-import { freezeDeal } from "./model.ts";
 import {
+  DealIdempotencyConflictError,
   DealInvariantError,
   DealScopeMismatchError,
   DealVersionConflictError,
 } from "./errors.ts";
-import type { Deal, DealEvent, DealReceipt, DealScope } from "./contracts.ts";
-import { sameDealScope } from "./contracts.ts";
+import type {
+  Deal,
+  DealCommandResult,
+  DealEvent,
+  DealReceipt,
+  DealScope,
+} from "./contracts.ts";
+import {
+  cloneStoredDeal,
+  cloneStoredEvent,
+  cloneStoredResult,
+  freezeStoredDeal,
+  sameDealScope,
+  type StoredDealEventRow,
+  type StoredDealRow,
+  toDealOutboxEvent,
+  toStoredEvent,
+} from "./contracts.ts";
+import { parseStoredDeal, readStoredDeal } from "./read_model.ts";
+import {
+  claimDealCommand,
+  completeDealCommand,
+  loadDealCommandClaim,
+  persistDealReceipt,
+} from "./receipts.ts";
 
 export interface DealWrite {
   readonly scope: DealScope;
@@ -23,49 +51,120 @@ export interface DealWrite {
   readonly auditEvent?: AuditEventDraft;
 }
 
+export interface DealCommandClaim {
+  readonly scope: DealScope;
+  readonly actorId: ActorId;
+  readonly commandType: string;
+  readonly targetId: string;
+  readonly idempotencyKey: IdempotencyKey;
+  readonly key: string;
+  readonly fingerprint: string;
+}
+
+export interface DealCommandExecution {
+  readonly result: DealCommandResult;
+  readonly receipt: DealReceipt;
+}
+
+export interface DealCommandTransaction {
+  find(scope: DealScope, dealId: DealId): Promise<Deal | undefined>;
+  save(write: DealWrite): Promise<Deal>;
+}
+
 export interface DealRepository {
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined>;
   list(scope: DealScope): Promise<readonly Deal[]>;
   save(write: DealWrite): Promise<Deal>;
   listEvents(scope: DealScope, dealId: DealId): Promise<readonly DealEvent[]>;
+  runIdempotent(
+    claim: DealCommandClaim,
+    callback: (
+      transaction: DealCommandTransaction,
+    ) => Promise<DealCommandExecution> | DealCommandExecution,
+  ): Promise<DealCommandResult>;
+}
+
+interface InMemoryClaim {
+  readonly fingerprint: string;
+  readonly result: DealCommandResult;
 }
 
 export class InMemoryDealRepository implements DealRepository {
   private readonly deals = new Map<string, Deal>();
   private readonly events = new Map<string, DealEvent[]>();
+  private readonly claims = new Map<string, InMemoryClaim>();
+  private readonly commandLocks = new Map<string, Promise<void>>();
 
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined> {
     const deal = this.deals.get(keyFor(scope, dealId));
-    return Promise.resolve(deal === undefined ? undefined : cloneDeal(deal));
+    return Promise.resolve(
+      deal === undefined ? undefined : cloneStoredDeal(deal),
+    );
   }
 
   list(scope: DealScope): Promise<readonly Deal[]> {
     return Promise.resolve(
       [...this.deals.values()]
         .filter((deal) => sameDealScope(scope, deal))
-        .map(cloneDeal),
+        .map(cloneStoredDeal),
     );
   }
 
   save(write: DealWrite): Promise<Deal> {
-    return Promise.resolve().then(() => {
-      assertScope(write.scope, write.aggregate);
-      assertEvent(write.event, write.aggregate);
-      const key = keyFor(write.scope, write.aggregate.id);
-      const current = this.deals.get(key);
-      assertVersion(write, current);
-      this.deals.set(key, cloneDeal(write.aggregate));
-      const history = this.events.get(key) ?? [];
-      history.push(cloneEvent(write.event));
-      this.events.set(key, history);
-      return cloneDeal(write.aggregate);
-    });
+    return Promise.resolve().then(() => this.saveInMemory(write));
+  }
+
+  async runIdempotent(
+    claim: DealCommandClaim,
+    callback: (
+      transaction: DealCommandTransaction,
+    ) => Promise<DealCommandExecution> | DealCommandExecution,
+  ): Promise<DealCommandResult> {
+    const previous = this.commandLocks.get(claim.key) ?? Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => release = resolve);
+    const queued = previous.then(() => current);
+    this.commandLocks.set(claim.key, queued);
+    await previous;
+    try {
+      const existing = this.claims.get(claim.key);
+      if (existing !== undefined) {
+        if (existing.fingerprint !== claim.fingerprint) {
+          throw new DealIdempotencyConflictError(claim.key);
+        }
+        return cloneStoredResult(existing.result);
+      }
+      const execution = await callback(this);
+      this.claims.set(claim.key, {
+        fingerprint: claim.fingerprint,
+        result: cloneStoredResult(execution.result),
+      });
+      return cloneStoredResult(execution.result);
+    } finally {
+      release();
+      if (this.commandLocks.get(claim.key) === queued) {
+        this.commandLocks.delete(claim.key);
+      }
+    }
   }
 
   listEvents(scope: DealScope, dealId: DealId): Promise<readonly DealEvent[]> {
     return Promise.resolve(
-      (this.events.get(keyFor(scope, dealId)) ?? []).map(cloneEvent),
+      (this.events.get(keyFor(scope, dealId)) ?? []).map(cloneStoredEvent),
     );
+  }
+
+  private saveInMemory(write: DealWrite): Deal {
+    assertScope(write.scope, write.aggregate);
+    assertEvent(write.event, write.aggregate);
+    const key = keyFor(write.scope, write.aggregate.id);
+    const current = this.deals.get(key);
+    assertVersion(write, current);
+    this.deals.set(key, cloneStoredDeal(write.aggregate));
+    const history = this.events.get(key) ?? [];
+    history.push(cloneStoredEvent(write.event));
+    this.events.set(key, history);
+    return cloneStoredDeal(write.aggregate);
   }
 }
 
@@ -83,51 +182,63 @@ export class PostgresDealRepository implements DealRepository {
   ) {}
 
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined> {
-    return this.transactions.run(async (transaction) => {
-      const result = await transaction.query<{ document: unknown }>(
-        `SELECT document FROM deal_management.deals
-         WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3`,
-        [scope.tenantId, scope.workspaceId, dealId],
-      );
-      const document = result.rows[0]?.document;
-      return document === undefined ? undefined : deserializeDeal(document);
-    });
+    return this.transactions.run((transaction) =>
+      findInTransaction(transaction, scope, dealId)
+    );
   }
 
   list(scope: DealScope): Promise<readonly Deal[]> {
     return this.transactions.run(async (transaction) => {
-      const result = await transaction.query<{ document: unknown }>(
-        `SELECT document FROM deal_management.deals
+      const result = await transaction.query<StoredDealRow>(
+        `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId",
+           deal_id AS "dealId", version, state, document
+         FROM deal_management.deals
          WHERE tenant_id = $1 AND workspace_id = $2 ORDER BY deal_id`,
         [scope.tenantId, scope.workspaceId],
       );
-      return result.rows.map(({ document }) => deserializeDeal(document));
+      return result.rows.map(readStoredDeal);
     });
   }
 
   save(write: DealWrite): Promise<Deal> {
+    return this.transactions.run((transaction) =>
+      this.saveInTransaction(transaction, write)
+    );
+  }
+
+  runIdempotent(
+    claim: DealCommandClaim,
+    callback: (
+      transaction: DealCommandTransaction,
+    ) => Promise<DealCommandExecution> | DealCommandExecution,
+  ): Promise<DealCommandResult> {
     return this.transactions.run(async (transaction) => {
-      const current = await currentVersion(
-        transaction,
-        write.scope,
-        write.aggregate.id,
-      );
-      assertVersion(write, current === undefined ? undefined : current);
-      if (current === undefined) {
-        await insertDeal(transaction, write.aggregate);
-      } else {
-        await updateDeal(transaction, write.aggregate, write.expectedVersion!);
+      const inserted = await claimDealCommand(transaction, claim);
+      const row = inserted
+        ? undefined
+        : await loadDealCommandClaim(transaction, claim);
+      if (row !== undefined) {
+        if (row.fingerprint !== claim.fingerprint) {
+          throw new DealIdempotencyConflictError(claim.key);
+        }
+        if (row.state === "completed") return deserializeDealResult(row.result);
+        throw new DealInvariantError(
+          `Idempotency key "${claim.key}" remains in progress; expected a completed or absent claim.`,
+        );
       }
-      await insertHistory(transaction, write);
-      await this.persistReceipt(transaction, write);
-      await this.persistEvent(transaction, write);
-      return cloneDeal(write.aggregate);
+      const commandTransaction: DealCommandTransaction = {
+        find: (scope, dealId) => findInTransaction(transaction, scope, dealId),
+        save: (write) => this.saveInTransaction(transaction, write),
+      };
+      const execution = await callback(commandTransaction);
+      await completeDealCommand(transaction, claim, execution.result);
+      return execution.result;
     });
   }
 
   listEvents(scope: DealScope, dealId: DealId): Promise<readonly DealEvent[]> {
     return this.transactions.run(async (transaction) => {
-      const result = await transaction.query<DealEventRow>(
+      const result = await transaction.query<StoredDealEventRow>(
         `SELECT event_id AS "eventId", tenant_id AS "tenantId",
            workspace_id AS "workspaceId", deal_id AS "dealId",
            actor_id AS "actorId", actor_kind AS "actorKind",
@@ -139,42 +250,43 @@ export class PostgresDealRepository implements DealRepository {
          ORDER BY aggregate_version`,
         [scope.tenantId, scope.workspaceId, dealId],
       );
-      return result.rows.map(toEvent);
+      return result.rows.map(toStoredEvent);
     });
   }
 
-  private async persistReceipt(
+  private async saveInTransaction(
     transaction: TransactionHandle,
     write: DealWrite,
-  ): Promise<void> {
-    if (write.receipt === undefined) return;
-    await transaction.query(
-      `INSERT INTO deal_management.command_receipts (
-         receipt_id, tenant_id, workspace_id, actor_id, command_type,
-         target_id, idempotency_key, fingerprint, result, created_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       ON CONFLICT (tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key)
-       DO NOTHING`,
-      [
-        write.receipt.id,
-        write.scope.tenantId,
-        write.scope.workspaceId,
-        write.receipt.actorId,
-        write.receipt.commandType,
-        write.receipt.targetId,
-        write.receipt.key,
-        write.receipt.fingerprint,
-        JSON.stringify(write.receipt.result),
-        write.event.occurredAt,
-      ],
+  ): Promise<Deal> {
+    assertScope(write.scope, write.aggregate);
+    assertEvent(write.event, write.aggregate);
+    const current = await currentVersion(
+      transaction,
+      write.scope,
+      write.aggregate.id,
     );
+    assertVersion(write, current);
+    if (current === undefined) {
+      await insertDeal(transaction, write.aggregate);
+    } else {
+      await updateDeal(transaction, write.aggregate, write.expectedVersion!);
+    }
+    await insertHistory(transaction, write);
+    await persistDealReceipt(
+      transaction,
+      write.scope,
+      write.receipt,
+      write.event.occurredAt,
+    );
+    await this.persistEvent(transaction, write);
+    return cloneStoredDeal(write.aggregate);
   }
 
   private async persistEvent(
     transaction: TransactionHandle,
     write: DealWrite,
   ): Promise<void> {
-    const event = toOutboxEvent(write.event, write.auditEvent?.eventId);
+    const event = toDealOutboxEvent(write.event, write.auditEvent?.eventId);
     if (write.auditEvent !== undefined && this.audit === undefined) {
       throw new Error(
         `Deal event "${write.event.eventId}" requested audit persistence; expected an audit/outbox appender.`,
@@ -188,20 +300,56 @@ export class PostgresDealRepository implements DealRepository {
   }
 }
 
-interface DealEventRow {
-  readonly eventId: string;
-  readonly tenantId: string;
-  readonly workspaceId: string;
-  readonly dealId: string;
-  readonly actorId: string;
-  readonly actorKind: DealEvent["actorKind"];
-  readonly correlationId: string;
-  readonly aggregateVersion: string | number;
-  readonly eventType: string;
-  readonly schemaVersion: number;
-  readonly payload: unknown;
-  readonly occurredAt: Date | string;
-  readonly availableAt: Date | string;
+async function findInTransaction(
+  transaction: TransactionHandle,
+  scope: DealScope,
+  dealId: DealId,
+): Promise<Deal | undefined> {
+  const result = await transaction.query<StoredDealRow>(
+    `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId",
+       deal_id AS "dealId", version, state, document
+     FROM deal_management.deals
+     WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3`,
+    [scope.tenantId, scope.workspaceId, dealId],
+  );
+  const row = result.rows[0];
+  return row === undefined ? undefined : readStoredDeal(row);
+}
+
+function deserializeDealResult(value: unknown): DealCommandResult {
+  const result = parseStoredObject(value, "Deal command result");
+  if (!isDealOperation(result.operation)) {
+    throw new DealInvariantError(
+      `Stored Deal command operation "${
+        String(result.operation)
+      }" is invalid; expected a known Deal operation.`,
+    );
+  }
+  return {
+    operation: result.operation,
+    deal: freezeStoredDeal(parseStoredDeal(result.deal)),
+  };
+}
+
+function parseStoredObject(
+  value: unknown,
+  label: string,
+): Record<string, unknown> {
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>;
+  }
+  throw new DealInvariantError(
+    `Stored ${label} "${String(value)}" is invalid; expected an object.`,
+  );
+}
+
+function isDealOperation(
+  value: unknown,
+): value is DealCommandResult["operation"] {
+  return value === "created" || value === "configured" ||
+    value === "party_added" || value === "role_assigned" ||
+    value === "mandate_set" || value === "authority_constraint_set";
 }
 
 async function currentVersion(
@@ -297,30 +445,6 @@ async function insertHistory(
   );
 }
 
-function toOutboxEvent(
-  event: DealEvent,
-  auditEventId: string | undefined,
-): OutboxEvent {
-  return {
-    eventId: event.eventId,
-    tenantId: event.tenantId,
-    workspaceId: event.workspaceId,
-    dealId: event.dealId,
-    aggregateType: "deal",
-    aggregateId: event.dealId,
-    aggregateVersion: event.aggregateVersion,
-    eventType: event.eventType,
-    schemaVersion: event.schemaVersion,
-    payload: {
-      ...event.payload,
-      ...(auditEventId === undefined ? {} : { auditEventId }),
-    },
-    correlationId: event.correlationId,
-    occurredAt: event.occurredAt,
-    availableAt: event.availableAt,
-  };
-}
-
 function assertScope(scope: DealScope, aggregate: Deal): void {
   if (sameDealScope(scope, aggregate)) return;
   throw new DealScopeMismatchError(aggregate.id);
@@ -362,90 +486,4 @@ function assertVersion(
 
 function keyFor(scope: DealScope, dealId: DealId): string {
   return `${scope.tenantId}|${scope.workspaceId}|${dealId}`;
-}
-
-function cloneDeal(deal: Deal): Deal {
-  return freezeDeal({
-    ...deal,
-    parties: deal.parties.map((party) => ({
-      ...party,
-      reference: { ...party.reference },
-    })),
-    roles: deal.roles.map((role) => ({ ...role })),
-    ...(deal.mandate === undefined ? {} : {
-      mandate: {
-        ...deal.mandate,
-        transactionValueCeiling: { ...deal.mandate.transactionValueCeiling },
-      },
-    }),
-    authorityConstraints: deal.authorityConstraints.map((constraint) => ({
-      ...constraint,
-      ...(constraint.amountCeiling === undefined
-        ? {}
-        : { amountCeiling: { ...constraint.amountCeiling } }),
-    })),
-  });
-}
-
-function cloneEvent(event: DealEvent): DealEvent {
-  return Object.freeze({
-    ...event,
-    payload: Object.freeze({ ...event.payload }),
-  });
-}
-
-function deserializeDeal(document: unknown): Deal {
-  const value = typeof document === "string" ? JSON.parse(document) : document;
-  if (!isRecord(value) || value.aggregateType !== "deal") {
-    throw new Error(
-      `Stored Deal document "${
-        String(document)
-      }" is invalid; expected aggregateType "deal".`,
-    );
-  }
-  return freezeDeal(value as unknown as Deal);
-}
-
-function toEvent(row: DealEventRow): DealEvent {
-  return {
-    eventId: row.eventId as DealEvent["eventId"],
-    tenantId: row.tenantId as DealEvent["tenantId"],
-    workspaceId: row.workspaceId as DealEvent["workspaceId"],
-    dealId: row.dealId as DealEvent["dealId"],
-    actorId: row.actorId as DealEvent["actorId"],
-    actorKind: row.actorKind,
-    correlationId: row.correlationId as DealEvent["correlationId"],
-    aggregateVersion: Number(
-      row.aggregateVersion,
-    ) as DealEvent["aggregateVersion"],
-    eventType: row.eventType,
-    schemaVersion: 1,
-    payload: toRecord(row.payload),
-    occurredAt: toDate(row.occurredAt, row.eventId),
-    availableAt: toDate(row.availableAt, row.eventId),
-  };
-}
-
-function toRecord(value: unknown): Readonly<Record<string, unknown>> {
-  const parsed = typeof value === "string" ? JSON.parse(value) : value;
-  if (isRecord(parsed)) return parsed;
-  throw new Error(
-    `Stored Deal event payload "${
-      String(value)
-    }" is invalid; expected an object.`,
-  );
-}
-
-function toDate(value: Date | string, eventId: string): Date {
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (!Number.isNaN(date.getTime())) return date;
-  throw new Error(
-    `Deal event "${eventId}" timestamp "${
-      String(value)
-    }" is invalid; expected an ISO date.`,
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

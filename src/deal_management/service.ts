@@ -21,7 +21,6 @@ import {
   commandFingerprint,
   commandReceiptKey,
   createReceipt,
-  replayOrThrow,
 } from "./receipts.ts";
 import { commandTarget } from "./commands.ts";
 import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
@@ -35,7 +34,6 @@ import type {
   DealCommandResult,
   DealEvent,
   DealOperation,
-  DealReceiptStore,
 } from "./contracts.ts";
 import { dealScope, requestedDealFields } from "./contracts.ts";
 import {
@@ -43,7 +41,12 @@ import {
   DealProtectedNotFoundError,
 } from "./errors.ts";
 import type { DealIdFactory } from "./ids.ts";
-import type { DealRepository } from "./repository.ts";
+import type {
+  DealCommandClaim,
+  DealCommandExecution,
+  DealCommandTransaction,
+  DealRepository,
+} from "./repository.ts";
 
 export const DEAL_RESOURCE = resourceKind("deal");
 export const DEAL_ACTION = Object.freeze({
@@ -59,7 +62,6 @@ export const DEAL_ACTION = Object.freeze({
 export interface DealManagementDependencies {
   readonly repository: DealRepository;
   readonly authorization: DealAuthorizationPort;
-  readonly receipts: DealReceiptStore;
   readonly ids: DealIdFactory;
   readonly clock: DealClock;
   readonly audit?: DealAuditEventFactory;
@@ -76,24 +78,27 @@ export class DealManagementService {
       DEAL_ACTION.create,
       false,
     );
-    const key = commandReceiptKey(command, target);
-    const replay = await this.replay(command, key);
-    if (replay !== undefined) return replay;
-    const id = command.dealId ?? this.dependencies.ids.nextDealId();
-    const deal = createDeal({
-      ...command,
-      id,
-      ...dealScope(command.context),
-      now: this.now(),
-    });
-    return await this.persist(
-      command,
-      key,
-      "created",
-      deal,
-      "DealCreated",
-      { dealId: id },
-      authorization,
+    return this.dependencies.repository.runIdempotent(
+      this.claim(command, target),
+      async (transaction) => {
+        const id = command.dealId ?? this.dependencies.ids.nextDealId();
+        const deal = createDeal({
+          ...command,
+          id,
+          ...dealScope(command.context),
+          now: this.now(),
+        });
+        return await this.persist(
+          transaction,
+          command,
+          target,
+          "created",
+          deal,
+          "DealCreated",
+          { dealId: id },
+          authorization,
+        );
+      },
     );
   }
 
@@ -209,44 +214,48 @@ export class DealManagementService {
       commandAction,
       humanOnly,
     );
-    const key = commandReceiptKey(command, command.dealId);
-    const replay = await this.replay(command, key);
-    if (replay !== undefined) return replay;
-    const current = await this.dependencies.repository.find(
-      dealScope(command.context),
-      command.dealId,
-    );
-    if (current === undefined) {
-      throw new DealProtectedNotFoundError(command.dealId);
-    }
-    const next = mutate(current);
-    return await this.persist(
-      command,
-      key,
-      operation,
-      next,
-      eventType,
-      { dealId: command.dealId },
-      authorization,
+    return this.dependencies.repository.runIdempotent(
+      this.claim(command, command.dealId),
+      async (transaction) => {
+        const current = await transaction.find(
+          dealScope(command.context),
+          command.dealId,
+        );
+        if (current === undefined) {
+          throw new DealProtectedNotFoundError(command.dealId);
+        }
+        const next = mutate(current);
+        return await this.persist(
+          transaction,
+          command,
+          command.dealId,
+          operation,
+          next,
+          eventType,
+          { dealId: command.dealId },
+          authorization,
+        );
+      },
     );
   }
 
   private async persist(
+    transaction: DealCommandTransaction,
     command: DealCommand,
-    key: string,
+    target: string,
     operation: DealOperation,
     deal: Deal,
     eventType: string,
     payload: Readonly<Record<string, unknown>>,
     authorization: AllowedAuthorizationDecision,
-  ): Promise<DealCommandResult> {
+  ): Promise<DealCommandExecution> {
     const event = this.event(command.context, deal, eventType, payload);
     const result = { operation, deal };
     const receipt = createReceipt({
-      key,
+      key: commandReceiptKey(command, target),
       actorId: command.context.actor.id,
       commandType: command.type,
-      targetId: commandTarget(command, deal.id),
+      targetId: target,
       fingerprint: commandFingerprint(command),
       result,
       sequence: event.eventId,
@@ -258,7 +267,7 @@ export class DealManagementService {
         event,
         authorization,
       });
-    await this.dependencies.repository.save({
+    await transaction.save({
       scope: dealScope(command.context),
       aggregate: deal,
       expectedVersion: command.type === "create_deal"
@@ -268,19 +277,22 @@ export class DealManagementService {
       receipt,
       auditEvent,
     });
-    await this.dependencies.receipts.put(receipt);
-    return result;
+    return { result, receipt };
   }
 
-  private async replay(
+  private claim(
     command: DealCommand,
-    key: string,
-  ): Promise<DealCommandResult | undefined> {
-    return replayOrThrow(
-      await this.dependencies.receipts.get(key),
-      commandFingerprint(command),
-      key,
-    );
+    target: string,
+  ): DealCommandClaim {
+    return {
+      scope: dealScope(command.context),
+      actorId: command.context.actor.id,
+      commandType: command.type,
+      targetId: target,
+      idempotencyKey: command.idempotencyKey,
+      key: commandReceiptKey(command, target),
+      fingerprint: commandFingerprint(command),
+    };
   }
 
   private async authorize(
