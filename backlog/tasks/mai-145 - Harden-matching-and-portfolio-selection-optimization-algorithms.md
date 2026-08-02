@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:03'
-updated_date: '2026-08-02 01:39'
+updated_date: '2026-08-02 01:46'
 labels:
   - backend
   - architecture
@@ -125,6 +125,8 @@ Draft PR #38 opened: https://github.com/luisfelipeluis49/mai/pull/38. Branch del
 Review correction red loop: added equal-synergy regression at tests/engines/matching.spec.ts where portfolio-a + portfolio-b and portfolio-c have equal synergy and feasibility; pre-fix solver selected portfolio-c instead of canonical candidate-id ordering. Input permutations were included in the regression.
 
 Tie-break correction implemented: solveCanonicalModel performs a primary synergy optimization, pins the exact primary optimum as an optimalSynergy constraint, and re-solves candidate inclusion decisions in canonical ID or seeded rank order. RankingContract now exposes tieBreakMethod=lexicographic-reoptimization. Regression passes for equal-synergy portfolios (portfolio-a + portfolio-b versus portfolio-c) across 4 input permutations and 3 repeated runs; pre-fix red case selected portfolio-c. Post-fix focused matching suite: 9 passed, including 48-candidate performance at 18.31 ms; legacy optimization suite: 8 passed. deno task test --quiet: 267 passed, 21 ignored. deno task verify: exit 0; all canonical documentation, i18n, Deno, frontend, GUI, Next, workflow, Storybook documentation/build/interaction checks PASS. Scope remains matching-only; MAI-145 remains In Progress pending human review.
+
+Final branch handoff: remote master merge e23e0b872b2cb93efecfc7ae3b81e966c0da9875 was integrated without conflicts; correction rebased and pushed as e6a4e4a489094eaab9d5a38b403839497be4b490. On that exact HEAD, focused matching 9/9 and legacy optimization 8/8 passed; deno task test --quiet passed 313 tests with 22 ignored; deno task verify exited 0 with every verification category PASS. PR #38 is OPEN at https://github.com/luisfelipeluis49/mai/pull/38 and is ready for review (the draft flag changed externally); no merge or Done transition was performed.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
