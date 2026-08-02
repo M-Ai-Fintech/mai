@@ -1,6 +1,7 @@
 import { AgentOrchestrator } from "../agent/index.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
 import { handleIdentityAccessRoute } from "../identity_access/http.ts";
+import { handleDealManagementRoute } from "../deal_management/http.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
 import {
@@ -56,6 +57,12 @@ async function routedResponse(
   repository: DealRepository,
   headers: Headers,
 ): Promise<Response> {
+  const dealManagementResponse = await handleDealManagementRoute(
+    request,
+    undefined,
+    headers,
+  );
+  if (dealManagementResponse) return dealManagementResponse;
   const identityAccessResponse = await handleIdentityAccessRoute(
     request,
     undefined,
