@@ -1,10 +1,10 @@
 ---
 id: MAI-151
 title: Establish a fast deterministic developer preflight for the modular monolith
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-07-31 17:33'
-updated_date: '2026-08-01 11:14'
+updated_date: '2026-08-02 03:50'
 labels:
   - backend
   - architecture
@@ -18,6 +18,21 @@ milestone: m-12
 dependencies:
   - MAI-79
   - MAI-106
+references:
+  - 'https://github.com/luisfelipeluis49/mai/pull/42'
+modified_files:
+  - deno.json
+  - scripts/verify_fast.ts
+  - scripts/verify_fast_manifest.ts
+  - scripts/verify_fast_test.ts
+  - scripts/verify_fast_benchmark.ts
+  - scripts/verify_fast_benchmark_test.ts
+  - tests/platform/events/inbox_contract.spec.ts
+  - tests/unit/deal_terminology_contract.spec.ts
+  - tests/unit/target_dossier_contract.spec.ts
+  - >-
+    backlog/docs/operations/local-setup/doc-8 -
+    Local-Setup-and-Runtime-Operations.md
 priority: high
 ordinal: 10900
 ---
@@ -86,10 +101,10 @@ Relationships:
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Inventory deno configuration, verification scripts, smoke tests, and MAI-106 contracts; define an explicit fast manifest and exclusions.
-2. Add offline minimum-permission verify:fast with explicit deterministic fixtures and component status reporting.
-3. Exclude live DB/network/providers/cloud/browser/builds and fail closed on unavailable live dependencies.
-4. Add determinism, permission, failure, manifest, and ten-run p95 benchmark evidence; run focused checks and deno task verify.
+1. Inventory deno.json, scripts/verify.ts, tests/smoke.spec.ts, and MAI-106 platform contract tests; define the included fast-check manifest and explicitly documented exclusions.
+2. Implement an offline developer/operator-only verify:fast runner with explicit deterministic test adapters, minimum Deno permissions, component statuses, and fail-closed dependency handling.
+3. Add deterministic, permission-boundary, manifest, controlled-failure, and ten-run benchmark tests/evidence without changing banker-facing CLI or canonical/integration gates.
+4. Run focused checks and deno task verify, record exact evidence and limitations, then prepare a human-reviewable Draft PR without marking the task Done.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -103,6 +118,22 @@ Record:
 - MAI-150 remains responsible for retiring the legacy product CLI.
 
 Do not check acceptance criteria during task creation.
+
+Discovery evidence (2026-08-02): the current platform/API, authorization, persistence, durable-job, outbox-dispatch, operations-contract, smoke, term-sheet, DomainArea, RiskSeverity, architecture-contract, and MvpStore tests ran offline with Deno permissions limited to read plus environment access; the combined run reached 89 passed before the existing target_dossier_memory.spec.ts failed on ONNX FFI permission. A second run without environment permission reached 88 passed before the existing deal_terminology_enforcement repository-construction test failed while reading DATABASE_URL. The fast manifest will therefore use pure schema/contract coverage for Target Dossier and Deal terminology, exclude ONNX/model and repository/database paths, and pass no network, FFI, write, or live-provider permissions. The failed dependency paths are excluded explicitly rather than falling back to fixtures.
+
+Implementation and focused verification evidence (2026-08-02): added `deno task verify:fast` and `deno task verify:fast:benchmark`. The fast runner executes 11 included deterministic test-adapter components in parallel, reports 5 explicit skips and 2 explicit unavailable statuses, and passes child tests with `--allow-read` only; the runner has `--allow-read --allow-run` and no network, write, env, FFI, provider, database, or model-download permission. `deno task verify:fast` exited 0. `deno test --no-prompt --allow-read --allow-run scripts/verify_fast_test.ts scripts/verify_fast_benchmark_test.ts tests/platform/events/inbox_contract.spec.ts tests/unit/deal_terminology_contract.spec.ts tests/unit/target_dossier_contract.spec.ts` exited 0 with 16 passed. The controlled-failure case exited 1 and reported `FAILED Core API contract parsing`. `deno task verify:fast:benchmark` recorded 10 runs on linux/x86_64 with Deno 2.9.3: 4035, 4047, 4264, 4052, 3912, 3956, 3851, 3993, 4363, and 3965 ms; p95 4363 ms, local target passed. `deno fmt --check`, `deno check`, and `git diff --check` exited 0.
+
+Canonical gate evidence (2026-08-02): the completed sandbox run `time deno task verify` exited 1 after 45.239s. It passed Canonical documentation, I18n Strings Check, Deno tests, Frontend design tokens, Frontend component boundary, Frontend shell boundary, Frontend screen families, Frontend deal intelligence screens, Frontend deal execution screens, Frontend Figma-to-code conformance, and Storybook documentation. It failed only environment/tooling-dependent GUI checks: `spawnSync git EPERM` in frontend foundation, missing `vitest`, missing `next`, missing `playwright`, missing `storybook`, and the resulting GUI workflow/build/interaction checks. An escalated rerun was stopped with Ctrl-C after 3m05.578s when live test paths produced no completion status; it is not verification evidence. The canonical gate is therefore not passing and remains an owner/environment follow-up; MAI-151 stays In Progress and is not Done.
+
+PR handoff blocker (2026-08-02): local commit `84d915d` was created successfully on `delivery/MAI-151-fast-developer-preflight`. `git push -u origin delivery/MAI-151-fast-developer-preflight` was rejected by the execution safety reviewer because it would externally transmit repository source and task data to `https://github.com/luisfelipeluis49/mai`. No push or PR was created. Explicit owner approval of that exact remote destination is required before continuing; task remains In Progress.
+
+Draft PR #42 created: https://github.com/luisfelipeluis49/mai/pull/42. Branch delivery/MAI-151-fast-developer-preflight is pushed with commits 174cb6f and 84d915d. Owner review is pending; task remains In Progress and no merge or Done transition was performed.
+
+PR review hardening (2026-08-02): added --cached-only and --frozen to both fast tasks and every child test command, scoped runner reads to the repository and subprocess execution to Deno, and added tests for the dependency-resolution boundary. The runner now caps included checks at four concurrent components, applies a 5000 ms component timeout, terminates timed-out Deno children, and reports timeout failures as FAILED. Benchmark coverage now asserts every included manifest ID executes exactly ten times. Hardened network-disabled benchmark on linux/x86_64 with Deno 2.9.3 and a pre-populated cache: 1225, 1199, 1162, 1193, 1086, 1129, 1128, 1140, 1114, 1129 ms; p95 1225 ms, target passed. Focused cached/frozen tests exited 0 with 19 passed. Canonical deno task verify rerun exited 1 after 35.770s: documentation, backend Deno tests, and static GUI checks passed; environment-only GUI checks failed on sandbox spawnSync git EPERM and missing vitest, next, playwright, and storybook. Task remains In Progress; canonical gate is not claimed as passing.
+
+Final post-refactor evidence (2026-08-02): deno task verify:fast exited 0 with 11 passed, 0 failed, 5 skipped, and 2 unavailable under cached/frozen, scoped permissions. Focused cached/frozen tests exited 0 with 19 passed. The final network-disabled ten-run benchmark on linux/x86_64 with Deno 2.9.3 recorded 1135, 1137, 1187, 1148, 1125, 1109, 1153, 1121, 1124, and 1136 ms; p95 1187 ms, target passed. The final canonical deno task verify rerun exited 1 after 34.331s because the environment still lacks GUI tooling and blocks git subprocesses; this remains a non-pass and owner follow-up.
+
+Review handoff complete (2026-08-02): commit 7c4a9c3 is pushed to delivery/MAI-151-fast-developer-preflight and PR #42 body is updated with the blocking review corrections and final evidence. PR remains Draft; task remains In Progress.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done
