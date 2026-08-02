@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-31 05:03'
-updated_date: '2026-08-01 14:27'
+updated_date: '2026-08-02 01:39'
 labels:
   - backend
   - architecture
@@ -121,6 +121,10 @@ Verification: deno task test --quiet exited 0 with 266 passed, 21 ignored; match
 Implementation commit: 62b34dfe58a5b0e230d430eabd9d86334b59d57. Worktree after commit contains only the CLI-managed MAI-145 task record; Graphify hook output was restored and is not part of the change. PR publication remains pending remote push/creation.
 
 Draft PR #38 opened: https://github.com/luisfelipeluis49/mai/pull/38. Branch delivery/MAI-145-matching-and-portfolio-algorithms is pushed; implementation commit 62b34dfe58a5b0e230d430eabd9d86334b59d57 and verification-evidence commit 67f7976 are included. Human review and downstream merge coordination are pending; MAI-145 intentionally remains In Progress.
+
+Review correction red loop: added equal-synergy regression at tests/engines/matching.spec.ts where portfolio-a + portfolio-b and portfolio-c have equal synergy and feasibility; pre-fix solver selected portfolio-c instead of canonical candidate-id ordering. Input permutations were included in the regression.
+
+Tie-break correction implemented: solveCanonicalModel performs a primary synergy optimization, pins the exact primary optimum as an optimalSynergy constraint, and re-solves candidate inclusion decisions in canonical ID or seeded rank order. RankingContract now exposes tieBreakMethod=lexicographic-reoptimization. Regression passes for equal-synergy portfolios (portfolio-a + portfolio-b versus portfolio-c) across 4 input permutations and 3 repeated runs; pre-fix red case selected portfolio-c. Post-fix focused matching suite: 9 passed, including 48-candidate performance at 18.31 ms; legacy optimization suite: 8 passed. deno task test --quiet: 267 passed, 21 ignored. deno task verify: exit 0; all canonical documentation, i18n, Deno, frontend, GUI, Next, workflow, Storybook documentation/build/interaction checks PASS. Scope remains matching-only; MAI-145 remains In Progress pending human review.
 <!-- SECTION:NOTES:END -->
 
 ## Definition of Done

@@ -187,8 +187,46 @@ Deno.test("selectPortfolio uses deterministic tie-breaking and seeded replay", (
   assertEquals(unseeded.selectedCandidateIds, ["candidate-a"]);
   assertEquals(seeded.selectedCandidateIds, seededReplay.selectedCandidateIds);
   assertEquals(seeded.ranking.tieBreaker, "seeded-candidate-order");
+  assertEquals(seeded.ranking.tieBreakMethod, "lexicographic-reoptimization");
   assertEquals(seeded.ranking.seed, 145);
 });
+
+Deno.test(
+  "selectPortfolio canonically ranks equal-synergy portfolios across permutations",
+  () => {
+    const candidates = [
+      candidate("portfolio-c", 20, 20, "SaaS", 0.1, 0),
+      candidate("portfolio-b", 10, 10, "SaaS", 0.1, 0),
+      candidate("portfolio-a", 10, 10, "SaaS", 0.1, 0),
+    ];
+    const requestFor = (
+      orderedCandidates: readonly MatchingCandidate[],
+    ): PortfolioSelectionRequest => ({
+      candidates: orderedCandidates,
+      criteria: criteria({ budgetLimit: 20 }),
+    });
+    const expected = ["portfolio-a", "portfolio-b"];
+    const permutations = [
+      candidates,
+      [candidates[1], candidates[2], candidates[0]],
+      [candidates[2], candidates[0], candidates[1]],
+      [...candidates].reverse(),
+    ];
+
+    for (let repeat = 0; repeat < 3; repeat++) {
+      for (const permutation of permutations) {
+        assertEquals(
+          selectPortfolio(requestFor(permutation)).selectedCandidateIds,
+          expected,
+        );
+      }
+    }
+    assertEquals(
+      selectPortfolio(requestFor(candidates)).selectedCandidateIds,
+      expected,
+    );
+  },
+);
 
 Deno.test("selectPortfolio preserves constraints across deterministic candidate permutations", () => {
   const base = Array.from({ length: 12 }, (_, index) =>

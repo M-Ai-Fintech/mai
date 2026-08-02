@@ -169,6 +169,102 @@ export function solveModel(model: Model): SolverResult {
   return typedSolver.Solve(model);
 }
 
+/** Pins the primary optimum before lexicographically resolving equal portfolios.
+ * @example solveCanonicalModel(model, variableKeys, candidates).feasible
+ */
+export function solveCanonicalModel(
+  model: Model,
+  variableKeys: readonly string[],
+  candidates: readonly MatchingCandidate[],
+): SolverResult {
+  const primarySolution = solveModel(model);
+  if (!primarySolution.feasible) return primarySolution;
+
+  const constrainedModel = modelWithSynergyConstraint(
+    model,
+    variableKeys,
+    candidates,
+    selectedSynergy(primarySolution, variableKeys, candidates),
+  );
+  let constraints = {
+    ...constrainedModel.constraints,
+  } as Record<string, ConstraintBound>;
+
+  for (const variableKey of variableKeys) {
+    const includeConstraints = withCandidateDecision(
+      constraints,
+      variableKey,
+      true,
+    );
+    const includeSolution = solveModel(
+      modelWithConstraints(constrainedModel, includeConstraints),
+    );
+    constraints = includeSolution.feasible
+      ? includeConstraints
+      : withCandidateDecision(constraints, variableKey, false);
+  }
+
+  return solveModel(modelWithConstraints(constrainedModel, constraints));
+}
+
+function modelWithSynergyConstraint(
+  model: Model,
+  variableKeys: readonly string[],
+  candidates: readonly MatchingCandidate[],
+  optimalSynergy: number,
+): Model {
+  // Pin synergy as a constraint so canonical probes cannot trade away value.
+  const variables: Record<string, VariableCoefficients> = {};
+  variableKeys.forEach((variableKey, index) => {
+    variables[variableKey] = {
+      ...model.variables[variableKey],
+      optimalSynergy: candidates[index].synergyValue,
+    };
+  });
+  return {
+    ...model,
+    constraints: {
+      ...model.constraints,
+      optimalSynergy: { min: optimalSynergy },
+    },
+    variables,
+  };
+}
+
+function selectedSynergy(
+  solution: SolverResult,
+  variableKeys: readonly string[],
+  candidates: readonly MatchingCandidate[],
+): number {
+  return candidates.reduce(
+    (total, candidate, index) =>
+      Number(solution[variableKeys[index]]) >= 1
+        ? total + candidate.synergyValue
+        : total,
+    0,
+  );
+}
+
+function withCandidateDecision(
+  constraints: Readonly<Record<string, ConstraintBound>>,
+  variableKey: string,
+  include: boolean,
+): Record<string, ConstraintBound> {
+  return {
+    ...constraints,
+    [variableKey.replace("candidate_", "pick_")]: include
+      ? { min: 1, max: 1 }
+      : { max: 0 },
+  };
+}
+
+function modelWithConstraints(
+  model: Model,
+  constraints: Record<string, ConstraintBound>,
+): Model {
+  return { ...model, constraints };
+}
+
 export function optimalResult(
   solution: SolverResult,
   variableKeys: readonly string[],

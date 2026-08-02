@@ -78,6 +78,7 @@ export interface RankingContract {
   readonly objective: "synergyValue";
   readonly direction: "maximize";
   readonly tieBreaker: RankingTieBreaker;
+  readonly tieBreakMethod: "lexicographic-reoptimization";
   readonly seed?: number;
 }
 

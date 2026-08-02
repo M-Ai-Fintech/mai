@@ -14,7 +14,7 @@ import {
   buildModel,
   infeasibleResult,
   optimalResult,
-  solveModel,
+  solveCanonicalModel,
 } from "./portfolio_model.ts";
 import {
   type PortfolioSelectionRequest,
@@ -49,7 +49,11 @@ export function selectPortfolio(
   }
 
   const built = buildModel(eligible, criteria);
-  const solution = solveModel(built.model);
+  const solution = solveCanonicalModel(
+    built.model,
+    built.variableKeys,
+    eligible,
+  );
   if (!solution.feasible) {
     return infeasibleResult(
       ranking,

@@ -16,12 +16,14 @@ export function rankingContract(seed: number | undefined): RankingContract {
       objective: "synergyValue",
       direction: "maximize",
       tieBreaker: "candidate-id-ascending",
+      tieBreakMethod: "lexicographic-reoptimization",
     }
     : {
       contractVersion: MATCHING_CONTRACT_VERSION,
       objective: "synergyValue",
       direction: "maximize",
       tieBreaker: "seeded-candidate-order",
+      tieBreakMethod: "lexicographic-reoptimization",
       seed,
     };
 }
@@ -30,7 +32,7 @@ export function orderCandidates(
   candidates: readonly MatchingCandidate[],
   seed: number | undefined,
 ): MatchingCandidate[] {
-  // The LP solver resolves equal objective values by insertion order.
+  // Canonical order is the sequence used by equal-optimum reoptimization.
   return [...candidates].sort((left, right) =>
     compareCandidates(left, right, seed)
   );
