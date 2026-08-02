@@ -4,7 +4,7 @@ title: Immutable audit and activity foundation
 status: In Progress
 assignee: []
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 01:35'
+updated_date: '2026-08-02 02:19'
 labels:
   - backend
   - architecture
@@ -113,6 +113,7 @@ Production RPO/RTO and retention operating inputs are explicit approval gates; n
 5. Add an authorization-gated export-job boundary that enqueues only opaque scoped inputs and appends an audited export-request event; do not select or certify providers, register /api/v1 routes, import history, or add mutation paths.
 6. Run focused audit_activity checks, format/lint/diff checks, and deno task verify; record the MAI-107 rebase gate and any environment-limited evidence before PR handoff.
 7. Tighten the audit payload contract to reject non-JSON values and prove nested special-value rejection, deep record/array support, and digest stability after freezing and JSON persistence.
+8. Add explicit database-row parsers that validate and hydrate authority/evidence/provenance and redaction snapshots, then prove event and overlay PostgreSQL JSON round trips through projection with unchanged digest and Date timestamps.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -125,4 +126,6 @@ Post-rebase evidence: after MAI-107 PR #36 merged, `git fetch origin` succeeded 
 Draft PR #39 is open for owner review at https://github.com/luisfelipeluis49/mai/pull/39. The branch was pushed after the required MAI-107 rebase; MAI-109 remains In Progress and no merge, self-approval, or Done transition was performed.
 
 Payload-freezing correction: replaced generic object freezing with recursive strict JSON-compatible normalization. AuditPayload now rejects nested Date, undefined, functions, symbols, Map/Set/custom instances, nonfinite numbers, sparse/invalid arrays, symbol keys, and non-data properties; finite values and plain nested records/arrays are sorted, cloned, frozen, and -0 is canonicalized to 0. The same normalized payload drives digest calculation, PostgreSQL JSON serialization, stored-event freezing, and projection output. TDD evidence: the pre-fix regression loop was red (5 new rejection cases failed); after the fix focused DENO_ENV=test audit_activity tests passed 22/22, including nested payload projection and digest equality after freezing plus JSON persistence. Typecheck, deno fmt --check, deno lint, and git diff --check passed. Updated full deno task test passed 326 with 0 failures and 22 ignored. Updated deno task verify exited 1 only on the known environment-bound GUI gates: frontend foundation spawnSync git EPERM, and missing vitest, next, playwright, and storybook; canonical documentation, i18n, Deno tests, design tokens, component/shell/screen/Figma checks, and Storybook documentation passed. PR #39 remains Draft/In Review pending owner action; MAI-109 remains In Progress.
+
+Persisted snapshot hydration correction: added explicit parseAuthoritySnapshot, parseEvidenceSnapshot, and parseAuditProvenance parsers that validate complete nested structures and hydrate capturedAt timestamps; redaction overlays use the same authority parser. PostgreSQL NULL optionals are omitted during row conversion so canonical digest input remains unchanged. Added a named-fake database-row regression covering append JSON/JSONB serialization, event/evidence Date hydration, freezeAuditEvent, unchanged digest, redaction-overlay hydration, and projection. Focused deno test --allow-env --allow-read --allow-net tests/audit_activity/*.spec.ts passed 23/23; deno task test passed 327 with 0 failures and 22 ignored; deno check, deno fmt --check, deno lint, and git diff --check passed. deno task verify exited 1 only on known environment-bound GUI gates: frontend foundation spawnSync git EPERM and missing vitest, next, playwright, and storybook; Deno tests and other repository checks passed.
 <!-- SECTION:NOTES:END -->

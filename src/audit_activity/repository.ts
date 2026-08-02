@@ -22,13 +22,13 @@ import type {
   WorkspaceId,
 } from "../shared/contracts/identifiers.ts";
 import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts";
-import type {
-  AuditActorKind,
-  AuditFieldClassification,
-  AuditProvenance,
-} from "./model.ts";
-import type { AuthoritySnapshot, EvidenceSnapshot } from "./model.ts";
+import type { AuditActorKind, AuditFieldClassification } from "./model.ts";
 import type { RequestOrigin } from "../shared/contracts/request_context.ts";
+import {
+  parseAuditProvenance,
+  parseAuthoritySnapshot,
+  parseEvidenceSnapshot,
+} from "./repository_parsers.ts";
 
 export interface AuditEventRepository {
   append(
@@ -264,13 +264,17 @@ function toStoredAuditEvent(row: AuditEventRow): StoredAuditEvent {
   const event: AuditEventDraft = {
     eventId: row.eventId as AuditEventId,
     tenantId: row.tenantId as TenantId,
-    workspaceId: row.workspaceId as WorkspaceId | undefined,
-    dealId: row.dealId as DealId | undefined,
+    ...(row.workspaceId === null
+      ? {}
+      : { workspaceId: row.workspaceId as WorkspaceId }),
+    ...(row.dealId === null ? {} : { dealId: row.dealId as DealId }),
     actorId: row.actorId as ActorId,
     actorKind: row.actorKind,
     origin: row.origin,
     correlationId: row.correlationId as CorrelationId,
-    causationId: row.causationId as AuditEventId | undefined,
+    ...(row.causationId === null
+      ? {}
+      : { causationId: row.causationId as AuditEventId }),
     aggregateType: row.aggregateType,
     aggregateId: row.aggregateId,
     aggregateVersion: parseNumber(
@@ -279,13 +283,12 @@ function toStoredAuditEvent(row: AuditEventRow): StoredAuditEvent {
     ) as AggregateVersion,
     eventType: row.eventType,
     schemaVersion: row.schemaVersion,
-    authoritySnapshot: parseObject(
+    authoritySnapshot: parseAuthoritySnapshot(
       row.authoritySnapshot,
-    ) as unknown as AuthoritySnapshot,
-    evidenceSnapshot: parseObject(
-      row.evidenceSnapshot,
-    ) as unknown as EvidenceSnapshot,
-    provenance: parseObject(row.provenance) as unknown as AuditProvenance,
+      row.eventId,
+    ),
+    evidenceSnapshot: parseEvidenceSnapshot(row.evidenceSnapshot, row.eventId),
+    provenance: parseAuditProvenance(row.provenance, row.eventId),
     payload: parseObject(row.payload) as unknown as AuditPayload,
     classifications: parseObject(row.classifications) as unknown as Readonly<
       Record<string, AuditFieldClassification>
@@ -303,13 +306,16 @@ function toStoredRedactionOverlay(row: RedactionRow): StoredRedactionOverlay {
   const overlay: RedactionOverlayDraft = {
     overlayId: row.overlayId as RedactionOverlayDraft["overlayId"],
     tenantId: row.tenantId as TenantId,
-    workspaceId: row.workspaceId as WorkspaceId | undefined,
-    dealId: row.dealId as DealId | undefined,
+    ...(row.workspaceId === null
+      ? {}
+      : { workspaceId: row.workspaceId as WorkspaceId }),
+    ...(row.dealId === null ? {} : { dealId: row.dealId as DealId }),
     targetEventId: row.targetEventId as AuditEventId,
     actorId: row.actorId as ActorId,
-    authoritySnapshot: parseObject(
+    authoritySnapshot: parseAuthoritySnapshot(
       row.authoritySnapshot,
-    ) as unknown as AuthoritySnapshot,
+      row.overlayId,
+    ),
     reason: row.reason,
     fields: parseStringArray(row.fields),
     appliedAt: parseDate(row.appliedAt, row.overlayId),
