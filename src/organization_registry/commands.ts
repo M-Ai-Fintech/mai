@@ -103,23 +103,23 @@ export interface MergePeopleCommand extends RegistryCommandBase {
   readonly reason: string;
 }
 
-export type OrganizationPatch = Partial<
-  Pick<Organization, "name" | "externalReference">
->;
+export interface OrganizationPatch {
+  readonly name?: Organization["name"];
+  readonly externalReference?: string | null;
+}
+
 export type LegalEntityPatch = Partial<
   Pick<LegalEntity, "legalName" | "jurisdictionCode" | "registrationNumber">
 >;
-export type PersonPatch = Partial<
-  Pick<
-    Person,
-    | "organizationId"
-    | "givenName"
-    | "familyName"
-    | "email"
-    | "phone"
-    | "nationalId"
-  >
->;
+
+export interface PersonPatch {
+  readonly organizationId?: OrganizationId | null;
+  readonly givenName?: Person["givenName"];
+  readonly familyName?: Person["familyName"];
+  readonly email?: string | null;
+  readonly phone?: string | null;
+  readonly nationalId?: string | null;
+}
 
 export type RegistryCommandResult = RegistryAggregate | RegistryMergeResult;
 

@@ -141,19 +141,27 @@ export function updateOrganizationAggregate(
   const name = patch.name === undefined
     ? current.name
     : requiredText(patch.name, "organization name", 200);
+  const { externalReference: _externalReference, ...withoutReference } =
+    current;
   return Object.freeze({
-    ...current,
+    ...withoutReference,
     version: nextVersion(current.version),
     updatedAt: now,
     name,
     normalizedName: normalizeIdentity(name),
-    ...(patch.externalReference === undefined ? {} : {
-      externalReference: requiredText(
-        patch.externalReference,
-        "organization external reference",
-        128,
-      ),
-    }),
+    ...(patch.externalReference === undefined
+      ? current.externalReference === undefined
+        ? {}
+        : { externalReference: current.externalReference }
+      : patch.externalReference === null
+      ? {}
+      : {
+        externalReference: requiredText(
+          patch.externalReference,
+          "organization external reference",
+          128,
+        ),
+      }),
   });
 }
 
@@ -197,11 +205,22 @@ export function updatePersonAggregate(
       `Person "${current.id}" update was empty; expected a mutable field.`,
     );
   }
+  const {
+    organizationId: _organizationId,
+    email: _email,
+    phone: _phone,
+    nationalId: _nationalId,
+    ...withoutOptionalFields
+  } = current;
   return Object.freeze({
-    ...current,
+    ...withoutOptionalFields,
     version: nextVersion(current.version),
     updatedAt: now,
     ...(patch.organizationId === undefined
+      ? current.organizationId === undefined
+        ? {}
+        : { organizationId: current.organizationId }
+      : patch.organizationId === null
       ? {}
       : { organizationId: patch.organizationId }),
     givenName: patch.givenName === undefined
@@ -211,14 +230,24 @@ export function updatePersonAggregate(
       ? current.familyName
       : requiredText(patch.familyName, "person family name", 120),
     ...(patch.email === undefined
+      ? current.email === undefined ? {} : { email: current.email }
+      : patch.email === null
       ? {}
       : { email: validatedEmail(patch.email) }),
     ...(patch.phone === undefined
+      ? current.phone === undefined ? {} : { phone: current.phone }
+      : patch.phone === null
       ? {}
       : { phone: requiredText(patch.phone, "person phone", 64) }),
-    ...(patch.nationalId === undefined ? {} : {
-      nationalId: requiredText(patch.nationalId, "person national ID", 128),
-    }),
+    ...(patch.nationalId === undefined
+      ? current.nationalId === undefined
+        ? {}
+        : { nationalId: current.nationalId }
+      : patch.nationalId === null
+      ? {}
+      : {
+        nationalId: requiredText(patch.nationalId, "person national ID", 128),
+      }),
   });
 }
 

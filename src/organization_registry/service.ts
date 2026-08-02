@@ -47,7 +47,6 @@ import type {
 import {
   commandFingerprint,
   commandReceiptKey,
-  InMemoryRegistryCommandReceiptStore,
   type RegistryCommandReceiptStore,
   replayOrThrow,
 } from "./receipts.ts";
@@ -80,15 +79,14 @@ export interface RegistryIdFactory {
 /**
  * Executes registry lifecycle commands against injected context-owned ports.
  *
- * @example const service = new OrganizationRegistryService(repository, clock, ids);
+ * @example const service = new OrganizationRegistryService(repository, clock, ids, receipts);
  */
 export class OrganizationRegistryService {
   constructor(
     private readonly repository: OrganizationRegistryRepository,
     private readonly clock: RegistryClock,
     private readonly ids: RegistryIdFactory,
-    private readonly receipts: RegistryCommandReceiptStore =
-      new InMemoryRegistryCommandReceiptStore(),
+    private readonly receipts: RegistryCommandReceiptStore,
   ) {}
 
   createOrganization(
@@ -245,7 +243,10 @@ export class OrganizationRegistryService {
         command.context,
         command.personId,
       );
-      if (command.patch.organizationId !== undefined) {
+      if (
+        command.patch.organizationId !== undefined &&
+        command.patch.organizationId !== null
+      ) {
         await requireActiveOrganization(
           this.repository,
           command.context,

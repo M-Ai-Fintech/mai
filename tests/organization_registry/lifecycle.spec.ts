@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   InMemoryOrganizationRegistryRepository,
+  InMemoryRegistryCommandReceiptStore,
   OrganizationRegistryReadModel,
   OrganizationRegistryService,
   RegistryDuplicateIdentityError,
@@ -16,6 +17,7 @@ import {
   scopeFor,
   SequentialRegistryIdFactory,
 } from "./support.ts";
+import { field, type FieldMask } from "../../src/platform/authz/v1.ts";
 
 Deno.test("registry creates versioned organization, legal entity, and person aggregates", async () => {
   const fixture = registryFixture();
@@ -90,6 +92,76 @@ Deno.test("registry rejects invalid identity invariants and stale updates", asyn
       }),
     RegistryVersionConflictError,
     'organization "org_fixture-1" expected version "1" but current version is "2"',
+  );
+});
+
+Deno.test("registry clears optional values, increments versions, and replays clears idempotently", async () => {
+  const fixture = registryFixture();
+  const context = contextFor();
+  const organization = await fixture.service.createOrganization({
+    context,
+    idempotencyKey: keyFor("clear-organization-create"),
+    name: "Northstar Holdings",
+    externalReference: "legacy-reference",
+  });
+  const person = await fixture.service.createPerson({
+    context,
+    idempotencyKey: keyFor("clear-person-create"),
+    organizationId: organization.id,
+    givenName: "Ada",
+    familyName: "Northstar",
+    email: "ada@example.test",
+    phone: "+55 11 99999-9999",
+    nationalId: "restricted-123",
+  });
+
+  const clearedOrganization = await fixture.service.updateOrganization({
+    context,
+    idempotencyKey: keyFor("clear-organization"),
+    organizationId: organization.id,
+    expectedVersion: organization.version,
+    patch: { externalReference: null },
+  });
+  const clearPersonCommand = {
+    context,
+    idempotencyKey: keyFor("clear-person"),
+    personId: person.id,
+    expectedVersion: person.version,
+    patch: {
+      organizationId: null,
+      email: null,
+      phone: null,
+      nationalId: null,
+    },
+  } as const;
+  const clearedPerson = await fixture.service.updatePerson(clearPersonCommand);
+  const replayedPerson = await fixture.service.updatePerson(clearPersonCommand);
+
+  assertEquals(clearedOrganization.version, 2);
+  assertEquals(clearedPerson.version, 2);
+  assertEquals(replayedPerson, clearedPerson);
+  assertEquals("externalReference" in clearedOrganization, false);
+  assertEquals("organizationId" in clearedPerson, false);
+  assertEquals("email" in clearedPerson, false);
+  assertEquals("phone" in clearedPerson, false);
+  assertEquals("nationalId" in clearedPerson, false);
+  assertEquals(
+    await fixture.readModel.read({
+      context,
+      kind: "organization",
+      id: organization.id,
+      fieldMask: clearableFieldsMask(),
+    }),
+    {},
+  );
+  assertEquals(
+    await fixture.readModel.read({
+      context,
+      kind: "person",
+      id: person.id,
+      fieldMask: clearableFieldsMask(),
+    }),
+    {},
   );
 });
 
@@ -340,7 +412,31 @@ function registryFixture() {
   const repository = new InMemoryOrganizationRegistryRepository();
   const clock = new FixedRegistryClock();
   const ids = new SequentialRegistryIdFactory();
-  const service = new OrganizationRegistryService(repository, clock, ids);
+  const service = new OrganizationRegistryService(
+    repository,
+    clock,
+    ids,
+    new InMemoryRegistryCommandReceiptStore(),
+  );
   const readModel = new OrganizationRegistryReadModel(repository);
   return { repository, service, readModel };
+}
+
+function clearableFieldsMask(): FieldMask {
+  const fields = [
+    ["external_reference", "restricted"],
+    ["organization_id", "external_shareable"],
+    ["email", "restricted"],
+    ["phone", "restricted"],
+    ["national_id", "restricted"],
+  ] as const;
+  return {
+    include: fields.map(([name]) => field(name)),
+    omit: [],
+    redact: [],
+    approvedClassifications: fields.map(([name, classification]) => ({
+      name: field(name),
+      classification,
+    })),
+  };
 }

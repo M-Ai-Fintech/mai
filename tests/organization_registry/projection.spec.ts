@@ -2,6 +2,7 @@ import { assert, assertEquals } from "@std/assert";
 import {
   defaultRegistryFieldMask,
   InMemoryOrganizationRegistryRepository,
+  InMemoryRegistryCommandReceiptStore,
   OrganizationRegistryService,
   projectRegistryAggregate,
 } from "../../src/organization_registry/v1.ts";
@@ -84,6 +85,7 @@ function createPerson() {
     new InMemoryOrganizationRegistryRepository(),
     new FixedRegistryClock(),
     new SequentialRegistryIdFactory(),
+    new InMemoryRegistryCommandReceiptStore(),
   );
   return service.createPerson({
     context: contextFor(),
