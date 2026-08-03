@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
+  AtomicVerificationMismatchError,
   dealManagementMigrations,
   type DealReconciliationRecord,
   DeterministicLegacyDealMapper,
@@ -63,19 +64,32 @@ Deno.test({
 
       for (
         const [caseId, validator] of [
-          ["missing-evidence", () => Promise.resolve(false)],
+          ["missing-evidence", () =>
+            Promise.resolve({
+              ok: false as const,
+              missing: ["CLAIM_COUNT"],
+            })],
           ["corrupt-evidence", () => Promise.reject(new Error("corrupt"))],
         ] as const
       ) {
         await reset(pool);
         await seedDeal(pool, mapped.deal);
         await store.save(appliedRecord(mapped.deal, caseId));
-        await assertRejects(() =>
+        const error = await assertRejects(() =>
           store.verifyAndMarkReconciliation(
             verificationInput(mapped.deal, caseId),
             () => validator(),
           )
         );
+        if (caseId === "missing-evidence") {
+          assertEquals(error instanceof AtomicVerificationMismatchError, true);
+          assertEquals(
+            (error as AtomicVerificationMismatchError).evidence.missing,
+            ["CLAIM_COUNT"],
+          );
+        } else {
+          assertEquals((error as Error).message, "corrupt");
+        }
         await assertApplied(store, caseId);
       }
 
@@ -281,20 +295,28 @@ async function validateDeal(
   },
   deal: { id: string; version: number },
   evidence: boolean,
-): Promise<boolean> {
+): Promise<
+  { readonly ok: true } | {
+    readonly ok: false;
+    readonly missing: readonly string[];
+  }
+> {
   const result = await transaction.query<
     { version: number; document: unknown }
   >(
     "SELECT version, document FROM deal_management.deals WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 FOR UPDATE",
     [scope.tenantId, scope.workspaceId, deal.id],
   );
-  return evidence && result.rows[0] !== undefined &&
+  const matches = evidence && result.rows[0] !== undefined &&
     Number(result.rows[0].version) === deal.version &&
     canonicalJson(stripPersistenceFields(
         typeof result.rows[0].document === "string"
           ? JSON.parse(result.rows[0].document)
           : result.rows[0].document,
       )) === canonicalJson(stripPersistenceFields(deal));
+  return matches
+    ? { ok: true }
+    : { ok: false, missing: ["AUTHORITATIVE_DOCUMENT"] };
 }
 
 function stripPersistenceFields(

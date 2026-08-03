@@ -24,6 +24,7 @@ export interface LegacyMappingInput {
 export type LegacyReferenceLookup = (
   legacyId: string,
   kind: NonNullable<LegacyPartyRecord["referenceKind"]>,
+  mappingKind: "party" | "team",
 ) => Promise<DealPartyReference | undefined>;
 
 export async function mapParties(
@@ -337,7 +338,11 @@ async function resolvePartyReference(
 ): Promise<DealPartyReference | undefined> {
   if (party.reference !== undefined) return party.reference;
   if (party.referenceKind === undefined) return undefined;
-  return await resolveReference(party.legacyPartyId, party.referenceKind);
+  return await resolveReference(
+    party.legacyPartyId,
+    party.referenceKind,
+    "party",
+  );
 }
 
 async function resolveTeamReference(
@@ -346,7 +351,11 @@ async function resolveTeamReference(
 ): Promise<DealPartyReference | undefined> {
   if (member.reference !== undefined) return member.reference;
   if (member.referenceKind === undefined) return undefined;
-  return await resolveReference(member.legacyMemberId, member.referenceKind);
+  return await resolveReference(
+    member.legacyMemberId,
+    member.referenceKind,
+    "team",
+  );
 }
 
 function normalizeRole(value: string | undefined): DealRoleName | undefined {

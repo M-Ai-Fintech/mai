@@ -1,18 +1,26 @@
 import type { Deal, DealScope } from "./contracts.ts";
 import { canonicalJson } from "./migration_identity.ts";
-import { parseStoredDeal } from "./read_model.ts";
 import type { DealId } from "./ids.ts";
 import type {
   CompatibilityRoutingMode,
   DealReconciliationRecord,
   DealReconciliationStore,
-  LegacyMappingIssue,
+  ReconciliationEvidenceResult,
   RoutingChange,
 } from "./legacy_contracts.ts";
-import type { LegacyMappingIssueCode } from "./legacy_contracts.ts";
-import { boundedIssueEvidence } from "./issue_evidence.ts";
 import type { DealTransactionRunner } from "./repository.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
+import {
+  recordKey,
+  routedRecord,
+  sameScope,
+  toRecord,
+  toRoutingChange,
+} from "./reconciliation_store_rows.ts";
+import type {
+  ReconciliationRow,
+  RoutingRow,
+} from "./reconciliation_store_rows.ts";
 
 /**
  * Stores reconciliation and routing state in memory for isolated tests and
@@ -151,10 +159,11 @@ export class PostgresDealReconciliationStore
     return this.transactions.run(async (transaction) => {
       const current = await findRecordForVerification(transaction, input);
       assertVerificationPreconditions(current, input);
-      if (!await validate(transaction, current)) {
-        throw new Error(
-          'Reconciliation evidence for "' + input.legacyDealId +
-            '" failed exact verification; expected an unchanged applied record and authoritative Deal.',
+      const verification = await validate(transaction, current);
+      if (!verification.ok) {
+        throw new AtomicVerificationMismatchError(
+          input.legacyDealId,
+          verification,
         );
       }
       const updated = await markVerified(transaction, current, input);
@@ -195,6 +204,19 @@ export class PostgresDealReconciliationStore
   }
 }
 
+/** Carries exact mismatch codes without disguising infrastructure failures. */
+export class AtomicVerificationMismatchError extends Error {
+  constructor(
+    legacyDealId: string,
+    readonly evidence: Extract<ReconciliationEvidenceResult, { ok: false }>,
+  ) {
+    super(
+      `Reconciliation evidence for "${legacyDealId}" failed exact verification; expected an unchanged applied record and authoritative Deal.`,
+    );
+    this.name = "AtomicVerificationMismatchError";
+  }
+}
+
 export interface AtomicVerificationInput {
   readonly scope: DealScope;
   readonly legacySource: string;
@@ -210,37 +232,7 @@ export interface AtomicVerificationInput {
 export type AtomicVerificationCallback = (
   transaction: TransactionHandle,
   current: DealReconciliationRecord,
-) => Promise<boolean>;
-
-interface ReconciliationRow {
-  readonly recordId: string;
-  readonly tenantId: string;
-  readonly workspaceId: string;
-  readonly legacySource: string;
-  readonly legacyDealId: string;
-  readonly authoritativeDealId: string | null;
-  readonly sourceFingerprint: string | null;
-  readonly intendedDocument: unknown;
-  readonly status: DealReconciliationRecord["status"];
-  readonly routingMode: CompatibilityRoutingMode;
-  readonly issue: unknown;
-  readonly updatedAt: Date | string;
-}
-
-interface RoutingRow {
-  readonly routingEventId: string;
-  readonly tenantId: string;
-  readonly workspaceId: string;
-  readonly legacySource: string;
-  readonly legacyDealId: string;
-  readonly authoritativeDealId: string | null;
-  readonly previousMode: CompatibilityRoutingMode;
-  readonly nextMode: CompatibilityRoutingMode;
-  readonly actorId: string;
-  readonly correlationId: string;
-  readonly reason: string;
-  readonly changedAt: Date | string;
-}
+) => Promise<ReconciliationEvidenceResult>;
 
 const recordSelect = `SELECT record_id AS "recordId", tenant_id AS "tenantId",
   workspace_id AS "workspaceId", legacy_source AS "legacySource",
@@ -499,147 +491,4 @@ function assertRouteStatus(
   throw new Error(
     `Reconciliation route for "${legacyDealId}" cannot enter "${nextMode}" from status "${record.status}"; expected status "${expectedStatus}".`,
   );
-}
-
-function toRecord(row: ReconciliationRow): DealReconciliationRecord {
-  const intendedDeal = row.intendedDocument === null
-    ? undefined
-    : parseStoredDeal(row.intendedDocument);
-  return {
-    recordId: row.recordId,
-    scope: rowScope(row),
-    legacySource: row.legacySource,
-    legacyDealId: row.legacyDealId,
-    ...rowIdentity(row),
-    ...(intendedDeal === undefined ? {} : { intendedDeal }),
-    status: row.status,
-    routingMode: row.routingMode,
-    ...(row.issue === null
-      ? {}
-      : { issue: parseIssue(row.issue, row.legacyDealId) }),
-    updatedAt: new Date(row.updatedAt).toISOString(),
-  };
-}
-
-function rowScope(row: ReconciliationRow): DealScope {
-  return {
-    tenantId: row.tenantId as DealScope["tenantId"],
-    workspaceId: row.workspaceId as DealScope["workspaceId"],
-  };
-}
-
-function rowIdentity(row: ReconciliationRow) {
-  return {
-    ...(row.authoritativeDealId === null
-      ? {}
-      : { authoritativeDealId: row.authoritativeDealId as DealId }),
-    ...(row.sourceFingerprint === null
-      ? {}
-      : { sourceFingerprint: row.sourceFingerprint }),
-  };
-}
-
-function toRoutingChange(row: RoutingRow): RoutingChange {
-  return {
-    scope: {
-      tenantId: row.tenantId as DealScope["tenantId"],
-      workspaceId: row.workspaceId as DealScope["workspaceId"],
-    },
-    legacySource: row.legacySource,
-    legacyDealId: row.legacyDealId,
-    ...(row.authoritativeDealId === null
-      ? {}
-      : { authoritativeDealId: row.authoritativeDealId as DealId }),
-    previousMode: row.previousMode,
-    nextMode: row.nextMode,
-    actorId: row.actorId,
-    correlationId: row.correlationId,
-    reason: row.reason,
-    changedAt: new Date(row.changedAt).toISOString(),
-  };
-}
-
-function parseIssue(value: unknown, legacyDealId: string): LegacyMappingIssue {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(
-      `Reconciliation issue for "${legacyDealId}" is invalid; expected a JSON object.`,
-    );
-  }
-  const issue = value as Record<string, unknown>;
-  if (typeof issue.code !== "string") {
-    throw new Error(
-      `Reconciliation issue for "${legacyDealId}" is invalid; expected a machine-readable code.`,
-    );
-  }
-  if (!isIssueCode(issue.code)) {
-    throw new Error(
-      `Reconciliation issue for "${legacyDealId}" has code "${
-        String(issue.code)
-      }"; expected a supported issue code.`,
-    );
-  }
-  return boundedIssueEvidence({
-    code: issue.code,
-    legacyDealId,
-    received: issue.received,
-    expected: issue.expected,
-    explanation: typeof issue.explanation === "string"
-      ? issue.explanation
-      : "Persisted reconciliation evidence is available by code and digest.",
-    mismatchPaths: Array.isArray(issue.mismatchPaths)
-      ? issue.mismatchPaths.filter((path): path is string =>
-        typeof path === "string"
-      )
-      : undefined,
-    receivedDigest: typeof issue.receivedDigest === "string"
-      ? issue.receivedDigest
-      : undefined,
-    expectedDigest: typeof issue.expectedDigest === "string"
-      ? issue.expectedDigest
-      : undefined,
-    operatorInterventionRequired: issue.operatorInterventionRequired === true,
-    retrySafe: issue.retrySafe === true,
-  });
-}
-
-function isIssueCode(value: unknown): value is LegacyMappingIssueCode {
-  return typeof value === "string" && [
-    "MISSING_REQUIRED_FIELD",
-    "INCOMPLETE_MANDATE",
-    "INVALID_CURRENCY",
-    "UNSUPPORTED_DEAL_TYPE",
-    "DUPLICATE_PARTY",
-    "MISSING_UPSTREAM_REFERENCE",
-    "UNSUPPORTED_LEGACY_SHAPE",
-    "AUTHORITY_EXCEEDS_MANDATE",
-    "SCOPE_MISMATCH",
-    "RECONCILIATION_DRIFT",
-  ].includes(value);
-}
-
-function routedRecord(
-  record: DealReconciliationRecord,
-  change: RoutingChange,
-): DealReconciliationRecord {
-  return {
-    ...record,
-    authoritativeDealId: change.authoritativeDealId ??
-      record.authoritativeDealId,
-    status: change.nextMode === "legacy" ? "rollback_routed" : "verified",
-    routingMode: change.nextMode,
-    updatedAt: change.changedAt,
-  };
-}
-
-function recordKey(
-  scope: DealScope,
-  source: string,
-  legacyDealId: string,
-): string {
-  return `${scope.tenantId}\u0000${scope.workspaceId}\u0000${source}\u0000${legacyDealId}`;
-}
-
-function sameScope(left: DealScope, right: DealScope): boolean {
-  return left.tenantId === right.tenantId &&
-    left.workspaceId === right.workspaceId;
 }

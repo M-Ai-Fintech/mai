@@ -55,6 +55,7 @@ export interface LegacyReferenceResolver {
     readonly legacyDealId: string;
     readonly scope: DealScope;
     readonly legacyReferenceId: string;
+    readonly mappingKind: "party" | "team";
     readonly referenceKind: DealPartyReference["kind"];
   }): Promise<DealPartyReference | undefined>;
 }

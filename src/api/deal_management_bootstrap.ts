@@ -22,34 +22,7 @@ import type {
   DealAuthorizationInput,
   DealAuthorizationPort,
 } from "../deal_management/v1.ts";
-import {
-  createDealManagementComposition,
-  type DealManagementComposition,
-} from "../deal_management/composition.ts";
-
-const DATABASE_KEYS = ["MAI106_DATABASE_URL", "DATABASE_URL"] as const;
-
-/** Loads the executable Deal graph from repository-owned production adapters. */
-export function loadExecutableDealManagement(
-  environment: Readonly<Record<string, string | undefined>> = {
-    MAI106_DATABASE_URL: Deno.env.get("MAI106_DATABASE_URL"),
-    DATABASE_URL: Deno.env.get("DATABASE_URL"),
-  },
-): DealManagementComposition {
-  const databaseUrl = configuredDatabaseUrl(environment);
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 10 });
-  const authentication = new PostgresIdentityAccessAuthentication(pool);
-  const authorization = new PostgresDealAuthorization(pool);
-  const result = createDealManagementComposition({
-    pool,
-    poolOwnership: "owned",
-    authentication,
-    authorization,
-  });
-  if (result.kind === "configured") return result.composition;
-  void pool.end();
-  throw new Error(result.message);
-}
+export { loadExecutableDealManagement } from "./deal_management_environment.ts";
 
 /** Authenticates opaque Identity Access session IDs against persisted sessions. */
 export class PostgresIdentityAccessAuthentication
@@ -194,24 +167,6 @@ const operatorScopeQuery = `SELECT 1 FROM iam.sessions s
   WHERE s.tenant_id = $1 AND s.workspace_id = $2 AND s.aggregate_id = $3
     AND s.actor_id = $5
     AND s.state = 'active' AND s.expires_at > NOW() LIMIT 1`;
-
-function configuredDatabaseUrl(
-  environment: Readonly<Record<string, string | undefined>>,
-): string {
-  const value = DATABASE_KEYS.map((key) => environment[key]).find((item) =>
-    item?.trim()
-  );
-  if (value === undefined) {
-    throw new Error(
-      "API database configuration is missing; expected MAI106_DATABASE_URL or DATABASE_URL.",
-    );
-  }
-  const protocol = new URL(value).protocol;
-  if (protocol === "postgres:" || protocol === "postgresql:") return value;
-  throw new Error(
-    `API database URL protocol "${protocol}" is invalid; expected postgres or postgresql.`,
-  );
-}
 
 function parseCredential(credential: string): string {
   const value = credential.replace(/^Bearer\s+/i, "").trim();

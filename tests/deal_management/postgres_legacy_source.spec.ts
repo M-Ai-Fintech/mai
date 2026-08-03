@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import {
   createDealManagementComposition,
   DeterministicLegacyDealMapper,
+  LegacyReferenceAmbiguityError,
   LegacyScopeMappingError,
   PostgresLegacyDealSource,
   PostgresLegacyReferenceResolver,
@@ -58,6 +59,50 @@ const legacySchemaSql = `CREATE TABLE IF NOT EXISTS transaction_type (
     advisor_id UUID NOT NULL REFERENCES advisor(id),
     advisor_side_id UUID NOT NULL REFERENCES advisor_side(id)
   );`;
+
+Deno.test("legacy reference resolution binds mapping kind and rejects ambiguity", async () => {
+  const parameterSets: readonly unknown[][] = [];
+  const transactions = {
+    run: async (operation: (transaction: unknown) => Promise<unknown>) =>
+      await operation({
+        query: (_sql: string, parameters: readonly unknown[]) => {
+          (parameterSets as unknown[][]).push([...parameters]);
+          return Promise.resolve({
+            rows: parameters[5] === "ambiguous"
+              ? [{ id: "one" }, { id: "two" }]
+              : [{ id: `${parameters[4]}-resolved` }],
+            rowCount: 1,
+          });
+        },
+      }),
+  } as unknown as PostgresTransactionRunner;
+  const resolver = new PostgresLegacyReferenceResolver(transactions);
+  await resolver.resolve(referenceInput("party", "party-id"));
+  await resolver.resolve(referenceInput("team", "team-id"));
+  assertEquals(parameterSets.map((parameters) => parameters[4]), [
+    "party",
+    "team",
+  ]);
+  await assertRejects(
+    () => resolver.resolve(referenceInput("party", "ambiguous")),
+    LegacyReferenceAmbiguityError,
+    "expected exactly one",
+  );
+});
+
+function referenceInput(
+  mappingKind: "party" | "team",
+  legacyReferenceId: string,
+) {
+  return {
+    source: "core.legacy_transaction",
+    legacyDealId: dealId,
+    scope,
+    legacyReferenceId,
+    mappingKind,
+    referenceKind: "organization" as const,
+  };
+}
 
 Deno.test({
   name: "PostgreSQL legacy source uses reviewed scope and canonical mappings",

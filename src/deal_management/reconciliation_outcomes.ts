@@ -27,6 +27,16 @@ export type ReconciliationIssueInput = Omit<ReconciliationRunInput, "mode"> & {
   readonly mode?: ReconciliationMode;
 };
 
+export function assertLegacySource(
+  record: LegacyDealRecord,
+  expectedSource: string | undefined,
+): void {
+  if (expectedSource === undefined || record.source === expectedSource) return;
+  throw new Error(
+    `Legacy Deal "${record.legacyDealId}" source "${record.source}" does not match selector source "${expectedSource}".`,
+  );
+}
+
 export type MappedLegacyDeal = Extract<
   LegacyMappingResult,
   { readonly kind: "mapped" }

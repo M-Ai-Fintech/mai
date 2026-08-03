@@ -1,28 +1,16 @@
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
-import type { IdempotencyKey } from "../platform/api/v1.ts";
 import type {
   ReconciliationEvidenceResult,
   ReconciliationEvidenceVerifier,
 } from "./legacy_contracts.ts";
 import type { DealTransactionRunner } from "./repository.ts";
-import { commandFingerprint } from "./receipts.ts";
-import { reconciliationIdempotencyKey } from "./migration_identity.ts";
-import { canonicalJson, type LegacyIdentity } from "./migration_identity.ts";
-import type {
-  AddDealPartyCommand,
-  AssignDealRoleCommand,
-  CreateDealCommand,
-  SetMandateCommand,
-} from "./commands.ts";
-
-/** Provides the evidence seam for the canonical reconciliation key helper. */
-export function verificationExpectedIdempotencyKey(
-  identity: LegacyIdentity,
-  operation: string,
-  legacyEntityId: string,
-): Promise<IdempotencyKey> {
-  return reconciliationIdempotencyKey(identity, operation, legacyEntityId);
-}
+import { canonicalJson } from "./migration_identity.ts";
+import {
+  buildMigrationManifest,
+  type ExpectedOperation,
+  expectedResultMismatch,
+} from "./reconciliation_manifest.ts";
+export { verificationExpectedIdempotencyKey } from "./reconciliation_manifest.ts";
 
 export type ReconciliationEvidenceMismatchCode =
   | "CLAIM_COUNT"
@@ -71,19 +59,6 @@ export class PostgresReconciliationEvidenceVerifier
   ): Promise<ReconciliationEvidenceResult> {
     return verifyEvidence(transaction, input);
   }
-}
-
-interface ExpectedOperation {
-  readonly name: string;
-  readonly command: string;
-  readonly target: string;
-  readonly rawKey: string;
-  readonly key: string;
-  readonly fingerprint: string;
-  readonly version: number;
-  readonly event: string;
-  readonly schema: number;
-  readonly resultOperation: string;
 }
 
 interface ClaimRow {
@@ -153,183 +128,67 @@ async function verifyEvidence(
     : { ok: false, missing: mismatches.map(formatMismatch) };
 }
 
-async function buildMigrationManifest(
-  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
-): Promise<readonly ExpectedOperation[]> {
-  const context = input.operator.commandContext;
-  const identity = {
-    source: input.legacySource,
-    legacyDealId: input.legacyDealId,
-  };
-  const base: CreateDealCommand = {
-    type: "create_deal",
-    context,
-    idempotencyKey: await verificationExpectedIdempotencyKey(
-      identity,
-      "create",
-      input.intendedDeal.id,
-    ),
-    dealId: input.intendedDeal.id,
-    name: input.intendedDeal.name,
-    dealType: input.intendedDeal.dealType,
-    confidentiality: input.intendedDeal.confidentiality,
-    currency: input.intendedDeal.currency,
-  };
-  const commands: Array<{
-    name: string;
-    command:
-      | CreateDealCommand
-      | SetMandateCommand
-      | AddDealPartyCommand
-      | AssignDealRoleCommand;
-    event: string;
-    resultOperation: string;
-  }> = [{
-    name: "create_deal",
-    command: base,
-    event: "DealCreated",
-    resultOperation: "created",
-  }];
-
-  let version = 1;
-  if (input.intendedDeal.mandate !== undefined) {
-    const mandate = input.intendedDeal.mandate;
-    commands.push({
-      name: "set_mandate",
-      command: {
-        type: "set_mandate",
-        context,
-        idempotencyKey: await verificationExpectedIdempotencyKey(
-          identity,
-          "mandate",
-          input.intendedDeal.id,
-        ),
-        dealId: input.intendedDeal.id,
-        expectedVersion: version,
-        mandateId: mandate.id,
-        transactionValueCeiling: mandate.transactionValueCeiling,
-        authorityCeiling: mandate.authorityCeiling,
-      },
-      event: "MandateSet",
-      resultOperation: "mandate_set",
-    });
-    version++;
-  }
-  for (const party of input.intendedDeal.parties) {
-    commands.push({
-      name: "add_deal_party",
-      command: {
-        type: "add_deal_party",
-        context,
-        idempotencyKey: await verificationExpectedIdempotencyKey(
-          identity,
-          "party",
-          party.id,
-        ),
-        dealId: input.intendedDeal.id,
-        expectedVersion: version,
-        partyId: party.id,
-        reference: party.reference,
-        side: party.side,
-        label: party.label,
-      },
-      event: "DealPartyAdded",
-      resultOperation: "party_added",
-    });
-    version++;
-  }
-  for (const role of input.intendedDeal.roles) {
-    commands.push({
-      name: "assign_deal_role",
-      command: {
-        type: "assign_deal_role",
-        context,
-        idempotencyKey: await verificationExpectedIdempotencyKey(
-          identity,
-          "role",
-          role.id,
-        ),
-        dealId: input.intendedDeal.id,
-        expectedVersion: version,
-        roleId: role.id,
-        partyId: role.partyId,
-        name: role.name,
-        authorityLevel: role.authorityLevel,
-      },
-      event: "DealRoleAssigned",
-      resultOperation: "role_assigned",
-    });
-    version++;
-  }
-
-  const operations: ExpectedOperation[] = [];
-  for (const [index, entry] of commands.entries()) {
-    const rawKey = entry.command.idempotencyKey;
-    operations.push({
-      name: `${entry.name}[${index}]`,
-      command: entry.command.type,
-      target: input.intendedDeal.id,
-      rawKey,
-      key: durableKey(input, entry.command.type, input.intendedDeal.id, rawKey),
-      fingerprint: commandFingerprint(entry.command),
-      version: index + 1,
-      event: entry.event,
-      schema: 1,
-      resultOperation: entry.resultOperation,
-    });
-  }
-  return operations;
-}
-
-function durableKey(
-  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
-  command: string,
-  target: string,
-  rawKey: string,
-): string {
-  return [
-    input.scope.tenantId,
-    input.scope.workspaceId,
-    input.operator.actorId,
-    command,
-    target,
-    rawKey,
-  ].join(":");
-}
-
 async function verifyOperation(
   transaction: TransactionHandle,
   input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
   operation: ExpectedOperation,
   mismatches: ReconciliationEvidenceMismatch[],
 ): Promise<void> {
-  const claims = await loadClaims(transaction, input, operation);
-  const receipts = await loadReceipts(transaction, input, operation);
-  const history = await loadHistory(transaction, input, operation);
-  const outbox = await loadOutbox(transaction, input, operation);
-  const audit = await loadAudit(transaction, input, operation);
+  const evidence = await loadOperationEvidence(transaction, input, operation);
+  checkEvidenceCounts(evidence, operation, mismatches);
+  checkCommandEvidence(evidence, operation, mismatches);
+  checkHistoryEvidence(evidence, input, operation, mismatches);
+  checkOutboxEvidence(evidence, input, operation, mismatches);
+  checkAuditEvidence(evidence, input, operation, mismatches);
+}
 
-  if (claims.length !== 1) {
-    add(mismatches, "CLAIM_COUNT", operation, `${claims.length}`);
-  }
-  if (receipts.length !== 1) {
-    add(mismatches, "RECEIPT_COUNT", operation, `${receipts.length}`);
-  }
-  if (history.length !== 1) {
-    add(mismatches, "HISTORY_COUNT", operation, `${history.length}`);
-  }
-  if (outbox.length !== 1) {
-    add(mismatches, "OUTBOX_COUNT", operation, `${outbox.length}`);
-  }
-  if (audit.length !== 1) {
-    add(mismatches, "AUDIT_COUNT", operation, `${audit.length}`);
-  }
+interface OperationEvidence {
+  readonly claims: ClaimRow[];
+  readonly receipts: ReceiptRow[];
+  readonly history: EventRow[];
+  readonly outbox: LinkedEventRow[];
+  readonly audit: LinkedEventRow[];
+}
 
-  const claim = claims[0];
-  const receipt = receipts[0];
-  const event = history[0];
-  const outboxEvent = outbox[0];
-  const auditEvent = audit[0];
+async function loadOperationEvidence(
+  transaction: TransactionHandle,
+  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
+  operation: ExpectedOperation,
+): Promise<OperationEvidence> {
+  const [claims, receipts, history, outbox, audit] = await Promise.all([
+    loadClaims(transaction, input, operation),
+    loadReceipts(transaction, input, operation),
+    loadHistory(transaction, input, operation),
+    loadOutbox(transaction, input, operation),
+    loadAudit(transaction, input, operation),
+  ]);
+  return { claims, receipts, history, outbox, audit };
+}
+
+function checkEvidenceCounts(
+  evidence: OperationEvidence,
+  operation: ExpectedOperation,
+  mismatches: ReconciliationEvidenceMismatch[],
+): void {
+  const counts = [
+    ["CLAIM_COUNT", evidence.claims.length],
+    ["RECEIPT_COUNT", evidence.receipts.length],
+    ["HISTORY_COUNT", evidence.history.length],
+    ["OUTBOX_COUNT", evidence.outbox.length],
+    ["AUDIT_COUNT", evidence.audit.length],
+  ] as const;
+  for (const [code, count] of counts) {
+    if (count !== 1) add(mismatches, code, operation, `${count}`);
+  }
+}
+
+function checkCommandEvidence(
+  evidence: OperationEvidence,
+  operation: ExpectedOperation,
+  mismatches: ReconciliationEvidenceMismatch[],
+): void {
+  const claim = evidence.claims[0];
+  const receipt = evidence.receipts[0];
   if (claim !== undefined) {
     if (claim.state !== "completed") {
       add(mismatches, "CLAIM_NOT_COMPLETED", operation, claim.state);
@@ -353,8 +212,20 @@ async function verifyOperation(
     if (canonicalJson(claim.result) !== canonicalJson(receipt.result)) {
       add(mismatches, "RESULT_MISMATCH", operation, "claim_receipt");
     }
-    checkResultShape(claim.result, operation, mismatches);
+    const resultMismatch = expectedResultMismatch(claim.result, operation);
+    if (resultMismatch !== undefined) {
+      add(mismatches, "RESULT_MISMATCH", operation, resultMismatch);
+    }
   }
+}
+
+function checkHistoryEvidence(
+  evidence: OperationEvidence,
+  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
+  operation: ExpectedOperation,
+  mismatches: ReconciliationEvidenceMismatch[],
+): void {
+  const event = evidence.history[0];
   if (event !== undefined) {
     if (event.aggregateVersion !== operation.version) {
       add(
@@ -376,6 +247,16 @@ async function verifyOperation(
       event.dealId !== operation.target
     ) add(mismatches, "HISTORY_SCOPE", operation, event.eventId);
   }
+}
+
+function checkOutboxEvidence(
+  evidence: OperationEvidence,
+  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
+  operation: ExpectedOperation,
+  mismatches: ReconciliationEvidenceMismatch[],
+): void {
+  const event = evidence.history[0];
+  const outboxEvent = evidence.outbox[0];
   if (outboxEvent !== undefined && event !== undefined) {
     if (
       outboxEvent.eventId !== event.eventId ||
@@ -397,6 +278,16 @@ async function verifyOperation(
       );
     }
   }
+}
+
+function checkAuditEvidence(
+  evidence: OperationEvidence,
+  input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
+  operation: ExpectedOperation,
+  mismatches: ReconciliationEvidenceMismatch[],
+): void {
+  const event = evidence.history[0];
+  const auditEvent = evidence.audit[0];
   if (auditEvent !== undefined && event !== undefined) {
     if (
       auditEvent.eventId !== event.eventId ||
@@ -410,33 +301,6 @@ async function verifyOperation(
       auditEvent.aggregateId !== operation.target
     ) add(mismatches, "AUDIT_SCOPE", operation, auditEvent.eventId);
   }
-}
-
-function checkResultShape(
-  result: unknown,
-  operation: ExpectedOperation,
-  mismatches: ReconciliationEvidenceMismatch[],
-): void {
-  if (typeof result !== "object" || result === null || Array.isArray(result)) {
-    add(mismatches, "RESULT_MISMATCH", operation, "not_object");
-    return;
-  }
-  const value = result as Record<string, unknown>;
-  const deal = value.deal;
-  if (
-    value.operation !== operation.resultOperation || typeof deal !== "object" ||
-    deal === null
-  ) {
-    add(mismatches, "RESULT_MISMATCH", operation, "shape");
-    return;
-  }
-  const storedDeal = deal as Record<string, unknown>;
-  if (
-    storedDeal.id !== operation.target ||
-    storedDeal.version !== operation.version ||
-    typeof storedDeal.tenantId !== "string" ||
-    typeof storedDeal.workspaceId !== "string"
-  ) add(mismatches, "RESULT_MISMATCH", operation, "aggregate_identity");
 }
 
 async function loadClaims(

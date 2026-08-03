@@ -107,11 +107,19 @@ export class CompatibilityDealReader {
       authoritativeDealId: input.authoritativeDealId,
     });
     if (routing === undefined) return { kind: "protected_not_found" };
-    return await this.read({
-      context: input.context,
-      legacySource: routing.legacySource,
-      legacyDealId: routing.legacyDealId,
-    });
+    if (shouldReadAuthoritative(routing)) {
+      return await this.readAuthoritative(scope, routing, authorization);
+    }
+    return await this.readLegacy(
+      {
+        context: input.context,
+        legacySource: routing.legacySource,
+        legacyDealId: routing.legacyDealId,
+      },
+      scope,
+      routing,
+      authorization,
+    );
   }
 
   /**

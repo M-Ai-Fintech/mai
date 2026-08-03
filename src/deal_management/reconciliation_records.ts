@@ -181,6 +181,23 @@ export function verificationIssue(
   });
 }
 
+/** Creates bounded operator evidence from exact atomic mismatch codes. */
+export function verificationEvidenceIssue(
+  record: LegacyDealRecord,
+  mismatchCodes: readonly string[],
+): LegacyMappingIssue {
+  return boundedIssueEvidence({
+    code: "RECONCILIATION_DRIFT",
+    legacyDealId: record.legacyDealId,
+    received: "durable evidence mismatch",
+    expected: "exact reconciliation operation manifest",
+    mismatchPaths: mismatchCodes,
+    explanation: "Atomic verification found mismatched durable evidence.",
+    operatorInterventionRequired: true,
+    retrySafe: false,
+  });
+}
+
 /**
  * Creates evidence when verification has no completed reconciliation record.
  *

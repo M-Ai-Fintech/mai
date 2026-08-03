@@ -209,6 +209,8 @@ Deno.test("successful operator cleanup closes owned resources once", async () =>
     "operator-proof",
     runtimeDependencies(new FakeAuthenticationPort(runtimePrincipal())),
   );
+  assertEquals(runtime.commandContext.request.sessionId, "session_runtime");
+  assertEquals(runtime.commandContext.request.identityId, "identity_runtime");
   await runtime.close();
   await runtime.close();
   assertEquals(pool.endCalls, 1);

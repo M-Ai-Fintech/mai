@@ -49,13 +49,15 @@ export class DeterministicLegacyDealMapper implements LegacyDealMapper {
   }
 
   private lookup(record: LegacyDealRecord): LegacyReferenceLookup {
-    return (legacyId, kind) => this.resolveReference(record, legacyId, kind);
+    return (legacyId, kind, mappingKind) =>
+      this.resolveReference(record, legacyId, kind, mappingKind);
   }
 
   private async resolveReference(
     record: LegacyDealRecord,
     legacyReferenceId: string,
     referenceKind: NonNullable<LegacyPartyRecord["referenceKind"]>,
+    mappingKind: "party" | "team",
   ): Promise<DealPartyReference | undefined> {
     return await this.references?.resolve({
       source: record.source,
@@ -65,6 +67,7 @@ export class DeterministicLegacyDealMapper implements LegacyDealMapper {
         workspaceId: record.workspaceId!,
       },
       legacyReferenceId,
+      mappingKind,
       referenceKind,
     });
   }

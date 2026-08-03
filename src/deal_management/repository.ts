@@ -10,6 +10,7 @@ import type {
   IdempotencyKey,
 } from "../platform/api/v1.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
+import { assertDealWriteVersion } from "./repository_validation.ts";
 import {
   DealIdempotencyConflictError,
   DealInvariantError,
@@ -159,7 +160,7 @@ export class InMemoryDealRepository implements DealRepository {
     assertEvent(write.event, write.aggregate);
     const key = keyFor(write.scope, write.aggregate.id);
     const current = this.deals.get(key);
-    assertVersion(write, current);
+    assertDealWriteVersion(write, current);
     this.deals.set(key, cloneStoredDeal(write.aggregate));
     const history = this.events.get(key) ?? [];
     history.push(cloneStoredEvent(write.event));
@@ -275,7 +276,7 @@ export class PostgresDealRepository implements DealRepository {
       write.scope,
       write.aggregate.id,
     );
-    assertVersion(write, current);
+    assertDealWriteVersion(write, current);
     if (current === undefined) {
       await insertDeal(transaction, write.aggregate);
     } else {
@@ -472,28 +473,6 @@ function assertEvent(event: DealEvent, aggregate: Deal): void {
   ) return;
   throw new DealInvariantError(
     `Deal event "${event.eventId}" does not match aggregate "${aggregate.id}"; expected the same scope and version.`,
-  );
-}
-
-function assertVersion(
-  write: DealWrite,
-  current: Deal | number | undefined,
-): void {
-  const stored = typeof current === "object" && current !== null
-    ? current.version
-    : current;
-  if (
-    stored === undefined && write.expectedVersion === undefined &&
-    write.aggregate.version === 1
-  ) return;
-  if (
-    stored !== undefined && write.expectedVersion === stored &&
-    write.aggregate.version === stored + 1
-  ) return;
-  throw new DealVersionConflictError(
-    write.aggregate.id,
-    write.expectedVersion,
-    stored ?? 0,
   );
 }
 

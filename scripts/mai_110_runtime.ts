@@ -79,7 +79,7 @@ export async function createOperatorRuntime(
     });
     return {
       executor: composition.reconciliation,
-      commandContext: commandContext(input, principal.actor),
+      commandContext: commandContext(input, principal),
       close: () => composition.close(),
     };
   } catch (error) {
@@ -119,14 +119,16 @@ function assertPrincipal(
 
 function commandContext(
   input: RuntimeInput,
-  actor: AuthenticatedPrincipal["actor"],
+  principal: AuthenticatedPrincipal,
 ): DealCommandContext {
   return {
-    actor,
+    actor: principal.actor,
     request: {
-      actorId: actor.id,
+      actorId: principal.actor.id,
       tenantId: input.scope.tenantId,
       workspaceId: input.scope.workspaceId,
+      sessionId: principal.sessionId,
+      identityId: principal.identityId,
       correlationId: input.correlationId,
       origin: "internal",
     },

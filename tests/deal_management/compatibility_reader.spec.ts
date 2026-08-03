@@ -538,6 +538,32 @@ Deno.test("authoritative routing authorizes logical and exact resources before l
   assertEquals(repository.findCalls, 1);
 });
 
+Deno.test("read by authoritative identity does not require legacy alias permission", async () => {
+  const context = contextFor();
+  const deal = fixtureDeal(context);
+  const store = new RecordingReconciliationStore();
+  await store.save(routingRecord(context, deal));
+  const authorization = new MaskedAuthorization(completeFieldMask());
+  const reader = readerFor(
+    context,
+    deal,
+    authorization,
+    store,
+    new RecordingDealRepository(deal),
+  );
+
+  const result = await reader.readByAuthoritative({
+    context,
+    authoritativeDealId: deal.id,
+  });
+
+  assertEquals(result.kind, "loaded");
+  assertEquals(
+    authorization.calls.map((call) => call.resource.id),
+    [deal.id],
+  );
+});
+
 Deno.test("routingState authorizes before exposing sanitized metadata", async () => {
   const context = contextFor();
   const deal = fixtureDeal(context);

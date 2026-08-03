@@ -25,6 +25,16 @@ export class LegacyScopeMappingError extends Error {
   }
 }
 
+/** Rejects duplicate reviewed mappings instead of selecting one arbitrarily. */
+export class LegacyReferenceAmbiguityError extends Error {
+  constructor(input: LegacyReferenceInput) {
+    super(
+      `Legacy ${input.mappingKind} reference "${input.legacyReferenceId}" is ambiguous; expected exactly one ${input.referenceKind} mapping in the requested scope.`,
+    );
+    this.name = "LegacyReferenceAmbiguityError";
+  }
+}
+
 /**
  * Rejects a reviewed mapping whose mandate columns violate the all-or-none contract.
  *
@@ -100,6 +110,7 @@ interface LegacyReferenceInput {
   readonly legacyDealId: string;
   readonly scope: DealScope;
   readonly legacyReferenceId: string;
+  readonly mappingKind: "party" | "team";
   readonly referenceKind: DealPartyReference["kind"];
 }
 
@@ -331,9 +342,14 @@ async function resolveReference(
      FROM deal_management.legacy_reference_mappings
      WHERE legacy_source = $1 AND legacy_record_id = $2
        AND tenant_id = $3 AND workspace_id = $4
-       AND legacy_reference_id = $5 AND reference_kind = $6`,
+       AND mapping_kind = $5 AND legacy_reference_id = $6
+       AND reference_kind = $7
+     LIMIT 2`,
     referenceValues(input),
   );
+  if (result.rows.length > 1) {
+    throw new LegacyReferenceAmbiguityError(input);
+  }
   const row = result.rows[0];
   return row === undefined
     ? undefined
@@ -346,6 +362,7 @@ function referenceValues(input: LegacyReferenceInput): unknown[] {
     input.legacyDealId,
     input.scope.tenantId,
     input.scope.workspaceId,
+    input.mappingKind,
     input.legacyReferenceId,
     input.referenceKind,
   ];

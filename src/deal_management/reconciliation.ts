@@ -1,11 +1,7 @@
 import type { DealManagementService } from "./service.ts";
 import type { DealRepository } from "./repository.ts";
-import type { TransactionHandle } from "../platform/persistence/v1.ts";
-import type {
-  AtomicVerificationCallback,
-  AtomicVerificationInput,
-  PostgresDealReconciliationStore,
-} from "./reconciliation_store.ts";
+import type { PostgresDealReconciliationStore } from "./reconciliation_store.ts";
+import { AtomicVerificationMismatchError } from "./reconciliation_store.ts";
 import type { Deal } from "./contracts.ts";
 import {
   type DealReconciliationRecord,
@@ -22,20 +18,22 @@ import {
   type ReconciliationRunResult,
   type ReconciliationVerificationResult,
 } from "./legacy_contracts.ts";
+import { replayMappedDeal, verifyMappedDeal } from "./reconciliation_replay.ts";
 import {
-  replayMappedDeal,
-  sameMappedDealIntent,
-  verifyMappedDeal,
-} from "./reconciliation_replay.ts";
+  supportsAtomicVerification,
+  verifyAtomicReconciliation,
+} from "./reconciliation_atomic.ts";
 import {
   applyIssue,
   dryRunIssue,
   reconciliationRecord,
   sourceConflict,
+  verificationEvidenceIssue,
   verificationIssue,
 } from "./reconciliation_records.ts";
 import {
   appliedReconciliation,
+  assertLegacySource,
   assertRoutable,
   issueRecord,
   type MappedLegacyDeal,
@@ -403,15 +401,11 @@ export class DealReconciliationExecutor {
   }
 
   private supportsAtomicVerification(): boolean {
-    return typeof (this.store as Partial<PostgresDealReconciliationStore>)
-          .verifyAndMarkReconciliation === "function" &&
-      typeof (this.repository as DealRepository & {
-          findInTransaction?: unknown;
-        }).findInTransaction === "function" &&
-      (this.evidence === undefined ||
-        typeof (this.evidence as ReconciliationEvidenceVerifier & {
-            verifyInTransaction?: unknown;
-          }).verifyInTransaction === "function");
+    return supportsAtomicVerification(
+      this.store,
+      this.repository,
+      this.evidence,
+    );
   }
 
   private async persistAtomicVerification(
@@ -421,74 +415,24 @@ export class DealReconciliationExecutor {
     previous: DealReconciliationRecord,
   ): Promise<ReconciliationOutcome> {
     const atomicStore = this.store as PostgresDealReconciliationStore;
-    const atomicInput: AtomicVerificationInput = {
-      scope: input.operator.scope,
-      legacySource: legacyRecord.source,
-      legacyDealId: legacyRecord.legacyDealId,
-      authoritativeDealId: mapping.authoritativeDealId,
-      sourceFingerprint: mapping.sourceFingerprint,
-      intendedDeal: mapping.deal,
-      actorId: input.operator.actorId,
-      correlationId: input.operator.correlationId,
-      now: input.operator.now,
-    };
     try {
-      const verified = await atomicStore.verifyAndMarkReconciliation(
-        atomicInput,
-        this.atomicEvidenceValidator(mapping.deal, legacyRecord, input),
+      const verified = await verifyAtomicReconciliation(
+        atomicStore,
+        this.repository,
+        this.evidence,
+        legacyRecord,
+        input,
+        mapping,
       );
       return { kind: "verified", record: verified };
-    } catch {
-      return {
-        kind: "rejected",
-        record: previous,
-      };
-    }
-  }
-
-  private atomicEvidenceValidator(
-    intendedDeal: Deal,
-    legacyRecord: LegacyDealRecord,
-    input: ReconciliationIssueInput,
-  ): AtomicVerificationCallback {
-    return async (transaction: TransactionHandle) => {
-      const repository = this.repository as DealRepository & {
-        findInTransaction: (
-          transaction: TransactionHandle,
-          scope: ReconciliationOperatorContext["scope"],
-          dealId: Deal["id"],
-          lock?: boolean,
-        ) => Promise<Deal | undefined>;
-      };
-      const authoritative = await repository.findInTransaction(
-        transaction,
-        input.operator.scope,
-        intendedDeal.id,
-        true,
+    } catch (error) {
+      if (!(error instanceof AtomicVerificationMismatchError)) throw error;
+      const issue = verificationEvidenceIssue(
+        legacyRecord,
+        error.evidence.missing,
       );
-      if (
-        authoritative === undefined ||
-        !sameMappedDealIntent(authoritative, intendedDeal)
-      ) return false;
-      if (this.evidence === undefined) return true;
-      const verifier = this.evidence as ReconciliationEvidenceVerifier & {
-        verifyInTransaction: (
-          transaction: TransactionHandle,
-          evidenceInput: Parameters<
-            ReconciliationEvidenceVerifier["verify"]
-          >[0],
-        ) => Promise<
-          Awaited<ReturnType<ReconciliationEvidenceVerifier["verify"]>>
-        >;
-      };
-      return (await verifier.verifyInTransaction(transaction, {
-        scope: input.operator.scope,
-        intendedDeal,
-        legacySource: legacyRecord.source,
-        legacyDealId: legacyRecord.legacyDealId,
-        operator: input.operator,
-      })).ok;
-    };
+      return await this.saveIssue(legacyRecord, input, issue, previous);
+    }
   }
 
   private async persistVerification(
@@ -549,14 +493,4 @@ export class DealReconciliationExecutor {
     assertRoutable(current, input.legacyDealId);
     return await this.store.route(routingChange(input, current));
   }
-}
-
-function assertLegacySource(
-  record: LegacyDealRecord,
-  expectedSource: string | undefined,
-): void {
-  if (expectedSource === undefined || record.source === expectedSource) return;
-  throw new Error(
-    `Legacy Deal "${record.legacyDealId}" source "${record.source}" does not match selector source "${expectedSource}".`,
-  );
 }
