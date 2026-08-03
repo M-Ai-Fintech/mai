@@ -27,6 +27,14 @@ export type ReconciliationIssueInput = Omit<ReconciliationRunInput, "mode"> & {
   readonly mode?: ReconciliationMode;
 };
 
+export type RoutingInput = {
+  readonly legacySource: string;
+  readonly legacyDealId: string;
+  readonly operator: ReconciliationOperatorContext;
+  readonly reason: string;
+  readonly nextMode: "authoritative" | "legacy";
+};
+
 export function assertLegacySource(
   record: LegacyDealRecord,
   expectedSource: string | undefined,

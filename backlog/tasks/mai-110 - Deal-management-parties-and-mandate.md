@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 23:22'
+updated_date: '2026-08-03 23:55'
 labels:
   - backend
   - architecture
@@ -248,6 +248,18 @@ author: Codex
 created: 2026-08-03 23:22
 ---
 PR #44 merge-readiness correction evidence (2026-08-03, code commit 83be199): restored iam_0001_identity_access.ts byte-for-byte to master SHA-256 663185049f1c950dd83452328fe23ebc5687fb56b3fd3115ea9141a2da6786e6 and added transactional iam-0002 identity backfill; preserved authenticated sessionId/identityId in operator DealCommandContext; separated party/team legacy mappings with ambiguity rejection; retained typed atomic mismatch evidence while propagating database failures; removed legacy-alias authorization from authoritative reads; split PR-added production modules below 500 lines. Verification: focused non-PostgreSQL 19 passed, 0 failed; focused PostgreSQL 5 passed, 0 failed; all Deal Management 83 passed, 0 failed, 0 ignored; Identity Access 22 passed, 0 failed; API 27 passed, 0 failed; post-split atomic/corruption 2 passed, 0 failed; deno fmt/lint/check and git diff --check exit 0; deno task verify:fast exit 0 (11 passed, 5 documented offline skips, 2 documented offline unavailable); final DENO_ENV=test MAI106_DATABASE_URL='<isolated-postgresql-16-url>' deno task verify exit 0 with all 17 categories PASS. PostgreSQL was a fresh postgres:16 container/database. No Wave B finisher, merge, approval, Done transition, Figma mutation, or intentional Graphify update occurred; hook-generated Graphify output was restored.
+---
+
+author: Codex
+created: 2026-08-03 23:44
+---
+Bounded final PR #44 correction plan (2026-08-04): add executor-level apply regressions proving unknown evidence/transaction infrastructure errors propagate unchanged and preserve applied/legacy/no-issue state; prove AtomicVerificationMismatchError remains a bounded persisted rejection with mismatch codes; narrow applyMapped to catch only explicit repository-owned expected domain/reconciliation failures; run the three named focused suites, fresh PostgreSQL full Deal suite with zero ignores, scoped static checks, verify:fast, and 17-category canonical verification; update Draft PR evidence and keep MAI-110 In Progress. No Graphify, frontend/Figma, migration, cutover, readiness, approval, merge, finisher, or Done mutation.
+---
+
+author: Codex
+created: 2026-08-03 23:55
+---
+Final executor error-boundary correction evidence (2026-08-04): applyMapped now persists issues only for typed DealError or ReconciliationApplyError failures; unknown PostgreSQL, transaction, audit, outbox, and evidence-verifier errors propagate unchanged. Executor-level real-PostgreSQL regression first failed because run(mode=apply) resolved instead of rejecting, then passed after the correction. The regression proves the exact infrastructure Error object propagates, the record remains applied with legacy routing and no issue, AtomicVerificationMismatchError still produces a bounded conflict, OUTBOX_LINK remains persisted, and no infrastructure message is stored. Required focused suites: 18 passed, 0 failed, exit 0. Full MAI106_DATABASE_URL='<isolated-postgresql-16-url>' DENO_ENV=test deno test ... 'tests/deal_management/*.spec.ts': 84 passed, 0 failed, 0 ignored, exit 0. Changed TypeScript deno fmt --check and deno lint: 5 files checked, exit 0. deno check src/deal_management/v1.ts and scripts/mai_110_runtime.ts: exit 0. git diff --check: exit 0. deno task verify:fast: exit 0, 11 passed, 0 failed, 5 documented offline skips, 2 documented offline unavailable. Final DENO_ENV=test MAI106_DATABASE_URL='<isolated-postgresql-16-url>' deno task verify: exit 0, all 17 categories PASS. MAI-110 remains In Progress; no Graphify command, frontend/Figma change, migration, cutover, readiness transition, approval, merge, Wave B finisher, or Done transition occurred.
 ---
 <!-- COMMENTS:END -->
 

@@ -191,11 +191,15 @@ export function verificationEvidenceIssue(
     legacyDealId: record.legacyDealId,
     received: "durable evidence mismatch",
     expected: "exact reconciliation operation manifest",
-    mismatchPaths: mismatchCodes,
+    mismatchPaths: persistedMismatchCodes(mismatchCodes),
     explanation: "Atomic verification found mismatched durable evidence.",
     operatorInterventionRequired: true,
     retrySafe: false,
   });
+}
+
+function persistedMismatchCodes(values: readonly string[]): string[] {
+  return [...new Set(values.map((value) => value.split(":", 1)[0]))];
 }
 
 /**

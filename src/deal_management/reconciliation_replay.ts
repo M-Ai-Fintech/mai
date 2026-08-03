@@ -3,11 +3,31 @@ import type { IdempotencyKey } from "../platform/api/v1.ts";
 import type { DealId } from "./ids.ts";
 import type { DealManagementService } from "./service.ts";
 import type { DealRepository } from "./repository.ts";
+import { DealError } from "./errors.ts";
 import {
   canonicalJson,
   type LegacyIdentity,
   reconciliationIdempotencyKey,
 } from "./migration_identity.ts";
+
+/** Identifies an expected replay conflict that can become bounded evidence. */
+export class ReconciliationApplyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ReconciliationApplyError";
+  }
+}
+
+/**
+ * Returns true only for expected apply failures safe to persist as evidence.
+ * @example if (isExpectedReconciliationApplyFailure(error)) persist(error)
+ */
+export function isExpectedReconciliationApplyFailure(
+  error: unknown,
+): error is DealError | ReconciliationApplyError {
+  return error instanceof DealError ||
+    error instanceof ReconciliationApplyError;
+}
 
 /** Provides the replay seam for the canonical reconciliation key helper. */
 export function replayExpectedIdempotencyKey(
@@ -69,7 +89,7 @@ function assertReplayClaim(
   mayResumeExistingDeal: boolean,
 ): void {
   if (!mayResumeExistingDeal) {
-    throw new Error(
+    throw new ReconciliationApplyError(
       `Authoritative Deal "${existingDeal.id}" already exists without a persisted reconciliation claim; expected an absent Deal or a resumable claim for the exact legacy record.`,
     );
   }
@@ -80,7 +100,7 @@ function assertReplayClaim(
     !sameMandate(existingDeal, intendedDeal) ||
     existingDeal.authorityConstraints.length !== 0
   ) {
-    throw new Error(
+    throw new ReconciliationApplyError(
       `Authoritative Deal "${existingDeal.id}" conflicts with the mapped legacy candidate; expected matching base fields, empty authority constraints, and only matching party, role, and mandate state before replay.`,
     );
   }

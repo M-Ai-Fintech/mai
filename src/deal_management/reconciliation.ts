@@ -18,7 +18,11 @@ import {
   type ReconciliationRunResult,
   type ReconciliationVerificationResult,
 } from "./legacy_contracts.ts";
-import { replayMappedDeal, verifyMappedDeal } from "./reconciliation_replay.ts";
+import {
+  isExpectedReconciliationApplyFailure,
+  replayMappedDeal,
+  verifyMappedDeal,
+} from "./reconciliation_replay.ts";
 import {
   supportsAtomicVerification,
   verifyAtomicReconciliation,
@@ -44,17 +48,10 @@ import {
   type ReconciliationRunInput,
   resumableClaim,
   routingChange,
+  type RoutingInput,
   verificationPrecondition,
   verifiedReconciliation,
 } from "./reconciliation_outcomes.ts";
-
-type RoutingInput = {
-  readonly legacySource: string;
-  readonly legacyDealId: string;
-  readonly operator: ReconciliationOperatorContext;
-  readonly reason: string;
-  readonly nextMode: "authoritative" | "legacy";
-};
 
 /**
  * Executes bounded per-Deal dry-run, apply, resume, and rollback operations.
@@ -266,6 +263,7 @@ export class DealReconciliationExecutor {
         pending,
       );
     } catch (error) {
+      if (!isExpectedReconciliationApplyFailure(error)) throw error;
       const issue = applyIssue(legacyRecord, error);
       return await this.saveIssue(legacyRecord, input, issue, pending);
     }

@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import {
   type DealId,
   DealManagementService,
@@ -9,6 +9,8 @@ import {
   PostgresDealReconciliationStore,
   PostgresDealRepository,
   PostgresReconciliationEvidenceVerifier,
+  type ReconciliationEvidenceResult,
+  type ReconciliationEvidenceVerifier,
 } from "../../src/deal_management/v1.ts";
 import { DealAuditEventFactoryAdapter } from "../../src/deal_management/composition_support.ts";
 import {
@@ -22,6 +24,7 @@ import {
   platformMigrations,
   PostgresMigrationRunner,
   PostgresTransactionRunner,
+  type TransactionHandle,
 } from "../../src/platform/persistence/v1.ts";
 import {
   createMai106Pool,
@@ -237,6 +240,141 @@ Deno.test({
     }
   },
 });
+
+class ThrowingEvidenceVerifier implements ReconciliationEvidenceVerifier {
+  constructor(readonly failure: Error) {}
+
+  verify(): Promise<ReconciliationEvidenceResult> {
+    return Promise.reject(this.failure);
+  }
+
+  verifyInTransaction(): Promise<ReconciliationEvidenceResult> {
+    return Promise.reject(this.failure);
+  }
+}
+
+class MismatchedEvidenceVerifier implements ReconciliationEvidenceVerifier {
+  verify(): Promise<ReconciliationEvidenceResult> {
+    return Promise.resolve(this.mismatch());
+  }
+
+  verifyInTransaction(
+    _transaction: TransactionHandle,
+  ): Promise<ReconciliationEvidenceResult> {
+    return Promise.resolve(this.mismatch());
+  }
+
+  private mismatch(): ReconciliationEvidenceResult {
+    return { ok: false, missing: ["OUTBOX_LINK:create_deal[0]:wrong-audit"] };
+  }
+}
+
+Deno.test({
+  name:
+    "executor apply propagates infrastructure failures and persists only typed mismatches",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    try {
+      await prepareFailureDatabase(pool);
+      const transactions = new PostgresTransactionRunner(pool);
+      const failure = new Error("distinctive-postgres-evidence-outage");
+      const infrastructure = failureExecutor(
+        transactions,
+        "legacy-pg-infrastructure",
+        new ThrowingEvidenceVerifier(failure),
+      );
+      const rejected = await assertRejects(() =>
+        infrastructure.executor.run({
+          mode: "apply",
+          legacyDealId: "legacy-pg-infrastructure",
+          operator: operator(),
+        })
+      );
+      assertEquals(rejected, failure);
+      await assertAppliedWithoutIssue(
+        infrastructure.store,
+        "legacy-pg-infrastructure",
+      );
+
+      const mismatch = failureExecutor(
+        transactions,
+        "legacy-pg-mismatch",
+        new MismatchedEvidenceVerifier(),
+      );
+      const result = await mismatch.executor.run({
+        mode: "apply",
+        legacyDealId: "legacy-pg-mismatch",
+        operator: operator(),
+      });
+      assertEquals(result.outcomes[0]?.kind, "conflict");
+      assertEquals(result.outcomes[0]?.record.issue?.mismatchPaths, [
+        "OUTBOX_LINK",
+      ]);
+      assertEquals(
+        JSON.stringify(result.outcomes[0]?.record.issue).includes(
+          failure.message,
+        ),
+        false,
+      );
+    } finally {
+      await truncate(pool).catch(() => {});
+      await pool.end();
+    }
+  },
+});
+
+async function prepareFailureDatabase(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  await new PostgresMigrationRunner(pool).apply([
+    ...platformMigrations,
+    ...auditActivityMigrations,
+    ...dealManagementMigrations,
+  ]);
+  await truncate(pool);
+}
+
+function failureExecutor(
+  transactions: PostgresTransactionRunner,
+  legacyDealId: string,
+  evidence: ReconciliationEvidenceVerifier,
+) {
+  const repository = auditedRepository(transactions);
+  const store = new PostgresDealReconciliationStore(transactions);
+  const service = new DealManagementService({
+    repository,
+    authorization: new RecordingDealAuthorization(),
+    ids: new SequentialDealIdFactory(`failure-${legacyDealId}`),
+    clock: new FixedDealClock(context.now),
+    audit: new DealAuditEventFactoryAdapter(),
+  });
+  return {
+    store,
+    executor: new DealReconciliationExecutor(
+      new InMemoryLegacyDealSource([record(legacyDealId)]),
+      new DeterministicLegacyDealMapper(),
+      store,
+      service,
+      repository,
+      evidence,
+    ),
+  };
+}
+
+async function assertAppliedWithoutIssue(
+  store: PostgresDealReconciliationStore,
+  legacyDealId: string,
+): Promise<void> {
+  const persisted = await store.find({
+    scope,
+    legacySource: "legacy.postgres-fixture",
+    legacyDealId,
+  });
+  assertEquals(persisted?.status, "applied");
+  assertEquals(persisted?.routingMode, "legacy");
+  assertEquals(persisted?.issue, undefined);
+}
 
 function auditedRepository(transactions: PostgresTransactionRunner) {
   return new PostgresDealRepository(
