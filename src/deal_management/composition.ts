@@ -63,6 +63,7 @@ import {
 export interface DealManagementCompositionConfig {
   readonly databaseUrl?: string;
   readonly pool?: pg.Pool;
+  readonly poolOwnership?: PoolOwnership;
   readonly authentication: AuthenticationPort;
   readonly authorization: DealAuthorizationPort;
   readonly ids?: DealIdFactory;
@@ -74,6 +75,8 @@ export interface DealManagementCompositionConfig {
   readonly legacyMapper?: LegacyDealMapper;
   readonly reconciliationStore?: DealReconciliationStore;
 }
+
+export type PoolOwnership = "owned" | "borrowed";
 
 export type DealManagementCompositionResult =
   | {
@@ -108,6 +111,7 @@ export class DealManagementComposition {
     http: DealManagementHttpDependencies,
     compatibilityReader: CompatibilityDealReader,
     reconciliation: DealReconciliationExecutor,
+    private readonly poolOwnership: PoolOwnership = "borrowed",
   ) {
     this.repository = dependencies.repository as PostgresDealRepository;
     this.service = new DealManagementService(dependencies);
@@ -126,8 +130,12 @@ export class DealManagementComposition {
    *
    * @example await composition.close()
    */
+  private closed = false;
+
   close(): Promise<void> {
-    return this.pool.end();
+    if (this.closed) return Promise.resolve();
+    this.closed = true;
+    return this.poolOwnership === "owned" ? this.pool.end() : Promise.resolve();
   }
 }
 
@@ -157,7 +165,7 @@ function configuredComposition(
   const core = configuredCore(config, poolResult.pool);
   const legacy = configuredLegacy(config, core.transactions);
   const compatibility = configuredCompatibility(config, core, legacy);
-  return configuredResult(config, poolResult.pool, core, compatibility);
+  return configuredResult(config, poolResult, core, compatibility);
 }
 
 function configuredCore(
@@ -232,7 +240,7 @@ function configuredReader(
 
 function configuredResult(
   config: DealManagementCompositionConfig,
-  pool: pg.Pool,
+  poolResult: Extract<PoolResult, { readonly kind: "configured" }>,
   core: ConfiguredCore,
   compatibility: ReturnType<typeof configuredCompatibility>,
 ): DealManagementCompositionResult {
@@ -241,11 +249,12 @@ function configuredResult(
   return {
     kind: "configured",
     composition: new DealManagementComposition(
-      pool,
+      poolResult.pool,
       { repository, authorization: config.authorization, ids, clock, audit },
       http,
       compatibility.compatibilityReader,
       compatibility.reconciliation,
+      poolResult.ownership,
     ),
   };
 }

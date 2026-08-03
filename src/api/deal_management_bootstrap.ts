@@ -42,6 +42,7 @@ export function loadExecutableDealManagement(
   const authorization = new PostgresDealAuthorization(pool);
   const result = createDealManagementComposition({
     pool,
+    poolOwnership: "owned",
     authentication,
     authorization,
   });

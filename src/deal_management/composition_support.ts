@@ -131,7 +131,11 @@ export function createPool(
   config: DealManagementCompositionConfig,
 ): PoolResult {
   if (config.pool !== undefined) {
-    return { kind: "configured", pool: config.pool };
+    return {
+      kind: "configured",
+      pool: config.pool,
+      ownership: config.poolOwnership ?? "borrowed",
+    };
   }
   if (config.databaseUrl === undefined) {
     return unavailablePool(
@@ -147,11 +151,16 @@ export function createPool(
       connectionTimeoutMillis: 5_000,
       statement_timeout: 10_000,
     }),
+    ownership: "owned",
   };
 }
 
 export type PoolResult =
-  | { readonly kind: "configured"; readonly pool: pg.Pool }
+  | {
+    readonly kind: "configured";
+    readonly pool: pg.Pool;
+    readonly ownership: "owned" | "borrowed";
+  }
   | {
     readonly kind: "unavailable";
     readonly reason: "missing_configuration" | "invalid_configuration";

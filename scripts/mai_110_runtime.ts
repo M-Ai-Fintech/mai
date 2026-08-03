@@ -3,28 +3,76 @@ import {
   PostgresDealAuthorization,
   PostgresIdentityAccessAuthentication,
 } from "../src/api/deal_management_bootstrap.ts";
+import type {
+  AuthenticatedPrincipal,
+  AuthenticationPort,
+} from "../src/identity_access/v1.ts";
+import type {
+  DealManagementComposition,
+} from "../src/deal_management/composition.ts";
 import type { DealCommandContext } from "../src/deal_management/v1.ts";
 import type {
   ReconciliationRuntime,
   ReconciliationRuntimeModule,
 } from "./deal_reconciliation.ts";
 
+type RuntimeInput = Parameters<ReconciliationRuntimeModule["createRuntime"]>[0];
+type RuntimeComposition = Pick<
+  DealManagementComposition,
+  "reconciliation" | "close"
+>;
+interface OperatorAuthorization {
+  assertOperatorScope(input: {
+    readonly sessionId: string;
+    readonly identityId: string;
+    readonly actorId: string;
+    readonly tenantId: string;
+    readonly workspaceId: string;
+  }): Promise<void>;
+}
+
+export interface OperatorRuntimeDependencies {
+  readonly authentication: AuthenticationPort;
+  readonly authorization: OperatorAuthorization;
+}
+
 /** Creates the repository-owned authenticated MAI-110 operator runtime. */
 export async function createRuntime(
-  input: Parameters<ReconciliationRuntimeModule["createRuntime"]>[0],
+  input: RuntimeInput,
+  loadComposition: () => DealManagementComposition =
+    loadExecutableDealManagement,
 ): Promise<ReconciliationRuntime> {
-  const composition = loadExecutableDealManagement();
+  const composition = loadComposition();
+  let credential: string;
   try {
-    const credential = requiredCredential(
-      Deno.env.get("MAI110_OPERATOR_SESSION"),
-    );
-    const authentication = new PostgresIdentityAccessAuthentication(
-      composition.pool,
-    );
-    const principal = await authentication.authenticate({ credential });
+    credential = requiredCredential(Deno.env.get("MAI110_OPERATOR_SESSION"));
+  } catch (error) {
+    await composition.close();
+    throw error;
+  }
+  return await createOperatorRuntime(
+    input,
+    composition,
+    credential,
+    productionOperatorDependencies(composition),
+  );
+}
+
+/** Creates an authenticated operator runtime from an explicit composition. */
+export async function createOperatorRuntime(
+  input: RuntimeInput,
+  composition: RuntimeComposition,
+  credential: string,
+  dependencies: OperatorRuntimeDependencies,
+): Promise<ReconciliationRuntime> {
+  try {
+    const principal = await dependencies.authentication.authenticate({
+      credential,
+    });
     assertPrincipal(input, principal);
-    const authorization = new PostgresDealAuthorization(composition.pool);
-    await authorization.assertOperatorScope({
+    await dependencies.authorization.assertOperatorScope({
+      sessionId: principal.sessionId,
+      identityId: principal.identityId,
       actorId: principal.actor.id,
       tenantId: input.scope.tenantId,
       workspaceId: input.scope.workspaceId,
@@ -40,6 +88,15 @@ export async function createRuntime(
   }
 }
 
+function productionOperatorDependencies(
+  composition: DealManagementComposition,
+): OperatorRuntimeDependencies {
+  return {
+    authentication: new PostgresIdentityAccessAuthentication(composition.pool),
+    authorization: new PostgresDealAuthorization(composition.pool),
+  };
+}
+
 function requiredCredential(value: string | undefined): string {
   if (value?.trim()) return value;
   throw new Error(
@@ -48,10 +105,8 @@ function requiredCredential(value: string | undefined): string {
 }
 
 function assertPrincipal(
-  input: Parameters<ReconciliationRuntimeModule["createRuntime"]>[0],
-  principal: Awaited<
-    ReturnType<PostgresIdentityAccessAuthentication["authenticate"]>
-  >,
+  input: RuntimeInput,
+  principal: AuthenticatedPrincipal,
 ): void {
   const matches = principal.actor.id === input.actorId &&
     principal.tenantId === input.scope.tenantId &&
@@ -63,10 +118,8 @@ function assertPrincipal(
 }
 
 function commandContext(
-  input: Parameters<ReconciliationRuntimeModule["createRuntime"]>[0],
-  actor: Awaited<
-    ReturnType<PostgresIdentityAccessAuthentication["authenticate"]>
-  >["actor"],
+  input: RuntimeInput,
+  actor: AuthenticatedPrincipal["actor"],
 ): DealCommandContext {
   return {
     actor,
