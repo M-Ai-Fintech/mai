@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 03:42'
+updated_date: '2026-08-03 03:46'
 labels:
   - backend
   - architecture
@@ -162,4 +162,6 @@ Corrective Wave B closure evidence (2026-08-02):
 - Acceptance criteria changes: none. Definition of Done changes: none. Historical failed-attempt evidence remains unchanged; this is append-only corrective evidence.
 
 Post-handoff correction (2026-08-02): final canonical verification completed before cleanup. `docker rm -f mai-110-postgres` succeeded and a subsequent named-container listing was empty; the isolated PostgreSQL container is removed. The append-only evidence commit `7f16128` was pushed to corrective PR #44; MAI-110 remains In Progress, PR #44 remains Draft/Open, and no source behavior changed after the verified implementation commits.
+
+Inventory wording correction (2026-08-02): `PostgresLegacyDealSource` directly reads the legacy transaction/type, business party-role, advisor/team, and timestamp sources. Existing legacy read paths also inventory `financial_structure` and phase history, but the bounded source intentionally does not auto-promote those untyped/operational values; mandate-like values require explicit representable input and unsupported values remain explicit outcomes. Draft PR #44 body was corrected accordingly through the GitHub API; no source behavior changed.
 <!-- SECTION:NOTES:END -->
