@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 20:03'
+updated_date: '2026-08-03 23:22'
 labels:
   - backend
   - architecture
@@ -127,7 +127,7 @@ Extra-large complexity; Wave 4 serial core domain. Recommended model: gpt-5.6-so
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-Serial PR #44 correction chain: T1 exact session identity; T2 compatibility authorization and projections; T3 explicit environment and pool ownership; T4 canonical migration identity; T5 optional mandate mapping; T6 production-path dry-run; T7 exact evidence manifest; T8 atomic verification; T9 bounded issue evidence; T10 fresh PostgreSQL integration, scoped verification, governed doc/evidence/PR reconciliation. Use one branch and exact commit per task, preserve Draft/Open/Unmerged/Unapproved and In Progress, and do not push or run Graphify.
+PR #44 merge-readiness correction plan (approved 2026-08-03): 1. Preserve exact authenticated sessionId and identityId through operator reconciliation DealCommandContext and add public-boundary regressions. 2. Restore iam_0001_identity_access.ts byte-for-byte to master, add additive IAM migration for sessions.identity_id with safe legacy backfill and migration-from-master upgrade tests. 3. Make legacy reference resolution kind-explicit for party versus team and reject ambiguous or cross-kind matches. 4. Preserve typed atomic-verification mismatch evidence while allowing database/infrastructure failures to propagate rather than becoming ordinary reconciliation rejections. 5. Authorize authoritative compatibility reads against the authoritative Deal only, without requiring legacy-alias permission, while preserving deny-before-load. 6. Split touched production files and functions to satisfy under-500-line SRP and 4-20-line function rules. 7. Run fresh and master-upgrade PostgreSQL tests, related Identity Access/API suites, scoped format/lint/check, verify:fast, and canonical verification with zero ignored Deal PostgreSQL tests and 17/17 categories. 8. Append exact Backlog and PR evidence, push focused commits, and keep MAI-110 In Progress plus PR #44 Draft/Open/Unmerged/Unapproved.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -242,6 +242,12 @@ Final local canonical correction (2026-08-03, unpublished head 7340828): owner a
 created: 2026-08-03 20:03
 ---
 Publication reconciliation (2026-08-03): local corrective head a6961df was pushed to origin/fix/MAI-110-wave-b-closure, which is PR #44 head. This publishes serial task commits T1 through T10 plus 7340828 (canonical verification stability) and a6961df (governed final verification evidence). PR remains Draft/Open/Unmerged/Unapproved and MAI-110 remains In Progress pending human review. No lifecycle, readiness, approval, merge, cutover, deletion, or provider-certification action occurred.
+---
+
+author: Codex
+created: 2026-08-03 23:22
+---
+PR #44 merge-readiness correction evidence (2026-08-03, code commit 83be199): restored iam_0001_identity_access.ts byte-for-byte to master SHA-256 663185049f1c950dd83452328fe23ebc5687fb56b3fd3115ea9141a2da6786e6 and added transactional iam-0002 identity backfill; preserved authenticated sessionId/identityId in operator DealCommandContext; separated party/team legacy mappings with ambiguity rejection; retained typed atomic mismatch evidence while propagating database failures; removed legacy-alias authorization from authoritative reads; split PR-added production modules below 500 lines. Verification: focused non-PostgreSQL 19 passed, 0 failed; focused PostgreSQL 5 passed, 0 failed; all Deal Management 83 passed, 0 failed, 0 ignored; Identity Access 22 passed, 0 failed; API 27 passed, 0 failed; post-split atomic/corruption 2 passed, 0 failed; deno fmt/lint/check and git diff --check exit 0; deno task verify:fast exit 0 (11 passed, 5 documented offline skips, 2 documented offline unavailable); final DENO_ENV=test MAI106_DATABASE_URL='<isolated-postgresql-16-url>' deno task verify exit 0 with all 17 categories PASS. PostgreSQL was a fresh postgres:16 container/database. No Wave B finisher, merge, approval, Done transition, Figma mutation, or intentional Graphify update occurred; hook-generated Graphify output was restored.
 ---
 <!-- COMMENTS:END -->
 
