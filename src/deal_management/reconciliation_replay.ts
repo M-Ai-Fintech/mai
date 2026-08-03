@@ -20,14 +20,63 @@ export async function replayMappedDeal(
   context: DealCommandContext,
   service: DealManagementService,
   repository: DealRepository,
+  mayResumeExistingDeal: boolean,
 ): Promise<Deal> {
   let current = await repository.find(scopeFor(context), intended.id);
   if (current === undefined) {
     current = await createMappedDeal(intended, context, service, repository);
+  } else {
+    assertReplayClaim(current, intended, mayResumeExistingDeal);
   }
   current = await replayMandate(intended, current, context, service);
   current = await replayParties(intended, current, context, service);
   return await replayRoles(intended, current, context, service);
+}
+
+function assertReplayClaim(
+  existingDeal: Deal,
+  intendedDeal: Deal,
+  mayResumeExistingDeal: boolean,
+): void {
+  if (!mayResumeExistingDeal) {
+    throw new Error(
+      `Authoritative Deal "${existingDeal.id}" already exists without a persisted reconciliation claim; expected an absent Deal or a resumable claim for the exact legacy record.`,
+    );
+  }
+  if (
+    !sameReplayBase(existingDeal, intendedDeal) ||
+    !isCompatibleSubset(existingDeal.parties, intendedDeal.parties) ||
+    !isCompatibleSubset(existingDeal.roles, intendedDeal.roles) ||
+    !sameMandate(existingDeal, intendedDeal)
+  ) {
+    throw new Error(
+      `Authoritative Deal "${existingDeal.id}" conflicts with the mapped legacy candidate; expected matching base fields and only matching party, role, and mandate state before replay.`,
+    );
+  }
+}
+
+function sameReplayBase(existingDeal: Deal, intendedDeal: Deal): boolean {
+  return existingDeal.name === intendedDeal.name &&
+    existingDeal.dealType === intendedDeal.dealType &&
+    existingDeal.currency === intendedDeal.currency &&
+    existingDeal.confidentiality === intendedDeal.confidentiality;
+}
+
+function sameMandate(existingDeal: Deal, intendedDeal: Deal): boolean {
+  return stableJson(existingDeal.mandate) ===
+      stableJson(intendedDeal.mandate) ||
+    existingDeal.mandate === undefined;
+}
+
+function isCompatibleSubset<T extends { readonly id: string }>(
+  existingValues: readonly T[],
+  intendedValues: readonly T[],
+): boolean {
+  return existingValues.every((existingValue) =>
+    intendedValues.some((intendedValue) =>
+      stableJson(existingValue) === stableJson(intendedValue)
+    )
+  );
 }
 
 async function createMappedDeal(

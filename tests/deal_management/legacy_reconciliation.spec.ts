@@ -12,6 +12,7 @@ import {
 import {
   contextFor,
   FixedDealClock,
+  keyFor,
   RecordingDealAuthorization,
   requiredTenantId,
   requiredWorkspaceId,
@@ -265,6 +266,42 @@ Deno.test("one invalid legacy Deal does not erase an earlier successful reconcil
     "rejected",
   ]);
   assertEquals((await fixture.repository.list(scope)).length, 1);
+});
+
+Deno.test("identity collision is rejected before any authoritative mutation", async () => {
+  const fixture = executorFixture(validLegacyDeal());
+  const mapped = await fixture.mapper.map({
+    record: validLegacyDeal(),
+    scope,
+    now: context.now,
+  });
+  if (mapped.kind !== "mapped") throw new Error("expected mapped fixture");
+  const created = await fixture.service.createDeal({
+    type: "create_deal",
+    context,
+    idempotencyKey: keyFor("collision-seed"),
+    dealId: mapped.deal.id,
+    name: "Unrelated authoritative Deal",
+    dealType: mapped.deal.dealType,
+    confidentiality: mapped.deal.confidentiality,
+    currency: mapped.deal.currency,
+  });
+  const beforeEvents = await fixture.repository.listEvents(
+    scope,
+    mapped.deal.id,
+  );
+  const reconciliation = await fixture.executor.run({
+    mode: "apply",
+    legacyDealId: "legacy-deal-1",
+    operator: operatorContext(),
+  });
+  const persisted = await fixture.repository.find(scope, mapped.deal.id);
+  assertEquals(reconciliation.outcomes[0]?.kind, "conflict");
+  assertEquals(persisted, created.deal);
+  assertEquals(
+    await fixture.repository.listEvents(scope, mapped.deal.id),
+    beforeEvents,
+  );
 });
 
 Deno.test("rollback routing reads legacy data while retaining authoritative Deal", async () => {

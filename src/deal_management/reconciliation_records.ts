@@ -115,6 +115,7 @@ export function applyIssue(
   record: LegacyDealRecord,
   error: unknown,
 ): LegacyMappingIssue {
+  if (isAuthoritativeCollision(error)) return collisionIssue(record, error);
   return {
     code: "UNSUPPORTED_LEGACY_SHAPE",
     legacyDealId: record.legacyDealId,
@@ -124,6 +125,28 @@ export function applyIssue(
       "Apply failed; the stored status is retryable only after the operator reviews the recorded error.",
     operatorInterventionRequired: true,
     retrySafe: true,
+  };
+}
+
+function isAuthoritativeCollision(error: unknown): error is Error {
+  return error instanceof Error &&
+    error.message.startsWith("Authoritative Deal");
+}
+
+function collisionIssue(
+  record: LegacyDealRecord,
+  error: Error,
+): LegacyMappingIssue {
+  return {
+    code: "RECONCILIATION_DRIFT",
+    legacyDealId: record.legacyDealId,
+    received: error.message,
+    expected:
+      "an absent authoritative Deal or an exact persisted reconciliation claim",
+    explanation:
+      "The deterministic authoritative identity is already bound to incompatible state; no migration command was issued.",
+    operatorInterventionRequired: true,
+    retrySafe: false,
   };
 }
 

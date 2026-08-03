@@ -216,6 +216,7 @@ export class DealReconciliationExecutor {
         input.operator.commandContext,
         this.service,
         this.repository,
+        resumableClaim(previous, mapping),
       );
       const appliedRecord = {
         ...pending,
@@ -382,4 +383,13 @@ export class DealReconciliationExecutor {
       });
     });
   }
+}
+
+function resumableClaim(
+  previous: DealReconciliationRecord | undefined,
+  mapping: Extract<LegacyMappingResult, { readonly kind: "mapped" }>,
+): boolean {
+  return previous?.authoritativeDealId === mapping.authoritativeDealId &&
+    previous.sourceFingerprint === mapping.sourceFingerprint &&
+    previous.status !== "dry_run_valid";
 }

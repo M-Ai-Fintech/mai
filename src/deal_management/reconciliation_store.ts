@@ -272,7 +272,7 @@ async function routeRecord(
   transaction: TransactionHandle,
   change: RoutingChange,
 ): Promise<DealReconciliationRecord> {
-  const current = await findRecord(transaction, change);
+  const current = await findRecordForRouting(transaction, change);
   if (current === undefined) {
     throw new Error(
       `Reconciliation record "${change.legacyDealId}" cannot route; expected an existing record in the requested scope.`,
@@ -308,6 +308,28 @@ async function routeRecord(
     ],
   );
   return updated;
+}
+
+async function findRecordForRouting(
+  transaction: TransactionHandle,
+  input: {
+    readonly scope: DealScope;
+    readonly legacySource: string;
+    readonly legacyDealId: string;
+  },
+): Promise<DealReconciliationRecord | undefined> {
+  const result = await transaction.query<ReconciliationRow>(
+    `${recordSelect}
+     WHERE tenant_id = $1 AND workspace_id = $2 AND legacy_source = $3
+       AND legacy_record_id = $4 FOR UPDATE`,
+    [
+      input.scope.tenantId,
+      input.scope.workspaceId,
+      input.legacySource,
+      input.legacyDealId,
+    ],
+  );
+  return result.rows[0] === undefined ? undefined : toRecord(result.rows[0]);
 }
 
 function assertRouteStatus(
