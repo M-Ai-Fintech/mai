@@ -69,6 +69,7 @@ export class DealReconciliationExecutor {
   async run(input: {
     readonly mode: ReconciliationMode;
     readonly legacyDealId: string;
+    readonly legacySource?: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationRunResult> {
     const outcome = await this.runOne(input);
@@ -78,6 +79,7 @@ export class DealReconciliationExecutor {
   async runBatch(input: {
     readonly mode: ReconciliationMode;
     readonly legacyDealIds: readonly string[];
+    readonly legacySource?: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationRunResult> {
     const outcomes: ReconciliationOutcome[] = [];
@@ -97,6 +99,7 @@ export class DealReconciliationExecutor {
    */
   async verifyBatch(input: {
     readonly legacyDealIds: readonly string[];
+    readonly legacySource?: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationVerificationResult> {
     const outcomes: ReconciliationOutcome[] = [];
@@ -142,6 +145,7 @@ export class DealReconciliationExecutor {
   private async runOne(input: {
     readonly mode: ReconciliationMode;
     readonly legacyDealId: string;
+    readonly legacySource?: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationOutcome> {
     const record = await this.source.load({
@@ -149,6 +153,7 @@ export class DealReconciliationExecutor {
       legacyDealId: input.legacyDealId,
     });
     if (record === undefined) return await this.missingRecord(input);
+    assertLegacySource(record, input.legacySource);
     return await this.reconcileLoaded(record, input);
   }
 
@@ -322,6 +327,7 @@ export class DealReconciliationExecutor {
 
   private async verifyOne(input: {
     readonly legacyDealId: string;
+    readonly legacySource?: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationOutcome> {
     const legacyRecord = await this.source.load({
@@ -329,6 +335,7 @@ export class DealReconciliationExecutor {
       legacyDealId: input.legacyDealId,
     });
     if (legacyRecord === undefined) return await this.missingRecord(input);
+    assertLegacySource(legacyRecord, input.legacySource);
     return await this.verifyLoaded(legacyRecord, input);
   }
 
@@ -427,4 +434,14 @@ export class DealReconciliationExecutor {
     assertRoutable(current, input.legacyDealId);
     return await this.store.route(routingChange(input, current));
   }
+}
+
+function assertLegacySource(
+  record: LegacyDealRecord,
+  expectedSource: string | undefined,
+): void {
+  if (expectedSource === undefined || record.source === expectedSource) return;
+  throw new Error(
+    `Legacy Deal "${record.legacyDealId}" source "${record.source}" does not match selector source "${expectedSource}".`,
+  );
 }

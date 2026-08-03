@@ -1,10 +1,12 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
+  createDealManagementComposition,
   DeterministicLegacyDealMapper,
   LegacyScopeMappingError,
   PostgresLegacyDealSource,
   PostgresLegacyReferenceResolver,
 } from "../../src/deal_management/v1.ts";
+import { FakeAuthenticationPort } from "../../src/identity_access/v1.ts";
 import { dealManagementMigrations } from "../../src/deal_management/v1.ts";
 import {
   PostgresMigrationRunner,
@@ -14,7 +16,12 @@ import {
   createMai106Pool,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
-import { requiredTenantId, requiredWorkspaceId } from "./support.ts";
+import {
+  contextFor,
+  RecordingDealAuthorization,
+  requiredTenantId,
+  requiredWorkspaceId,
+} from "./support.ts";
 
 const databaseUrl = mai106DatabaseUrl();
 const dealId = "10000000-0000-4000-8000-000000000001";
@@ -63,6 +70,7 @@ Deno.test({
       const transactions = new PostgresTransactionRunner(pool);
       const source = new PostgresLegacyDealSource(transactions);
       await assertProductionMapping(transactions, source);
+      await assertProductionDryRunMatchesApply(pool);
       await assertOptionalMandateMapping(pool, source);
       await assertScopeRejections(source);
     } finally {
@@ -91,6 +99,82 @@ async function assertProductionMapping(
   assertEquals(mapped.kind, "mapped");
   if (mapped.kind !== "mapped") return;
   assertMappedDeal(mapped.deal);
+}
+
+async function assertProductionDryRunMatchesApply(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  const context = contextFor(
+    "tenant_postgres-legacy",
+    "workspace_postgres-legacy",
+  );
+  const result = createDealManagementComposition({
+    pool,
+    authentication: new FakeAuthenticationPort({
+      actor: context.actor,
+      sessionId: "session_postgres-legacy" as never,
+      identityId: "identity_postgres-legacy" as never,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+    }),
+    authorization: new RecordingDealAuthorization(),
+  });
+  if (result.kind !== "configured") throw new Error(result.message);
+  const operator = {
+    scope,
+    actorId: context.actor.id,
+    correlationId: context.request.correlationId,
+    now: context.now,
+    commandContext: context,
+  };
+  try {
+    const dryRun = await result.composition.reconciliation.run({
+      mode: "dry-run",
+      legacySource: "core.legacy_transaction",
+      legacyDealId: dealId,
+      operator,
+    });
+    const dryRecord = dryRun.outcomes[0]?.record;
+    if (dryRecord === undefined) throw new Error("dry-run record is missing");
+    const counts = await evidenceCounts(pool);
+    assertEquals(counts, { deals: 0, history: 0, receipts: 0, claims: 0 });
+    const applied = await result.composition.reconciliation.run({
+      mode: "apply",
+      legacySource: "core.legacy_transaction",
+      legacyDealId: dealId,
+      operator,
+    });
+    const appliedRecord = applied.outcomes[0]?.record;
+    assertEquals(
+      appliedRecord?.authoritativeDealId,
+      dryRecord.authoritativeDealId,
+    );
+    assertEquals(appliedRecord?.sourceFingerprint, dryRecord.sourceFingerprint);
+    assertEquals(appliedRecord?.intendedDeal, dryRecord.intendedDeal);
+  } finally {
+    await result.composition.close();
+  }
+}
+
+async function evidenceCounts(pool: ReturnType<typeof createMai106Pool>) {
+  const [deals, history, receipts, claims] = await Promise.all([
+    pool.query("SELECT COUNT(*)::int AS count FROM deal_management.deals"),
+    pool.query(
+      "SELECT COUNT(*)::int AS count FROM deal_management.aggregate_history",
+    ),
+    pool.query(
+      "SELECT COUNT(*)::int AS count FROM deal_management.command_receipts",
+    ),
+    pool.query(
+      "SELECT COUNT(*)::int AS count FROM deal_management.command_claims",
+    ),
+  ]);
+  return {
+    deals: deals.rows[0].count,
+    history: history.rows[0].count,
+    receipts: receipts.rows[0].count,
+    claims: claims.rows[0].count,
+  };
 }
 
 async function assertOptionalMandateMapping(

@@ -1,4 +1,10 @@
-import { assert, assertEquals, assertNotEquals } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertNotEquals,
+  assertRejects,
+} from "@std/assert";
+import { runReconciliationCli } from "../../scripts/deal_reconciliation.ts";
 import {
   CompatibilityDealReader,
   DealManagementService,
@@ -236,6 +242,46 @@ Deno.test("dry-run writes diagnostics only and creates no Deal history or outbox
   });
   assertEquals(stored?.status, "dry_run_valid");
   assertEquals(stored?.routingMode, "legacy");
+});
+
+Deno.test("operator input accepts selectors, not legacy Deal documents", async () => {
+  const path = await Deno.makeTempFile({ suffix: ".json" });
+  try {
+    await Deno.writeTextFile(path, JSON.stringify([validLegacyDeal()]));
+    await assertRejects(
+      () =>
+        runReconciliationCli([
+          "--mode",
+          "dry-run",
+          "--input",
+          path,
+          "--tenant",
+          scope.tenantId,
+          "--workspace",
+          scope.workspaceId,
+        ]),
+      Error,
+      "expected only non-empty source and legacyDealId strings",
+    );
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test("reconciliation rejects a selector source that differs from loaded source", async () => {
+  const fixture = executorFixture(validLegacyDeal());
+  await assertRejects(
+    () =>
+      fixture.executor.run({
+        mode: "dry-run",
+        legacyDealId: "legacy-deal-1",
+        legacySource: "unexpected.source",
+        operator: operatorContext(),
+      }),
+    Error,
+    "does not match selector source",
+  );
+  assertEquals((await fixture.repository.list(scope)).length, 0);
 });
 
 Deno.test("apply is idempotent, resumable, and records verified per-Deal state", async () => {

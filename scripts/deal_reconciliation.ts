@@ -1,7 +1,5 @@
 import {
   DealReconciliationExecutor,
-  DeterministicLegacyDealMapper,
-  type LegacyDealRecord,
   type ReconciliationMode,
   type ReconciliationRunResult,
   type ReconciliationVerificationResult,
@@ -50,29 +48,34 @@ export interface ReconciliationRuntime {
   close(): Promise<void>;
 }
 
+export interface LegacyDealSelector {
+  readonly source: string;
+  readonly legacyDealId: string;
+}
+
 /**
  * Runs the bounded MAI-110 operator command with explicit mode and inputs.
  *
- * Dry-run maps JSON records without constructing an authoritative repository;
- * apply and resume require an operator-provided runtime module with approved
- * authentication, authorization, persistence, and audit dependencies.
+ * Dry-run and authoritative modes use the same authenticated production
+ * runtime; dry-run remains non-authoritative through the executor mode.
  *
- * @example await runReconciliationCli(["--mode", "dry-run", "--input", "legacy.json", "--tenant", "tenant_a", "--workspace", "workspace_a"])
+ * @example await runReconciliationCli(["--mode", "dry-run", "--input", "selectors.json", "--tenant", "tenant_a", "--workspace", "workspace_a"])
  */
 export async function runReconciliationCli(
   argumentsValue: readonly string[],
 ): Promise<void> {
   const options = parseOptions(argumentsValue);
   const scope = parseScope(options);
-  const records = await readLegacyRecords(options.input);
-  if (options.mode === "dry-run") {
-    await writeDryRun(records, scope, options.now);
-    return;
-  }
+  const selectors = await readSelectors(options.input);
   requireApplyConfirmation(options);
   const runtime = await loadRuntime(options.runtimeModule, scope, options);
   try {
-    const report = await runAuthoritativeMode(runtime, options, records, scope);
+    const report = await runAuthoritativeMode(
+      runtime,
+      options,
+      selectors,
+      scope,
+    );
     console.log(JSON.stringify(report));
   } finally {
     await runtime.close();
@@ -165,11 +168,11 @@ function parseScope(options: ReconciliationOptions): DealScope {
   return { tenantId: tenant.value, workspaceId: workspace.value };
 }
 
-async function readLegacyRecords(
+async function readSelectors(
   path: string,
-): Promise<readonly LegacyDealRecord[]> {
+): Promise<readonly LegacyDealSelector[]> {
   const parsed = await parseLegacyFile(path);
-  assertLegacyRecords(path, parsed);
+  assertSelectors(path, parsed);
   return parsed;
 }
 
@@ -187,35 +190,20 @@ async function parseLegacyFile(path: string): Promise<unknown> {
   return parsed;
 }
 
-function assertLegacyRecords(
+function assertSelectors(
   path: string,
   parsed: unknown,
-): asserts parsed is LegacyDealRecord[] {
+): asserts parsed is LegacyDealSelector[] {
   if (!Array.isArray(parsed)) {
     throw new Error(
-      `Legacy input "${path}" is invalid; expected a JSON array of LegacyDealRecord objects.`,
+      `Legacy input "${path}" is invalid; expected a JSON array of source and legacyDealId selectors.`,
     );
   }
-  if (!parsed.every(isLegacyDealRecord)) {
+  if (!parsed.every(isLegacyDealSelector)) {
     throw new Error(
-      `Legacy input "${path}" contains an invalid record; expected source, legacyDealId, parties, and team fields.`,
+      `Legacy input "${path}" contains an invalid selector; expected only non-empty source and legacyDealId strings.`,
     );
   }
-}
-
-async function writeDryRun(
-  records: readonly LegacyDealRecord[],
-  scope: DealScope,
-  now: string,
-): Promise<void> {
-  const mapper = new DeterministicLegacyDealMapper();
-  const mappings = [];
-  for (const record of records) {
-    mappings.push(await mapper.map({ record, scope, now }));
-  }
-  console.log(
-    JSON.stringify({ mode: "dry-run", authoritativeWrites: 0, mappings }),
-  );
 }
 
 async function loadRuntime(
@@ -259,7 +247,7 @@ function runtimeIdentity(
 async function runAuthoritativeMode(
   runtime: ReconciliationRuntime,
   options: ReconciliationOptions,
-  records: readonly LegacyDealRecord[],
+  selectors: readonly LegacyDealSelector[],
   scope: DealScope,
 ): Promise<
   | ReconciliationRunResult
@@ -267,18 +255,37 @@ async function runAuthoritativeMode(
   | Readonly<Record<string, unknown>>
 > {
   const operator = operatorContext(runtime, options, scope);
-  const legacyDealIds = records.map((record) => record.legacyDealId);
+  const legacyDealIds = selectors.map((selector) => selector.legacyDealId);
+  const legacySource = selectorSource(selectors);
   if (options.mode === "verify") {
-    return await runtime.executor.verifyBatch({ legacyDealIds, operator });
+    return await runtime.executor.verifyBatch({
+      legacyDealIds,
+      legacySource,
+      operator,
+    });
   }
   if (isRoutingMode(options.mode)) {
-    return await runRoutingBatch(runtime, options, records, operator);
+    return await runRoutingBatch(runtime, options, selectors, operator);
   }
   return await runtime.executor.runBatch({
     mode: options.mode,
     legacyDealIds,
+    legacySource,
     operator,
   });
+}
+
+function selectorSource(selectors: readonly LegacyDealSelector[]): string {
+  const source = selectors[0]?.source;
+  if (
+    source === undefined ||
+    selectors.every((selector) => selector.source === source)
+  ) {
+    return source ?? "";
+  }
+  throw new Error(
+    "Legacy input contains multiple sources; expected one configured production source per run.",
+  );
 }
 
 function operatorContext(
@@ -298,12 +305,12 @@ function operatorContext(
 async function runRoutingBatch(
   runtime: ReconciliationRuntime,
   options: ReconciliationOptions,
-  records: readonly LegacyDealRecord[],
+  selectors: readonly LegacyDealSelector[],
   operator: ReturnType<typeof operatorContext>,
 ): Promise<Readonly<Record<string, unknown>>> {
   const routed: DealReconciliationRecord[] = [];
-  for (const record of records) {
-    routed.push(await routeRecord(runtime, options, record, operator));
+  for (const selector of selectors) {
+    routed.push(await routeRecord(runtime, options, selector, operator));
   }
   return { mode: options.mode, routed };
 }
@@ -317,20 +324,20 @@ function isRoutingMode(
 function routeRecord(
   runtime: ReconciliationRuntime,
   options: ReconciliationOptions,
-  record: LegacyDealRecord,
+  selector: LegacyDealSelector,
   operator: ReturnType<typeof operatorContext>,
 ): Promise<DealReconciliationRecord> {
   if (options.mode === "rollback-routing") {
     return runtime.executor.rollbackReadRouting({
-      legacySource: record.source,
-      legacyDealId: record.legacyDealId,
+      legacySource: selector.source,
+      legacyDealId: selector.legacyDealId,
       operator,
       reason: options.reason,
     });
   }
   return runtime.executor.restoreAuthoritativeReadRouting({
-    legacySource: record.source,
-    legacyDealId: record.legacyDealId,
+    legacySource: selector.source,
+    legacyDealId: selector.legacyDealId,
     operator,
     reason: options.reason,
   });
@@ -370,13 +377,15 @@ function isRuntimeModule(value: unknown): value is ReconciliationRuntimeModule {
     "createRuntime" in value && typeof value.createRuntime === "function";
 }
 
-function isLegacyDealRecord(value: unknown): value is LegacyDealRecord {
+function isLegacyDealSelector(value: unknown): value is LegacyDealSelector {
   return typeof value === "object" && value !== null &&
     !Array.isArray(value) && "source" in value &&
-    typeof value.source === "string" &&
+    typeof value.source === "string" && value.source.trim().length > 0 &&
     "legacyDealId" in value && typeof value.legacyDealId === "string" &&
-    "parties" in value && Array.isArray(value.parties) &&
-    "team" in value && Array.isArray(value.team);
+    value.legacyDealId.trim().length > 0 &&
+    Object.keys(value).every((key) =>
+      key === "source" || key === "legacyDealId"
+    );
 }
 
 export type { TenantId, WorkspaceId };
