@@ -8,6 +8,7 @@ import {
 } from "../platform/api/v1.ts";
 import type { ActorReference } from "../platform/authz/v1.ts";
 import type { ActorId, TenantId, WorkspaceId } from "../platform/api/v1.ts";
+import type { SessionId, UserIdentityId } from "../identity_access/ids.ts";
 import type { DealCommandContext } from "./contracts.ts";
 import type { DealManagementService } from "./service.ts";
 import type { DealAuthorizationPort } from "./contracts.ts";
@@ -15,6 +16,8 @@ import type { DealRepository } from "./repository.ts";
 
 export interface DealAuthenticatedPrincipal {
   readonly actor: ActorReference;
+  readonly sessionId: SessionId;
+  readonly identityId: UserIdentityId;
   readonly tenantId: TenantId;
   readonly workspaceId: WorkspaceId;
 }
@@ -194,6 +197,8 @@ export function createDealContext(
 ): DealCommandContext {
   const request = {
     actorId: principal.actor.id as ActorId,
+    sessionId: principal.sessionId,
+    identityId: principal.identityId,
     tenantId: principal.tenantId,
     workspaceId: principal.workspaceId,
     correlationId,

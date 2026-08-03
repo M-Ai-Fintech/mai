@@ -77,6 +77,7 @@ export const iamIdentityMigration = defineMigration({
           state TEXT NOT NULL CHECK (state IN ('active', 'revoked', 'expired')),
           issued_at TIMESTAMPTZ NOT NULL,
           expires_at TIMESTAMPTZ NOT NULL,
+          identity_id TEXT NOT NULL,
           revoked_at TIMESTAMPTZ,
           document JSONB NOT NULL CHECK (jsonb_typeof(document) = 'object'),
           created_at TIMESTAMPTZ NOT NULL,

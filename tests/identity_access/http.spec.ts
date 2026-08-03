@@ -10,6 +10,7 @@ import {
   InMemoryIdentityAccessRepository,
   resourceKind,
   rolePolicyId,
+  sessionId,
   tenantId,
   userIdentityId,
   workspaceId,
@@ -23,6 +24,8 @@ const principal = {
     state: "active" as const,
   },
   tenantId: tenantId("tenant_acme"),
+  sessionId: sessionId("session_alice"),
+  identityId: userIdentityId("identity_alice"),
   workspaceId: workspaceId("workspace_main"),
 };
 

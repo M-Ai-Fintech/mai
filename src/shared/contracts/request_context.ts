@@ -10,11 +10,19 @@ import {
   type TenantId,
   type WorkspaceId,
 } from "./identifiers.ts";
+import {
+  type SessionId,
+  sessionIdResult,
+  type UserIdentityId,
+  userIdentityIdResult,
+} from "../../identity_access/ids.ts";
 
 export type RequestOrigin = "http" | "job" | "internal";
 
 export interface RequestContext {
   readonly actorId: ActorId;
+  readonly sessionId?: SessionId;
+  readonly identityId?: UserIdentityId;
   readonly tenantId: TenantId;
   readonly correlationId: CorrelationId;
   readonly origin: RequestOrigin;
@@ -28,6 +36,8 @@ export type ContextIssueCode =
   | "MISSING_TENANT"
   | "MISSING_CORRELATION"
   | "INVALID_ACTOR_ID"
+  | "INVALID_SESSION_ID"
+  | "INVALID_IDENTITY_ID"
   | "INVALID_TENANT_ID"
   | "INVALID_WORKSPACE_ID"
   | "INVALID_DEAL_ID"
@@ -66,6 +76,22 @@ function parsedRequestContext(
   if (!actor.ok) return contextFailure("INVALID_ACTOR_ID");
   if (!tenant.ok) return contextFailure("INVALID_TENANT_ID");
   if (!correlation.ok) return contextFailure("INVALID_CORRELATION_ID");
+  const session = value.sessionId === undefined
+    ? undefined
+    : typeof value.sessionId === "string"
+    ? sessionIdResult(value.sessionId)
+    : { ok: false as const };
+  const identity = value.identityId === undefined
+    ? undefined
+    : typeof value.identityId === "string"
+    ? userIdentityIdResult(value.identityId)
+    : { ok: false as const };
+  if (session !== undefined && !session.ok) {
+    return contextFailure("INVALID_SESSION_ID");
+  }
+  if (identity !== undefined && !identity.ok) {
+    return contextFailure("INVALID_IDENTITY_ID");
+  }
   const origin = value.origin;
   if (!isRequestOrigin(origin)) return contextFailure("INVALID_ORIGIN");
   return parsedOptionalScope(
@@ -74,6 +100,8 @@ function parsedRequestContext(
     tenant.value,
     correlation.value,
     origin,
+    session === undefined ? undefined : session.value,
+    identity === undefined ? undefined : identity.value,
   );
 }
 
@@ -83,6 +111,8 @@ function parsedOptionalScope(
   tenantId: TenantId,
   correlationId: CorrelationId,
   origin: RequestOrigin,
+  sessionId: SessionId | undefined,
+  identityId: UserIdentityId | undefined,
 ): ContextParseResult {
   const workspace = value.workspaceId === undefined
     ? undefined
@@ -98,6 +128,8 @@ function parsedOptionalScope(
     ok: true,
     value: {
       actorId,
+      ...(sessionId === undefined ? {} : { sessionId }),
+      ...(identityId === undefined ? {} : { identityId }),
       tenantId,
       correlationId,
       origin,

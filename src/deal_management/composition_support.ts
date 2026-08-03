@@ -29,6 +29,7 @@ import {
   dealRoleId,
   mandateId,
 } from "./ids.ts";
+import { userIdentityId } from "../identity_access/ids.ts";
 import type {
   DealAuthenticatedPrincipal,
   DealAuthenticationPort,
@@ -226,6 +227,8 @@ function verifiedPrincipal(
   }
   return {
     actor: principal.actor,
+    sessionId: principal.sessionId,
+    identityId: userIdentityId(principal.identityId),
     tenantId: principal.tenantId,
     workspaceId: principal.workspaceId,
   };

@@ -8,6 +8,7 @@ import {
   sessionId,
   sessionRecord,
   tenantId,
+  userIdentityId,
   workspaceId,
 } from "../../src/identity_access/v1.ts";
 
@@ -23,6 +24,8 @@ Deno.test("session repository keeps tenant and workspace scope while revoking im
     sessionId: sessionId("session_repository"),
     principal: {
       actor,
+      sessionId: sessionId("session_repository"),
+      identityId: userIdentityId("identity_alice"),
       tenantId: tenantId("tenant_acme"),
       workspaceId: workspaceId("workspace_main"),
     },

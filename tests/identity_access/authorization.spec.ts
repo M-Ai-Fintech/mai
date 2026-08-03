@@ -15,7 +15,9 @@ import {
   IdentityAccessJobRevalidator,
   projectAuthorizedIdentity,
   resourceKind,
+  sessionId,
   tenantId,
+  userIdentityId,
   withWorkspaceContext,
   workspaceId,
 } from "../../src/identity_access/v1.ts";
@@ -78,7 +80,13 @@ Deno.test("authorization evaluates grant facts before loading and restrictions w
   }, adminContext);
   const session = createSessionContext({
     sessionId: "session_policy" as never,
-    principal: { actor, tenantId: tenant, workspaceId: workspace },
+    principal: {
+      actor,
+      sessionId: sessionId("session_policy"),
+      identityId: userIdentityId("identity_policy"),
+      tenantId: tenant,
+      workspaceId: workspace,
+    },
     correlationId: "cor_policy_session" as never,
     issuedAt: "2026-08-01T12:00:00.000Z",
     expiresAt: "2026-08-01T13:00:00.000Z",
@@ -138,7 +146,13 @@ Deno.test("job revalidation fences an expired temporary grant before an effect",
   }, adminContext);
   const session = createSessionContext({
     sessionId: "session_job" as never,
-    principal: { actor, tenantId: tenant, workspaceId: workspace },
+    principal: {
+      actor,
+      sessionId: sessionId("session_policy-2"),
+      identityId: userIdentityId("identity_policy-2"),
+      tenantId: tenant,
+      workspaceId: workspace,
+    },
     correlationId: "cor_job" as never,
     issuedAt: "2026-08-01T12:00:00.000Z",
     expiresAt: "2026-08-01T13:00:00.000Z",

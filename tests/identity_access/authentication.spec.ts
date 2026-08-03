@@ -8,6 +8,7 @@ import {
   sessionId,
   SessionRegistry,
   tenantId,
+  userIdentityId,
   verifyInvitationToken,
   workspaceId,
 } from "../../src/identity_access/v1.ts";
@@ -20,6 +21,8 @@ const principal = {
   },
   tenantId: tenantId("tenant_acme"),
   workspaceId: workspaceId("workspace_main"),
+  sessionId: sessionId("session_alice"),
+  identityId: userIdentityId("identity_alice"),
 };
 
 Deno.test("invitation tokens are represented only by digests", async () => {
@@ -35,7 +38,7 @@ Deno.test("provider-neutral authentication produces a safe invalidatable session
     credential: "opaque-proof",
   });
   const session = createSessionContext({
-    sessionId: sessionId("session_alice"),
+    sessionId: principal.sessionId,
     principal: authenticated,
     correlationId: correlationId("cor_authentication"),
     issuedAt: "2026-08-01T12:00:00.000Z",

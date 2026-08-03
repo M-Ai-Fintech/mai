@@ -54,6 +54,16 @@ export function userIdentityId(value: string): UserIdentityId {
   return prefixedId<UserIdentityId>(value, "identity_", "user identity ID");
 }
 
+export function userIdentityIdResult(value: string):
+  | { readonly ok: true; readonly value: UserIdentityId }
+  | { readonly ok: false } {
+  try {
+    return { ok: true, value: userIdentityId(value) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 export function membershipId(value: string): MembershipId {
   return prefixedId<MembershipId>(value, "membership_", "membership ID");
 }
@@ -64,6 +74,16 @@ export function invitationId(value: string): InvitationId {
 
 export function sessionId(value: string): SessionId {
   return prefixedId<SessionId>(value, "session_", "session ID");
+}
+
+export function sessionIdResult(value: string):
+  | { readonly ok: true; readonly value: SessionId }
+  | { readonly ok: false } {
+  try {
+    return { ok: true, value: sessionId(value) };
+  } catch {
+    return { ok: false };
+  }
 }
 
 export function rolePolicyId(value: string): RolePolicyId {

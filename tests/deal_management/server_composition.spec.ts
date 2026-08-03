@@ -8,7 +8,9 @@ import {
   actorId,
   FakeAuthenticationPort,
   IdentityAccessError,
+  sessionId,
   tenantId,
+  userIdentityId,
   workspaceId,
 } from "../../src/identity_access/v1.ts";
 import type { AuthenticationPort } from "../../src/identity_access/v1.ts";
@@ -86,21 +88,21 @@ async function seedExecutableIdentity(
     `INSERT INTO iam.memberships
     (aggregate_id, tenant_id, workspace_id, version, state, document, created_at, updated_at)
     VALUES ('membership_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 1, 'active',
-      '{"identityId":"identity_server-bootstrap","rolePolicyIds":["role_server-bootstrap"]}', $1, $1)`,
+      '{"tenantId":"tenant_northstar","workspaceId":"workspace_alpha","identityId":"identity_server-bootstrap","rolePolicyIds":["role_server-bootstrap"]}', $1, $1)`,
     [now],
   );
   await pool.query(
     `INSERT INTO iam.sessions
-    (aggregate_id, tenant_id, workspace_id, actor_id, version, state, issued_at, expires_at, document, created_at, updated_at)
-    VALUES ('session_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 'actor_server-bootstrap', 1,
-      'active', $1, $2, '{"actor":{"id":"actor_server-bootstrap","kind":"human","state":"active"},"identityId":"identity_server-bootstrap"}', $1, $1)`,
+    (aggregate_id, tenant_id, workspace_id, actor_id, identity_id, version, state, issued_at, expires_at, document, created_at, updated_at)
+    VALUES ('session_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 'actor_server-bootstrap', 'identity_server-bootstrap', 1,
+    'active', $1, $2, '{"sessionId":"session_server-bootstrap","tenantId":"tenant_northstar","workspaceId":"workspace_alpha","state":"active","expiresAt":"2099-08-03T12:00:00.000Z","actor":{"id":"actor_server-bootstrap","kind":"human","state":"active"},"identityId":"identity_server-bootstrap"}', $1, $1)`,
     [now, expiry],
   );
   await pool.query(
     `INSERT INTO access.role_policies
     (aggregate_id, tenant_id, workspace_id, version, state, document, created_at, updated_at)
     VALUES ('role_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 1, 'active',
-      '{"id":"role_server-bootstrap","resourceKinds":["deal"],"actions":["create"],"fields":["deal","parties","roles","mandate_ceiling","authority_constraints"]}', $1, $1)`,
+      '{"id":"role_server-bootstrap","tenantId":"tenant_northstar","workspaceId":"workspace_alpha","state":"active","resourceKinds":["deal"],"actions":["create"],"fields":["deal","parties","roles","mandate_ceiling","authority_constraints"]}', $1, $1)`,
     [now],
   );
 }
@@ -179,6 +181,8 @@ function configuredRouter(
       pool,
       authentication: new FakeAuthenticationPort({
         actor: { id: actorId("actor_server"), kind: "human", state: "active" },
+        sessionId: sessionId("session_server"),
+        identityId: userIdentityId("identity_server"),
         tenantId: tenantId("tenant_northstar"),
         workspaceId: workspaceId("workspace_alpha"),
       }),
@@ -350,6 +354,8 @@ Deno.test({
               kind: "human",
               state: "active",
             },
+            sessionId: sessionId("session_other"),
+            identityId: userIdentityId("identity_other"),
             tenantId: tenantId("tenant_other"),
             workspaceId: workspaceId("workspace_other"),
           }),
