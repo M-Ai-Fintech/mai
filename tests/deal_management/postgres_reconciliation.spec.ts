@@ -155,6 +155,23 @@ Deno.test({
         operator: operator(),
       });
       assertEquals(applied.outcomes[0]?.kind, "verified");
+      const mappedApply = await mapper.map({
+        record: record("legacy-pg-apply"),
+        scope,
+        now: context.now,
+      });
+      if (mappedApply.kind !== "mapped") {
+        throw new Error("expected mapped apply");
+      }
+      const persistedApply = await repository.find(
+        scope,
+        mappedApply.deal.id,
+      );
+      if (persistedApply === undefined) {
+        throw new Error("expected persisted apply");
+      }
+      assertEquals(persistedApply.parties.length > 0, true);
+      assertEquals(persistedApply.mandate !== undefined, true);
       const resumed = await executor.run({
         mode: "resume",
         legacyDealId: "legacy-pg-apply",

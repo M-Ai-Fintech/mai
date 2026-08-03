@@ -64,6 +64,13 @@ export class PostgresReconciliationEvidenceVerifier
       verifyEvidence(transaction, input)
     );
   }
+
+  verifyInTransaction(
+    transaction: TransactionHandle,
+    input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
+  ): Promise<ReconciliationEvidenceResult> {
+    return verifyEvidence(transaction, input);
+  }
 }
 
 interface ExpectedOperation {

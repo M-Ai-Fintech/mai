@@ -107,7 +107,8 @@ export const reconciliationRoutingMigration = defineMigration({
           UNIQUE (tenant_id, workspace_id, legacy_source, legacy_record_id),
           UNIQUE (tenant_id, workspace_id, authoritative_deal_id),
           CHECK (intended_document IS NULL OR jsonb_typeof(intended_document) = 'object'),
-          CHECK (issue IS NULL OR jsonb_typeof(issue) = 'object')
+          CHECK (issue IS NULL OR jsonb_typeof(issue) = 'object'),
+          CHECK (routing_mode = 'legacy' OR status = 'verified')
         );
         CREATE INDEX deal_management_reconciliation_records_scope_idx
           ON deal_management.reconciliation_records

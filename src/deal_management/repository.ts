@@ -187,6 +187,16 @@ export class PostgresDealRepository implements DealRepository {
     );
   }
 
+  /** Reads an authoritative Deal on a caller-owned transaction. */
+  findInTransaction(
+    transaction: TransactionHandle,
+    scope: DealScope,
+    dealId: DealId,
+    lock = false,
+  ): Promise<Deal | undefined> {
+    return findInTransaction(transaction, scope, dealId, lock);
+  }
+
   list(scope: DealScope): Promise<readonly Deal[]> {
     return this.transactions.run(async (transaction) => {
       const result = await transaction.query<StoredDealRow>(
@@ -304,12 +314,15 @@ async function findInTransaction(
   transaction: TransactionHandle,
   scope: DealScope,
   dealId: DealId,
+  lock = false,
 ): Promise<Deal | undefined> {
   const result = await transaction.query<StoredDealRow>(
     `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId",
        deal_id AS "dealId", version, state, document
      FROM deal_management.deals
-     WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3`,
+     WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3${
+      lock ? " FOR UPDATE" : ""
+    }`,
     [scope.tenantId, scope.workspaceId, dealId],
   );
   const row = result.rows[0];

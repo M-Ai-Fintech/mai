@@ -1,4 +1,5 @@
-import type { DealScope } from "./contracts.ts";
+import type { Deal, DealScope } from "./contracts.ts";
+import { canonicalJson } from "./migration_identity.ts";
 import { parseStoredDeal } from "./read_model.ts";
 import type { DealId } from "./ids.ts";
 import type {
@@ -141,6 +142,24 @@ export class PostgresDealReconciliationStore
     );
   }
 
+  verifyAndMarkReconciliation(
+    input: AtomicVerificationInput,
+    validate: AtomicVerificationCallback,
+  ): Promise<DealReconciliationRecord> {
+    return this.transactions.run(async (transaction) => {
+      const current = await findRecordForVerification(transaction, input);
+      assertVerificationPreconditions(current, input);
+      if (!await validate(transaction, current)) {
+        throw new Error(
+          'Reconciliation evidence for "' + input.legacyDealId +
+            '" failed exact verification; expected an unchanged applied record and authoritative Deal.',
+        );
+      }
+      const updated = await markVerified(transaction, current, input);
+      return updated;
+    });
+  }
+
   route(change: RoutingChange): Promise<DealReconciliationRecord> {
     return this.transactions.run((transaction) =>
       routeRecord(transaction, change)
@@ -173,6 +192,23 @@ export class PostgresDealReconciliationStore
     });
   }
 }
+
+export interface AtomicVerificationInput {
+  readonly scope: DealScope;
+  readonly legacySource: string;
+  readonly legacyDealId: string;
+  readonly authoritativeDealId: DealId;
+  readonly sourceFingerprint: string;
+  readonly intendedDeal: Deal;
+  readonly actorId: string;
+  readonly correlationId: string;
+  readonly now: string;
+}
+
+export type AtomicVerificationCallback = (
+  transaction: TransactionHandle,
+  current: DealReconciliationRecord,
+) => Promise<boolean>;
 
 interface ReconciliationRow {
   readonly recordId: string;
@@ -210,6 +246,99 @@ const recordSelect = `SELECT record_id AS "recordId", tenant_id AS "tenantId",
   source_fingerprint AS "sourceFingerprint", intended_document AS "intendedDocument",
   status, routing_mode AS "routingMode", issue, updated_at AS "updatedAt"
   FROM deal_management.reconciliation_records`;
+
+async function findRecordForVerification(
+  transaction: TransactionHandle,
+  input: AtomicVerificationInput,
+): Promise<DealReconciliationRecord | undefined> {
+  const result = await transaction.query<ReconciliationRow>(
+    recordSelect +
+      " WHERE tenant_id = $1 AND workspace_id = $2 AND legacy_source = $3 " +
+      "AND legacy_record_id = $4 FOR UPDATE",
+    [
+      input.scope.tenantId,
+      input.scope.workspaceId,
+      input.legacySource,
+      input.legacyDealId,
+    ],
+  );
+  return result.rows[0] === undefined ? undefined : toRecord(result.rows[0]);
+}
+
+function assertVerificationPreconditions(
+  current: DealReconciliationRecord | undefined,
+  input: AtomicVerificationInput,
+): asserts current is DealReconciliationRecord {
+  if (current === undefined) {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" was not found; expected an applied record in the requested scope.',
+    );
+  }
+  if (current.status !== "applied" || current.routingMode !== "legacy") {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" is stale; expected status applied and legacy routing.',
+    );
+  }
+  if (current.authoritativeDealId !== input.authoritativeDealId) {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" has a mismatched authoritative Deal identity; expected the mapped identity.',
+    );
+  }
+  if (current.sourceFingerprint !== input.sourceFingerprint) {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" has a mismatched source fingerprint; expected the applied fingerprint.',
+    );
+  }
+  if (
+    current.intendedDeal === undefined ||
+    canonicalJson(current.intendedDeal) !== canonicalJson(input.intendedDeal)
+  ) {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" has a mismatched intended document; expected the applied document.',
+    );
+  }
+}
+
+async function markVerified(
+  transaction: TransactionHandle,
+  current: DealReconciliationRecord,
+  input: AtomicVerificationInput,
+): Promise<DealReconciliationRecord> {
+  const result = await transaction.query(
+    "UPDATE deal_management.reconciliation_records " +
+      "SET status = 'verified', routing_mode = 'authoritative', issue = NULL, updated_at = $7 " +
+      "WHERE tenant_id = $1 AND workspace_id = $2 AND legacy_source = $3 " +
+      "AND legacy_record_id = $4 AND status = 'applied' AND routing_mode = 'legacy' " +
+      "AND authoritative_deal_id = $5 AND source_fingerprint = $6",
+    [
+      input.scope.tenantId,
+      input.scope.workspaceId,
+      input.legacySource,
+      input.legacyDealId,
+      input.authoritativeDealId,
+      input.sourceFingerprint,
+      input.now,
+    ],
+  );
+  if (result.rowCount !== 1) {
+    throw new Error(
+      'Reconciliation record "' + input.legacyDealId +
+        '" became stale before atomic verification could commit; expected one applied row.',
+    );
+  }
+  return {
+    ...current,
+    status: "verified",
+    routingMode: "authoritative",
+    updatedAt: input.now,
+    issue: undefined,
+  };
+}
 
 async function findRecord(
   transaction: TransactionHandle,
