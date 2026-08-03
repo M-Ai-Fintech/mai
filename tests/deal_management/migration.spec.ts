@@ -9,7 +9,7 @@ Deno.test("Deal Management migration is additive, scoped, and rollback-safe", ()
   assertEquals(dealManagementMigration.owner, "deal_management");
   assertEquals(dealManagementMigration.schema, "deal_management");
   assertEquals(dealManagementMigration.version, 1);
-  assertEquals(dealManagementMigrations, [dealManagementMigration]);
+  assertEquals(dealManagementMigrations.map(({ version }) => version), [1, 2]);
   assert(
     dealManagementMigration.rollbackNotes.includes(
       "retaining every new record",
@@ -27,6 +27,24 @@ Deno.test("Deal Management migration is additive, scoped, and rollback-safe", ()
   assert(
     dealManagementMigration.statements.every((statement) =>
       statement.schema === "deal_management"
+    ),
+  );
+  const routingMigration = dealManagementMigrations[1];
+  assertEquals(
+    routingMigration?.id,
+    "deal_management-0002-reconciliation-routing",
+  );
+  assert(
+    routingMigration?.statements[0]?.sql.includes("reconciliation_records"),
+  );
+  assert(
+    routingMigration?.statements[0]?.sql.includes(
+      "reconciliation_routing_history",
+    ),
+  );
+  assert(
+    !/\bDROP\s+(TABLE|SCHEMA)\b/i.test(
+      routingMigration?.statements[0]?.sql ?? "",
     ),
   );
 });
