@@ -9,6 +9,8 @@ import type {
   LegacyMappingIssue,
   RoutingChange,
 } from "./legacy_contracts.ts";
+import type { LegacyMappingIssueCode } from "./legacy_contracts.ts";
+import { boundedIssueEvidence } from "./issue_evidence.ts";
 import type { DealTransactionRunner } from "./repository.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 
@@ -563,7 +565,56 @@ function parseIssue(value: unknown, legacyDealId: string): LegacyMappingIssue {
       `Reconciliation issue for "${legacyDealId}" is invalid; expected a JSON object.`,
     );
   }
-  return value as LegacyMappingIssue;
+  const issue = value as Record<string, unknown>;
+  if (typeof issue.code !== "string") {
+    throw new Error(
+      `Reconciliation issue for "${legacyDealId}" is invalid; expected a machine-readable code.`,
+    );
+  }
+  if (!isIssueCode(issue.code)) {
+    throw new Error(
+      `Reconciliation issue for "${legacyDealId}" has code "${
+        String(issue.code)
+      }"; expected a supported issue code.`,
+    );
+  }
+  return boundedIssueEvidence({
+    code: issue.code,
+    legacyDealId,
+    received: issue.received,
+    expected: issue.expected,
+    explanation: typeof issue.explanation === "string"
+      ? issue.explanation
+      : "Persisted reconciliation evidence is available by code and digest.",
+    mismatchPaths: Array.isArray(issue.mismatchPaths)
+      ? issue.mismatchPaths.filter((path): path is string =>
+        typeof path === "string"
+      )
+      : undefined,
+    receivedDigest: typeof issue.receivedDigest === "string"
+      ? issue.receivedDigest
+      : undefined,
+    expectedDigest: typeof issue.expectedDigest === "string"
+      ? issue.expectedDigest
+      : undefined,
+    operatorInterventionRequired: issue.operatorInterventionRequired === true,
+    retrySafe: issue.retrySafe === true,
+  });
+}
+
+function isIssueCode(value: unknown): value is LegacyMappingIssueCode {
+  return typeof value === "string" && [
+    "MISSING_REQUIRED_FIELD",
+    "INCOMPLETE_MANDATE",
+    "INVALID_CURRENCY",
+    "UNSUPPORTED_DEAL_TYPE",
+    "DUPLICATE_PARTY",
+    "MISSING_UPSTREAM_REFERENCE",
+    "UNSUPPORTED_LEGACY_SHAPE",
+    "AUTHORITY_EXCEEDS_MANDATE",
+    "SCOPE_MISMATCH",
+    "RECONCILIATION_DRIFT",
+  ].includes(value);
 }
 
 function routedRecord(

@@ -4,6 +4,7 @@ import {
   type LegacyMappingIssue,
   type LegacyMappingResult,
 } from "./legacy_contracts.ts";
+import { boundedIssueEvidence } from "./issue_evidence.ts";
 
 type LegacyErrorKind = Exclude<LegacyMappingResult["kind"], "mapped">;
 type LegacyMappingFailure = Exclude<
@@ -148,7 +149,7 @@ export function issue(
   expected: string,
   explanation: string,
 ): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code,
     legacyDealId: record.legacyDealId,
     received,
@@ -156,5 +157,5 @@ export function issue(
     explanation,
     operatorInterventionRequired: true,
     retrySafe: code !== "SCOPE_MISMATCH" && code !== "RECONCILIATION_DRIFT",
-  };
+  });
 }

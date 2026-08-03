@@ -17,6 +17,7 @@ import type {
   LegacyDealSource,
   LegacyMappingIssue,
 } from "./legacy_contracts.ts";
+import { boundedIssueEvidence } from "./issue_evidence.ts";
 
 export type CompatibilityReadSource = "authoritative" | "legacy";
 
@@ -235,15 +236,14 @@ function sourceMismatch(
   input: { readonly legacyDealId: string; readonly legacySource: string },
   receivedSource: string,
 ): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code: "SCOPE_MISMATCH",
     legacyDealId: input.legacyDealId,
     received: receivedSource,
     expected: input.legacySource,
     explanation: "The selected legacy adapter returned a different source.",
-    operatorInterventionRequired: true,
     retrySafe: false,
-  };
+  });
 }
 
 function shouldReadAuthoritative(

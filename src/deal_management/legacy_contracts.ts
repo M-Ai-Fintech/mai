@@ -83,6 +83,9 @@ export interface LegacyMappingIssue {
   readonly legacyDealId: string;
   readonly received: string;
   readonly expected: string;
+  readonly mismatchPaths?: readonly string[];
+  readonly receivedDigest?: string;
+  readonly expectedDigest?: string;
   readonly explanation: string;
   readonly operatorInterventionRequired: boolean;
   readonly retrySafe: boolean;

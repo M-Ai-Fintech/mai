@@ -8,6 +8,7 @@ import type {
   ReconciliationStatus,
 } from "./legacy_contracts.ts";
 import { reconciliationRecordId } from "./migration_identity.ts";
+import { boundedIssueEvidence } from "./issue_evidence.ts";
 
 /**
  * Builds persisted reconciliation state for one mapped legacy Deal.
@@ -52,14 +53,17 @@ export function sourceConflict(
     return undefined;
   }
   return {
-    code: "RECONCILIATION_DRIFT",
-    legacyDealId: mapping.legacyDealId,
-    received: mapping.sourceFingerprint,
-    expected: previous.sourceFingerprint,
-    explanation:
-      "Legacy content changed after reconciliation; operator review is required before retry.",
-    operatorInterventionRequired: true,
-    retrySafe: false,
+    ...boundedIssueEvidence({
+      code: "RECONCILIATION_DRIFT",
+      legacyDealId: mapping.legacyDealId,
+      received: "source fingerprint differs",
+      expected: "persisted source fingerprint",
+      receivedContent: mapping.sourceFingerprint,
+      expectedContent: previous.sourceFingerprint,
+      explanation:
+        "Legacy content changed after reconciliation; operator review is required before retry.",
+      retrySafe: false,
+    }),
   };
 }
 
@@ -117,16 +121,17 @@ export function applyIssue(
   error: unknown,
 ): LegacyMappingIssue {
   if (isAuthoritativeCollision(error)) return collisionIssue(record, error);
-  return {
+  return boundedIssueEvidence({
     code: "UNSUPPORTED_LEGACY_SHAPE",
     legacyDealId: record.legacyDealId,
-    received: error instanceof Error ? error.message : String(error),
+    received: "provider or validation failure",
     expected: "a transactionally persisted, invariant-valid authoritative Deal",
+    receivedContent: error instanceof Error ? error.message : String(error),
     explanation:
       "Apply failed; the stored status is retryable only after the operator reviews the recorded error.",
     operatorInterventionRequired: true,
     retrySafe: true,
-  };
+  });
 }
 
 function isAuthoritativeCollision(error: unknown): error is Error {
@@ -138,17 +143,18 @@ function collisionIssue(
   record: LegacyDealRecord,
   error: Error,
 ): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code: "RECONCILIATION_DRIFT",
     legacyDealId: record.legacyDealId,
-    received: error.message,
+    received: "authoritative identity collision",
     expected:
       "an absent authoritative Deal or an exact persisted reconciliation claim",
+    receivedContent: error.message,
     explanation:
       "The deterministic authoritative identity is already bound to incompatible state; no migration command was issued.",
     operatorInterventionRequired: true,
     retrySafe: false,
-  };
+  });
 }
 
 /**
@@ -161,16 +167,18 @@ export function verificationIssue(
   applied: Deal | undefined,
   intended: Deal,
 ): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code: "RECONCILIATION_DRIFT",
     legacyDealId: record.legacyDealId,
-    received: JSON.stringify(applied ?? "undefined"),
-    expected: JSON.stringify(intended),
+    received: "persisted authoritative document",
+    expected: "mapped source candidate",
+    receivedContent: applied ?? "undefined",
+    expectedContent: intended,
     explanation:
       "Persisted authoritative state differs from the mapped source candidate.",
     operatorInterventionRequired: true,
     retrySafe: false,
-  };
+  });
 }
 
 /**
@@ -181,16 +189,15 @@ export function verificationIssue(
 export function missingVerificationIssue(
   record: LegacyDealRecord,
 ): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code: "MISSING_REQUIRED_FIELD",
     legacyDealId: record.legacyDealId,
     received: "undefined",
     expected: "a persisted verified reconciliation record",
     explanation:
       "Verification cannot confirm a Deal that has not completed reconciliation.",
-    operatorInterventionRequired: true,
     retrySafe: true,
-  };
+  });
 }
 
 /**

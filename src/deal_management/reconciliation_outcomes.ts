@@ -16,6 +16,7 @@ import {
   statusForIssue,
   verificationIssue,
 } from "./reconciliation_records.ts";
+import { boundedIssueEvidence } from "./issue_evidence.ts";
 
 export type ReconciliationRunInput = {
   readonly mode: ReconciliationMode;
@@ -135,16 +136,15 @@ export function missingLegacyRecord(legacyDealId: string): LegacyDealRecord {
 }
 
 export function missingLegacyIssue(legacyDealId: string): LegacyMappingIssue {
-  return {
+  return boundedIssueEvidence({
     code: "MISSING_REQUIRED_FIELD",
     legacyDealId,
     received: "undefined",
     expected: "an existing legacy Deal record",
     explanation:
       "The legacy source returned no Deal for the requested identifier.",
-    operatorInterventionRequired: true,
     retrySafe: true,
-  };
+  });
 }
 
 export function assertRoutable(
