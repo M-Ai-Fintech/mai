@@ -1,5 +1,5 @@
 import { createDeal, setMandate } from "./model.ts";
-import { dealId, mandateId } from "./ids.ts";
+import { dealId } from "./ids.ts";
 import type { Deal, DealScope } from "./contracts.ts";
 import type {
   LegacyDealRecord,
@@ -11,7 +11,8 @@ import {
   mapParties,
   mapTeam,
 } from "./legacy_mapper_parties.ts";
-import { issue, issueResult, shortSlug } from "./legacy_mapper_validation.ts";
+import { issue, issueResult } from "./legacy_mapper_validation.ts";
+import { mandateIdFor } from "./migration_identity.ts";
 
 const LEGACY_TYPE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "m&a": "acquisition",
@@ -42,7 +43,7 @@ export async function mapCandidate(
   const dealType = normalizeLegacyDealType(input.record);
   if (dealType === undefined) return unsupportedDealType(input.record);
   let deal = createBaseDeal(input, identity, dealType);
-  const mandateResult = applyMandate(deal, input.record, input.now);
+  const mandateResult = await applyMandate(deal, input.record, input.now);
   if (mandateResult.kind !== "ok") return mandateResult;
   deal = mandateResult.deal;
   const mappingInput: LegacyMappingInput = {
@@ -98,29 +99,29 @@ function createBaseDeal(
   });
 }
 
-function applyMandate(
+async function applyMandate(
   deal: Deal,
   record: LegacyDealRecord,
   now: string,
-): { readonly kind: "ok"; readonly deal: Deal } | LegacyMappingResult {
+): Promise<{ readonly kind: "ok"; readonly deal: Deal } | LegacyMappingResult> {
   if (record.mandate === undefined) return { kind: "ok", deal };
   const mandate = record.mandate;
   if (isIncompleteMandate(mandate)) return missingMandate(record, mandate);
   try {
     return {
       kind: "ok",
-      deal: setMandate(deal, mandateInput(deal, record, now)),
+      deal: setMandate(deal, await mandateInput(deal, record, now)),
     };
   } catch (error) {
     return invalidMandate(record, error);
   }
 }
 
-function mandateInput(deal: Deal, record: LegacyDealRecord, now: string) {
+async function mandateInput(deal: Deal, record: LegacyDealRecord, now: string) {
   const mandate = record.mandate!;
   return {
     expectedVersion: deal.version,
-    id: mandateId(`mandate_legacy-${shortSlug(record.legacyDealId)}`),
+    id: await mandateIdFor(record),
     transactionValueCeiling: {
       amount: mandate.transactionValueCeiling!,
       currency: mandate.currency!,

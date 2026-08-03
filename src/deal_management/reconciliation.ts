@@ -202,13 +202,13 @@ export class DealReconciliationExecutor {
     if (input.mode !== "dry-run") {
       return this.saveIssue(record, input, issue, previous);
     }
-    return Promise.resolve(dryRunIssue(
+    return dryRunIssue(
       record,
       issue,
       previous,
       input.operator.scope,
       input.operator.now,
-    ));
+    );
   }
 
   private async saveDryRun(
@@ -222,7 +222,7 @@ export class DealReconciliationExecutor {
     previous: DealReconciliationRecord | undefined,
   ): Promise<ReconciliationOutcome> {
     if (previous !== undefined) return { kind: "mapped", record: previous };
-    const record = reconciliationRecord(
+    const record = await reconciliationRecord(
       legacyRecord,
       input.operator.scope,
       mapping,
@@ -242,7 +242,7 @@ export class DealReconciliationExecutor {
     if (previous?.status === "verified") {
       return { kind: "already_reconciled", record: previous };
     }
-    const pending = pendingReconciliation(legacyRecord, input, mapping);
+    const pending = await pendingReconciliation(legacyRecord, input, mapping);
     await this.store.save(pending);
     try {
       return await this.applyAndVerify(
@@ -271,6 +271,7 @@ export class DealReconciliationExecutor {
       this.service,
       this.repository,
       resumableClaim(previous, mapping),
+      { source: legacyRecord.source, legacyDealId: legacyRecord.legacyDealId },
     );
     const appliedRecord = appliedReconciliation(pending, input.operator.now);
     await this.store.save(appliedRecord);
@@ -290,7 +291,9 @@ export class DealReconciliationExecutor {
     applied: Deal,
     appliedRecord: DealReconciliationRecord,
   ): Promise<ReconciliationOutcome> {
-    if (!await this.verifyEvidence(mapping.deal, input.operator)) {
+    if (
+      !await this.verifyEvidence(mapping.deal, input.operator, legacyRecord)
+    ) {
       const issue = verificationIssue(legacyRecord, applied, mapping.deal);
       return await this.saveIssue(legacyRecord, input, issue, appliedRecord);
     }
@@ -309,7 +312,7 @@ export class DealReconciliationExecutor {
     issue: LegacyMappingIssue,
     previous?: DealReconciliationRecord,
   ): Promise<ReconciliationOutcome> {
-    const record = issueRecord(legacyRecord, input, issue, previous);
+    const record = await issueRecord(legacyRecord, input, issue, previous);
     await this.store.save(record);
     return {
       kind: record.status === "conflict" ? "conflict" : "rejected",
@@ -372,7 +375,7 @@ export class DealReconciliationExecutor {
     mapping: MappedLegacyDeal,
     previous: DealReconciliationRecord,
   ): Promise<ReconciliationOutcome> {
-    if (await this.verifyEvidence(mapping.deal, input.operator)) {
+    if (await this.verifyEvidence(mapping.deal, input.operator, legacyRecord)) {
       const verified = verifiedReconciliation(previous, input.operator.now);
       await this.store.save(verified);
       return { kind: "verified", record: verified };
@@ -388,6 +391,7 @@ export class DealReconciliationExecutor {
   private async verifyEvidence(
     intendedDeal: Deal,
     operator: ReconciliationOperatorContext,
+    legacyRecord: LegacyDealRecord,
   ): Promise<boolean> {
     const documentMatches = await verifyMappedDeal(
       intendedDeal,
@@ -399,6 +403,8 @@ export class DealReconciliationExecutor {
     return (await this.evidence.verify({
       scope: operator.scope,
       intendedDeal,
+      legacySource: legacyRecord.source,
+      legacyDealId: legacyRecord.legacyDealId,
       operator,
     })).ok;
   }

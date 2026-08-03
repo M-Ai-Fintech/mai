@@ -10,11 +10,8 @@ import {
   type LegacyReferenceLookup,
   mapCandidate,
 } from "./legacy_mapper_parts.ts";
-import {
-  sourceFingerprint,
-  stableDealIdentity,
-  validateRecord,
-} from "./legacy_mapper_validation.ts";
+import { validateRecord } from "./legacy_mapper_validation.ts";
+import { legacyDealId, sourceFingerprint } from "./migration_identity.ts";
 
 /**
  * Maps one legacy Deal into a complete authoritative aggregate candidate.
@@ -35,7 +32,7 @@ export class DeterministicLegacyDealMapper implements LegacyDealMapper {
   }): Promise<LegacyMappingResult> {
     const issue = validateRecord(input.record, input.scope);
     if (issue !== undefined) return { kind: issue.kind, issue: issue.issue };
-    const identity = await stableDealIdentity(input.record);
+    const identity = await legacyDealId(input.record);
     const candidate = await mapCandidate(
       input,
       identity,

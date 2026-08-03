@@ -7,21 +7,22 @@ import type {
   ReconciliationOutcome,
   ReconciliationStatus,
 } from "./legacy_contracts.ts";
+import { reconciliationRecordId } from "./migration_identity.ts";
 
 /**
  * Builds persisted reconciliation state for one mapped legacy Deal.
  *
  * @example reconciliationRecord(record, scope, mapping, "pending", now)
  */
-export function reconciliationRecord(
+export async function reconciliationRecord(
   legacyRecord: LegacyDealRecord,
   scope: DealScope,
   mapping: Extract<LegacyMappingResult, { readonly kind: "mapped" }>,
   status: ReconciliationStatus,
   updatedAt: string,
-): DealReconciliationRecord {
+): Promise<DealReconciliationRecord> {
   return {
-    recordId: recordIdFor(legacyRecord),
+    recordId: await recordIdFor(legacyRecord),
     scope,
     legacySource: legacyRecord.source,
     legacyDealId: legacyRecord.legacyDealId,
@@ -82,15 +83,15 @@ export function statusForIssue(
  *
  * @example const outcome = dryRunIssue(record, issue, undefined, scope, now)
  */
-export function dryRunIssue(
+export async function dryRunIssue(
   legacyRecord: LegacyDealRecord,
   issue: LegacyMappingIssue,
   previous: DealReconciliationRecord | undefined,
   scope: DealScope,
   updatedAt: string,
-): ReconciliationOutcome {
+): Promise<ReconciliationOutcome> {
   const record = previous ?? {
-    recordId: recordIdFor(legacyRecord),
+    recordId: await recordIdFor(legacyRecord),
     scope,
     legacySource: legacyRecord.source,
     legacyDealId: legacyRecord.legacyDealId,
@@ -197,16 +198,6 @@ export function missingVerificationIssue(
  *
  * @example const id = recordIdFor(legacyRecord)
  */
-export function recordIdFor(record: LegacyDealRecord): string {
-  return `reconcile_${slug(record.source)}_${slug(record.legacyDealId)}`.slice(
-    0,
-    64,
-  );
-}
-
-function slug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
-    /^-|-$/g,
-    "",
-  ) || "record";
+export function recordIdFor(record: LegacyDealRecord): Promise<string> {
+  return reconciliationRecordId(record);
 }

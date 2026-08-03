@@ -11,6 +11,7 @@ import { freezeDeal } from "./model.ts";
 import { dealReceiptId } from "./ids.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 import type { DealCommandClaim } from "./repository.ts";
+import { canonicalJson } from "./migration_identity.ts";
 
 export interface DealReceiptTransactionRunner {
   run<TResult>(
@@ -169,7 +170,7 @@ export function commandReceiptKey(
 }
 
 export function commandFingerprint(command: DealCommand): string {
-  return stableSerialize({
+  return canonicalJson({
     type: command.type,
     actorId: command.context.actor.id,
     tenantId: command.context.request.tenantId,
@@ -293,17 +294,6 @@ function payloadWithoutContext(command: DealCommand): Record<string, unknown> {
   delete payload.context;
   delete payload.idempotencyKey;
   return payload;
-}
-
-function stableSerialize(value: unknown): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(",")}]`;
-  const object = value as Record<string, unknown>;
-  return `{${
-    Object.keys(object).sort().map((key) =>
-      `${JSON.stringify(key)}:${stableSerialize(object[key])}`
-    ).join(",")
-  }}`;
 }
 
 export type { DealMutationCommand };

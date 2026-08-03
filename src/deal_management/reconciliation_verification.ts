@@ -1,10 +1,22 @@
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
+import type { IdempotencyKey } from "../platform/api/v1.ts";
 import type { Deal } from "./contracts.ts";
 import type {
   ReconciliationEvidenceResult,
   ReconciliationEvidenceVerifier,
 } from "./legacy_contracts.ts";
 import type { DealTransactionRunner } from "./repository.ts";
+import { reconciliationIdempotencyKey } from "./migration_identity.ts";
+import type { LegacyIdentity } from "./migration_identity.ts";
+
+/** Provides the evidence seam for the canonical reconciliation key helper. */
+export function verificationExpectedIdempotencyKey(
+  identity: LegacyIdentity,
+  operation: string,
+  legacyEntityId: string,
+): Promise<IdempotencyKey> {
+  return reconciliationIdempotencyKey(identity, operation, legacyEntityId);
+}
 
 /** Verifies one exact migration operation per durable evidence stream. */
 export class PostgresReconciliationEvidenceVerifier
@@ -39,11 +51,12 @@ async function verifyEvidence(
   transaction: TransactionHandle,
   input: Parameters<ReconciliationEvidenceVerifier["verify"]>[0],
 ): Promise<ReconciliationEvidenceResult> {
-  const expected = expectedOperations(
+  const expected = await expectedOperations(
     input.intendedDeal,
     input.scope.tenantId,
     input.scope.workspaceId,
     input.operator.actorId,
+    { source: input.legacySource, legacyDealId: input.legacyDealId },
   );
   const rows = await loadEvidence(transaction, input);
   const missing = expected.flatMap((operation) =>
@@ -52,33 +65,40 @@ async function verifyEvidence(
   return missing.length === 0 ? { ok: true } : { ok: false, missing };
 }
 
-function expectedOperations(
+async function expectedOperations(
   deal: Deal,
   tenantId: string,
   workspaceId: string,
   actorId: string,
-): readonly ExpectedOperation[] {
+  identity: { readonly source: string; readonly legacyDealId: string },
+): Promise<readonly ExpectedOperation[]> {
   const base = [{
     command: "create_deal",
     event: "DealCreated",
-    key: key(deal.id, "create"),
+    key: verificationExpectedIdempotencyKey(identity, "create", deal.id),
   }];
   const mandate = deal.mandate === undefined ? [] : [{
     command: "set_mandate",
     event: "MandateSet",
-    key: key(deal.id, "mandate"),
+    key: verificationExpectedIdempotencyKey(identity, "mandate", deal.id),
   }];
   const parties = deal.parties.map((party) => ({
     command: "add_deal_party",
     event: "DealPartyAdded",
-    key: key(deal.id, `party-${party.id}`),
+    key: verificationExpectedIdempotencyKey(identity, "party", party.id),
   }));
   const roles = deal.roles.map((role) => ({
     command: "assign_deal_role",
     event: "DealRoleAssigned",
-    key: key(deal.id, `role-${role.id}`),
+    key: verificationExpectedIdempotencyKey(identity, "role", role.id),
   }));
-  return [...base, ...mandate, ...parties, ...roles].map((operation) => ({
+  const operations = await Promise.all(
+    [...base, ...mandate, ...parties, ...roles].map(async (operation) => ({
+      ...operation,
+      key: await operation.key,
+    })),
+  );
+  return operations.map((operation) => ({
     ...operation,
     key: [
       tenantId,
@@ -90,17 +110,6 @@ function expectedOperations(
     ]
       .join(":"),
   }));
-}
-
-function key(dealId: string, operation: string): string {
-  return `idem_reconcile-${slug(operation)}-${slug(dealId)}`.slice(0, 64);
-}
-
-function slug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
-    /^-|-$/g,
-    "",
-  ) || "record";
 }
 
 async function loadEvidence(

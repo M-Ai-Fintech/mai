@@ -31,12 +31,12 @@ export type MappedLegacyDeal = Extract<
   { readonly kind: "mapped" }
 >;
 
-export function pendingReconciliation(
+export async function pendingReconciliation(
   record: LegacyDealRecord,
   input: ReconciliationRunInput,
   mapping: MappedLegacyDeal,
-): DealReconciliationRecord {
-  return reconciliationRecord(
+): Promise<DealReconciliationRecord> {
+  return await reconciliationRecord(
     record,
     input.operator.scope,
     mapping,
@@ -85,14 +85,14 @@ export function verificationPrecondition(
   );
 }
 
-export function issueRecord(
+export async function issueRecord(
   legacyRecord: LegacyDealRecord,
   input: ReconciliationIssueInput,
   issue: LegacyMappingIssue,
   previous?: DealReconciliationRecord,
-): DealReconciliationRecord {
+): Promise<DealReconciliationRecord> {
   return {
-    recordId: previous?.recordId ?? recordIdFor(legacyRecord),
+    recordId: previous?.recordId ?? await recordIdFor(legacyRecord),
     scope: input.operator.scope,
     legacySource: legacyRecord.source,
     legacyDealId: legacyRecord.legacyDealId,

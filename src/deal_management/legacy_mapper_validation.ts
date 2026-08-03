@@ -4,7 +4,6 @@ import {
   type LegacyMappingIssue,
   type LegacyMappingResult,
 } from "./legacy_contracts.ts";
-import { dealId } from "./ids.ts";
 
 type LegacyErrorKind = Exclude<LegacyMappingResult["kind"], "mapped">;
 type LegacyMappingFailure = Exclude<
@@ -158,50 +157,4 @@ export function issue(
     operatorInterventionRequired: true,
     retrySafe: code !== "SCOPE_MISMATCH" && code !== "RECONCILIATION_DRIFT",
   };
-}
-
-/**
- * Derives a stable authoritative Deal identity from legacy source identity.
- *
- * @example const id = await stableDealIdentity(record)
- */
-export async function stableDealIdentity(
-  record: LegacyDealRecord,
-): Promise<ReturnType<typeof dealId>> {
-  const bytes = new TextEncoder().encode(
-    `${record.source}\u0000${record.legacyDealId}`,
-  );
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  const hex = Array.from(
-    new Uint8Array(digest),
-    (value) => value.toString(16).padStart(2, "0"),
-  ).join("");
-  return dealId(`deal_legacy-${hex.slice(0, 48)}`);
-}
-
-/**
- * Hashes the complete legacy record for drift detection on retry.
- *
- * @example const fingerprint = await sourceFingerprint(record)
- */
-export async function sourceFingerprint(
-  record: LegacyDealRecord,
-): Promise<string> {
-  const bytes = new TextEncoder().encode(JSON.stringify(record));
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(
-    new Uint8Array(digest),
-    (value) => value.toString(16).padStart(2, "0"),
-  ).join("");
-}
-
-/**
- * Produces a bounded slug for deterministic IDs and reconciliation keys.
- *
- * @example const slug = shortSlug("legacy deal/1")
- */
-export function shortSlug(value: string): string {
-  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return normalized.slice(0, 36) || "record";
 }

@@ -1,11 +1,22 @@
-import {
-  type IdempotencyKey,
-  parseIdempotencyKey,
-} from "../platform/api/v1.ts";
 import type { Deal, DealCommandContext, DealScope } from "./contracts.ts";
+import type { IdempotencyKey } from "../platform/api/v1.ts";
 import type { DealId } from "./ids.ts";
 import type { DealManagementService } from "./service.ts";
 import type { DealRepository } from "./repository.ts";
+import {
+  canonicalJson,
+  type LegacyIdentity,
+  reconciliationIdempotencyKey,
+} from "./migration_identity.ts";
+
+/** Provides the replay seam for the canonical reconciliation key helper. */
+export function replayExpectedIdempotencyKey(
+  identity: LegacyIdentity,
+  operation: string,
+  legacyEntityId: string,
+): Promise<IdempotencyKey> {
+  return reconciliationIdempotencyKey(identity, operation, legacyEntityId);
+}
 
 /**
  * Replays one mapped Deal through the existing command service.
@@ -21,16 +32,35 @@ export async function replayMappedDeal(
   service: DealManagementService,
   repository: DealRepository,
   mayResumeExistingDeal: boolean,
+  legacyIdentity: LegacyIdentity,
 ): Promise<Deal> {
   let current = await repository.find(scopeFor(context), intended.id);
   if (current === undefined) {
-    current = await createMappedDeal(intended, context, service, repository);
+    current = await createMappedDeal(
+      intended,
+      context,
+      service,
+      repository,
+      legacyIdentity,
+    );
   } else {
     assertReplayClaim(current, intended, mayResumeExistingDeal);
   }
-  current = await replayMandate(intended, current, context, service);
-  current = await replayParties(intended, current, context, service);
-  return await replayRoles(intended, current, context, service);
+  current = await replayMandate(
+    intended,
+    current,
+    context,
+    service,
+    legacyIdentity,
+  );
+  current = await replayParties(
+    intended,
+    current,
+    context,
+    service,
+    legacyIdentity,
+  );
+  return await replayRoles(intended, current, context, service, legacyIdentity);
 }
 
 function assertReplayClaim(
@@ -64,8 +94,8 @@ function sameReplayBase(existingDeal: Deal, intendedDeal: Deal): boolean {
 }
 
 function sameMandate(existingDeal: Deal, intendedDeal: Deal): boolean {
-  return stableJson(existingDeal.mandate) ===
-      stableJson(intendedDeal.mandate) ||
+  return canonicalJson(existingDeal.mandate) ===
+      canonicalJson(intendedDeal.mandate) ||
     existingDeal.mandate === undefined;
 }
 
@@ -75,7 +105,7 @@ function isCompatibleSubset<T extends { readonly id: string }>(
 ): boolean {
   return existingValues.every((existingValue) =>
     intendedValues.some((intendedValue) =>
-      stableJson(existingValue) === stableJson(intendedValue)
+      canonicalJson(existingValue) === canonicalJson(intendedValue)
     )
   );
 }
@@ -85,11 +115,16 @@ async function createMappedDeal(
   context: DealCommandContext,
   service: DealManagementService,
   repository: DealRepository,
+  legacyIdentity: LegacyIdentity,
 ): Promise<Deal> {
   await service.createDeal({
     type: "create_deal",
     context,
-    idempotencyKey: reconciliationKey(intended.id, "create"),
+    idempotencyKey: await replayExpectedIdempotencyKey(
+      legacyIdentity,
+      "create",
+      intended.id,
+    ),
     dealId: intended.id,
     name: intended.name,
     dealType: intended.dealType,
@@ -104,6 +139,7 @@ async function replayMandate(
   current: Deal,
   context: DealCommandContext,
   service: DealManagementService,
+  legacyIdentity: LegacyIdentity,
 ): Promise<Deal> {
   if (intended.mandate === undefined || current.mandate !== undefined) {
     return current;
@@ -111,7 +147,11 @@ async function replayMandate(
   const result = await service.setMandate({
     type: "set_mandate",
     context,
-    idempotencyKey: reconciliationKey(intended.id, "mandate"),
+    idempotencyKey: await replayExpectedIdempotencyKey(
+      legacyIdentity,
+      "mandate",
+      intended.id,
+    ),
     dealId: intended.id,
     expectedVersion: current.version,
     mandateId: intended.mandate.id,
@@ -126,6 +166,7 @@ async function replayParties(
   current: Deal,
   context: DealCommandContext,
   service: DealManagementService,
+  legacyIdentity: LegacyIdentity,
 ): Promise<Deal> {
   let next = current;
   for (const party of intended.parties) {
@@ -133,7 +174,11 @@ async function replayParties(
     const result = await service.addDealParty({
       type: "add_deal_party",
       context,
-      idempotencyKey: reconciliationKey(intended.id, `party-${party.id}`),
+      idempotencyKey: await replayExpectedIdempotencyKey(
+        legacyIdentity,
+        "party",
+        party.id,
+      ),
       dealId: intended.id,
       expectedVersion: next.version,
       partyId: party.id,
@@ -161,6 +206,7 @@ async function replayRoles(
   current: Deal,
   context: DealCommandContext,
   service: DealManagementService,
+  legacyIdentity: LegacyIdentity,
 ): Promise<Deal> {
   let next = current;
   for (const role of intended.roles) {
@@ -168,7 +214,11 @@ async function replayRoles(
     const result = await service.assignDealRole({
       type: "assign_deal_role",
       context,
-      idempotencyKey: reconciliationKey(intended.id, `role-${role.id}`),
+      idempotencyKey: await replayExpectedIdempotencyKey(
+        legacyIdentity,
+        "role",
+        role.id,
+      ),
       dealId: intended.id,
       expectedVersion: next.version,
       roleId: role.id,
@@ -216,7 +266,7 @@ export async function verifyMappedDeal(
 ): Promise<boolean> {
   const persisted = await repository.find(scope, intended.id);
   if (persisted === undefined) return false;
-  return stableJson(persisted) === stableJson({
+  return canonicalJson(persisted) === canonicalJson({
     ...intended,
     version: persisted.version,
     updatedAt: persisted.updatedAt,
@@ -225,7 +275,7 @@ export async function verifyMappedDeal(
 
 /** Compares mapped intent while ignoring persistence-only fields. */
 export function sameMappedDealIntent(left: Deal, right: Deal): boolean {
-  return stableJson(intentShape(left)) === stableJson(intentShape(right));
+  return canonicalJson(intentShape(left)) === canonicalJson(intentShape(right));
 }
 
 function intentShape(deal: Deal): unknown {
@@ -238,18 +288,6 @@ function intentShape(deal: Deal): unknown {
   return intent;
 }
 
-function reconciliationKey(dealId: DealId, operation: string): IdempotencyKey {
-  const value = `idem_reconcile-${slug(operation)}-${slug(dealId)}`.slice(
-    0,
-    64,
-  );
-  const parsed = parseIdempotencyKey(value);
-  if (parsed.ok) return parsed.value;
-  throw new Error(
-    `Reconciliation idempotency key "${value}" is invalid; expected a canonical idempotency key.`,
-  );
-}
-
 function scopeFor(context: DealCommandContext): DealScope {
   if (context.request.workspaceId === undefined) {
     throw new Error(
@@ -260,27 +298,4 @@ function scopeFor(context: DealCommandContext): DealScope {
     tenantId: context.request.tenantId,
     workspaceId: context.request.workspaceId,
   };
-}
-
-function slug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
-    /^-|-$/g,
-    "",
-  ) || "record";
-}
-
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (isPlainRecord(value)) {
-    return `{${
-      Object.keys(value).sort().map((key) =>
-        `${JSON.stringify(key)}:${stableJson(value[key])}`
-      ).join(",")
-    }}`;
-  }
-  return JSON.stringify(value);
-}
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

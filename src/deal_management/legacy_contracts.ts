@@ -173,6 +173,8 @@ export interface ReconciliationEvidenceVerifier {
   verify(input: {
     readonly scope: DealScope;
     readonly intendedDeal: Deal;
+    readonly legacySource: string;
+    readonly legacyDealId: string;
     readonly operator: ReconciliationOperatorContext;
   }): Promise<ReconciliationEvidenceResult>;
 }

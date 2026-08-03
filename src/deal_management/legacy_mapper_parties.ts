@@ -1,5 +1,4 @@
 import { addDealParty, assignDealRole } from "./model.ts";
-import { dealPartyId, dealRoleId } from "./ids.ts";
 import type { Deal, DealPartyReference } from "./contracts.ts";
 import type { DealRoleName } from "./contracts.ts";
 import {
@@ -14,8 +13,8 @@ import {
   invariantIssue,
   issue,
   issueResult,
-  shortSlug,
 } from "./legacy_mapper_validation.ts";
+import { partyIdFor, roleIdFor } from "./migration_identity.ts";
 
 export interface LegacyMappingInput {
   readonly record: LegacyDealRecord;
@@ -58,7 +57,7 @@ async function mapParty(
   seen.add(referenceKey);
   const validation = validateParty(input.record, party);
   if (validation.kind !== "valid") return validation;
-  return appendParty(
+  return await appendParty(
     deal,
     input.record,
     party,
@@ -78,20 +77,24 @@ function validateParty(record: LegacyDealRecord, party: LegacyPartyRecord) {
   };
 }
 
-function appendParty(
+async function appendParty(
   deal: Deal,
   record: LegacyDealRecord,
   party: LegacyPartyRecord,
   reference: DealPartyReference,
   side: NonNullable<Deal["parties"][number]["side"]>,
   now: string,
-): MappingAggregateResult {
+): Promise<MappingAggregateResult> {
   try {
     return {
       kind: "ok",
       deal: addDealParty(deal, {
         expectedVersion: deal.version,
-        id: dealPartyId(`party_legacy-${shortSlug(party.legacyPartyId)}`),
+        id: await partyIdFor({
+          source: record.source,
+          legacyDealId: record.legacyDealId,
+          legacyEntityId: party.legacyPartyId,
+        }),
         reference,
         side,
         label: party.label!,
@@ -137,7 +140,12 @@ async function mapTeamMember(
   if (reference === undefined) {
     return missingTeamReference(input.record, member.legacyMemberId);
   }
-  const partyResult = addMissingTeamParty(input, initial, member, reference);
+  const partyResult = await addMissingTeamParty(
+    input,
+    initial,
+    member,
+    reference,
+  );
   if (partyResult.kind !== "ok") return partyResult;
   return mapMemberRole(
     input,
@@ -149,14 +157,14 @@ async function mapTeamMember(
   );
 }
 
-function mapMemberRole(
+async function mapMemberRole(
   input: LegacyMappingInput,
   deal: Deal,
   member: LegacyTeamMemberRecord,
   role: DealRoleName,
   roleKeys: Set<string>,
   reference: DealPartyReference,
-): MappingAggregateResult {
+): Promise<MappingAggregateResult> {
   const party = findParty(deal, reference);
   if (party === undefined) {
     return invariantIssue(input.record, "team party was not persisted");
@@ -167,7 +175,7 @@ function mapMemberRole(
   const roleKey = `${party.id}:${role}`;
   if (roleKeys.has(roleKey)) return duplicateRole(input.record, roleKey);
   roleKeys.add(roleKey);
-  return appendRole(
+  return await appendRole(
     deal,
     input.record,
     member,
@@ -177,16 +185,16 @@ function mapMemberRole(
   );
 }
 
-function addMissingTeamParty(
+async function addMissingTeamParty(
   input: LegacyMappingInput,
   deal: Deal,
   member: LegacyTeamMemberRecord,
   reference: DealPartyReference,
-): MappingAggregateResult {
+): Promise<MappingAggregateResult> {
   if (findParty(deal, reference) !== undefined) return { kind: "ok", deal };
   const validation = validateTeamParty(input.record, member);
   if (validation.kind !== "valid") return validation;
-  return appendTeamParty(input, deal, member, reference, validation.side);
+  return await appendTeamParty(input, deal, member, reference, validation.side);
 }
 
 function validateTeamParty(
@@ -256,19 +264,23 @@ function missingLabel(
   );
 }
 
-function appendTeamParty(
+async function appendTeamParty(
   input: LegacyMappingInput,
   deal: Deal,
   member: LegacyTeamMemberRecord,
   reference: DealPartyReference,
   side: Deal["parties"][number]["side"],
-): MappingAggregateResult {
+): Promise<MappingAggregateResult> {
   try {
     return {
       kind: "ok",
       deal: addDealParty(deal, {
         expectedVersion: deal.version,
-        id: dealPartyId(`party_legacy-${shortSlug(member.legacyMemberId)}`),
+        id: await partyIdFor({
+          source: input.record.source,
+          legacyDealId: input.record.legacyDealId,
+          legacyEntityId: member.legacyMemberId,
+        }),
         reference,
         side,
         label: member.label!,
@@ -280,20 +292,24 @@ function appendTeamParty(
   }
 }
 
-function appendRole(
+async function appendRole(
   deal: Deal,
   record: LegacyDealRecord,
   member: LegacyTeamMemberRecord,
   partyId: Deal["parties"][number]["id"],
   role: DealRoleName,
   now: string,
-): MappingAggregateResult {
+): Promise<MappingAggregateResult> {
   try {
     return {
       kind: "ok",
       deal: assignDealRole(deal, {
         expectedVersion: deal.version,
-        id: dealRoleId(`dealrole_legacy-${shortSlug(member.legacyMemberId)}`),
+        id: await roleIdFor({
+          source: record.source,
+          legacyDealId: record.legacyDealId,
+          legacyEntityId: member.legacyMemberId,
+        }),
         partyId,
         name: role,
         authorityLevel: member.authorityLevel!,
