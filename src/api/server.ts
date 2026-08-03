@@ -1,5 +1,11 @@
 import { AgentOrchestrator } from "../agent/index.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
+import {
+  createDealManagementComposition,
+  type DealManagementComposition,
+  type DealManagementCompositionConfig,
+  type DealManagementCompositionResult,
+} from "../deal_management/composition.ts";
 import { handleIdentityAccessRoute } from "../identity_access/http.ts";
 import { handleDealManagementRoute } from "../deal_management/http.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
@@ -10,6 +16,21 @@ import {
 } from "../platform/operations/health.ts";
 
 const PORT = 8000;
+
+export interface ApiServerOptions {
+  readonly dealManagement?:
+    | DealManagementComposition
+    | DealManagementCompositionConfig
+    | DealManagementCompositionResult;
+  readonly repository?: DealRepository;
+}
+
+export interface ApiServerRouter {
+  readonly dealManagement: DealManagementCompositionResult;
+  readonly repository: DealRepository;
+  readonly readiness: RuntimeReadiness;
+  handle(request: Request): Promise<Response>;
+}
 
 function corsHeaders(): Headers {
   return new Headers({
@@ -39,6 +60,7 @@ function withMvpHeaders(response: Response, cors: Headers): Response {
 async function routeRequest(
   request: Request,
   repository: DealRepository,
+  dealManagement: DealManagementCompositionResult,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
@@ -46,7 +68,12 @@ async function routeRequest(
   const healthResponse = handleHealthRequest(request, readiness);
   if (healthResponse) return healthResponse;
   try {
-    return await routedResponse(request, repository, headers);
+    return await routedResponse(
+      request,
+      repository,
+      dealManagement,
+      headers,
+    );
   } catch (error: unknown) {
     return unexpectedResponse(error, headers);
   }
@@ -55,13 +82,14 @@ async function routeRequest(
 async function routedResponse(
   request: Request,
   repository: DealRepository,
+  dealManagement: DealManagementCompositionResult,
   headers: Headers,
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
     request,
-    // MAI-110 owns route registration; downstream application composition must
-    // provide authentication, authorization, persistence, and service ports.
-    undefined,
+    dealManagement.kind === "configured"
+      ? dealManagement.composition.http
+      : undefined,
     headers,
   );
   if (dealManagementResponse) return dealManagementResponse;
@@ -114,17 +142,77 @@ async function connectRepository(
     : console.warn(`[API Server] ${message}`);
 }
 
-export function startServer(): Deno.HttpServer {
-  const repository = DealRepository.getRepoInstance();
+/**
+ * Creates the application router with one explicit Deal dependency graph.
+ *
+ * Missing configuration is retained as a governed unavailable result, while
+ * configured Deal and legacy routes share the same process-scoped pool.
+ *
+ * @example const router = createApiServer({ dealManagement: config })
+ */
+export function createApiServer(
+  options: ApiServerOptions = {},
+): ApiServerRouter {
+  const dealManagement = resolveDealManagement(options.dealManagement);
+  const repository = options.repository ??
+    (dealManagement.kind === "configured"
+      ? new DealRepository(dealManagement.composition.pool)
+      : DealRepository.getRepoInstance());
   const readiness = new RuntimeReadiness("api");
-  void connectRepository(repository, readiness);
+  return {
+    dealManagement,
+    repository,
+    readiness,
+    handle: (request) =>
+      routeRequest(request, repository, dealManagement, readiness),
+  };
+}
+
+/**
+ * Starts the HTTP server using the same explicit router used by tests.
+ *
+ * @example const server = startServer({ dealManagement: config })
+ */
+export function startServer(options: ApiServerOptions = {}): Deno.HttpServer {
+  const router = createApiServer(options);
+  void connectRepository(router.repository, router.readiness);
   console.log(`[API Server] Starting on http://localhost:${PORT}`);
   return Deno.serve(
     { port: PORT },
-    (request) => routeRequest(request, repository, readiness),
+    router.handle,
   );
 }
 
 if (import.meta.main) startServer();
 
 export { jsonResponse };
+
+function resolveDealManagement(
+  value: ApiServerOptions["dealManagement"],
+): DealManagementCompositionResult {
+  if (value === undefined) {
+    return {
+      kind: "unavailable",
+      reason: "missing_configuration",
+      message: "Deal Management is not configured.",
+    };
+  }
+  if (isCompositionResult(value)) return value;
+  if (isComposition(value)) {
+    return { kind: "configured", composition: value };
+  }
+  return createDealManagementComposition(value);
+}
+
+function isCompositionResult(
+  value: ApiServerOptions["dealManagement"],
+): value is DealManagementCompositionResult {
+  return typeof value === "object" && value !== null && "kind" in value;
+}
+
+function isComposition(
+  value: ApiServerOptions["dealManagement"],
+): value is DealManagementComposition {
+  return typeof value === "object" && value !== null && "http" in value &&
+    "pool" in value;
+}
