@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 18:58'
+updated_date: '2026-08-03 20:03'
 labels:
   - backend
   - architecture
@@ -237,6 +237,11 @@ Aggregate DENO_ENV=test deno task verify was stopped with exit 130 after the san
 created: 2026-08-03 18:58
 ---
 Final local canonical correction (2026-08-03, unpublished head 7340828): owner authorized the narrow GUI verification scope. Commit 7340828 makes the GUI build explicitly use the stable Webpack compiler, makes the foundation verifier independent of a Node-to-git subprocess, and fixes duplicate React list keys; it contains no visual or Figma redesign. Fresh PostgreSQL 16 focused Deal suite: 80 passed, 0 failed, 0 ignored. Related Identity Access, authorization, audit, outbox/events, persistence, and API suite: 120 passed, 0 failed. Static: backend 47 changed TypeScript files passed deno fmt --check and deno lint; GUI ScreenBody.tsx passed deno fmt --check and npm --prefix gui run lint; required production entry points passed deno check; git diff --check passed. deno task verify:fast exited 0 with 11 passed, 5 skipped, 2 unavailable by its declared offline profile. DENO_ENV=test MAI106_DATABASE_URL=<isolated local PostgreSQL 16 URL> deno task verify exited 0 with all 17 canonical categories PASS, including production build, localhost workflow, Storybook build, and 133 interaction tests. The named isolated container was removed after testing. The commit hook regenerated Graphify output; graphify-out/GRAPH_REPORT.md and graphify-out/graph.json were restored and are excluded. MAI-110 remains In Progress and PR #44 remains Draft/Open/Unmerged/Unapproved because the local head is not pushed; no readiness, approval, merge, Done transition, cutover, deletion, or provider certification occurred.
+---
+
+created: 2026-08-03 20:03
+---
+Publication reconciliation (2026-08-03): local corrective head a6961df was pushed to origin/fix/MAI-110-wave-b-closure, which is PR #44 head. This publishes serial task commits T1 through T10 plus 7340828 (canonical verification stability) and a6961df (governed final verification evidence). PR remains Draft/Open/Unmerged/Unapproved and MAI-110 remains In Progress pending human review. No lifecycle, readiness, approval, merge, cutover, deletion, or provider-certification action occurred.
 ---
 <!-- COMMENTS:END -->
 
