@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 11:35'
+updated_date: '2026-08-03 13:54'
 labels:
   - backend
   - architecture
@@ -34,15 +34,16 @@ documentation:
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 modified_files:
   - >-
+    backlog/docs/governance/document-inventory/doc-12 -
+    Documentation-Inventory-and-Classification.md
+  - >-
     backlog/docs/operations/deal-management/doc-38 -
     MAI-110-Deal-Reconciliation-Operator-Procedure.md
-  - backlog/tasks/mai-110 - Deal-management-parties-and-mandate.md
-  - graphify-out/GRAPH_REPORT.md
-  - graphify-out/graph.json
   - scripts/deal_reconciliation.ts
   - scripts/mai_110_runtime.ts
   - src/api/deal_management_bootstrap.ts
   - src/api/server.ts
+  - src/deal_management/compatibility_reader.ts
   - src/deal_management/composition.ts
   - src/deal_management/composition_support.ts
   - src/deal_management/http.ts
@@ -56,16 +57,25 @@ modified_files:
   - src/deal_management/legacy_source.ts
   - >-
     src/deal_management/migrations/deal_management_0002_reconciliation_routing.ts
+  - src/deal_management/migrations/index.ts
   - src/deal_management/reconciliation.ts
+  - src/deal_management/reconciliation_records.ts
   - src/deal_management/reconciliation_replay.ts
   - src/deal_management/reconciliation_store.ts
   - src/deal_management/reconciliation_verification.ts
+  - src/deal_management/route_identifiers.ts
   - src/deal_management/v1.ts
+  - src/identity_access/authentication.ts
+  - src/identity_access/contracts.ts
+  - src/identity_access/session_repository.ts
   - tests/deal_management/executable_bootstrap.spec.ts
   - tests/deal_management/legacy_reconciliation.spec.ts
+  - tests/deal_management/migration.spec.ts
+  - tests/deal_management/postgres_integration.spec.ts
   - tests/deal_management/postgres_legacy_source.spec.ts
   - tests/deal_management/postgres_reconciliation.spec.ts
   - tests/deal_management/server_composition.spec.ts
+  - src/deal_management/reconciliation_outcomes.ts
 priority: high
 ordinal: 20000
 ---
@@ -177,6 +187,8 @@ PR #44 request-changes review received 2026-08-03 for head 92c2d7b. Current corr
 PR #44 request-changes correction evidence (2026-08-03, final local state):\n\n- Closed executable bootstrap: src/api/server.ts now uses the repository-owned executable bootstrap by default; persisted Identity Access session authentication, authoritative PostgreSQL authorization, Deal composition, and the exact executable router path are covered without production fakes.\n- Closed production legacy mapping: additive reviewed scope/reference mapping tables bind every legacy Deal to tenant/workspace, confidentiality, mandate, canonical Organization Registry/Identity Access references, reference kinds, and team authority. PostgresLegacyDealSource and PostgresLegacyReferenceResolver fail closed for absent/cross-scope evidence.\n- Closed collision mutation: pre-write claim/base/party/role/mandate validation rejects unrelated deterministic-ID collisions. PostgreSQL regression proves unchanged Deal document/version, aggregate history, command receipts, command claims, and outbox.\n- Closed verification evidence: verification checks fresh fingerprint, persisted intended_document, authoritative document, expected history, receipts, claims, outbox, audit, and audit-outbox linkage; status=applied recovery persists verified plus authoritative routing only after all evidence passes.\n- Closed operator runtime: scripts/mai_110_runtime.ts reuses approved production composition, authenticates and scope-validates the operator, uses real PostgreSQL source/resolver/mapper/repository/store, and closes its pool; CLI closes runtime in finally. Governed doc-38 references the committed path and credential.\n- Closed routing concurrency: PostgreSQL SELECT FOR UPDATE serializes route changes and the competing test proves exactly one deterministic stale failure.\n- Closed standards: all changed production TypeScript was challenge-scanned; no unambiguous function remains above 20 substantive lines. Independent final challenge verdict: all seven blockers closed and ready for human re-review.\n\nVerification chronology:\n- Initial PostgreSQL attempts were non-passing: sandbox EACCES, then a stale checksum in the isolated test database after the unmerged migration changed. Only mai_test_mai106 was reset; the later clean-schema executions passed.\n- Final focused: MAI106_DATABASE_URL=postgres://postgres:***@127.0.0.1:55432/mai_test_mai106 DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net 'tests/deal_management/*.spec.ts' -> 41 passed, 0 failed, 0 ignored.\n- Final scoped deno fmt --check, deno lint, deno check for src/api, src/deal_management, both operator scripts, and tests/deal_management -> pass; git diff --check -> pass.\n- Final deno task verify:fast -> 11 passed, 0 failed, 5 skipped, 2 unavailable under its explicit offline profile; unavailable/skipped items are not claimed as passing.\n- Final DENO_ENV=test deno task verify -> all 17 canonical categories PASS.\n- graphify update . completed after final source changes; graph JSON/report refreshed. SQL extraction warned tree_sitter_sql is unavailable, but TypeScript graph extraction completed.\n\nGovernance: MAI-110 remains In Progress. PR #44 must remain Draft/unapproved until owner re-review. No merge, readiness transition, Done transition, cutover, deployment, legacy deletion, or production-readiness claim is authorized.
 
 Local corrective commits created: ecd725a fix(MAI-110): close PR 44 review blockers; 699c1e6 chore(MAI-110): refresh graph evidence. Branch fix/MAI-110-wave-b-closure is ahead of origin by 2. Attempted git push was rejected by the external-egress safety gate because explicit authorization to publish repository code was not established; no connector workaround, PR mutation, readiness transition, approval, or merge was attempted. Owner action: explicitly authorize pushing these commits to origin/fix/MAI-110-wave-b-closure and updating Draft PR #44, or push them manually.
+
+Final re-review correction: restored graphify-out/GRAPH_REPORT.md and graphify-out/graph.json to master versions and removed both from the MAI-110 modified-file inventory. The earlier premature Graphify refresh is historical evidence only; Graphify must run once after the corrective PR is merged.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

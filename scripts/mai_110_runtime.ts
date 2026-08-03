@@ -15,7 +15,9 @@ export async function createRuntime(
 ): Promise<ReconciliationRuntime> {
   const composition = loadExecutableDealManagement();
   try {
-    const credential = requiredCredential(input.credential);
+    const credential = requiredCredential(
+      Deno.env.get("MAI110_OPERATOR_SESSION"),
+    );
     const authentication = new PostgresIdentityAccessAuthentication(
       composition.pool,
     );
@@ -41,7 +43,7 @@ export async function createRuntime(
 function requiredCredential(value: string | undefined): string {
   if (value?.trim()) return value;
   throw new Error(
-    "Operator credential is missing; expected --credential session_<slug>.",
+    "Operator credential is missing; expected MAI110_OPERATOR_SESSION.",
   );
 }
 

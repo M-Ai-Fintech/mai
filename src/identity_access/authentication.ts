@@ -11,6 +11,7 @@ import type { SessionId } from "./ids.ts";
 
 export interface AuthenticatedPrincipal {
   readonly actor: ActorReference;
+  readonly identityId?: string;
   readonly tenantId: TenantId;
   readonly workspaceId?: WorkspaceId;
 }
@@ -107,6 +108,7 @@ export class SessionRegistry {
 class SafeSessionContext implements SessionContext {
   readonly sessionId: SessionId;
   readonly actor: ActorReference;
+  readonly identityId: string | undefined;
   readonly tenantId: TenantId;
   readonly workspaceId: WorkspaceId | undefined;
   readonly issuedAt: string;
@@ -126,6 +128,7 @@ class SafeSessionContext implements SessionContext {
   }) {
     this.sessionId = input.sessionId;
     this.actor = Object.freeze({ ...input.principal.actor });
+    this.identityId = input.principal.identityId;
     this.tenantId = input.principal.tenantId;
     this.workspaceId = input.principal.workspaceId;
     this.issuedAt = input.issuedAt;
@@ -138,6 +141,7 @@ class SafeSessionContext implements SessionContext {
   toRequestContext(origin: "http" | "job" | "internal" = "internal") {
     return {
       actorId: this.actor.id,
+      ...(this.identityId === undefined ? {} : { identityId: this.identityId }),
       tenantId: this.tenantId,
       correlationId: this.correlationId,
       origin,

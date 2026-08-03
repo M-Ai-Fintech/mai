@@ -16,36 +16,30 @@ import {
   type ReconciliationRunResult,
   type ReconciliationVerificationResult,
 } from "./legacy_contracts.ts";
-import {
-  replayMappedDeal,
-  sameMappedDealIntent,
-  verifyMappedDeal,
-} from "./reconciliation_replay.ts";
+import { replayMappedDeal, verifyMappedDeal } from "./reconciliation_replay.ts";
 import {
   applyIssue,
   dryRunIssue,
-  missingVerificationIssue,
   reconciliationRecord,
-  recordIdFor,
   sourceConflict,
-  statusForIssue,
   verificationIssue,
 } from "./reconciliation_records.ts";
+import {
+  appliedReconciliation,
+  assertRoutable,
+  issueRecord,
+  type MappedLegacyDeal,
+  missingLegacyIssue,
+  missingLegacyRecord,
+  pendingReconciliation,
+  type ReconciliationIssueInput,
+  type ReconciliationRunInput,
+  resumableClaim,
+  routingChange,
+  verificationPrecondition,
+  verifiedReconciliation,
+} from "./reconciliation_outcomes.ts";
 
-type ReconciliationRunInput = {
-  readonly mode: ReconciliationMode;
-  readonly legacyDealId: string;
-  readonly operator: ReconciliationOperatorContext;
-};
-
-type ReconciliationIssueInput = Omit<ReconciliationRunInput, "mode"> & {
-  readonly mode?: ReconciliationMode;
-};
-
-type MappedLegacyDeal = Extract<
-  LegacyMappingResult,
-  { readonly kind: "mapped" }
->;
 type RoutingInput = {
   readonly legacySource: string;
   readonly legacyDealId: string;
@@ -427,151 +421,4 @@ export class DealReconciliationExecutor {
     assertRoutable(current, input.legacyDealId);
     return await this.store.route(routingChange(input, current));
   }
-}
-
-function pendingReconciliation(
-  record: LegacyDealRecord,
-  input: ReconciliationRunInput,
-  mapping: MappedLegacyDeal,
-): DealReconciliationRecord {
-  return reconciliationRecord(
-    record,
-    input.operator.scope,
-    mapping,
-    "pending",
-    input.operator.now,
-  );
-}
-
-function verificationPrecondition(
-  record: LegacyDealRecord,
-  mapping: MappedLegacyDeal,
-  previous: DealReconciliationRecord | undefined,
-): LegacyMappingIssue | undefined {
-  const conflict = sourceConflict(previous, mapping);
-  if (conflict !== undefined) return conflict;
-  if (previous?.authoritativeDealId === undefined) {
-    return missingVerificationIssue(record);
-  }
-  if (matchesPersistedIntent(previous, mapping)) return;
-  return verificationIssue(record, previous.intendedDeal, mapping.deal);
-}
-
-function missingLegacyRecord(legacyDealId: string): LegacyDealRecord {
-  return { source: "unknown", legacyDealId, parties: [], team: [] };
-}
-
-function missingLegacyIssue(legacyDealId: string): LegacyMappingIssue {
-  return {
-    code: "MISSING_REQUIRED_FIELD",
-    legacyDealId,
-    received: "undefined",
-    expected: "an existing legacy Deal record",
-    explanation:
-      "The legacy source returned no Deal for the requested identifier.",
-    operatorInterventionRequired: true,
-    retrySafe: true,
-  };
-}
-
-function assertRoutable(
-  record: DealReconciliationRecord | undefined,
-  legacyDealId: string,
-): asserts record is DealReconciliationRecord & {
-  authoritativeDealId: Deal["id"];
-} {
-  if (record?.authoritativeDealId !== undefined) return;
-  throw new Error(
-    `Deal "${legacyDealId}" cannot change read routing; expected a reconciled authoritative identity in the requested scope.`,
-  );
-}
-
-function routingChange(
-  input: RoutingInput,
-  current: DealReconciliationRecord & { authoritativeDealId: Deal["id"] },
-) {
-  return {
-    scope: input.operator.scope,
-    legacySource: input.legacySource,
-    legacyDealId: input.legacyDealId,
-    authoritativeDealId: current.authoritativeDealId,
-    previousMode: current.routingMode,
-    nextMode: input.nextMode,
-    actorId: input.operator.actorId,
-    correlationId: input.operator.correlationId,
-    reason: input.reason,
-    changedAt: input.operator.now,
-  };
-}
-
-function matchesPersistedIntent(
-  previous: DealReconciliationRecord,
-  mapping: MappedLegacyDeal,
-): boolean {
-  return previous.intendedDeal !== undefined &&
-    sameMappedDealIntent(previous.intendedDeal, mapping.deal);
-}
-
-function appliedReconciliation(
-  pending: DealReconciliationRecord,
-  now: string,
-): DealReconciliationRecord {
-  return { ...pending, status: "applied", updatedAt: now };
-}
-
-function verifiedReconciliation(
-  applied: DealReconciliationRecord,
-  now: string,
-): DealReconciliationRecord {
-  return {
-    ...applied,
-    status: "verified",
-    routingMode: "authoritative",
-    updatedAt: now,
-  };
-}
-
-function issueRecord(
-  legacyRecord: LegacyDealRecord,
-  input: ReconciliationIssueInput,
-  issue: LegacyMappingIssue,
-  previous?: DealReconciliationRecord,
-): DealReconciliationRecord {
-  return {
-    recordId: previous?.recordId ?? recordIdFor(legacyRecord),
-    scope: input.operator.scope,
-    legacySource: legacyRecord.source,
-    legacyDealId: legacyRecord.legacyDealId,
-    ...priorIdentity(previous),
-    status: statusForIssue(issue),
-    routingMode: previous?.routingMode ?? "legacy",
-    issue,
-    updatedAt: input.operator.now,
-  };
-}
-
-function priorIdentity(
-  previous?: DealReconciliationRecord,
-): Partial<DealReconciliationRecord> {
-  if (previous === undefined) return {};
-  return {
-    ...(previous.authoritativeDealId === undefined
-      ? {}
-      : { authoritativeDealId: previous.authoritativeDealId }),
-    ...(previous.sourceFingerprint === undefined
-      ? {}
-      : { sourceFingerprint: previous.sourceFingerprint }),
-    ...(previous.intendedDeal === undefined
-      ? {}
-      : { intendedDeal: previous.intendedDeal }),
-  };
-}
-
-function resumableClaim(
-  previous: DealReconciliationRecord | undefined,
-  mapping: Extract<LegacyMappingResult, { readonly kind: "mapped" }>,
-): boolean {
-  return previous?.authoritativeDealId === mapping.authoritativeDealId &&
-    previous.sourceFingerprint === mapping.sourceFingerprint &&
-    previous.status !== "dry_run_valid";
 }

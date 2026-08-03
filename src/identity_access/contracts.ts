@@ -163,6 +163,7 @@ export interface Revocation extends AggregateBase {
 export interface SessionContext {
   readonly sessionId: SessionId;
   readonly actor: ActorReference;
+  readonly identityId?: string;
   readonly tenantId: TenantId;
   readonly workspaceId?: WorkspaceId;
   readonly issuedAt: string;

@@ -207,7 +207,9 @@ function mapAuthenticationFailure(error: unknown): Error {
     error instanceof IdentityAccessError &&
     error.code === "AUTHENTICATION_FAILED"
   ) {
-    return new DealAuthenticationError(error.message);
+    return new DealAuthenticationError(
+      "Authentication failed; expected a valid active session credential.",
+    );
   }
   return new UnavailableAuthentication(
     "Identity Access authentication dependency is unavailable; expected a provider response.",
@@ -219,7 +221,7 @@ function verifiedPrincipal(
 ): DealAuthenticatedPrincipal {
   if (principal.workspaceId === undefined) {
     throw new DealAuthenticationError(
-      `Authenticated actor "${principal.actor.id}" has no verified workspace; expected Identity Access to provide tenant and workspace scope.`,
+      "Authentication failed; expected a valid active session credential.",
     );
   }
   return {

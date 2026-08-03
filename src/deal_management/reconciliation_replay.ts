@@ -47,10 +47,11 @@ function assertReplayClaim(
     !sameReplayBase(existingDeal, intendedDeal) ||
     !isCompatibleSubset(existingDeal.parties, intendedDeal.parties) ||
     !isCompatibleSubset(existingDeal.roles, intendedDeal.roles) ||
-    !sameMandate(existingDeal, intendedDeal)
+    !sameMandate(existingDeal, intendedDeal) ||
+    existingDeal.authorityConstraints.length !== 0
   ) {
     throw new Error(
-      `Authoritative Deal "${existingDeal.id}" conflicts with the mapped legacy candidate; expected matching base fields and only matching party, role, and mandate state before replay.`,
+      `Authoritative Deal "${existingDeal.id}" conflicts with the mapped legacy candidate; expected matching base fields, empty authority constraints, and only matching party, role, and mandate state before replay.`,
     );
   }
 }

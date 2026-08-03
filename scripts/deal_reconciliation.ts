@@ -36,7 +36,6 @@ export interface ReconciliationRuntimeModule {
     readonly actorId: ActorId;
     readonly correlationId: CorrelationId;
     readonly now: string;
-    readonly credential?: string;
   }): Promise<ReconciliationRuntime>;
 }
 
@@ -99,7 +98,6 @@ interface ReconciliationOptions {
   readonly runtimeModule?: string;
   readonly confirmation?: string;
   readonly reason: string;
-  readonly credential?: string;
 }
 
 function parseOptions(
@@ -153,7 +151,6 @@ function parsedOptions(
     runtimeModule: values.get("runtime-module"),
     confirmation: values.get("confirm"),
     reason: values.get("reason") ?? "MAI-110 operator routing procedure",
-    credential: values.get("credential"),
   };
 }
 
@@ -239,7 +236,6 @@ async function loadRuntime(
     actorId: identity.actorId,
     correlationId: identity.correlationId,
     now: options.now,
-    credential: options.credential,
   });
 }
 

@@ -9,6 +9,7 @@ export type SessionState = "active" | "revoked" | "expired";
 export interface SessionRecord {
   readonly sessionId: SessionId;
   readonly actor: ActorReference;
+  readonly identityId?: string;
   readonly tenantId: TenantId;
   readonly workspaceId?: WorkspaceId;
   readonly issuedAt: string;
@@ -39,6 +40,9 @@ export function sessionRecord(session: SessionContext): SessionRecord {
   return Object.freeze({
     sessionId: session.sessionId,
     actor: Object.freeze({ ...session.actor }),
+    ...(session.identityId === undefined
+      ? {}
+      : { identityId: session.identityId }),
     tenantId: session.tenantId,
     ...(session.workspaceId === undefined
       ? {}

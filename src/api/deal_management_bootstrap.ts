@@ -53,7 +53,7 @@ export class PostgresIdentityAccessAuthentication
   ): Promise<AuthenticatedPrincipal> {
     const id = parseCredential(input.credential);
     const result = await this.pool.query<SessionRow>(sessionQuery, [id]);
-    if (result.rowCount !== 1) throw authenticationFailure(id);
+    if (result.rowCount !== 1) throw authenticationFailure();
     return activePrincipal(result.rows[0]);
   }
 }
@@ -139,6 +139,7 @@ interface SessionRow {
   readonly state: string;
   readonly expiresAt: Date | string;
   readonly document: unknown;
+  readonly actorId: string;
 }
 
 interface PolicyRow {
@@ -149,11 +150,18 @@ interface PolicyRow {
 const sessionQuery =
   `SELECT aggregate_id AS "aggregateId", tenant_id AS "tenantId",
   workspace_id AS "workspaceId", state, expires_at AS "expiresAt", document
-  FROM iam.sessions WHERE aggregate_id = $1`;
+  , actor_id AS "actorId" FROM iam.sessions WHERE aggregate_id = $1`;
 
-const policyQuery = `WITH identity AS (
-  SELECT aggregate_id FROM iam.user_identities
-  WHERE tenant_id = $1 AND provider_subject = $3 AND state = 'active'
+const policyQuery = `WITH session_identity AS (
+  SELECT s.tenant_id, s.workspace_id, s.actor_id,
+    s.document->>'identityId' AS identity_id
+  FROM iam.sessions s
+  WHERE s.tenant_id = $1 AND s.workspace_id = $2 AND s.actor_id = $3
+    AND s.state = 'active' AND s.expires_at > NOW()
+), identity AS (
+  SELECT i.aggregate_id FROM iam.user_identities i JOIN session_identity s
+    ON s.identity_id = i.aggregate_id AND s.tenant_id = i.tenant_id
+  WHERE i.state = 'active'
 ), membership AS (
   SELECT document FROM iam.memberships
   WHERE tenant_id = $1 AND workspace_id = $2 AND state = 'active'
@@ -167,11 +175,14 @@ WHERE g.tenant_id = $1 AND g.workspace_id = $2 AND g.identity_id = (SELECT aggre
 UNION ALL SELECT 'restriction', r.document FROM access.restrictions r
 WHERE r.tenant_id = $1 AND r.workspace_id = $2 AND r.state = 'active'`;
 
-const operatorScopeQuery = `SELECT 1 FROM iam.user_identities i
+const operatorScopeQuery = `SELECT 1 FROM iam.sessions s
+  JOIN iam.user_identities i ON i.aggregate_id = s.document->>'identityId'
+    AND i.tenant_id = s.tenant_id AND i.state = 'active'
   JOIN iam.memberships m ON m.tenant_id = i.tenant_id
     AND m.workspace_id = $2 AND m.state = 'active'
     AND m.document->>'identityId' = i.aggregate_id
-  WHERE i.tenant_id = $1 AND i.provider_subject = $3 AND i.state = 'active' LIMIT 1`;
+  WHERE s.tenant_id = $1 AND s.workspace_id = $2 AND s.actor_id = $3
+    AND s.state = 'active' AND s.expires_at > NOW() LIMIT 1`;
 
 function configuredDatabaseUrl(
   environment: Readonly<Record<string, string | undefined>>,
@@ -196,14 +207,14 @@ function parseCredential(credential: string): string {
   try {
     return sessionId(value);
   } catch {
-    throw authenticationFailure(value || "empty");
+    throw authenticationFailure();
   }
 }
 
-function authenticationFailure(received: string): IdentityAccessError {
+function authenticationFailure(): IdentityAccessError {
   return new IdentityAccessError(
     "AUTHENTICATION_FAILED",
-    `credential "${received}" is invalid; expected an active opaque Identity Access session ID.`,
+    "Authentication failed; expected a valid active session credential.",
   );
 }
 
@@ -211,13 +222,17 @@ function activePrincipal(row: SessionRow): AuthenticatedPrincipal {
   if (
     row.state !== "active" || Date.parse(String(row.expiresAt)) <= Date.now()
   ) {
-    throw authenticationFailure(row.aggregateId);
+    throw authenticationFailure();
   }
   const document = row.document as {
     readonly actor?: AuthenticatedPrincipal["actor"];
+    readonly identityId?: string;
   };
-  if (document.actor === undefined || row.workspaceId === null) {
-    throw authenticationFailure(row.aggregateId);
+  if (
+    document.actor === undefined || document.actor.id !== row.actorId ||
+    document.identityId === undefined || row.workspaceId === null
+  ) {
+    throw authenticationFailure();
   }
   return {
     actor: document.actor,

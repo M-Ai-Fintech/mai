@@ -330,6 +330,38 @@ Deno.test("identity collision is rejected before any authoritative mutation", as
     confidentiality: mapped.deal.confidentiality,
     currency: mapped.deal.currency,
   });
+  const seededMandate = await fixture.service.setMandate({
+    type: "set_mandate",
+    context,
+    idempotencyKey: keyFor("collision-mandate"),
+    dealId: mapped.deal.id,
+    expectedVersion: created.deal.version,
+    transactionValueCeiling: { amount: 100, currency: "USD" },
+    authorityCeiling: 2,
+  });
+  const seededParty = await fixture.service.addDealParty({
+    type: "add_deal_party",
+    context,
+    idempotencyKey: keyFor("collision-party"),
+    dealId: mapped.deal.id,
+    expectedVersion: seededMandate.deal.version,
+    partyId: "party_collision" as never,
+    reference: { kind: "organization", id: "org_collision" },
+    side: "target",
+    label: "Collision party",
+  });
+  await fixture.service.setAuthorityConstraint({
+    type: "set_authority_constraint",
+    context,
+    idempotencyKey: keyFor("collision-authority"),
+    dealId: mapped.deal.id,
+    expectedVersion: seededParty.deal.version,
+    partyId: seededParty.deal.parties[0]?.id,
+    action: "approve",
+    authorityLevel: 1,
+    humanOnly: true,
+  });
+  const constrained = await fixture.repository.find(scope, mapped.deal.id);
   const beforeEvents = await fixture.repository.listEvents(
     scope,
     mapped.deal.id,
@@ -341,7 +373,7 @@ Deno.test("identity collision is rejected before any authoritative mutation", as
   });
   const persisted = await fixture.repository.find(scope, mapped.deal.id);
   assertEquals(reconciliation.outcomes[0]?.kind, "conflict");
-  assertEquals(persisted, created.deal);
+  assertEquals(persisted, constrained);
   assertEquals(
     await fixture.repository.listEvents(scope, mapped.deal.id),
     beforeEvents,

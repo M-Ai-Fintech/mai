@@ -78,7 +78,7 @@ async function seedExecutableIdentity(
   await pool.query(
     `INSERT INTO iam.user_identities
     (aggregate_id, tenant_id, version, state, provider_subject, document, created_at, updated_at)
-    VALUES ('identity_server-bootstrap', 'tenant_northstar', 1, 'active', 'actor_server-bootstrap',
+    VALUES ('identity_server-bootstrap', 'tenant_northstar', 1, 'active', 'external-subject-789',
       '{"id":"identity_server-bootstrap"}', $1, $1)`,
     [now],
   );
@@ -93,7 +93,7 @@ async function seedExecutableIdentity(
     `INSERT INTO iam.sessions
     (aggregate_id, tenant_id, workspace_id, actor_id, version, state, issued_at, expires_at, document, created_at, updated_at)
     VALUES ('session_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 'actor_server-bootstrap', 1,
-      'active', $1, $2, '{"actor":{"id":"actor_server-bootstrap","kind":"human","state":"active"}}', $1, $1)`,
+      'active', $1, $2, '{"actor":{"id":"actor_server-bootstrap","kind":"human","state":"active"},"identityId":"identity_server-bootstrap"}', $1, $1)`,
     [now, expiry],
   );
   await pool.query(
@@ -283,6 +283,11 @@ Deno.test({
         },
       }).handle(dealRequest(`/api/v1/deals/${dealId}`, "GET"));
       assertEquals(invalidCredentials.status, 401);
+      const invalidBody = await invalidCredentials.json() as {
+        error?: { message?: string };
+      };
+      assertEquals(invalidBody.error?.message, "Authentication failed.");
+      assert(!JSON.stringify(invalidBody).includes("provider rejected"));
       const publicAuthorization = router.dealManagement.composition.http
         .authorization as PublicOnlyAuthorization;
       assert(
