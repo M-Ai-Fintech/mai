@@ -24,5 +24,6 @@ export * from "./legacy_contracts.ts";
 export * from "./legacy_mapper.ts";
 export * from "./legacy_source.ts";
 export * from "./reconciliation_store.ts";
+export * from "./reconciliation_verification.ts";
 export * from "./reconciliation.ts";
 export * from "./compatibility_reader.ts";

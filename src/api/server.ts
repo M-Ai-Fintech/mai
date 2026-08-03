@@ -14,6 +14,7 @@ import {
   handleHealthRequest,
   RuntimeReadiness,
 } from "../platform/operations/health.ts";
+import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
 
 const PORT = 8000;
 
@@ -93,6 +94,14 @@ async function routedResponse(
     headers,
   );
   if (dealManagementResponse) return dealManagementResponse;
+  return await nonDealResponse(request, repository, headers);
+}
+
+async function nonDealResponse(
+  request: Request,
+  repository: DealRepository,
+  headers: Headers,
+): Promise<Response> {
   const identityAccessResponse = await handleIdentityAccessRoute(
     request,
     undefined,
@@ -173,14 +182,25 @@ export function createApiServer(
  *
  * @example const server = startServer({ dealManagement: config })
  */
-export function startServer(options: ApiServerOptions = {}): Deno.HttpServer {
-  const router = createApiServer(options);
+export function startServer(options?: ApiServerOptions): Deno.HttpServer {
+  const router = options === undefined
+    ? createExecutableApiServer()
+    : createApiServer(options);
   void connectRepository(router.repository, router.readiness);
   console.log(`[API Server] Starting on http://localhost:${PORT}`);
   return Deno.serve(
     { port: PORT },
     router.handle,
   );
+}
+
+/** Creates the exact production router used by the executable entry point. */
+export function createExecutableApiServer(
+  environment?: Readonly<Record<string, string | undefined>>,
+): ApiServerRouter {
+  return createApiServer({
+    dealManagement: loadExecutableDealManagement(environment),
+  });
 }
 
 if (import.meta.main) startServer();

@@ -109,30 +109,39 @@ function applyMandate(
   try {
     return {
       kind: "ok",
-      deal: setMandate(deal, {
-        expectedVersion: deal.version,
-        id: mandateId(`mandate_legacy-${shortSlug(record.legacyDealId)}`),
-        transactionValueCeiling: {
-          amount: mandate.transactionValueCeiling!,
-          currency: mandate.currency!,
-        },
-        authorityCeiling: mandate.authorityCeiling!,
-        now,
-      }),
+      deal: setMandate(deal, mandateInput(deal, record, now)),
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return issueResult(
-      "invalid_legacy_record",
-      issue(
-        "UNSUPPORTED_LEGACY_SHAPE",
-        record,
-        message,
-        "a mandate compatible with the Deal currency and positive authority ceiling",
-        "Mandate-like legacy data failed Deal invariant validation.",
-      ),
-    );
+    return invalidMandate(record, error);
   }
+}
+
+function mandateInput(deal: Deal, record: LegacyDealRecord, now: string) {
+  const mandate = record.mandate!;
+  return {
+    expectedVersion: deal.version,
+    id: mandateId(`mandate_legacy-${shortSlug(record.legacyDealId)}`),
+    transactionValueCeiling: {
+      amount: mandate.transactionValueCeiling!,
+      currency: mandate.currency!,
+    },
+    authorityCeiling: mandate.authorityCeiling!,
+    now,
+  };
+}
+
+function invalidMandate(record: LegacyDealRecord, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return issueResult(
+    "invalid_legacy_record",
+    issue(
+      "UNSUPPORTED_LEGACY_SHAPE",
+      record,
+      message,
+      "a mandate compatible with the Deal currency and positive authority ceiling",
+      "Mandate-like legacy data failed Deal invariant validation.",
+    ),
+  );
 }
 
 function isIncompleteMandate(

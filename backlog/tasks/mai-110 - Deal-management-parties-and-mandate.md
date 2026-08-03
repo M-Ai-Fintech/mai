@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 03:46'
+updated_date: '2026-08-03 11:33'
 labels:
   - backend
   - architecture
@@ -21,6 +21,7 @@ dependencies:
   - MAI-108
 references:
   - 'https://github.com/luisfelipeluis49/mai/pull/43'
+  - 'https://github.com/luisfelipeluis49/mai/pull/44'
 documentation:
   - >-
     backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 -
@@ -32,33 +33,39 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 modified_files:
+  - >-
+    backlog/docs/operations/deal-management/doc-38 -
+    MAI-110-Deal-Reconciliation-Operator-Procedure.md
   - backlog/tasks/mai-110 - Deal-management-parties-and-mandate.md
+  - graphify-out/GRAPH_REPORT.md
+  - graphify-out/graph.json
+  - scripts/deal_reconciliation.ts
+  - scripts/mai_110_runtime.ts
+  - src/api/deal_management_bootstrap.ts
   - src/api/server.ts
-  - src/deal_management/commands.ts
-  - src/deal_management/contracts.ts
-  - src/deal_management/errors.ts
+  - src/deal_management/composition.ts
+  - src/deal_management/composition_support.ts
   - src/deal_management/http.ts
   - src/deal_management/http_commands.ts
-  - src/deal_management/http_response.ts
   - src/deal_management/http_shared.ts
-  - src/deal_management/ids.ts
-  - src/deal_management/migrations/deal_management_0001.ts
-  - src/deal_management/migrations/index.ts
-  - src/deal_management/model.ts
-  - src/deal_management/projection.ts
-  - src/deal_management/read_model.ts
-  - src/deal_management/receipts.ts
-  - src/deal_management/repository.ts
-  - src/deal_management/service.ts
+  - src/deal_management/legacy_contracts.ts
+  - src/deal_management/legacy_mapper.ts
+  - src/deal_management/legacy_mapper_parties.ts
+  - src/deal_management/legacy_mapper_parts.ts
+  - src/deal_management/legacy_mapper_validation.ts
+  - src/deal_management/legacy_source.ts
+  - >-
+    src/deal_management/migrations/deal_management_0002_reconciliation_routing.ts
+  - src/deal_management/reconciliation.ts
+  - src/deal_management/reconciliation_replay.ts
+  - src/deal_management/reconciliation_store.ts
+  - src/deal_management/reconciliation_verification.ts
   - src/deal_management/v1.ts
-  - tests/deal_management/http.spec.ts
-  - tests/deal_management/migration.spec.ts
-  - tests/deal_management/model.spec.ts
-  - tests/deal_management/postgres_integration.spec.ts
-  - tests/deal_management/projection.spec.ts
-  - tests/deal_management/repository.spec.ts
-  - tests/deal_management/service.spec.ts
-  - tests/deal_management/support.ts
+  - tests/deal_management/executable_bootstrap.spec.ts
+  - tests/deal_management/legacy_reconciliation.spec.ts
+  - tests/deal_management/postgres_legacy_source.spec.ts
+  - tests/deal_management/postgres_reconciliation.spec.ts
+  - tests/deal_management/server_composition.spec.ts
 priority: high
 ordinal: 20000
 ---
@@ -110,7 +117,7 @@ Extra-large complexity; Wave 4 serial core domain. Recommended model: gpt-5.6-so
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Confirm MAI-107 and MAI-108 Done, consume only their v1 exports, and preserve doc-24/ADR-25..33 boundaries; no Graphify, lifecycle, frontend, provider, RLS, or legacy cutover work. 2. Add src/deal_management domain IDs/contracts/errors/model/commands/service/repository/receipts/projection/read_model/v1 with Deal as root, owned party/role/mandate/authority constraints, stable Identity Access/Organization references, scoped deny-before-load authorization, version/ETag and actor-command-target idempotency. 3. Add context-owned additive migration and transaction-scoped PostgreSQL repository/outbox integration plus rollback/read-routing evidence, without changing platform or upstream migrations. 4. Add semantic /api/v1 command/read HTTP handler, safe DTOs and server registration only; cover unauthorized/absent equivalence, scope isolation, ceilings, stale If-Match, replay mismatch, safe omission, migration rollback/routing and transaction behavior. 5. Run focused Deno tests, formatting/lint/check, diff check, relevant platform/upstream contracts, deno task test, and DENO_ENV=test deno task verify; record exact outcomes and hand off an unapproved Draft PR containing MAI-110 while leaving the task In Progress.
+PR #44 review correction plan (approved 2026-08-03):\n1. Reconcile all six blocking findings and the function-length standards finding against the current branch head, retaining already-correct later work.\n2. Add a repository-owned executable API bootstrap that loads environment configuration, constructs approved Identity Access authentication, authoritative authorization, PostgreSQL composition, and router dependencies; make import.meta.main execute it with fail-closed startup/readiness behavior.\n3. Make the default PostgreSQL legacy source tenant/workspace-bound and supply a concrete governed reference resolver plus explicit confidentiality/team-authority mapping evidence; reject unprovable scope and mappings.\n4. Complete pre-write reconciliation collision validation and regression evidence proving a conflicting authoritative Deal remains byte/version/history/receipt/outbox unchanged.\n5. Expand verify to inspect intended fingerprint/document, aggregate history/version, command receipts/claims, outbox and audit linkage, then transactionally persist verified status and authoritative routing; cover recovery from applied.\n6. Commit a repository-owned operator runtime factory using the same production composition, authenticated/authorized operator context, real PostgreSQL source/resolver/mapper/repository/store, and deterministic resource cleanup; update doc-38 to its real path.\n7. Make routing compare-and-swap safe in one transaction and add competing PostgreSQL route coverage with one deterministic stale failure.\n8. Split touched functions above 20 lines while preserving repository standards and add PostgreSQL integration coverage for executable bootstrap, production legacy source, cross-scope rejection, verification recovery, and routing concurrency.\n9. Run focused tests, scoped format/lint/check, git diff --check, verify:fast, and all 17 canonical verification categories; append exact pass/fail/ignored evidence without removing earlier chronology.\n10. Update Draft PR #44 and MAI-110 evidence, keep both unapproved/In Progress, and re-review the new head without merging or marking ready.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -164,4 +171,14 @@ Corrective Wave B closure evidence (2026-08-02):
 Post-handoff correction (2026-08-02): final canonical verification completed before cleanup. `docker rm -f mai-110-postgres` succeeded and a subsequent named-container listing was empty; the isolated PostgreSQL container is removed. The append-only evidence commit `7f16128` was pushed to corrective PR #44; MAI-110 remains In Progress, PR #44 remains Draft/Open, and no source behavior changed after the verified implementation commits.
 
 Inventory wording correction (2026-08-02): `PostgresLegacyDealSource` directly reads the legacy transaction/type, business party-role, advisor/team, and timestamp sources. Existing legacy read paths also inventory `financial_structure` and phase history, but the bounded source intentionally does not auto-promote those untyped/operational values; mandate-like values require explicit representable input and unsupported values remain explicit outcomes. Draft PR #44 body was corrected accordingly through the GitHub API; no source behavior changed.
+
+PR #44 request-changes review received 2026-08-03 for head 92c2d7b. Current corrective branch is later at 48270bc, so execution first reconciles each finding against current head. Plan approved by the owner prompt; PR remains Draft and MAI-110 remains In Progress.
+
+PR #44 request-changes correction evidence (2026-08-03, final local state):\n\n- Closed executable bootstrap: src/api/server.ts now uses the repository-owned executable bootstrap by default; persisted Identity Access session authentication, authoritative PostgreSQL authorization, Deal composition, and the exact executable router path are covered without production fakes.\n- Closed production legacy mapping: additive reviewed scope/reference mapping tables bind every legacy Deal to tenant/workspace, confidentiality, mandate, canonical Organization Registry/Identity Access references, reference kinds, and team authority. PostgresLegacyDealSource and PostgresLegacyReferenceResolver fail closed for absent/cross-scope evidence.\n- Closed collision mutation: pre-write claim/base/party/role/mandate validation rejects unrelated deterministic-ID collisions. PostgreSQL regression proves unchanged Deal document/version, aggregate history, command receipts, command claims, and outbox.\n- Closed verification evidence: verification checks fresh fingerprint, persisted intended_document, authoritative document, expected history, receipts, claims, outbox, audit, and audit-outbox linkage; status=applied recovery persists verified plus authoritative routing only after all evidence passes.\n- Closed operator runtime: scripts/mai_110_runtime.ts reuses approved production composition, authenticates and scope-validates the operator, uses real PostgreSQL source/resolver/mapper/repository/store, and closes its pool; CLI closes runtime in finally. Governed doc-38 references the committed path and credential.\n- Closed routing concurrency: PostgreSQL SELECT FOR UPDATE serializes route changes and the competing test proves exactly one deterministic stale failure.\n- Closed standards: all changed production TypeScript was challenge-scanned; no unambiguous function remains above 20 substantive lines. Independent final challenge verdict: all seven blockers closed and ready for human re-review.\n\nVerification chronology:\n- Initial PostgreSQL attempts were non-passing: sandbox EACCES, then a stale checksum in the isolated test database after the unmerged migration changed. Only mai_test_mai106 was reset; the later clean-schema executions passed.\n- Final focused: MAI106_DATABASE_URL=postgres://postgres:***@127.0.0.1:55432/mai_test_mai106 DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net 'tests/deal_management/*.spec.ts' -> 41 passed, 0 failed, 0 ignored.\n- Final scoped deno fmt --check, deno lint, deno check for src/api, src/deal_management, both operator scripts, and tests/deal_management -> pass; git diff --check -> pass.\n- Final deno task verify:fast -> 11 passed, 0 failed, 5 skipped, 2 unavailable under its explicit offline profile; unavailable/skipped items are not claimed as passing.\n- Final DENO_ENV=test deno task verify -> all 17 canonical categories PASS.\n- graphify update . completed after final source changes; graph JSON/report refreshed. SQL extraction warned tree_sitter_sql is unavailable, but TypeScript graph extraction completed.\n\nGovernance: MAI-110 remains In Progress. PR #44 must remain Draft/unapproved until owner re-review. No merge, readiness transition, Done transition, cutover, deployment, legacy deletion, or production-readiness claim is authorized.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Implemented the PR #44 request-changes corrections: real executable bootstrap and operator runtime, scope-bound PostgreSQL legacy mappings/resolver, collision-safe preflight, durable verification evidence and applied recovery, serialized routing, governed operator documentation, PostgreSQL regressions, and changed-production function refactors. Final evidence: 41/41 focused Deal tests with zero PostgreSQL ignores; scoped format/lint/check/diff pass; verify:fast 11 pass/5 skip/2 unavailable offline; all 17 canonical categories pass; independent challenge review closes all seven blockers. Keep MAI-110 In Progress and PR #44 Draft pending owner review; do not merge or mark ready automatically.
+<!-- SECTION:FINAL_SUMMARY:END -->

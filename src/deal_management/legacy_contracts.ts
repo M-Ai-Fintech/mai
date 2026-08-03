@@ -12,8 +12,8 @@ import type { DealId } from "./ids.ts";
 export interface LegacyDealRecord {
   readonly source: string;
   readonly legacyDealId: string;
-  readonly tenantId?: string;
-  readonly workspaceId?: string;
+  readonly tenantId?: DealScope["tenantId"];
+  readonly workspaceId?: DealScope["workspaceId"];
   readonly name?: string;
   readonly dealType?: string;
   readonly confidentiality?: DealConfidentiality;
@@ -52,6 +52,8 @@ export interface LegacyMandateLike {
 export interface LegacyReferenceResolver {
   resolve(input: {
     readonly source: string;
+    readonly legacyDealId: string;
+    readonly scope: DealScope;
     readonly legacyReferenceId: string;
     readonly referenceKind: DealPartyReference["kind"];
   }): Promise<DealPartyReference | undefined>;
@@ -166,6 +168,18 @@ export interface DealReconciliationStore {
     readonly legacyDealId: string;
   }): Promise<readonly RoutingChange[]>;
 }
+
+export interface ReconciliationEvidenceVerifier {
+  verify(input: {
+    readonly scope: DealScope;
+    readonly intendedDeal: Deal;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationEvidenceResult>;
+}
+
+export type ReconciliationEvidenceResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly missing: readonly string[] };
 
 export interface ReconciliationRunResult {
   readonly mode: ReconciliationMode;

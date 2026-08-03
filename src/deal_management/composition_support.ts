@@ -91,28 +91,34 @@ export class DealAuditEventFactoryAdapter implements DealAuditEventFactory {
 export function validateCompositionConfig(
   config: DealManagementCompositionConfig,
 ): DealManagementCompositionResult | undefined {
-  if (config.pool === undefined && config.databaseUrl === undefined) {
-    return loadUnavailable(
-      "missing_configuration",
-      "Deal Management persistence is missing; expected an injected pool or database URL.",
-    );
-  }
+  return persistenceError(config) ?? poolSizeError(config) ?? urlError(config);
+}
+
+function persistenceError(config: DealManagementCompositionConfig) {
+  if (config.pool !== undefined || config.databaseUrl !== undefined) return;
+  return loadUnavailable(
+    "missing_configuration",
+    "Deal Management persistence is missing; expected an injected pool or database URL.",
+  );
+}
+
+function poolSizeError(config: DealManagementCompositionConfig) {
   if (
-    config.poolMax !== undefined &&
-    (!Number.isSafeInteger(config.poolMax) || config.poolMax < 1)
-  ) {
-    return loadUnavailable(
-      "invalid_configuration",
-      `Deal Management poolMax "${config.poolMax}" is invalid; expected a positive safe integer.`,
-    );
-  }
-  if (config.databaseUrl !== undefined) {
-    const error = databaseUrlError(config.databaseUrl);
-    if (error !== undefined) {
-      return loadUnavailable("invalid_configuration", error);
-    }
-  }
-  return undefined;
+    config.poolMax === undefined ||
+    (Number.isSafeInteger(config.poolMax) && config.poolMax > 0)
+  ) return;
+  return loadUnavailable(
+    "invalid_configuration",
+    `Deal Management poolMax "${config.poolMax}" is invalid; expected a positive safe integer.`,
+  );
+}
+
+function urlError(config: DealManagementCompositionConfig) {
+  if (config.databaseUrl === undefined) return;
+  const error = databaseUrlError(config.databaseUrl);
+  return error === undefined
+    ? undefined
+    : loadUnavailable("invalid_configuration", error);
 }
 
 /**
@@ -293,13 +299,7 @@ function auditDraft(
   };
 }
 
-function auditIdentity(
-  input: {
-    readonly context: DealCommandContext;
-    readonly event: DealEvent;
-  },
-  actorKind: "human" | "agent" | "system",
-): Pick<
+type DealAuditIdentity = Pick<
   AuditEventDraft,
   | "eventId"
   | "tenantId"
@@ -314,18 +314,32 @@ function auditIdentity(
   | "aggregateVersion"
   | "eventType"
   | "schemaVersion"
-> {
+>;
+
+function auditIdentity(
+  input: {
+    readonly context: DealCommandContext;
+    readonly event: DealEvent;
+  },
+  actorKind: "human" | "agent" | "system",
+): DealAuditIdentity {
   const event = input.event;
+  return {
+    ...auditEventIdentity(event),
+    actorId: input.context.actor.id,
+    actorKind,
+    origin: input.context.request.origin,
+  };
+}
+
+function auditEventIdentity(event: DealEvent) {
   return {
     eventId: event.eventId as unknown as AuditEventId,
     tenantId: event.tenantId,
     workspaceId: event.workspaceId,
     dealId: event.dealId,
-    actorId: input.context.actor.id,
-    actorKind,
-    origin: input.context.request.origin,
     correlationId: event.correlationId,
-    aggregateType: "deal",
+    aggregateType: "deal" as const,
     aggregateId: event.dealId,
     aggregateVersion: event.aggregateVersion,
     eventType: event.eventType,
@@ -343,18 +357,24 @@ function auditAuthoritySnapshot(
 ): AuditEventDraft["authoritySnapshot"] {
   const event = input.event;
   return {
-    snapshotId: String(
-      input.authorization.authoritySnapshotReference ?? "deal-authz-v1",
-    ),
+    snapshotId: authoritySnapshotId(input.authorization),
     actorId: input.context.actor.id,
     actorKind,
     policyVersion: authorizationPolicyVersion(input.authorization),
-    scope: {
-      tenantId: event.tenantId,
-      workspaceId: event.workspaceId,
-      dealId: event.dealId,
-    },
+    scope: auditScope(event),
     capturedAt: event.occurredAt,
+  };
+}
+
+function authoritySnapshotId(decision: AllowedAuthorizationDecision): string {
+  return String(decision.authoritySnapshotReference ?? "deal-authz-v1");
+}
+
+function auditScope(event: DealEvent) {
+  return {
+    tenantId: event.tenantId,
+    workspaceId: event.workspaceId,
+    dealId: event.dealId,
   };
 }
 
@@ -392,20 +412,25 @@ function auditPayloadValue(value: unknown, path: string): AuditPayloadValue {
     value === null || typeof value === "boolean" || typeof value === "string"
   ) return value;
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (Array.isArray(value)) {
-    return value.map((item, index) =>
-      auditPayloadValue(item, `${path}[${index}]`)
-    );
-  }
-  if (isRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map((
-        [key, item],
-      ) => [key, auditPayloadValue(item, `${path}.${key}`)]),
-    );
-  }
+  if (Array.isArray(value)) return auditPayloadArray(value, path);
+  if (isRecord(value)) return auditPayloadRecord(value, path);
   throw new Error(
     `Audit payload field "${path}" is invalid; expected JSON-safe values.`,
+  );
+}
+
+function auditPayloadArray(value: unknown[], path: string) {
+  return value.map((item, index) =>
+    auditPayloadValue(item, `${path}[${index}]`)
+  );
+}
+
+function auditPayloadRecord(value: Record<string, unknown>, path: string) {
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      auditPayloadValue(item, `${path}.${key}`),
+    ]),
   );
 }
 

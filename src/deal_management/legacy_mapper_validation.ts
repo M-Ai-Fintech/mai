@@ -7,6 +7,10 @@ import {
 import { dealId } from "./ids.ts";
 
 type LegacyErrorKind = Exclude<LegacyMappingResult["kind"], "mapped">;
+type LegacyMappingFailure = Exclude<
+  LegacyMappingResult,
+  { readonly kind: "mapped" }
+>;
 
 /**
  * Validates legacy scope and required scalar fields before mapping.
@@ -19,24 +23,39 @@ export function validateRecord(
 ):
   | { readonly kind: LegacyErrorKind; readonly issue: LegacyMappingIssue }
   | undefined {
+  const scopeIssue = validateScope(record, scope);
+  if (scopeIssue !== undefined) return scopeIssue;
+  const requiredIssue = validateRequiredFields(record);
+  if (requiredIssue !== undefined) return requiredIssue;
+  return validateCurrency(record);
+}
+
+function validateScope(record: LegacyDealRecord, scope: DealScope) {
   if (
-    record.tenantId !== undefined && record.tenantId !== scope.tenantId ||
-    record.workspaceId !== undefined && record.workspaceId !== scope.workspaceId
-  ) {
-    return {
-      kind: "conflict",
-      issue: issue(
-        "SCOPE_MISMATCH",
-        record,
-        `${record.tenantId ?? "undefined"}/${
-          record.workspaceId ?? "undefined"
-        }`,
-        `${scope.tenantId}/${scope.workspaceId}`,
-        "Legacy record scope does not match the operator-provided trusted scope.",
-      ),
-    };
+    record.tenantId === scope.tenantId &&
+    record.workspaceId === scope.workspaceId
+  ) return;
+  return issueResult(
+    "conflict",
+    issue(
+      "SCOPE_MISMATCH",
+      record,
+      `${record.tenantId ?? "undefined"}/${record.workspaceId ?? "undefined"}`,
+      `${scope.tenantId}/${scope.workspaceId}`,
+      "Legacy record scope does not match the operator-provided trusted scope.",
+    ),
+  );
+}
+
+function validateRequiredFields(record: LegacyDealRecord) {
+  for (const [field, value, expected] of requiredFields(record)) {
+    if (value !== undefined && value.trim().length > 0) continue;
+    return missingField(record, field, value, expected);
   }
-  const required: readonly [string, string | undefined, string][] = [
+}
+
+function requiredFields(record: LegacyDealRecord) {
+  return [
     ["name", record.name, "a non-empty Deal name"],
     ["dealType", record.dealType, "a supported legacy Deal type"],
     [
@@ -45,33 +64,39 @@ export function validateRecord(
       "an explicit Deal confidentiality",
     ],
     ["currency", record.currency, "an uppercase ISO-style 3-letter currency"],
-  ];
-  for (const [field, value, expected] of required) {
-    if (value !== undefined && value.trim().length > 0) continue;
-    return {
-      kind: "invalid_legacy_record",
-      issue: issue(
-        "MISSING_REQUIRED_FIELD",
-        record,
-        value ?? "undefined",
-        `${field}: ${expected}`,
-        `Legacy Deal field "${field}" is missing or empty.`,
-      ),
-    };
-  }
-  if (!/^[A-Z]{3}$/.test(record.currency!)) {
-    return {
-      kind: "invalid_legacy_record",
-      issue: issue(
-        "INVALID_CURRENCY",
-        record,
-        record.currency!,
-        "an uppercase ISO-style 3-letter currency",
-        "Legacy currency is not safe to use as the authoritative Deal currency.",
-      ),
-    };
-  }
-  return undefined;
+  ] as const;
+}
+
+function missingField(
+  record: LegacyDealRecord,
+  field: string,
+  value: string | undefined,
+  expected: string,
+) {
+  return issueResult(
+    "invalid_legacy_record",
+    issue(
+      "MISSING_REQUIRED_FIELD",
+      record,
+      value ?? "undefined",
+      `${field}: ${expected}`,
+      `Legacy Deal field "${field}" is missing or empty.`,
+    ),
+  );
+}
+
+function validateCurrency(record: LegacyDealRecord) {
+  if (/^[A-Z]{3}$/.test(record.currency!)) return;
+  return issueResult(
+    "invalid_legacy_record",
+    issue(
+      "INVALID_CURRENCY",
+      record,
+      record.currency!,
+      "an uppercase ISO-style 3-letter currency",
+      "Legacy currency is not safe to use as the authoritative Deal currency.",
+    ),
+  );
 }
 
 /**
@@ -104,7 +129,7 @@ export function invariantIssue(
 export function issueResult(
   kind: LegacyErrorKind,
   problem: LegacyMappingIssue,
-): LegacyMappingResult {
+): LegacyMappingFailure {
   if (
     kind !== "invalid_legacy_record" && kind !== "missing_required_reference" &&
     kind !== "unsupported_legacy_shape" && kind !== "conflict"

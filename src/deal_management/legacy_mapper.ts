@@ -62,6 +62,11 @@ export class DeterministicLegacyDealMapper implements LegacyDealMapper {
   ): Promise<DealPartyReference | undefined> {
     return await this.references?.resolve({
       source: record.source,
+      legacyDealId: record.legacyDealId,
+      scope: {
+        tenantId: record.tenantId!,
+        workspaceId: record.workspaceId!,
+      },
       legacyReferenceId,
       referenceKind,
     });

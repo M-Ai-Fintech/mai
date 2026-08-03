@@ -24,11 +24,15 @@ import {
 } from "./service.ts";
 import type { DealIdFactory } from "./ids.ts";
 import { PostgresDealRepository } from "./repository.ts";
-import { PostgresLegacyDealSource } from "./legacy_source.ts";
+import {
+  PostgresLegacyDealSource,
+  PostgresLegacyReferenceResolver,
+} from "./legacy_source.ts";
 import { DeterministicLegacyDealMapper } from "./legacy_mapper.ts";
 import { PostgresDealReconciliationStore } from "./reconciliation_store.ts";
 import { CompatibilityDealReader } from "./compatibility_reader.ts";
 import { DealReconciliationExecutor } from "./reconciliation.ts";
+import { PostgresReconciliationEvidenceVerifier } from "./reconciliation_verification.ts";
 import type {
   DealReconciliationStore,
   LegacyDealMapper,
@@ -150,9 +154,19 @@ function configuredComposition(
   config: DealManagementCompositionConfig,
   poolResult: Extract<PoolResult, { readonly kind: "configured" }>,
 ): DealManagementCompositionResult {
+  const core = configuredCore(config, poolResult.pool);
+  const legacy = configuredLegacy(config, core.transactions);
+  const compatibility = configuredCompatibility(config, core, legacy);
+  return configuredResult(config, poolResult.pool, core, compatibility);
+}
+
+function configuredCore(
+  config: DealManagementCompositionConfig,
+  pool: pg.Pool,
+) {
   const clock = config.clock ?? systemClock();
   const ids = config.ids ?? randomDealIds();
-  const transactions = new PostgresTransactionRunner(poolResult.pool);
+  const transactions = new PostgresTransactionRunner(pool);
   const repository = createRepository(transactions);
   const audit = config.audit ?? new DealAuditEventFactoryAdapter();
   const service = new DealManagementService({
@@ -162,43 +176,91 @@ function configuredComposition(
     clock,
     audit,
   });
+  return { clock, ids, transactions, repository, audit, service };
+}
+
+function configuredLegacy(
+  config: DealManagementCompositionConfig,
+  transactions: PostgresTransactionRunner,
+) {
   const legacySource = config.legacySource ??
     new PostgresLegacyDealSource(transactions);
   const legacyMapper = config.legacyMapper ??
-    new DeterministicLegacyDealMapper();
+    new DeterministicLegacyDealMapper(
+      new PostgresLegacyReferenceResolver(transactions),
+    );
   const reconciliationStore = config.reconciliationStore ??
     new PostgresDealReconciliationStore(transactions);
-  const compatibilityReader = new CompatibilityDealReader(
-    repository,
-    legacySource,
-    legacyMapper,
-    reconciliationStore,
-    config.authorization,
-  );
+  return { legacySource, legacyMapper, reconciliationStore };
+}
+
+type ConfiguredCore = ReturnType<typeof configuredCore>;
+type ConfiguredLegacy = ReturnType<typeof configuredLegacy>;
+
+function configuredCompatibility(
+  config: DealManagementCompositionConfig,
+  core: ConfiguredCore,
+  legacy: ConfiguredLegacy,
+) {
+  const { repository, service, transactions } = core;
+  const { legacySource, legacyMapper, reconciliationStore } = legacy;
+  const compatibilityReader = configuredReader(config, core, legacy);
   const reconciliation = new DealReconciliationExecutor(
     legacySource,
     legacyMapper,
     reconciliationStore,
     service,
     repository,
+    new PostgresReconciliationEvidenceVerifier(transactions),
   );
-  const http = {
-    authentication: new IdentityAccessDealAuthentication(config.authentication),
-    authorization: config.authorization,
-    repository,
-    service,
-    now: () => clock.now(),
-    nextCorrelationId: config.nextCorrelationId ?? randomCorrelationId,
-  } satisfies DealManagementHttpDependencies;
+  return { compatibilityReader, reconciliation };
+}
+
+function configuredReader(
+  config: DealManagementCompositionConfig,
+  core: ConfiguredCore,
+  legacy: ConfiguredLegacy,
+) {
+  return new CompatibilityDealReader(
+    core.repository,
+    legacy.legacySource,
+    legacy.legacyMapper,
+    legacy.reconciliationStore,
+    config.authorization,
+  );
+}
+
+function configuredResult(
+  config: DealManagementCompositionConfig,
+  pool: pg.Pool,
+  core: ConfiguredCore,
+  compatibility: ReturnType<typeof configuredCompatibility>,
+): DealManagementCompositionResult {
+  const { clock, ids, repository, audit } = core;
+  const http = configuredHttp(config, core);
   return {
     kind: "configured",
     composition: new DealManagementComposition(
-      poolResult.pool,
+      pool,
       { repository, authorization: config.authorization, ids, clock, audit },
       http,
-      compatibilityReader,
-      reconciliation,
+      compatibility.compatibilityReader,
+      compatibility.reconciliation,
     ),
+  };
+}
+
+function configuredHttp(
+  config: DealManagementCompositionConfig,
+  core: ConfiguredCore,
+): DealManagementHttpDependencies {
+  return {
+    authentication: new IdentityAccessDealAuthentication(config.authentication),
+    authorization: config.authorization,
+    repository: core.repository,
+    service: core.service,
+    now: () => core.clock.now(),
+    nextCorrelationId: config.nextCorrelationId ?? randomCorrelationId,
   };
 }
 

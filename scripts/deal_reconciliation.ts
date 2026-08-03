@@ -36,6 +36,7 @@ export interface ReconciliationRuntimeModule {
     readonly actorId: ActorId;
     readonly correlationId: CorrelationId;
     readonly now: string;
+    readonly credential?: string;
   }): Promise<ReconciliationRuntime>;
 }
 
@@ -47,6 +48,7 @@ export interface ReconciliationRuntimeModule {
 export interface ReconciliationRuntime {
   readonly executor: DealReconciliationExecutor;
   readonly commandContext: DealCommandContext;
+  close(): Promise<void>;
 }
 
 /**
@@ -70,8 +72,12 @@ export async function runReconciliationCli(
   }
   requireApplyConfirmation(options);
   const runtime = await loadRuntime(options.runtimeModule, scope, options);
-  const report = await runAuthoritativeMode(runtime, options, records, scope);
-  console.log(JSON.stringify(report));
+  try {
+    const report = await runAuthoritativeMode(runtime, options, records, scope);
+    console.log(JSON.stringify(report));
+  } finally {
+    await runtime.close();
+  }
 }
 
 if (import.meta.main) {
@@ -93,11 +99,18 @@ interface ReconciliationOptions {
   readonly runtimeModule?: string;
   readonly confirmation?: string;
   readonly reason: string;
+  readonly credential?: string;
 }
 
 function parseOptions(
   argumentsValue: readonly string[],
 ): ReconciliationOptions {
+  const values = optionValues(argumentsValue);
+  const mode = requiredMode(values.get("mode"));
+  return parsedOptions(values, mode);
+}
+
+function optionValues(argumentsValue: readonly string[]): Map<string, string> {
   const values = new Map<string, string>();
   for (let index = 0; index < argumentsValue.length; index += 2) {
     const flag = argumentsValue[index];
@@ -111,7 +124,10 @@ function parseOptions(
     }
     values.set(flag.slice(2), value);
   }
-  const mode = values.get("mode");
+  return values;
+}
+
+function requiredMode(mode: string | undefined): ReconciliationOptions["mode"] {
   if (!isMode(mode)) {
     throw new Error(
       `Operator mode "${
@@ -119,6 +135,13 @@ function parseOptions(
       }" is invalid; expected dry-run, apply, resume, verify, or rollback-routing.`,
     );
   }
+  return mode;
+}
+
+function parsedOptions(
+  values: ReadonlyMap<string, string>,
+  mode: ReconciliationOptions["mode"],
+): ReconciliationOptions {
   return {
     mode,
     input: requiredOption(values, "input"),
@@ -130,6 +153,7 @@ function parseOptions(
     runtimeModule: values.get("runtime-module"),
     confirmation: values.get("confirm"),
     reason: values.get("reason") ?? "MAI-110 operator routing procedure",
+    credential: values.get("credential"),
   };
 }
 
@@ -147,6 +171,12 @@ function parseScope(options: ReconciliationOptions): DealScope {
 async function readLegacyRecords(
   path: string,
 ): Promise<readonly LegacyDealRecord[]> {
+  const parsed = await parseLegacyFile(path);
+  assertLegacyRecords(path, parsed);
+  return parsed;
+}
+
+async function parseLegacyFile(path: string): Promise<unknown> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(await Deno.readTextFile(path));
@@ -157,6 +187,13 @@ async function readLegacyRecords(
       }.`,
     );
   }
+  return parsed;
+}
+
+function assertLegacyRecords(
+  path: string,
+  parsed: unknown,
+): asserts parsed is LegacyDealRecord[] {
   if (!Array.isArray(parsed)) {
     throw new Error(
       `Legacy input "${path}" is invalid; expected a JSON array of LegacyDealRecord objects.`,
@@ -167,7 +204,6 @@ async function readLegacyRecords(
       `Legacy input "${path}" contains an invalid record; expected source, legacyDealId, parties, and team fields.`,
     );
   }
-  return parsed;
 }
 
 async function writeDryRun(
@@ -190,32 +226,38 @@ async function loadRuntime(
   scope: DealScope,
   options: ReconciliationOptions,
 ): Promise<ReconciliationRuntime> {
-  if (path === undefined) {
-    throw new Error(
-      `Operator runtime module is missing for mode "${options.mode}"; expected --runtime-module ./approved-mai-110-runtime.ts.`,
-    );
-  }
-  const imported: unknown = await import(
-    new URL(path, `file://${Deno.cwd()}/`).href
-  );
+  const runtimePath = path ?? "./scripts/mai_110_runtime.ts";
+  const imported: unknown = await importRuntime(runtimePath);
   if (!isRuntimeModule(imported)) {
     throw new Error(
-      `Operator runtime module "${path}" is invalid; expected createRuntime(input).`,
+      `Operator runtime module "${runtimePath}" is invalid; expected createRuntime(input).`,
     );
   }
-  const actor = parseActorId(options.actor);
-  const correlation = parseCorrelationId(options.correlation);
-  if (!actor.ok || !correlation.ok) {
-    throw new Error(
-      `Operator identity "${options.actor}" or correlation "${options.correlation}" is invalid; expected canonical identifiers.`,
-    );
-  }
+  const identity = runtimeIdentity(options);
   return await imported.createRuntime({
     scope,
-    actorId: actor.value,
-    correlationId: correlation.value,
+    actorId: identity.actorId,
+    correlationId: identity.correlationId,
     now: options.now,
+    credential: options.credential,
   });
+}
+
+function importRuntime(path: string): Promise<unknown> {
+  return import(new URL(path, `file://${Deno.cwd()}/`).href);
+}
+
+function runtimeIdentity(
+  options: ReconciliationOptions,
+): { actorId: ActorId; correlationId: CorrelationId } {
+  const actor = parseActorId(options.actor);
+  const correlation = parseCorrelationId(options.correlation);
+  if (actor.ok && correlation.ok) {
+    return { actorId: actor.value, correlationId: correlation.value };
+  }
+  throw new Error(
+    `Operator identity "${options.actor}" or correlation "${options.correlation}" is invalid; expected canonical identifiers.`,
+  );
 }
 
 async function runAuthoritativeMode(
@@ -229,18 +271,16 @@ async function runAuthoritativeMode(
   | Readonly<Record<string, unknown>>
 > {
   const operator = operatorContext(runtime, options, scope);
+  const legacyDealIds = records.map((record) => record.legacyDealId);
   if (options.mode === "verify") {
-    return await runtime.executor.verifyBatch({
-      legacyDealIds: records.map((record) => record.legacyDealId),
-      operator,
-    });
+    return await runtime.executor.verifyBatch({ legacyDealIds, operator });
   }
   if (isRoutingMode(options.mode)) {
     return await runRoutingBatch(runtime, options, records, operator);
   }
   return await runtime.executor.runBatch({
     mode: options.mode,
-    legacyDealIds: records.map((record) => record.legacyDealId),
+    legacyDealIds,
     operator,
   });
 }

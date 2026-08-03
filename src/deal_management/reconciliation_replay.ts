@@ -222,6 +222,21 @@ export async function verifyMappedDeal(
   });
 }
 
+/** Compares mapped intent while ignoring persistence-only fields. */
+export function sameMappedDealIntent(left: Deal, right: Deal): boolean {
+  return stableJson(intentShape(left)) === stableJson(intentShape(right));
+}
+
+function intentShape(deal: Deal): unknown {
+  const {
+    version: _version,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    ...intent
+  } = deal;
+  return intent;
+}
+
 function reconciliationKey(dealId: DealId, operation: string): IdempotencyKey {
   const value = `idem_reconcile-${slug(operation)}-${slug(dealId)}`.slice(
     0,

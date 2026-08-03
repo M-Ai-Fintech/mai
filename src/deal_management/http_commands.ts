@@ -96,22 +96,18 @@ function createCommand(
 function mutationCommand(
   input: MutationCommandInput,
 ): Promise<DealCommandResult> {
-  if (input.command === "configure" && input.segments.length === 3) {
-    return configureCommand(input);
-  }
-  if (input.command === "parties" && input.segments.length === 3) {
-    return partyCommand(input);
-  }
-  if (input.command === "roles" && input.segments.length === 3) {
-    return roleCommand(input);
-  }
-  if (input.command === "mandate" && input.segments.length === 3) {
-    return mandateCommand(input);
-  }
-  if (
-    input.command === "authority-constraints" && input.segments.length === 3
-  ) {
-    return constraintCommand(input);
+  const commands = {
+    configure: configureCommand,
+    parties: partyCommand,
+    roles: roleCommand,
+    mandate: mandateCommand,
+    "authority-constraints": constraintCommand,
+  } as const;
+  const command = input.command === undefined
+    ? undefined
+    : commands[input.command as keyof typeof commands];
+  if (command !== undefined && input.segments.length === 3) {
+    return command(input);
   }
   throw new RequestInputError(
     `Deal command route "${

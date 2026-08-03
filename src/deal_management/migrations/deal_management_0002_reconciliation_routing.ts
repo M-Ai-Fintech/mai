@@ -19,6 +19,61 @@ export const reconciliationRoutingMigration = defineMigration({
     {
       schema: "deal_management",
       sql: `
+        CREATE TABLE deal_management.legacy_deal_mappings (
+          legacy_source TEXT NOT NULL,
+          legacy_record_id TEXT NOT NULL,
+          tenant_id TEXT NOT NULL,
+          workspace_id TEXT NOT NULL,
+          confidentiality TEXT NOT NULL CHECK (
+            confidentiality IN ('standard', 'sensitive', 'highly_sensitive')
+          ),
+          mandate_transaction_value_ceiling NUMERIC NOT NULL CHECK (
+            mandate_transaction_value_ceiling > 0
+          ),
+          mandate_currency TEXT NOT NULL CHECK (mandate_currency ~ '^[A-Z]{3}$'),
+          mandate_authority_ceiling INTEGER NOT NULL CHECK (
+            mandate_authority_ceiling > 0
+          ),
+          reviewed_by TEXT NOT NULL,
+          reviewed_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (legacy_source, legacy_record_id),
+          UNIQUE (
+            legacy_source, legacy_record_id, tenant_id, workspace_id
+          )
+        );
+        CREATE INDEX deal_management_legacy_deal_mappings_scope_idx
+          ON deal_management.legacy_deal_mappings
+            (tenant_id, workspace_id, legacy_source, legacy_record_id);
+        CREATE TABLE deal_management.legacy_reference_mappings (
+          legacy_source TEXT NOT NULL,
+          legacy_record_id TEXT NOT NULL,
+          tenant_id TEXT NOT NULL,
+          workspace_id TEXT NOT NULL,
+          mapping_kind TEXT NOT NULL CHECK (mapping_kind IN ('party', 'team')),
+          legacy_reference_id TEXT NOT NULL,
+          reference_kind TEXT NOT NULL CHECK (
+            reference_kind IN ('organization', 'legal_entity', 'person', 'user_identity')
+          ),
+          authoritative_reference_id TEXT NOT NULL,
+          team_authority_level INTEGER CHECK (team_authority_level > 0),
+          reviewed_by TEXT NOT NULL,
+          reviewed_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (
+            legacy_source, legacy_record_id, mapping_kind, legacy_reference_id
+          ),
+          FOREIGN KEY (
+            legacy_source, legacy_record_id, tenant_id, workspace_id
+          )
+            REFERENCES deal_management.legacy_deal_mappings
+              (legacy_source, legacy_record_id, tenant_id, workspace_id),
+          CHECK (
+            (mapping_kind = 'party' AND team_authority_level IS NULL) OR
+            (mapping_kind = 'team' AND team_authority_level IS NOT NULL)
+          )
+        );
+        CREATE INDEX deal_management_legacy_reference_mappings_scope_idx
+          ON deal_management.legacy_reference_mappings
+            (tenant_id, workspace_id, legacy_source, legacy_record_id);
         CREATE TABLE deal_management.reconciliation_records (
           record_id TEXT PRIMARY KEY,
           tenant_id TEXT NOT NULL,

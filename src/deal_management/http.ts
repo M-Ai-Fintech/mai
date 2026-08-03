@@ -53,16 +53,32 @@ export async function handleDealManagementRoute(
   if (dependencies === undefined) {
     return dependencyUnavailable(correlation.value, baseHeaders);
   }
+  return await dispatchConfigured(
+    request,
+    segments,
+    dependencies,
+    correlation.value,
+    baseHeaders,
+  );
+}
+
+async function dispatchConfigured(
+  request: Request,
+  segments: readonly string[],
+  dependencies: DealManagementHttpDependencies,
+  correlationId: Parameters<typeof createDealContext>[1],
+  baseHeaders: Headers,
+) {
   try {
     return await dispatchRoute(
       request,
       segments,
       dependencies,
-      correlation.value,
+      correlationId,
       baseHeaders,
     );
   } catch (error) {
-    return mapDealError(error, correlation.value, baseHeaders);
+    return mapDealError(error, correlationId, baseHeaders);
   }
 }
 
@@ -79,6 +95,22 @@ async function dispatchRoute(
     correlationId,
     dependencies.now(),
   );
+  return await dispatchMethod(
+    request,
+    segments,
+    context,
+    dependencies,
+    baseHeaders,
+  );
+}
+
+async function dispatchMethod(
+  request: Request,
+  segments: readonly string[],
+  context: ReturnType<typeof createDealContext>,
+  dependencies: DealManagementHttpDependencies,
+  baseHeaders: Headers,
+) {
   if (request.method === "GET") {
     return await readRoute(segments, context, dependencies, baseHeaders);
   }
@@ -139,19 +171,36 @@ async function readRoute(
     return writeResponse("Not Found", 404, baseHeaders);
   }
   const parsedDealId = parseDealRouteId(segments[1]);
-  const result = await readDealProjection({
-    context,
-    dealId: parsedDealId,
-    repository: dependencies.repository,
-    authorization: dependencies.authorization,
-  });
+  const result = await readProjection(parsedDealId, context, dependencies);
   if (result.kind === "protected_not_found") {
     return writeResponse(result.response, 404, baseHeaders);
   }
+  return readSuccess(segments[2], result.value, context, baseHeaders);
+}
+
+function readProjection(
+  dealId: Parameters<typeof readDealProjection>[0]["dealId"],
+  context: ReturnType<typeof createDealContext>,
+  dependencies: DealManagementHttpDependencies,
+) {
+  return readDealProjection({
+    context,
+    dealId,
+    repository: dependencies.repository,
+    authorization: dependencies.authorization,
+  });
+}
+
+function readSuccess(
+  subresource: string | undefined,
+  deal: DealProjection,
+  context: ReturnType<typeof createDealContext>,
+  baseHeaders: Headers,
+) {
   return writeSuccess(
-    readRouteData(segments[2], result.value),
+    readRouteData(subresource, deal),
     context.request.correlationId,
-    result.value.version,
+    deal.version,
     200,
     baseHeaders,
   );

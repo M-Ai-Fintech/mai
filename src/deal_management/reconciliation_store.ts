@@ -249,23 +249,27 @@ async function saveRecord(
        intended_document = EXCLUDED.intended_document, status = EXCLUDED.status,
        routing_mode = EXCLUDED.routing_mode, issue = EXCLUDED.issue,
        updated_at = EXCLUDED.updated_at`,
-    [
-      record.recordId,
-      record.scope.tenantId,
-      record.scope.workspaceId,
-      record.legacySource,
-      record.legacyDealId,
-      record.authoritativeDealId ?? null,
-      record.sourceFingerprint ?? null,
-      record.intendedDeal === undefined
-        ? null
-        : JSON.stringify(record.intendedDeal),
-      record.status,
-      record.routingMode,
-      record.issue === undefined ? null : JSON.stringify(record.issue),
-      record.updatedAt,
-    ],
+    recordValues(record),
   );
+}
+
+function recordValues(record: DealReconciliationRecord): unknown[] {
+  return [
+    record.recordId,
+    record.scope.tenantId,
+    record.scope.workspaceId,
+    record.legacySource,
+    record.legacyDealId,
+    record.authoritativeDealId ?? null,
+    record.sourceFingerprint ?? null,
+    record.intendedDeal === undefined
+      ? null
+      : JSON.stringify(record.intendedDeal),
+    record.status,
+    record.routingMode,
+    record.issue === undefined ? null : JSON.stringify(record.issue),
+    record.updatedAt,
+  ];
 }
 
 async function routeRecord(
@@ -278,36 +282,58 @@ async function routeRecord(
       `Reconciliation record "${change.legacyDealId}" cannot route; expected an existing record in the requested scope.`,
     );
   }
+  assertCurrentRoute(current, change);
+  const updated = routedRecord(current, change);
+  await saveRecord(transaction, updated);
+  await insertRoutingHistory(transaction, current, change);
+  return updated;
+}
+
+function assertCurrentRoute(
+  current: DealReconciliationRecord,
+  change: RoutingChange,
+): void {
   if (current.routingMode !== change.previousMode) {
     throw new Error(
       `Reconciliation routing for "${change.legacyDealId}" is stale at "${current.routingMode}"; expected "${change.previousMode}".`,
     );
   }
   assertRouteStatus(current, change.nextMode, change.legacyDealId);
-  const updated = routedRecord(current, change);
-  await saveRecord(transaction, updated);
+}
+
+async function insertRoutingHistory(
+  transaction: TransactionHandle,
+  current: DealReconciliationRecord,
+  change: RoutingChange,
+): Promise<void> {
   await transaction.query(
     `INSERT INTO deal_management.reconciliation_routing_history (
        routing_event_id, tenant_id, workspace_id, legacy_source, legacy_record_id,
        authoritative_deal_id, previous_mode, next_mode, actor_id, correlation_id,
        reason, changed_at
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [
-      `routing_${crypto.randomUUID().replaceAll("-", "")}`,
-      change.scope.tenantId,
-      change.scope.workspaceId,
-      change.legacySource,
-      change.legacyDealId,
-      change.authoritativeDealId ?? current.authoritativeDealId ?? null,
-      change.previousMode,
-      change.nextMode,
-      change.actorId,
-      change.correlationId,
-      change.reason,
-      change.changedAt,
-    ],
+    routingValues(current, change),
   );
-  return updated;
+}
+
+function routingValues(
+  current: DealReconciliationRecord,
+  change: RoutingChange,
+): unknown[] {
+  return [
+    `routing_${crypto.randomUUID().replaceAll("-", "")}`,
+    change.scope.tenantId,
+    change.scope.workspaceId,
+    change.legacySource,
+    change.legacyDealId,
+    change.authoritativeDealId ?? current.authoritativeDealId ?? null,
+    change.previousMode,
+    change.nextMode,
+    change.actorId,
+    change.correlationId,
+    change.reason,
+    change.changedAt,
+  ];
 }
 
 async function findRecordForRouting(
@@ -350,18 +376,10 @@ function toRecord(row: ReconciliationRow): DealReconciliationRecord {
     : parseStoredDeal(row.intendedDocument);
   return {
     recordId: row.recordId,
-    scope: {
-      tenantId: row.tenantId as DealScope["tenantId"],
-      workspaceId: row.workspaceId as DealScope["workspaceId"],
-    },
+    scope: rowScope(row),
     legacySource: row.legacySource,
     legacyDealId: row.legacyDealId,
-    ...(row.authoritativeDealId === null
-      ? {}
-      : { authoritativeDealId: row.authoritativeDealId as DealId }),
-    ...(row.sourceFingerprint === null
-      ? {}
-      : { sourceFingerprint: row.sourceFingerprint }),
+    ...rowIdentity(row),
     ...(intendedDeal === undefined ? {} : { intendedDeal }),
     status: row.status,
     routingMode: row.routingMode,
@@ -369,6 +387,24 @@ function toRecord(row: ReconciliationRow): DealReconciliationRecord {
       ? {}
       : { issue: parseIssue(row.issue, row.legacyDealId) }),
     updatedAt: new Date(row.updatedAt).toISOString(),
+  };
+}
+
+function rowScope(row: ReconciliationRow): DealScope {
+  return {
+    tenantId: row.tenantId as DealScope["tenantId"],
+    workspaceId: row.workspaceId as DealScope["workspaceId"],
+  };
+}
+
+function rowIdentity(row: ReconciliationRow) {
+  return {
+    ...(row.authoritativeDealId === null
+      ? {}
+      : { authoritativeDealId: row.authoritativeDealId as DealId }),
+    ...(row.sourceFingerprint === null
+      ? {}
+      : { sourceFingerprint: row.sourceFingerprint }),
   };
 }
 

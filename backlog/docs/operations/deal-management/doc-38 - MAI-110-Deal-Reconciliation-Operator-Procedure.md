@@ -3,14 +3,14 @@ id: doc-38
 title: MAI-110 Deal Reconciliation Operator Procedure
 type: guide
 created_date: '2026-08-03 02:14'
-updated_date: '2026-08-03 03:09'
+updated_date: '2026-08-03 11:06'
 ---
 # MAI-110 Deal Reconciliation Operator Procedure
 
 - Authority ID: doc-38
 - Owner: Deal Management and Platform Operations
 - Authority: Bounded MAI-110 operator procedure
-- Freshness: Current as of 2026-08-02
+- Freshness: Current as of 2026-08-03
 - Language: English
 - Update trigger: Mapping, reconciliation, read-routing, or operator safety procedure changes
 
@@ -27,6 +27,7 @@ Before any command, the operator must confirm:
 - connectivity through the least-privilege migration and application credentials;
 - an approved backup or restore point expectation;
 - operator authorization for the target tenant and workspace;
+- an approved active Identity Access operator session credential matching the actor, tenant, and workspace;
 - the exact trusted `tenant_<slug>` and `workspace_<slug>` scope;
 - no conflicting reconciliation, migration, deployment, or Backlog mutation process;
 - a plan to retain reports without credentials or secrets.
@@ -47,10 +48,10 @@ Abort if any required reference, currency, Deal type, confidentiality, party sid
 
 ## Apply
 
-Use an approved runtime module that constructs Identity Access authentication, authoritative authorization, the scoped PostgreSQL Deal repository, transaction runner, audit/outbox appender, legacy source, mapper, and reconciliation store. The runtime module must not use permissive authorization or anonymous actors.
+The repository-owned `scripts/mai_110_runtime.ts` runtime constructs Identity Access authentication, authoritative authorization, the scoped PostgreSQL Deal repository, transaction runner, audit/outbox appender, legacy source, mapper, and reconciliation store. The runtime module must not use permissive authorization or anonymous actors.
 
 ```bash
-DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode apply --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./approved-mai-110-runtime.ts --confirm APPLY_MAI_110
+DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode apply --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./scripts/mai_110_runtime.ts --credential session_<approved-operator-session> --confirm APPLY_MAI_110
 ```
 
 Apply is bounded per Deal and idempotent. The explicit confirmation is required for apply. Successful records move through `pending`, `applied`, and `verified`; conflicts and rejected records remain visible for operator review. No global authoritative-read flag is changed.
@@ -58,7 +59,7 @@ Apply is bounded per Deal and idempotent. The explicit confirmation is required 
 ## Resume
 
 ```bash
-DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode resume --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./approved-mai-110-runtime.ts
+DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode resume --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./scripts/mai_110_runtime.ts --credential session_<approved-operator-session>
 ```
 
 Resume reuses deterministic legacy identity and command keys. Verified Deals are not duplicated, failed Deals can be retried after review, and conflicts remain conflicts until the source or operator decision changes. A successful earlier Deal is never erased because a later Deal failed.
@@ -66,7 +67,7 @@ Resume reuses deterministic legacy identity and command keys. Verified Deals are
 ## Verification
 
 ```bash
-DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode verify --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./approved-mai-110-runtime.ts
+DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode verify --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./scripts/mai_110_runtime.ts --credential session_<approved-operator-session>
 ```
 
 The verification command loads each legacy record, remaps it, loads the persisted reconciliation record and authoritative Deal, and compares the legacy identifier, deterministic authoritative identifier, tenant, workspace, name, Deal type, currency, parties, team roles, mandate, source fingerprint, persisted Deal document, aggregate history, command receipts, transactional outbox, reconciliation status, and routing mode. `verified` means the persisted authoritative state matches the intended mapped state; a successful insert alone is not verification. Drift is reported as an explicit conflict.
@@ -76,13 +77,13 @@ The verification command loads each legacy record, remaps it, loads the persiste
 Rollback means changing one reconciled Deal from authoritative reads to the legacy compatibility adapter. It retains authoritative rows, history, receipts, audit events, outbox events, and reconciliation evidence. It does not delete or reverse data.
 
 ```bash
-DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode rollback-routing --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./approved-mai-110-runtime.ts --reason rollback-validation
+DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode rollback-routing --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./scripts/mai_110_runtime.ts --credential session_<approved-operator-session> --reason rollback-validation
 ```
 
 The command reports the previous and next route, selected source, actor, correlation ID, reason, and timestamp. A subsequent read must identify `legacy` as the selected source through the named compatibility adapter. To restore one reviewed Deal to authoritative reads, use the explicit per-Deal operation:
 
 ```bash
-DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode authoritative-routing --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./approved-mai-110-runtime.ts --reason restore-after-review
+DENO_ENV=test deno run --allow-read --allow-env --allow-net --allow-ffi --allow-run scripts/deal_reconciliation.ts --mode authoritative-routing --input ./legacy-deals.json --tenant tenant_northstar --workspace workspace_alpha --actor actor_operator --correlation cor_reconciliation --runtime-module ./scripts/mai_110_runtime.ts --credential session_<approved-operator-session> --reason restore-after-review
 ```
 
 Neither operation enables a global cutover flag.

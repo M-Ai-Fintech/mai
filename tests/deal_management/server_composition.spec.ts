@@ -1,5 +1,9 @@
 import { assert, assertEquals } from "@std/assert";
-import { type ApiServerRouter, createApiServer } from "../../src/api/server.ts";
+import {
+  type ApiServerRouter,
+  createApiServer,
+  createExecutableApiServer,
+} from "../../src/api/server.ts";
 import {
   actorId,
   FakeAuthenticationPort,
@@ -25,8 +29,101 @@ import {
   type ContextMigration,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
+import { identityAccessMigrations } from "../../src/identity_access/v1.ts";
 
 const databaseUrl = mai106DatabaseUrl();
+
+Deno.test({
+  name: "executable bootstrap authenticates persisted Identity Access policy",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    let router: ApiServerRouter | undefined;
+    try {
+      await new PostgresMigrationRunner(pool).apply(identityAccessMigrations);
+      router = createExecutableApiServer({ MAI106_DATABASE_URL: databaseUrl });
+      if (router.dealManagement.kind !== "configured") return;
+      await new PostgresMigrationRunner(pool).apply(
+        router.dealManagement.composition
+          .migrations as readonly ContextMigration[],
+      );
+      await seedExecutableIdentity(pool);
+      const response = await router.handle(
+        dealRequest("/api/v1/deals", "POST", {
+          name: "Executable bootstrap deal",
+          dealType: "acquisition",
+          confidentiality: "sensitive",
+          currency: "USD",
+        }, {
+          Authorization: "Bearer session_server-bootstrap",
+          "Idempotency-Key": "idem_executable-bootstrap",
+        }),
+      );
+      assertEquals(response.status, 201);
+    } finally {
+      await cleanExecutableIdentity(pool).catch(() => {});
+      if (router?.dealManagement.kind === "configured") {
+        await router.dealManagement.composition.close();
+      }
+      await pool.end();
+    }
+  },
+});
+
+async function seedExecutableIdentity(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  const now = "2026-08-03T12:00:00.000Z";
+  const expiry = "2099-08-03T12:00:00.000Z";
+  await pool.query(
+    `INSERT INTO iam.user_identities
+    (aggregate_id, tenant_id, version, state, provider_subject, document, created_at, updated_at)
+    VALUES ('identity_server-bootstrap', 'tenant_northstar', 1, 'active', 'actor_server-bootstrap',
+      '{"id":"identity_server-bootstrap"}', $1, $1)`,
+    [now],
+  );
+  await pool.query(
+    `INSERT INTO iam.memberships
+    (aggregate_id, tenant_id, workspace_id, version, state, document, created_at, updated_at)
+    VALUES ('membership_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 1, 'active',
+      '{"identityId":"identity_server-bootstrap","rolePolicyIds":["role_server-bootstrap"]}', $1, $1)`,
+    [now],
+  );
+  await pool.query(
+    `INSERT INTO iam.sessions
+    (aggregate_id, tenant_id, workspace_id, actor_id, version, state, issued_at, expires_at, document, created_at, updated_at)
+    VALUES ('session_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 'actor_server-bootstrap', 1,
+      'active', $1, $2, '{"actor":{"id":"actor_server-bootstrap","kind":"human","state":"active"}}', $1, $1)`,
+    [now, expiry],
+  );
+  await pool.query(
+    `INSERT INTO access.role_policies
+    (aggregate_id, tenant_id, workspace_id, version, state, document, created_at, updated_at)
+    VALUES ('role_server-bootstrap', 'tenant_northstar', 'workspace_alpha', 1, 'active',
+      '{"id":"role_server-bootstrap","resourceKinds":["deal"],"actions":["create"],"fields":["deal","parties","roles","mandate_ceiling","authority_constraints"]}', $1, $1)`,
+    [now],
+  );
+}
+
+async function cleanExecutableIdentity(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  await pool.query(
+    "DELETE FROM deal_management.deals WHERE tenant_id = 'tenant_northstar'",
+  );
+  await pool.query(
+    "DELETE FROM access.role_policies WHERE aggregate_id = 'role_server-bootstrap'",
+  );
+  await pool.query(
+    "DELETE FROM iam.sessions WHERE aggregate_id = 'session_server-bootstrap'",
+  );
+  await pool.query(
+    "DELETE FROM iam.memberships WHERE aggregate_id = 'membership_server-bootstrap'",
+  );
+  await pool.query(
+    "DELETE FROM iam.user_identities WHERE aggregate_id = 'identity_server-bootstrap'",
+  );
+}
 
 class ProviderFailure implements AuthenticationPort {
   authenticate(): Promise<never> {

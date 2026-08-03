@@ -103,22 +103,25 @@ export function requestCorrelation(
   if (parsed.ok) return { kind: "ok", value: parsed.value };
   const fallback = dependencies?.nextCorrelationId() ??
     "cor_invalid" as CorrelationId;
+  return invalidCorrelation(header, fallback);
+}
+
+function invalidCorrelation(header: string | null, fallback: CorrelationId) {
+  const message = `X-Correlation-Id received ${
+    safeInput(header)
+  }; expected a canonical correlation identifier.`;
   return {
-    kind: "error",
+    kind: "error" as const,
     response: createApiError({
       code: "VALIDATION_FAILED",
-      message: `X-Correlation-Id received ${
-        safeInput(header)
-      }; expected a canonical correlation identifier.`,
+      message,
       correlationId: fallback,
       retryable: false,
       fieldErrors: {
         "X-Correlation-Id": [{
           field: "X-Correlation-Id",
           code: "INVALID_TYPE",
-          message: `X-Correlation-Id received ${
-            safeInput(header)
-          }; expected a canonical correlation identifier.`,
+          message,
         }],
       },
     }),

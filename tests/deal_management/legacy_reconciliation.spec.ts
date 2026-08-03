@@ -31,6 +31,8 @@ function validLegacyDeal(
   return {
     source: "legacy.fixture",
     legacyDealId: "legacy-deal-1",
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
     name: "Legacy acquisition",
     dealType: "acquisition",
     confidentiality: "sensitive",
@@ -207,6 +209,22 @@ Deno.test("apply is idempotent, resumable, and records verified per-Deal state",
     operator: operatorContext(),
   });
   assertEquals(verification.outcomes[0]?.kind, "verified");
+  const verifiedRecord = verification.outcomes[0]?.record;
+  if (verifiedRecord === undefined) throw new Error("expected verified record");
+  await fixture.store.save({ ...verifiedRecord, status: "applied" });
+  const interrupted = await fixture.executor.verifyBatch({
+    legacyDealIds: ["legacy-deal-1"],
+    operator: operatorContext(),
+  });
+  assertEquals(interrupted.outcomes[0]?.record.status, "verified");
+  assertEquals(
+    (await fixture.store.find({
+      scope,
+      legacySource: "legacy.fixture",
+      legacyDealId: "legacy-deal-1",
+    }))?.status,
+    "verified",
+  );
   const driftExecutor = new DealReconciliationExecutor(
     new InMemoryLegacyDealSource([
       validLegacyDeal({ name: "Changed legacy content" }),
@@ -266,6 +284,32 @@ Deno.test("one invalid legacy Deal does not erase an earlier successful reconcil
     "rejected",
   ]);
   assertEquals((await fixture.repository.list(scope)).length, 1);
+});
+
+Deno.test("verification rejects a mismatched persisted intended document", async () => {
+  const fixture = executorFixture(validLegacyDeal());
+  await fixture.executor.run({
+    mode: "apply",
+    legacyDealId: "legacy-deal-1",
+    operator: operatorContext(),
+  });
+  const stored = await fixture.store.find({
+    scope,
+    legacySource: "legacy.fixture",
+    legacyDealId: "legacy-deal-1",
+  });
+  if (stored?.intendedDeal === undefined) throw new Error("expected intent");
+  await fixture.store.save({
+    ...stored,
+    status: "applied",
+    intendedDeal: { ...stored.intendedDeal, name: "Corrupted intent" },
+  });
+  const result = await fixture.executor.verifyBatch({
+    legacyDealIds: ["legacy-deal-1"],
+    operator: operatorContext(),
+  });
+  assertEquals(result.outcomes[0]?.kind, "conflict");
+  assertEquals(result.outcomes[0]?.record.status, "conflict");
 });
 
 Deno.test("identity collision is rejected before any authoritative mutation", async () => {

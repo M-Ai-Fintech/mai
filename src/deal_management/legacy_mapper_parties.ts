@@ -56,32 +56,26 @@ async function mapParty(
   const referenceKey = `${reference.kind}:${reference.id}`;
   if (seen.has(referenceKey)) return duplicateParty(input.record, referenceKey);
   seen.add(referenceKey);
+  const validation = validateParty(input.record, party);
+  if (validation.kind !== "valid") return validation;
+  return appendParty(
+    deal,
+    input.record,
+    party,
+    reference,
+    validation.side,
+    input.now,
+  );
+}
+
+function validateParty(record: LegacyDealRecord, party: LegacyPartyRecord) {
   const side = party.side?.trim().toLowerCase();
-  if (side === undefined || !isDealPartySide(side)) {
-    return issueResult(
-      "unsupported_legacy_shape",
-      issue(
-        "UNSUPPORTED_LEGACY_SHAPE",
-        input.record,
-        party.side ?? "undefined",
-        "a supported Deal party side",
-        "Legacy party side cannot be mapped without inventing ownership.",
-      ),
-    );
-  }
-  if (party.label === undefined || party.label.trim().length === 0) {
-    return issueResult(
-      "invalid_legacy_record",
-      issue(
-        "MISSING_REQUIRED_FIELD",
-        input.record,
-        party.label ?? "undefined",
-        "a non-empty party label",
-        "Legacy party label is required for an owned Deal party.",
-      ),
-    );
-  }
-  return appendParty(deal, input.record, party, reference, side, input.now);
+  const problem = partyShapeIssue(record, party.side, party.label, false);
+  if (problem !== undefined) return problem;
+  return {
+    kind: "valid" as const,
+    side: side as Deal["parties"][number]["side"],
+  };
 }
 
 function appendParty(
@@ -145,7 +139,25 @@ async function mapTeamMember(
   }
   const partyResult = addMissingTeamParty(input, initial, member, reference);
   if (partyResult.kind !== "ok") return partyResult;
-  const party = findParty(partyResult.deal, reference);
+  return mapMemberRole(
+    input,
+    partyResult.deal,
+    member,
+    role,
+    roleKeys,
+    reference,
+  );
+}
+
+function mapMemberRole(
+  input: LegacyMappingInput,
+  deal: Deal,
+  member: LegacyTeamMemberRecord,
+  role: DealRoleName,
+  roleKeys: Set<string>,
+  reference: DealPartyReference,
+): MappingAggregateResult {
+  const party = findParty(deal, reference);
   if (party === undefined) {
     return invariantIssue(input.record, "team party was not persisted");
   }
@@ -156,7 +168,7 @@ async function mapTeamMember(
   if (roleKeys.has(roleKey)) return duplicateRole(input.record, roleKey);
   roleKeys.add(roleKey);
   return appendRole(
-    partyResult.deal,
+    deal,
     input.record,
     member,
     party.id,
@@ -172,31 +184,85 @@ function addMissingTeamParty(
   reference: DealPartyReference,
 ): MappingAggregateResult {
   if (findParty(deal, reference) !== undefined) return { kind: "ok", deal };
+  const validation = validateTeamParty(input.record, member);
+  if (validation.kind !== "valid") return validation;
+  return appendTeamParty(input, deal, member, reference, validation.side);
+}
+
+function validateTeamParty(
+  record: LegacyDealRecord,
+  member: LegacyTeamMemberRecord,
+) {
   const side = member.side?.trim().toLowerCase();
+  const problem = partyShapeIssue(record, member.side, member.label, true);
+  if (problem !== undefined) return problem;
+  return {
+    kind: "valid" as const,
+    side: side as Deal["parties"][number]["side"],
+  };
+}
+
+function partyShapeIssue(
+  record: LegacyDealRecord,
+  rawSide: string | undefined,
+  label: string | undefined,
+  team: boolean,
+) {
+  const side = rawSide?.trim().toLowerCase();
   if (side === undefined || !isDealPartySide(side)) {
-    return issueResult(
-      "unsupported_legacy_shape",
-      issue(
-        "UNSUPPORTED_LEGACY_SHAPE",
-        input.record,
-        member.side ?? "undefined",
-        "an explicit supported side for a legacy team party",
-        "Legacy team membership has no safe party side.",
-      ),
-    );
+    return unsupportedSide(record, rawSide, team);
   }
-  if (member.label === undefined || member.label.trim().length === 0) {
-    return issueResult(
-      "invalid_legacy_record",
-      issue(
-        "MISSING_REQUIRED_FIELD",
-        input.record,
-        member.label ?? "undefined",
-        "a non-empty team member label",
-        "A team member promoted to a Deal party needs an explicit label.",
-      ),
-    );
-  }
+  if (label !== undefined && label.trim().length > 0) return;
+  return missingLabel(record, label, team);
+}
+
+function unsupportedSide(
+  record: LegacyDealRecord,
+  value: string | undefined,
+  team: boolean,
+) {
+  return issueResult(
+    "unsupported_legacy_shape",
+    issue(
+      "UNSUPPORTED_LEGACY_SHAPE",
+      record,
+      value ?? "undefined",
+      team
+        ? "an explicit supported side for a legacy team party"
+        : "a supported Deal party side",
+      team
+        ? "Legacy team membership has no safe party side."
+        : "Legacy party side cannot be mapped without inventing ownership.",
+    ),
+  );
+}
+
+function missingLabel(
+  record: LegacyDealRecord,
+  label: string | undefined,
+  team: boolean,
+) {
+  return issueResult(
+    "invalid_legacy_record",
+    issue(
+      "MISSING_REQUIRED_FIELD",
+      record,
+      label ?? "undefined",
+      team ? "a non-empty team member label" : "a non-empty party label",
+      team
+        ? "A team member promoted to a Deal party needs an explicit label."
+        : "Legacy party label is required for an owned Deal party.",
+    ),
+  );
+}
+
+function appendTeamParty(
+  input: LegacyMappingInput,
+  deal: Deal,
+  member: LegacyTeamMemberRecord,
+  reference: DealPartyReference,
+  side: Deal["parties"][number]["side"],
+): MappingAggregateResult {
   try {
     return {
       kind: "ok",
@@ -205,7 +271,7 @@ function addMissingTeamParty(
         id: dealPartyId(`party_legacy-${shortSlug(member.legacyMemberId)}`),
         reference,
         side,
-        label: member.label,
+        label: member.label!,
         now: input.now,
       }),
     };
