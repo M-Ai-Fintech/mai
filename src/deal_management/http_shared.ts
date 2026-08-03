@@ -36,6 +36,11 @@ export interface DealManagementHttpDependencies {
   readonly nextCorrelationId: () => CorrelationId;
 }
 
+/**
+ * Represents a safe request validation failure at the HTTP boundary.
+ *
+ * @example throw new RequestInputError("name received undefined; expected a string")
+ */
 export class RequestInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -43,6 +48,11 @@ export class RequestInputError extends Error {
   }
 }
 
+/**
+ * Represents invalid or absent credential proof.
+ *
+ * @example throw new DealAuthenticationError("Authentication is required.")
+ */
 export class DealAuthenticationError extends Error {
   constructor(message = "Authentication failed.") {
     super(message);
@@ -50,6 +60,11 @@ export class DealAuthenticationError extends Error {
   }
 }
 
+/**
+ * Represents an unavailable authentication provider dependency.
+ *
+ * @example throw new DealAuthenticationUnavailableError()
+ */
 export class DealAuthenticationUnavailableError extends Error {
   constructor(message = "Authentication provider is unavailable.") {
     super(message);
@@ -57,12 +72,22 @@ export class DealAuthenticationUnavailableError extends Error {
   }
 }
 
+/**
+ * Extracts API v1 route segments without exposing non-API paths.
+ *
+ * @example const segments = routeSegments(request.url)
+ */
 export function routeSegments(urlValue: string): readonly string[] | undefined {
   const pathname = new URL(urlValue).pathname;
   if (!pathname.startsWith("/api/v1/")) return undefined;
   return pathname.slice("/api/v1/".length).split("/").filter(Boolean);
 }
 
+/**
+ * Validates or generates a request correlation identifier.
+ *
+ * @example const correlation = requestCorrelation(request, dependencies)
+ */
 export function requestCorrelation(
   request: Request,
   dependencies: DealManagementHttpDependencies | undefined,
@@ -82,37 +107,61 @@ export function requestCorrelation(
     kind: "error",
     response: createApiError({
       code: "VALIDATION_FAILED",
-      message: "X-Correlation-Id must be a canonical correlation identifier.",
+      message: `X-Correlation-Id received ${
+        safeInput(header)
+      }; expected a canonical correlation identifier.`,
       correlationId: fallback,
       retryable: false,
       fieldErrors: {
         "X-Correlation-Id": [{
           field: "X-Correlation-Id",
           code: "INVALID_TYPE",
-          message:
-            "X-Correlation-Id must be a canonical correlation identifier.",
+          message: `X-Correlation-Id received ${
+            safeInput(header)
+          }; expected a canonical correlation identifier.`,
         }],
       },
     }),
   };
 }
 
+/**
+ * Requires the canonical idempotency header used by Deal commands.
+ *
+ * @example const key = requiredIdempotency(request)
+ */
 export function requiredIdempotency(request: Request): IdempotencyKey {
-  const parsed = parseIdempotencyHeader(request.headers.get("Idempotency-Key"));
+  const received = request.headers.get("Idempotency-Key");
+  const parsed = parseIdempotencyHeader(received);
   if (parsed.ok) return parsed.value;
   throw new RequestInputError(
-    "Idempotency-Key must be a canonical idempotency key.",
+    `Idempotency-Key received ${
+      safeInput(received)
+    }; expected a canonical idempotency key.`,
   );
 }
 
+/**
+ * Requires a strong aggregate version from the If-Match header.
+ *
+ * @example const version = requiredIfMatch(request)
+ */
 export function requiredIfMatch(request: Request): number {
-  const parsed = parseIfMatch(request.headers.get("If-Match"));
+  const received = request.headers.get("If-Match");
+  const parsed = parseIfMatch(received);
   if (parsed.ok) return parsed.value;
   throw new RequestInputError(
-    'If-Match must be a strong aggregate ETag such as "v1".',
+    `If-Match received ${
+      safeInput(received)
+    }; expected a strong aggregate ETag such as "v1".`,
   );
 }
 
+/**
+ * Parses a JSON object body and rejects non-object input.
+ *
+ * @example const body = await readBody(request)
+ */
 export async function readBody(
   request: Request,
 ): Promise<Record<string, unknown>> {
@@ -120,12 +169,21 @@ export async function readBody(
   try {
     value = await request.json();
   } catch {
-    throw new RequestInputError("request body must be valid JSON.");
+    throw new RequestInputError(
+      "request body could not be parsed as JSON; expected a JSON object.",
+    );
   }
   if (isRecord(value)) return value;
-  throw new RequestInputError("request body must be a JSON object.");
+  throw new RequestInputError(
+    `request body received ${safeInput(value)}; expected a JSON object.`,
+  );
 }
 
+/**
+ * Builds the scoped command context from a verified principal.
+ *
+ * @example const context = createDealContext(principal, correlationId, now)
+ */
 export function createDealContext(
   principal: DealAuthenticatedPrincipal,
   correlationId: CorrelationId,
@@ -141,6 +199,11 @@ export function createDealContext(
   return { actor: principal.actor, request, now };
 }
 
+/**
+ * Reads a required non-empty string field from a request body.
+ *
+ * @example const name = requiredString(body, "name")
+ */
 export function requiredString(
   body: Record<string, unknown>,
   fieldName: string,
@@ -148,10 +211,15 @@ export function requiredString(
   const value = body[fieldName];
   if (typeof value === "string" && value.trim().length > 0) return value;
   throw new RequestInputError(
-    `${fieldName} is required and must be a non-empty string.`,
+    `${fieldName} received ${safeInput(value)}; expected a non-empty string.`,
   );
 }
 
+/**
+ * Reads an optional non-empty string field from a request body.
+ *
+ * @example const label = optionalString(body, "label")
+ */
 export function optionalString(
   body: Record<string, unknown>,
   fieldName: string,
@@ -160,26 +228,52 @@ export function optionalString(
   if (value === undefined) return undefined;
   if (typeof value === "string" && value.trim().length > 0) return value;
   throw new RequestInputError(
-    `${fieldName} must be a non-empty string when supplied.`,
+    `${fieldName} received ${
+      safeInput(value)
+    }; expected a non-empty string when supplied.`,
   );
 }
 
+/**
+ * Reads a required finite numeric field from a request body.
+ *
+ * @example const authority = requiredNumber(body, "authorityLevel")
+ */
 export function requiredNumber(
   body: Record<string, unknown>,
   fieldName: string,
 ): number {
   const value = body[fieldName];
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  throw new RequestInputError(`${fieldName} must be a finite number.`);
+  throw new RequestInputError(
+    `${fieldName} received ${safeInput(value)}; expected a finite number.`,
+  );
 }
 
+/**
+ * Reads a required boolean field from a request body.
+ *
+ * @example const humanOnly = requiredBoolean(body, "humanOnly")
+ */
 export function requiredBoolean(
   body: Record<string, unknown>,
   fieldName: string,
 ): boolean {
   const value = body[fieldName];
   if (typeof value === "boolean") return value;
-  throw new RequestInputError(`${fieldName} must be a boolean.`);
+  throw new RequestInputError(
+    `${fieldName} received ${safeInput(value)}; expected a boolean.`,
+  );
+}
+
+function safeInput(value: unknown): string {
+  if (value === undefined) return "undefined";
+  if (value === null) return "null";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return `<${Array.isArray(value) ? "array" : typeof value}>`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
