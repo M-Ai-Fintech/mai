@@ -2,10 +2,13 @@ import type {
   Deal,
   DealAuthorizationPort,
   DealCommandContext,
+  DealProjection,
   DealScope,
 } from "./contracts.ts";
 import { dealScope, requestedDealFields } from "./contracts.ts";
 import { DEAL_ACTION, DEAL_RESOURCE } from "./service.ts";
+import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
+import { projectDeal } from "./projection.ts";
 import type { DealRepository } from "./repository.ts";
 import type {
   DealReconciliationRecord,
@@ -21,8 +24,9 @@ export type CompatibilityReadResult =
   | {
     readonly kind: "loaded";
     readonly source: CompatibilityReadSource;
-    readonly deal: Deal;
-    readonly routing: DealReconciliationRecord | undefined;
+    readonly value: DealProjection;
+    readonly authorization: AllowedAuthorizationDecision;
+    readonly routing: CompatibilityRoutingMetadata;
   }
   | {
     readonly kind: "protected_not_found";
@@ -56,19 +60,28 @@ export class CompatibilityDealReader {
     readonly legacyDealId: string;
   }): Promise<CompatibilityReadResult> {
     const scope = dealScope(input.context);
+    const logicalAuthorization = await this.authorize(
+      input.context,
+      scope,
+      input.legacyDealId,
+    );
+    if (logicalAuthorization === undefined) {
+      return { kind: "protected_not_found" };
+    }
     const routing = await this.reconciliation.find({
       scope,
       legacySource: input.legacySource,
       legacyDealId: input.legacyDealId,
     });
     const targetId = routing?.authoritativeDealId ?? input.legacyDealId;
-    if (!await this.isAuthorized(input.context, scope, targetId)) {
-      return { kind: "protected_not_found" };
-    }
+    const authorization = targetId === input.legacyDealId
+      ? logicalAuthorization
+      : await this.authorize(input.context, scope, targetId);
+    if (authorization === undefined) return { kind: "protected_not_found" };
     if (routing !== undefined && shouldReadAuthoritative(routing)) {
-      return await this.readAuthoritative(scope, routing);
+      return await this.readAuthoritative(scope, routing, authorization);
     }
-    return await this.readLegacy(input, scope, routing);
+    return await this.readLegacy(input, scope, routing, authorization);
   }
 
   /**
@@ -82,6 +95,12 @@ export class CompatibilityDealReader {
     readonly authoritativeDealId: Deal["id"];
   }): Promise<CompatibilityReadResult> {
     const scope = dealScope(input.context);
+    const authorization = await this.authorize(
+      input.context,
+      scope,
+      input.authoritativeDealId,
+    );
+    if (authorization === undefined) return { kind: "protected_not_found" };
     const routing = await this.reconciliation.findByAuthoritativeId({
       scope,
       authoritativeDealId: input.authoritativeDealId,
@@ -97,21 +116,35 @@ export class CompatibilityDealReader {
   /**
    * Exposes one Deal's persisted compatibility route for operator evidence.
    *
-   * @example await reader.routingState({ scope, legacySource, legacyDealId })
+   * @example await reader.routingState({ context, legacySource, legacyDealId })
    */
-  routingState(input: {
-    readonly scope: DealScope;
+  async routingState(input: {
+    readonly context: DealCommandContext;
     readonly legacySource: string;
     readonly legacyDealId: string;
-  }): Promise<DealReconciliationRecord | undefined> {
-    return this.reconciliation.find(input);
+  }): Promise<CompatibilityRoutingMetadata | undefined> {
+    const scope = dealScope(input.context);
+    const authorization = await this.authorize(
+      input.context,
+      scope,
+      input.legacyDealId,
+    );
+    if (authorization === undefined) return undefined;
+    const routing = await this.reconciliation.find({
+      scope,
+      legacySource: input.legacySource,
+      legacyDealId: input.legacyDealId,
+    });
+    return routing === undefined
+      ? undefined
+      : sanitizeRouting(routing, routing.routingMode);
   }
 
-  private async isAuthorized(
+  private async authorize(
     context: DealCommandContext,
     scope: DealScope,
     targetId: string,
-  ): Promise<boolean> {
+  ): Promise<AllowedAuthorizationDecision | undefined> {
     const decision = await this.authorization.authorize({
       context,
       scope,
@@ -119,12 +152,13 @@ export class CompatibilityDealReader {
       action: DEAL_ACTION.read,
       requestedFields: requestedDealFields(),
     });
-    return decision.outcome === "allow";
+    return decision.outcome === "allow" ? decision : undefined;
   }
 
   private async readAuthoritative(
     scope: DealScope,
     routing: DealReconciliationRecord,
+    authorization: AllowedAuthorizationDecision,
   ): Promise<CompatibilityReadResult> {
     if (routing.authoritativeDealId === undefined) {
       return { kind: "protected_not_found" };
@@ -134,7 +168,7 @@ export class CompatibilityDealReader {
       routing.authoritativeDealId,
     );
     if (deal === undefined) return { kind: "protected_not_found" };
-    return { kind: "loaded", source: "authoritative", deal, routing };
+    return loadedResult("authoritative", deal, authorization, routing);
   }
 
   private async readLegacy(
@@ -145,6 +179,7 @@ export class CompatibilityDealReader {
     },
     scope: DealScope,
     routing: DealReconciliationRecord | undefined,
+    authorization: AllowedAuthorizationDecision,
   ): Promise<CompatibilityReadResult> {
     const record = await this.legacy.load({
       scope,
@@ -165,8 +200,35 @@ export class CompatibilityDealReader {
     if (mapping.kind !== "mapped") {
       return { kind: "mapping_issue", issue: mapping.issue };
     }
-    return { kind: "loaded", source: "legacy", deal: mapping.deal, routing };
+    return loadedResult("legacy", mapping.deal, authorization, routing);
   }
+}
+
+export interface CompatibilityRoutingMetadata {
+  readonly source: CompatibilityReadSource;
+  readonly routingMode: "authoritative" | "legacy";
+}
+
+function loadedResult(
+  source: CompatibilityReadSource,
+  deal: Deal,
+  authorization: AllowedAuthorizationDecision,
+  routing: DealReconciliationRecord | undefined,
+): CompatibilityReadResult {
+  return {
+    kind: "loaded",
+    source,
+    value: projectDeal(deal, authorization.fieldMask),
+    authorization,
+    routing: sanitizeRouting(routing, source),
+  };
+}
+
+function sanitizeRouting(
+  routing: DealReconciliationRecord | undefined,
+  source: CompatibilityReadSource,
+): CompatibilityRoutingMetadata {
+  return { source, routingMode: routing?.routingMode ?? source };
 }
 
 function sourceMismatch(
