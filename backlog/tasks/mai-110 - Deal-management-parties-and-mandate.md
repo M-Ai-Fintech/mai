@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-02 06:57'
+updated_date: '2026-08-03 01:25'
 labels:
   - backend
   - architecture
@@ -131,4 +131,12 @@ Live PR check: PR #43 is OPEN and Draft against master with mergeStateStatus CLE
 Final live reconciliation: PR #43 head is fb60f5069ad0cbbb8c207c2235906c4cfd765c3c (commit fb60f50), Draft=true, OPEN, base=master, mergeStateStatus=CLEAN, reviewDecision empty, statusCheckRollup empty. gh 2.45.0 is authenticated as luisfelipeluis49. No approval, merge, or Done transition was performed.
 
 Post-reconciliation sync: metadata-only commit 5475873 was pushed after the prior live PR snapshot; PR #43 remains Draft and OPEN with no approval or merge. No source or test files changed after the verified implementation commit.
+
+Wave B finisher review 2026-08-02: PR #43 is merged into master at f682576 following owner review; dependencies MAI-107 and MAI-108 are Done. Merged-source review is non-passing, so MAI-110 remains In Progress and was not finalized.
+
+Passing evidence: DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/deal_management/*.spec.ts -> 23 passed, 0 failed, 2 PostgreSQL integration tests ignored because MAI106_DATABASE_URL is unset. deno fmt --check src/deal_management tests/deal_management src/api/server.ts; deno lint src/deal_management tests/deal_management src/api/server.ts; deno check src/deal_management/v1.ts src/api/server.ts; git diff --check -> passed. DENO_ENV=test deno task verify -> exit 0.
+
+Closure blockers requiring a corrective PR: (1) src/api/server.ts registers Deal Management with undefined dependencies, causing every live /api/v1/deals request to return 503; provide approved runtime composition through injected authentication, authorization, repository, receipt, clock, ID and audit/outbox ports, with a server-composition regression test. (2) MAI-110 requires legacy deal/team mapping, per-deal reconciliation, and rollback through an adapter; current migration has only reconciliation tables and rollback prose. Add bounded reconciliation/read-routing adapter evidence and operator procedure, without performing unauthorized legacy cutover. (3) Correct root AGENTS.md breaches: split all new functions over 20 lines, add intent-plus-example docstrings to public functions, replace public data names, extract duplicated route-ID parsing, and include received offending values plus expected shapes in validation errors.
+
+No feature code, Graphify update, task finalization, cleanup, finalization commit, or push was performed by this finisher because review blockers exist.
 <!-- SECTION:NOTES:END -->
