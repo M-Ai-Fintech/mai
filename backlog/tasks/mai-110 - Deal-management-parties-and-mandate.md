@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 13:54'
+updated_date: '2026-08-03 13:55'
 labels:
   - backend
   - architecture
@@ -189,6 +189,8 @@ PR #44 request-changes correction evidence (2026-08-03, final local state):\n\n-
 Local corrective commits created: ecd725a fix(MAI-110): close PR 44 review blockers; 699c1e6 chore(MAI-110): refresh graph evidence. Branch fix/MAI-110-wave-b-closure is ahead of origin by 2. Attempted git push was rejected by the external-egress safety gate because explicit authorization to publish repository code was not established; no connector workaround, PR mutation, readiness transition, approval, or merge was attempted. Owner action: explicitly authorize pushing these commits to origin/fix/MAI-110-wave-b-closure and updating Draft PR #44, or push them manually.
 
 Final re-review correction: restored graphify-out/GRAPH_REPORT.md and graphify-out/graph.json to master versions and removed both from the MAI-110 modified-file inventory. The earlier premature Graphify refresh is historical evidence only; Graphify must run once after the corrective PR is merged.
+
+Final re-review implementation evidence: safe constant authentication failures and a non-argument MAI110_OPERATOR_SESSION channel; explicit actor/identity/provider/session correlation with fail-closed authorization; exact per-operation evidence verification including claim/receipt/history/outbox/audit linkage; authorityConstraints collision preflight; reconciliation split to 424 lines; and credential-safety, identity-correlation, evidence, authority, and PostgreSQL regressions. Final focused suite: 42 passed, 0 failed, 0 ignored with MAI106_DATABASE_URL configured. Scoped fmt/lint/check and git diff --check passed. verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable offline. Repository-wide deno task test completed successfully; canonical runner was executed but its full output was truncated by the execution channel after the Deno test stream. Corrective commit f5ba394 is local; PR remains Draft and MAI-110 remains In Progress.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
