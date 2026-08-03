@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 03:40'
+updated_date: '2026-08-03 03:42'
 labels:
   - backend
   - architecture
@@ -160,4 +160,6 @@ Corrective Wave B closure evidence (2026-08-02):
 - Preflight/canonical: `deno task verify:fast` 11 passed/0 failed/5 skipped/2 unavailable under the explicit offline manifest; `DENO_ENV=test deno task verify` passed all 17 canonical categories. Root-wide `deno fmt --check` and `deno lint` still report unrelated baseline findings outside this corrective scope; no scoped changed file has those findings.
 - Governance/non-claims: no production/development cutover, no destructive migration, no legacy data deletion, no frontend/Figma changes, no provider-specific infrastructure, no permissive authentication/authorization, no Wave B finisher, and no explicit `graphify update .`. A checkout hook regenerated Graphify outputs during preflight; those outputs were restored and none are in the corrective diff. MAI-110 remains In Progress.
 - Acceptance criteria changes: none. Definition of Done changes: none. Historical failed-attempt evidence remains unchanged; this is append-only corrective evidence.
+
+Post-handoff correction (2026-08-02): final canonical verification completed before cleanup. `docker rm -f mai-110-postgres` succeeded and a subsequent named-container listing was empty; the isolated PostgreSQL container is removed. The append-only evidence commit `7f16128` was pushed to corrective PR #44; MAI-110 remains In Progress, PR #44 remains Draft/Open, and no source behavior changed after the verified implementation commits.
 <!-- SECTION:NOTES:END -->
