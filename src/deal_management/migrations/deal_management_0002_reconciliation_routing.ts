@@ -27,12 +27,23 @@ export const reconciliationRoutingMigration = defineMigration({
           confidentiality TEXT NOT NULL CHECK (
             confidentiality IN ('standard', 'sensitive', 'highly_sensitive')
           ),
-          mandate_transaction_value_ceiling NUMERIC NOT NULL CHECK (
+          mandate_transaction_value_ceiling NUMERIC CHECK (
             mandate_transaction_value_ceiling > 0
           ),
-          mandate_currency TEXT NOT NULL CHECK (mandate_currency ~ '^[A-Z]{3}$'),
-          mandate_authority_ceiling INTEGER NOT NULL CHECK (
+          mandate_currency TEXT CHECK (
+            mandate_currency IS NULL OR mandate_currency ~ '^[A-Z]{3}$'
+          ),
+          mandate_authority_ceiling INTEGER CHECK (
             mandate_authority_ceiling > 0
+          ),
+          CHECK (
+            (mandate_transaction_value_ceiling IS NULL AND
+             mandate_currency IS NULL AND
+             mandate_authority_ceiling IS NULL)
+            OR
+            (mandate_transaction_value_ceiling IS NOT NULL AND
+             mandate_currency IS NOT NULL AND
+             mandate_authority_ceiling IS NOT NULL)
           ),
           reviewed_by TEXT NOT NULL,
           reviewed_at TIMESTAMPTZ NOT NULL,

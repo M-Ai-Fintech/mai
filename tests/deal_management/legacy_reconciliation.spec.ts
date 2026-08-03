@@ -147,6 +147,68 @@ Deno.test("legacy mapper returns explicit outcomes for unsafe values", async () 
   assertEquals(missingReference.kind, "missing_required_reference");
 });
 
+Deno.test("legacy mapper accepts a Deal without mandate evidence", async () => {
+  const mapper = new DeterministicLegacyDealMapper();
+  const result = await mapper.map({
+    record: validLegacyDeal({ mandate: undefined, team: [] }),
+    scope,
+    now: context.now,
+  });
+  assertEquals(result.kind, "mapped");
+  if (result.kind === "mapped") assertEquals(result.deal.mandate, undefined);
+});
+
+Deno.test("legacy mapper rejects a team authority without a mandate ceiling", async () => {
+  const mapper = new DeterministicLegacyDealMapper();
+  const result = await mapper.map({
+    record: validLegacyDeal({ mandate: undefined }),
+    scope,
+    now: context.now,
+  });
+  assertEquals(result.kind, "conflict");
+  if (result.kind === "conflict") {
+    assertEquals(result.issue.code, "AUTHORITY_EXCEEDS_MANDATE");
+    assertEquals(result.issue.received, "1");
+  }
+});
+
+Deno.test("legacy mapper rejects every partial mandate shape", async () => {
+  const partials: readonly NonNullable<LegacyDealRecord["mandate"]>[] = [
+    { transactionValueCeiling: 100, currency: "USD" },
+    { transactionValueCeiling: 100, authorityCeiling: 2 },
+    { currency: "USD", authorityCeiling: 2 },
+  ];
+  for (const mandate of partials) {
+    const result = await new DeterministicLegacyDealMapper().map({
+      record: validLegacyDeal({ mandate, team: [] }),
+      scope,
+      now: context.now,
+    });
+    assertEquals(result.kind, "invalid_legacy_record");
+    if (result.kind === "invalid_legacy_record") {
+      assertEquals(result.issue.code, "INCOMPLETE_MANDATE");
+    }
+  }
+});
+
+Deno.test("legacy mapper rejects mandate currency and positive-value violations", async () => {
+  const invalidMandates: readonly NonNullable<LegacyDealRecord["mandate"]>[] = [
+    { transactionValueCeiling: 100, currency: "EUR", authorityCeiling: 2 },
+    { transactionValueCeiling: 0, currency: "USD", authorityCeiling: 2 },
+    { transactionValueCeiling: -1, currency: "USD", authorityCeiling: 2 },
+    { transactionValueCeiling: 100, currency: "USD", authorityCeiling: 0 },
+    { transactionValueCeiling: 100, currency: "USD", authorityCeiling: -1 },
+  ];
+  for (const mandate of invalidMandates) {
+    const result = await new DeterministicLegacyDealMapper().map({
+      record: validLegacyDeal({ mandate, team: [] }),
+      scope,
+      now: context.now,
+    });
+    assertEquals(result.kind, "invalid_legacy_record");
+  }
+});
+
 Deno.test("dry-run writes diagnostics only and creates no Deal history or outbox", async () => {
   const fixture = executorFixture(validLegacyDeal());
   const result = await fixture.executor.run({

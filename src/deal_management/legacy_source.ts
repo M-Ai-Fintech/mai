@@ -26,6 +26,20 @@ export class LegacyScopeMappingError extends Error {
 }
 
 /**
+ * Rejects a reviewed mapping whose mandate columns violate the all-or-none contract.
+ *
+ * @example throw new LegacyMandateMappingError(legacyDealId, received)
+ */
+export class LegacyMandateMappingError extends Error {
+  constructor(legacyDealId: string, received: string) {
+    super(
+      `Legacy Deal "${legacyDealId}" has mandate mapping "${received}"; expected all mandate values or none.`,
+    );
+    this.name = "LegacyMandateMappingError";
+  }
+}
+
+/**
  * Provides fixture records for focused tests without a production fallback.
  *
  * @example const source = new InMemoryLegacyDealSource([record])
@@ -93,9 +107,9 @@ interface LegacyDealMappingRow {
   readonly tenantId: DealScope["tenantId"];
   readonly workspaceId: DealScope["workspaceId"];
   readonly confidentiality: LegacyDealRecord["confidentiality"];
-  readonly mandateValue: string;
-  readonly mandateCurrency: string;
-  readonly mandateAuthority: number;
+  readonly mandateValue: string | null;
+  readonly mandateCurrency: string | null;
+  readonly mandateAuthority: number | null;
 }
 
 interface LegacyTransactionRow {
@@ -282,7 +296,7 @@ function legacyDealFields(
     dealType: deal.dealType ?? undefined,
     confidentiality: mapping.confidentiality,
     currency: deal.currency ?? undefined,
-    mandate: mappedMandate(mapping),
+    mandate: mappedMandate(mapping, deal.id),
     sourceUpdatedAt: sourceTimestamp,
     sourceVersion: sourceTimestamp,
   };
@@ -290,11 +304,21 @@ function legacyDealFields(
 
 function mappedMandate(
   mapping: LegacyDealMappingRow,
-): NonNullable<LegacyDealRecord["mandate"]> {
+  legacyDealId: string,
+): LegacyDealRecord["mandate"] {
+  const values = [
+    mapping.mandateValue,
+    mapping.mandateCurrency,
+    mapping.mandateAuthority,
+  ];
+  if (values.every((value) => value === null)) return undefined;
+  if (values.some((value) => value === null)) {
+    throw new LegacyMandateMappingError(legacyDealId, JSON.stringify(values));
+  }
   return {
     transactionValueCeiling: Number(mapping.mandateValue),
-    currency: mapping.mandateCurrency,
-    authorityCeiling: mapping.mandateAuthority,
+    currency: mapping.mandateCurrency!,
+    authorityCeiling: mapping.mandateAuthority!,
   };
 }
 

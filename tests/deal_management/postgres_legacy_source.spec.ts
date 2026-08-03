@@ -21,6 +21,8 @@ const dealId = "10000000-0000-4000-8000-000000000001";
 const unmappedDealId = "10000000-0000-4000-8000-000000000002";
 const partyId = "20000000-0000-4000-8000-000000000001";
 const advisorId = "30000000-0000-4000-8000-000000000001";
+const noMandateDealId = "10000000-0000-4000-8000-000000000003";
+const partialMandateDealId = "10000000-0000-4000-8000-000000000004";
 const scope = {
   tenantId: requiredTenantId("tenant_postgres-legacy"),
   workspaceId: requiredWorkspaceId("workspace_postgres-legacy"),
@@ -61,6 +63,7 @@ Deno.test({
       const transactions = new PostgresTransactionRunner(pool);
       const source = new PostgresLegacyDealSource(transactions);
       await assertProductionMapping(transactions, source);
+      await assertOptionalMandateMapping(pool, source);
       await assertScopeRejections(source);
     } finally {
       await cleanDatabase(pool).catch(() => {});
@@ -88,6 +91,45 @@ async function assertProductionMapping(
   assertEquals(mapped.kind, "mapped");
   if (mapped.kind !== "mapped") return;
   assertMappedDeal(mapped.deal);
+}
+
+async function assertOptionalMandateMapping(
+  pool: ReturnType<typeof createMai106Pool>,
+  source: PostgresLegacyDealSource,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO transaction (id, title, code, currency, created_at, updated_at)
+     VALUES ($1, 'No mandate Deal', 'LEGACY-3', 'USD', now(), now()),
+            ($2, 'Partial mandate Deal', 'LEGACY-4', 'USD', now(), now())`,
+    [noMandateDealId, partialMandateDealId],
+  );
+  await pool.query(
+    `INSERT INTO deal_management.legacy_deal_mappings
+      (legacy_source, legacy_record_id, tenant_id, workspace_id,
+       confidentiality, mandate_transaction_value_ceiling, mandate_currency,
+       mandate_authority_ceiling, reviewed_by, reviewed_at)
+     VALUES ('core.legacy_transaction', $1, $2, $3, 'standard', NULL, NULL,
+             NULL, 'operator_reviewed', now())`,
+    [noMandateDealId, scope.tenantId, scope.workspaceId],
+  );
+  const noMandate = await source.load({
+    scope,
+    legacyDealId: noMandateDealId,
+  });
+  assertEquals(noMandate?.mandate, undefined);
+  await assertRejects(
+    () =>
+      pool.query(
+        `INSERT INTO deal_management.legacy_deal_mappings
+        (legacy_source, legacy_record_id, tenant_id, workspace_id,
+         confidentiality, mandate_transaction_value_ceiling, mandate_currency,
+         mandate_authority_ceiling, reviewed_by, reviewed_at)
+       VALUES ('core.legacy_transaction', $1, $2, $3, 'standard', 100, 'USD',
+               NULL, 'operator_reviewed', now())`,
+        [partialMandateDealId, scope.tenantId, scope.workspaceId],
+      ),
+    Error,
+  );
 }
 
 function assertMappedDeal(

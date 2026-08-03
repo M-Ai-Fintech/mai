@@ -107,6 +107,10 @@ async function applyMandate(
   if (record.mandate === undefined) return { kind: "ok", deal };
   const mandate = record.mandate;
   if (isIncompleteMandate(mandate)) return missingMandate(record, mandate);
+  if (
+    mandate.transactionValueCeiling! <= 0 ||
+    mandate.authorityCeiling! <= 0
+  ) return invalidMandate(record, new Error("mandate values must be positive"));
   try {
     return {
       kind: "ok",
@@ -157,13 +161,27 @@ function missingMandate(
   mandate: NonNullable<LegacyDealRecord["mandate"]>,
 ): LegacyMappingResult {
   return issueResult(
-    "missing_required_reference",
+    "invalid_legacy_record",
     issue(
-      "MISSING_REQUIRED_FIELD",
+      "INCOMPLETE_MANDATE",
       record,
-      JSON.stringify(mandate),
+      incompleteMandateSummary(mandate),
       "mandate transactionValueCeiling, currency, and authorityCeiling",
       "Mandate-like legacy data is incomplete and cannot be promoted.",
     ),
   );
+}
+
+function incompleteMandateSummary(
+  mandate: NonNullable<LegacyDealRecord["mandate"]>,
+): string {
+  return JSON.stringify({
+    transactionValueCeiling: mandate.transactionValueCeiling === undefined
+      ? "undefined"
+      : "present",
+    currency: mandate.currency === undefined ? "undefined" : "present",
+    authorityCeiling: mandate.authorityCeiling === undefined
+      ? "undefined"
+      : "present",
+  });
 }

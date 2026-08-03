@@ -43,8 +43,40 @@ Deno.test("Deal Management migration is additive, scoped, and rollback-safe", ()
     ),
   );
   assert(
+    routingMigration?.statements[0]?.sql.includes(
+      "mandate_transaction_value_ceiling IS NULL",
+    ),
+  );
+  assert(
+    routingMigration?.statements[0]?.sql.includes(
+      "mandate_currency IS NULL",
+    ),
+  );
+  assert(
+    routingMigration?.statements[0]?.sql.includes(
+      "mandate_authority_ceiling IS NULL",
+    ),
+  );
+  assert(
     !/\bDROP\s+(TABLE|SCHEMA)\b/i.test(
       routingMigration?.statements[0]?.sql ?? "",
+    ),
+  );
+});
+
+Deno.test("reconciliation mandate values are all present or all absent", () => {
+  const sql = (dealManagementMigrations[1]?.statements[0]?.sql ?? "")
+    .replace(/\s+/g, " ");
+  assert(sql.includes("mandate_transaction_value_ceiling > 0"));
+  assert(sql.includes("mandate_authority_ceiling > 0"));
+  assert(
+    sql.includes(
+      "mandate_transaction_value_ceiling IS NULL AND mandate_currency IS NULL AND mandate_authority_ceiling IS NULL",
+    ),
+  );
+  assert(
+    sql.includes(
+      "mandate_transaction_value_ceiling IS NOT NULL AND mandate_currency IS NOT NULL AND mandate_authority_ceiling IS NOT NULL",
     ),
   );
 });

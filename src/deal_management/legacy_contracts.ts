@@ -68,6 +68,7 @@ export interface LegacyDealSource {
 
 export type LegacyMappingIssueCode =
   | "MISSING_REQUIRED_FIELD"
+  | "INCOMPLETE_MANDATE"
   | "INVALID_CURRENCY"
   | "UNSUPPORTED_DEAL_TYPE"
   | "DUPLICATE_PARTY"
