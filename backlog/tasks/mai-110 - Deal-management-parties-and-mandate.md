@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 13:55'
+updated_date: '2026-08-03 18:58'
 labels:
   - backend
   - architecture
@@ -127,7 +127,7 @@ Extra-large complexity; Wave 4 serial core domain. Recommended model: gpt-5.6-so
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-PR #44 review correction plan (approved 2026-08-03):\n1. Reconcile all six blocking findings and the function-length standards finding against the current branch head, retaining already-correct later work.\n2. Add a repository-owned executable API bootstrap that loads environment configuration, constructs approved Identity Access authentication, authoritative authorization, PostgreSQL composition, and router dependencies; make import.meta.main execute it with fail-closed startup/readiness behavior.\n3. Make the default PostgreSQL legacy source tenant/workspace-bound and supply a concrete governed reference resolver plus explicit confidentiality/team-authority mapping evidence; reject unprovable scope and mappings.\n4. Complete pre-write reconciliation collision validation and regression evidence proving a conflicting authoritative Deal remains byte/version/history/receipt/outbox unchanged.\n5. Expand verify to inspect intended fingerprint/document, aggregate history/version, command receipts/claims, outbox and audit linkage, then transactionally persist verified status and authoritative routing; cover recovery from applied.\n6. Commit a repository-owned operator runtime factory using the same production composition, authenticated/authorized operator context, real PostgreSQL source/resolver/mapper/repository/store, and deterministic resource cleanup; update doc-38 to its real path.\n7. Make routing compare-and-swap safe in one transaction and add competing PostgreSQL route coverage with one deterministic stale failure.\n8. Split touched functions above 20 lines while preserving repository standards and add PostgreSQL integration coverage for executable bootstrap, production legacy source, cross-scope rejection, verification recovery, and routing concurrency.\n9. Run focused tests, scoped format/lint/check, git diff --check, verify:fast, and all 17 canonical verification categories; append exact pass/fail/ignored evidence without removing earlier chronology.\n10. Update Draft PR #44 and MAI-110 evidence, keep both unapproved/In Progress, and re-review the new head without merging or marking ready.
+Serial PR #44 correction chain: T1 exact session identity; T2 compatibility authorization and projections; T3 explicit environment and pool ownership; T4 canonical migration identity; T5 optional mandate mapping; T6 production-path dry-run; T7 exact evidence manifest; T8 atomic verification; T9 bounded issue evidence; T10 fresh PostgreSQL integration, scoped verification, governed doc/evidence/PR reconciliation. Use one branch and exact commit per task, preserve Draft/Open/Unmerged/Unapproved and In Progress, and do not push or run Graphify.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -192,6 +192,53 @@ Final re-review correction: restored graphify-out/GRAPH_REPORT.md and graphify-o
 
 Final re-review implementation evidence: safe constant authentication failures and a non-argument MAI110_OPERATOR_SESSION channel; explicit actor/identity/provider/session correlation with fail-closed authorization; exact per-operation evidence verification including claim/receipt/history/outbox/audit linkage; authorityConstraints collision preflight; reconciliation split to 424 lines; and credential-safety, identity-correlation, evidence, authority, and PostgreSQL regressions. Final focused suite: 42 passed, 0 failed, 0 ignored with MAI106_DATABASE_URL configured. Scoped fmt/lint/check and git diff --check passed. verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable offline. Repository-wide deno task test completed successfully; canonical runner was executed but its full output was truncated by the execution channel after the Deno test stream. Corrective commit f5ba394 is local; PR remains Draft and MAI-110 remains In Progress.
 <!-- SECTION:NOTES:END -->
+
+## Comments
+
+<!-- COMMENTS:BEGIN -->
+created: 2026-08-03 18:12
+---
+Final corrective verification (2026-08-03, local unpublished head 151dff39bbce9aff837091381f931321fa390652):
+
+- Serial task commits: cdcf40c (T1), c15fc44 (T2), 7f0bceb (T3), ccc009c (T4), b4e50f1 (T5), eb14be7 (T6), 16318d7 (T7), 07f013f (T8), 6cbe24d (T9), and 151dff3 (T10).
+- Exact isolated PostgreSQL 16 command tests/deal_management/*.spec.ts: 80 passed, 0 failed, 0 ignored; exit 0. The related Identity Access, authorization, audit, outbox/events, persistence, and API suites: 120 passed, 0 failed, 0 ignored; exit 0.
+- Scoped PR TypeScript deno fmt --check: 47 files checked, exit 0. Scoped deno lint: 47 files checked, exit 0. deno check src/deal_management/v1.ts, src/api/server.ts, scripts/deal_reconciliation.ts, and scripts/mai_110_runtime.ts: each exit 0. git diff --check: exit 0.
+- deno task verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable; command exit 0, but skipped/unavailable categories remain non-passing for a complete readiness gate.
+- DENO_ENV=test deno task verify: sandbox execution reached frontend/build checks after backend stages but hit gui/scripts/verify-frontend-foundation.mjs spawnSync git EPERM and stalled; it was stopped with exit 130. The elevated retry was rejected by the execution service with 503 no healthy upstream. Canonical verification therefore remains non-passing and no 17/17 pass claim is made.
+- Governance chronology preserved: Graphify was run prematurely in historical work; generated output was restored after automatic checkout hooks; no Graphify output is in the corrective commits; the Wave B finisher retains the final Graphify run. No explicit graphify update was run in this correction.
+- MAI-110 remains In Progress. PR #44 remains Draft, Open, Unmerged, and Unapproved; remote head remains 7b4647a while 151dff3 is local and unpublished. No merge, approval, ready transition, Done transition, push, cutover, deletion, destructive migration, frontend/Figma work, or provider certification occurred.
+---
+
+created: 2026-08-03 18:24
+---
+Canonical category matrix (individual command capture, 2026-08-03; the aggregate canonical runner remained non-passing):
+
+1. Canonical documentation — PASS, exit 0.
+2. I18n Strings Check — PASS, exit 0.
+3. Deno tests — PASS command, 517 passed, 0 failed, 1 ignored; exit 0. Ignored e2e flow smoke means this category is not a complete gate.
+4. Frontend design tokens — PASS, exit 0.
+5. Frontend foundation boundary — FAIL, exit 1: spawnSync git EPERM in the sandbox.
+6. Frontend component boundary — PASS, exit 0.
+7. Frontend shell boundary — PASS, exit 0.
+8. Frontend screen families — PASS, exit 0.
+9. Frontend deal intelligence screens — PASS, exit 0.
+10. Frontend deal execution screens — PASS, exit 0.
+11. Frontend Figma-to-code conformance — PASS, exit 0.
+12. GUI unit tests — PASS, 34 files/92 tests, exit 0.
+13. Next.js production build — TIMEOUT, exit 124 after 30 seconds at optimized production build.
+14. Frontend principal workflows — FAIL, exit 1: Next server exited before readiness.
+15. Storybook documentation — PASS, exit 0.
+16. Storybook build — PASS, exit 0.
+17. Storybook interaction tests — FAIL, exit 1: listen EPERM on 127.0.0.1; no tests executed.
+
+Aggregate DENO_ENV=test deno task verify was stopped with exit 130 after the sandbox frontend/build stall; the elevated retry was rejected by the execution service with 503 no healthy upstream. Therefore canonical verification is explicitly non-passing, and no 17/17 pass claim is made.
+---
+
+created: 2026-08-03 18:58
+---
+Final local canonical correction (2026-08-03, unpublished head 7340828): owner authorized the narrow GUI verification scope. Commit 7340828 makes the GUI build explicitly use the stable Webpack compiler, makes the foundation verifier independent of a Node-to-git subprocess, and fixes duplicate React list keys; it contains no visual or Figma redesign. Fresh PostgreSQL 16 focused Deal suite: 80 passed, 0 failed, 0 ignored. Related Identity Access, authorization, audit, outbox/events, persistence, and API suite: 120 passed, 0 failed. Static: backend 47 changed TypeScript files passed deno fmt --check and deno lint; GUI ScreenBody.tsx passed deno fmt --check and npm --prefix gui run lint; required production entry points passed deno check; git diff --check passed. deno task verify:fast exited 0 with 11 passed, 5 skipped, 2 unavailable by its declared offline profile. DENO_ENV=test MAI106_DATABASE_URL=<isolated local PostgreSQL 16 URL> deno task verify exited 0 with all 17 canonical categories PASS, including production build, localhost workflow, Storybook build, and 133 interaction tests. The named isolated container was removed after testing. The commit hook regenerated Graphify output; graphify-out/GRAPH_REPORT.md and graphify-out/graph.json were restored and are excluded. MAI-110 remains In Progress and PR #44 remains Draft/Open/Unmerged/Unapproved because the local head is not pushed; no readiness, approval, merge, Done transition, cutover, deletion, or provider certification occurred.
+---
+<!-- COMMENTS:END -->
 
 ## Final Summary
 
