@@ -19,7 +19,12 @@ import type {
   WorkspaceId,
 } from "../platform/api/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
-import { parseIdempotencyKey } from "../platform/api/v1.ts";
+import {
+  parseIdempotencyKey,
+  parseJobId,
+  parseOperationId,
+} from "../platform/api/v1.ts";
+import { parseDocumentId } from "./ids.ts";
 
 export type DocumentJobType =
   | "documents.upload"
@@ -54,10 +59,26 @@ export function createDocumentJob(input: DocumentJobInput): DocumentJobInput {
     );
   }
   assertJobDefinition(input);
+  assertProcessReference(input);
   return Object.freeze({
     ...input,
     inputVersionReferences: Object.freeze([...input.inputVersionReferences]),
   });
+}
+
+function assertProcessReference(input: DocumentJobInput): void {
+  if (input.jobType !== "documents.process") return;
+  const reference = input.inputVersionReferences[0];
+  const documentId = reference?.documentId;
+  if (
+    reference?.aggregateType === "DocumentVersion" && documentId !== undefined
+  ) {
+    const parsed = parseDocumentId(documentId);
+    if (parsed.ok) return;
+  }
+  throw new Error(
+    `Document process job "${input.jobId}" has no authorized document ID; expected a valid documentId on its DocumentVersion input reference.`,
+  );
 }
 
 export async function deriveDocumentIdempotencyKey(input: {
@@ -77,6 +98,29 @@ export async function deriveDocumentIdempotencyKey(input: {
   throw new Error(
     `Derived document idempotency key for "${input.targetId}" was invalid; expected an idem_ identifier.`,
   );
+}
+
+export async function deriveDocumentDurableIdentifiers(input: {
+  readonly tenantId: TenantId;
+  readonly workspaceId: WorkspaceId;
+  readonly dealId: DealId;
+  readonly actorId: ActorId;
+  readonly commandType: string;
+  readonly documentId: string;
+  readonly idempotencyKey: IdempotencyKey;
+  readonly payloadDigest: string;
+}): Promise<{ readonly jobId: JobId; readonly operationId: OperationId }> {
+  const digest = await payloadDigest({
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId,
+    dealId: input.dealId,
+    actorId: input.actorId,
+    commandType: input.commandType,
+    documentId: input.documentId,
+    idempotencyKey: input.idempotencyKey,
+    payloadDigest: input.payloadDigest,
+  });
+  return identifiersFromDigest(digest);
 }
 
 export async function enqueueDocumentJob(
@@ -110,5 +154,21 @@ export function documentJobAggregateVersion(value: number): AggregateVersion {
   }
   throw new Error(
     `Document job aggregate version "${value}" is invalid; expected a positive safe integer.`,
+  );
+}
+
+function identifiersFromDigest(digest: string): {
+  readonly jobId: JobId;
+  readonly operationId: OperationId;
+} {
+  const jobId = `job_${digest.slice(0, 48)}`;
+  const operationId = `op_${digest.slice(0, 60)}`;
+  const parsedJobId = parseJobId(jobId);
+  const parsedOperationId = parseOperationId(operationId);
+  if (parsedJobId.ok && parsedOperationId.ok) {
+    return { jobId: parsedJobId.value, operationId: parsedOperationId.value };
+  }
+  throw new Error(
+    `Document command digest "${digest}" could not produce durable identifiers; expected a lowercase SHA-256 digest.`,
   );
 }

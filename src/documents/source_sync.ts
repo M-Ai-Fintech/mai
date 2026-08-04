@@ -36,7 +36,8 @@ export class DocumentSourceSyncService {
   async synchronize(): Promise<SourceSyncResult> {
     const page = await this.listPage();
     const result = await this.ingestPage(page.documents);
-    if (page.nextCursor !== undefined) {
+    const canAdvance = result.failures.length === 0 && result.skipped === 0;
+    if (canAdvance && page.nextCursor !== undefined) {
       await this.dependencies.updateCursor(
         page.nextCursor,
         page.providerVersion,
@@ -44,8 +45,9 @@ export class DocumentSourceSyncService {
     }
     return {
       ...result,
-      cursor: page.nextCursor,
-      providerVersion: page.providerVersion,
+      ...(canAdvance && page.nextCursor !== undefined
+        ? { cursor: page.nextCursor, providerVersion: page.providerVersion }
+        : {}),
     };
   }
 
@@ -95,14 +97,14 @@ export class DocumentSourceSyncService {
     if (this.dependencies.upload === undefined) {
       return invalidProviderMetadata(this.dependencies.provider.provider);
     }
-    const command = await this.dependencies.resolveUpload(
-      this.dependencies.source,
-      document,
-    );
-    if (command === undefined) {
-      return invalidProviderMetadata(this.dependencies.provider.provider);
-    }
     try {
+      const command = await this.dependencies.resolveUpload(
+        this.dependencies.source,
+        document,
+      );
+      if (command === undefined) {
+        return invalidProviderMetadata(this.dependencies.provider.provider);
+      }
       const content = await this.dependencies.provider.downloadDocument({
         providerWorkspaceId: this.dependencies.source.providerWorkspaceId!,
         providerDocumentId: document.providerDocumentId,

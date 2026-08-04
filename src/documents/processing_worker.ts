@@ -18,7 +18,7 @@ import type { DocumentVersion } from "./version.ts";
 import { createDerivedArtifact, type DerivedArtifact } from "./processing.ts";
 import type { DocumentScope, ObjectReference } from "./model.ts";
 import type { DocumentVersionId } from "./ids.ts";
-import { parseDocumentVersionId } from "./ids.ts";
+import { parseDocumentId, parseDocumentVersionId } from "./ids.ts";
 import type { ObjectStore } from "./object_store.ts";
 
 export interface ExactDocumentVersionReader {
@@ -32,25 +32,15 @@ export class ExactDocumentVersionChecker implements JobInputVersionChecker {
   constructor(private readonly versions: ExactDocumentVersionReader) {}
 
   async recheck(job: ClaimedJob): Promise<boolean> {
-    const reference = job.inputVersionReferences[0];
-    if (
-      reference === undefined ||
-      reference.aggregateType !== "DocumentVersion" ||
-      job.workspaceId === undefined || job.dealId === undefined
-    ) {
-      return false;
-    }
-    const documentVersionId = parseDocumentVersionId(reference.aggregateId);
-    if (!documentVersionId.ok) return false;
+    const reference = documentVersionReference(job);
+    if (reference === undefined) return false;
     const version = await this.versions.findExact(
-      {
-        tenantId: job.tenantId,
-        workspaceId: job.workspaceId,
-        dealId: job.dealId,
-      },
-      documentVersionId.value,
+      reference.scope,
+      reference.documentVersionId,
     );
-    return version !== undefined && version.versionNumber === reference.version;
+    return version !== undefined && sameScope(version.scope, reference.scope) &&
+      version.documentId === reference.documentId &&
+      version.versionNumber === reference.version;
   }
 }
 
@@ -90,6 +80,7 @@ export class DocumentProcessingExecutor implements JobExecutor {
     const version = await this.loadVersion(job);
     await context.beforeExternalEffect();
     const content = await this.objectStore.readObject(version.objectReference);
+    await context.beforeExternalEffect();
     const draft = await this.processor.process(version, content);
     const artifact = createDerivedArtifact({
       derivedArtifactId: draft.derivedArtifactId,
@@ -108,35 +99,25 @@ export class DocumentProcessingExecutor implements JobExecutor {
   }
 
   private async loadVersion(job: ClaimedJob): Promise<DocumentVersion> {
-    const reference = job.inputVersionReferences[0];
-    if (
-      reference === undefined ||
-      reference.aggregateType !== "DocumentVersion" ||
-      job.workspaceId === undefined || job.dealId === undefined
-    ) {
+    const reference = documentVersionReference(job);
+    if (reference === undefined) {
       throw new Error(
         `Document job "${job.jobId}" has no exact version scope; expected tenant/workspace/deal input reference.`,
       );
     }
-    const documentVersionId = parseDocumentVersionId(reference.aggregateId);
-    if (!documentVersionId.ok) {
-      throw new Error(
-        `Document job "${job.jobId}" referenced version "${reference.aggregateId}"; expected a docver_ identifier.`,
-      );
-    }
     const version = await this.versions.findExact(
-      {
-        tenantId: job.tenantId,
-        workspaceId: job.workspaceId,
-        dealId: job.dealId,
-      },
-      documentVersionId.value,
+      reference.scope,
+      reference.documentVersionId,
     );
-    if (version !== undefined && version.versionNumber === reference.version) {
+    if (
+      version !== undefined && sameScope(version.scope, reference.scope) &&
+      version.documentId === reference.documentId &&
+      version.versionNumber === reference.version
+    ) {
       return version;
     }
     throw new Error(
-      `STALE_DOCUMENT_VERSION: job "${job.jobId}" referenced "${reference.aggregateId}" version "${reference.version}"; expected the exact immutable version.`,
+      `STALE_DOCUMENT_VERSION: job "${job.jobId}" referenced "${reference.documentVersionId}" version "${reference.version}" for document "${reference.documentId}"; expected the exact immutable version in the authorized scope.`,
     );
   }
 }
@@ -174,6 +155,7 @@ export class DocumentProcessingWorker {
       clock: dependencies.clock,
       failurePolicy: dependencies.failurePolicy,
       audit: dependencies.audit,
+      allowedJobTypes: ["documents.process"],
     });
   }
 
@@ -183,4 +165,39 @@ export class DocumentProcessingWorker {
   ): Promise<JobWorkerOutcome> {
     return this.worker.executeOne(workerId, leaseMilliseconds);
   }
+}
+
+interface DocumentVersionJobReference {
+  readonly scope: DocumentScope;
+  readonly documentId: DocumentVersion["documentId"];
+  readonly documentVersionId: DocumentVersionId;
+  readonly version: DocumentVersion["versionNumber"];
+}
+
+function documentVersionReference(
+  job: ClaimedJob,
+): DocumentVersionJobReference | undefined {
+  if (job.workspaceId === undefined || job.dealId === undefined) {
+    return undefined;
+  }
+  const reference = job.inputVersionReferences[0];
+  if (reference?.aggregateType !== "DocumentVersion") return undefined;
+  const documentId = parseDocumentId(reference.documentId);
+  const documentVersionId = parseDocumentVersionId(reference.aggregateId);
+  if (!documentId.ok || !documentVersionId.ok) return undefined;
+  return {
+    scope: {
+      tenantId: job.tenantId,
+      workspaceId: job.workspaceId,
+      dealId: job.dealId,
+    },
+    documentId: documentId.value,
+    documentVersionId: documentVersionId.value,
+    version: reference.version,
+  };
+}
+
+function sameScope(left: DocumentScope, right: DocumentScope): boolean {
+  return left.tenantId === right.tenantId &&
+    left.workspaceId === right.workspaceId && left.dealId === right.dealId;
 }

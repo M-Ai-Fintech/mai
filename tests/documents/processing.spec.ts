@@ -128,7 +128,7 @@ Deno.test("processing rechecks the exact immutable version before reading or pro
   });
   assertEquals(result.resultReference, "artifact_text-v1");
   assertEquals(artifacts.values.length, 1);
-  assertEquals(beforeEffectCalls, 1);
+  assertEquals(beforeEffectCalls, 2);
 
   const stale = fixtureClaimedJob(version.documentVersionId, 2);
   await assertRejects(
@@ -342,6 +342,7 @@ function fixtureClaimedJob(
       aggregateType: "DocumentVersion",
       aggregateId: versionId,
       version: requiredId(version, parseAggregateVersion),
+      documentId: "doc_contract",
     }],
   };
 }
@@ -391,6 +392,7 @@ function fixtureJob() {
       aggregateType: "DocumentVersion",
       aggregateId: "docver_contract-v1",
       version: requiredId(1, parseAggregateVersion),
+      documentId: "doc_contract",
     }],
     payload: { documentVersionId: "docver_contract-v1" },
     timeoutAt: timestamp("2026-08-03T12:30:00.000Z"),

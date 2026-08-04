@@ -111,6 +111,10 @@ Deno.test("documents v1 commands require If-Match and deterministic idempotency"
     scheduler.input?.inputVersionReferences?.[0].aggregateType,
     "DocumentVersion",
   );
+  assertEquals(
+    scheduler.input?.inputVersionReferences?.[0].documentId,
+    "doc_contract",
+  );
 
   const missingIfMatch = await route(
     application,

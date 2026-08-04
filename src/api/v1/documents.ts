@@ -19,7 +19,7 @@ import { type DocumentId, parseDocumentId } from "../../documents/ids.ts";
 import type { JobInputVersionReference } from "../../platform/jobs/v1.ts";
 import type { DocumentListOptions } from "../../documents/repository.ts";
 import { deriveDocumentIdempotencyKey } from "../../documents/jobs.ts";
-import { payloadDigest } from "../../platform/persistence/v1.ts";
+import { payloadDigest as canonicalPayloadDigest } from "../../platform/persistence/v1.ts";
 import { IdempotencyConflictError } from "../../platform/persistence/v1.ts";
 
 export type DocumentApiAction = "read" | "upload" | "sync" | "process";
@@ -205,7 +205,7 @@ export class DocumentsV1Application {
     if (expectedKey !== input.idempotencyKey) {
       return idempotencyConflict(context);
     }
-    const payloadDigest = await commandDigest(input);
+    const payloadDigest = await commandDigest(context, scope, input);
     try {
       const result = await this.scheduler.schedule({
         ...input,
@@ -274,13 +274,27 @@ function scopeFromContext(context: RequestContext): DocumentScope | undefined {
   };
 }
 
-async function commandDigest(input: DocumentCommandInput): Promise<string> {
-  return await payloadDigest({
+async function commandDigest(
+  context: RequestContext,
+  scope: DocumentScope,
+  input: DocumentCommandInput,
+): Promise<string> {
+  const commandPayloadDigest = await canonicalPayloadDigest({
     action: input.action,
     commandType: input.commandType,
     documentId: input.documentId,
     expectedVersion: input.expectedVersion,
     payload: input.payload,
+  });
+  return await canonicalPayloadDigest({
+    tenantId: context.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+    actorId: context.actorId,
+    commandType: input.commandType,
+    documentId: input.documentId,
+    idempotencyKey: input.idempotencyKey,
+    payloadDigest: commandPayloadDigest,
   });
 }
 

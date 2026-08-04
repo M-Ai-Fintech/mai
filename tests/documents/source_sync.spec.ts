@@ -3,9 +3,17 @@ import { collectAndChecksum } from "../../src/documents/checksum.ts";
 import { FakeObjectStore } from "../../src/documents/object_store.ts";
 import {
   DocumentProviderFailure,
+  type DocumentSourceProvider,
   FakeDocumentSourceProvider,
   normalizeProviderError,
+  type SourceDocument,
+  type SourceDocumentPage,
 } from "../../src/documents/source_provider.ts";
+import type { ByteSource } from "../../src/documents/checksum.ts";
+import type {
+  ProviderCapabilities,
+  ProviderMarker,
+} from "../../src/documents/source.ts";
 import { DocumentSourceSyncService } from "../../src/documents/source_sync.ts";
 import {
   DocumentUploadService,
@@ -59,7 +67,7 @@ Deno.test("upload stores a versioned object and duplicate source retries do not 
   assertEquals(new TextDecoder().decode(retained.bytes), "contract");
 });
 
-Deno.test("source sync normalizes missing provider identity and advances cursor only after ingestion", async () => {
+Deno.test("source sync records missing provider identity without advancing the cursor", async () => {
   const provider = new FakeDocumentSourceProvider({
     provider: createProviderMarker("fixture"),
     capabilities: {
@@ -94,7 +102,8 @@ Deno.test("source sync normalizes missing provider identity and advances cursor 
   assertEquals(result.created, 0);
   assertEquals(result.skipped, 1);
   assertEquals(result.failures[0].code, "INVALID_PROVIDER_METADATA");
-  assertEquals(cursorUpdate, "cursor-v2");
+  assertEquals(result.cursor, undefined);
+  assertEquals(cursorUpdate, undefined);
 });
 
 Deno.test("provider failures are normalized without exposing raw provider errors", async () => {
@@ -114,6 +123,95 @@ Deno.test("provider failures are normalized without exposing raw provider errors
     Error,
     "raw provider secret",
   );
+});
+
+Deno.test("successful source pages advance and duplicate pages remain idempotent", async () => {
+  const document = providerDocument("provider-contract");
+  const provider = fakeProvider([document], {
+    "provider-contract": new TextEncoder().encode("contract"),
+  });
+  const objectStore = new FakeObjectStore();
+  const versions = new InMemoryVersionSink();
+  const updates: string[] = [];
+  const service = syncService(provider, objectStore, versions, updates);
+
+  const first = await service.synchronize();
+  const second = await service.synchronize();
+  assertEquals(first, {
+    created: 1,
+    duplicates: 0,
+    skipped: 0,
+    failures: [],
+    cursor: "cursor-next",
+    providerVersion: "provider-v2",
+  });
+  assertEquals(second.created, 0);
+  assertEquals(second.duplicates, 1);
+  assertEquals(second.cursor, "cursor-next");
+  assertEquals(updates, ["cursor-next", "cursor-next"]);
+  assertEquals(versions.values.length, 1);
+});
+
+Deno.test("partial source pages retain successful and failed accounting without advancing", async () => {
+  const provider = fakeProvider([
+    providerDocument("provider-contract"),
+    { name: "missing-id.pdf", mimeType: "application/pdf" },
+  ], { "provider-contract": new TextEncoder().encode("contract") });
+  const objectStore = new FakeObjectStore();
+  const versions = new InMemoryVersionSink();
+  const updates: string[] = [];
+  const result = await syncService(provider, objectStore, versions, updates)
+    .synchronize();
+
+  assertEquals(result.created, 1);
+  assertEquals(result.duplicates, 0);
+  assertEquals(result.skipped, 1);
+  assertEquals(result.failures.length, 1);
+  assertEquals(result.failures[0].code, "INVALID_PROVIDER_METADATA");
+  assertEquals(result.cursor, undefined);
+  assertEquals(updates, []);
+  assertEquals(versions.values.length, 1);
+});
+
+Deno.test("provider download failure keeps the source cursor retryable", async () => {
+  const provider = fakeProvider([providerDocument("provider-missing")], {});
+  const updates: string[] = [];
+  const result = await syncService(
+    provider,
+    new FakeObjectStore(),
+    new InMemoryVersionSink(),
+    updates,
+  ).synchronize();
+
+  assertEquals(result.created, 0);
+  assertEquals(result.failures[0].code, "NOT_FOUND");
+  assertEquals(result.cursor, undefined);
+  assertEquals(updates, []);
+});
+
+Deno.test("retrying a failed page creates once, then advances as a duplicate", async () => {
+  const provider = new RetryingSourceProvider(
+    providerDocument("provider-retry"),
+  );
+  const objectStore = new FakeObjectStore();
+  const versions = new InMemoryVersionSink();
+  const updates: string[] = [];
+  const service = syncService(provider, objectStore, versions, updates);
+
+  const failed = await service.synchronize();
+  assertEquals(failed.created, 0);
+  assertEquals(failed.failures[0].code, "NOT_FOUND");
+  assertEquals(failed.cursor, undefined);
+
+  provider.available = true;
+  const recovered = await service.synchronize();
+  const replay = await service.synchronize();
+  assertEquals(recovered.created, 1);
+  assertEquals(recovered.cursor, "cursor-next");
+  assertEquals(replay.duplicates, 1);
+  assertEquals(replay.cursor, "cursor-next");
+  assertEquals(versions.values.length, 1);
+  assertEquals(updates, ["cursor-next", "cursor-next"]);
 });
 
 async function* chunks(values: readonly string[]): AsyncIterable<Uint8Array> {
@@ -168,6 +266,108 @@ function uploadCommand(
     objectKey: "documents/doc_contract/docver_contract-v1",
     storageVersion: "storage-v1",
     requestedAt: timestamp("2026-08-03T12:00:00.000Z"),
+  };
+}
+
+function syncService(
+  provider: DocumentSourceProvider,
+  objectStore: FakeObjectStore,
+  versions: InMemoryVersionSink,
+  updates: string[],
+): DocumentSourceSyncService {
+  const upload = new DocumentUploadService({ objectStore, versions });
+  return new DocumentSourceSyncService({
+    provider,
+    source: fixtureSource(),
+    upload,
+    resolveUpload: (_source, document) =>
+      Promise.resolve(uploadCommandFor(document)),
+    updateCursor: (cursor) => {
+      if (cursor !== undefined) updates.push(cursor);
+      return Promise.resolve(fixtureSource());
+    },
+  });
+}
+
+function uploadCommandFor(document: SourceDocument): UploadCommand {
+  const source = createDocumentSource({
+    ...fixtureSource(),
+    providerDocumentId: document.providerDocumentId,
+    providerVersion: document.providerVersion ?? "v1",
+  });
+  return uploadCommand(fixtureDocument(), source);
+}
+
+function providerDocument(providerDocumentId: string): SourceDocument {
+  return {
+    providerDocumentId,
+    name: "Contract.pdf",
+    mimeType: "application/pdf",
+    sizeBytes: 8,
+    providerVersion: "v1",
+  };
+}
+
+function fakeProvider(
+  documents: readonly SourceDocument[],
+  contents: Readonly<Record<string, Uint8Array>>,
+): FakeDocumentSourceProvider {
+  return new FakeDocumentSourceProvider({
+    provider: createProviderMarker("fixture"),
+    capabilities: fixtureCapabilities(),
+    pages: [{
+      providerVersion: "provider-v2",
+      nextCursor: "cursor-next",
+      documents,
+    }],
+    contents,
+  });
+}
+
+class RetryingSourceProvider implements DocumentSourceProvider {
+  readonly provider = createProviderMarker("fixture");
+  available = false;
+
+  constructor(private readonly document: SourceDocument) {}
+
+  discoverCapabilities(): Promise<ProviderCapabilities> {
+    return Promise.resolve(fixtureCapabilities());
+  }
+
+  listDocuments(
+    _request: { readonly providerWorkspaceId: string },
+  ): Promise<SourceDocumentPage> {
+    return Promise.resolve({
+      providerVersion: "provider-v2",
+      nextCursor: "cursor-next",
+      documents: [this.document],
+    });
+  }
+
+  downloadDocument(
+    _request: {
+      readonly providerWorkspaceId: string;
+      readonly providerDocumentId: string;
+    },
+  ): Promise<ByteSource> {
+    if (this.available) {
+      return Promise.resolve(new TextEncoder().encode("contract"));
+    }
+    return Promise.reject(
+      new DocumentProviderFailure({
+        code: "NOT_FOUND",
+        message: "retryable fixture failure",
+        retryable: true,
+      }),
+    );
+  }
+}
+
+function fixtureCapabilities(): ProviderCapabilities {
+  const provider: ProviderMarker = createProviderMarker("fixture");
+  return {
+    provider,
+    capabilities: ["list_documents", "download_document"],
   };
 }
 

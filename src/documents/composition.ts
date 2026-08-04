@@ -5,11 +5,7 @@ import {
   PostgresTransactionRunner,
   type TransactionHandle,
 } from "../platform/persistence/v1.ts";
-import {
-  type JobId,
-  parseJobId,
-  parseOperationId,
-} from "../platform/api/v1.ts";
+import { type JobId, parseJobId } from "../platform/api/v1.ts";
 import { type DurableJob, JobRepository } from "../platform/jobs/v1.ts";
 import { type OutboxEvent, OutboxRepository } from "../platform/events/v1.ts";
 import { documentsMigrations } from "./migrations/index.ts";
@@ -22,7 +18,11 @@ import {
   sourceProviderMarker,
 } from "./source_provider.ts";
 import { createProviderCapabilities } from "./source.ts";
-import { createDocumentJob, enqueueDocumentJob } from "./jobs.ts";
+import {
+  createDocumentJob,
+  deriveDocumentDurableIdentifiers,
+  enqueueDocumentJob,
+} from "./jobs.ts";
 import type {
   AcceptedDocumentJob,
   DocumentCommandScheduler,
@@ -141,8 +141,19 @@ class PostgresDocumentCommandScheduler implements DocumentCommandScheduler {
     this.idempotency = new IdempotencyRepository(this.clock);
   }
 
-  schedule(input: DocumentScheduleInput): Promise<DocumentScheduleResult> {
-    const identifiers = identifiersFromDigest(input.payloadDigest);
+  async schedule(
+    input: DocumentScheduleInput,
+  ): Promise<DocumentScheduleResult> {
+    const identifiers = await deriveDocumentDurableIdentifiers({
+      tenantId: input.scope.tenantId,
+      workspaceId: input.scope.workspaceId,
+      dealId: input.scope.dealId,
+      actorId: input.context.actorId,
+      commandType: input.commandType,
+      documentId: input.documentId,
+      idempotencyKey: input.idempotencyKey,
+      payloadDigest: input.payloadDigest,
+    });
     return this.transactions.run((transaction) =>
       this.scheduleInTransaction(transaction, input, identifiers)
     );
@@ -245,17 +256,6 @@ function eventFor(
     occurredAt,
     availableAt: occurredAt,
   };
-}
-
-function identifiersFromDigest(payloadDigest: string): AcceptedDocumentJob {
-  const jobId = parseJobId(`job_${payloadDigest.slice(0, 48)}`);
-  const operationId = parseOperationId(`op_${payloadDigest.slice(48)}`);
-  if (!jobId.ok || !operationId.ok) {
-    throw new Error(
-      `Document payload digest "${payloadDigest}" could not produce durable job identifiers; expected a 64-character lowercase SHA-256 digest.`,
-    );
-  }
-  return { jobId: jobId.value, operationId: operationId.value };
 }
 
 function parseStoredJobId(value: string | undefined): JobId {

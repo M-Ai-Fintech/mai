@@ -195,7 +195,7 @@ function commandInput(
   const commandType =
     `documents.${command.action}` as DocumentCommandInput["commandType"];
   const inputVersionReferences = command.action === "process"
-    ? processReference(payload)
+    ? processReference(payload, command.documentId)
     : undefined;
   if (command.action === "process" && inputVersionReferences === undefined) {
     return undefined;
@@ -213,6 +213,7 @@ function commandInput(
 
 function processReference(
   payload: Readonly<Record<string, unknown>>,
+  documentId: DocumentId,
 ): DocumentCommandInput["inputVersionReferences"] {
   const versionId = parseDocumentVersionId(payload.documentVersionId);
   const version = parseAggregateVersion(payload.version);
@@ -221,6 +222,7 @@ function processReference(
     aggregateType: "DocumentVersion",
     aggregateId: versionId.value,
     version: version.value,
+    documentId,
   }];
 }
 
