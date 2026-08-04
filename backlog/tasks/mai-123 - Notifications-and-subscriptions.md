@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:29'
-updated_date: '2026-08-04 09:46'
+updated_date: '2026-08-04 10:52'
 labels:
   - backend
   - architecture
@@ -56,6 +56,9 @@ modified_files:
   - tests/notifications/repository_postgres.spec.ts
   - tests/notifications/consumer.spec.ts
   - tests/notifications/delivery.spec.ts
+  - tests/notifications/delivery_lease.spec.ts
+  - tests/notifications/delivery_failures.spec.ts
+  - tests/notifications/delivery_test_support.ts
   - tests/notifications/migration.spec.ts
   - tests/api/v1/notifications.spec.ts
 priority: medium
@@ -161,6 +164,8 @@ Draft PR opened through the verified user-owned GitHub repository: https://githu
 Correction evidence 2026-08-04: commit d1472987b2fbd2304ff1c8c38e58cc465f4b440f (fix(MAI-123): enforce notification delivery and replay isolation) was pushed to PR #46 without rebase, merge, approval, or provider enablement. Focused Notification/API-v1 suite passed 33/33: consumer 4, delivery 6, migration 3, model 5, PostgreSQL repository 8, API v1 7. Fresh isolated PostgreSQL passed 5 integration tests with zero MAI-123 ignored tests: migration and append-only trigger 1, lifecycle 1, exact-scope atomic idempotency 1, concurrent subscription command 1, concurrent delivery command 1. Dedicated concurrency coverage passed 2/2. Append-only evidence passed inserts, rejected UPDATE, rejected DELETE, unchanged receipt, and migration idempotency. Scoped fmt/lint/check/diff checks passed; verify:fast exit 0; canonical DENO_ENV=test deno task verify exit 0 with 17/17 categories passed. Delivery worker now depends only on the Notifications-owned claimNotificationDelivery port; consumer remains enqueue-only; default delivery claiming fails closed; exact-scope idempotency includes tenant/workspace/deal-or-no-deal/actor/command/target/key; no shared platform job, Deal lifecycle, Documents, GUI/Figma, or Graphify diff. MAI-123 remains In Progress and PR #46 remains Draft/Open/Unmerged/Unapproved for human review.
 
 Final post-sync correction evidence 2026-08-04: branch delivery/MAI-123-notifications-and-subscriptions; original correction commit d1472987b2fbd2304ff1c8c38e58cc465f4b440f; PR #46; synchronized with current origin/master 11da22c146ba83f91cb3bec9f518e15d582cad18. The Notifications-owned typed claim boundary remains independent; delivery execution fails closed when unconfigured; the consumer retains enqueue-only authority; exact-scope idempotency, atomic insert-or-observe concurrency handling, append-only delivery receipts, and module-size compliance remain verified. The delivery worker now reads and asserts a fresh pre-adapter lease time and reads a fresh post-adapter time for success, retry, terminal, delivery-state, receipt, retry-policy, scheduling, complete, and fail persistence. Mutable-clock delivery regressions: 9 passed, 0 failed; lease expiry during successful, retryable, and terminal adapter calls leaves only the truthful attempted receipt and prevents post-adapter persistence. Complete Notification/API suite: 36 passed, 0 failed (consumer 4, delivery 9, migration 3, model 5, repository 8, API v1 7). PostgreSQL evidence: 7 passed, 0 failed, 0 ignored MAI-123 PostgreSQL tests (migration 1 and repository 6); concurrency evidence 2 passed, 0 failed; append-only evidence 1 passed, 0 failed. Full backend: 540 passed, 0 failed, 38 unrelated ignored. Changed-file fmt/lint/check passed for 23 TypeScript files and git diff --check passed. verify:fast exit 0: 11 passed, 0 failed, 5 skipped, 2 offline-unavailable. Canonical verification exit 0: 17/17 categories passed. No MAI-112 dependency; no shared platform-job modification; no provider enablement or credentials; no Graphify output. MAI-123 remains In Progress pending human review, integration with merged Wave C work, and Wave C finalization.
+
+Final test-compliance evidence 2026-08-04: branch delivery/MAI-123-notifications-and-subscriptions; PR #46; starting head 1077c3d92f8cad6aa3944e2530e53b306683ec9f. Split tests/notifications/delivery.spec.ts by responsibility into delivery.spec.ts (79 lines, core claim-boundary/unconfigured/disabled behavior), delivery_lease.spec.ts (108 lines, mutable-clock success and three lease-expiry regressions), delivery_failures.spec.ts (78 lines, retry/exhaustion and expiry-before-adapter behavior), and delivery_test_support.ts (359 lines, Notification-owned typed fakes and fixtures). Every resulting delivery test/support file is below 500 lines. All nine existing delivery cases remain present: 3 core, 4 lease, and 2 failure cases; post-adapter lease assertions and truthful attempted-receipt regressions are unchanged. No production code was modified. No MAI-112 dependency, shared platform-job modification, provider enablement or credentials, or Graphify output. Post-split focused delivery suite: 9 passed, 0 failed. Complete Notification/API suite: 36 passed, 0 failed. PostgreSQL: 7 passed, 0 failed, 0 ignored MAI-123 PostgreSQL tests. Concurrency: 2 passed, 0 failed. Append-only evidence: 1 passed, 0 failed. Complete backend: 540 passed, 0 failed, 38 unrelated ignored. Format/lint/check passed for 26 changed TypeScript files; git diff --check passed. verify:fast exit 0: 11 passed, 0 failed, 5 skipped, 2 offline-unavailable. Canonical verification exit 0: 17/17 categories passed. All changed production Notification/API files remain below 500 lines. MAI-123 remains In Progress pending human review and Wave C finalization.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
