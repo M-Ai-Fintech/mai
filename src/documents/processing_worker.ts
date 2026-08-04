@@ -94,6 +94,7 @@ export class DocumentProcessingExecutor implements JobExecutor {
       processorVersion: draft.processorVersion,
       createdAt: draft.createdAt,
     });
+    await context.beforeExternalEffect();
     await this.artifacts.append(artifact);
     return { resultReference: artifact.derivedArtifactId };
   }

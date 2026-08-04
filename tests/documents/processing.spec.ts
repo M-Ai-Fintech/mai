@@ -128,7 +128,7 @@ Deno.test("processing rechecks the exact immutable version before reading or pro
   });
   assertEquals(result.resultReference, "artifact_text-v1");
   assertEquals(artifacts.values.length, 1);
-  assertEquals(beforeEffectCalls, 2);
+  assertEquals(beforeEffectCalls, 3);
 
   const stale = fixtureClaimedJob(version.documentVersionId, 2);
   await assertRejects(
