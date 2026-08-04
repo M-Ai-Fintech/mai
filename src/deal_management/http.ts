@@ -1,8 +1,13 @@
 import { createApiError } from "../platform/api/v1.ts";
 import { readDealProjection } from "./read_model.ts";
+import {
+  type DealLifecycleReadProjection,
+  readDealLifecycleProjection as loadDealLifecycleProjection,
+} from "./lifecycle/projection.ts";
 import { executeDealCommand } from "./http_commands.ts";
 import { parseDealRouteId } from "./route_identifiers.ts";
 import type { DealProjection } from "./contracts.ts";
+import { projectDealCommandResult } from "./projection.ts";
 import {
   mapDealError,
   safeCommandDto,
@@ -23,6 +28,7 @@ const DEAL_ROOT = "deals";
 
 type DealSubresourceResponse =
   | DealProjection
+  | DealLifecycleReadProjection
   | {
     readonly dealId: DealProjection["id"];
     readonly version: DealProjection["version"];
@@ -32,6 +38,16 @@ type DealSubresourceResponse =
     readonly dealId: DealProjection["id"];
     readonly version: DealProjection["version"];
     readonly parties: DealProjection["parties"];
+  }
+  | {
+    readonly dealId: DealProjection["id"];
+    readonly version: DealProjection["version"];
+    readonly milestones: DealLifecycleReadProjection["lifecycle"]["milestones"];
+  }
+  | {
+    readonly dealId: DealProjection["id"];
+    readonly version: DealProjection["version"];
+    readonly activity: DealLifecycleReadProjection["activity"];
   };
 
 /**
@@ -171,6 +187,22 @@ async function readRoute(
     return writeResponse("Not Found", 404, baseHeaders);
   }
   const parsedDealId = parseDealRouteId(segments[1]);
+  if (isLifecycleReadRoute(segments)) {
+    const result = await readLifecycleProjection(
+      parsedDealId,
+      context,
+      dependencies,
+    );
+    if (result.kind === "protected_not_found") {
+      return writeResponse(result.response, 404, baseHeaders);
+    }
+    return lifecycleReadSuccess(
+      segments[2],
+      result.value,
+      context,
+      baseHeaders,
+    );
+  }
   const result = await readProjection(parsedDealId, context, dependencies);
   if (result.kind === "protected_not_found") {
     return writeResponse(result.response, 404, baseHeaders);
@@ -206,9 +238,45 @@ function readSuccess(
   );
 }
 
+function readLifecycleProjection(
+  dealId: Parameters<typeof loadDealLifecycleProjection>[0]["dealId"],
+  context: ReturnType<typeof createDealContext>,
+  dependencies: DealManagementHttpDependencies,
+) {
+  return loadDealLifecycleProjection({
+    context,
+    dealId,
+    repository: dependencies.repository,
+    authorization: dependencies.authorization,
+  });
+}
+
+function lifecycleReadSuccess(
+  subresource: string | undefined,
+  value: DealLifecycleReadProjection,
+  context: ReturnType<typeof createDealContext>,
+  baseHeaders: Headers,
+): Response {
+  return writeSuccess(
+    lifecycleRouteData(subresource, value),
+    context.request.correlationId,
+    value.lifecycle.version,
+    200,
+    baseHeaders,
+  );
+}
+
 function isReadRoute(segments: readonly string[]): boolean {
   return segments.length === 2 ||
-    (segments.length === 3 && ["mandate", "parties"].includes(segments[2]));
+    (segments.length === 3 &&
+      ["mandate", "parties", "lifecycle", "milestones", "activity"].includes(
+        segments[2],
+      ));
+}
+
+function isLifecycleReadRoute(segments: readonly string[]): boolean {
+  return segments.length === 3 &&
+    ["lifecycle", "milestones", "activity"].includes(segments[2]);
 }
 
 function readRouteData(
@@ -230,6 +298,29 @@ function readRouteData(
     : deal;
 }
 
+function lifecycleRouteData(
+  subresource: string | undefined,
+  value: DealLifecycleReadProjection,
+): DealSubresourceResponse {
+  const dealId = value.lifecycle.dealId;
+  const version = value.lifecycle.version;
+  if (subresource === "milestones") {
+    return {
+      dealId,
+      version,
+      milestones: value.lifecycle.milestones,
+    };
+  }
+  if (subresource === "activity") {
+    return {
+      dealId,
+      version,
+      activity: value.activity,
+    };
+  }
+  return value;
+}
+
 async function commandRoute(
   request: Request,
   segments: readonly string[],
@@ -237,7 +328,7 @@ async function commandRoute(
   dependencies: DealManagementHttpDependencies,
   baseHeaders: Headers,
 ): Promise<Response> {
-  if (segments.length < 1 || segments.length > 3) {
+  if (segments.length < 1 || segments.length > 5) {
     return writeResponse("Not Found", 404, baseHeaders);
   }
   const result = await executeDealCommand({
@@ -247,7 +338,9 @@ async function commandRoute(
     service: dependencies.service,
   });
   return writeSuccess(
-    safeCommandDto(result),
+    result.lifecycle === undefined
+      ? safeCommandDto(result)
+      : projectDealCommandResult(result),
     context.request.correlationId,
     result.deal.version,
     result.operation === "created" ? 201 : 200,

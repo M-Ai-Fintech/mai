@@ -2,12 +2,20 @@ import { action, resourceKind } from "../platform/authz/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
 import {
   addDealParty,
+  advanceDealVersion,
+  assertDealVersion,
   assignDealRole,
   configureDeal,
   createDeal,
   setAuthorityConstraint,
   setMandate,
 } from "./model.ts";
+import {
+  createInitialLifecycle,
+  createMilestone,
+  transitionLifecycle,
+  transitionMilestone,
+} from "./lifecycle/model.ts";
 import type {
   AddDealPartyCommand,
   AssignDealRoleCommand,
@@ -17,6 +25,15 @@ import type {
   SetAuthorityConstraintCommand,
   SetMandateCommand,
 } from "./commands.ts";
+import type {
+  CreateMilestoneCommand,
+  DealLifecycleAggregate,
+  LifecycleChange,
+  LifecycleCommand,
+  LifecycleIdFactory,
+  TransitionLifecycleCommand,
+  TransitionMilestoneCommand,
+} from "./lifecycle/contracts.ts";
 import {
   commandFingerprint,
   commandReceiptKey,
@@ -38,6 +55,7 @@ import type {
 import { dealScope, requestedDealFields } from "./contracts.ts";
 import {
   DealAuthorizationError,
+  DealInvariantError,
   DealProtectedNotFoundError,
 } from "./errors.ts";
 import type { DealIdFactory } from "./ids.ts";
@@ -57,6 +75,8 @@ export const DEAL_ACTION = Object.freeze({
   roles: action("configure_roles"),
   mandate: action("configure_mandate"),
   constraints: action("configure_constraints"),
+  lifecycle: action("transition_lifecycle"),
+  milestones: action("manage_milestones"),
 });
 
 export interface DealManagementDependencies {
@@ -65,6 +85,7 @@ export interface DealManagementDependencies {
   readonly ids: DealIdFactory;
   readonly clock: DealClock;
   readonly audit?: DealAuditEventFactory;
+  readonly lifecycleIds?: LifecycleIdFactory;
 }
 
 export class DealManagementService {
@@ -180,6 +201,51 @@ export class DealManagementService {
     );
   }
 
+  transitionLifecycle(
+    command: TransitionLifecycleCommand,
+  ): Promise<DealCommandResult> {
+    return this.lifecycleUpdate(
+      command,
+      DEAL_ACTION.lifecycle,
+      "lifecycle_transitioned",
+      "DealLifecycleTransitioned",
+      (_, lifecycle) => transitionLifecycle(lifecycle, command),
+    );
+  }
+
+  createMilestone(
+    command: CreateMilestoneCommand,
+  ): Promise<DealCommandResult> {
+    return this.lifecycleUpdate(
+      command,
+      DEAL_ACTION.milestones,
+      "milestone_created",
+      "DealMilestoneCreated",
+      (_, lifecycle) =>
+        createMilestone(lifecycle, {
+          id: command.milestoneId ?? this.nextMilestoneId(),
+          key: command.key,
+          title: command.title,
+          prerequisites: command.prerequisites,
+          dueAt: command.dueAt,
+          now: this.now(),
+        }),
+    );
+  }
+
+  transitionMilestone(
+    command: TransitionMilestoneCommand,
+  ): Promise<DealCommandResult> {
+    return this.lifecycleUpdate(
+      command,
+      DEAL_ACTION.milestones,
+      "milestone_transitioned",
+      "DealMilestoneTransitioned",
+      (_, lifecycle) =>
+        transitionMilestone(lifecycle, { ...command, now: this.now() }),
+    );
+  }
+
   async loadDeal(
     context: DealCommandContext,
     dealId: Deal["id"],
@@ -248,9 +314,15 @@ export class DealManagementService {
     eventType: string,
     payload: Readonly<Record<string, unknown>>,
     authorization: AllowedAuthorizationDecision,
+    lifecycleChange?: LifecycleChange,
   ): Promise<DealCommandExecution> {
     const event = this.event(command.context, deal, eventType, payload);
-    const result = { operation, deal };
+    const lifecycle = lifecycleChange?.aggregate;
+    const result = {
+      operation,
+      deal,
+      ...(lifecycle === undefined ? {} : { lifecycle }),
+    };
     const receipt = createReceipt({
       key: commandReceiptKey(command, target),
       actorId: command.context.actor.id,
@@ -276,8 +348,57 @@ export class DealManagementService {
       event,
       receipt,
       auditEvent,
+      ...(lifecycleChange === undefined ? {} : {
+        lifecycle: {
+          aggregate: lifecycleChange.aggregate,
+          history: this.lifecycleHistory(command, deal, event, lifecycleChange),
+        },
+      }),
     });
     return { result, receipt };
+  }
+
+  private async lifecycleUpdate(
+    command: LifecycleCommand,
+    commandAction: typeof DEAL_ACTION[keyof typeof DEAL_ACTION],
+    operation: DealCommandResult["operation"],
+    eventType: string,
+    mutate: (deal: Deal, lifecycle: DealLifecycleAggregate) => LifecycleChange,
+  ): Promise<DealCommandResult> {
+    const authorization = await this.authorize(
+      command.context,
+      command.dealId,
+      commandAction,
+      false,
+    );
+    return this.dependencies.repository.runIdempotent(
+      this.claim(command, command.dealId),
+      async (transaction) => {
+        const current = await transaction.find(
+          dealScope(command.context),
+          command.dealId,
+        );
+        if (current === undefined) {
+          throw new DealProtectedNotFoundError(command.dealId);
+        }
+        assertDealVersion(current, command.expectedVersion);
+        const lifecycle = await currentLifecycle(transaction, current);
+        const change = mutate(current, lifecycle);
+        const next = advanceDealVersion(current, this.now());
+        assertLifecycleVersion(change.aggregate, next);
+        return await this.persist(
+          transaction,
+          command,
+          command.dealId,
+          operation,
+          next,
+          eventType,
+          lifecyclePayload(change, authorization),
+          authorization,
+          change,
+        );
+      },
+    );
   }
 
   private claim(
@@ -344,6 +465,88 @@ export class DealManagementService {
   private now(): string {
     return this.dependencies.clock.now();
   }
+
+  private nextMilestoneId() {
+    return this.dependencies.lifecycleIds?.nextMilestoneId() ??
+      (`milestone_${crypto.randomUUID().replaceAll("-", "")}` as never);
+  }
+
+  private lifecycleHistory(
+    command: { readonly context: DealCommandContext },
+    deal: Deal,
+    event: DealEvent,
+    change: LifecycleChange,
+  ) {
+    return {
+      transitionId: this.dependencies.lifecycleIds?.nextTransitionId() ??
+        `transition_${crypto.randomUUID().replaceAll("-", "")}`,
+      eventId: event.eventId,
+      tenantId: deal.tenantId,
+      workspaceId: deal.workspaceId,
+      dealId: deal.id,
+      aggregateVersion: deal.version,
+      subjectType: change.subjectType,
+      subjectId: change.subjectId,
+      previousState: change.previousState,
+      nextState: change.nextState,
+      prerequisites: change.prerequisites,
+      actorId: command.context.actor.id,
+      correlationId: command.context.request.correlationId,
+      occurredAt: event.occurredAt.toISOString(),
+    };
+  }
+}
+
+async function currentLifecycle(
+  transaction: DealCommandTransaction,
+  deal: Deal,
+): Promise<DealLifecycleAggregate> {
+  const lifecycle = await transaction.findLifecycle({
+    tenantId: deal.tenantId,
+    workspaceId: deal.workspaceId,
+  }, deal.id);
+  if (lifecycle === undefined) {
+    return createInitialLifecycle({
+      dealId: deal.id,
+      tenantId: deal.tenantId,
+      workspaceId: deal.workspaceId,
+      version: deal.version,
+    });
+  }
+  if (lifecycle.version === deal.version) return lifecycle;
+  throw new DealInvariantError(
+    `Deal lifecycle version "${lifecycle.version}" does not match Deal "${deal.id}" version "${deal.version}"; expected synchronized aggregate versions.`,
+  );
+}
+
+function assertLifecycleVersion(
+  lifecycle: DealLifecycleAggregate,
+  deal: Deal,
+): void {
+  if (lifecycle.version === deal.version) return;
+  throw new DealInvariantError(
+    `Deal lifecycle version "${lifecycle.version}" does not match Deal "${deal.id}" version "${deal.version}"; expected one atomic aggregate version.`,
+  );
+}
+
+function lifecyclePayload(
+  change: LifecycleChange,
+  authorization: AllowedAuthorizationDecision,
+): Readonly<Record<string, unknown>> {
+  return {
+    subjectType: change.subjectType,
+    subjectId: change.subjectId,
+    ...(change.previousState === undefined
+      ? {}
+      : { previousState: change.previousState }),
+    nextState: change.nextState,
+    prerequisites: change.prerequisites,
+    authorization: {
+      reasonCode: authorization.reasonCode,
+      allowedActions: authorization.allowedActions,
+      approvedClassifications: authorization.fieldMask.approvedClassifications,
+    },
+  };
 }
 
 export type { AggregateVersion };

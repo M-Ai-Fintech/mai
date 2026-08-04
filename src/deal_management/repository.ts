@@ -24,25 +24,37 @@ import type {
   DealReceipt,
   DealScope,
 } from "./contracts.ts";
+import type {
+  DealLifecycleAggregate,
+  DealLifecycleRepository,
+  DealLifecycleTransaction,
+  LifecycleHistoryRecord,
+  LifecyclePersistenceMutation,
+} from "./lifecycle/contracts.ts";
 import {
   cloneStoredDeal,
   cloneStoredEvent,
   cloneStoredResult,
-  freezeStoredDeal,
   sameDealScope,
   type StoredDealEventRow,
   type StoredDealRow,
   toDealOutboxEvent,
   toStoredEvent,
 } from "./contracts.ts";
-import { parseStoredDeal, readStoredDeal } from "./read_model.ts";
+import { readStoredDeal } from "./read_model.ts";
+import {
+  findLifecycleInTransaction,
+  InMemoryLifecycleStore,
+  persistLifecycle,
+  PostgresLifecycleStore,
+} from "./lifecycle/projection.ts";
 import {
   claimDealCommand,
   completeDealCommand,
+  deserializeResult,
   loadDealCommandClaim,
   persistDealReceipt,
 } from "./receipts.ts";
-
 export interface DealWrite {
   readonly scope: DealScope;
   readonly aggregate: Deal;
@@ -50,8 +62,8 @@ export interface DealWrite {
   readonly event: DealEvent;
   readonly receipt?: DealReceipt;
   readonly auditEvent?: AuditEventDraft;
+  readonly lifecycle?: LifecyclePersistenceMutation;
 }
-
 export interface DealCommandClaim {
   readonly scope: DealScope;
   readonly actorId: ActorId;
@@ -61,18 +73,17 @@ export interface DealCommandClaim {
   readonly key: string;
   readonly fingerprint: string;
 }
-
 export interface DealCommandExecution {
   readonly result: DealCommandResult;
   readonly receipt: DealReceipt;
 }
 
-export interface DealCommandTransaction {
+export interface DealCommandTransaction extends DealLifecycleTransaction {
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined>;
   save(write: DealWrite): Promise<Deal>;
 }
 
-export interface DealRepository {
+export interface DealRepository extends DealLifecycleRepository {
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined>;
   list(scope: DealScope): Promise<readonly Deal[]>;
   save(write: DealWrite): Promise<Deal>;
@@ -93,6 +104,7 @@ interface InMemoryClaim {
 export class InMemoryDealRepository implements DealRepository {
   private readonly deals = new Map<string, Deal>();
   private readonly events = new Map<string, DealEvent[]>();
+  private readonly lifecycleStore = new InMemoryLifecycleStore();
   private readonly claims = new Map<string, InMemoryClaim>();
   private readonly commandLocks = new Map<string, Promise<void>>();
 
@@ -109,6 +121,20 @@ export class InMemoryDealRepository implements DealRepository {
         .filter((deal) => sameDealScope(scope, deal))
         .map(cloneStoredDeal),
     );
+  }
+
+  findLifecycle(
+    scope: DealScope,
+    dealId: DealId,
+  ): Promise<DealLifecycleAggregate | undefined> {
+    return this.lifecycleStore.find(scope, dealId);
+  }
+
+  listLifecycleHistory(
+    scope: DealScope,
+    dealId: DealId,
+  ): Promise<readonly LifecycleHistoryRecord[]> {
+    return this.lifecycleStore.listHistory(scope, dealId);
   }
 
   save(write: DealWrite): Promise<Deal> {
@@ -165,6 +191,9 @@ export class InMemoryDealRepository implements DealRepository {
     const history = this.events.get(key) ?? [];
     history.push(cloneStoredEvent(write.event));
     this.events.set(key, history);
+    if (write.lifecycle !== undefined) {
+      this.lifecycleStore.save(write.lifecycle);
+    }
     return cloneStoredDeal(write.aggregate);
   }
 }
@@ -176,11 +205,15 @@ export interface DealTransactionRunner {
 }
 
 export class PostgresDealRepository implements DealRepository {
+  private readonly lifecycleStore: PostgresLifecycleStore;
+
   constructor(
     private readonly transactions: DealTransactionRunner,
     private readonly outbox = new OutboxRepository(),
     private readonly audit?: AuditOutboxAppender,
-  ) {}
+  ) {
+    this.lifecycleStore = new PostgresLifecycleStore(transactions);
+  }
 
   find(scope: DealScope, dealId: DealId): Promise<Deal | undefined> {
     return this.transactions.run((transaction) =>
@@ -211,6 +244,20 @@ export class PostgresDealRepository implements DealRepository {
     });
   }
 
+  findLifecycle(
+    scope: DealScope,
+    dealId: DealId,
+  ): Promise<DealLifecycleAggregate | undefined> {
+    return this.lifecycleStore.find(scope, dealId);
+  }
+
+  listLifecycleHistory(
+    scope: DealScope,
+    dealId: DealId,
+  ): Promise<readonly LifecycleHistoryRecord[]> {
+    return this.lifecycleStore.listHistory(scope, dealId);
+  }
+
   save(write: DealWrite): Promise<Deal> {
     return this.transactions.run((transaction) =>
       this.saveInTransaction(transaction, write)
@@ -232,13 +279,17 @@ export class PostgresDealRepository implements DealRepository {
         if (row.fingerprint !== claim.fingerprint) {
           throw new DealIdempotencyConflictError(claim.key);
         }
-        if (row.state === "completed") return deserializeDealResult(row.result);
+        if (row.state === "completed") {
+          return deserializeResult(row.result, "Deal command result");
+        }
         throw new DealInvariantError(
           `Idempotency key "${claim.key}" remains in progress; expected a completed or absent claim.`,
         );
       }
       const commandTransaction: DealCommandTransaction = {
         find: (scope, dealId) => findInTransaction(transaction, scope, dealId),
+        findLifecycle: (scope, dealId) =>
+          findLifecycleInTransaction(transaction, scope, dealId),
         save: (write) => this.saveInTransaction(transaction, write),
       };
       const execution = await callback(commandTransaction);
@@ -290,6 +341,9 @@ export class PostgresDealRepository implements DealRepository {
       write.event.occurredAt,
     );
     await this.persistEvent(transaction, write);
+    if (write.lifecycle !== undefined) {
+      await persistLifecycle(transaction, write.lifecycle);
+    }
     return cloneStoredDeal(write.aggregate);
   }
 
@@ -328,42 +382,6 @@ async function findInTransaction(
   );
   const row = result.rows[0];
   return row === undefined ? undefined : readStoredDeal(row);
-}
-
-function deserializeDealResult(value: unknown): DealCommandResult {
-  const result = parseStoredObject(value, "Deal command result");
-  if (!isDealOperation(result.operation)) {
-    throw new DealInvariantError(
-      `Stored Deal command operation "${
-        String(result.operation)
-      }" is invalid; expected a known Deal operation.`,
-    );
-  }
-  return {
-    operation: result.operation,
-    deal: freezeStoredDeal(parseStoredDeal(result.deal)),
-  };
-}
-
-function parseStoredObject(
-  value: unknown,
-  label: string,
-): Record<string, unknown> {
-  const parsed = typeof value === "string" ? JSON.parse(value) : value;
-  if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-    return parsed as Record<string, unknown>;
-  }
-  throw new DealInvariantError(
-    `Stored ${label} "${String(value)}" is invalid; expected an object.`,
-  );
-}
-
-function isDealOperation(
-  value: unknown,
-): value is DealCommandResult["operation"] {
-  return value === "created" || value === "configured" ||
-    value === "party_added" || value === "role_assigned" ||
-    value === "mandate_set" || value === "authority_constraint_set";
 }
 
 async function currentVersion(
