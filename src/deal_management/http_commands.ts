@@ -8,6 +8,11 @@ import type {
   DealRoleName,
   Money,
 } from "./contracts.ts";
+import type {
+  DealLifecycleState,
+  DealMilestoneState,
+  LifecyclePrerequisite,
+} from "./lifecycle/contracts.ts";
 import type { IdempotencyKey } from "../platform/api/v1.ts";
 import {
   assertDealConfidentiality,
@@ -32,6 +37,7 @@ import {
   requiredNumber,
   requiredString,
 } from "./http_shared.ts";
+import { milestoneId } from "./lifecycle/contracts.ts";
 
 /**
  * Translates one semantic Deal command route into the existing service API.
@@ -96,6 +102,15 @@ function createCommand(
 function mutationCommand(
   input: MutationCommandInput,
 ): Promise<DealCommandResult> {
+  if (isLifecycleTransitionRoute(input.segments)) {
+    return lifecycleTransitionCommand(input);
+  }
+  if (isMilestoneCreateRoute(input.segments)) {
+    return milestoneCreateCommand(input);
+  }
+  if (isMilestoneTransitionRoute(input.segments)) {
+    return milestoneTransitionCommand(input);
+  }
   const commands = {
     configure: configureCommand,
     parties: partyCommand,
@@ -114,6 +129,158 @@ function mutationCommand(
       input.command ?? "undefined"
     }" is not supported; expected a semantic configuration command with one route segment.`,
   );
+}
+
+function lifecycleTransitionCommand(
+  input: MutationCommandInput,
+): Promise<DealCommandResult> {
+  return input.service.transitionLifecycle({
+    type: "transition_lifecycle",
+    context: input.context,
+    idempotencyKey: input.idempotencyKey,
+    dealId: input.deal,
+    expectedVersion: input.expectedVersion,
+    toState: requiredLifecycleState(input.body, "toState"),
+  });
+}
+
+function milestoneCreateCommand(
+  input: MutationCommandInput,
+): Promise<DealCommandResult> {
+  const requestedId = optionalString(input.body, "milestoneId");
+  return input.service.createMilestone({
+    type: "create_milestone",
+    context: input.context,
+    idempotencyKey: input.idempotencyKey,
+    dealId: input.deal,
+    expectedVersion: input.expectedVersion,
+    ...(requestedId === undefined
+      ? {}
+      : { milestoneId: parseMilestoneId(requestedId) }),
+    key: requiredString(input.body, "key"),
+    title: requiredString(input.body, "title"),
+    prerequisites: optionalPrerequisites(input.body),
+    dueAt: optionalString(input.body, "dueAt"),
+  });
+}
+
+function milestoneTransitionCommand(
+  input: MutationCommandInput,
+): Promise<DealCommandResult> {
+  return input.service.transitionMilestone({
+    type: "transition_milestone",
+    context: input.context,
+    idempotencyKey: input.idempotencyKey,
+    dealId: input.deal,
+    expectedVersion: input.expectedVersion,
+    milestoneId: parseMilestoneId(input.segments[3]),
+    toState: requiredMilestoneState(input.body, "toState"),
+  });
+}
+
+function isLifecycleTransitionRoute(segments: readonly string[]): boolean {
+  return (segments.length === 3 &&
+    (segments[2] === "phase-transitions" ||
+      segments[2] === "lifecycle-transition")) ||
+    (segments.length === 4 && segments[2] === "lifecycle" &&
+      segments[3] === "transition");
+}
+
+function isMilestoneCreateRoute(segments: readonly string[]): boolean {
+  return segments.length === 3 && segments[2] === "milestones";
+}
+
+function isMilestoneTransitionRoute(segments: readonly string[]): boolean {
+  return segments.length === 5 && segments[2] === "milestones" &&
+    segments[4] === "transition";
+}
+
+function requiredLifecycleState(
+  body: Record<string, unknown>,
+  fieldName: string,
+): DealLifecycleState {
+  const value = requiredString(body, fieldName);
+  if (
+    value === "draft" || value === "sourcing" ||
+    value === "due_diligence" || value === "negotiation" ||
+    value === "closing" || value === "completed" || value === "archived"
+  ) return value;
+  throw new RequestInputError(
+    `${fieldName} received ${
+      JSON.stringify(value)
+    }; expected a supported Deal lifecycle state.`,
+  );
+}
+
+function requiredMilestoneState(
+  body: Record<string, unknown>,
+  fieldName: string,
+): DealMilestoneState {
+  const value = requiredString(body, fieldName);
+  if (
+    value === "planned" || value === "active" || value === "blocked" ||
+    value === "completed" || value === "cancelled"
+  ) return value;
+  throw new RequestInputError(
+    `${fieldName} received ${
+      JSON.stringify(value)
+    }; expected a supported Deal milestone state.`,
+  );
+}
+
+function parseMilestoneId(value: string | undefined) {
+  if (value === undefined) {
+    throw new RequestInputError(
+      "milestoneId is missing; expected a canonical milestone_ identifier.",
+    );
+  }
+  try {
+    return milestoneId(value);
+  } catch {
+    throw new RequestInputError(
+      `milestoneId "${value}" is invalid; expected a canonical milestone_ identifier.`,
+    );
+  }
+}
+
+function optionalPrerequisites(
+  body: Record<string, unknown>,
+): readonly LifecyclePrerequisite[] | undefined {
+  const value = body.prerequisites;
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new RequestInputError(
+      `prerequisites received ${
+        safeShape(value)
+      }; expected an array of key/state objects.`,
+    );
+  }
+  return value.map((item, index) => prerequisiteValue(item, index));
+}
+
+function prerequisiteValue(
+  value: unknown,
+  index: number,
+): LifecyclePrerequisite {
+  if (!isRecord(value)) {
+    throw new RequestInputError(
+      `prerequisites[${index}] received ${
+        safeShape(value)
+      }; expected an object with key and state.`,
+    );
+  }
+  const key = value.key;
+  const state = value.state;
+  if (
+    typeof key !== "string" || key.trim().length === 0 || state !== "completed"
+  ) {
+    throw new RequestInputError(
+      `prerequisites[${index}] received ${
+        safeShape(value)
+      }; expected a non-empty key and state "completed".`,
+    );
+  }
+  return { key: key.trim(), state: "completed" };
 }
 
 function configureCommand(

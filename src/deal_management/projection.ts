@@ -1,5 +1,6 @@
 import type {
   Deal,
+  DealCommandResult,
   DealFieldMaskDecision,
   DealProjection,
 } from "./contracts.ts";
@@ -8,6 +9,7 @@ import {
   type FieldClassification,
   type FieldName,
 } from "../platform/authz/v1.ts";
+import { projectLifecycle } from "./lifecycle/projection.ts";
 
 interface ProjectionField {
   readonly name: FieldName;
@@ -35,6 +37,31 @@ const CONSTRAINTS_FIELD: ProjectionField = {
   classification: "mandate_ceiling",
 };
 
+const SAFE_COMMAND_RESPONSE_MASK: DealFieldMaskDecision = Object.freeze({
+  include: [field("deal")],
+  omit: [
+    field("parties"),
+    field("roles"),
+    field("mandate_ceiling"),
+    field("authority_constraints"),
+  ],
+  redact: [],
+  approvedClassifications: [{
+    name: field("deal"),
+    classification: "public" as const,
+  }],
+});
+
+const SAFE_LIFECYCLE_COMMAND_MASK: DealFieldMaskDecision = Object.freeze({
+  include: [field("lifecycle"), field("milestones")],
+  omit: [],
+  redact: [],
+  approvedClassifications: [
+    { name: field("lifecycle"), classification: "public" as const },
+    { name: field("milestones"), classification: "public" as const },
+  ],
+});
+
 export function projectDeal(
   deal: Deal,
   fields: DealFieldMaskDecision,
@@ -60,6 +87,17 @@ export function projectDeal(
         authorityConstraints: deal.authorityConstraints.map(projectConstraint),
       }
       : {}),
+  };
+}
+
+export function projectDealCommandResult(result: DealCommandResult) {
+  const deal = projectDeal(result.deal, SAFE_COMMAND_RESPONSE_MASK);
+  return result.lifecycle === undefined ? deal : {
+    ...deal,
+    lifecycle: projectLifecycle(
+      result.lifecycle,
+      SAFE_LIFECYCLE_COMMAND_MASK,
+    ),
   };
 }
 
