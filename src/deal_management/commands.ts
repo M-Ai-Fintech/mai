@@ -14,6 +14,7 @@ import type {
   DealRoleId,
   MandateId,
 } from "./ids.ts";
+import type { LifecycleCommand } from "./lifecycle/contracts.ts";
 
 export interface CommandBase {
   readonly context: DealCommandContext;
@@ -86,7 +87,8 @@ export type DealCommand =
   | AddDealPartyCommand
   | AssignDealRoleCommand
   | SetMandateCommand
-  | SetAuthorityConstraintCommand;
+  | SetAuthorityConstraintCommand
+  | LifecycleCommand;
 
 export type DealMutationCommand = Exclude<DealCommand, CreateDealCommand>;
 

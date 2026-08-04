@@ -370,6 +370,13 @@ function assertVersion(deal: Deal, expected: AggregateVersion | number): void {
   throw new DealVersionConflictError(deal.id, expected, deal.version);
 }
 
+export function assertDealVersion(
+  deal: Deal,
+  expected: AggregateVersion | number,
+): void {
+  assertVersion(deal, expected);
+}
+
 function advance(deal: Deal, now: string, changes: Partial<Deal>): Deal {
   assertInstant(now, "Deal update time");
   return freezeDeal({
@@ -378,6 +385,10 @@ function advance(deal: Deal, now: string, changes: Partial<Deal>): Deal {
     version: (deal.version + 1) as AggregateVersion,
     updatedAt: now,
   });
+}
+
+export function advanceDealVersion(deal: Deal, now: string): Deal {
+  return advance(deal, now, {});
 }
 
 function assertMoney(money: Money, currency: string, label: string): void {
