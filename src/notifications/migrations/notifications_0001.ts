@@ -6,7 +6,7 @@ export const notificationsMigration = defineMigration({
   id: "notifications-0001",
   version: 1,
   forwardNotes:
-    "Create the notification-owned subscription, recipient projection, idempotency, and append-only delivery receipt tables. Apply additively beside the MVP notification feed; consumers and channels remain disabled until review, credentials, and staging evidence exist.",
+    "Create the notification-owned subscription, recipient projection, exact-scope idempotency, and append-only delivery receipt tables. Apply additively beside the MVP notification feed; consumers and channels remain disabled until review, credentials, and staging evidence exist.",
   rollbackNotes:
     "Do not physically drop this schema after durable production rows exist. Roll back by disabling notification consumers/channels and routing reads to the retained MVP projection; preserve rows and the platform migration ledger for reconciliation. A rehearsal may drop the schema only in an isolated empty test database.",
   statements: [
@@ -74,6 +74,7 @@ export const notificationsMigration = defineMigration({
       sql: `CREATE TABLE notifications.idempotency_records (
         tenant_id TEXT NOT NULL,
         workspace_id TEXT NOT NULL,
+        deal_id TEXT NOT NULL CHECK (length(deal_id) BETWEEN 1 AND 256),
         actor_id TEXT NOT NULL,
         command_type TEXT NOT NULL,
         target_id TEXT NOT NULL,
@@ -81,7 +82,7 @@ export const notificationsMigration = defineMigration({
         payload_digest CHAR(64) NOT NULL CHECK (payload_digest ~ '^[0-9a-f]{64}$'),
         result JSONB NOT NULL CHECK (jsonb_typeof(result) = 'object'),
         created_at TIMESTAMPTZ NOT NULL,
-        PRIMARY KEY (tenant_id, workspace_id, actor_id, command_type, target_id, idempotency_key)
+        PRIMARY KEY (tenant_id, workspace_id, deal_id, actor_id, command_type, target_id, idempotency_key)
       )`,
     },
     {
@@ -105,6 +106,30 @@ export const notificationsMigration = defineMigration({
       schema: "notifications",
       sql: `CREATE INDEX notifications_receipts_scope_idx
         ON notifications.delivery_receipts (tenant_id, workspace_id, deal_id, recipient_id, notification_id, occurred_at, receipt_id)`,
+    },
+    {
+      schema: "notifications",
+      sql:
+        `CREATE OR REPLACE FUNCTION notifications.reject_delivery_receipt_mutation()
+        RETURNS trigger
+        LANGUAGE plpgsql
+        AS $function$
+        BEGIN
+          RAISE EXCEPTION 'Delivery receipt mutation is append-only; operation "%" is rejected', TG_OP;
+        END;
+        $function$`,
+    },
+    {
+      schema: "notifications",
+      sql: `DROP TRIGGER IF EXISTS delivery_receipts_append_only
+        ON notifications.delivery_receipts`,
+    },
+    {
+      schema: "notifications",
+      sql: `CREATE TRIGGER delivery_receipts_append_only
+        BEFORE UPDATE OR DELETE ON notifications.delivery_receipts
+        FOR EACH ROW
+        EXECUTE FUNCTION notifications.reject_delivery_receipt_mutation()`,
     },
   ],
 });

@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import type { TransactionHandle } from "../../../src/platform/persistence/transaction.ts";
 import type { AuthorizationDecision } from "../../../src/platform/authz/v1.ts";
 import type {
@@ -22,6 +22,7 @@ import {
   handleNotificationV1Route,
   type NotificationV1RouteDependencies,
 } from "../../../src/api/v1/notifications_routes.ts";
+import { NotificationV1Service } from "../../../src/api/v1/notifications.ts";
 
 const scope: NotificationScope = {
   tenantId: "tenant_alpha" as TenantId,
@@ -71,6 +72,80 @@ Deno.test("v1 subscription command uses ETag and idempotency replay", async () =
   assertEquals(first?.headers.get("ETag"), '"v1"');
   assertEquals(replay?.status, 201);
   assertEquals(await first?.json(), await replay?.json());
+  const conflict = await handleNotificationV1Route(
+    request("POST", "/api/v1/notifications/subscriptions", {
+      subscriptionId: "sub_alice-deal",
+      eventType: "deal.updated",
+      preferences: { channels: { in_app: false, email: true } },
+    }, "idem_subscription-create"),
+    dependencies,
+  );
+  assertEquals(conflict?.status, 409);
+  assertEquals((await conflict?.json()).error.code, "IDEMPOTENCY_CONFLICT");
+});
+
+Deno.test("v1 idempotency identity includes every authorization scope component", async () => {
+  const repository = new InMemoryNotificationRepository();
+  const command = {
+    subscriptionId: "sub_alice-deal",
+    eventType: "deal.updated",
+    preferences: { channels: { in_app: true, email: false } },
+  };
+  const first = await handleNotificationV1Route(
+    request(
+      "POST",
+      "/api/v1/notifications/subscriptions",
+      command,
+      "idem_scope-exact",
+    ),
+    routeDependencies(repository, actorAlice, true, scope),
+  );
+  const replay = await handleNotificationV1Route(
+    request(
+      "POST",
+      "/api/v1/notifications/subscriptions",
+      command,
+      "idem_scope-exact",
+    ),
+    routeDependencies(repository, actorAlice, true, scope),
+  );
+  const otherScopes = [
+    { ...scope, dealId: "deal_moon" as DealId },
+    { ...scope, dealId: undefined },
+    { ...scope, workspaceId: "workspace_other" as WorkspaceId },
+    { ...scope, tenantId: "tenant_other" as TenantId },
+  ];
+
+  assertEquals(first?.status, 201);
+  assertEquals(await first?.json(), await replay?.json());
+  for (const otherScope of otherScopes) {
+    const response = await handleNotificationV1Route(
+      request(
+        "POST",
+        "/api/v1/notifications/subscriptions",
+        command,
+        "idem_scope-exact",
+      ),
+      routeDependencies(repository, actorAlice, true, otherScope),
+    );
+    assertEquals(response?.status, 201);
+    const body = await response?.json();
+    assertEquals(body.data.scope.tenantId, otherScope.tenantId);
+    assertEquals(body.data.scope.workspaceId, otherScope.workspaceId);
+    assertEquals(body.data.scope.dealId, otherScope.dealId);
+  }
+
+  const otherRecipient = await handleNotificationV1Route(
+    request(
+      "POST",
+      "/api/v1/notifications/subscriptions",
+      command,
+      "idem_scope-exact",
+    ),
+    routeDependencies(repository, "actor_bob" as ActorId, true, scope),
+  );
+  assertEquals(otherRecipient?.status, 201);
+  assertEquals((await otherRecipient?.json()).data.recipientId, "actor_bob");
 });
 
 Deno.test("v1 subscription update rejects a stale If-Match version", async () => {
@@ -152,12 +227,38 @@ Deno.test("v1 delivery returns the durable job reference", async () => {
   );
 });
 
+Deno.test("v1 idempotency preserves infrastructure failures unchanged", async () => {
+  const failure = new Error("database unavailable");
+  const repository = new FailingIdempotencyLockRepository(failure);
+  const service = new NotificationV1Service({
+    repository,
+    transactions: new ImmediateRunner(),
+    authorization: new NamedAuthorization(true),
+    clock: { now: () => new Date("2026-08-03T12:00:00.000Z") },
+  });
+
+  try {
+    await service.saveSubscription({
+      context: contextFor(actorAlice),
+      scope,
+      subscriptionId: "sub_failure",
+      eventType: "deal.updated",
+      preferences: { channels: { in_app: true, email: false } },
+      idempotencyKey: "idem_failure" as IdempotencyKey,
+    });
+    throw new Error("Expected the infrastructure failure to propagate.");
+  } catch (error) {
+    assert(error === failure);
+  }
+});
+
 function routeDependencies(
   repository: InMemoryNotificationRepository,
   actorId: ActorId,
   allowed: boolean,
+  requestScope: NotificationScope = scope,
 ): NotificationV1RouteDependencies {
-  const context = contextFor(actorId);
+  const context = contextFor(actorId, requestScope);
   return {
     repository,
     transactions: new ImmediateRunner(),
@@ -167,12 +268,15 @@ function routeDependencies(
   };
 }
 
-function contextFor(actorId: ActorId): RequestContext {
+function contextFor(
+  actorId: ActorId,
+  requestScope: NotificationScope = scope,
+): RequestContext {
   return {
     actorId,
-    tenantId: scope.tenantId,
-    workspaceId: scope.workspaceId,
-    dealId: scope.dealId,
+    tenantId: requestScope.tenantId,
+    workspaceId: requestScope.workspaceId,
+    dealId: requestScope.dealId,
     correlationId,
     origin: "http",
   };
@@ -235,6 +339,16 @@ class NamedAuthorization {
           reasonCode: "NO_MATCHING_GRANT",
         } as AuthorizationDecision),
     );
+  }
+}
+
+class FailingIdempotencyLockRepository extends InMemoryNotificationRepository {
+  constructor(private readonly failure: Error) {
+    super();
+  }
+
+  override lockIdempotency(): Promise<void> {
+    return Promise.reject(this.failure);
   }
 }
 

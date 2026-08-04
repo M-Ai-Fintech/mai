@@ -12,7 +12,6 @@ import type {
 import {
   type AuthorizedNotificationScope,
   createNotificationCursor,
-  type NotificationAuthorizationPort,
   type NotificationReadProjection,
   parseNotificationCursor,
   projectNotification,
@@ -32,97 +31,24 @@ import {
   type NotificationIdempotencyLookup,
   type NotificationIdempotencyRecord,
   type NotificationProjectionLookup,
-  type NotificationRepository,
   NotificationRepositoryNotFoundError,
   type SubscriptionIdLookup,
 } from "../../notifications/repository.ts";
+import {
+  NotificationDeliveryUnavailableError,
+  NotificationIdempotencyConflictError,
+  NotificationValidationError,
+} from "./notifications_contracts.ts";
+import type {
+  DeliveryReferenceResult,
+  NotificationListInput,
+  NotificationListResult,
+  NotificationV1Dependencies,
+  SubscriptionCommandInput,
+  SubscriptionCommandResult,
+} from "./notifications_contracts.ts";
 
-export interface NotificationV1TransactionRunner {
-  run<TResult>(
-    callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
-  ): Promise<TResult>;
-}
-
-export interface NotificationV1Dependencies {
-  readonly repository: NotificationRepository;
-  readonly transactions: NotificationV1TransactionRunner;
-  readonly authorization: NotificationAuthorizationPort;
-  readonly clock: { now(): Date };
-}
-
-export interface NotificationListInput {
-  readonly context: RequestContext;
-  readonly scope: NotificationScope;
-  readonly cursor?: OpaqueCursor;
-  readonly limit: number;
-}
-
-export interface NotificationListResult {
-  readonly data: readonly NotificationReadProjection[];
-  readonly nextCursor?: OpaqueCursor;
-  readonly access: AuthorizedNotificationScope;
-}
-
-export interface SubscriptionCommandInput {
-  readonly context: RequestContext;
-  readonly scope: NotificationScope;
-  readonly subscriptionId: string;
-  readonly eventType: string;
-  readonly preferences: SubscriptionPreferences;
-  readonly idempotencyKey: IdempotencyKey;
-  readonly expectedVersion?: AggregateVersion;
-}
-
-export interface SubscriptionCommandResult {
-  readonly subscription: Subscription;
-  readonly replayed: boolean;
-}
-
-export interface DeliveryReferenceResult {
-  readonly jobId: string;
-  readonly operationId: OperationId;
-  readonly replayed: boolean;
-}
-
-export class NotificationIdempotencyConflictError extends Error {
-  readonly code = "IDEMPOTENCY_CONFLICT";
-
-  constructor(readonly idempotencyKey: IdempotencyKey) {
-    super(
-      `Notification idempotency key "${idempotencyKey}" was reused with a different payload; expected the original command.`,
-    );
-    this.name = "NotificationIdempotencyConflictError";
-  }
-}
-
-export class NotificationValidationError extends Error {
-  readonly code = "VALIDATION_FAILED";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "NotificationValidationError";
-  }
-}
-
-export class NotificationAuthenticationError extends Error {
-  readonly code = "UNAUTHENTICATED";
-
-  constructor(message = "Notification authentication is required.") {
-    super(message);
-    this.name = "NotificationAuthenticationError";
-  }
-}
-
-export class NotificationDeliveryUnavailableError extends Error {
-  readonly code = "DEPENDENCY_UNAVAILABLE";
-
-  constructor(notificationId: string) {
-    super(
-      `Notification "${notificationId}" has no durable delivery job reference; expected projection consumption before external delivery.`,
-    );
-    this.name = "NotificationDeliveryUnavailableError";
-  }
-}
+export * from "./notifications_contracts.ts";
 
 export class NotificationV1Service {
   constructor(private readonly dependencies: NotificationV1Dependencies) {}
@@ -189,6 +115,7 @@ export class NotificationV1Service {
     const digest = await payloadDigest(commandPayload(input));
     return await this.dependencies.transactions.run(async (transaction) => {
       const lookup = idempotencyLookup(input, "subscription");
+      await this.dependencies.repository.lockIdempotency(transaction, lookup);
       const existing = await this.dependencies.repository.findIdempotency(
         transaction,
         lookup,
@@ -252,6 +179,7 @@ export class NotificationV1Service {
     });
     return await this.dependencies.transactions.run(async (transaction) => {
       const lookup = idempotencyLookup(input, "delivery");
+      await this.dependencies.repository.lockIdempotency(transaction, lookup);
       const existing = await this.dependencies.repository.findIdempotency(
         transaction,
         lookup,
@@ -341,6 +269,7 @@ function idempotencyLookup(
   return {
     tenantId: input.scope.tenantId,
     workspaceId: input.scope.workspaceId,
+    ...(input.scope.dealId === undefined ? {} : { dealId: input.scope.dealId }),
     actorId: input.context.actorId,
     commandType,
     targetId: input.subscriptionId ?? input.notificationId ?? "collection",

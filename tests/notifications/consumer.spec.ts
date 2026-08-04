@@ -1,4 +1,5 @@
-import { assert, assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
+import type { AuthorizationDecision } from "../../src/platform/authz/v1.ts";
 import type { OutboxEvent } from "../../src/platform/events/v1.ts";
 import type { InboxMessage } from "../../src/platform/events/inbox.ts";
 import type { TransactionHandle } from "../../src/platform/persistence/transaction.ts";
@@ -17,10 +18,7 @@ import {
   InMemoryNotificationRepository,
   type NotificationRepository,
 } from "../../src/notifications/repository.ts";
-import {
-  createSubscription,
-  type Subscription,
-} from "../../src/notifications/subscriptions.ts";
+import { createSubscription } from "../../src/notifications/subscriptions.ts";
 import {
   type NotificationEventAuthorizer,
   NotificationEventConsumer,
@@ -28,6 +26,47 @@ import {
 } from "../../src/notifications/consumer.ts";
 import type { AuthorizedNotificationScope } from "../../src/notifications/projection.ts";
 import type { NotificationScope } from "../../src/notifications/model.ts";
+import { createNotificationComposition } from "../../src/notifications/composition.ts";
+
+Deno.test("composition keeps projection and API paths usable without delivery claiming", async () => {
+  const repository = new InMemoryNotificationRepository();
+  const inbox = new FakeInbox();
+  const jobs = new FakeJobQueue();
+  await addSubscription(repository);
+  const composition = createNotificationComposition({
+    transactions: new ImmediateRunner(),
+    repository,
+    inbox,
+    jobs,
+    authorization: new AllowNotificationAuthorization(),
+    eventAuthorizer: new FakeNotificationEventAuthorizer(),
+    deliveryAuthorizer: new FakeDeliveryAuthorizer(),
+    clock: { now: () => now },
+  });
+
+  const consumed = await composition.consumer.consume(notificationEvent());
+  const listed = await composition.v1.listNotifications({
+    context: {
+      actorId: actorAlice,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      dealId: scope.dealId,
+      correlationId: "cor_notifications" as CorrelationId,
+      origin: "internal",
+    },
+    scope,
+    limit: 20,
+  });
+
+  assertEquals(consumed.status, "projected");
+  assertEquals(listed.data.length, 1);
+  assertEquals(composition.deliveryJobStore, undefined);
+  await assertRejects(
+    () => composition.delivery.runOne("worker_a", 30_000),
+    Error,
+    "claimNotificationDelivery",
+  );
+});
 
 const scope: NotificationScope = {
   tenantId: "tenant_alpha" as TenantId,
@@ -221,5 +260,28 @@ class FakeNotificationEventAuthorizer implements NotificationEventAuthorizer {
       action: "deliver",
       decision: {} as AuthorizedNotificationScope["decision"],
     });
+  }
+}
+
+class FakeDeliveryAuthorizer {
+  authorize(
+    authorizedScope: NotificationScope,
+    recipientId: ActorId,
+  ): Promise<AuthorizedNotificationScope> {
+    return Promise.resolve({
+      ...authorizedScope,
+      recipientId,
+      action: "deliver",
+      decision: {} as AuthorizedNotificationScope["decision"],
+    });
+  }
+}
+
+class AllowNotificationAuthorization {
+  authorize(): Promise<AuthorizationDecision> {
+    return Promise.resolve({
+      outcome: "allow",
+      approvedScope: {},
+    } as AuthorizationDecision);
   }
 }

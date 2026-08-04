@@ -8,8 +8,8 @@ import {
   DisabledNotificationChannelAdapter,
   type NotificationChannelAdapter,
   type NotificationDeliveryAuthorizer,
+  type NotificationDeliveryJobStore,
   NotificationDeliveryWorker,
-  type NotificationJobPort,
 } from "./delivery.ts";
 import {
   type NotificationEventAuthorizer,
@@ -35,7 +35,10 @@ export interface NotificationCompositionOptions {
   readonly transactions?: NotificationTransactionRunner;
   readonly repository?: NotificationRepository;
   readonly inbox?: NotificationInboxPort;
-  readonly jobs?: NotificationJobPort & Pick<JobRepository, "enqueue">;
+  /** Enqueue-only authority retained by the event consumer. */
+  readonly jobs?: Pick<JobRepository, "enqueue">;
+  /** Optional safe claim authority; omission intentionally disables delivery execution. */
+  readonly deliveryJobStore?: NotificationDeliveryJobStore;
   readonly authorization: NotificationAuthorizationPort;
   readonly eventAuthorizer: NotificationEventAuthorizer;
   readonly deliveryAuthorizer: NotificationDeliveryAuthorizer;
@@ -47,7 +50,8 @@ export interface NotificationComposition {
   readonly repository: NotificationRepository;
   readonly transactions: NotificationTransactionRunner;
   readonly inbox: NotificationInboxPort;
-  readonly jobs: NotificationJobPort & Pick<JobRepository, "enqueue">;
+  readonly jobs: Pick<JobRepository, "enqueue">;
+  readonly deliveryJobStore?: NotificationDeliveryJobStore;
   readonly adapters: ReadonlyMap<
     NotificationChannel,
     NotificationChannelAdapter
@@ -78,7 +82,7 @@ export function createNotificationComposition(
   });
   const delivery = new NotificationDeliveryWorker({
     transactions: infrastructure.transactions,
-    jobs: infrastructure.jobs,
+    jobStore: infrastructure.deliveryJobStore,
     repository: infrastructure.repository,
     authorizer: options.deliveryAuthorizer,
     adapters,
@@ -105,7 +109,8 @@ interface NotificationInfrastructure {
   readonly repository: NotificationRepository;
   readonly transactions: NotificationTransactionRunner;
   readonly inbox: NotificationInboxPort;
-  readonly jobs: NotificationJobPort & Pick<JobRepository, "enqueue">;
+  readonly jobs: Pick<JobRepository, "enqueue">;
+  readonly deliveryJobStore?: NotificationDeliveryJobStore;
 }
 
 function resolveInfrastructure(
@@ -116,7 +121,13 @@ function resolveInfrastructure(
     const repository = new PostgresNotificationRepository();
     const inbox = new InboxRepository();
     const jobs = new JobRepository();
-    return { repository, transactions, inbox, jobs };
+    return {
+      repository,
+      transactions,
+      inbox,
+      jobs,
+      deliveryJobStore: options.deliveryJobStore,
+    };
   }
   if (
     options.transactions !== undefined && options.repository !== undefined &&
@@ -127,14 +138,16 @@ function resolveInfrastructure(
       transactions: options.transactions,
       inbox: options.inbox,
       jobs: options.jobs,
+      deliveryJobStore: options.deliveryJobStore,
     };
   }
   if (
     options.transactions !== undefined || options.repository !== undefined ||
-    options.inbox !== undefined || options.jobs !== undefined
+    options.inbox !== undefined || options.jobs !== undefined ||
+    options.deliveryJobStore !== undefined
   ) {
     throw new Error(
-      "Notification infrastructure is incomplete; expected a PostgreSQL pool or all test transaction, repository, inbox, and job ports.",
+      "Notification infrastructure is incomplete; expected a PostgreSQL pool or all test transaction, repository, inbox, and enqueue-only job ports; delivery claiming is optional and must use the Notifications-owned claimNotificationDelivery port.",
     );
   }
   return {
@@ -142,6 +155,7 @@ function resolveInfrastructure(
     transactions: new UnconfiguredTransactionRunner(),
     inbox: new InboxRepository(),
     jobs: new JobRepository(),
+    deliveryJobStore: undefined,
   };
 }
 

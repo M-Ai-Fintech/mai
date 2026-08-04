@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import type {
   ClaimedJob,
   JobFailure,
@@ -18,13 +18,16 @@ import type {
 import {
   createNotificationId,
   freezeProjection,
-  type NotificationProjection,
   type NotificationScope,
 } from "../../src/notifications/model.ts";
 import {
+  type ClaimedNotificationDeliveryJob,
   DisabledNotificationChannelAdapter,
   type NotificationAdapterResult,
   type NotificationChannelAdapter,
+  type NotificationDeliveryClaim,
+  NotificationDeliveryClaimUnavailableError,
+  type NotificationDeliveryJobStore,
   NotificationDeliveryWorker,
 } from "../../src/notifications/delivery.ts";
 import { InMemoryNotificationRepository } from "../../src/notifications/repository.ts";
@@ -63,7 +66,45 @@ Deno.test("delivery worker records attempted and succeeded receipts", async () =
     "succeeded",
   ]);
   assertEquals(jobs.completed.length, 1);
+  assertEquals(jobs.claimCalls, 1);
   assertEquals(adapter.requests.length, 1);
+});
+
+Deno.test("delivery execution fails closed without a notification claim port", async () => {
+  const repository = new InMemoryNotificationRepository();
+  const deliveryWorker = new NotificationDeliveryWorker({
+    transactions: new ImmediateRunner(),
+    repository,
+    authorizer: new FakeDeliveryAuthorizer(),
+    adapters: new Map(),
+    retryPolicy: new ExponentialDeliveryRetryPolicy(),
+    clock: { now: () => createdAt },
+  });
+
+  await assertRejects(
+    () => deliveryWorker.runOne("worker_a", 30_000),
+    NotificationDeliveryClaimUnavailableError,
+    "claimNotificationDelivery",
+  );
+});
+
+Deno.test("typed claim store leaves unrelated jobs outside the notification queue", async () => {
+  const notification = claimedJob("in_app", 1);
+  const unrelated = { ...notification, jobType: "audit.export" } as ClaimedJob;
+  const mixed = new MixedFakeJobStore([unrelated, notification]);
+
+  const claimed = await mixed.claimNotificationDelivery(
+    new FakeTransaction(),
+    {
+      workerId: "worker_a",
+      now: createdAt,
+      leaseUntil: new Date(createdAt.getTime() + 30_000),
+      limit: 1,
+    },
+  );
+
+  assertEquals(claimed.map((job) => job.jobType), ["notification.delivery"]);
+  assertEquals(mixed.remaining.map((job) => job.jobType), ["audit.export"]);
 });
 
 Deno.test("delivery worker retries with backoff and exposes terminal dead-letter evidence", async () => {
@@ -188,7 +229,7 @@ function worker(
 ): NotificationDeliveryWorker {
   return new NotificationDeliveryWorker({
     transactions: new ImmediateRunner(),
-    jobs,
+    jobStore: jobs,
     repository,
     authorizer: new FakeDeliveryAuthorizer(),
     adapters: new Map(adapters.map((adapter) => [adapter.channel, adapter])),
@@ -200,7 +241,7 @@ function worker(
 function claimedJob(
   channel: "in_app" | "email",
   attemptNumber: number,
-): ClaimedJob {
+): ClaimedNotificationDeliveryJob {
   return {
     jobId: "job_notification-notif-event-1-actor-alice" as JobId,
     operationId: "op_notification-notif-event-1-actor-alice" as OperationId,
@@ -258,13 +299,18 @@ class FakeTransaction implements TransactionHandle {
   }
 }
 
-class FakeJobs {
+class FakeJobs implements NotificationDeliveryJobStore {
   readonly completed: Array<{ readonly jobId: JobId }> = [];
   readonly failures: Array<JobFailure> = [];
+  claimCalls = 0;
 
-  constructor(private readonly queue: ClaimedJob[]) {}
+  constructor(private readonly queue: ClaimedNotificationDeliveryJob[]) {}
 
-  claim(): Promise<ClaimedJob[]> {
+  claimNotificationDelivery(
+    _transaction: TransactionHandle,
+    _claim: NotificationDeliveryClaim,
+  ): Promise<readonly ClaimedNotificationDeliveryJob[]> {
+    this.claimCalls++;
     const job = this.queue.shift();
     return Promise.resolve(job === undefined ? [] : [job]);
   }
@@ -287,6 +333,38 @@ class FakeJobs {
     failure: JobFailure,
   ): Promise<void> {
     this.failures.push(failure);
+    return Promise.resolve();
+  }
+}
+
+class MixedFakeJobStore implements NotificationDeliveryJobStore {
+  readonly remaining: ClaimedJob[];
+
+  constructor(jobs: ClaimedJob[]) {
+    this.remaining = [...jobs];
+  }
+
+  claimNotificationDelivery(
+    _transaction: TransactionHandle,
+    _claim: NotificationDeliveryClaim,
+  ): Promise<readonly ClaimedNotificationDeliveryJob[]> {
+    const index = this.remaining.findIndex((job) =>
+      job.jobType === "notification.delivery"
+    );
+    if (index < 0) return Promise.resolve([]);
+    const [job] = this.remaining.splice(index, 1);
+    return Promise.resolve([job as ClaimedNotificationDeliveryJob]);
+  }
+
+  assertActiveLease(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  complete(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  fail(): Promise<void> {
     return Promise.resolve();
   }
 }

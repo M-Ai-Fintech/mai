@@ -1,25 +1,12 @@
-import type {
-  ClaimedJob,
-  JobClaim,
-  JobFailure,
-  SanitizedJobFailure,
-} from "../platform/jobs/repository.ts";
+import type { ClaimedJob, JobFailure } from "../platform/jobs/repository.ts";
 import { sanitizedJobFailure } from "../platform/jobs/repository.ts";
 import type { TransactionHandle } from "../platform/persistence/transaction.ts";
-import type {
-  ActorId,
-  JobId,
-  OperationId,
-} from "../shared/contracts/identifiers.ts";
+import type { ActorId, JobId } from "../shared/contracts/identifiers.ts";
 import {
-  createDeliveryReceiptId,
-  type DeliveryReceipt,
   type NotificationChannel,
   type NotificationClock,
-  type NotificationId,
   type NotificationProjection,
   type NotificationScope,
-  parseNotificationId,
 } from "./model.ts";
 import type {
   AuthorizedNotificationScope,
@@ -28,33 +15,54 @@ import type {
 import type {
   NotificationProjectionLookup,
   NotificationRepository,
-  NotificationStateUpdate,
 } from "./repository.ts";
-import type { DeliveryRetryPolicy } from "./retry.ts";
+import {
+  type DeliveryRetryPolicy,
+  missingReceipt,
+  type ParsedDeliveryJob,
+  parseDeliveryJob,
+  receipt,
+  sanitizedFailure,
+  stateUpdate,
+} from "./retry.ts";
 import { projectNotification } from "./projection.ts";
 
-export interface NotificationJobPort {
-  claim(
+export interface NotificationDeliveryClaim {
+  readonly workerId: string;
+  readonly now: Date;
+  readonly leaseUntil: Date;
+  readonly limit: number;
+}
+
+export type ClaimedNotificationDeliveryJob = Omit<ClaimedJob, "jobType"> & {
+  readonly jobType: "notification.delivery";
+};
+
+export interface NotificationDeliveryJobStore {
+  claimNotificationDelivery(
     transaction: TransactionHandle,
-    claim: JobClaim,
-  ): Promise<ClaimedJob[]>;
+    claim: NotificationDeliveryClaim,
+  ): Promise<readonly ClaimedNotificationDeliveryJob[]>;
   assertActiveLease(
     transaction: TransactionHandle,
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     now: Date,
   ): Promise<void>;
   complete(
     transaction: TransactionHandle,
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     resultReference: string,
     completedAt: Date,
   ): Promise<void>;
   fail(
     transaction: TransactionHandle,
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     failure: JobFailure,
   ): Promise<void>;
 }
+
+/** Compatibility name for callers that used the original notification port. */
+export type NotificationJobPort = NotificationDeliveryJobStore;
 
 export interface NotificationDeliveryRequest {
   readonly channel: NotificationChannel;
@@ -82,7 +90,7 @@ export interface NotificationDeliveryAuthorizer {
   authorize(
     scope: NotificationScope,
     recipientId: ActorId,
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
   ): Promise<AuthorizedNotificationScope>;
 }
 
@@ -92,7 +100,7 @@ export interface NotificationDeliveryDependencies {
       callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
     ): Promise<TResult>;
   };
-  readonly jobs: NotificationJobPort;
+  readonly jobStore?: NotificationDeliveryJobStore;
   readonly repository: NotificationRepository;
   readonly authorizer: NotificationDeliveryAuthorizer;
   readonly adapters: ReadonlyMap<
@@ -124,6 +132,17 @@ export class DisabledNotificationChannelAdapter
   }
 }
 
+export class NotificationDeliveryClaimUnavailableError extends Error {
+  readonly code = "NOTIFICATION_DELIVERY_CLAIM_UNAVAILABLE";
+
+  constructor() {
+    super(
+      "Notification delivery execution is unavailable; expected a Notifications-owned claimNotificationDelivery port.",
+    );
+    this.name = "NotificationDeliveryClaimUnavailableError";
+  }
+}
+
 export class NotificationDeliveryWorker {
   constructor(
     private readonly dependencies: NotificationDeliveryDependencies,
@@ -148,21 +167,25 @@ export class NotificationDeliveryWorker {
     workerId: string,
     leaseMilliseconds: number,
     now: Date,
-  ): Promise<ClaimedJob | undefined> {
-    const claim: JobClaim = {
+  ): Promise<ClaimedNotificationDeliveryJob | undefined> {
+    const jobStore = this.dependencies.jobStore;
+    if (jobStore === undefined) {
+      throw new NotificationDeliveryClaimUnavailableError();
+    }
+    const claim: NotificationDeliveryClaim = {
       workerId,
       now,
       leaseUntil: new Date(now.getTime() + leaseMilliseconds),
       limit: 1,
     };
     return await this.dependencies.transactions.run(async (transaction) => {
-      const jobs = await this.dependencies.jobs.claim(transaction, claim);
+      const jobs = await jobStore.claimNotificationDelivery(transaction, claim);
       return jobs[0];
     });
   }
 
   private async processClaimedJob(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
   ): Promise<NotificationDeliveryResult> {
     const input = parseDeliveryJob(job);
     const access = await this.dependencies.authorizer.authorize(
@@ -170,7 +193,7 @@ export class NotificationDeliveryWorker {
       input.recipientId,
       job,
     );
-    const projection = await this.loadProjection(job, input, access);
+    const projection = await this.loadProjection(input, access);
     if (projection === undefined) {
       return await this.recordMissingProjection(job, input, access);
     }
@@ -218,7 +241,6 @@ export class NotificationDeliveryWorker {
   }
 
   private loadProjection(
-    job: ClaimedJob,
     input: ParsedDeliveryJob,
     access: AuthorizedNotificationScope,
   ): Promise<NotificationProjection | undefined> {
@@ -232,13 +254,17 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordAttempt(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     now: Date,
   ): Promise<void> {
     await this.dependencies.transactions.run(async (transaction) => {
-      await this.dependencies.jobs.assertActiveLease(transaction, job, now);
+      await this.dependencies.jobStore!.assertActiveLease(
+        transaction,
+        job,
+        now,
+      );
       await this.dependencies.repository.updateDeliveryState(
         transaction,
         stateUpdate(access, projection, job, "attempting"),
@@ -251,7 +277,7 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordSuccess(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     result: Extract<
@@ -261,7 +287,11 @@ export class NotificationDeliveryWorker {
     now: Date,
   ): Promise<NotificationDeliveryResult> {
     await this.dependencies.transactions.run(async (transaction) => {
-      await this.dependencies.jobs.assertActiveLease(transaction, job, now);
+      await this.dependencies.jobStore!.assertActiveLease(
+        transaction,
+        job,
+        now,
+      );
       await this.dependencies.repository.updateDeliveryState(
         transaction,
         stateUpdate(access, projection, job, "succeeded"),
@@ -270,7 +300,7 @@ export class NotificationDeliveryWorker {
         transaction,
         receipt(projection, access, job, "succeeded", now),
       );
-      await this.dependencies.jobs.complete(
+      await this.dependencies.jobStore!.complete(
         transaction,
         job,
         result.resultReference,
@@ -281,7 +311,7 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordRetry(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     failureCode: string,
@@ -317,7 +347,7 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordTerminal(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     failureCode: string,
@@ -336,13 +366,17 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordExpired(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     now: Date,
   ): Promise<NotificationDeliveryResult> {
     await this.dependencies.transactions.run(async (transaction) => {
-      await this.dependencies.jobs.assertActiveLease(transaction, job, now);
+      await this.dependencies.jobStore!.assertActiveLease(
+        transaction,
+        job,
+        now,
+      );
       await this.dependencies.repository.updateDeliveryState(
         transaction,
         stateUpdate(access, projection, job, "expired"),
@@ -351,7 +385,7 @@ export class NotificationDeliveryWorker {
         transaction,
         receipt(projection, access, job, "expired", now),
       );
-      await this.dependencies.jobs.fail(transaction, job, {
+      await this.dependencies.jobStore!.fail(transaction, job, {
         outcome: "failed",
         failure: sanitizedJobFailure("NOTIFICATION_EXPIRED"),
         completedAt: now,
@@ -361,18 +395,22 @@ export class NotificationDeliveryWorker {
   }
 
   private async recordMissingProjection(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     input: ParsedDeliveryJob,
     access: AuthorizedNotificationScope,
   ): Promise<NotificationDeliveryResult> {
     const now = this.dependencies.clock.now();
     await this.dependencies.transactions.run(async (transaction) => {
-      await this.dependencies.jobs.assertActiveLease(transaction, job, now);
+      await this.dependencies.jobStore!.assertActiveLease(
+        transaction,
+        job,
+        now,
+      );
       await this.dependencies.repository.appendReceipt(
         transaction,
         missingReceipt(input, access, job, now),
       );
-      await this.dependencies.jobs.fail(transaction, job, {
+      await this.dependencies.jobStore!.fail(transaction, job, {
         outcome: "dead_lettered",
         failure: sanitizedJobFailure("NOTIFICATION_NOT_FOUND"),
         completedAt: now,
@@ -382,7 +420,7 @@ export class NotificationDeliveryWorker {
   }
 
   private recordFailure(
-    job: ClaimedJob,
+    job: ClaimedNotificationDeliveryJob,
     projection: NotificationProjection,
     access: AuthorizedNotificationScope,
     outcome: "retry_scheduled" | "dead_lettered",
@@ -392,7 +430,11 @@ export class NotificationDeliveryWorker {
   ): Promise<void> {
     const failure = sanitizedFailure(failureCode);
     return this.dependencies.transactions.run(async (transaction) => {
-      await this.dependencies.jobs.assertActiveLease(transaction, job, now);
+      await this.dependencies.jobStore!.assertActiveLease(
+        transaction,
+        job,
+        now,
+      );
       await this.dependencies.repository.updateDeliveryState(
         transaction,
         stateUpdate(
@@ -413,7 +455,7 @@ export class NotificationDeliveryWorker {
           failureCode,
         ),
       );
-      await this.dependencies.jobs.fail(transaction, job, {
+      await this.dependencies.jobStore!.fail(transaction, job, {
         outcome,
         failure,
         completedAt: now,
@@ -421,112 +463,6 @@ export class NotificationDeliveryWorker {
       });
     });
   }
-}
-
-function parseDeliveryJob(job: ClaimedJob): ParsedDeliveryJob {
-  if (job.workspaceId === undefined) {
-    throw new Error(
-      `Notification job "${job.jobId}" has no workspace scope; expected a recipient-scoped job.`,
-    );
-  }
-  const rawId = job.payload.notificationId;
-  const parsedId = parseNotificationId(rawId);
-  if (!parsedId.ok) {
-    throw new Error(
-      `Notification job "${job.jobId}" notification ID "${
-        String(rawId)
-      }" is invalid; expected a notification ID.`,
-    );
-  }
-  const channel = job.payload.channel;
-  if (channel !== "in_app" && channel !== "email") {
-    throw new Error(
-      `Notification job "${job.jobId}" channel "${
-        String(channel)
-      }" is invalid; expected in_app or email.`,
-    );
-  }
-  return {
-    notificationId: parsedId.value,
-    recipientId: job.initiatingActorId,
-    channel,
-    scope: {
-      tenantId: job.tenantId,
-      workspaceId: job.workspaceId,
-      ...(job.dealId === undefined ? {} : { dealId: job.dealId }),
-    },
-  };
-}
-
-interface ParsedDeliveryJob {
-  readonly notificationId: NotificationId;
-  readonly recipientId: ActorId;
-  readonly channel: NotificationChannel;
-  readonly scope: NotificationScope;
-}
-
-function stateUpdate(
-  access: AuthorizedNotificationScope,
-  projection: NotificationProjection,
-  job: ClaimedJob,
-  state: NotificationStateUpdate["state"],
-): NotificationStateUpdate {
-  return {
-    access,
-    notificationId: projection.notificationId,
-    jobId: job.jobId,
-    state,
-  };
-}
-
-function receipt(
-  projection: NotificationProjection,
-  access: AuthorizedNotificationScope,
-  job: ClaimedJob,
-  outcome: DeliveryReceipt["outcome"],
-  occurredAt: Date,
-  failureCode?: string,
-): DeliveryReceipt {
-  return {
-    receiptId: createDeliveryReceiptId(
-      `receipt_${
-        receiptToken(projection.notificationId)
-      }-${job.attemptNumber}-${receiptToken(outcome)}`,
-    ),
-    scope: access,
-    recipientId: access.recipientId,
-    notificationId: projection.notificationId,
-    jobId: job.jobId,
-    channel: job.payload.channel as NotificationChannel,
-    attemptNumber: job.attemptNumber,
-    outcome,
-    ...(failureCode === undefined ? {} : { failureCode }),
-    occurredAt,
-  };
-}
-
-function missingReceipt(
-  input: ParsedDeliveryJob,
-  access: AuthorizedNotificationScope,
-  job: ClaimedJob,
-  occurredAt: Date,
-): DeliveryReceipt {
-  return {
-    receiptId: createDeliveryReceiptId(
-      `receipt_${
-        receiptToken(input.notificationId)
-      }-${job.attemptNumber}-terminal`,
-    ),
-    scope: input.scope,
-    recipientId: access.recipientId,
-    notificationId: input.notificationId,
-    jobId: job.jobId,
-    channel: input.channel,
-    attemptNumber: job.attemptNumber,
-    outcome: "terminal",
-    failureCode: "NOTIFICATION_NOT_FOUND",
-    occurredAt,
-  };
 }
 
 async function deliverSafely(
@@ -538,13 +474,4 @@ async function deliverSafely(
   } catch {
     return { status: "retryable", failureCode: "CHANNEL_ADAPTER_ERROR" };
   }
-}
-
-function sanitizedFailure(code: string): SanitizedJobFailure {
-  if (/^[A-Z][A-Z0-9_:-]{0,127}$/.test(code)) return sanitizedJobFailure(code);
-  return sanitizedJobFailure("CHANNEL_ADAPTER_ERROR");
-}
-
-function receiptToken(notificationId: string): string {
-  return notificationId.replaceAll("_", "-");
 }

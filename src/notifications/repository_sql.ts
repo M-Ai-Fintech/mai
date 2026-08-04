@@ -1,6 +1,7 @@
 import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts";
 import type {
   ActorId,
+  DealId,
   IdempotencyKey,
   TenantId,
   WorkspaceId,
@@ -15,7 +16,6 @@ import {
   type NotificationProjection,
   type NotificationScope,
 } from "./model.ts";
-import type { AuthorizedNotificationScope } from "./projection.ts";
 import {
   freezeSubscription,
   type Subscription,
@@ -25,7 +25,21 @@ import {
   attachJobSql,
   deliveryStateUpdateSql,
   idempotencyInsertSql,
+  idempotencyLockSql,
   idempotencySelectSql,
+  projectionInsertSql,
+  projectionInsertValues,
+  projectionSelectSql,
+  receiptInsertSql,
+  receiptInsertValues,
+  receiptSelectSql,
+  subscriptionInsertSql,
+  subscriptionInsertValues,
+  subscriptionSelectSql,
+  subscriptionUpdateSql,
+} from "./repository_sql_queries.ts";
+import {
+  NO_DEAL_SCOPE_MARKER,
   type NotificationIdempotencyLookup,
   type NotificationIdempotencyRecord,
   type NotificationJobLink,
@@ -34,18 +48,8 @@ import {
   type NotificationRepository,
   NotificationRepositoryNotFoundError,
   type NotificationStateUpdate,
-  projectionInsertSql,
-  projectionInsertValues,
-  projectionSelectSql,
-  receiptInsertSql,
-  receiptInsertValues,
-  receiptSelectSql,
   type SubscriptionIdLookup,
-  subscriptionInsertSql,
-  subscriptionInsertValues,
   type SubscriptionLookup,
-  subscriptionSelectSql,
-  subscriptionUpdateSql,
 } from "./repository.ts";
 
 export class PostgresNotificationRepository implements NotificationRepository {
@@ -239,13 +243,23 @@ export class PostgresNotificationRepository implements NotificationRepository {
   ): Promise<NotificationIdempotencyRecord | undefined> {
     const result = await transaction.query<NotificationIdempotencyRow>(
       `${idempotencySelectSql()} WHERE tenant_id = $1 AND workspace_id = $2
-       AND actor_id = $3 AND command_type = $4 AND target_id = $5
-       AND idempotency_key = $6`,
+       AND deal_id = $3 AND actor_id = $4 AND command_type = $5
+       AND target_id = $6 AND idempotency_key = $7`,
       idempotencyLookupValues(lookup),
     );
     return result.rows[0] === undefined
       ? undefined
       : toIdempotency(result.rows[0]);
+  }
+
+  async lockIdempotency(
+    transaction: TransactionHandle,
+    lookup: NotificationIdempotencyLookup,
+  ): Promise<void> {
+    await transaction.query(
+      idempotencyLockSql(),
+      idempotencyLookupValues(lookup),
+    );
   }
 
   async insertIdempotency(
@@ -312,6 +326,7 @@ interface DeliveryReceiptRow extends ScopedRecipientRow {
 interface NotificationIdempotencyRow {
   readonly tenantId: TenantId;
   readonly workspaceId: WorkspaceId;
+  readonly dealId: string;
   readonly actorId: ActorId;
   readonly commandType: string;
   readonly targetId: string;
@@ -392,6 +407,9 @@ function toIdempotency(
   return {
     tenantId: row.tenantId,
     workspaceId: row.workspaceId,
+    ...(row.dealId === NO_DEAL_SCOPE_MARKER
+      ? {}
+      : { dealId: row.dealId as DealId }),
     actorId: row.actorId,
     commandType: row.commandType,
     targetId: row.targetId,
@@ -440,6 +458,7 @@ function idempotencyLookupValues(
   return [
     lookup.tenantId,
     lookup.workspaceId,
+    lookup.dealId ?? NO_DEAL_SCOPE_MARKER,
     lookup.actorId,
     lookup.commandType,
     lookup.targetId,
