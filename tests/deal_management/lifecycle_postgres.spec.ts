@@ -206,3 +206,109 @@ Deno.test({
     }
   },
 });
+
+Deno.test({
+  name: "lifecycle transition history is append-only at the database boundary",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    try {
+      const migrations = [
+        ...platformMigrations,
+        ...auditActivityMigrations,
+        ...dealManagementMigrations,
+      ];
+      const runner = new PostgresMigrationRunner(pool);
+      await runner.apply(migrations);
+      await runner.apply(migrations);
+      await truncate(pool);
+      await insertHistoryRow(pool);
+
+      const before = await historySnapshot(pool);
+      await assertRejects(
+        () =>
+          pool.query(
+            `UPDATE deal_management.lifecycle_transition_history
+             SET next_state = 'blocked'
+             WHERE transition_id = $1`,
+            ["transition_immutable"],
+          ),
+        Error,
+        "append-only",
+      );
+      await assertRejects(
+        () =>
+          pool.query(
+            `DELETE FROM deal_management.lifecycle_transition_history
+             WHERE transition_id = $1`,
+            ["transition_immutable"],
+          ),
+        Error,
+        "append-only",
+      );
+      const after = await historySnapshot(pool);
+      assertEquals(after, before);
+      assertEquals(
+        await count(pool, "deal_management.lifecycle_transition_history"),
+        "1",
+      );
+      const trigger = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM pg_trigger
+         WHERE tgrelid = 'deal_management.lifecycle_transition_history'::regclass
+           AND tgname = 'lifecycle_transition_history_no_update_or_delete'`,
+      );
+      assertEquals(trigger.rows[0]!.count, "1");
+    } finally {
+      await truncate(pool);
+      await pool.end();
+    }
+  },
+});
+
+async function insertHistoryRow(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO deal_management.lifecycle_transition_history (
+       transition_id, event_id, tenant_id, workspace_id, deal_id,
+       aggregate_version, subject_type, subject_id, previous_state,
+       next_state, prerequisites, actor_id, correlation_id, occurred_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+    [
+      "transition_immutable",
+      "event_immutable",
+      "tenant_northstar",
+      "workspace_alpha",
+      "deal_immutable",
+      1,
+      "milestone",
+      "milestone_immutable",
+      null,
+      "planned",
+      JSON.stringify([]),
+      "actor_immutable",
+      "correlation_immutable",
+      "2026-08-04T12:00:00.000Z",
+    ],
+  );
+}
+
+async function historySnapshot(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<readonly HistorySnapshot[]> {
+  const result = await pool.query<HistorySnapshot>(
+    `SELECT subject_id AS "subjectId", next_state AS "nextState",
+            prerequisites::text AS prerequisites
+     FROM deal_management.lifecycle_transition_history
+     WHERE transition_id = $1`,
+    ["transition_immutable"],
+  );
+  return result.rows;
+}
+
+interface HistorySnapshot {
+  readonly subjectId: string;
+  readonly nextState: string;
+  readonly prerequisites: string;
+}

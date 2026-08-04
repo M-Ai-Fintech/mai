@@ -9,6 +9,7 @@ export interface LifecycleTransitionRule {
 export interface MilestoneTransitionRule {
   readonly from: DealMilestoneState;
   readonly to: DealMilestoneState;
+  readonly requiresPrerequisites: boolean;
 }
 
 export const DEAL_LIFECYCLE_TRANSITIONS: readonly LifecycleTransitionRule[] =
@@ -28,14 +29,14 @@ export const DEAL_LIFECYCLE_TRANSITIONS: readonly LifecycleTransitionRule[] =
 
 export const MILESTONE_TRANSITIONS: readonly MilestoneTransitionRule[] = Object
   .freeze([
-    makeMilestoneRule("planned", "active"),
-    makeMilestoneRule("planned", "blocked"),
-    makeMilestoneRule("planned", "cancelled"),
-    makeMilestoneRule("active", "completed"),
-    makeMilestoneRule("active", "blocked"),
-    makeMilestoneRule("active", "cancelled"),
-    makeMilestoneRule("blocked", "active"),
-    makeMilestoneRule("blocked", "cancelled"),
+    makeMilestoneRule("planned", "active", true),
+    makeMilestoneRule("planned", "blocked", false),
+    makeMilestoneRule("planned", "cancelled", false),
+    makeMilestoneRule("active", "completed", true),
+    makeMilestoneRule("active", "blocked", false),
+    makeMilestoneRule("active", "cancelled", false),
+    makeMilestoneRule("blocked", "active", true),
+    makeMilestoneRule("blocked", "cancelled", false),
   ]);
 
 export function lifecycleRule(
@@ -67,6 +68,7 @@ function rule(
 function makeMilestoneRule(
   from: DealMilestoneState,
   to: DealMilestoneState,
+  requiresPrerequisites: boolean,
 ): MilestoneTransitionRule {
-  return Object.freeze({ from, to });
+  return Object.freeze({ from, to, requiresPrerequisites });
 }

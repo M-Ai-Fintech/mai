@@ -29,8 +29,20 @@ Deno.test("lifecycle migration is an additive current-schema upgrade", () => {
       "UNIQUE (tenant_id, workspace_id, deal_id, aggregate_version)",
     ),
   );
+  assert(
+    sql.includes(
+      "CREATE FUNCTION deal_management.reject_lifecycle_history_mutation",
+    ),
+  );
+  assert(
+    sql.includes(
+      "CREATE TRIGGER lifecycle_transition_history_no_update_or_delete",
+    ),
+  );
+  assert(sql.includes("BEFORE UPDATE OR DELETE"));
   assert(sql.includes("jsonb_typeof(document) = 'object'"));
-  assert(!/\b(DROP|TRUNCATE|DELETE|ALTER)\b/i.test(sql));
+  assert(!/\b(DROP|TRUNCATE|ALTER)\b/i.test(sql));
+  assert(!/\bDELETE\s+FROM\b/i.test(sql));
   assert(
     lifecycleMilestonesMigration.statements.every((statement) =>
       statement.schema === "deal_management"

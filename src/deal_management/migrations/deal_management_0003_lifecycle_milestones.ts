@@ -64,5 +64,24 @@ export const lifecycleMilestonesMigration = defineMigration({
             (tenant_id, workspace_id, deal_id, aggregate_version, occurred_at);
       `,
     },
+    {
+      schema: "deal_management",
+      sql: `
+        CREATE FUNCTION deal_management.reject_lifecycle_history_mutation()
+        RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          RAISE EXCEPTION 'deal_management lifecycle transition history is append-only';
+        END;
+        $$
+      `,
+    },
+    {
+      schema: "deal_management",
+      sql: `
+        CREATE TRIGGER lifecycle_transition_history_no_update_or_delete
+        BEFORE UPDATE OR DELETE ON deal_management.lifecycle_transition_history
+        FOR EACH ROW EXECUTE FUNCTION deal_management.reject_lifecycle_history_mutation()
+      `,
+    },
   ],
 });

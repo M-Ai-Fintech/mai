@@ -123,7 +123,9 @@ export function transitionMilestone(
     throw invalidTransition(current.state, input.toState, "milestone");
   }
   const prerequisites = evaluateMilestonePrerequisites(aggregate, current);
-  assertPrerequisites(current.key, prerequisites);
+  if (rule.requiresPrerequisites) {
+    assertPrerequisites(current.key, prerequisites);
+  }
   const next = {
     ...current,
     state: input.toState,
@@ -225,7 +227,6 @@ export function parseStoredLifecycleHistory(
     ),
   };
 }
-
 function parseMilestone(value: unknown): DealMilestone {
   const document = objectValue(value, "Deal milestone");
   const prerequisites = arrayValue(

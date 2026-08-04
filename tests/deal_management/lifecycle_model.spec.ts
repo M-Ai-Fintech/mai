@@ -7,6 +7,10 @@ import {
   transitionLifecycle,
   transitionMilestone,
 } from "../../src/deal_management/lifecycle/model.ts";
+import type {
+  DealLifecycleAggregate,
+  DealMilestoneState,
+} from "../../src/deal_management/lifecycle/contracts.ts";
 import {
   DEAL_LIFECYCLE_TRANSITIONS,
   MILESTONE_TRANSITIONS,
@@ -44,16 +48,19 @@ Deno.test("lifecycle tables expose explicit forward and terminal edges", () => {
     ],
   );
   assertEquals(
-    MILESTONE_TRANSITIONS.map(({ from, to }) => `${from}->${to}`),
+    MILESTONE_TRANSITIONS.map(({ from, to, requiresPrerequisites }) => [
+      `${from}->${to}`,
+      requiresPrerequisites,
+    ]),
     [
-      "planned->active",
-      "planned->blocked",
-      "planned->cancelled",
-      "active->completed",
-      "active->blocked",
-      "active->cancelled",
-      "blocked->active",
-      "blocked->cancelled",
+      ["planned->active", true],
+      ["planned->blocked", false],
+      ["planned->cancelled", false],
+      ["active->completed", true],
+      ["active->blocked", false],
+      ["active->cancelled", false],
+      ["blocked->active", true],
+      ["blocked->cancelled", false],
     ],
   );
   assertEquals(DEAL_LIFECYCLE_TRANSITIONS.at(-1)?.to, "archived");
@@ -95,6 +102,98 @@ Deno.test("lifecycle transitions enforce milestones as prerequisites", () => {
 
   assertEquals(next.state, "due_diligence");
   assertEquals(next.milestones[0]?.state, "completed");
+});
+
+Deno.test(
+  "milestones can be blocked or cancelled while prerequisites are unmet",
+  () => {
+    const allowed = [
+      ["planned", "blocked"],
+      ["planned", "cancelled"],
+      ["active", "cancelled"],
+      ["blocked", "cancelled"],
+    ] as const;
+    for (const [fromState, toState] of allowed) {
+      const result = transitionMilestone(
+        milestoneWithUnmetPrerequisite(fromState),
+        {
+          milestoneId: milestoneId("milestone_unmet_transition"),
+          toState,
+          now: "2026-08-04T12:03:00.000Z",
+        },
+      );
+      assertEquals(result.aggregate.milestones[0]?.state, toState);
+      assertEquals(result.prerequisites[0]?.satisfied, false);
+    }
+  },
+);
+
+Deno.test("activation and completion reject unmet prerequisites", () => {
+  const activation = expectLifecycleError(
+    () =>
+      transitionMilestone(milestoneWithUnmetPrerequisite("planned"), {
+        milestoneId: milestoneId("milestone_unmet_transition"),
+        toState: "active",
+        now: "2026-08-04T12:03:00.000Z",
+      }),
+  );
+  assertEquals(activation.lifecycleCode, "PREREQUISITE_BLOCKED");
+
+  const completion = expectLifecycleError(
+    () =>
+      transitionMilestone(milestoneWithUnmetPrerequisite("active"), {
+        milestoneId: milestoneId("milestone_unmet_transition"),
+        toState: "completed",
+        now: "2026-08-04T12:03:00.000Z",
+      }),
+  );
+  assertEquals(completion.lifecycleCode, "PREREQUISITE_BLOCKED");
+});
+
+Deno.test("successful milestone prerequisites remain evidenced", () => {
+  const prerequisite = createMilestone(lifecycle(), {
+    id: milestoneId("milestone_prerequisite"),
+    key: "target_identified",
+    title: "Target identified",
+    now: "2026-08-04T12:00:00.000Z",
+  }).aggregate;
+  const completedPrerequisite = transitionMilestone(
+    transitionMilestone(prerequisite, {
+      milestoneId: milestoneId("milestone_prerequisite"),
+      toState: "active",
+      now: "2026-08-04T12:01:00.000Z",
+    }).aggregate,
+    {
+      milestoneId: milestoneId("milestone_prerequisite"),
+      toState: "completed",
+      now: "2026-08-04T12:02:00.000Z",
+    },
+  ).aggregate;
+  const dependent = createMilestone(completedPrerequisite, {
+    id: milestoneId("milestone_dependent"),
+    key: "diligence_complete",
+    title: "Diligence complete",
+    prerequisites: [{ key: "target_identified", state: "completed" }],
+    now: "2026-08-04T12:03:00.000Z",
+  }).aggregate;
+
+  const active = transitionMilestone(dependent, {
+    milestoneId: milestoneId("milestone_dependent"),
+    toState: "active",
+    now: "2026-08-04T12:04:00.000Z",
+  });
+  assertEquals(active.prerequisites, [{
+    key: "target_identified",
+    requiredState: "completed",
+    actualState: "completed",
+    satisfied: true,
+  }]);
+  const completed = transitionMilestone(active.aggregate, {
+    milestoneId: milestoneId("milestone_dependent"),
+    toState: "completed",
+    now: "2026-08-04T12:05:00.000Z",
+  });
+  assertEquals(completed.aggregate.milestones[1]?.state, "completed");
 });
 
 Deno.test("lifecycle model rejects invalid, duplicate, missing, and impossible inputs", () => {
@@ -164,4 +263,23 @@ function expectLifecycleError(action: () => unknown): DealLifecycleError {
     throw error;
   }
   throw new Error("Expected a DealLifecycleError, but the action completed.");
+}
+
+function milestoneWithUnmetPrerequisite(
+  state: Extract<DealMilestoneState, "planned" | "active" | "blocked">,
+): DealLifecycleAggregate {
+  const aggregate = createMilestone(lifecycle(), {
+    id: milestoneId("milestone_unmet_transition"),
+    key: "requires_target",
+    title: "Requires target",
+    prerequisites: [{ key: "target_identified", state: "completed" }],
+    now: "2026-08-04T12:00:00.000Z",
+  }).aggregate;
+  return {
+    ...aggregate,
+    milestones: aggregate.milestones.map((milestone) => ({
+      ...milestone,
+      state,
+    })),
+  };
 }
