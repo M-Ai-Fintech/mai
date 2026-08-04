@@ -1,11 +1,11 @@
 ---
 id: MAI-110
 title: 'Deal management, parties and mandate'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-03 23:55'
+updated_date: '2026-08-04 01:36'
 labels:
   - backend
   - architecture
@@ -191,6 +191,8 @@ Local corrective commits created: ecd725a fix(MAI-110): close PR 44 review block
 Final re-review correction: restored graphify-out/GRAPH_REPORT.md and graphify-out/graph.json to master versions and removed both from the MAI-110 modified-file inventory. The earlier premature Graphify refresh is historical evidence only; Graphify must run once after the corrective PR is merged.
 
 Final re-review implementation evidence: safe constant authentication failures and a non-argument MAI110_OPERATOR_SESSION channel; explicit actor/identity/provider/session correlation with fail-closed authorization; exact per-operation evidence verification including claim/receipt/history/outbox/audit linkage; authorityConstraints collision preflight; reconciliation split to 424 lines; and credential-safety, identity-correlation, evidence, authority, and PostgreSQL regressions. Final focused suite: 42 passed, 0 failed, 0 ignored with MAI106_DATABASE_URL configured. Scoped fmt/lint/check and git diff --check passed. verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable offline. Repository-wide deno task test completed successfully; canonical runner was executed but its full output was truncated by the execution channel after the Deno test stream. Corrective commit f5ba394 is local; PR remains Draft and MAI-110 remains In Progress.
+
+Wave B finisher closure (2026-08-03): master was clean and synchronized at 034d3bf, with owner-merged PR #44 (merge 7b97264) and follow-up PR #45 (merge 034d3bf). Merged-source review covered bounded ownership/exclusions, authenticated tenant/workspace and identity isolation, deny-before-load authorization, provenance and safe diagnostics, concurrency/idempotency, migration/additive rollback routing, legacy mapping/reconciliation, operator evidence, and the executable server composition. Focused Deno suites passed: tests/deal_management/*.spec.ts = 84 passed, 0 failed, 0 ignored; related Identity Access/API suites = 49 passed, 0 failed. Canonical command DENO_ENV=test MAI106_DATABASE_URL=<isolated postgres:16 URL> deno task verify exited 0 with all 17 categories PASS, including GUI unit tests, Next.js production build, frontend workflows, Storybook build, and Storybook interaction tests. Graphify ran exactly once after green verification: graphify update . completed, graphify-out/graph.json and GRAPH_REPORT.md refreshed (17157 nodes, 27903 edges); git diff --check passed. The named PostgreSQL container was removed. No feature implementation occurred during finalization; no frontend/Figma redesign, cutover, deployment, provider certification, or destructive migration was performed.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -266,5 +268,5 @@ Final executor error-boundary correction evidence (2026-08-04): applyMapped now 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implemented the PR #44 request-changes corrections: real executable bootstrap and operator runtime, scope-bound PostgreSQL legacy mappings/resolver, collision-safe preflight, durable verification evidence and applied recovery, serialized routing, governed operator documentation, PostgreSQL regressions, and changed-production function refactors. Final evidence: 41/41 focused Deal tests with zero PostgreSQL ignores; scoped format/lint/check/diff pass; verify:fast 11 pass/5 skip/2 unavailable offline; all 17 canonical categories pass; independent challenge review closes all seven blockers. Keep MAI-110 In Progress and PR #44 Draft pending owner review; do not merge or mark ready automatically.
+Closed MAI-110 after owner-merged PR #44 and follow-up migration-bootstrap PR #45. Verified merged Deal Management source with 84 focused tests and 49 related Identity Access/API tests, all passing with zero ignored PostgreSQL tests; canonical DENO_ENV=test deno task verify passed all 17 categories. Refreshed Graphify once after verification, removed the isolated PostgreSQL container and merged MAI-110 local branches, and committed the generated graph outputs. No feature implementation was performed by the finisher.
 <!-- SECTION:FINAL_SUMMARY:END -->
