@@ -46,15 +46,19 @@ Deno.test("delivery worker records attempted and succeeded receipts", async () =
   const repository = new InMemoryNotificationRepository();
   const job = claimedJob("in_app", 1);
   await prepareProjection(repository, job);
+  const clock = new MutableFakeClock(createdAt);
   const adapter = new FakeChannelAdapter("in_app", {
     status: "succeeded",
     resultReference: "receipt-provider-fake",
-  });
+  }, () => clock.advance(1_000));
   const jobs = new FakeJobs([job]);
-  const result = await worker(repository, jobs, [adapter]).runOne(
-    "worker_a",
-    30_000,
-  );
+  const result = await worker(
+    repository,
+    jobs,
+    [adapter],
+    new ExponentialDeliveryRetryPolicy(),
+    clock,
+  ).runOne("worker_a", 30_000);
 
   assertEquals(result, { status: "succeeded", jobId: job.jobId });
   const receipts = await repository.listReceipts(new FakeTransaction(), {
@@ -65,9 +69,75 @@ Deno.test("delivery worker records attempted and succeeded receipts", async () =
     "attempted",
     "succeeded",
   ]);
+  assertEquals(
+    receipts.map((receipt) => receipt.occurredAt.toISOString()),
+    [
+      createdAt.toISOString(),
+      new Date(createdAt.getTime() + 1_000).toISOString(),
+    ],
+  );
+  const projection = await repository.findProjection(new FakeTransaction(), {
+    access: access(),
+    notificationId: createNotificationId("notif_event-1-actor-alice"),
+  });
+  assertEquals(projection?.deliveryState, "succeeded");
   assertEquals(jobs.completed.length, 1);
+  assertEquals(
+    jobs.completed[0]?.completedAt.toISOString(),
+    new Date(createdAt.getTime() + 1_000).toISOString(),
+  );
+  assertEquals(
+    jobs.leaseAssertions.map((assertion) => assertion.toISOString()),
+    [
+      createdAt.toISOString(),
+      createdAt.toISOString(),
+      new Date(createdAt.getTime() + 1_000).toISOString(),
+    ],
+  );
   assertEquals(jobs.claimCalls, 1);
   assertEquals(adapter.requests.length, 1);
+});
+
+Deno.test("lease expiry during a successful adapter call prevents completion", async () => {
+  const fixture = await expiringAdapterFixture({
+    status: "succeeded",
+    resultReference: "must-not-complete",
+  });
+
+  await assertRejects(
+    () => fixture.worker.runOne("worker_a", 30_000),
+    LeaseFenceError,
+    "lease expired",
+  );
+  await assertExpiredDelivery(fixture);
+});
+
+Deno.test("lease expiry during a retryable adapter call prevents retry persistence", async () => {
+  const fixture = await expiringAdapterFixture({
+    status: "retryable",
+    failureCode: "REMOTE_BUSY",
+  });
+
+  await assertRejects(
+    () => fixture.worker.runOne("worker_a", 30_000),
+    LeaseFenceError,
+    "lease expired",
+  );
+  await assertExpiredDelivery(fixture);
+});
+
+Deno.test("lease expiry during a terminal adapter call prevents dead-letter persistence", async () => {
+  const fixture = await expiringAdapterFixture({
+    status: "terminal",
+    failureCode: "REMOTE_REJECTED",
+  });
+
+  await assertRejects(
+    () => fixture.worker.runOne("worker_a", 30_000),
+    LeaseFenceError,
+    "lease expired",
+  );
+  await assertExpiredDelivery(fixture);
 });
 
 Deno.test("delivery execution fails closed without a notification claim port", async () => {
@@ -226,6 +296,7 @@ function worker(
   jobs: FakeJobs,
   adapters: readonly NotificationChannelAdapter[],
   retryPolicy = new ExponentialDeliveryRetryPolicy(),
+  clock = new MutableFakeClock(createdAt),
 ): NotificationDeliveryWorker {
   return new NotificationDeliveryWorker({
     transactions: new ImmediateRunner(),
@@ -234,8 +305,77 @@ function worker(
     authorizer: new FakeDeliveryAuthorizer(),
     adapters: new Map(adapters.map((adapter) => [adapter.channel, adapter])),
     retryPolicy,
-    clock: { now: () => new Date("2026-08-03T12:00:00.000Z") },
+    clock,
   });
+}
+
+interface ExpiringAdapterFixture {
+  readonly repository: InMemoryNotificationRepository;
+  readonly job: ClaimedNotificationDeliveryJob;
+  readonly jobs: FakeJobs;
+  readonly adapter: FakeChannelAdapter;
+  readonly worker: NotificationDeliveryWorker;
+}
+
+async function expiringAdapterFixture(
+  result: Exclude<NotificationAdapterResult, { readonly status: "disabled" }>,
+): Promise<ExpiringAdapterFixture> {
+  const repository = new InMemoryNotificationRepository();
+  const job = claimedJob("in_app", 1);
+  await prepareProjection(repository, job);
+  const clock = new MutableFakeClock(new Date("2026-08-03T12:29:59.000Z"));
+  const adapter = new FakeChannelAdapter(
+    "in_app",
+    result,
+    () => clock.advance(2_000),
+  );
+  const jobs = new FakeJobs([job]);
+  return {
+    repository,
+    job,
+    jobs,
+    adapter,
+    worker: worker(
+      repository,
+      jobs,
+      [adapter],
+      new ExponentialDeliveryRetryPolicy(),
+      clock,
+    ),
+  };
+}
+
+async function assertExpiredDelivery(
+  fixture: ExpiringAdapterFixture,
+): Promise<void> {
+  const receipts = await fixture.repository.listReceipts(
+    new FakeTransaction(),
+    {
+      access: access(),
+      notificationId: createNotificationId("notif_event-1-actor-alice"),
+    },
+  );
+  const projection = await fixture.repository.findProjection(
+    new FakeTransaction(),
+    {
+      access: access(),
+      notificationId: createNotificationId("notif_event-1-actor-alice"),
+    },
+  );
+  assertEquals(receipts.map((receipt) => receipt.outcome), ["attempted"]);
+  assertEquals(projection?.deliveryState, "attempting");
+  assertEquals(fixture.adapter.requests.length, 1);
+  assertEquals(fixture.jobs.completed, []);
+  assertEquals(fixture.jobs.failCalls, []);
+  assertEquals(fixture.jobs.failures, []);
+  assertEquals(
+    fixture.jobs.leaseAssertions.map((assertion) => assertion.toISOString()),
+    [
+      "2026-08-03T12:29:59.000Z",
+      "2026-08-03T12:29:59.000Z",
+      "2026-08-03T12:30:01.000Z",
+    ],
+  );
 }
 
 function claimedJob(
@@ -291,6 +431,18 @@ class ImmediateRunner {
   }
 }
 
+class MutableFakeClock {
+  constructor(private current: Date) {}
+
+  now(): Date {
+    return new Date(this.current);
+  }
+
+  advance(milliseconds: number): void {
+    this.current = new Date(this.current.getTime() + milliseconds);
+  }
+}
+
 class FakeTransaction implements TransactionHandle {
   readonly metadata: Readonly<Record<string, string>> = {};
 
@@ -300,8 +452,16 @@ class FakeTransaction implements TransactionHandle {
 }
 
 class FakeJobs implements NotificationDeliveryJobStore {
-  readonly completed: Array<{ readonly jobId: JobId }> = [];
+  readonly completed: Array<{
+    readonly jobId: JobId;
+    readonly completedAt: Date;
+  }> = [];
+  readonly failCalls: Array<{
+    readonly jobId: JobId;
+    readonly failure: JobFailure;
+  }> = [];
   readonly failures: Array<JobFailure> = [];
+  readonly leaseAssertions: Date[] = [];
   claimCalls = 0;
 
   constructor(private readonly queue: ClaimedNotificationDeliveryJob[]) {}
@@ -315,15 +475,25 @@ class FakeJobs implements NotificationDeliveryJobStore {
     return Promise.resolve(job === undefined ? [] : [job]);
   }
 
-  assertActiveLease(): Promise<void> {
+  assertActiveLease(
+    _transaction: TransactionHandle,
+    job: ClaimedNotificationDeliveryJob,
+    now: Date,
+  ): Promise<void> {
+    this.leaseAssertions.push(new Date(now));
+    if (now >= job.leaseExpiresAt) {
+      return Promise.reject(new LeaseFenceError(job.jobId, now));
+    }
     return Promise.resolve();
   }
 
   complete(
     _transaction: TransactionHandle,
     job: ClaimedJob,
+    _resultReference: string,
+    completedAt: Date,
   ): Promise<void> {
-    this.completed.push({ jobId: job.jobId });
+    this.completed.push({ jobId: job.jobId, completedAt });
     return Promise.resolve();
   }
 
@@ -332,6 +502,7 @@ class FakeJobs implements NotificationDeliveryJobStore {
     _job: ClaimedJob,
     failure: JobFailure,
   ): Promise<void> {
+    this.failCalls.push({ jobId: _job.jobId, failure });
     this.failures.push(failure);
     return Promise.resolve();
   }
@@ -390,10 +561,21 @@ class FakeChannelAdapter implements NotificationChannelAdapter {
   constructor(
     readonly channel: "in_app" | "email",
     private readonly result: NotificationAdapterResult,
+    private readonly onDeliver: () => void = () => {},
   ) {}
 
   deliver(request: unknown): Promise<NotificationAdapterResult> {
     this.requests.push(request);
+    this.onDeliver();
     return Promise.resolve(this.result);
+  }
+}
+
+class LeaseFenceError extends Error {
+  constructor(jobId: JobId, now: Date) {
+    super(
+      `Job "${jobId}" lease expired at "${now.toISOString()}"; expected an active lease.`,
+    );
+    this.name = "LeaseFenceError";
   }
 }

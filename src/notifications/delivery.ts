@@ -212,6 +212,8 @@ export class NotificationDeliveryWorker {
       );
     }
     await this.recordAttempt(job, projection, access, now);
+    const preAdapterNow = this.dependencies.clock.now();
+    await this.assertActiveLease(job, preAdapterNow);
     const result = await deliverSafely(adapter, {
       channel: input.channel,
       notification: projectNotification(projection, access),
@@ -219,8 +221,15 @@ export class NotificationDeliveryWorker {
       jobId: job.jobId,
       attemptNumber: job.attemptNumber,
     });
+    const postAdapterNow = this.dependencies.clock.now();
     if (result.status === "succeeded") {
-      return await this.recordSuccess(job, projection, access, result, now);
+      return await this.recordSuccess(
+        job,
+        projection,
+        access,
+        result,
+        postAdapterNow,
+      );
     }
     if (result.status === "retryable") {
       return await this.recordRetry(
@@ -228,7 +237,7 @@ export class NotificationDeliveryWorker {
         projection,
         access,
         result.failureCode,
-        now,
+        postAdapterNow,
       );
     }
     return await this.recordTerminal(
@@ -236,7 +245,16 @@ export class NotificationDeliveryWorker {
       projection,
       access,
       result.failureCode,
-      now,
+      postAdapterNow,
+    );
+  }
+
+  private assertActiveLease(
+    job: ClaimedNotificationDeliveryJob,
+    now: Date,
+  ): Promise<void> {
+    return this.dependencies.transactions.run((transaction) =>
+      this.dependencies.jobStore!.assertActiveLease(transaction, job, now)
     );
   }
 
