@@ -1,4 +1,5 @@
 import { assertEquals, assertRejects } from "@std/assert";
+import { auditActivityMigrations } from "../../src/audit_activity/v1.ts";
 import {
   createDealManagementComposition,
   DeterministicLegacyDealMapper,
@@ -10,6 +11,7 @@ import {
 import { FakeAuthenticationPort } from "../../src/identity_access/v1.ts";
 import { dealManagementMigrations } from "../../src/deal_management/v1.ts";
 import {
+  platformMigrations,
   PostgresMigrationRunner,
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
@@ -276,7 +278,11 @@ function assertMappedDeal(
 async function prepareDatabase(
   pool: ReturnType<typeof createMai106Pool>,
 ): Promise<void> {
-  await new PostgresMigrationRunner(pool).apply(dealManagementMigrations);
+  await new PostgresMigrationRunner(pool).apply([
+    ...platformMigrations,
+    ...auditActivityMigrations,
+    ...dealManagementMigrations,
+  ]);
   await pool.query(legacySchemaSql);
   await cleanDatabase(pool);
 }
