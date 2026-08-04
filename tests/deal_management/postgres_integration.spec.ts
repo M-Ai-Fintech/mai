@@ -45,7 +45,7 @@ Deno.test({
       ...dealManagementMigrations,
     ]);
     await pool.query(
-      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.reconciliation_manifest, platform.outbox",
     );
     const transactions = new PostgresTransactionRunner(pool);
     const repository = new PostgresDealRepository(transactions);
@@ -130,7 +130,7 @@ Deno.test({
       DealVersionConflictError,
     );
     await pool.query(
-      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+      "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.reconciliation_manifest, platform.outbox",
     );
     await pool.end();
   },
@@ -148,7 +148,7 @@ Deno.test({
         ...dealManagementMigrations,
       ]);
       await pool.query(
-        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.reconciliation_manifest, platform.outbox",
       );
       const transactions = new PostgresTransactionRunner(pool);
       const repository = new PostgresDealRepository(transactions);
@@ -308,7 +308,7 @@ Deno.test({
       );
     } finally {
       await pool.query(
-        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, platform.outbox",
+        "TRUNCATE deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.reconciliation_manifest, platform.outbox",
       ).catch(() => {});
       await pool.end();
     }

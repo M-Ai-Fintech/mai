@@ -1,14 +1,31 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const trackedOutput = execFileSync(
-  "git",
-  ["ls-files", "--cached", "--others", "--exclude-standard", "gui"],
-  { cwd: repositoryRoot, encoding: "utf8" },
-);
-const activePaths = trackedOutput.trim().split("\n").filter(Boolean);
+const ignoredDirectoryNames = new Set([
+  ".git",
+  ".next",
+  "coverage",
+  "graphify-out",
+  "node_modules",
+  "storybook-static",
+]);
+const activePaths = [];
+const pendingDirectories = ["gui"];
+while (pendingDirectories.length) {
+  const relativeDirectory = pendingDirectories.pop();
+  if (!relativeDirectory) continue;
+  for (const entry of readdirSync(resolve(repositoryRoot, relativeDirectory), {
+    withFileTypes: true,
+  })) {
+    const relativePath = `${relativeDirectory}/${entry.name}`;
+    if (entry.isFile()) activePaths.push(relativePath);
+    if (entry.isDirectory() && !ignoredDirectoryNames.has(entry.name)) {
+      pendingDirectories.push(relativePath);
+    }
+  }
+}
+activePaths.sort();
 const sourcePaths = activePaths.filter((path) =>
   !path.endsWith("package-lock.json") &&
   path !== "gui/scripts/verify-frontend-foundation.mjs"

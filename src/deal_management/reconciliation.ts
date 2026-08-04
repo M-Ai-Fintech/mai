@@ -1,0 +1,494 @@
+import type { DealManagementService } from "./service.ts";
+import type { DealRepository } from "./repository.ts";
+import type { PostgresDealReconciliationStore } from "./reconciliation_store.ts";
+import { AtomicVerificationMismatchError } from "./reconciliation_store.ts";
+import type { Deal } from "./contracts.ts";
+import {
+  type DealReconciliationRecord,
+  type DealReconciliationStore,
+  type LegacyDealMapper,
+  type LegacyDealRecord,
+  type LegacyDealSource,
+  type LegacyMappingIssue,
+  type LegacyMappingResult,
+  type ReconciliationEvidenceVerifier,
+  type ReconciliationMode,
+  type ReconciliationOperatorContext,
+  type ReconciliationOutcome,
+  type ReconciliationRunResult,
+  type ReconciliationVerificationResult,
+} from "./legacy_contracts.ts";
+import {
+  isExpectedReconciliationApplyFailure,
+  replayMappedDeal,
+  verifyMappedDeal,
+} from "./reconciliation_replay.ts";
+import {
+  supportsAtomicVerification,
+  verifyAtomicReconciliation,
+} from "./reconciliation_atomic.ts";
+import {
+  applyIssue,
+  dryRunIssue,
+  reconciliationRecord,
+  sourceConflict,
+  verificationEvidenceIssue,
+  verificationIssue,
+} from "./reconciliation_records.ts";
+import {
+  appliedReconciliation,
+  assertLegacySource,
+  assertRoutable,
+  issueRecord,
+  type MappedLegacyDeal,
+  missingLegacyIssue,
+  missingLegacyRecord,
+  pendingReconciliation,
+  type ReconciliationIssueInput,
+  type ReconciliationRunInput,
+  resumableClaim,
+  routingChange,
+  type RoutingInput,
+  verificationPrecondition,
+  verifiedReconciliation,
+} from "./reconciliation_outcomes.ts";
+
+/**
+ * Executes bounded per-Deal dry-run, apply, resume, and rollback operations.
+ *
+ * Dry-run writes only explicitly non-authoritative reconciliation diagnostics;
+ * apply uses Deal Management commands and never changes global read routing.
+ *
+ * @example const report = await executor.run({ mode: "dry-run", ...input })
+ */
+export class DealReconciliationExecutor {
+  constructor(
+    private readonly source: LegacyDealSource,
+    private readonly mapper: LegacyDealMapper,
+    private readonly store: DealReconciliationStore,
+    private readonly service: DealManagementService,
+    private readonly repository: DealRepository,
+    private readonly evidence?: ReconciliationEvidenceVerifier,
+  ) {}
+
+  async run(input: {
+    readonly mode: ReconciliationMode;
+    readonly legacyDealId: string;
+    readonly legacySource?: string;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationRunResult> {
+    const outcome = await this.runOne(input);
+    return { mode: input.mode, outcomes: [outcome] };
+  }
+
+  async runBatch(input: {
+    readonly mode: ReconciliationMode;
+    readonly legacyDealIds: readonly string[];
+    readonly legacySource?: string;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationRunResult> {
+    const outcomes: ReconciliationOutcome[] = [];
+    for (const legacyDealId of input.legacyDealIds) {
+      outcomes.push(await this.runOne({ ...input, legacyDealId }));
+    }
+    return { mode: input.mode, outcomes };
+  }
+
+  /**
+   * Compares persisted authoritative Deals with fresh mapped legacy intent.
+   *
+   * Drift is persisted as an explicit conflict; a matching record is returned
+   * as verified without writing a Deal, history, or outbox event.
+   *
+   * @example await executor.verifyBatch({ legacyDealIds, operator })
+   */
+  async verifyBatch(input: {
+    readonly legacyDealIds: readonly string[];
+    readonly legacySource?: string;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationVerificationResult> {
+    const outcomes: ReconciliationOutcome[] = [];
+    for (const legacyDealId of input.legacyDealIds) {
+      outcomes.push(await this.verifyOne({ ...input, legacyDealId }));
+    }
+    return { mode: "verify", outcomes };
+  }
+
+  /**
+   * Routes one reconciled Deal back to the legacy compatibility reader.
+   *
+   * Authoritative data and reconciliation evidence remain untouched.
+   *
+   * @example await executor.rollbackReadRouting({ source, legacyDealId, operator })
+   */
+  rollbackReadRouting(input: {
+    readonly legacySource: string;
+    readonly legacyDealId: string;
+    readonly operator: ReconciliationOperatorContext;
+    readonly reason: string;
+  }): Promise<DealReconciliationRecord> {
+    return this.routeReadRouting({ ...input, nextMode: "legacy" });
+  }
+
+  /**
+   * Restores one explicitly routed Deal to authoritative reads after review.
+   *
+   * This changes only one persisted route and appends routing evidence; it
+   * does not enable a global cutover or remove legacy data.
+   *
+   * @example await executor.restoreAuthoritativeReadRouting({ legacySource, legacyDealId, operator, reason })
+   */
+  restoreAuthoritativeReadRouting(input: {
+    readonly legacySource: string;
+    readonly legacyDealId: string;
+    readonly operator: ReconciliationOperatorContext;
+    readonly reason: string;
+  }): Promise<DealReconciliationRecord> {
+    return this.routeReadRouting({ ...input, nextMode: "authoritative" });
+  }
+
+  private async runOne(input: {
+    readonly mode: ReconciliationMode;
+    readonly legacyDealId: string;
+    readonly legacySource?: string;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationOutcome> {
+    const record = await this.source.load({
+      scope: input.operator.scope,
+      legacyDealId: input.legacyDealId,
+    });
+    if (record === undefined) return await this.missingRecord(input);
+    assertLegacySource(record, input.legacySource);
+    return await this.reconcileLoaded(record, input);
+  }
+
+  private async reconcileLoaded(
+    record: LegacyDealRecord,
+    input: ReconciliationRunInput,
+  ): Promise<ReconciliationOutcome> {
+    const mapping = await this.mapper.map({
+      record,
+      scope: input.operator.scope,
+      now: input.operator.now,
+    });
+    const previous = await this.store.find({
+      scope: input.operator.scope,
+      legacySource: record.source,
+      legacyDealId: record.legacyDealId,
+    });
+    return await this.resolveMapping(record, input, mapping, previous);
+  }
+
+  private async resolveMapping(
+    record: LegacyDealRecord,
+    input: ReconciliationRunInput,
+    mapping: LegacyMappingResult,
+    previous: DealReconciliationRecord | undefined,
+  ): Promise<ReconciliationOutcome> {
+    const conflict = sourceConflict(previous, mapping);
+    if (conflict !== undefined) {
+      return await this.handleIssue(
+        record,
+        input,
+        conflict,
+        previous,
+      );
+    }
+    if (mapping.kind !== "mapped") {
+      return await this.handleIssue(record, input, mapping.issue, previous);
+    }
+    if (input.mode === "dry-run") {
+      return await this.saveDryRun(record, input, mapping, previous);
+    }
+    return await this.applyMapped(record, input, mapping, previous);
+  }
+
+  private handleIssue(
+    record: LegacyDealRecord,
+    input: ReconciliationRunInput,
+    issue: LegacyMappingIssue,
+    previous: DealReconciliationRecord | undefined,
+  ): Promise<ReconciliationOutcome> {
+    if (input.mode !== "dry-run") {
+      return this.saveIssue(record, input, issue, previous);
+    }
+    return dryRunIssue(
+      record,
+      issue,
+      previous,
+      input.operator.scope,
+      input.operator.now,
+    );
+  }
+
+  private async saveDryRun(
+    legacyRecord: LegacyDealRecord,
+    input: {
+      readonly mode: ReconciliationMode;
+      readonly legacyDealId: string;
+      readonly operator: ReconciliationOperatorContext;
+    },
+    mapping: Extract<LegacyMappingResult, { readonly kind: "mapped" }>,
+    previous: DealReconciliationRecord | undefined,
+  ): Promise<ReconciliationOutcome> {
+    if (previous !== undefined) return { kind: "mapped", record: previous };
+    const record = await reconciliationRecord(
+      legacyRecord,
+      input.operator.scope,
+      mapping,
+      "dry_run_valid",
+      input.operator.now,
+    );
+    await this.store.save(record);
+    return { kind: "mapped", record };
+  }
+
+  private async applyMapped(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationRunInput,
+    mapping: MappedLegacyDeal,
+    previous: DealReconciliationRecord | undefined,
+  ): Promise<ReconciliationOutcome> {
+    if (previous?.status === "verified") {
+      return { kind: "already_reconciled", record: previous };
+    }
+    const pending = await pendingReconciliation(legacyRecord, input, mapping);
+    await this.store.save(pending);
+    try {
+      return await this.applyAndVerify(
+        legacyRecord,
+        input,
+        mapping,
+        previous,
+        pending,
+      );
+    } catch (error) {
+      if (!isExpectedReconciliationApplyFailure(error)) throw error;
+      const issue = applyIssue(legacyRecord, error);
+      return await this.saveIssue(legacyRecord, input, issue, pending);
+    }
+  }
+
+  private async applyAndVerify(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationRunInput,
+    mapping: MappedLegacyDeal,
+    previous: DealReconciliationRecord | undefined,
+    pending: DealReconciliationRecord,
+  ): Promise<ReconciliationOutcome> {
+    const applied = await replayMappedDeal(
+      mapping.deal,
+      input.operator.commandContext,
+      this.service,
+      this.repository,
+      resumableClaim(previous, mapping),
+      { source: legacyRecord.source, legacyDealId: legacyRecord.legacyDealId },
+    );
+    const appliedRecord = appliedReconciliation(pending, input.operator.now);
+    await this.store.save(appliedRecord);
+    return await this.verifyApplied(
+      legacyRecord,
+      input,
+      mapping,
+      applied,
+      appliedRecord,
+    );
+  }
+
+  private async verifyApplied(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationRunInput,
+    mapping: MappedLegacyDeal,
+    applied: Deal,
+    appliedRecord: DealReconciliationRecord,
+  ): Promise<ReconciliationOutcome> {
+    if (this.supportsAtomicVerification()) {
+      return await this.persistAtomicVerification(
+        legacyRecord,
+        input,
+        mapping,
+        appliedRecord,
+      );
+    }
+    if (
+      !await this.verifyEvidence(mapping.deal, input.operator, legacyRecord)
+    ) {
+      const issue = verificationIssue(legacyRecord, applied, mapping.deal);
+      return await this.saveIssue(legacyRecord, input, issue, appliedRecord);
+    }
+    const verified = verifiedReconciliation(appliedRecord, input.operator.now);
+    await this.store.save(verified);
+    return { kind: "verified", record: verified };
+  }
+
+  private async saveIssue(
+    legacyRecord: LegacyDealRecord,
+    input: {
+      readonly mode?: ReconciliationMode;
+      readonly legacyDealId: string;
+      readonly operator: ReconciliationOperatorContext;
+    },
+    issue: LegacyMappingIssue,
+    previous?: DealReconciliationRecord,
+  ): Promise<ReconciliationOutcome> {
+    const record = await issueRecord(legacyRecord, input, issue, previous);
+    await this.store.save(record);
+    return {
+      kind: record.status === "conflict" ? "conflict" : "rejected",
+      record,
+    };
+  }
+
+  private async verifyOne(input: {
+    readonly legacyDealId: string;
+    readonly legacySource?: string;
+    readonly operator: ReconciliationOperatorContext;
+  }): Promise<ReconciliationOutcome> {
+    const legacyRecord = await this.source.load({
+      scope: input.operator.scope,
+      legacyDealId: input.legacyDealId,
+    });
+    if (legacyRecord === undefined) return await this.missingRecord(input);
+    assertLegacySource(legacyRecord, input.legacySource);
+    return await this.verifyLoaded(legacyRecord, input);
+  }
+
+  private async verifyLoaded(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationIssueInput,
+  ): Promise<ReconciliationOutcome> {
+    const mapping = await this.mapper.map({
+      record: legacyRecord,
+      scope: input.operator.scope,
+      now: input.operator.now,
+    });
+    if (mapping.kind !== "mapped") {
+      return await this.saveIssue(legacyRecord, input, mapping.issue);
+    }
+    return await this.verifyMappedRecord(legacyRecord, input, mapping);
+  }
+
+  private async verifyMappedRecord(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationIssueInput,
+    mapping: MappedLegacyDeal,
+  ): Promise<ReconciliationOutcome> {
+    const previous = await this.store.find({
+      scope: input.operator.scope,
+      legacySource: legacyRecord.source,
+      legacyDealId: legacyRecord.legacyDealId,
+    });
+    if (previous !== undefined && this.supportsAtomicVerification()) {
+      return await this.persistAtomicVerification(
+        legacyRecord,
+        input,
+        mapping,
+        previous,
+      );
+    }
+    const issue = verificationPrecondition(legacyRecord, mapping, previous);
+    if (issue !== undefined) {
+      return await this.saveIssue(legacyRecord, input, issue, previous);
+    }
+    return await this.persistVerification(
+      legacyRecord,
+      input,
+      mapping,
+      previous!,
+    );
+  }
+
+  private supportsAtomicVerification(): boolean {
+    return supportsAtomicVerification(
+      this.store,
+      this.repository,
+      this.evidence,
+    );
+  }
+
+  private async persistAtomicVerification(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationIssueInput,
+    mapping: MappedLegacyDeal,
+    previous: DealReconciliationRecord,
+  ): Promise<ReconciliationOutcome> {
+    const atomicStore = this.store as PostgresDealReconciliationStore;
+    try {
+      const verified = await verifyAtomicReconciliation(
+        atomicStore,
+        this.repository,
+        this.evidence,
+        legacyRecord,
+        input,
+        mapping,
+      );
+      return { kind: "verified", record: verified };
+    } catch (error) {
+      if (!(error instanceof AtomicVerificationMismatchError)) throw error;
+      const issue = verificationEvidenceIssue(
+        legacyRecord,
+        error.evidence.missing,
+      );
+      return await this.saveIssue(legacyRecord, input, issue, previous);
+    }
+  }
+
+  private async persistVerification(
+    legacyRecord: LegacyDealRecord,
+    input: ReconciliationIssueInput,
+    mapping: MappedLegacyDeal,
+    previous: DealReconciliationRecord,
+  ): Promise<ReconciliationOutcome> {
+    if (await this.verifyEvidence(mapping.deal, input.operator, legacyRecord)) {
+      const verified = verifiedReconciliation(previous, input.operator.now);
+      await this.store.save(verified);
+      return { kind: "verified", record: verified };
+    }
+    return await this.saveIssue(
+      legacyRecord,
+      input,
+      verificationIssue(legacyRecord, previous.intendedDeal, mapping.deal),
+      previous,
+    );
+  }
+
+  private async verifyEvidence(
+    intendedDeal: Deal,
+    operator: ReconciliationOperatorContext,
+    legacyRecord: LegacyDealRecord,
+  ): Promise<boolean> {
+    const documentMatches = await verifyMappedDeal(
+      intendedDeal,
+      this.repository,
+      operator.scope,
+    );
+    if (!documentMatches) return false;
+    if (this.evidence === undefined) return true;
+    return (await this.evidence.verify({
+      scope: operator.scope,
+      intendedDeal,
+      legacySource: legacyRecord.source,
+      legacyDealId: legacyRecord.legacyDealId,
+      operator,
+    })).ok;
+  }
+
+  private missingRecord(input: ReconciliationIssueInput) {
+    const record = missingLegacyRecord(input.legacyDealId);
+    return this.saveIssue(
+      record,
+      input,
+      missingLegacyIssue(input.legacyDealId),
+    );
+  }
+
+  private async routeReadRouting(input: RoutingInput) {
+    const current = await this.store.find({
+      scope: input.operator.scope,
+      legacySource: input.legacySource,
+      legacyDealId: input.legacyDealId,
+    });
+    assertRoutable(current, input.legacyDealId);
+    return await this.store.route(routingChange(input, current));
+  }
+}

@@ -18,12 +18,15 @@ import {
 } from "./support.ts";
 import type { DealAuthenticationPort } from "../../src/deal_management/v1.ts";
 import type { DealAuthorizationPort } from "../../src/deal_management/v1.ts";
+import { sessionId, userIdentityId } from "../../src/identity_access/v1.ts";
 
 class FixedDealAuthentication implements DealAuthenticationPort {
   authenticate() {
     const context = contextFor();
     return Promise.resolve({
       actor: context.actor,
+      sessionId: sessionId("session_http"),
+      identityId: userIdentityId("identity_http"),
       tenantId: requiredTenantId(context.request.tenantId),
       workspaceId: requiredWorkspaceId(context.request.workspaceId!),
     });

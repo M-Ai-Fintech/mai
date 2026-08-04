@@ -7,10 +7,12 @@ import type {
 } from "../shared/contracts/identifiers.ts";
 import { IdentityAccessError } from "./errors.ts";
 import type { SessionContext } from "./contracts.ts";
-import type { SessionId } from "./ids.ts";
+import type { SessionId, UserIdentityId } from "./ids.ts";
 
 export interface AuthenticatedPrincipal {
   readonly actor: ActorReference;
+  readonly sessionId: SessionId;
+  readonly identityId: UserIdentityId;
   readonly tenantId: TenantId;
   readonly workspaceId?: WorkspaceId;
 }
@@ -37,6 +39,8 @@ export class FakeAuthenticationPort implements AuthenticationPort {
     }
     return Promise.resolve(Object.freeze({
       actor: Object.freeze({ ...this.principal.actor }),
+      sessionId: this.principal.sessionId,
+      identityId: this.principal.identityId,
       tenantId: this.principal.tenantId,
       ...(this.principal.workspaceId === undefined
         ? {}
@@ -107,6 +111,7 @@ export class SessionRegistry {
 class SafeSessionContext implements SessionContext {
   readonly sessionId: SessionId;
   readonly actor: ActorReference;
+  readonly identityId: string;
   readonly tenantId: TenantId;
   readonly workspaceId: WorkspaceId | undefined;
   readonly issuedAt: string;
@@ -126,6 +131,7 @@ class SafeSessionContext implements SessionContext {
   }) {
     this.sessionId = input.sessionId;
     this.actor = Object.freeze({ ...input.principal.actor });
+    this.identityId = input.principal.identityId;
     this.tenantId = input.principal.tenantId;
     this.workspaceId = input.principal.workspaceId;
     this.issuedAt = input.issuedAt;
@@ -138,6 +144,8 @@ class SafeSessionContext implements SessionContext {
   toRequestContext(origin: "http" | "job" | "internal" = "internal") {
     return {
       actorId: this.actor.id,
+      sessionId: this.sessionId,
+      identityId: this.identityId,
       tenantId: this.tenantId,
       correlationId: this.correlationId,
       origin,

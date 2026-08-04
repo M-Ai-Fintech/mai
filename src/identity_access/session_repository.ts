@@ -9,6 +9,7 @@ export type SessionState = "active" | "revoked" | "expired";
 export interface SessionRecord {
   readonly sessionId: SessionId;
   readonly actor: ActorReference;
+  readonly identityId?: string;
   readonly tenantId: TenantId;
   readonly workspaceId?: WorkspaceId;
   readonly issuedAt: string;
@@ -39,6 +40,9 @@ export function sessionRecord(session: SessionContext): SessionRecord {
   return Object.freeze({
     sessionId: session.sessionId,
     actor: Object.freeze({ ...session.actor }),
+    ...(session.identityId === undefined
+      ? {}
+      : { identityId: session.identityId }),
     tenantId: session.tenantId,
     ...(session.workspaceId === undefined
       ? {}
@@ -135,14 +139,15 @@ export class PostgresSessionRepository implements SessionRepository {
     return this.transactions.run((transaction) =>
       transaction.query(
         `INSERT INTO iam.sessions (
-         aggregate_id, tenant_id, workspace_id, actor_id, version, state,
+         aggregate_id, tenant_id, workspace_id, actor_id, identity_id, version, state,
          issued_at, expires_at, revoked_at, document, created_at, updated_at
-       ) VALUES ($1, $2, $3, $4, 1, $5, $6, $7, $8, $9, $6, $6)`,
+       ) VALUES ($1, $2, $3, $4, $5, 1, $6, $7, $8, $9, $10, $7, $7)`,
         [
           record.sessionId,
           record.tenantId,
           record.workspaceId ?? null,
           record.actor.id,
+          record.identityId,
           record.state,
           record.issuedAt,
           record.expiresAt,
@@ -159,7 +164,7 @@ export class PostgresSessionRepository implements SessionRepository {
   ): Promise<SessionRecord | undefined> {
     return this.transactions.run(async (transaction) => {
       const result = await transaction.query<{ document: unknown }>(
-        `SELECT document FROM iam.sessions
+        `SELECT document, identity_id AS "identityId" FROM iam.sessions
          WHERE tenant_id = $1 AND aggregate_id = $2 ${scopePredicate(scope)}`,
         scopeParameters(scope, sessionIdValue),
       );

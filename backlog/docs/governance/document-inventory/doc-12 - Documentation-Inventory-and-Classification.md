@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-08-01 11:58'
+updated_date: '2026-08-03 03:10'
 tags:
   - documentation
   - inventory
@@ -14,7 +14,7 @@ tags:
 - Authority ID: DOC-INV-001
 - Owner: Repository maintainers
 - Authority: Canonical classification inventory
-- Freshness: Current as of 2026-08-01
+- Freshness: Current as of 2026-08-02
 - Language: English
 - Update trigger: Addition, deletion, relocation, or reclassification of tracked documentation-like assets
 
@@ -260,6 +260,7 @@ Every project file below is individually classified; removed paths are retained 
 | `backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 - Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md` | Architecture | Accepted ADR: Migration and retirement of the mock-backed MVP API | doc-36 | accepted 2026-07-30 | English | canonical |
 
 | `backlog/docs/operations/deployment/doc-37 - MAI-148-Deployment-and-Operations-Foundation.md` | Platform Architecture and Operations | MAI-148 deployment and operations foundation | doc-37 | current 2026-08-01 | English | canonical |
+| `backlog/docs/operations/deal-management/doc-38 - MAI-110-Deal-Reconciliation-Operator-Procedure.md` | Deal Management and Platform Operations | Bounded MAI-110 reconciliation and rollback read-routing procedure | doc-38 | current 2026-08-02 | English | canonical |
 | `infra/README.md` | Platform Operations | Provider-neutral infrastructure implementation contract | implementation-local | current | English | referenced |
 | `infra/runbooks/*.md` | Platform Operations | MAI-148 operator procedures | implementation-local | current | English | referenced |
 
@@ -647,6 +648,15 @@ The following manifest is authoritative for automated documentation checks. Path
       "purpose": "Accepted ADR: Migration and retirement of the mock-backed MVP API",
       "authority": "doc-36",
       "freshness": "accepted 2026-07-30",
+      "language": "English",
+      "disposition": "canonical"
+    },
+{
+      "path": "operations/deal-management/doc-38 - MAI-110-Deal-Reconciliation-Operator-Procedure.md",
+      "owner": "Deal Management and Platform Operations",
+      "purpose": "Bounded MAI-110 reconciliation and rollback read-routing procedure",
+      "authority": "doc-38",
+      "freshness": "current 2026-08-02",
       "language": "English",
       "disposition": "canonical"
     }

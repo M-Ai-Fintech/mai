@@ -421,8 +421,7 @@ const familyDefinitions: Readonly<
     ],
     inspector: {
       title: "Configuration version",
-      copy:
-        "Draft, proposed, effective and historical states stay distinct.",
+      copy: "Draft, proposed, effective and historical states stay distinct.",
       status: "Versioned",
       role: "success",
     },
@@ -468,7 +467,13 @@ const familyDefinitions: Readonly<
 };
 
 const deals = [
-  ["Project Horizon", "Northstar Foods", "Diligence", "Approval due", "Ana Costa"],
+  [
+    "Project Horizon",
+    "Northstar Foods",
+    "Diligence",
+    "Approval due",
+    "Ana Costa",
+  ],
   ["Project Copper", "HelioGrid", "Matching", "Conflict review", "Rafael Lima"],
   ["Project Summit", "Vale Verde", "Valuation", "Ready", "Mei Tan"],
   ["Restricted deal", "Redacted", "Restricted", "Hidden", "Restricted"],
@@ -552,7 +557,10 @@ function StatePanel(
   }
   if (state === "empty") {
     return (
-      <InlineNotice role="information" title="No matching local demonstration data">
+      <InlineNotice
+        role="information"
+        title="No matching local demonstration data"
+      >
         Change the filter or return when a fixture is available.
       </InlineNotice>
     );
@@ -612,13 +620,18 @@ function OperationalContent(
         )
         : null}
       <div className={styles.workspace}>
-        <ol className={styles.registry} aria-label={`${definition.eyebrow} items`}>
-          {definition.items.map((item) => (
-            <li key={item.title}>
+        <ol
+          className={styles.registry}
+          aria-label={`${definition.eyebrow} items`}
+        >
+          {definition.items.map((item, index) => (
+            <li key={`${item.title}-${index}`}>
               <Surface className={styles.row}>
                 <h2>{item.title}</h2>
                 <p className={styles.meta}>{item.meta}</p>
-                <StatusIndicator role={item.role}>{item.status}</StatusIndicator>
+                <StatusIndicator role={item.role}>
+                  {item.status}
+                </StatusIndicator>
               </Surface>
             </li>
           ))}
@@ -670,7 +683,9 @@ function DealsPortfolioContent() {
             <tbody>
               {deals.map((deal) => (
                 <tr key={deal[0]}>
-                  {deal.map((value) => <td key={value}>{value}</td>)}
+                  {deal.map((value, index) => (
+                    <td key={`${value}-${index}`}>{value}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>

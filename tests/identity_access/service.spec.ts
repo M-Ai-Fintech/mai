@@ -126,7 +126,12 @@ Deno.test("revocation invalidates actor sessions and queued job effects", async 
   });
   const session = createSessionContext({
     sessionId: sessionId("session_service"),
-    principal: { actor, tenantId: tenant },
+    principal: {
+      actor,
+      sessionId: sessionId("session_service"),
+      identityId: userIdentityId("identity_service"),
+      tenantId: tenant,
+    },
     correlationId: "cor_session-service" as never,
     issuedAt: context.now,
     expiresAt: "2026-08-01T13:00:00.000Z",
