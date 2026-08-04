@@ -8,6 +8,7 @@ import type {
 } from "./contracts.ts";
 import { parseStoredDeal } from "./read_model.ts";
 import { freezeDeal } from "./model.ts";
+import { parseStoredLifecycle } from "./lifecycle/model.ts";
 import { dealReceiptId } from "./ids.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 import type { DealCommandClaim } from "./repository.ts";
@@ -235,7 +236,10 @@ async function insertReceipt(
 }
 
 function deserializeReceipt(row: DealReceiptRow): DealReceipt {
-  const result = deserializeResult(row.result, row.id);
+  const result = deserializeResult(
+    row.result,
+    `Deal receipt "${row.id}" result`,
+  );
   return Object.freeze({
     id: dealReceiptId(row.id),
     actorId: row.actorId as DealReceipt["actorId"],
@@ -247,20 +251,20 @@ function deserializeReceipt(row: DealReceiptRow): DealReceipt {
   });
 }
 
-function deserializeResult(
+export function deserializeResult(
   value: unknown,
-  receiptId: string,
+  label: string,
 ): DealCommandResult {
   const parsed = typeof value === "string" ? JSON.parse(value) : value;
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error(
-      `Stored Deal receipt "${receiptId}" has invalid result; expected an object.`,
+      `Stored ${label} is invalid; expected an object.`,
     );
   }
   const result = parsed as Record<string, unknown>;
   if (!isOperation(result.operation)) {
     throw new Error(
-      `Stored Deal receipt "${receiptId}" has operation "${
+      `Stored ${label} has operation "${
         String(result.operation)
       }"; expected a Deal operation.`,
     );
@@ -268,13 +272,18 @@ function deserializeResult(
   return {
     operation: result.operation,
     deal: freezeDeal(parseStoredDeal(result.deal)),
+    ...(result.lifecycle === undefined
+      ? {}
+      : { lifecycle: parseStoredLifecycle(result.lifecycle) }),
   };
 }
 
 function isOperation(value: unknown): value is DealCommandResult["operation"] {
   return value === "created" || value === "configured" ||
     value === "party_added" || value === "role_assigned" ||
-    value === "mandate_set" || value === "authority_constraint_set";
+    value === "mandate_set" || value === "authority_constraint_set" ||
+    value === "lifecycle_transitioned" || value === "milestone_created" ||
+    value === "milestone_transitioned";
 }
 
 export function replayOrThrow(

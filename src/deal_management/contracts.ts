@@ -30,6 +30,7 @@ import type {
   DealRoleId,
   MandateId,
 } from "./ids.ts";
+import type { DealLifecycleAggregate } from "./lifecycle/contracts.ts";
 
 export type DealConfidentiality = "standard" | "sensitive" | "highly_sensitive";
 export type DealState = "draft";
@@ -215,11 +216,15 @@ export type DealOperation =
   | "party_added"
   | "role_assigned"
   | "mandate_set"
-  | "authority_constraint_set";
+  | "authority_constraint_set"
+  | "lifecycle_transitioned"
+  | "milestone_created"
+  | "milestone_transitioned";
 
 export interface DealCommandResult {
   readonly operation: DealOperation;
   readonly deal: Deal;
+  readonly lifecycle?: DealLifecycleAggregate;
 }
 
 export interface DealReceipt {
@@ -344,7 +349,29 @@ export function cloneStoredDeal(deal: Deal): Deal {
 export function cloneStoredResult(
   result: DealCommandResult,
 ): DealCommandResult {
-  return { ...result, deal: cloneStoredDeal(result.deal) };
+  return {
+    ...result,
+    deal: cloneStoredDeal(result.deal),
+    ...(result.lifecycle === undefined
+      ? {}
+      : { lifecycle: cloneLifecycle(result.lifecycle) }),
+  };
+}
+
+function cloneLifecycle(
+  lifecycle: DealLifecycleAggregate,
+): DealLifecycleAggregate {
+  return Object.freeze({
+    ...lifecycle,
+    milestones: Object.freeze(
+      lifecycle.milestones.map((milestone) =>
+        Object.freeze({
+          ...milestone,
+          prerequisites: Object.freeze([...milestone.prerequisites]),
+        })
+      ),
+    ),
+  });
 }
 
 export function cloneStoredEvent(event: DealEvent): DealEvent {

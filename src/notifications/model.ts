@@ -1,7 +1,6 @@
 import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts";
 import type {
   ActorId,
-  CorrelationId,
   DealId,
   IdempotencyKey,
   JobId,
