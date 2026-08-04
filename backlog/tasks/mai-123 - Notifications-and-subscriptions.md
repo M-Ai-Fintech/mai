@@ -1,11 +1,11 @@
 ---
 id: MAI-123
 title: Notifications and subscriptions
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:29'
-updated_date: '2026-08-04 10:52'
+updated_date: '2026-08-04 11:17'
 labels:
   - backend
   - architecture
@@ -107,9 +107,9 @@ Channel provider selections and credentials remain gates before delivery is enab
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Recipient isolation, subscription versioning, delivery retry/expiry and non-mutating source behavior pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Recipient isolation, subscription versioning, delivery retry/expiry and non-mutating source behavior pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -166,10 +166,12 @@ Correction evidence 2026-08-04: commit d1472987b2fbd2304ff1c8c38e58cc465f4b440f 
 Final post-sync correction evidence 2026-08-04: branch delivery/MAI-123-notifications-and-subscriptions; original correction commit d1472987b2fbd2304ff1c8c38e58cc465f4b440f; PR #46; synchronized with current origin/master 11da22c146ba83f91cb3bec9f518e15d582cad18. The Notifications-owned typed claim boundary remains independent; delivery execution fails closed when unconfigured; the consumer retains enqueue-only authority; exact-scope idempotency, atomic insert-or-observe concurrency handling, append-only delivery receipts, and module-size compliance remain verified. The delivery worker now reads and asserts a fresh pre-adapter lease time and reads a fresh post-adapter time for success, retry, terminal, delivery-state, receipt, retry-policy, scheduling, complete, and fail persistence. Mutable-clock delivery regressions: 9 passed, 0 failed; lease expiry during successful, retryable, and terminal adapter calls leaves only the truthful attempted receipt and prevents post-adapter persistence. Complete Notification/API suite: 36 passed, 0 failed (consumer 4, delivery 9, migration 3, model 5, repository 8, API v1 7). PostgreSQL evidence: 7 passed, 0 failed, 0 ignored MAI-123 PostgreSQL tests (migration 1 and repository 6); concurrency evidence 2 passed, 0 failed; append-only evidence 1 passed, 0 failed. Full backend: 540 passed, 0 failed, 38 unrelated ignored. Changed-file fmt/lint/check passed for 23 TypeScript files and git diff --check passed. verify:fast exit 0: 11 passed, 0 failed, 5 skipped, 2 offline-unavailable. Canonical verification exit 0: 17/17 categories passed. No MAI-112 dependency; no shared platform-job modification; no provider enablement or credentials; no Graphify output. MAI-123 remains In Progress pending human review, integration with merged Wave C work, and Wave C finalization.
 
 Final test-compliance evidence 2026-08-04: branch delivery/MAI-123-notifications-and-subscriptions; PR #46; starting head 1077c3d92f8cad6aa3944e2530e53b306683ec9f. Split tests/notifications/delivery.spec.ts by responsibility into delivery.spec.ts (79 lines, core claim-boundary/unconfigured/disabled behavior), delivery_lease.spec.ts (108 lines, mutable-clock success and three lease-expiry regressions), delivery_failures.spec.ts (78 lines, retry/exhaustion and expiry-before-adapter behavior), and delivery_test_support.ts (359 lines, Notification-owned typed fakes and fixtures). Every resulting delivery test/support file is below 500 lines. All nine existing delivery cases remain present: 3 core, 4 lease, and 2 failure cases; post-adapter lease assertions and truthful attempted-receipt regressions are unchanged. No production code was modified. No MAI-112 dependency, shared platform-job modification, provider enablement or credentials, or Graphify output. Post-split focused delivery suite: 9 passed, 0 failed. Complete Notification/API suite: 36 passed, 0 failed. PostgreSQL: 7 passed, 0 failed, 0 ignored MAI-123 PostgreSQL tests. Concurrency: 2 passed, 0 failed. Append-only evidence: 1 passed, 0 failed. Complete backend: 540 passed, 0 failed, 38 unrelated ignored. Format/lint/check passed for 26 changed TypeScript files; git diff --check passed. verify:fast exit 0: 11 passed, 0 failed, 5 skipped, 2 offline-unavailable. Canonical verification exit 0: 17/17 categories passed. All changed production Notification/API files remain below 500 lines. MAI-123 remains In Progress pending human review and Wave C finalization.
+
+Wave C finisher 2026-08-04: merged PR #46 (b75f3c0) reviewed against the approved plan. Recipient-safe projections, versioned subscriptions, exact-scope idempotency, inbox-deduplicated event consumption, disabled-by-default delivery, retry/expiry/dead-letter receipts, append-only PostgreSQL evidence, and source-domain non-mutation are present; no channel provider was enabled. Fresh isolated PostgreSQL Wave C suite passed 20/20; canonical DENO_ENV=test MAI106_DATABASE_URL=<fresh isolated DB> MAI123_DATABASE_URL=<fresh isolated DB> deno task verify exited 0 with 17/17 categories PASS. Graphify was refreshed once after green verification.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Post-adapter lease fencing and deterministic expiry regressions are verified on the synchronized MAI-123 branch. Focused Notification/API and PostgreSQL evidence passed, verify:fast exited 0, and canonical verification passed 17/17. MAI-123 remains In Progress pending human review, integration with merged Wave C work, and Wave C finalization.
+Merged Notifications delivery from PR #46 is final. The Wave C finisher verified plan conformance, recipient isolation, subscription concurrency/idempotency, durable delivery retry/expiry/receipt behavior, isolated PostgreSQL evidence, and the 17-category canonical gate. Graphify refreshed after verification; no provider channel was enabled.
 <!-- SECTION:FINAL_SUMMARY:END -->

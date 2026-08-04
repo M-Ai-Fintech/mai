@@ -1,11 +1,11 @@
 ---
 id: MAI-112
 title: 'Documents, sources and processing'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-04 10:55'
+updated_date: '2026-08-04 11:17'
 labels:
   - backend
   - architecture
@@ -129,9 +129,9 @@ Object storage/VDR provider selection, credentials and production readiness evid
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Document versions are immutable; upload/sync/process retries are idempotent; storage/VDR and tenant/workspace/deal leakage tests pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Document versions are immutable; upload/sync/process retries are idempotent; storage/VDR and tenant/workspace/deal leakage tests pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -297,4 +297,12 @@ Post-sync lease-fencing evidence: de76fae93beecbdb963e0c58acdbf1d4d509b545 remai
 Exact post-sync verification on isolated PostgreSQL mai_test_mai106 at localhost:55434: focused processing set (processing.spec.ts, processing_lease.spec.ts, processing_isolation.spec.ts, processing_worker_postgres.spec.ts) passed 8/8 with 0 failures; complete Documents suite passed 25/25 with 0 failures and 0 ignored (20 non-PostgreSQL plus 5 PostgreSQL); Documents API passed 5/5; complete platform-jobs suite passed 16/16 with 0 failures (10 non-PostgreSQL plus 6 PostgreSQL); filtered-claim PostgreSQL passed 1/1; mixed-queue PostgreSQL passed 2/2; MAI-112 required PostgreSQL coverage passed 11/11 with 0 ignored; complete backend deno task test passed 572, failed 0, with 1 unrelated pre-existing ignored live-agent smoke test; scoped deno fmt --check and deno lint checked 45 files successfully; deno check src/documents/processing_worker.ts passed; deno check tests/documents/processing_lease.spec.ts passed; git diff --check passed; deno task verify:fast exited 0 with 11 passed, 0 failed, 5 skipped, and 2 documented offline-unavailable categories; canonical DENO_ENV=test MAI106_DATABASE_URL=postgres://postgres:postgres@localhost:55434/mai_test_mai106 deno task verify exited 0 with 17/17 categories passed.
 
 Scope/governance evidence: exact-version authorization binding, retry-safe source cursor handling, complete durable-job identity, backward-compatible filtered claiming, and the third artifact-persistence lease fence are preserved. No MAI-123 dependency or content, Notifications modification, provider enablement/credentials, GUI/Figma modification, or Graphify output was introduced. MAI-112 remains In Progress pending human data-model, security, infrastructure, and merge review and Wave C finalization. PR #47 remains Draft/Open/Unmerged/Unapproved.
+
+Wave C finisher 2026-08-04: merged PR #47 (65ee190) reviewed against the approved plan. Provider-neutral Documents ownership, immutable versions/provenance, exact-scope authorization, source cursor/idempotency, durable processing/retries, lease-fenced artifact persistence, migration/rollback retention, and disabled-by-default adapters are present; no provider certification was introduced. Fresh isolated PostgreSQL Wave C suite passed 20/20; canonical DENO_ENV=test MAI106_DATABASE_URL=<fresh isolated DB> MAI123_DATABASE_URL=<fresh isolated DB> deno task verify exited 0 with 17/17 categories PASS. Graphify was refreshed once after green verification.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Merged Documents delivery from PR #47 is final. The Wave C finisher verified plan conformance, bounded provider-neutral ownership, immutable provenance and isolation behavior, durable processing/lease fencing, isolated PostgreSQL evidence, and the 17-category canonical gate. Graphify refreshed after verification; no provider was enabled or certified.
+<!-- SECTION:FINAL_SUMMARY:END -->

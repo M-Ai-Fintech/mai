@@ -1,11 +1,11 @@
 ---
 id: MAI-111
 title: 'Deal lifecycle, phases and milestones'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-04 08:51'
+updated_date: '2026-08-04 11:17'
 labels:
   - backend
   - architecture
@@ -81,9 +81,9 @@ High complexity; Wave 5 parallel with BE-P09. Recommended model: gpt-5.6-sol, Hi
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Every deal lifecycle and milestone transition table case, prerequisite and invalid transition is executable and audited.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Every deal lifecycle and milestone transition table case, prerequisite and invalid transition is executable and audited.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -155,4 +155,12 @@ Final correction verification 2026-08-04: transition-specific prerequisite regre
 Correction handoff 2026-08-04: commit 043d03953ade6face15cbecc890222f3655b9563 (fix(MAI-111): correct lifecycle prerequisite and history invariants) was pushed to delivery/MAI-111-deal-lifecycle-phases-and-milestones; local and origin branch heads match. PR #48 description now contains the exact correction and verification evidence. Connector readback confirms PR #48 is Open, Draft, Unmerged, and has no review submissions, review threads, comments, or requested reviewers. MAI-111 remains In Progress. No Graphify files are in the diff; no merge, approval, ready-for-review conversion, or Done transition was performed.
 
 Governance correction 2026-08-04: MAI-111 remains In Progress for human review. Branch: delivery/MAI-111-deal-lifecycle-phases-and-milestones. Correction commit: 043d03953ade6face15cbecc890222f3655b9563. PR: #48. Milestone prerequisite enforcement is transition-specific; blocked and cancelled transitions remain valid with unmet prerequisites, while activation and completion remain blocked when prerequisites are unmet. Lifecycle transition history is database-enforced append-only; PostgreSQL rejects both UPDATE and DELETE. No MAI-112, MAI-123, Documents, Notifications, platform-jobs, GUI, Figma, provider, or Graphify scope was introduced. Exact verification evidence: Focused MAI-111: 17 passed, 0 failed, 0 ignored. PostgreSQL lifecycle integration: 4 passed, 0 failed, 0 ignored. Complete Deal Management: 103 passed, 0 failed, 0 ignored. Backend test task: 541 passed, 0 failed, 1 unrelated ignored live-agent case. verify:fast: 11 passed, 0 failed. Canonical verification: exit 0, 17/17 categories passed. MAI-111 remains In Progress pending human review and Wave C finalization.
+
+Wave C finisher 2026-08-04: merged PR #48 (11da22c) reviewed against the approved plan. Lifecycle state machines, transition-specific prerequisite enforcement, protected tenant/workspace/deal reads, optimistic concurrency/idempotency, atomic audit/outbox history, append-only PostgreSQL lifecycle history, migration/legacy uncertainty and rollback retention are present. Focused non-PostgreSQL evidence passed 67/67 with one unrelated Documents PostgreSQL skip before environment setup; fresh isolated PostgreSQL Wave C suite passed 20/20; canonical DENO_ENV=test MAI106_DATABASE_URL=<fresh isolated DB> MAI123_DATABASE_URL=<fresh isolated DB> deno task verify exited 0 with 17/17 categories PASS. Graphify was refreshed once after green verification.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Merged lifecycle delivery from PR #48 is final. The Wave C finisher verified plan conformance, bounded Deal Management ownership, transition/prerequisite and append-only-history regressions, isolated PostgreSQL evidence, and the 17-category canonical gate. Graphify refreshed after verification; no feature code was changed by the finisher.
+<!-- SECTION:FINAL_SUMMARY:END -->
