@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-04 08:44'
+updated_date: '2026-08-04 10:55'
 labels:
   - backend
   - architecture
@@ -73,6 +73,7 @@ modified_files:
   - tests/documents/repository_postgres.spec.ts
   - tests/documents/source_sync.spec.ts
   - tests/documents/processing.spec.ts
+  - tests/documents/processing_lease.spec.ts
   - tests/documents/processing_isolation.spec.ts
   - tests/documents/processing_worker_postgres.spec.ts
   - tests/documents/composition_postgres.spec.ts
@@ -177,6 +178,12 @@ Deliver the provider-neutral Documents vertical slice: tenant/workspace/deal-sco
 - Shared collision-risk paths are `src/platform/{persistence,events,jobs}/**`, `src/api/server.ts`, `src/api/mvp_routes.ts`, `src/api/routes/engines_documents.ts`, `src/core/vdr/**`, and any central migration/runtime registration. They are deliberately not planned MAI-112 modifications; obtain an owner-assigned integration slice if a dependency requires one.
 
 PR #47 blocker-correction plan (approved by the explicit correction request): (1) trace the v1 process command, durable DocumentJob payload, worker exact-version recheck, and existing tests; add immutable authorized document/version identity and deny-before-object/processor/artifact regressions for document and full tenant/workspace/deal scope; (2) make source-page accounting explicit so cursor advancement requires all items to be durably created or recognized duplicates, with retry-safe failed-item evidence and page retry regressions; (3) derive job and operation IDs from complete tenant/workspace/deal/actor/command/document/idempotency/payload identity and add PostgreSQL replay/isolation/collision regressions; (4) extend the shared platform PostgreSQL claim contract with optional non-empty allowed job types, preserve unfiltered behavior, filter inside FOR UPDATE SKIP LOCKED, and use the filter in the Documents worker with mixed-queue PostgreSQL regressions; (5) run focused, platform, PostgreSQL, verify:fast, complete backend, and canonical verification, then update the existing Draft PR and Backlog without merge or Done.
+
+PR #47 lease-fencing correction (approved 2026-08-04): add one `beforeExternalEffect()` assertion immediately before authoritative `artifacts.append()` in `src/documents/processing_worker.ts`, preserving the existing exact-version, cancellation, timeout, and job-type checks.
+
+Regression seam: add named lease-controlled execution context, object-store observer, processor observer, and artifact sink tests under `tests/documents/processing_lease.spec.ts`; prove the successful sequence has three assertions and one append, while deterministic lease loss during processor execution causes the third assertion to reject and leaves the artifact sink empty. No sleeps or wall-clock timing.
+
+Verification and handoff: run focused processing/Documents/platform-job suites, scoped format/lint/type/diff checks, `deno task verify:fast`, relevant PostgreSQL suites, and canonical `DENO_ENV=test deno task verify`; append exact results to MAI-112, commit as `fix(MAI-112): fence derived artifact persistence`, push the existing branch, update Draft PR #47, and retain In Progress/Draft/Open/Unmerged/Unapproved governance.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -266,4 +273,28 @@ Correction implementation evidence 2026-08-04: bound Document processing jobs to
 Verification evidence 2026-08-04: focused Documents tests 23 passed/0 failed/0 ignored; API documents tests 5 passed/0 failed; platform-jobs tests 16 passed/0 failed with the filtered PostgreSQL claim test included; MAI-112 PostgreSQL tests 11 passed/0 failed/0 ignored; mixed-queue PostgreSQL tests 2 passed/0 failed; complete backend deno task test 551 passed/0 failed/1 unrelated ignored live-agent smoke test; verify:fast exit 0 with 11 passed/0 failed, 5 skipped, and 2 unavailable by its documented offline manifest; canonical DENO_ENV=test deno task verify exited 0 with 17/17 categories passed. All changed TypeScript files pass scoped deno fmt --check, deno lint, deno check, and git diff --check. Repository-wide fmt/lint commands were also run and reported pre-existing governed Markdown/AGENTS and unrelated GUI/source findings outside this change; no unrelated files were modified.
 
 Governance remains unchanged: MAI-112 stays In Progress; PR #47 remains Draft/Open/Unmerged/Unapproved; no MAI-111, MAI-123, Notifications, GUI/Figma, provider credentials/certification, destructive migration, Graphify run, approval, or merge was performed.
+
+Lease-fencing implementation 2026-08-04: `DocumentProcessingExecutor.execute()` now asserts `beforeExternalEffect()` immediately before `DerivedArtifactSink.append()`, preserving the load/validate, pre-read, and pre-processor fences. The named `LeaseController`, lease-observing object store and processor, and recording artifact sink in `tests/documents/processing_lease.spec.ts` deterministically prove the successful three-fence/one-append sequence and lease expiration during processor execution before the final assertion.
+
+Red/green evidence: before the production fence, the two new lease tests failed (successful path observed 2 assertions instead of 3; expiry path did not reject). After the one-line correction, `deno test --allow-read --allow-write --allow-env --allow-net --allow-run tests/documents/processing_lease.spec.ts tests/documents/processing.spec.ts tests/documents/processing_isolation.spec.ts` passed 7/7 with 0 failures; the stale-version and cross-document/scope regressions remain passing.
+
+Lease-fencing final evidence 2026-08-04: commit `de76fae93beecbdb963e0c58acdbf1d4d509b545` (`fix(MAI-112): fence derived artifact persistence`) pushed fast-forward to `delivery/MAI-112-documents-sources-and-processing` from remote head `29b7d3e6f98c2fc4577b1d42c9f091d8f14dad73`. The commit changes only `src/documents/processing_worker.ts`, `tests/documents/processing.spec.ts`, and `tests/documents/processing_lease.spec.ts`.
+
+Lease regressions: focused processing/worker set passed 7/7 (4 existing processing, 2 new lease-fence cases, 1 exact-version isolation); the success case observed assertions before object read and processor invocation at counts 1 and 2, then completed the third assertion and appended exactly once. The deterministic processor-expiry case caused the final `beforeExternalEffect()` to reject with `LEASE_LOST`; `DerivedArtifactSink.append()` was called 0 times and retained 0 authoritative artifacts. Existing stale-version and cross-document/tenant/workspace/deal isolation regressions passed.
+
+Relevant suite evidence: all Documents specs passed 25/25 (19 non-PostgreSQL plus 6 PostgreSQL); Documents API tests passed 5/5; all platform-job specs passed 16/16 (10 non-PostgreSQL plus 6 PostgreSQL); mixed-queue PostgreSQL coverage passed 2/2 (Documents worker and filtered claim). MAI-112-required PostgreSQL coverage passed 11/11 with 0 ignored tests. Complete backend `DENO_ENV=test MAI106_DATABASE_URL=postgres://postgres:postgres@localhost:55432/mai_test_mai106 deno task test` passed 553, failed 0, with 1 unrelated pre-existing ignored live-agent smoke test.
+
+Static/canonical evidence: changed-file `deno fmt --check`, `deno lint`, `deno check src/documents/processing_worker.ts`, `deno check tests/documents/processing_lease.spec.ts`, and `git diff --check` passed. The exact repository-wide `deno fmt --check` exited 1 with 697 pre-existing unformatted files and repository-wide `deno lint` exited 1 with 23 pre-existing GUI/source findings outside this correction; no unrelated files changed. `deno task verify:fast` exited 0 with 11 passed, 0 failed, 5 skipped, 2 unavailable under its documented offline manifest. Canonical `DENO_ENV=test MAI106_DATABASE_URL=postgres://postgres:postgres@localhost:55432/mai_test_mai106 deno task verify` exited 0 with 17/17 categories passed.
+
+Governance/handoff: MAI-112 remains In Progress. PR #47 remains Draft/Open/Unmerged/Unapproved; no approval, merge, ready-state mutation, sibling Wave C code, shared platform-job change, Graphify run, or Graphify file is included. The commit hook regenerated Graphify outputs; they were restored before publication.
+
+Evidence count clarification appended 2026-08-04: the complete Documents inventory is 25 passed/0 failed/0 ignored, consisting of 20 non-PostgreSQL tests (including the static migration-contract test) and 5 PostgreSQL tests. The platform-job inventory is 16 passed/0 failed, consisting of 10 non-PostgreSQL and 6 PostgreSQL tests; the combined MAI-112-required PostgreSQL count remains 11 passed/0 failed/0 ignored.
+
+Final-review synchronization evidence (2026-08-04): branch delivery/MAI-112-documents-sources-and-processing; PR #47; current origin/master used: 11da22c146ba83f91cb3bec9f518e15d582cad18; synchronization commit: 7e8b200b8715f1ce7b9f15e3e63c19312a2deeb6 (Merge remote-tracking branch 'origin/master' into delivery/MAI-112-documents-sources-and-processing). The merge was clean; it incorporated only merged MAI-111 Deal Management content and did not modify MAI-112 source/test files or incorporate MAI-123.
+
+Post-sync lease-fencing evidence: de76fae93beecbdb963e0c58acdbf1d4d509b545 remains unchanged. DocumentProcessingExecutor preserves three ordered beforeExternalEffect assertions: before object-store read, before processor invocation, and immediately before authoritative artifacts.append(). The successful-path regression observed all three assertions in order and appended exactly once. The deterministic lease-loss regression rejects with LEASE_LOST after processor draft production; artifacts.append() was called zero times and no derived artifact became authoritative. Exact-version and cross-document/tenant/workspace/deal isolation regressions remain passing. processing_lease.spec.ts is governed in the modified-file inventory.
+
+Exact post-sync verification on isolated PostgreSQL mai_test_mai106 at localhost:55434: focused processing set (processing.spec.ts, processing_lease.spec.ts, processing_isolation.spec.ts, processing_worker_postgres.spec.ts) passed 8/8 with 0 failures; complete Documents suite passed 25/25 with 0 failures and 0 ignored (20 non-PostgreSQL plus 5 PostgreSQL); Documents API passed 5/5; complete platform-jobs suite passed 16/16 with 0 failures (10 non-PostgreSQL plus 6 PostgreSQL); filtered-claim PostgreSQL passed 1/1; mixed-queue PostgreSQL passed 2/2; MAI-112 required PostgreSQL coverage passed 11/11 with 0 ignored; complete backend deno task test passed 572, failed 0, with 1 unrelated pre-existing ignored live-agent smoke test; scoped deno fmt --check and deno lint checked 45 files successfully; deno check src/documents/processing_worker.ts passed; deno check tests/documents/processing_lease.spec.ts passed; git diff --check passed; deno task verify:fast exited 0 with 11 passed, 0 failed, 5 skipped, and 2 documented offline-unavailable categories; canonical DENO_ENV=test MAI106_DATABASE_URL=postgres://postgres:postgres@localhost:55434/mai_test_mai106 deno task verify exited 0 with 17/17 categories passed.
+
+Scope/governance evidence: exact-version authorization binding, retry-safe source cursor handling, complete durable-job identity, backward-compatible filtered claiming, and the third artifact-persistence lease fence are preserved. No MAI-123 dependency or content, Notifications modification, provider enablement/credentials, GUI/Figma modification, or Graphify output was introduced. MAI-112 remains In Progress pending human data-model, security, infrastructure, and merge review and Wave C finalization. PR #47 remains Draft/Open/Unmerged/Unapproved.
 <!-- SECTION:NOTES:END -->
