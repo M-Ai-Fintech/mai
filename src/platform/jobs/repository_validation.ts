@@ -11,12 +11,24 @@ export function assertJobClaim(claim: JobClaim): void {
       `Job lease "${claim.leaseUntil.toISOString()}" is invalid; expected after claim time.`,
     );
   }
-  if (
-    Number.isSafeInteger(claim.limit) && claim.limit > 0 && claim.limit <= 100
-  ) return;
-  throw new Error(
-    `Job claim limit "${claim.limit}" is invalid; expected 1-100.`,
-  );
+  assertClaimLimit(claim.limit);
+  if (claim.allowedJobTypes === undefined) return;
+  if (claim.allowedJobTypes.length === 0) {
+    throw new Error(
+      "Job allowed types are empty; expected at least one explicit job type or an omitted filter.",
+    );
+  }
+  for (const jobType of claim.allowedJobTypes) {
+    if (jobType.trim() && jobType.length <= 128) continue;
+    throw new Error(
+      `Job allowed type "${jobType}" is invalid; expected 1-128 characters.`,
+    );
+  }
+}
+
+function assertClaimLimit(limit: number): void {
+  if (Number.isSafeInteger(limit) && limit > 0 && limit <= 100) return;
+  throw new Error(`Job claim limit "${limit}" is invalid; expected 1-100.`);
 }
 
 export function assertJobFailure(failure: JobFailure): void {

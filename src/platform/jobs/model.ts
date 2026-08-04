@@ -27,6 +27,7 @@ export interface JobInputVersionReference {
   readonly aggregateType: string;
   readonly aggregateId: string;
   readonly version: AggregateVersion;
+  readonly documentId?: string;
 }
 
 export interface DurableJob {

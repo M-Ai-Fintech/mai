@@ -104,6 +104,7 @@ export interface JobWorkerDependencies {
   readonly clock: Clock;
   readonly failurePolicy: JobFailurePolicy;
   readonly audit: JobAuditAppendPort;
+  readonly allowedJobTypes?: readonly string[];
 }
 
 export type JobWorkerOutcome =
@@ -150,6 +151,9 @@ export class JobWorker {
         now,
         leaseUntil: new Date(now.getTime() + leaseMilliseconds),
         limit: 1,
+        ...(this.dependencies.allowedJobTypes === undefined
+          ? {}
+          : { allowedJobTypes: this.dependencies.allowedJobTypes }),
       });
       return jobs[0];
     });

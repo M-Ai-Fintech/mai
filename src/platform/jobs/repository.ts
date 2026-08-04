@@ -38,6 +38,7 @@ export interface JobClaim {
   readonly now: Date;
   readonly leaseUntil: Date;
   readonly limit: number;
+  readonly allowedJobTypes?: readonly string[];
 }
 
 export interface ClaimedJob extends DurableJob {
@@ -120,7 +121,13 @@ export class JobRepository {
     assertJobClaim(claim);
     const result = await transaction.query<ClaimedJobRow>(
       jobClaimSql(),
-      [claim.now, claim.workerId, claim.leaseUntil, claim.limit],
+      [
+        claim.now,
+        claim.workerId,
+        claim.leaseUntil,
+        claim.limit,
+        claim.allowedJobTypes === undefined ? null : [...claim.allowedJobTypes],
+      ],
     );
     const claimed: ClaimedJob[] = [];
     for (const row of result.rows) {

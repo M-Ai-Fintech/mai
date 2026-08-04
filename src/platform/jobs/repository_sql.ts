@@ -39,9 +39,12 @@ export function jobClaimSql(): string {
       lease_owner AS previous_lease_owner,
       lease_expires_at AS previous_lease_expires_at
     FROM platform.jobs
-    WHERE state = 'queued'
-      OR (state = 'retry_scheduled' AND next_attempt_at <= $1)
-      OR (state = 'running' AND lease_expires_at <= $1)
+    WHERE (
+        state = 'queued'
+        OR (state = 'retry_scheduled' AND next_attempt_at <= $1)
+        OR (state = 'running' AND lease_expires_at <= $1)
+      )
+      AND ($5::text[] IS NULL OR job_type = ANY($5::text[]))
     ORDER BY created_at, job_id
     FOR UPDATE SKIP LOCKED LIMIT $4
   )
