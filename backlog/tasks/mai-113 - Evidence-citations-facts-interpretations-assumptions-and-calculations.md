@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 14:22'
+updated_date: '2026-08-05 12:42'
 labels:
   - backend
   - architecture
@@ -39,24 +39,45 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 modified_files:
+  - src/api/v1/evidence_knowledge.ts
+  - src/api/v1/evidence_knowledge_routes.ts
   - src/documents/authorized_version_read.ts
   - src/documents/v1.ts
+  - src/evidence_knowledge/assumption.ts
+  - src/evidence_knowledge/calculation.ts
+  - src/evidence_knowledge/citation.ts
   - src/evidence_knowledge/citation_service.ts
+  - src/evidence_knowledge/composition.ts
   - src/evidence_knowledge/document_version_verification.ts
+  - src/evidence_knowledge/events.ts
+  - src/evidence_knowledge/fact.ts
   - src/evidence_knowledge/fact_command_audit.ts
   - src/evidence_knowledge/fact_command_helpers.ts
   - src/evidence_knowledge/fact_command_repository.ts
   - src/evidence_knowledge/fact_commands.ts
+  - src/evidence_knowledge/fact_version_status.ts
+  - src/evidence_knowledge/freshness.ts
+  - src/evidence_knowledge/ids.ts
+  - src/evidence_knowledge/interpretation.ts
+  - src/evidence_knowledge/invalidation.ts
+  - src/evidence_knowledge/invalidation_repository.ts
+  - src/evidence_knowledge/migrations/evidence_knowledge_0001.ts
   - src/evidence_knowledge/migrations/evidence_knowledge_0002.ts
   - src/evidence_knowledge/migrations/evidence_knowledge_0003.ts
   - src/evidence_knowledge/migrations/evidence_knowledge_0004.ts
   - src/evidence_knowledge/migrations/index.ts
   - src/evidence_knowledge/model.ts
+  - src/evidence_knowledge/provenance.ts
   - src/evidence_knowledge/repository.ts
   - src/evidence_knowledge/repository_rows.ts
   - src/evidence_knowledge/repository_sql.ts
   - src/evidence_knowledge/repository_validation.ts
+  - src/evidence_knowledge/v1.ts
+  - src/evidence_knowledge/vector_port.ts
+  - src/evidence_knowledge/vector_projection.ts
+  - tests/api/v1/evidence_knowledge.spec.ts
   - tests/documents/authorized_version_read.spec.ts
+  - tests/evidence_knowledge/calculation_provenance_postgres.spec.ts
   - tests/evidence_knowledge/composition_postgres.spec.ts
   - tests/evidence_knowledge/document_version_verification.spec.ts
   - tests/evidence_knowledge/evidence_write_concurrency_postgres.spec.ts
@@ -66,7 +87,16 @@ modified_files:
   - tests/evidence_knowledge/fact_command_postgres.spec.ts
   - tests/evidence_knowledge/fact_command_rollback_postgres.spec.ts
   - tests/evidence_knowledge/fact_commands.spec.ts
+  - tests/evidence_knowledge/invalidation.spec.ts
+  - tests/evidence_knowledge/invalidation_lease_postgres.spec.ts
+  - tests/evidence_knowledge/lineage.spec.ts
   - tests/evidence_knowledge/migration.spec.ts
+  - tests/evidence_knowledge/migration_backfill_postgres.spec.ts
+  - tests/evidence_knowledge/migration_constraints_postgres.spec.ts
+  - tests/evidence_knowledge/migration_postgres_test_support.ts
+  - tests/evidence_knowledge/model.spec.ts
+  - tests/evidence_knowledge/repository_postgres.spec.ts
+  - tests/evidence_knowledge/vector_isolation.spec.ts
 priority: high
 ordinal: 40000
 ---
@@ -310,7 +340,7 @@ Post-merge evidence update:
   17. 0b3a229 test(MAI-113): prove complete fact audit rollback
 - Migration 0004: Created additive evidence_knowledge-0004 to enforce deferred pointer trigger without altering published 0003.
 - Published 0003 checksum preservation: evidence_knowledge-0003.ts restored exactly from commit 7428d32501489bd9278c64524afb30534c889a2f.
-- Fact pointer history-consistency results: Direct transition-history inserts superseding current version without updating Fact row fail at transaction commit via deferred trigger trg_assert_fact_current_version_valid.
+- Fact pointer history-consistency results: Direct transition-history inserts superseding current version without updating Fact row fail at transaction commit via deferred triggers trigger_check_fact_pointer_invariant and trigger_check_fact_transition_history_pointer_invariant.
 - Concurrent Citation replay results: 2 concurrent ops with identical Citation payload both succeed, storing 1 Citation row.
 - Concurrent Evidence replay results: 2 concurrent ops with identical Evidence payload both succeed, storing 1 Citation row and 1 Evidence row.
 - Concurrent conflict results: 2 concurrent ops with conflicting payloads result in 1 winner success and 1 deterministic error (payload changed; expected immutable replay).
@@ -363,4 +393,14 @@ Final bounded cleanup verification evidence for MAI-113:
 - Files over 400 lines: src/evidence_knowledge/repository.ts (482), tests/evidence_knowledge/evidence_write_concurrency_postgres.spec.ts (421), tests/evidence_knowledge/fact_command_rollback_postgres.spec.ts (443). All files strictly under 500 lines.
 - Confirmation MAI-113 remains In Progress.
 - Confirmation no new PR was created.
+
+Final migration test organization correction:
+- Split the former 654-line tests/evidence_knowledge/migration.spec.ts into four focused files without changing migration behavior:
+  * tests/evidence_knowledge/migration.spec.ts (38 lines)
+  * tests/evidence_knowledge/migration_backfill_postgres.spec.ts (255 lines)
+  * tests/evidence_knowledge/migration_constraints_postgres.spec.ts (278 lines)
+  * tests/evidence_knowledge/migration_postgres_test_support.ts (195 lines)
+- Preserved one migration metadata test, four backfill/repair PostgreSQL tests, and four deferred-constraint PostgreSQL tests.
+- Restored the complete MAI-113 modified_files inventory, including original vertical-slice files and all post-merge correction files.
+- This connector environment cannot execute the private repository's Deno/PostgreSQL suites; TypeScript syntax parsing completed locally for all four split files. Full repository verification remains required before a final readiness claim.
 <!-- SECTION:NOTES:END -->
