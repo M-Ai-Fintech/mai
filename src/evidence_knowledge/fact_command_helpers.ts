@@ -33,10 +33,13 @@ export function validateReplacement(
   if (
     replacement.factId !== version.factId ||
     replacement.versionNumber <= version.versionNumber ||
-    replacement.status !== "approved"
+    replacement.status !== "approved" ||
+    replacement.scope.tenantId !== version.scope.tenantId ||
+    replacement.scope.workspaceId !== version.scope.workspaceId ||
+    replacement.scope.dealId !== version.scope.dealId
   ) {
     throw new Error(
-      `Fact replacement "${replacement.factVersionId}" is invalid; expected the same fact, a higher version, and approved status.`,
+      `Fact replacement "${replacement.factVersionId}" is invalid; expected the same fact, same scope, a higher version, and approved status.`,
     );
   }
 }

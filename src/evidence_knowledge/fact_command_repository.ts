@@ -7,6 +7,7 @@ import type {
 import type { AggregateVersion } from "../platform/api/v1.ts";
 import { VersionConflictError } from "../platform/persistence/concurrency.ts";
 import type {
+  AllowedFactCommandAuthorization,
   FactTransitionResult,
   FactTransitionStore,
   TransitionFactStatusCommand,
@@ -22,7 +23,6 @@ import {
 import { rowToFact, rowToFactVersion } from "./repository_rows.ts";
 import { EvidenceKnowledgeRepository } from "./repository.ts";
 import { loadEffectiveFactVersionStatus } from "./fact_version_status.ts";
-import type { AuthoritySnapshot } from "../audit_activity/v1.ts";
 import { appendFactTransitionAudit } from "./fact_command_audit.ts";
 import {
   appendHistory,
@@ -44,6 +44,10 @@ export interface FactCommandRepositoryDependencies {
   readonly onFactLockAcquired?: (
     command: TransitionFactStatusCommand,
   ) => Promise<void>;
+  readonly onTransactionStarted?: (
+    command: TransitionFactStatusCommand,
+    pid: number,
+  ) => Promise<void>;
 }
 
 export class PostgresFactTransitionStore implements FactTransitionStore {
@@ -57,18 +61,29 @@ export class PostgresFactTransitionStore implements FactTransitionStore {
 
   transition(
     command: TransitionFactStatusCommand,
-    authSnapshot: AuthoritySnapshot,
+    auth: AllowedFactCommandAuthorization,
   ): Promise<FactTransitionResult> {
     return this.dependencies.transactions.run((transaction) =>
-      this.transitionInTransaction(transaction, command, authSnapshot)
+      this.transitionInTransaction(transaction, command, auth)
     );
   }
 
   private async transitionInTransaction(
     transaction: TransactionHandle,
     command: TransitionFactStatusCommand,
-    authSnapshot: AuthoritySnapshot,
+    auth: AllowedFactCommandAuthorization,
   ): Promise<FactTransitionResult> {
+    if (this.dependencies.onTransactionStarted) {
+      const pidRes = await transaction.query<{ pid: number }>(
+        "SELECT pg_backend_pid() AS pid",
+      );
+      if (pidRes.rows[0]?.pid) {
+        await this.dependencies.onTransactionStarted(
+          command,
+          pidRes.rows[0].pid,
+        );
+      }
+    }
     const occurredAt = this.dependencies.clock.now();
     const existing = await claimCommand(
       transaction,
@@ -102,12 +117,17 @@ export class PostgresFactTransitionStore implements FactTransitionStore {
         `Fact version "${version.factVersionId}" has status "${version.status}"; expected proposed before approval.`,
       );
     }
-    if (
-      command.targetStatus === "superseded" && version.status !== "approved"
-    ) {
-      throw new Error(
-        `Fact version "${version.factVersionId}" has status "${version.status}"; expected approved before supersession.`,
-      );
+    if (command.targetStatus === "superseded") {
+      if (version.status !== "approved") {
+        throw new Error(
+          `Fact version "${version.factVersionId}" has status "${version.status}"; expected approved before supersession.`,
+        );
+      }
+      if (fact.currentFactVersionId !== version.factVersionId) {
+        throw new Error(
+          `Fact version "${version.factVersionId}" is not current; expected current fact version "${fact.currentFactVersionId}" for supersession.`,
+        );
+      }
     }
 
     await verifyCitations(
@@ -129,7 +149,7 @@ export class PostgresFactTransitionStore implements FactTransitionStore {
 
     const newCurrentVersionId = command.targetStatus === "superseded"
       ? replacement!.factVersionId
-      : version.factVersionId;
+      : (fact.currentFactVersionId ?? version.factVersionId);
 
     const updated = await updateFact(
       transaction,
@@ -169,7 +189,7 @@ export class PostgresFactTransitionStore implements FactTransitionStore {
     await appendFactTransitionAudit(
       transaction,
       command,
-      authSnapshot,
+      auth,
       fact,
       updated,
       version,
