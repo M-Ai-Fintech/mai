@@ -424,6 +424,226 @@ Deno.test({
   },
 });
 
+Deno.test({
+  name:
+    "evidence_knowledge-0004 transition history insert invalidating pointer rejects at commit",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      ...evidenceKnowledgeMigrations,
+    ]);
+
+    const tenant = "t_h_inv";
+    const workspace = "w_h_inv";
+    const deal = "d_h_inv";
+    const factId = "fact_h_inv";
+    const v1Id = "v1_h_inv";
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, aggregate_version, created_at, current_fact_version_id)
+       VALUES ($1, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL)`,
+      [factId, tenant, workspace, deal, now],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_versions (fact_version_id, fact_id, tenant_id, workspace_id, deal_id, statement, category, status, version_number, citation_ids, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'statement 1', 'financial', 'proposed', 1, '[]', $6)`,
+      [v1Id, factId, tenant, workspace, deal, now],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+       VALUES ('h1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmd1', $6)`,
+      [tenant, workspace, deal, factId, v1Id, now],
+    );
+
+    await pool.query(
+      `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+      [factId, v1Id],
+    );
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+         VALUES ('h2', $1, $2, $3, $4, $5, 'approved', 'superseded', 'cmd2', $6)`,
+        [tenant, workspace, deal, factId, v1Id, now],
+      );
+      await assertRejects(
+        () => client.query("COMMIT"),
+        Error,
+        "not effectively approved",
+      );
+    } finally {
+      client.release();
+    }
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
+    "evidence_knowledge-0004 valid atomic supersession and deferred behavior succeeds at commit",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      ...evidenceKnowledgeMigrations,
+    ]);
+
+    const tenant = "t_h_atom";
+    const workspace = "w_h_atom";
+    const deal = "d_h_atom";
+    const factId = "fact_h_atom";
+    const v1Id = "v1_h_atom";
+    const v2Id = "v2_h_atom";
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, aggregate_version, created_at, current_fact_version_id)
+       VALUES ($1, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL)`,
+      [factId, tenant, workspace, deal, now],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_versions (fact_version_id, fact_id, tenant_id, workspace_id, deal_id, statement, category, status, version_number, citation_ids, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'statement 1', 'financial', 'proposed', 1, '[]', $6),
+              ($7, $2, $3, $4, $5, 'statement 2', 'financial', 'proposed', 2, '[]', $6)`,
+      [v1Id, factId, tenant, workspace, deal, now, v2Id],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+       VALUES ('h1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmd1', $6)`,
+      [tenant, workspace, deal, factId, v1Id, now],
+    );
+
+    await pool.query(
+      `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+      [factId, v1Id],
+    );
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+         VALUES ('h2', $1, $2, $3, $4, $5, 'approved', 'superseded', 'cmd2', $6)`,
+        [tenant, workspace, deal, factId, v1Id, now],
+      );
+      await client.query(
+        `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+         VALUES ('h3', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmd3', $6)`,
+        [tenant, workspace, deal, factId, v2Id, now],
+      );
+      await client.query(
+        `UPDATE evidence_knowledge.facts SET current_fact_version_id=$2 WHERE fact_id=$1`,
+        [factId, v2Id],
+      );
+      await client.query("COMMIT");
+    } finally {
+      client.release();
+    }
+
+    const factRes = await pool.query<{ current_fact_version_id: string }>(
+      `SELECT current_fact_version_id FROM evidence_knowledge.facts WHERE fact_id=$1`,
+      [factId],
+    );
+    assertEquals(factRes.rows[0].current_fact_version_id, v2Id);
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
+    "evidence_knowledge-0004 unrelated history transition does not invalidate current fact",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      ...evidenceKnowledgeMigrations,
+    ]);
+
+    const tenant = "t_unrel";
+    const workspace = "w_unrel";
+    const deal = "d_unrel";
+    const factA = "fact_A";
+    const factB = "fact_B";
+    const vA1 = "v_A1";
+    const vB1 = "v_B1";
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, aggregate_version, created_at, current_fact_version_id)
+       VALUES ($1, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL),
+              ($6, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL)`,
+      [factA, tenant, workspace, deal, now, factB],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_versions (fact_version_id, fact_id, tenant_id, workspace_id, deal_id, statement, category, status, version_number, citation_ids, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'statement A', 'financial', 'proposed', 1, '[]', $6),
+              ($7, $8, $3, $4, $5, 'statement B', 'financial', 'proposed', 1, '[]', $6)`,
+      [vA1, factA, tenant, workspace, deal, now, vB1, factB],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+       VALUES ('hA1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmdA1', $6)`,
+      [tenant, workspace, deal, factA, vA1, now],
+    );
+
+    await pool.query(
+      `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+      [factA, vA1],
+    );
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+         VALUES ('hB1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmdB1', $6)`,
+        [tenant, workspace, deal, factB, vB1, now],
+      );
+      await client.query("COMMIT");
+    } finally {
+      client.release();
+    }
+
+    const factARes = await pool.query<{ current_fact_version_id: string }>(
+      `SELECT current_fact_version_id FROM evidence_knowledge.facts WHERE fact_id=$1`,
+      [factA],
+    );
+    assertEquals(factARes.rows[0].current_fact_version_id, vA1);
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
 async function resetSchema(pool: pg.Pool): Promise<void> {
   await pool.query("DROP SCHEMA IF EXISTS evidence_knowledge CASCADE");
   await pool.query("DROP SCHEMA IF EXISTS audit_activity CASCADE");

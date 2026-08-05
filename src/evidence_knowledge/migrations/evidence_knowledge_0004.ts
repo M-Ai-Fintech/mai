@@ -6,9 +6,9 @@ export const evidenceKnowledgeMigration0004 = defineMigration({
   id: "evidence_knowledge-0004",
   version: 4,
   forwardNotes:
-    "Corrective migration for facts.current_fact_version_id repairing superseded pointers, validating fact pointer invariant, and establishing constraint trigger.",
+    "Corrective migration for facts.current_fact_version_id repairing superseded pointers, validating fact pointer invariant, and establishing constraint triggers on facts and fact_transition_history.",
   rollbackNotes:
-    "Retain check constraint, constraint trigger, and current_fact_version_id backfill; additive schema migration is non-destructive.",
+    "Retain check constraint, constraint triggers, and current_fact_version_id backfill; additive schema migration is non-destructive.",
   statements: [
     {
       schema: "evidence_knowledge",
@@ -98,24 +98,30 @@ export const evidenceKnowledgeMigration0004 = defineMigration({
         (status != 'approved' AND current_fact_version_id IS NULL)
       );
 
-      CREATE OR REPLACE FUNCTION evidence_knowledge.check_fact_pointer_invariant()
-      RETURNS TRIGGER AS $$
+      CREATE OR REPLACE FUNCTION evidence_knowledge.validate_fact_pointer_invariant(
+        v_tenant_id TEXT,
+        v_workspace_id TEXT,
+        v_deal_id TEXT,
+        v_fact_id TEXT
+      )
+      RETURNS VOID AS $$
       DECLARE
         v_status TEXT;
-        v_fact_id TEXT;
         v_current_id TEXT;
-        v_tenant_id TEXT;
-        v_workspace_id TEXT;
-        v_deal_id TEXT;
         v_ver_status TEXT;
         v_eff_status TEXT;
       BEGIN
-        v_status := to_jsonb(NEW)->>'status';
-        v_fact_id := to_jsonb(NEW)->>'fact_id';
-        v_current_id := to_jsonb(NEW)->>'current_fact_version_id';
-        v_tenant_id := to_jsonb(NEW)->>'tenant_id';
-        v_workspace_id := to_jsonb(NEW)->>'workspace_id';
-        v_deal_id := to_jsonb(NEW)->>'deal_id';
+        SELECT status, current_fact_version_id
+        INTO v_status, v_current_id
+        FROM evidence_knowledge.facts
+        WHERE tenant_id = v_tenant_id
+          AND workspace_id = v_workspace_id
+          AND deal_id = v_deal_id
+          AND fact_id = v_fact_id;
+
+        IF NOT FOUND THEN
+          RETURN;
+        END IF;
 
         IF v_status = 'approved' THEN
           IF v_current_id IS NULL THEN
@@ -157,7 +163,18 @@ export const evidenceKnowledgeMigration0004 = defineMigration({
             RAISE EXCEPTION 'Non-approved Fact % cannot have current_fact_version_id', v_fact_id;
           END IF;
         END IF;
+      END;
+      $$ LANGUAGE plpgsql;
 
+      CREATE OR REPLACE FUNCTION evidence_knowledge.check_fact_pointer_invariant()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        PERFORM evidence_knowledge.validate_fact_pointer_invariant(
+          to_jsonb(NEW)->>'tenant_id',
+          to_jsonb(NEW)->>'workspace_id',
+          to_jsonb(NEW)->>'deal_id',
+          to_jsonb(NEW)->>'fact_id'
+        );
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
@@ -168,6 +185,26 @@ export const evidenceKnowledgeMigration0004 = defineMigration({
       DEFERRABLE INITIALLY DEFERRED
       FOR EACH ROW
       EXECUTE FUNCTION evidence_knowledge.check_fact_pointer_invariant();
+
+      CREATE OR REPLACE FUNCTION evidence_knowledge.check_fact_transition_history_pointer_invariant()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        PERFORM evidence_knowledge.validate_fact_pointer_invariant(
+          to_jsonb(NEW)->>'tenant_id',
+          to_jsonb(NEW)->>'workspace_id',
+          to_jsonb(NEW)->>'deal_id',
+          to_jsonb(NEW)->>'fact_id'
+        );
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS trigger_check_fact_transition_history_pointer_invariant ON evidence_knowledge.fact_transition_history;
+      CREATE CONSTRAINT TRIGGER trigger_check_fact_transition_history_pointer_invariant
+      AFTER INSERT ON evidence_knowledge.fact_transition_history
+      DEFERRABLE INITIALLY DEFERRED
+      FOR EACH ROW
+      EXECUTE FUNCTION evidence_knowledge.check_fact_transition_history_pointer_invariant();
       `,
     },
   ],
