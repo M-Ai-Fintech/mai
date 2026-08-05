@@ -262,4 +262,3 @@ function transitionValues(
     JSON.stringify(input.data ?? {}),
   ];
 }
-

@@ -93,4 +93,3 @@ export class DealRepository extends DatabaseMemoryService {
     });
   }
 }
-
