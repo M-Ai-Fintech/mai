@@ -1,13 +1,13 @@
 import type { DocumentVersion } from "../documents/version.ts";
 import type { DocumentVersionId } from "../documents/ids.ts";
+import type { AuthorizedDocumentVersionReadPort } from "../documents/v1.ts";
+import type { RequestContext } from "../platform/api/v1.ts";
 import type {
   EvidenceClassification,
   EvidenceScope,
   ExactDocumentVersionReference,
 } from "./model.ts";
 import { sameScope } from "./model.ts";
-import type { DocumentsRepository } from "../documents/repository.ts";
-import type { PostgresTransactionRunner } from "../platform/persistence/v1.ts";
 
 export type ExactDocumentVerificationFailure =
   | "protected-not-found"
@@ -25,44 +25,25 @@ export interface VerifiedExactDocumentVersion {
 
 export interface ExactDocumentVersionVerificationPort {
   verify(
+    context: RequestContext,
     scope: EvidenceScope,
     reference: ExactDocumentVersionReference,
   ): Promise<VerifiedExactDocumentVersion>;
 }
 
-export interface DocumentsExactVersionReadPort {
-  findVersion(
-    scope: EvidenceScope,
-    versionId: DocumentVersionId,
-  ): Promise<DocumentVersion | undefined>;
-}
-
-export class PostgresDocumentsExactVersionReadPort
-  implements DocumentsExactVersionReadPort {
-  constructor(
-    private readonly documents: DocumentsRepository,
-    private readonly transactions: PostgresTransactionRunner,
-  ) {}
-
-  findVersion(
-    scope: EvidenceScope,
-    versionId: DocumentVersionId,
-  ): Promise<DocumentVersion | undefined> {
-    return this.transactions.run((transaction) =>
-      this.documents.findVersion(transaction, scope, versionId)
-    );
-  }
-}
-
 export class DocumentsExactVersionVerificationAdapter
   implements ExactDocumentVersionVerificationPort {
-  constructor(private readonly documents: DocumentsExactVersionReadPort) {}
+  constructor(
+    private readonly versionReadPort: AuthorizedDocumentVersionReadPort,
+  ) {}
 
   async verify(
+    context: RequestContext,
     scope: EvidenceScope,
     reference: ExactDocumentVersionReference,
   ): Promise<VerifiedExactDocumentVersion> {
-    const version = await this.documents.findVersion(
+    const version = await this.versionReadPort.findAccessibleVersion(
+      context,
       scope,
       reference.documentVersionId,
     );
@@ -96,11 +77,22 @@ export class FakeExactDocumentVersionVerificationPort
   ) {}
 
   async verify(
+    context: RequestContext,
     scope: EvidenceScope,
     reference: ExactDocumentVersionReference,
   ): Promise<VerifiedExactDocumentVersion> {
     await Promise.resolve();
     if (this.inaccessible.has(reference.documentVersionId)) {
+      throw protectedNotFound(
+        reference.documentVersionId,
+        "protected-not-found",
+      );
+    }
+    if (
+      context.tenantId !== scope.tenantId ||
+      context.workspaceId !== scope.workspaceId ||
+      context.dealId !== scope.dealId
+    ) {
       throw protectedNotFound(
         reference.documentVersionId,
         "protected-not-found",
@@ -130,7 +122,7 @@ export class FakeExactDocumentVersionVerificationPort
 
 function protectedNotFound(
   versionId: string,
-  reason: ExactDocumentVerificationFailure,
+  reason: ExactDocumentVerificationFailure = "protected-not-found",
 ): Error {
   void reason;
   return new Error(

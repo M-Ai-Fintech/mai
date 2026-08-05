@@ -20,6 +20,7 @@ import type {
   VerifiedExactDocumentVersion,
 } from "../../src/evidence_knowledge/document_version_verification.ts";
 import { evidenceKnowledgeMigrations } from "../../src/evidence_knowledge/migrations/index.ts";
+import { auditActivityMigrations } from "../../src/audit_activity/migrations/index.ts";
 import { createCitation } from "../../src/evidence_knowledge/citation.ts";
 import {
   createExactDocumentVersionReference,
@@ -34,33 +35,27 @@ import {
   parseFactVersionId,
 } from "../../src/evidence_knowledge/v1.ts";
 import {
+  parseActorId,
   parseDealId,
   parseTenantId,
   parseWorkspaceId,
+  type RequestContext,
 } from "../../src/platform/api/v1.ts";
 import { VersionConflictError } from "../../src/platform/persistence/concurrency.ts";
 import {
   createMai106Pool,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
+import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
   mai106DatabaseUrl();
 
-class BarrierVerifier implements ExactDocumentVersionVerificationPort {
-  private lockAcquiredResolver?: () => void;
-  readonly lockAcquiredPromise = new Promise<void>((resolve) => {
-    this.lockAcquiredResolver = resolve;
-  });
-
-  private releaseResolver?: () => void;
-  readonly releasePromise = new Promise<void>((resolve) => {
-    this.releaseResolver = resolve;
-  });
-
+class SimpleVerifier implements ExactDocumentVersionVerificationPort {
   constructor(private readonly expectedDocVersion: DocumentVersion) {}
 
-  async verify(
+  verify(
+    _context: RequestContext,
     scope: EvidenceScope,
     reference: ExactDocumentVersionReference,
   ): Promise<VerifiedExactDocumentVersion> {
@@ -71,17 +66,11 @@ class BarrierVerifier implements ExactDocumentVersionVerificationPort {
     ) {
       throw new Error("Verification mismatch.");
     }
-    this.lockAcquiredResolver?.();
-    await this.releasePromise;
-    return Object.freeze({
+    return Promise.resolve(Object.freeze({
       scope,
       reference,
       version: this.expectedDocVersion,
-    });
-  }
-
-  release(): void {
-    this.releaseResolver?.();
+    }));
   }
 }
 
@@ -94,6 +83,7 @@ Deno.test({
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
+      ...auditActivityMigrations,
       ...evidenceKnowledgeMigrations,
     ]);
 
@@ -151,17 +141,42 @@ Deno.test({
       classification: citation.source.classification,
     } as DocumentVersion;
 
-    const barrierVerifier = new BarrierVerifier(docVersion);
-    const service = new AtomicFactCommandService(
-      { authorize: () => Promise.resolve(true) },
-      new PostgresFactTransitionStore({
-        transactions,
-        evidence: repository,
-        verifier: barrierVerifier,
-        outbox: new OutboxRepository(),
-        clock: { now: () => fixtureNow() },
-      }),
-    );
+    const verifier = new SimpleVerifier(docVersion);
+
+    let writer1LockResolver: (() => void) | undefined;
+    const writer1LockPromise = new Promise<void>((r) => {
+      writer1LockResolver = r;
+    });
+
+    let releaseWriter1Resolver: (() => void) | undefined;
+    const releaseWriter1Promise = new Promise<void>((r) => {
+      releaseWriter1Resolver = r;
+    });
+
+    const authSnapshot = fixtureAuthoritySnapshot(scope);
+    const authPort = {
+      authorize: () =>
+        Promise.resolve({
+          allowed: true as const,
+          authoritySnapshot: authSnapshot,
+        }),
+    };
+
+    const store = new PostgresFactTransitionStore({
+      transactions,
+      evidence: repository,
+      verifier,
+      outbox: new OutboxRepository(),
+      clock: { now: () => fixtureNow() },
+      onFactLockAcquired: async (command) => {
+        if (command.idempotencyKey === "race-cmd-1") {
+          writer1LockResolver?.();
+          await releaseWriter1Promise;
+        }
+      },
+    });
+
+    const service = new AtomicFactCommandService(authPort, store);
 
     const command1 = {
       context: contextResult.value,
@@ -186,16 +201,38 @@ Deno.test({
     };
 
     const promise1 = service.transition(command1);
-    await barrierVerifier.lockAcquiredPromise;
+    await writer1LockPromise;
 
     const promise2 = service.transition(command2);
-    barrierVerifier.release();
+
+    let blocked = false;
+    for (let i = 0; i < 50; i++) {
+      const locks = await pool.query(
+        "SELECT 1 FROM pg_locks WHERE granted = false",
+      );
+      if ((locks.rowCount ?? 0) > 0) {
+        blocked = true;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    assertEquals(
+      blocked,
+      true,
+      "Writer 2 must block on row lock before releasing Writer 1",
+    );
+
+    releaseWriter1Resolver?.();
 
     const [result1, result2] = await Promise.allSettled([promise1, promise2]);
 
     assertEquals(result1.status, "fulfilled");
     if (result1.status === "fulfilled") {
       assertEquals(result1.value.fact.status, "approved");
+      assertEquals(
+        result1.value.fact.currentFactVersionId,
+        "factver_command-v1",
+      );
       assertEquals(result1.value.fact.aggregateVersion, 2);
       assertEquals(result1.value.replayed, false);
     }
@@ -212,7 +249,9 @@ Deno.test({
       outboxCount: string;
       idempotencyCount: string;
       idempotencyHistoryCount: string;
+      auditCount: string;
       factStatus: string;
+      currentFactVersionId: string;
       factVersion: string;
     }>(
       `SELECT
@@ -222,12 +261,15 @@ Deno.test({
         (SELECT count(*)::text FROM platform.outbox WHERE event_type='evidence.fact-status-transitioned') AS "outboxCount",
         (SELECT count(*)::text FROM evidence_knowledge.command_idempotency) AS "idempotencyCount",
         (SELECT count(*)::text FROM evidence_knowledge.command_idempotency_history) AS "idempotencyHistoryCount",
+        (SELECT count(*)::text FROM audit_activity.audit_events WHERE aggregate_type='EvidenceFact') AS "auditCount",
         (SELECT status FROM evidence_knowledge.facts WHERE fact_id='fact_command') AS "factStatus",
+        (SELECT current_fact_version_id FROM evidence_knowledge.facts WHERE fact_id='fact_command') AS "currentFactVersionId",
         (SELECT aggregate_version::text FROM evidence_knowledge.facts WHERE fact_id='fact_command') AS "factVersion"`,
     );
 
     const row = dbState.rows[0];
     assertEquals(row.factStatus, "approved");
+    assertEquals(row.currentFactVersionId, "factver_command-v1");
     assertEquals(row.factVersion, "2");
     assertEquals(row.historyCount, "1");
     assertEquals(row.provenanceCount, "1");
@@ -235,6 +277,7 @@ Deno.test({
     assertEquals(row.outboxCount, "1");
     assertEquals(row.idempotencyCount, "1");
     assertEquals(row.idempotencyHistoryCount, "1");
+    assertEquals(row.auditCount, "1");
 
     const losingIdempotency = await pool.query(
       `SELECT count(*)::text AS count FROM evidence_knowledge.command_idempotency WHERE idempotency_key='race-cmd-2'`,
@@ -248,16 +291,17 @@ Deno.test({
 
 async function resetSchema(pool: pg.Pool): Promise<void> {
   await pool.query("DROP SCHEMA IF EXISTS evidence_knowledge CASCADE");
+  await pool.query("DROP SCHEMA IF EXISTS audit_activity CASCADE");
   await pool.query(
     "DELETE FROM platform.outbox WHERE event_type='evidence.fact-status-transitioned'",
   ).catch(() => {});
   await pool.query(
-    "DELETE FROM platform.migration_ledger WHERE context_owner=$1",
-    ["evidence_knowledge"],
+    "DELETE FROM platform.migration_ledger WHERE context_owner IN ($1, $2)",
+    ["evidence_knowledge", "audit_activity"],
   ).catch(() => {});
 }
 
-function fixtureScope() {
+function fixtureScope(): EvidenceScope {
   return {
     tenantId: required("tenant_acme", parseTenantId),
     workspaceId: required("workspace_dealroom", parseWorkspaceId),
@@ -265,7 +309,7 @@ function fixtureScope() {
   };
 }
 
-function fixtureCitation(scope: ReturnType<typeof fixtureScope>) {
+function fixtureCitation(scope: EvidenceScope) {
   return createCitation({
     citationId: required("citation_command", parseCitationId),
     scope,
@@ -280,6 +324,17 @@ function fixtureCitation(scope: ReturnType<typeof fixtureScope>) {
     freshness: { state: "current", checkedAt: fixtureNow() },
     createdAt: fixtureNow(),
   });
+}
+
+function fixtureAuthoritySnapshot(scope: EvidenceScope): AuthoritySnapshot {
+  return {
+    snapshotId: "authsnap_test",
+    actorId: required("actor_alice", parseActorId),
+    actorKind: "human",
+    policyVersion: "v1",
+    scope,
+    capturedAt: fixtureNow(),
+  };
 }
 
 function fixtureNow(): Date {

@@ -13,7 +13,7 @@ export function evidenceSelectColumns(): string {
 }
 
 export function factSelectColumns(): string {
-  return `SELECT fact_id AS "factId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", category, status, aggregate_version AS "aggregateVersion", created_at AS "createdAt" FROM evidence_knowledge.facts`;
+  return `SELECT fact_id AS "factId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", category, status, current_fact_version_id AS "currentFactVersionId", aggregate_version AS "aggregateVersion", created_at AS "createdAt" FROM evidence_knowledge.facts`;
 }
 
 export function factVersionSelectColumns(): string {

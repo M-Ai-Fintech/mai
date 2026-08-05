@@ -7,6 +7,7 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
+  parseActorId,
   parseAggregateVersion,
   parseRequestContext,
 } from "../../src/platform/api/v1.ts";
@@ -17,6 +18,7 @@ import { PostgresFactTransitionStore } from "../../src/evidence_knowledge/fact_c
 import { AtomicFactCommandService } from "../../src/evidence_knowledge/fact_commands.ts";
 import { FakeExactDocumentVersionVerificationPort } from "../../src/evidence_knowledge/document_version_verification.ts";
 import { evidenceKnowledgeMigrations } from "../../src/evidence_knowledge/migrations/index.ts";
+import { auditActivityMigrations } from "../../src/audit_activity/migrations/index.ts";
 import { createCitation } from "../../src/evidence_knowledge/citation.ts";
 import {
   createExactDocumentVersionReference,
@@ -37,21 +39,24 @@ import {
   createMai106Pool,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
+import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
   mai106DatabaseUrl();
 
 Deno.test({
   name:
-    "fact commands atomically persist idempotency, history, provenance, invalidation, and outbox evidence",
+    "fact commands atomically persist idempotency, history, provenance, invalidation, audit, and outbox evidence",
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
     await reset(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
+      ...auditActivityMigrations,
       ...evidenceKnowledgeMigrations,
     ]);
+
     const transactions = new PostgresTransactionRunner(pool);
     const repository = new EvidenceKnowledgeRepository();
     const scope = fixtureScope();
@@ -105,8 +110,24 @@ Deno.test({
       checksum: citation.source.checksum,
       classification: citation.source.classification,
     } as DocumentVersion]);
+
+    const authSnapshot: AuthoritySnapshot = {
+      snapshotId: "authsnap_test",
+      actorId: required("actor_alice", parseActorId),
+      actorKind: "human",
+      policyVersion: "v1",
+      scope,
+      capturedAt: now(),
+    };
+
     const service = new AtomicFactCommandService(
-      { authorize: () => Promise.resolve(true) },
+      {
+        authorize: () =>
+          Promise.resolve({
+            allowed: true as const,
+            authoritySnapshot: authSnapshot,
+          }),
+      },
       new PostgresFactTransitionStore({
         transactions,
         evidence: repository,
@@ -128,6 +149,7 @@ Deno.test({
     const first = await service.transition(command);
     const replay = await service.transition(command);
     assertEquals(first.fact.status, "approved");
+    assertEquals(first.fact.currentFactVersionId, "factver_command-v1");
     assertEquals(replay.replayed, true);
     const staleCommand = {
       ...command,
@@ -172,11 +194,13 @@ Deno.test({
       expectedAggregateVersion: aggregateVersion(3),
       targetStatus: "superseded",
       replacementFactVersionId: versionTwo,
+      rationale: "Replacing v1 with v2 for post-merge review correction",
       idempotencyKey: "supersede-command-v1",
       payloadDigest: "d".repeat(64),
     });
     assertEquals(approvedReplacement.fact.aggregateVersion, 3);
-    assertEquals(superseded.fact.status, "superseded");
+    assertEquals(superseded.fact.status, "approved");
+    assertEquals(superseded.fact.currentFactVersionId, "factver_command-v2");
     assertEquals(
       await transactions.run((transaction) =>
         repository.findFactVersion(
@@ -194,14 +218,16 @@ Deno.test({
         invalidation: string;
         outbox: string;
         commandHistory: string;
+        auditEvents: string;
       }
-    >(`SELECT (SELECT count(*)::text FROM evidence_knowledge.fact_transition_history) AS history, (SELECT count(*)::text FROM evidence_knowledge.fact_transition_provenance) AS provenance, (SELECT count(*)::text FROM evidence_knowledge.invalidations) AS invalidation, (SELECT count(*)::text FROM platform.outbox WHERE event_type='evidence.fact-status-transitioned') AS outbox, (SELECT count(*)::text FROM evidence_knowledge.command_idempotency_history) AS "commandHistory"`);
+    >(`SELECT (SELECT count(*)::text FROM evidence_knowledge.fact_transition_history) AS history, (SELECT count(*)::text FROM evidence_knowledge.fact_transition_provenance) AS provenance, (SELECT count(*)::text FROM evidence_knowledge.invalidations) AS invalidation, (SELECT count(*)::text FROM platform.outbox WHERE event_type='evidence.fact-status-transitioned') AS outbox, (SELECT count(*)::text FROM evidence_knowledge.command_idempotency_history) AS "commandHistory", (SELECT count(*)::text FROM audit_activity.audit_events WHERE aggregate_type='EvidenceFact') AS "auditEvents"`);
     assertEquals(counts.rows[0], {
       history: "3",
       provenance: "3",
       invalidation: "3",
       outbox: "3",
       commandHistory: "3",
+      auditEvents: "3",
     });
     await reset(pool);
     await pool.end();
@@ -210,12 +236,13 @@ Deno.test({
 
 async function reset(pool: pg.Pool): Promise<void> {
   await pool.query("DROP SCHEMA IF EXISTS evidence_knowledge CASCADE");
+  await pool.query("DROP SCHEMA IF EXISTS audit_activity CASCADE");
   await pool.query(
     "DELETE FROM platform.outbox WHERE event_type='evidence.fact-status-transitioned'",
   ).catch(() => {});
   await pool.query(
-    "DELETE FROM platform.migration_ledger WHERE context_owner=$1",
-    ["evidence_knowledge"],
+    "DELETE FROM platform.migration_ledger WHERE context_owner IN ($1, $2)",
+    ["evidence_knowledge", "audit_activity"],
   ).catch(() => {});
 }
 function fixtureScope() {

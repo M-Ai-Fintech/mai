@@ -67,6 +67,11 @@ export function rowToFact(row: Record<string, unknown>): Fact {
     scope: rowScope(row),
     category: factCategory(row, "category"),
     status: factStatus(row, "status"),
+    currentFactVersionId: optionalIdentifier(
+      row,
+      "currentFactVersionId",
+      parseFactVersionId,
+    ),
     aggregateVersion: positiveNumber(row, "aggregateVersion"),
     createdAt: date(row, "createdAt"),
   });

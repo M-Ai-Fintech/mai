@@ -11,12 +11,16 @@ import {
   createExactDocumentVersionReference,
 } from "../../src/evidence_knowledge/v1.ts";
 import {
+  parseActorId,
+  parseCorrelationId,
   parseDealId,
   parseTenantId,
   parseWorkspaceId,
+  type RequestContext,
 } from "../../src/platform/api/v1.ts";
 
 Deno.test("exact version verification accepts the matching immutable snapshot", async () => {
+  const context = fixtureContext();
   const scope = fixtureScope();
   const reference = createExactDocumentVersionReference({
     documentVersionId: required("docver_contract-v1", parseDocumentVersionId),
@@ -32,11 +36,12 @@ Deno.test("exact version verification accepts the matching immutable snapshot", 
     classification: reference.classification,
   } as DocumentVersion;
   const result = await new FakeExactDocumentVersionVerificationPort([version])
-    .verify(scope, reference);
+    .verify(context, scope, reference);
   assertEquals(result.version.documentVersionId, reference.documentVersionId);
 });
 
 Deno.test("missing, cross-scope, checksum, and classification sources are protected", async () => {
+  const context = fixtureContext();
   const scope = fixtureScope();
   const reference = createExactDocumentVersionReference({
     documentVersionId: required("docver_missing-v1", parseDocumentVersionId),
@@ -47,13 +52,14 @@ Deno.test("missing, cross-scope, checksum, and classification sources are protec
   });
   const port = new FakeExactDocumentVersionVerificationPort([]);
   await assertRejects(
-    () => port.verify(scope, reference),
+    () => port.verify(context, scope, reference),
     Error,
     "protected outcome",
   );
 });
 
 Deno.test("all exact-version mismatches use the same protected error shape", async () => {
+  const context = fixtureContext();
   const scope = fixtureScope();
   const otherScope = { ...scope, dealId: required("deal_other", parseDealId) };
   const matching = reference("docver_shape-v1", "a", "financial");
@@ -81,7 +87,7 @@ Deno.test("all exact-version mismatches use the same protected error shape", asy
   const messages: string[] = [];
   for (let index = 0; index < cases.length; index += 1) {
     const error = await assertRejects(
-      () => cases[index].verify(scope, references[index]),
+      () => cases[index].verify(context, scope, references[index]),
       Error,
     );
     messages.push(error.message);
@@ -98,6 +104,7 @@ Deno.test("all exact-version mismatches use the same protected error shape", asy
 });
 
 Deno.test("Documents adapter consumes the public exact-version read seam", async () => {
+  const context = fixtureContext();
   const scope = fixtureScope();
   const reference = createExactDocumentVersionReference({
     documentVersionId: required("docver_contract-v1", parseDocumentVersionId),
@@ -107,10 +114,10 @@ Deno.test("Documents adapter consumes the public exact-version read seam", async
     processingVersion: "extractor-v2",
   });
   const adapter = new DocumentsExactVersionVerificationAdapter({
-    findVersion: () => Promise.resolve(undefined),
+    findAccessibleVersion: () => Promise.resolve(undefined),
   });
   await assertRejects(
-    () => adapter.verify(scope, reference),
+    () => adapter.verify(context, scope, reference),
     Error,
     "protected outcome",
   );
@@ -144,9 +151,23 @@ Deno.test("citation persistence is not reached when exact verification rejects",
       },
     },
   );
-  await assertRejects(() => writer.insert(scope, citation), Error);
+  await assertRejects(
+    () => writer.insert(fixtureContext(), scope, citation),
+    Error,
+  );
   assertEquals(writes, 0);
 });
+
+function fixtureContext(): RequestContext {
+  return {
+    actorId: required("actor_alice", parseActorId),
+    tenantId: required("tenant_acme", parseTenantId),
+    workspaceId: required("workspace_dealroom", parseWorkspaceId),
+    dealId: required("deal_horizon", parseDealId),
+    correlationId: required("cor_test", parseCorrelationId),
+    origin: "http",
+  };
+}
 
 function fixtureScope() {
   return {

@@ -1,5 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
+  parseActorId,
   parseAggregateVersion,
   parseDealId,
   parseRequestContext,
@@ -16,6 +17,7 @@ import {
   parseFactId,
   parseFactVersionId,
 } from "../../src/evidence_knowledge/v1.ts";
+import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 
 Deno.test("fact command authorizes before the protected atomic store", async () => {
   const contextResult = parseRequestContext({
@@ -39,7 +41,7 @@ Deno.test("fact command authorizes before the protected atomic store", async () 
   };
   let loaded = false;
   const authorization: FactCommandAuthorizationPort = {
-    authorize: () => Promise.resolve(false),
+    authorize: () => Promise.resolve({ allowed: false }),
   };
   const store: FactTransitionStore = {
     transition: () => {
@@ -54,6 +56,48 @@ Deno.test("fact command authorizes before the protected atomic store", async () 
     "FORBIDDEN",
   );
   assertEquals(loaded, false);
+});
+
+Deno.test("fact command requires non-empty rationale for supersession", async () => {
+  const contextResult = parseRequestContext({
+    actorId: "actor_alice",
+    tenantId: "tenant_acme",
+    workspaceId: "workspace_dealroom",
+    dealId: "deal_horizon",
+    correlationId: "cor_fact",
+    origin: "http",
+  });
+  if (!contextResult.ok) throw new Error("Fixture context is invalid.");
+  const command = {
+    context: contextResult.value,
+    scope: fixtureScope(),
+    factId: required("fact_net-debt", parseFactId),
+    factVersionId: required("factver_net-debt-v1", parseFactVersionId),
+    expectedAggregateVersion: aggregateVersion(1),
+    targetStatus: "superseded" as const,
+    idempotencyKey: "supersede-net-debt",
+    payloadDigest: "a".repeat(64),
+    replacementFactVersionId: required(
+      "factver_net-debt-v2",
+      parseFactVersionId,
+    ),
+  };
+  const authorization: FactCommandAuthorizationPort = {
+    authorize: () =>
+      Promise.resolve({
+        allowed: true,
+        authoritySnapshot: fixtureAuthoritySnapshot(),
+      }),
+  };
+  const store: FactTransitionStore = {
+    transition: () => Promise.reject(new Error("store must not run")),
+  };
+  await assertRejects(
+    () =>
+      new AtomicFactCommandService(authorization, store).transition(command),
+    Error,
+    "MISSING_RATIONALE",
+  );
 });
 
 Deno.test("fact command rejects malformed idempotency evidence before persistence", async () => {
@@ -75,7 +119,11 @@ Deno.test("fact command rejects malformed idempotency evidence before persistenc
     payloadDigest: "not-a-digest",
   };
   const authorization: FactCommandAuthorizationPort = {
-    authorize: () => Promise.resolve(true),
+    authorize: () =>
+      Promise.resolve({
+        allowed: true,
+        authoritySnapshot: fixtureAuthoritySnapshot(),
+      }),
   };
   const store: FactTransitionStore = {
     transition: () => Promise.reject(new Error("store must not run")),
@@ -87,6 +135,17 @@ Deno.test("fact command rejects malformed idempotency evidence before persistenc
     "INVALID_PAYLOAD_DIGEST",
   );
 });
+
+function fixtureAuthoritySnapshot(): AuthoritySnapshot {
+  return {
+    snapshotId: "authsnap_test",
+    actorId: required("actor_alice", parseActorId),
+    actorKind: "human",
+    policyVersion: "v1",
+    scope: fixtureScope(),
+    capturedAt: new Date(),
+  };
+}
 
 function required<T>(
   value: string,

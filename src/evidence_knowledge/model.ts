@@ -63,6 +63,7 @@ export interface Fact {
   readonly scope: EvidenceScope;
   readonly category: FactCategory;
   readonly status: FactStatus;
+  readonly currentFactVersionId?: FactVersionId;
   readonly aggregateVersion: number;
   readonly createdAt: Date;
 }

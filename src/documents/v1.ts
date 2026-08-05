@@ -18,3 +18,4 @@ export * from "./retry.ts";
 export * from "./processing_worker.ts";
 export * from "./events.ts";
 export * from "./composition.ts";
+export * from "./authorized_version_read.ts";

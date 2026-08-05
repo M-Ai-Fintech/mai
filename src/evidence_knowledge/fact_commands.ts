@@ -2,6 +2,7 @@ import type { AggregateVersion, RequestContext } from "../platform/api/v1.ts";
 import type { FactId, FactVersionId, InvalidationId } from "./ids.ts";
 import type { EvidenceScope, Fact, FactStatus } from "./model.ts";
 import { assertFactStatusTransition } from "./fact.ts";
+import type { AuthoritySnapshot } from "../audit_activity/v1.ts";
 
 export interface TransitionFactStatusCommand {
   readonly context: RequestContext;
@@ -13,19 +14,31 @@ export interface TransitionFactStatusCommand {
   readonly idempotencyKey: string;
   readonly payloadDigest: string;
   readonly replacementFactVersionId?: FactVersionId;
+  readonly rationale?: string;
 }
+
+export type FactCommandAuthorizationResult =
+  | {
+    readonly allowed: true;
+    readonly authoritySnapshot: AuthoritySnapshot;
+    readonly policyDecisionId?: string;
+  }
+  | {
+    readonly allowed: false;
+  };
 
 export interface FactCommandAuthorizationPort {
   authorize(
     context: RequestContext,
     scope: EvidenceScope,
     factId: FactId,
-  ): Promise<boolean>;
+  ): Promise<FactCommandAuthorizationResult>;
 }
 
 export interface FactTransitionStore {
   transition(
     command: TransitionFactStatusCommand,
+    authSnapshot: AuthoritySnapshot,
   ): Promise<FactTransitionResult>;
 }
 
@@ -52,15 +65,23 @@ export class AtomicFactCommandService {
   async transition(
     command: TransitionFactStatusCommand,
   ): Promise<FactTransitionResult> {
-    const allowed = await this.authorization.authorize(
+    const authResult = await this.authorization.authorize(
       command.context,
       command.scope,
       command.factId,
     );
-    if (!allowed) throw new FactCommandConflict("FORBIDDEN", command.factId);
+    if (!authResult.allowed) {
+      throw new FactCommandConflict("FORBIDDEN", command.factId);
+    }
+    if (
+      command.targetStatus === "superseded" &&
+      (!command.rationale || !command.rationale.trim())
+    ) {
+      throw new FactCommandConflict("MISSING_RATIONALE", command.factId);
+    }
     assertDigest(command.payloadDigest);
     assertKey(command.idempotencyKey);
-    return await this.store.transition(command);
+    return await this.store.transition(command, authResult.authoritySnapshot);
   }
 }
 

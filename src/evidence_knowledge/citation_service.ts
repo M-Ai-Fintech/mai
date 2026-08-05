@@ -31,11 +31,15 @@ export class VerifiedCitationWriter {
     private readonly persistence: CitationPersistencePort,
   ) {}
 
-  async insert(scope: EvidenceScope, citation: Citation): Promise<void> {
+  async insert(
+    context: RequestContext,
+    scope: EvidenceScope,
+    citation: Citation,
+  ): Promise<void> {
     if (!sameScope(scope, citation.scope)) {
       throw new Error("Citation cannot be verified; protected outcome.");
     }
-    await this.verifier.verify(scope, citation.source);
+    await this.verifier.verify(context, scope, citation.source);
     await this.persistence.insertCitation(citation);
   }
 }
@@ -54,14 +58,14 @@ export class PostgresVerifiedEvidenceWriteService
     citation: Citation,
   ): Promise<void> {
     const scope = contextScope(context);
-    await authorize(this.authorization, context, scope);
     if (!sameScope(scope, citation.scope)) {
       throw new Error("Citation cannot be verified; protected outcome.");
     }
-    await this.verifier.verify(scope, citation.source);
-    await this.transactions.run((transaction) =>
-      this.repository.insertCitation(transaction, citation)
-    );
+    await this.transactions.run(async (transaction) => {
+      await authorize(this.authorization, context, scope);
+      await this.verifier.verify(context, scope, citation.source);
+      await this.repository.insertOrValidateCitation(transaction, citation);
+    });
   }
 
   async createEvidence(
@@ -69,17 +73,21 @@ export class PostgresVerifiedEvidenceWriteService
     evidence: EvidenceRecord,
   ): Promise<void> {
     const scope = contextScope(context);
-    await authorize(this.authorization, context, scope);
     if (
       !sameScope(scope, evidence.scope) ||
       !sameScope(scope, evidence.citation.scope)
     ) {
       throw new Error("Evidence cannot be verified; protected outcome.");
     }
-    await this.verifier.verify(scope, evidence.citation.source);
-    await this.transactions.run((transaction) =>
-      this.repository.insertEvidence(transaction, evidence)
-    );
+    await this.transactions.run(async (transaction) => {
+      await authorize(this.authorization, context, scope);
+      await this.verifier.verify(context, scope, evidence.citation.source);
+      await this.repository.insertOrValidateCitation(
+        transaction,
+        evidence.citation,
+      );
+      await this.repository.insertEvidence(transaction, evidence);
+    });
   }
 }
 

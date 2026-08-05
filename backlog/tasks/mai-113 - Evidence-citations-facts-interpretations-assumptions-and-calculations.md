@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 01:04'
+updated_date: '2026-08-05 02:04'
 labels:
   - backend
   - architecture
@@ -377,4 +377,6 @@ Final evidence correction pass (2026-08-04):
 - Prohibited paths: Untouched (0 files changed outside MAI-113 scope).
 - Replaced/superseded prior claims for head d672b15d023b7bca0681a53303666d9c631e84df and e40a17247aeb50325d7efef3ed79426f0f5b9d56.
 - MAI-113 status: MAI-113 remains In Progress pending human data-model, security, architecture, API-contract, and merge review and Wave D finalization.
+
+Post-merge review correction completed on master: 1) Added AuthorizedDocumentVersionReadPort in src/documents/authorized_version_read.ts and updated DocumentsExactVersionVerificationAdapter in src/evidence_knowledge/document_version_verification.ts to use public seam with 0 DocumentsRepository imports; 2) Refactored PostgresVerifiedEvidenceWriteService in src/evidence_knowledge/citation_service.ts to execute authorization, exact verification, citation insert/validation, and evidence insert within a single PostgreSQL transaction; 3) Created migration evidence_knowledge-0002 adding current_fact_version_id to evidence_knowledge.facts with scoped FK and backfill; updated Fact model to maintain approved status while active version is tracked in current_fact_version_id and append supersedes provenance; 4) Updated FactCommandAuthorizationPort for structured FactCommandAuthorizationResult with AuthoritySnapshot and rationale validation; added src/evidence_knowledge/fact_command_audit.ts and enforced strict single-clock capture (occurredAt = clock.now()); 5) Modularized fact_command_repository.ts (390 lines) so all 27 Evidence Knowledge files remain strictly under 440 lines; hardened tests/evidence_knowledge/fact_command_concurrency_postgres.spec.ts with onFactLockAcquired barrier and pg_locks lock proof. Focused unit tests: 12 passed; Documents tests: 29 passed; Audit Activity tests: 23 passed; Wave C PostgreSQL matrix: 7 passed; all Evidence Knowledge specs: 25 passed. Static checks deno fmt --check, deno lint, deno check, git diff --check passed with 0 errors. Task remains In Progress pending Wave D final human review.
 <!-- SECTION:NOTES:END -->
