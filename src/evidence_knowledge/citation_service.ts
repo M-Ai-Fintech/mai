@@ -44,6 +44,11 @@ export class VerifiedCitationWriter {
   }
 }
 
+export interface EvidenceWriteServiceHooks {
+  onBeforeInsertCitation?: () => Promise<void>;
+  onBeforeInsertEvidence?: () => Promise<void>;
+}
+
 export class PostgresVerifiedEvidenceWriteService
   implements VerifiedEvidenceWritePort {
   constructor(
@@ -51,6 +56,7 @@ export class PostgresVerifiedEvidenceWriteService
     private readonly repository: EvidenceKnowledgeRepository,
     private readonly verifier: ExactDocumentVersionVerificationPort,
     private readonly authorization: EvidenceWriteAuthorizationPort,
+    private readonly hooks?: EvidenceWriteServiceHooks,
   ) {}
 
   async createCitation(
@@ -64,6 +70,9 @@ export class PostgresVerifiedEvidenceWriteService
     await this.transactions.run(async (transaction) => {
       await authorize(this.authorization, context, scope);
       await this.verifier.verify(context, scope, citation.source);
+      if (this.hooks?.onBeforeInsertCitation) {
+        await this.hooks.onBeforeInsertCitation();
+      }
       await this.repository.insertOrValidateCitation(transaction, citation);
     });
   }
@@ -72,23 +81,37 @@ export class PostgresVerifiedEvidenceWriteService
     context: RequestContext,
     evidence: EvidenceRecord,
   ): Promise<void> {
-    const scope = contextScope(context);
-    if (
-      !sameScope(scope, evidence.scope) ||
-      !sameScope(scope, evidence.citation.scope)
-    ) {
-      throw new Error("Evidence cannot be verified; protected outcome.");
-    }
+    const scope = validateEvidenceScope(context, evidence);
     await this.transactions.run(async (transaction) => {
       await authorize(this.authorization, context, scope);
       await this.verifier.verify(context, scope, evidence.citation.source);
+      if (this.hooks?.onBeforeInsertCitation) {
+        await this.hooks.onBeforeInsertCitation();
+      }
       await this.repository.insertOrValidateCitation(
         transaction,
         evidence.citation,
       );
+      if (this.hooks?.onBeforeInsertEvidence) {
+        await this.hooks.onBeforeInsertEvidence();
+      }
       await this.repository.insertOrValidateEvidence(transaction, evidence);
     });
   }
+}
+
+function validateEvidenceScope(
+  context: RequestContext,
+  evidence: EvidenceRecord,
+): EvidenceScope {
+  const scope = contextScope(context);
+  if (
+    !sameScope(scope, evidence.scope) ||
+    !sameScope(scope, evidence.citation.scope)
+  ) {
+    throw new Error("Evidence cannot be verified; protected outcome.");
+  }
+  return scope;
 }
 
 async function authorize(

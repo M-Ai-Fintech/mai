@@ -195,7 +195,7 @@ Deno.test({
         (SELECT count(*)::text FROM evidence_knowledge.invalidations WHERE source_id=$1) AS invalidation,
         (SELECT count(*)::text FROM evidence_knowledge.command_idempotency WHERE target_id=$1) AS "commandIdempotency",
         (SELECT count(*)::text FROM evidence_knowledge.command_idempotency_history WHERE target_id=$1) AS "commandHistory",
-        (SELECT count(*)::text FROM platform.outbox WHERE (payload->'command'->>'idempotencyKey')='audit-fail-key') AS outbox,
+        (SELECT count(*)::text FROM platform.outbox WHERE aggregate_type='EvidenceFact' AND aggregate_id=$1) AS outbox,
         (SELECT count(*)::text FROM audit_activity.audit_events WHERE (payload->>'idempotencyKey')='audit-fail-key') AS "auditEvents"`,
       [factId],
     );

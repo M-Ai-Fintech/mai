@@ -1,6 +1,7 @@
 import type {
   BookValueInput,
   CalculationError,
+  CalculationOptions,
   CashFlow,
   DiscountedCashFlowInput,
   EbitdaMultipleInput,

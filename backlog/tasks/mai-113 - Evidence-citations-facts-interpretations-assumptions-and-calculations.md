@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 12:10'
+updated_date: '2026-08-05 14:21'
 labels:
   - backend
   - architecture
@@ -39,47 +39,34 @@ documentation:
     backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 -
     Proposed-ADR-Documents-VDR-and-Object-Storage.md
 modified_files:
-  - src/api/v1/evidence_knowledge.ts
-  - src/api/v1/evidence_knowledge_routes.ts
-  - src/evidence_knowledge/assumption.ts
-  - src/evidence_knowledge/calculation.ts
-  - src/evidence_knowledge/citation.ts
+  - src/documents/authorized_version_read.ts
+  - src/documents/v1.ts
   - src/evidence_knowledge/citation_service.ts
-  - src/evidence_knowledge/composition.ts
   - src/evidence_knowledge/document_version_verification.ts
-  - src/evidence_knowledge/events.ts
-  - src/evidence_knowledge/fact.ts
+  - src/evidence_knowledge/fact_command_audit.ts
+  - src/evidence_knowledge/fact_command_helpers.ts
   - src/evidence_knowledge/fact_command_repository.ts
   - src/evidence_knowledge/fact_commands.ts
-  - src/evidence_knowledge/fact_version_status.ts
-  - src/evidence_knowledge/freshness.ts
-  - src/evidence_knowledge/ids.ts
-  - src/evidence_knowledge/interpretation.ts
-  - src/evidence_knowledge/invalidation.ts
-  - src/evidence_knowledge/invalidation_repository.ts
-  - src/evidence_knowledge/migrations/evidence_knowledge_0001.ts
+  - src/evidence_knowledge/migrations/evidence_knowledge_0002.ts
+  - src/evidence_knowledge/migrations/evidence_knowledge_0003.ts
+  - src/evidence_knowledge/migrations/evidence_knowledge_0004.ts
   - src/evidence_knowledge/migrations/index.ts
   - src/evidence_knowledge/model.ts
-  - src/evidence_knowledge/provenance.ts
   - src/evidence_knowledge/repository.ts
   - src/evidence_knowledge/repository_rows.ts
   - src/evidence_knowledge/repository_sql.ts
-  - src/evidence_knowledge/v1.ts
-  - src/evidence_knowledge/vector_port.ts
-  - src/evidence_knowledge/vector_projection.ts
-  - tests/api/v1/evidence_knowledge.spec.ts
-  - tests/evidence_knowledge/calculation_provenance_postgres.spec.ts
+  - src/evidence_knowledge/repository_validation.ts
+  - tests/documents/authorized_version_read.spec.ts
   - tests/evidence_knowledge/composition_postgres.spec.ts
   - tests/evidence_knowledge/document_version_verification.spec.ts
+  - tests/evidence_knowledge/evidence_write_concurrency_postgres.spec.ts
+  - tests/evidence_knowledge/evidence_write_postgres.spec.ts
+  - tests/evidence_knowledge/fact_command_audit_postgres.spec.ts
+  - tests/evidence_knowledge/fact_command_concurrency_postgres.spec.ts
   - tests/evidence_knowledge/fact_command_postgres.spec.ts
+  - tests/evidence_knowledge/fact_command_rollback_postgres.spec.ts
   - tests/evidence_knowledge/fact_commands.spec.ts
-  - tests/evidence_knowledge/invalidation.spec.ts
-  - tests/evidence_knowledge/invalidation_lease_postgres.spec.ts
-  - tests/evidence_knowledge/lineage.spec.ts
   - tests/evidence_knowledge/migration.spec.ts
-  - tests/evidence_knowledge/model.spec.ts
-  - tests/evidence_knowledge/repository_postgres.spec.ts
-  - tests/evidence_knowledge/vector_isolation.spec.ts
 priority: high
 ordinal: 40000
 ---

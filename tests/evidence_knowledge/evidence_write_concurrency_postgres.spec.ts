@@ -79,17 +79,20 @@ Deno.test({
     const repository = new EvidenceKnowledgeRepository();
     const verifier = new TestVerifier();
     const auth = { authorize: () => Promise.resolve(true) };
+    const citationBarrier = createBarrier(2);
     const service1 = new PostgresVerifiedEvidenceWriteService(
       transactions1,
       repository,
       verifier,
       auth,
+      { onBeforeInsertCitation: () => citationBarrier.enter() },
     );
     const service2 = new PostgresVerifiedEvidenceWriteService(
       transactions2,
       repository,
       verifier,
       auth,
+      { onBeforeInsertCitation: () => citationBarrier.enter() },
     );
 
     const scope = fixtureScope();
@@ -97,10 +100,15 @@ Deno.test({
     const citation = fixtureCitation(scope, "citation_ident-conc");
     const evidence = fixtureEvidence(scope, citation, "evidence_ident-conc");
 
-    const results = await Promise.allSettled([
+    const writePromise = Promise.allSettled([
       service1.createEvidence(context, evidence),
       service2.createEvidence(context, evidence),
     ]);
+
+    await citationBarrier.awaitReached();
+    citationBarrier.release();
+
+    const results = await writePromise;
 
     assertEquals(results[0].status, "fulfilled");
     assertEquals(results[1].status, "fulfilled");
@@ -131,17 +139,20 @@ Deno.test({
     const repository = new EvidenceKnowledgeRepository();
     const verifier = new TestVerifier();
     const auth = { authorize: () => Promise.resolve(true) };
+    const citationBarrier = createBarrier(2);
     const service1 = new PostgresVerifiedEvidenceWriteService(
       transactions1,
       repository,
       verifier,
       auth,
+      { onBeforeInsertCitation: () => citationBarrier.enter() },
     );
     const service2 = new PostgresVerifiedEvidenceWriteService(
       transactions2,
       repository,
       verifier,
       auth,
+      { onBeforeInsertCitation: () => citationBarrier.enter() },
     );
 
     const scope = fixtureScope();
@@ -152,10 +163,15 @@ Deno.test({
       excerpt: "Conflicting excerpt during concurrent write",
     });
 
-    const results = await Promise.allSettled([
+    const writePromise = Promise.allSettled([
       service1.createCitation(context, citation1),
       service2.createCitation(context, citation2),
     ]);
+
+    await citationBarrier.awaitReached();
+    citationBarrier.release();
+
+    const results = await writePromise;
 
     const fulfilled = results.filter((r) => r.status === "fulfilled");
     const rejected = results.filter((r) => r.status === "rejected");
@@ -192,17 +208,20 @@ Deno.test({
     const repository = new EvidenceKnowledgeRepository();
     const verifier = new TestVerifier();
     const auth = { authorize: () => Promise.resolve(true) };
+    const evidenceBarrier = createBarrier(2);
     const service1 = new PostgresVerifiedEvidenceWriteService(
       transactions1,
       repository,
       verifier,
       auth,
+      { onBeforeInsertEvidence: () => evidenceBarrier.enter() },
     );
     const service2 = new PostgresVerifiedEvidenceWriteService(
       transactions2,
       repository,
       verifier,
       auth,
+      { onBeforeInsertEvidence: () => evidenceBarrier.enter() },
     );
 
     const scope = fixtureScope();
@@ -213,10 +232,15 @@ Deno.test({
     const evidence1 = fixtureEvidence(scope, citation1, "evidence_conf-conc");
     const evidence2 = fixtureEvidence(scope, citation2, "evidence_conf-conc");
 
-    const results = await Promise.allSettled([
+    const writePromise = Promise.allSettled([
       service1.createEvidence(context, evidence1),
       service2.createEvidence(context, evidence2),
     ]);
+
+    await evidenceBarrier.awaitReached();
+    evidenceBarrier.release();
+
+    const results = await writePromise;
 
     const fulfilled = results.filter((r) => r.status === "fulfilled");
     const rejected = results.filter((r) => r.status === "rejected");
@@ -368,4 +392,30 @@ function required<T>(
   const result = parser(value);
   if (result.ok) return result.value;
   throw new Error(`Fixture identifier "${value}" is invalid.`);
+}
+
+function createBarrier(count: number) {
+  let remaining = count;
+  let resolveReached: () => void;
+  const reached = new Promise<void>((res) => {
+    resolveReached = res;
+  });
+  let resolveProceed: () => void;
+  const proceed = new Promise<void>((res) => {
+    resolveProceed = res;
+  });
+
+  return {
+    async enter(): Promise<void> {
+      remaining--;
+      if (remaining === 0) resolveReached();
+      await proceed;
+    },
+    awaitReached(): Promise<void> {
+      return reached;
+    },
+    release(): void {
+      resolveProceed();
+    },
+  };
 }

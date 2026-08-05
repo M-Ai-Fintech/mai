@@ -49,13 +49,13 @@ import {
 } from "./repository_rows.ts";
 
 const CITATION_INSERT_SQL =
-  `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (citation_id) DO NOTHING`;
+  `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT DO NOTHING`;
 
 const CITATION_UPSERT_SQL =
   `${CITATION_INSERT_SQL} RETURNING citation_id AS "citationId"`;
 
 const EVIDENCE_INSERT_SQL =
-  `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (evidence_id) DO NOTHING`;
+  `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`;
 
 const EVIDENCE_UPSERT_SQL =
   `${EVIDENCE_INSERT_SQL} RETURNING evidence_id AS "evidenceId"`;

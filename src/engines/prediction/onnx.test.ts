@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertAlmostEquals, assertEquals, assertRejects } from "@std/assert";
 import { PredictionEngine } from "./index.ts";
 import {
   ArtifactMissingError,
