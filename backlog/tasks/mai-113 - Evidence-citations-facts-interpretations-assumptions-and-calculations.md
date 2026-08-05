@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 14:21'
+updated_date: '2026-08-05 14:22'
 labels:
   - backend
   - architecture
@@ -329,4 +329,38 @@ Post-merge evidence update:
 - Confirmation no new PR was created.
 
 MAI-113 remains In Progress pending final human data-model, security, architecture, API-contract, and Wave D completion review.
+
+Final reviewed implementation and verification SHA: d1b5c356d1b76a3bab4f71f76a32288ed9102d22
+Governance metadata commit follows this reviewed state and contains no application logic.
+
+Final bounded cleanup verification evidence for MAI-113:
+- Reviewed implementation and verification SHA: d1b5c356d1b76a3bab4f71f76a32288ed9102d22
+- Original merged baseline SHA: 679c8137b5117cf4b6ec49cb5d6345c19bc290fb
+- Starting HEAD for cleanup: e5ac927952d2623bd5c3e72b74845fa332bf3033
+- Restored Graphify files byte-identically from 679c8137b5117cf4b6ec49cb5d6345c19bc290fb:
+  * graphify-out/GRAPH_REPORT.md (blob 643098eb679a57899962f5407fe6460258f34383)
+  * graphify-out/graph.json (blob c287f22fd25e76d142989d726631e4d2edae3a21)
+- Reverted six unrelated final-commit files byte-identically to 0b3a229f14c7c5ac9064d827a0375627fecc52d9:
+  1. src/core/AGENTS.md
+  2. src/core/db/DealRepository.ts
+  3. src/core/db/deals/write_operations.ts
+  4. src/engines/prediction/onnx.test.ts
+  5. src/engines/valuation/validation.ts
+  6. tests/core/db/DealRepository.spec.ts
+- Corrected outbox rollback assertion selector in tests/evidence_knowledge/fact_command_rollback_postgres.spec.ts using aggregate_type='EvidenceFact' AND aggregate_id=$1.
+- Deterministic concurrency synchronization mechanism: Added optional onBeforeInsertCitation and onBeforeInsertEvidence test hooks to PostgresVerifiedEvidenceWriteService with async barrier synchronization in tests/evidence_knowledge/evidence_write_concurrency_postgres.spec.ts.
+- Deterministic concurrency test results:
+  * Concurrent identical replay: 2 concurrent createEvidence writers reach citation insert boundary, released, both succeed. Citation count = 1, Evidence count = 1.
+  * Concurrent conflicting Citation: 2 concurrent createCitation writers reach citation insert boundary, released. Exactly 1 succeeds, exactly 1 receives deterministic immutable replay conflict (payload changed; expected immutable replay). Citation count = 1.
+  * Concurrent conflicting Evidence: 2 concurrent createEvidence writers reach evidence insert boundary, released. Exactly 1 succeeds, exactly 1 receives deterministic immutable replay conflict (payload changed; expected immutable replay). Evidence count = 1.
+- Focused test counts: 52 passed, 0 failed across 15 focused evidence_knowledge specs.
+- Documents test counts: 29 passed, 0 failed across 9 specs.
+- Audit Activity test counts: 23 passed, 0 failed across 6 specs.
+- Wave C PostgreSQL matrix counts: 130 passed, 0 failed across 38 specs (Evidence Knowledge 49, Documents 29, Audit Activity 23, Notifications 29).
+- Complete backend counts (deno task test): 664 passed, 0 failed, 1 ignored (exit 0).
+- verify:fast result: 11 passed, 0 failed, 5 skipped, 2 unavailable (exit 0).
+- Canonical verification result (deno task verify): 17/17 categories passed (exit 0).
+- Files over 400 lines: src/evidence_knowledge/repository.ts (482), tests/evidence_knowledge/evidence_write_concurrency_postgres.spec.ts (421), tests/evidence_knowledge/fact_command_rollback_postgres.spec.ts (443). All files strictly under 500 lines.
+- Confirmation MAI-113 remains In Progress.
+- Confirmation no new PR was created.
 <!-- SECTION:NOTES:END -->
