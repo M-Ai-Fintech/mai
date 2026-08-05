@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 00:23'
+updated_date: '2026-08-05 01:04'
 labels:
   - backend
   - architecture
@@ -359,4 +359,22 @@ Correction evidence (2026-08-04): branch delivery/MAI-113-evidence-citations-fac
 Final-correction implementation in progress: added explicit expectedAggregateVersion comparison and guarded update, effective Fact Version status resolver with transition sequence, composed VerifiedEvidenceWritePort with authorization-before-verification and uniform protected outcomes, lease-based invalidation owner tokens/expiry/reclaim, and transaction-scoped calculation provenance validation for evidence/fact_version/interpretation/assumption inputs. Added PostgreSQL regressions for stale commands, complete Fact Version lifecycle, calculation rollback/input kinds, and stale invalidation owner fencing. Static checks pass for 41 scoped files; non-PostgreSQL focused run is 22 passed, 0 failed, 4 PostgreSQL tests ignored because the sandbox rejects the required elevated database execution. MAI-113 remains In Progress; no PR publication or completion claim until PostgreSQL, backend, verify:fast, and canonical gates rerun after synchronization.
 
 Final evidence (2026-08-04): continuation completed from head 67c0a56e9365551066d152da18fa8d345fb23b9e to final head d672b15d023b7bca0681a53303666d9c631e84df on branch delivery/MAI-113-evidence-citations-facts-interpretations-assumptions-and-calculations. Current master SHA: 84541e2f21fad89bf82807c86a6f72746efd9ce0. All 5 core invariants verified: 1) expectedAggregateVersion guarded UPDATE; 2) loadEffectiveFactVersionStatus single status resolver; 3) exact Document Version verification required for citation/evidence writes; 4) expiring lease owner tokens and fencing for invalidations; 5) calculation input resolution by kind/scope with atomic transaction rollback. Focused MAI-113 tests: 26 passed, 0 failed. Documents PostgreSQL tests: 6 passed. Wave C PostgreSQL tests: 36 passed. Complete backend test suite: 634 passed, 0 failed, 1 ignored (exit 0). verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable (exit 0). Canonical verification: 17/17 categories passed (exit 0). All 41 changed files under 500 lines (max repository.ts: 483, fact_command_repository.ts: 478). Prohibited files untouched. Task remains In Progress; PR #49 remains Draft/Open/Unmerged/Unapproved.
+
+Final evidence correction pass (2026-08-04):
+- Starting head: e40a1724451890e2c30c82d9fb44b2fb0f85908c
+- Current master SHA: 84541e2f21fad89bf82807c86a6f72746efd9ce0
+- Graphify output restored from origin/master via commit 9d87016; PR diff contains 0 graphify-out files.
+- Fact concurrency PostgreSQL regression added in commit 5bbe48c (tests/evidence_knowledge/fact_command_concurrency_postgres.spec.ts).
+- Concurrency result: 2 commands with same expected aggregate version (1) executed concurrently with row locking; 1 succeeded (fact status approved, aggregate version 2), 1 failed deterministically with VersionConflictError.
+- Losing transaction created 0 history, 0 provenance, 0 invalidation, 0 outbox event, and 0 idempotency rows (complete atomic rollback).
+- Focused MAI-113 tests: 27 passed, 0 failed across 14 spec files.
+- Documents PostgreSQL tests: 6 passed (25 passed across all 9 Documents specs).
+- Wave C PostgreSQL test matrix: 44 passed across 16 suites.
+- Complete backend: 635 passed, 0 failed, 1 ignored (exit 0).
+- verify:fast: 11 passed, 0 failed, 5 skipped, 2 unavailable (exit 0).
+- Canonical deno task verify: exit 0, 17/17 categories passed.
+- File-size evidence: All 42 changed files strictly under 500 lines (max repository.ts: 483, fact_command_repository.ts: 478, fact_command_concurrency_postgres.spec.ts: 302).
+- Prohibited paths: Untouched (0 files changed outside MAI-113 scope).
+- Replaced/superseded prior claims for head d672b15d023b7bca0681a53303666d9c631e84df and e40a17247aeb50325d7efef3ed79426f0f5b9d56.
+- MAI-113 status: MAI-113 remains In Progress pending human data-model, security, architecture, API-contract, and merge review and Wave D finalization.
 <!-- SECTION:NOTES:END -->
