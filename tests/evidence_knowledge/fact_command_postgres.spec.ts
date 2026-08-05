@@ -126,6 +126,7 @@ Deno.test({
           Promise.resolve({
             allowed: true as const,
             authoritySnapshot: authSnapshot,
+            policyDecisionId: "policy_dec_test",
           }),
       },
       new PostgresFactTransitionStore({
@@ -151,6 +152,7 @@ Deno.test({
     assertEquals(first.fact.status, "approved");
     assertEquals(first.fact.currentFactVersionId, "factver_command-v1");
     assertEquals(replay.replayed, true);
+
     const staleCommand = {
       ...command,
       idempotencyKey: "approve-stale",
@@ -161,6 +163,7 @@ Deno.test({
       Error,
       "VERSION_CONFLICT",
     );
+
     const versionTwo = required("factver_command-v2", parseFactVersionId);
     await transactions.run((transaction) =>
       repository.insertFactVersion(
@@ -182,6 +185,7 @@ Deno.test({
         }),
       )
     );
+
     const approvedReplacement = await service.transition({
       ...command,
       factVersionId: versionTwo,
@@ -189,6 +193,13 @@ Deno.test({
       idempotencyKey: "approve-command-v2",
       payloadDigest: "c".repeat(64),
     });
+    assertEquals(approvedReplacement.fact.status, "approved");
+    assertEquals(
+      approvedReplacement.fact.currentFactVersionId,
+      "factver_command-v1",
+    );
+    assertEquals(approvedReplacement.fact.aggregateVersion, 3);
+
     const superseded = await service.transition({
       ...command,
       expectedAggregateVersion: aggregateVersion(3),
@@ -198,9 +209,10 @@ Deno.test({
       idempotencyKey: "supersede-command-v1",
       payloadDigest: "d".repeat(64),
     });
-    assertEquals(approvedReplacement.fact.aggregateVersion, 3);
     assertEquals(superseded.fact.status, "approved");
     assertEquals(superseded.fact.currentFactVersionId, "factver_command-v2");
+    assertEquals(superseded.fact.aggregateVersion, 4);
+
     assertEquals(
       await transactions.run((transaction) =>
         repository.findFactVersion(
@@ -208,9 +220,10 @@ Deno.test({
           scope,
           required("factver_command-v1", parseFactVersionId),
         )
-      ).then((value) => value?.status),
+      ).then((v) => v?.status),
       "superseded",
     );
+
     const counts = await pool.query<
       {
         history: string;
@@ -229,6 +242,26 @@ Deno.test({
       commandHistory: "3",
       auditEvents: "3",
     });
+
+    const auditRows = await pool.query<{
+      actor_id: string;
+      payload: Record<string, unknown>;
+      occurred_at: Date;
+    }>(
+      `SELECT actor_id, payload, occurred_at FROM audit_activity.audit_events WHERE aggregate_type='EvidenceFact' ORDER BY position ASC`,
+    );
+    assertEquals(auditRows.rows.length, 3);
+    assertEquals(auditRows.rows[0].actor_id, "actor_alice");
+    assertEquals(auditRows.rows[0].payload.policyDecisionId, "policy_dec_test");
+    assertEquals(
+      auditRows.rows[2].payload.resultingCurrentFactVersionId,
+      "factver_command-v2",
+    );
+    assertEquals(
+      auditRows.rows[2].payload.rationale,
+      "Replacing v1 with v2 for post-merge review correction",
+    );
+
     await reset(pool);
     await pool.end();
   },

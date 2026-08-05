@@ -143,6 +143,9 @@ Deno.test({
 
     const verifier = new SimpleVerifier(docVersion);
 
+    let writer1Pid = 0;
+    let writer2Pid = 0;
+
     let writer1LockResolver: (() => void) | undefined;
     const writer1LockPromise = new Promise<void>((r) => {
       writer1LockResolver = r;
@@ -168,6 +171,14 @@ Deno.test({
       verifier,
       outbox: new OutboxRepository(),
       clock: { now: () => fixtureNow() },
+      onTransactionStarted: (_command, pid) => {
+        if (_command.idempotencyKey === "race-cmd-1") {
+          writer1Pid = pid;
+        } else if (_command.idempotencyKey === "race-cmd-2") {
+          writer2Pid = pid;
+        }
+        return Promise.resolve();
+      },
       onFactLockAcquired: async (command) => {
         if (command.idempotencyKey === "race-cmd-1") {
           writer1LockResolver?.();
@@ -207,19 +218,23 @@ Deno.test({
 
     let blocked = false;
     for (let i = 0; i < 50; i++) {
-      const locks = await pool.query(
-        "SELECT 1 FROM pg_locks WHERE granted = false",
-      );
-      if ((locks.rowCount ?? 0) > 0) {
-        blocked = true;
-        break;
+      if (writer2Pid > 0) {
+        const blockingResult = await pool.query<{ blockingPid: number }>(
+          'SELECT unnest(pg_blocking_pids($1)) AS "blockingPid"',
+          [writer2Pid],
+        );
+        const blockingPids = blockingResult.rows.map((r) => r.blockingPid);
+        if (blockingPids.includes(writer1Pid)) {
+          blocked = true;
+          break;
+        }
       }
       await new Promise((r) => setTimeout(r, 50));
     }
     assertEquals(
       blocked,
       true,
-      "Writer 2 must block on row lock before releasing Writer 1",
+      `Writer 2 (PID ${writer2Pid}) must block specifically on Writer 1 (PID ${writer1Pid}) before releasing Writer 1`,
     );
 
     releaseWriter1Resolver?.();
