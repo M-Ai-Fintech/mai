@@ -86,7 +86,7 @@ export class PostgresVerifiedEvidenceWriteService
         transaction,
         evidence.citation,
       );
-      await this.repository.insertEvidence(transaction, evidence);
+      await this.repository.insertOrValidateEvidence(transaction, evidence);
     });
   }
 }

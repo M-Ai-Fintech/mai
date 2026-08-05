@@ -129,6 +129,35 @@ export class EvidenceKnowledgeRepository {
       ],
     );
   }
+  async insertOrValidateEvidence(
+    transaction: TransactionHandle,
+    evidence: EvidenceRecord,
+  ): Promise<void> {
+    const existingResult = await transaction.query<{
+      tenantId: string;
+      workspaceId: string;
+      dealId: string;
+      citationId: string;
+    }>(
+      `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", citation_id AS "citationId" FROM evidence_knowledge.evidence_records WHERE evidence_id=$1`,
+      [evidence.evidenceId],
+    );
+    if (existingResult.rows[0] === undefined) {
+      await this.insertEvidence(transaction, evidence);
+      return;
+    }
+    const existing = existingResult.rows[0];
+    if (
+      existing.tenantId !== evidence.scope.tenantId ||
+      existing.workspaceId !== evidence.scope.workspaceId ||
+      existing.dealId !== evidence.scope.dealId ||
+      existing.citationId !== evidence.citation.citationId
+    ) {
+      throw new Error(
+        `Evidence "${evidence.evidenceId}" payload changed; expected immutable replay.`,
+      );
+    }
+  }
   async findEvidence(
     transaction: TransactionHandle,
     scope: EvidenceScope,
