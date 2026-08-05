@@ -22,11 +22,10 @@ import type {
 } from "../../src/evidence_knowledge/document_version_verification.ts";
 import { evidenceKnowledgeMigrations } from "../../src/evidence_knowledge/migrations/index.ts";
 import { auditActivityMigrations } from "../../src/audit_activity/migrations/index.ts";
-import type {
-  TransactionHandle,
-} from "../../src/platform/persistence/v1.ts";
+import type { TransactionHandle } from "../../src/platform/persistence/v1.ts";
 import type { Citation } from "../../src/evidence_knowledge/citation.ts";
 import { createCitation } from "../../src/evidence_knowledge/citation.ts";
+import { createFreshness } from "../../src/evidence_knowledge/freshness.ts";
 import {
   createEvidenceRecord,
   createExactDocumentVersionReference,
@@ -118,7 +117,7 @@ Deno.test({
 });
 
 Deno.test({
-  name: "PostgreSQL evidence write citation conflict rejection",
+  name: "PostgreSQL evidence write concurrent identical replay",
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
@@ -142,21 +141,91 @@ Deno.test({
 
     const scope = fixtureScope();
     const context = fixtureContext(scope);
-    const citation = fixtureCitation(scope, "citation_conflict1");
-    const evidence = fixtureEvidence(scope, citation, "evidence_conflict1");
+    const citation = fixtureCitation(scope, "citation_conc-id1");
+    const evidence = fixtureEvidence(scope, citation, "evidence_conc-id1");
+
+    await Promise.all([
+      service.createEvidence(context, evidence),
+      service.createEvidence(context, evidence),
+    ]);
+
+    const counts = await queryCounts(pool);
+    assertEquals(counts.citationCount, "1");
+    assertEquals(counts.evidenceCount, "1");
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name: "PostgreSQL evidence write citation conflict matrix",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+    await new PostgresMigrationRunner(pool).apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      ...evidenceKnowledgeMigrations,
+    ]);
+
+    const transactions = new PostgresTransactionRunner(pool);
+    const repository = new EvidenceKnowledgeRepository();
+    const verifier = new TestVerifier(true);
+    const auth = { authorize: () => Promise.resolve(true) };
+    const service = new PostgresVerifiedEvidenceWriteService(
+      transactions,
+      repository,
+      verifier,
+      auth,
+    );
+
+    const scope = fixtureScope();
+    const context = fixtureContext(scope);
+    const citation = fixtureCitation(scope, "citation_conflict-matrix1");
+    const evidence = fixtureEvidence(scope, citation, "evidence_cm1");
 
     await service.createEvidence(context, evidence);
 
-    const conflictingCitation = createCitation({
-      ...citation,
-      excerpt: "Changed excerpt content",
-    });
+    const conflicts = [
+      createCitation({ ...citation, excerpt: "Changed excerpt" }),
+      createCitation({
+        ...citation,
+        freshness: createFreshness({
+          state: "stale",
+          reason: "Stale document version",
+          checkedAt: citation.freshness.checkedAt,
+        }),
+      }),
+      createCitation({
+        ...citation,
+        freshness: createFreshness({
+          state: "current",
+          reason: "different reason",
+          checkedAt: citation.freshness.checkedAt,
+        }),
+      }),
+      createCitation({
+        ...citation,
+        freshness: createFreshness({
+          state: "current",
+          checkedAt: new Date("2026-08-05T00:00:00.000Z"),
+        }),
+      }),
+      createCitation({
+        ...citation,
+        createdAt: new Date("2026-08-05T00:00:00.000Z"),
+      }),
+    ];
 
-    await assertRejects(
-      () => service.createCitation(context, conflictingCitation),
-      Error,
-      "payload changed; expected immutable replay",
-    );
+    for (const conflictingCitation of conflicts) {
+      await assertRejects(
+        () => service.createCitation(context, conflictingCitation),
+        Error,
+        "payload changed; expected immutable replay",
+      );
+    }
 
     const counts = await queryCounts(pool);
     assertEquals(counts.citationCount, "1");
@@ -238,7 +307,10 @@ Deno.test({
     const failingRepository = {
       ...repository,
       insertOrValidateCitation: (t: unknown, c: unknown) =>
-        repository.insertOrValidateCitation(t as TransactionHandle, c as Citation),
+        repository.insertOrValidateCitation(
+          t as TransactionHandle,
+          c as Citation,
+        ),
       insertOrValidateEvidence: () =>
         Promise.reject(new Error("Simulated database failure")),
     } as unknown as EvidenceKnowledgeRepository;

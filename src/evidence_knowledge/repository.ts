@@ -52,7 +52,7 @@ export class EvidenceKnowledgeRepository {
     citation: Citation,
   ): Promise<void> {
     await transaction.query(
-      `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (citation_id) DO NOTHING`,
       [
         citation.citationId,
         ...scopeParameters(citation.scope),
@@ -95,7 +95,12 @@ export class EvidenceKnowledgeRepository {
       existing.source.processingVersion !== citation.source.processingVersion ||
       JSON.stringify(existing.source.location) !==
         JSON.stringify(citation.source.location) ||
-      existing.excerpt !== citation.excerpt
+      existing.excerpt !== citation.excerpt ||
+      existing.freshness.state !== citation.freshness.state ||
+      existing.freshness.reason !== citation.freshness.reason ||
+      existing.freshness.checkedAt.getTime() !==
+        citation.freshness.checkedAt.getTime() ||
+      existing.createdAt.getTime() !== citation.createdAt.getTime()
     ) {
       throw new Error(
         `Citation "${citation.citationId}" payload changed; expected immutable replay.`,
@@ -120,7 +125,7 @@ export class EvidenceKnowledgeRepository {
     evidence: EvidenceRecord,
   ): Promise<void> {
     await transaction.query(
-      `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+      `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (evidence_id) DO NOTHING`,
       [
         evidence.evidenceId,
         ...scopeParameters(evidence.scope),
@@ -138,8 +143,9 @@ export class EvidenceKnowledgeRepository {
       workspaceId: string;
       dealId: string;
       citationId: string;
+      createdAt: Date;
     }>(
-      `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", citation_id AS "citationId" FROM evidence_knowledge.evidence_records WHERE evidence_id=$1`,
+      `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", citation_id AS "citationId", created_at AS "createdAt" FROM evidence_knowledge.evidence_records WHERE evidence_id=$1`,
       [evidence.evidenceId],
     );
     if (existingResult.rows[0] === undefined) {
@@ -151,7 +157,8 @@ export class EvidenceKnowledgeRepository {
       existing.tenantId !== evidence.scope.tenantId ||
       existing.workspaceId !== evidence.scope.workspaceId ||
       existing.dealId !== evidence.scope.dealId ||
-      existing.citationId !== evidence.citation.citationId
+      existing.citationId !== evidence.citation.citationId ||
+      new Date(existing.createdAt).getTime() !== evidence.createdAt.getTime()
     ) {
       throw new Error(
         `Evidence "${evidence.evidenceId}" payload changed; expected immutable replay.`,
