@@ -153,6 +153,70 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "evidence_knowledge-0003 migration repairs incorrect superseded pointer to effective approved version",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      evidenceKnowledgeMigration,
+      evidenceKnowledgeMigration0002,
+    ]);
+
+    const tenant = "t_mig_rep";
+    const workspace = "w_mig_rep";
+    const deal = "d_mig_rep";
+    const factId = "fact_mig_rep";
+    const v1Id = "v1_mig_rep";
+    const v2Id = "v2_mig_rep";
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, aggregate_version, created_at, current_fact_version_id)
+       VALUES ($1, $2, $3, $4, 'financial', 'approved', 3, $5, NULL)`,
+      [factId, tenant, workspace, deal, now],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_versions (fact_version_id, fact_id, tenant_id, workspace_id, deal_id, statement, category, status, version_number, citation_ids, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'statement 1', 'financial', 'proposed', 1, '[]', $6),
+              ($7, $2, $3, $4, $5, 'statement 2', 'financial', 'proposed', 2, '[]', $6)`,
+      [v1Id, factId, tenant, workspace, deal, now, v2Id],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+       VALUES ('h1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmd1', $7),
+              ('h2', $1, $2, $3, $4, $6, 'proposed', 'approved', 'cmd2', $7),
+              ('h3', $1, $2, $3, $4, $5, 'approved', 'superseded', 'cmd3', $7)`,
+      [tenant, workspace, deal, factId, v1Id, v2Id, now],
+    );
+
+    // Set incorrect current_fact_version_id pointing to superseded v1
+    await pool.query(
+      `UPDATE evidence_knowledge.facts SET current_fact_version_id=$2 WHERE fact_id=$1`,
+      [factId, v1Id],
+    );
+
+    await runner.apply([evidenceKnowledgeMigration0003]);
+
+    const factRes = await pool.query<{ current_fact_version_id: string }>(
+      `SELECT current_fact_version_id FROM evidence_knowledge.facts WHERE fact_id=$1`,
+      [factId],
+    );
+    assertEquals(factRes.rows[0].current_fact_version_id, v2Id);
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
   name: "evidence_knowledge-0003 migration rejects ambiguous state",
   ignore: databaseUrl === undefined,
   async fn() {
@@ -238,6 +302,100 @@ Deno.test({
       Error,
       "no effective approved version",
     );
+
+    await resetSchema(pool);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
+    "evidence_knowledge-0003 constraint trigger rejects invalid pointers and permits valid pointers",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await resetSchema(pool);
+
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      ...auditActivityMigrations,
+      ...evidenceKnowledgeMigrations,
+    ]);
+
+    const tenant = "t_trig";
+    const workspace = "w_trig";
+    const deal = "d_trig";
+    const factId = "fact_trig";
+    const fact2Id = "fact_trig2";
+    const v1Id = "v1_trig";
+    const v2Id = "v2_trig";
+    const now = new Date().toISOString();
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, aggregate_version, created_at, current_fact_version_id)
+       VALUES ($1, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL),
+              ($6, $2, $3, $4, 'financial', 'proposed', 1, $5, NULL)`,
+      [factId, tenant, workspace, deal, now, fact2Id],
+    );
+
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_versions (fact_version_id, fact_id, tenant_id, workspace_id, deal_id, statement, category, status, version_number, citation_ids, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'statement 1', 'financial', 'proposed', 1, '[]', $6),
+              ($7, $8, $3, $4, $5, 'statement 2', 'financial', 'proposed', 1, '[]', $6)`,
+      [v1Id, factId, tenant, workspace, deal, now, v2Id, fact2Id],
+    );
+
+    // 1. Reject approved fact with null pointer (check constraint)
+    await assertRejects(
+      () =>
+        pool.query(
+          `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=NULL WHERE fact_id=$1`,
+          [factId],
+        ),
+      Error,
+      "check_facts_approved_has_current_version",
+    );
+
+    // 2. Reject approved fact pointing to version owned by another fact (foreign key constraint)
+    await assertRejects(
+      () =>
+        pool.query(
+          `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+          [factId, v2Id],
+        ),
+      Error,
+      "fk_facts_current_fact_version",
+    );
+
+    // 3. Reject approved fact pointing to version that is not effectively approved (trigger check)
+    await assertRejects(
+      () =>
+        pool.query(
+          `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+          [factId, v1Id],
+        ),
+      Error,
+      "not effectively approved",
+    );
+
+    // 4. Transition v1 to approved in history, then set current pointer -> succeeds!
+    await pool.query(
+      `INSERT INTO evidence_knowledge.fact_transition_history (history_id, tenant_id, workspace_id, deal_id, fact_id, fact_version_id, from_status, to_status, command_key, created_at)
+       VALUES ('h_trig1', $1, $2, $3, $4, $5, 'proposed', 'approved', 'cmd_trig1', $6)`,
+      [tenant, workspace, deal, factId, v1Id, now],
+    );
+
+    await pool.query(
+      `UPDATE evidence_knowledge.facts SET status='approved', current_fact_version_id=$2 WHERE fact_id=$1`,
+      [factId, v1Id],
+    );
+
+    const factRes = await pool.query<{ current_fact_version_id: string }>(
+      `SELECT current_fact_version_id FROM evidence_knowledge.facts WHERE fact_id=$1`,
+      [factId],
+    );
+    assertEquals(factRes.rows[0].current_fact_version_id, v1Id);
 
     await resetSchema(pool);
     await pool.end();
