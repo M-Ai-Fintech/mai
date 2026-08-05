@@ -78,18 +78,24 @@ export class AtomicFactCommandService {
     if (!authResult.allowed) {
       throw new FactCommandConflict("FORBIDDEN", command.factId);
     }
+    const normalizedRationale = command.rationale?.trim();
     if (command.targetStatus === "superseded") {
-      const trimmed = command.rationale?.trim() ?? "";
-      if (trimmed.length === 0) {
+      if (
+        normalizedRationale === undefined || normalizedRationale.length === 0
+      ) {
         throw new FactCommandConflict("MISSING_RATIONALE", command.factId);
       }
-      if (trimmed.length > 1024) {
+      if (normalizedRationale.length > 1024) {
         throw new FactCommandConflict("INVALID_RATIONALE", command.factId);
       }
     }
     assertDigest(command.payloadDigest);
     assertKey(command.idempotencyKey);
-    return await this.store.transition(command, authResult);
+    const normalizedCommand: TransitionFactStatusCommand =
+      normalizedRationale !== command.rationale
+        ? { ...command, rationale: normalizedRationale }
+        : command;
+    return await this.store.transition(normalizedCommand, authResult);
   }
 }
 

@@ -12,6 +12,7 @@ import {
   type FactCommandAuthorizationPort,
   type FactTransitionResult,
   type FactTransitionStore,
+  type TransitionFactStatusCommand,
 } from "../../src/evidence_knowledge/fact_commands.ts";
 import {
   parseFactId,
@@ -97,6 +98,114 @@ Deno.test("fact command requires non-empty rationale for supersession", async ()
       new AtomicFactCommandService(authorization, store).transition(command),
     Error,
     "MISSING_RATIONALE",
+  );
+});
+
+Deno.test("fact command normalizes surrounding rationale whitespace before persistence", async () => {
+  const contextResult = parseRequestContext({
+    actorId: "actor_alice",
+    tenantId: "tenant_acme",
+    workspaceId: "workspace_dealroom",
+    dealId: "deal_horizon",
+    correlationId: "cor_fact",
+    origin: "http",
+  });
+  if (!contextResult.ok) throw new Error("Fixture context is invalid.");
+  let passedCommand: TransitionFactStatusCommand | undefined;
+  const authorization: FactCommandAuthorizationPort = {
+    authorize: () =>
+      Promise.resolve({
+        allowed: true,
+        authoritySnapshot: fixtureAuthoritySnapshot(),
+      }),
+  };
+  const store: FactTransitionStore = {
+    transition: (cmd) => {
+      passedCommand = cmd;
+      return Promise.resolve({} as FactTransitionResult);
+    },
+  };
+  const service = new AtomicFactCommandService(authorization, store);
+
+  await service.transition({
+    context: contextResult.value,
+    scope: fixtureScope(),
+    factId: required("fact_net-debt", parseFactId),
+    factVersionId: required("factver_net-debt-v1", parseFactVersionId),
+    expectedAggregateVersion: aggregateVersion(1),
+    targetStatus: "superseded" as const,
+    idempotencyKey: "supersede-net-debt-norm",
+    payloadDigest: "a".repeat(64),
+    replacementFactVersionId: required(
+      "factver_net-debt-v2",
+      parseFactVersionId,
+    ),
+    rationale: "   \n\t Superseding with updated audited figure \t  \n ",
+  });
+
+  assertEquals(
+    passedCommand?.rationale,
+    "Superseding with updated audited figure",
+  );
+});
+
+Deno.test("fact command rejects whitespace-only rationale and rationale over 1024 characters", async () => {
+  const contextResult = parseRequestContext({
+    actorId: "actor_alice",
+    tenantId: "tenant_acme",
+    workspaceId: "workspace_dealroom",
+    dealId: "deal_horizon",
+    correlationId: "cor_fact",
+    origin: "http",
+  });
+  if (!contextResult.ok) throw new Error("Fixture context is invalid.");
+  const authorization: FactCommandAuthorizationPort = {
+    authorize: () =>
+      Promise.resolve({
+        allowed: true,
+        authoritySnapshot: fixtureAuthoritySnapshot(),
+      }),
+  };
+  const store: FactTransitionStore = {
+    transition: () => Promise.reject(new Error("store must not run")),
+  };
+  const service = new AtomicFactCommandService(authorization, store);
+
+  // Whitespace only
+  await assertRejects(
+    () =>
+      service.transition({
+        context: contextResult.value,
+        scope: fixtureScope(),
+        factId: required("fact_net-debt", parseFactId),
+        factVersionId: required("factver_net-debt-v1", parseFactVersionId),
+        expectedAggregateVersion: aggregateVersion(1),
+        targetStatus: "superseded" as const,
+        idempotencyKey: "supersede-ws",
+        payloadDigest: "a".repeat(64),
+        rationale: "     \n\t   ",
+      }),
+    Error,
+    "MISSING_RATIONALE",
+  );
+
+  // Over 1024 characters
+  const longRationale = "a".repeat(1025);
+  await assertRejects(
+    () =>
+      service.transition({
+        context: contextResult.value,
+        scope: fixtureScope(),
+        factId: required("fact_net-debt", parseFactId),
+        factVersionId: required("factver_net-debt-v1", parseFactVersionId),
+        expectedAggregateVersion: aggregateVersion(1),
+        targetStatus: "superseded" as const,
+        idempotencyKey: "supersede-long",
+        payloadDigest: "a".repeat(64),
+        rationale: longRationale,
+      }),
+    Error,
+    "INVALID_RATIONALE",
   );
 });
 

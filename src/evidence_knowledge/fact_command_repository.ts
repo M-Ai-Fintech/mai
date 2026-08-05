@@ -48,6 +48,7 @@ export interface FactCommandRepositoryDependencies {
     command: TransitionFactStatusCommand,
     pid: number,
   ) => Promise<void>;
+  readonly appendAudit?: typeof appendFactTransitionAudit;
 }
 
 export class PostgresFactTransitionStore implements FactTransitionStore {
@@ -186,7 +187,9 @@ export class PostgresFactTransitionStore implements FactTransitionStore {
       occurredAt,
     );
 
-    await appendFactTransitionAudit(
+    const appendAudit = this.dependencies.appendAudit ??
+      appendFactTransitionAudit;
+    await appendAudit(
       transaction,
       command,
       auth,
