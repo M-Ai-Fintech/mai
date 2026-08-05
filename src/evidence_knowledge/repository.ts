@@ -29,6 +29,8 @@ import {
   assertLineageNodeExists,
   inputId,
   validateCalculationInputs,
+  validateCitationReplay,
+  validateEvidenceReplay,
 } from "./repository_validation.ts";
 import {
   calculationSelectColumns,
@@ -46,67 +48,47 @@ import {
   rowToFactVersion,
 } from "./repository_rows.ts";
 
+const CITATION_INSERT_SQL =
+  `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (citation_id) DO NOTHING`;
+
+const CITATION_UPSERT_SQL =
+  `${CITATION_INSERT_SQL} RETURNING citation_id AS "citationId"`;
+
+const EVIDENCE_INSERT_SQL =
+  `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (evidence_id) DO NOTHING`;
+
+const EVIDENCE_UPSERT_SQL =
+  `${EVIDENCE_INSERT_SQL} RETURNING evidence_id AS "evidenceId"`;
+
 export class EvidenceKnowledgeRepository {
   async insertCitation(
     transaction: TransactionHandle,
     citation: Citation,
   ): Promise<void> {
-    await transaction.query(
-      `INSERT INTO evidence_knowledge.citations (citation_id, tenant_id, workspace_id, deal_id, document_version_id, checksum_algorithm, checksum_value, location, classification, processing_version, excerpt, freshness_state, freshness_reason, freshness_checked_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (citation_id) DO NOTHING`,
-      [
-        citation.citationId,
-        ...scopeParameters(citation.scope),
-        citation.source.documentVersionId,
-        citation.source.checksum.algorithm,
-        citation.source.checksum.value,
-        JSON.stringify(citation.source.location),
-        citation.source.classification,
-        citation.source.processingVersion,
-        citation.excerpt,
-        citation.freshness.state,
-        citation.freshness.reason ?? null,
-        citation.freshness.checkedAt,
-        citation.createdAt,
-      ],
-    );
+    await transaction.query(CITATION_INSERT_SQL, citationParams(citation));
   }
+
   async insertOrValidateCitation(
     transaction: TransactionHandle,
     citation: Citation,
   ): Promise<void> {
-    const existingResult = await transaction.query(
+    const res = await transaction.query(
+      CITATION_UPSERT_SQL,
+      citationParams(citation),
+    );
+    if (res.rows.length === 1) return;
+    const existing = await transaction.query(
       `${citationSelectColumns()} WHERE citation_id=$1`,
       [citation.citationId],
     );
-    if (existingResult.rows[0] === undefined) {
-      await this.insertCitation(transaction, citation);
-      return;
-    }
-    const existing = rowToCitation(existingResult.rows[0]);
-    if (
-      existing.scope.tenantId !== citation.scope.tenantId ||
-      existing.scope.workspaceId !== citation.scope.workspaceId ||
-      existing.scope.dealId !== citation.scope.dealId ||
-      existing.source.documentVersionId !== citation.source.documentVersionId ||
-      existing.source.checksum.algorithm !==
-        citation.source.checksum.algorithm ||
-      existing.source.checksum.value !== citation.source.checksum.value ||
-      existing.source.classification !== citation.source.classification ||
-      existing.source.processingVersion !== citation.source.processingVersion ||
-      JSON.stringify(existing.source.location) !==
-        JSON.stringify(citation.source.location) ||
-      existing.excerpt !== citation.excerpt ||
-      existing.freshness.state !== citation.freshness.state ||
-      existing.freshness.reason !== citation.freshness.reason ||
-      existing.freshness.checkedAt.getTime() !==
-        citation.freshness.checkedAt.getTime() ||
-      existing.createdAt.getTime() !== citation.createdAt.getTime()
-    ) {
+    if (existing.rows[0] === undefined) {
       throw new Error(
         `Citation "${citation.citationId}" payload changed; expected immutable replay.`,
       );
     }
+    validateCitationReplay(rowToCitation(existing.rows[0]), citation);
   }
+
   async findCitation(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -120,25 +102,24 @@ export class EvidenceKnowledgeRepository {
       ? undefined
       : rowToCitation(result.rows[0]);
   }
+
   async insertEvidence(
     transaction: TransactionHandle,
     evidence: EvidenceRecord,
   ): Promise<void> {
-    await transaction.query(
-      `INSERT INTO evidence_knowledge.evidence_records (evidence_id, tenant_id, workspace_id, deal_id, citation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (evidence_id) DO NOTHING`,
-      [
-        evidence.evidenceId,
-        ...scopeParameters(evidence.scope),
-        evidence.citation.citationId,
-        evidence.createdAt,
-      ],
-    );
+    await transaction.query(EVIDENCE_INSERT_SQL, evidenceParams(evidence));
   }
+
   async insertOrValidateEvidence(
     transaction: TransactionHandle,
     evidence: EvidenceRecord,
   ): Promise<void> {
-    const existingResult = await transaction.query<{
+    const res = await transaction.query(
+      EVIDENCE_UPSERT_SQL,
+      evidenceParams(evidence),
+    );
+    if (res.rows.length === 1) return;
+    const existing = await transaction.query<{
       tenantId: string;
       workspaceId: string;
       dealId: string;
@@ -148,23 +129,14 @@ export class EvidenceKnowledgeRepository {
       `SELECT tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", citation_id AS "citationId", created_at AS "createdAt" FROM evidence_knowledge.evidence_records WHERE evidence_id=$1`,
       [evidence.evidenceId],
     );
-    if (existingResult.rows[0] === undefined) {
-      await this.insertEvidence(transaction, evidence);
-      return;
-    }
-    const existing = existingResult.rows[0];
-    if (
-      existing.tenantId !== evidence.scope.tenantId ||
-      existing.workspaceId !== evidence.scope.workspaceId ||
-      existing.dealId !== evidence.scope.dealId ||
-      existing.citationId !== evidence.citation.citationId ||
-      new Date(existing.createdAt).getTime() !== evidence.createdAt.getTime()
-    ) {
+    if (existing.rows[0] === undefined) {
       throw new Error(
         `Evidence "${evidence.evidenceId}" payload changed; expected immutable replay.`,
       );
     }
+    validateEvidenceReplay(existing.rows[0], evidence);
   }
+
   async findEvidence(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -178,6 +150,7 @@ export class EvidenceKnowledgeRepository {
       ? undefined
       : rowToEvidence(result.rows[0]);
   }
+
   async insertFact(transaction: TransactionHandle, fact: Fact): Promise<void> {
     await transaction.query(
       `INSERT INTO evidence_knowledge.facts (fact_id, tenant_id, workspace_id, deal_id, category, status, current_fact_version_id, aggregate_version, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
@@ -192,16 +165,15 @@ export class EvidenceKnowledgeRepository {
       ],
     );
   }
+
   async insertFactVersion(
     transaction: TransactionHandle,
     version: FactVersion,
   ): Promise<void> {
     if (version.supersedesFactVersionId !== undefined) {
-      const prior = await transaction.query<{
-        factId: string;
-        versionNumber: string;
-        status: string;
-      }>(
+      const prior = await transaction.query<
+        { factId: string; versionNumber: string; status: string }
+      >(
         `SELECT fact_id AS "factId", version_number AS "versionNumber", status FROM evidence_knowledge.fact_versions WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND fact_version_id=$4`,
         [...scopeParameters(version.scope), version.supersedesFactVersionId],
       );
@@ -254,6 +226,7 @@ export class EvidenceKnowledgeRepository {
       );
     }
   }
+
   async findFact(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -265,6 +238,7 @@ export class EvidenceKnowledgeRepository {
     );
     return result.rows[0] === undefined ? undefined : rowToFact(result.rows[0]);
   }
+
   async findFactVersion(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -284,6 +258,7 @@ export class EvidenceKnowledgeRepository {
     );
     return Object.freeze({ ...version, status });
   }
+
   async transitionFactStatus(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -319,6 +294,7 @@ export class EvidenceKnowledgeRepository {
     }
     return rowToFact(updated.rows[0]);
   }
+
   async insertCalculation(
     transaction: TransactionHandle,
     calculation: Calculation,
@@ -462,6 +438,7 @@ export class EvidenceKnowledgeRepository {
       ],
     );
   }
+
   async findCalculation(
     transaction: TransactionHandle,
     scope: EvidenceScope,
@@ -475,4 +452,31 @@ export class EvidenceKnowledgeRepository {
       ? undefined
       : rowToCalculation(result.rows[0]);
   }
+}
+
+function citationParams(citation: Citation): unknown[] {
+  return [
+    citation.citationId,
+    ...scopeParameters(citation.scope),
+    citation.source.documentVersionId,
+    citation.source.checksum.algorithm,
+    citation.source.checksum.value,
+    JSON.stringify(citation.source.location),
+    citation.source.classification,
+    citation.source.processingVersion,
+    citation.excerpt,
+    citation.freshness.state,
+    citation.freshness.reason ?? null,
+    citation.freshness.checkedAt,
+    citation.createdAt,
+  ];
+}
+
+function evidenceParams(evidence: EvidenceRecord): unknown[] {
+  return [
+    evidence.evidenceId,
+    ...scopeParameters(evidence.scope),
+    evidence.citation.citationId,
+    evidence.createdAt,
+  ];
 }

@@ -14,11 +14,13 @@ Deno.test("Evidence Knowledge composition exposes only its owned migration strea
     "evidence_knowledge",
     "evidence_knowledge",
     "evidence_knowledge",
+    "evidence_knowledge",
   ]);
   assertEquals(composition.migrations.map(({ id }) => id), [
     "evidence_knowledge-0001",
     "evidence_knowledge-0002",
     "evidence_knowledge-0003",
+    "evidence_knowledge-0004",
   ]);
   await composition.close();
 });

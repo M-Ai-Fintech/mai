@@ -1,7 +1,9 @@
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
+import type { Citation } from "./citation.ts";
 import type {
   Calculation,
   CalculationInputReference,
+  EvidenceRecord,
   EvidenceScope,
 } from "./model.ts";
 import type { ProvenanceLink } from "./provenance.ts";
@@ -53,6 +55,57 @@ export function inputId(input: CalculationInputReference): string {
   if (input.kind === "fact_version") return input.factVersionId;
   if (input.kind === "interpretation") return input.interpretationId;
   return input.assumptionId;
+}
+
+export function validateCitationReplay(
+  existing: Citation,
+  citation: Citation,
+): void {
+  if (
+    existing.scope.tenantId !== citation.scope.tenantId ||
+    existing.scope.workspaceId !== citation.scope.workspaceId ||
+    existing.scope.dealId !== citation.scope.dealId ||
+    existing.source.documentVersionId !== citation.source.documentVersionId ||
+    existing.source.checksum.algorithm !== citation.source.checksum.algorithm ||
+    existing.source.checksum.value !== citation.source.checksum.value ||
+    existing.source.classification !== citation.source.classification ||
+    existing.source.processingVersion !== citation.source.processingVersion ||
+    JSON.stringify(existing.source.location) !==
+      JSON.stringify(citation.source.location) ||
+    existing.excerpt !== citation.excerpt ||
+    existing.freshness.state !== citation.freshness.state ||
+    existing.freshness.reason !== citation.freshness.reason ||
+    existing.freshness.checkedAt.getTime() !==
+      citation.freshness.checkedAt.getTime() ||
+    existing.createdAt.getTime() !== citation.createdAt.getTime()
+  ) {
+    throw new Error(
+      `Citation "${citation.citationId}" payload changed; expected immutable replay.`,
+    );
+  }
+}
+
+export function validateEvidenceReplay(
+  existing: {
+    tenantId: string;
+    workspaceId: string;
+    dealId: string;
+    citationId: string;
+    createdAt: Date;
+  },
+  evidence: EvidenceRecord,
+): void {
+  if (
+    existing.tenantId !== evidence.scope.tenantId ||
+    existing.workspaceId !== evidence.scope.workspaceId ||
+    existing.dealId !== evidence.scope.dealId ||
+    existing.citationId !== evidence.citation.citationId ||
+    new Date(existing.createdAt).getTime() !== evidence.createdAt.getTime()
+  ) {
+    throw new Error(
+      `Evidence "${evidence.evidenceId}" payload changed; expected immutable replay.`,
+    );
+  }
 }
 
 function calculationInputTarget(
