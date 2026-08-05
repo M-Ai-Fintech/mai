@@ -27,6 +27,11 @@ export type FactCommandAuthorizationResult =
     readonly allowed: false;
   };
 
+export type AllowedFactCommandAuthorization = Extract<
+  FactCommandAuthorizationResult,
+  { allowed: true }
+>;
+
 export interface FactCommandAuthorizationPort {
   authorize(
     context: RequestContext,
@@ -38,7 +43,7 @@ export interface FactCommandAuthorizationPort {
 export interface FactTransitionStore {
   transition(
     command: TransitionFactStatusCommand,
-    authSnapshot: AuthoritySnapshot,
+    auth: AllowedFactCommandAuthorization,
   ): Promise<FactTransitionResult>;
 }
 
@@ -73,15 +78,18 @@ export class AtomicFactCommandService {
     if (!authResult.allowed) {
       throw new FactCommandConflict("FORBIDDEN", command.factId);
     }
-    if (
-      command.targetStatus === "superseded" &&
-      (!command.rationale || !command.rationale.trim())
-    ) {
-      throw new FactCommandConflict("MISSING_RATIONALE", command.factId);
+    if (command.targetStatus === "superseded") {
+      const trimmed = command.rationale?.trim() ?? "";
+      if (trimmed.length === 0) {
+        throw new FactCommandConflict("MISSING_RATIONALE", command.factId);
+      }
+      if (trimmed.length > 1024) {
+        throw new FactCommandConflict("INVALID_RATIONALE", command.factId);
+      }
     }
     assertDigest(command.payloadDigest);
     assertKey(command.idempotencyKey);
-    return await this.store.transition(command, authResult.authoritySnapshot);
+    return await this.store.transition(command, authResult);
   }
 }
 

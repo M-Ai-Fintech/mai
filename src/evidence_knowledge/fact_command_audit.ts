@@ -1,12 +1,14 @@
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
-import type { TransitionFactStatusCommand } from "./fact_commands.ts";
+import type {
+  AllowedFactCommandAuthorization,
+  TransitionFactStatusCommand,
+} from "./fact_commands.ts";
 import type { Fact, FactVersion } from "./model.ts";
 import {
   auditEventDigest,
   type AuditEventDraft,
   type AuditEventId,
-  type AuthoritySnapshot,
   PostgresAuditEventRepository,
 } from "../audit_activity/v1.ts";
 import type {
@@ -20,7 +22,7 @@ import type {
 export async function appendFactTransitionAudit(
   transaction: TransactionHandle,
   command: TransitionFactStatusCommand,
-  authSnapshot: AuthoritySnapshot,
+  auth: AllowedFactCommandAuthorization,
   factBefore: Fact,
   factAfter: Fact,
   version: FactVersion,
@@ -31,6 +33,7 @@ export async function appendFactTransitionAudit(
   const eventId = `evidence_audit-${
     crypto.randomUUID().replaceAll("-", "")
   }` as AuditEventId;
+  const authSnapshot = auth.authoritySnapshot;
   const draft: AuditEventDraft = {
     eventId,
     tenantId: command.scope.tenantId as TenantId,
@@ -67,6 +70,7 @@ export async function appendFactTransitionAudit(
       replacementFactVersionId: replacement?.factVersionId ?? null,
       commandType: "fact-status",
       idempotencyKey: command.idempotencyKey,
+      policyDecisionId: auth.policyDecisionId ?? null,
       beforeAggregateVersion: factBefore.aggregateVersion,
       afterAggregateVersion: factAfter.aggregateVersion,
       beforeFactStatus: factBefore.status,
@@ -82,6 +86,7 @@ export async function appendFactTransitionAudit(
       replacementFactVersionId: "internal",
       commandType: "internal",
       idempotencyKey: "internal",
+      policyDecisionId: "internal",
       beforeAggregateVersion: "internal",
       afterAggregateVersion: "internal",
       beforeFactStatus: "internal",
