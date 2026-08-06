@@ -4,6 +4,12 @@ export const membershipEnforcementSql = `
   DROP TRIGGER IF EXISTS tasks_membership_authority
     ON work_management.tasks_current;
   DROP FUNCTION IF EXISTS work_management.enforce_membership_authority();
+  DROP FUNCTION IF EXISTS work_management.membership_is_inconsistent();
+  DROP FUNCTION IF EXISTS work_management.lock_membership_authority(TEXT,TEXT,TEXT,TEXT);
+  DROP FUNCTION IF EXISTS work_management.validate_workstream_membership(TEXT,TEXT,TEXT,TEXT);
+  DROP FUNCTION IF EXISTS work_management.validate_task_membership(TEXT,TEXT,TEXT,TEXT,TEXT);
+  DROP FUNCTION IF EXISTS work_management.enforce_workstream_membership_authority();
+  DROP FUNCTION IF EXISTS work_management.enforce_task_membership_authority();
 
   CREATE FUNCTION work_management.lock_membership_authority(
     requested_tenant TEXT, requested_workspace TEXT, requested_deal TEXT,
@@ -24,6 +30,9 @@ export const membershipEnforcementSql = `
     missing_task_id TEXT;
     extra_task_id TEXT;
   BEGIN
+    -- Every current-row writer shares the rollout lock and the migration
+    -- takes the conflicting exclusive lock before its scan
+    PERFORM work_management.lock_membership_rollout_shared();
     PERFORM work_management.lock_membership_authority(requested_tenant,
       requested_workspace, requested_deal, requested_workstream);
     SELECT document INTO stored_document
@@ -45,6 +54,13 @@ export const membershipEnforcementSql = `
     IF jsonb_typeof(stored_document->'taskIds') IS DISTINCT FROM 'array' THEN
       RAISE EXCEPTION 'workstream % taskIds is %, expected an array',
         requested_workstream, stored_document->'taskIds';
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM jsonb_array_elements_text(stored_document->'taskIds') AS item
+      WHERE length(item) > 64 OR item !~ '^task_[a-z0-9]+(?:-[a-z0-9]+)*$'
+    ) THEN
+      RAISE EXCEPTION 'workstream % taskIds contains a malformed Task ID, expected canonical task_<slug> syntax',
+        requested_workstream;
     END IF;
     IF stored_document->>'state' = 'completed' AND EXISTS (
       SELECT 1 FROM work_management.tasks_current
@@ -96,6 +112,12 @@ export const membershipEnforcementSql = `
     stored_workstream TEXT;
     owner_document JSONB;
   BEGIN
+    PERFORM work_management.lock_membership_rollout_shared();
+    IF length(requested_task) > 64
+      OR requested_task !~ '^task_[a-z0-9]+(?:-[a-z0-9]+)*$' THEN
+      RAISE EXCEPTION 'Task % is malformed, expected canonical task_<slug> syntax',
+        requested_task;
+    END IF;
     PERFORM work_management.lock_membership_authority(requested_tenant,
       requested_workspace, requested_deal, requested_workstream);
     SELECT document, workstream_id INTO stored_document, stored_workstream

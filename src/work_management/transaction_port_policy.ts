@@ -10,8 +10,6 @@ export type WorkManagementPort =
 export type CommandExecutionPhase =
   | "replay_authorization"
   | "claim_transaction"
-  | "external_prepare"
-  | "prepared_facts_transaction"
   | "finalize_transaction";
 
 export type PortControl = "uncontrolled_external" | "transaction_local";
@@ -25,26 +23,26 @@ export interface WorkManagementPortPolicy {
 /**
  * Classifies every MAI-114 command port by where it may execute.
  *
- * @example assertWorkManagementPortPhase("target", "external_prepare")
+ * @example assertWorkManagementPortPhase("target", "finalize_transaction")
  */
 export const WORK_MANAGEMENT_PORT_POLICY: Readonly<
   Record<WorkManagementPort, WorkManagementPortPolicy>
 > = Object.freeze({
   authorization: localPolicy(
     "Evaluate through the MAI-106 transaction-local authorization adapter while the command transaction is open.",
-    ["replay_authorization", "external_prepare", "finalize_transaction"],
+    ["replay_authorization", "finalize_transaction"],
   ),
   target: localPolicy(
     "Resolve target identity and version through the MAI-106 transaction-local adapter.",
-    ["external_prepare", "finalize_transaction"],
+    ["finalize_transaction"],
   ),
   evidence: localPolicy(
     "Validate immutable evidence references through the MAI-106 transaction-local adapter.",
-    ["external_prepare", "finalize_transaction"],
+    ["finalize_transaction"],
   ),
   authority: localPolicy(
     "Resolve the named human authority snapshot through the MAI-106 transaction-local adapter.",
-    ["external_prepare", "finalize_transaction"],
+    ["finalize_transaction"],
   ),
   audit: localPolicy(
     "Append immutable audit evidence using the active PostgreSQL transaction handle.",
@@ -87,19 +85,26 @@ export class TransactionPortPolicyError extends Error {
 /** Rejects a production adapter that could perform uncontrolled I/O in a command transaction. */
 export function assertTransactionSafeAdapter(
   port: WorkManagementPort,
-  adapter: {
+  _adapter: {
     readonly transactionSafe?: true;
     readonly transactionMode?: "mai106_local";
   },
 ): void {
-  if (
-    adapter.transactionSafe === true &&
-    adapter.transactionMode === "mai106_local"
-  ) return;
   throw new TransactionPortPolicyError(
     port,
     "finalize_transaction",
     WORK_MANAGEMENT_PORT_POLICY[port],
+  );
+}
+
+export function assertTransactionSafeEffects(
+  _audit: object,
+  _outbox: object,
+): void {
+  throw new TransactionPortPolicyError(
+    "audit",
+    "finalize_transaction",
+    WORK_MANAGEMENT_PORT_POLICY.audit,
   );
 }
 

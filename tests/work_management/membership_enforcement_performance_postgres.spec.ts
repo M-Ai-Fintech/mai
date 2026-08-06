@@ -6,6 +6,7 @@ import {
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
   createMai106Pool,
+  ensureMai114Roles,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
 
@@ -16,6 +17,7 @@ Deno.test({
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
+    await ensureMai114Roles(pool);
     const suffix = crypto.randomUUID().replaceAll("-", "");
     const tenant = `tenant_perf_${suffix}`;
     try {
@@ -48,6 +50,17 @@ Deno.test({
         [tenant, "workspace_perf", "deal_perf", `ws_perf_${suffix}_37`],
       );
       assertStringIncludes(ownerPlan, "workstreams_current_pkey");
+      const commandGatePlan = await explain(
+        pool,
+        `
+        SELECT mode, unresolved_blocking_count
+        FROM work_management.membership_reconciliation_activation
+        WHERE activation_id = TRUE
+      `,
+        [],
+      );
+      assert(!commandGatePlan.includes("membership_reconciliation_findings"));
+      assert(!commandGatePlan.includes('"Node Type": "Seq Scan"'));
       const startedAt = performance.now();
       const result = await pool.query(
         "SELECT work_management.scan_membership_authority($1,$2) AS count",
@@ -76,12 +89,18 @@ async function resetPerformanceContext(pool: import("pg").Pool): Promise<void> {
       work_management.membership_reconciliation_resolutions,
       work_management.membership_reconciliation_findings,
       work_management.membership_reconciliation_scans,
+      work_management.membership_reconciliation_activation,
       work_management.membership_rollout_events,
       platform.idempotency_records,
       platform.outbox,
       platform.inbox
     RESTART IDENTITY CASCADE
   `);
+  await pool.query(
+    `INSERT INTO work_management.membership_reconciliation_activation
+      (activation_id, mode, unresolved_blocking_count, recorded_at)
+      VALUES (TRUE, 'read_only', 0, now())`,
+  );
 }
 
 async function seedRepresentativeData(

@@ -12,6 +12,7 @@ import {
 } from "../../../src/work_management/ids.ts";
 import { WorkManagementV1Application } from "../../../src/api/v1/work_management.ts";
 import { handleWorkManagementV1Route } from "../../../src/api/v1/work_management_routes.ts";
+import { WorkManagementContextError } from "../../../src/api/v1/work_management_contracts.ts";
 import type { RequestContext } from "../../../src/platform/api/v1.ts";
 
 const context: RequestContext = {
@@ -188,4 +189,25 @@ Deno.test("Work Management rejects weak ETags and requires owner If-Match for Ta
   );
   assertEquals(task?.status, 422);
   assertStringIncludes(await task!.text(), "If-Match");
+});
+
+Deno.test("context failures validate correlation headers and use a safe fallback", async () => {
+  const response = await handleWorkManagementV1Route(
+    new Request("http://localhost/api/v1/work-management/workstreams", {
+      headers: { "X-Correlation-Id": "spoofed correlation" },
+    }),
+    {
+      context: {
+        contextFor: () => {
+          throw new WorkManagementContextError(
+            "UNAUTHENTICATED",
+            "missing actor",
+          );
+        },
+      },
+      application: {} as WorkManagementV1Application,
+    },
+  );
+  assertEquals(response?.status, 401);
+  assertEquals(response?.headers.get("X-Correlation-Id"), "cor_route");
 });

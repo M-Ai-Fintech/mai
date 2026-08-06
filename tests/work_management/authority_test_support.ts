@@ -2,6 +2,7 @@ import { createApprovalPackage } from "../../src/work_management/approval_reques
 import {
   actor,
   aggregateVersion,
+  approvalDecisionId,
   approvalPackageId,
   approvalRequestId,
   deal,
@@ -99,13 +100,11 @@ export function authorityDispatch(
   packageValue: ApprovalPackage,
 ): TargetCommandDispatch {
   return {
-    dispatchId: "dispatch_authority-proof",
+    dispatchId: "work_target_command_authority-proof",
     ...authorityScope,
     approvalRequestId: approvalRequestId("approval_authority-proof"),
     approvalRequestVersion: aggregateVersion(4),
-    decisionId: "approval_decision_authority-proof" as TargetCommandDispatch[
-      "decisionId"
-    ],
+    decisionId: approvalDecisionId("decision_authority-proof"),
     outcome: "approved",
     targetAggregateType: packageValue.target.aggregateType,
     targetAggregateId: packageValue.target.aggregateId,
@@ -119,7 +118,8 @@ export function authorityDispatch(
     correlationId:
       "cor_authority-proof" as TargetCommandDispatch["correlationId"],
     causationId: "work_event_authority-proof",
-    idempotencyIdentity: "idem_authority-proof",
+    idempotencyIdentity:
+      "tenant_authority-proof|workspace_authority-proof|deal_authority-proof|actor_authority-approver|approve_approval_request|approval_authority-proof|idem_authority-proof",
     recordedAt: "2026-08-06T12:00:00.000Z",
   };
 }

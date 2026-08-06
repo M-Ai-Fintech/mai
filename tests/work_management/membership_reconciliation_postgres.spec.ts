@@ -6,6 +6,7 @@ import {
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
   createMai106Pool,
+  ensureMai114Roles,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
 
@@ -17,6 +18,7 @@ Deno.test({
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
+    await ensureMai114Roles(pool);
     const suffix = crypto.randomUUID().replaceAll("-", "");
     const scope = [
       `tenant_recon_${suffix}`,
@@ -28,6 +30,28 @@ Deno.test({
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
       await resetIsolatedContext(pool);
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_bindings
+          (session_role, actor_id) VALUES (current_user, 'operator:test')
+          ON CONFLICT (session_role, actor_id) DO NOTHING`,
+      );
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_binding_events
+          (event_id, session_role, actor_id, action, recorded_at)
+         VALUES ('binding_event_test_operator', current_user, 'operator:test', 'bind', now())
+         ON CONFLICT (event_id) DO NOTHING`,
+      );
+      await assertRejects(
+        () =>
+          pool.query(
+            `INSERT INTO work_management.membership_operator_actor_binding_events
+             (event_id, session_role, actor_id, action, recorded_at)
+             VALUES ($1, current_user, 'unregistered:actor', 'bind', now())`,
+            [`binding_event_orphan_${suffix}`],
+          ),
+        Error,
+        "membership_operator_actor_binding_events_binding_fk",
+      );
       const baselineScan = `scan_baseline_${suffix}`;
       await pool.query(
         "SELECT work_management.scan_membership_authority($1,$2)",
@@ -71,8 +95,90 @@ Deno.test({
       );
       assertEquals(await findingCount(pool, cleanScan), 0);
       await resolveFindings(pool, firstScan, cleanScan, suffix);
+      await pool.query(
+        "SELECT set_config('work_management.operator_actor','operator:test',false)",
+      );
+      await assertRejects(
+        () =>
+          pool.query(
+            "SELECT work_management.set_membership_rollout_mode($1,'commands',NULL,$2,$3)",
+            [
+              `activate_null_${suffix}`,
+              "operator:test",
+              new Date().toISOString(),
+            ],
+          ),
+        Error,
+        "requires a completed reconciliation scan",
+      );
       await activate(pool, `activate_clean_${suffix}`, cleanScan);
       assertEquals(await commandsAvailable(pool), true);
+      const runtime = await pool.connect();
+      try {
+        await runtime.query("SET ROLE mai_work_management_runtime");
+        const commandGate = await runtime.query(
+          "SELECT work_management.membership_commands_available() AS available",
+        );
+        assertEquals(commandGate.rows[0].available, true);
+        await assertRejects(
+          () =>
+            runtime.query(
+              "UPDATE work_management.membership_reconciliation_activation SET mode='commands' WHERE activation_id=TRUE",
+            ),
+          Error,
+        );
+      } finally {
+        await runtime.query("RESET ROLE");
+        runtime.release();
+      }
+      const operator = await pool.connect();
+      try {
+        await operator.query("SET ROLE mai_work_management_operator");
+        await operator.query(
+          "SELECT set_config('work_management.migration_bootstrap','true',false)",
+        );
+        await operator.query(
+          "SELECT set_config('work_management.operator_actor','operator:spoof',false)",
+        );
+        await assertRejects(
+          () =>
+            operator.query(
+              "SELECT work_management.set_membership_rollout_mode($1,'read_only',$2,$3,$4)",
+              [
+                `operator_spoof_${suffix}`,
+                cleanScan,
+                "operator:spoof",
+                new Date().toISOString(),
+              ],
+            ),
+          Error,
+          "not bound",
+        );
+      } finally {
+        await operator.query("RESET ROLE");
+        operator.release();
+      }
+      const privilege = await pool.query(
+        `SELECT has_function_privilege(
+          'public',
+          'work_management.set_membership_rollout_mode(text,text,text,text,timestamptz)',
+          'EXECUTE'::text) AS allowed`,
+      );
+      assertEquals(privilege.rows[0].allowed, false);
+      await assertRejects(
+        () =>
+          pool.query(
+            "SELECT work_management.set_membership_rollout_mode($1,'read_only',$2,$3,$4)",
+            [
+              `spoofed_actor_${suffix}`,
+              cleanScan,
+              "operator:spoof",
+              new Date().toISOString(),
+            ],
+          ),
+        Error,
+        "not bound",
+      );
       const replay = await pool.query(
         "SELECT work_management.scan_membership_authority($1,$2) AS count",
         [cleanScan, cleanAt],
@@ -103,6 +209,75 @@ Deno.test({
         new Date(Date.now() + 10_000).toISOString(),
       );
       assertEquals(await commandsAvailable(pool), false);
+      const revokedAt = new Date(Date.parse(cleanAt) + 20_000).toISOString();
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_binding_events
+          (event_id, session_role, actor_id, action, recorded_at)
+         VALUES ($1, current_user, 'operator:test', 'revoke', $2)`,
+        [`binding_event_revoke_${suffix}`, revokedAt],
+      );
+      await assertRejects(
+        () =>
+          setReadOnly(pool, `revoked_binding_${suffix}`, cleanScan, revokedAt),
+        Error,
+        "not bound",
+      );
+      const reboundAt = new Date(Date.parse(revokedAt) + 1_000).toISOString();
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_binding_events
+          (event_id, session_role, actor_id, action, recorded_at)
+         VALUES ($1, current_user, 'operator:test', 'bind', $2)`,
+        [`binding_event_rebind_${suffix}`, reboundAt],
+      );
+      await setReadOnly(
+        pool,
+        `rebound_binding_${suffix}`,
+        cleanScan,
+        reboundAt,
+      );
+      const bindingEvents = await pool.query<{ readonly action: string }>(
+        `SELECT action FROM work_management.membership_operator_actor_binding_events
+         WHERE session_role=current_user AND actor_id='operator:test'
+         ORDER BY recorded_at, event_id`,
+      );
+      assertEquals(bindingEvents.rows.slice(-2).map((row) => row.action), [
+        "revoke",
+        "bind",
+      ]);
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_binding_events
+          (event_id, session_role, actor_id, action, recorded_at)
+         VALUES ($1, current_user, 'operator:test', 'bind', $2)`,
+        [
+          `binding_event_future_bind_${suffix}`,
+          new Date(Date.parse(reboundAt) + 86_400_000).toISOString(),
+        ],
+      );
+      await pool.query(
+        `INSERT INTO work_management.membership_operator_actor_binding_events
+          (event_id, session_role, actor_id, action, recorded_at)
+         VALUES ($1, current_user, 'operator:test', 'revoke', $2)`,
+        [
+          `binding_event_clock_safe_revoke_${suffix}`,
+          new Date(Date.parse(reboundAt) + 2_000).toISOString(),
+        ],
+      );
+      await assertRejects(
+        () => setReadOnly(pool, `clock_safe_revoke_${suffix}`, cleanScan),
+        Error,
+        "not bound",
+      );
+      const readOnlyRuntime = await pool.connect();
+      try {
+        await readOnlyRuntime.query("SET ROLE mai_work_management_runtime");
+        const commandGate = await readOnlyRuntime.query(
+          "SELECT work_management.membership_commands_available() AS available",
+        );
+        assertEquals(commandGate.rows[0].available, false);
+      } finally {
+        await readOnlyRuntime.query("RESET ROLE");
+        readOnlyRuntime.release();
+      }
       const direct = await pool.connect();
       try {
         await direct.query(
@@ -125,6 +300,21 @@ Deno.test({
         );
         direct.release();
       }
+      const firstFinding = await pool.query<{ readonly finding_id: string }>(
+        "SELECT finding_id FROM work_management.membership_reconciliation_findings WHERE scan_id=$1 LIMIT 1",
+        [firstScan],
+      );
+      await assertRejects(
+        () =>
+          pool.query(
+            `INSERT INTO work_management.membership_reconciliation_resolutions
+             (resolution_id, finding_id, action, status, resolution, resolved_by, recorded_at)
+             VALUES ($1,$2,'resolve','resolved','{"action":"retained","retained":true,"evidence":{}}','operator:direct',now())`,
+            [`direct_resolution_${suffix}`, firstFinding.rows[0].finding_id],
+          ),
+        Error,
+        "governed scan or resolution function",
+      );
       assertEquals(await findingCount(pool, firstScan), 10);
       const terminalWorkstream = `ws_terminal_${suffix}`;
       const terminalTask = `task_terminal-${suffix}`;
@@ -262,12 +452,20 @@ async function resetIsolatedContext(pool: import("pg").Pool): Promise<void> {
       work_management.membership_reconciliation_resolutions,
       work_management.membership_reconciliation_findings,
       work_management.membership_reconciliation_scans,
+      work_management.membership_reconciliation_activation,
       work_management.membership_rollout_events,
+      work_management.membership_operator_actor_bindings,
+      work_management.membership_operator_actor_binding_events,
       platform.idempotency_records,
       platform.outbox,
       platform.inbox
     RESTART IDENTITY CASCADE
   `);
+  await pool.query(
+    `INSERT INTO work_management.membership_reconciliation_activation
+      (activation_id, mode, unresolved_blocking_count, recorded_at)
+      VALUES (TRUE, 'read_only', 0, now())`,
+  );
 }
 
 const expectedClasses = [
@@ -473,6 +671,9 @@ async function resolveFindings(
   cleanScan: string,
   suffix: string,
 ): Promise<void> {
+  await pool.query(
+    "SELECT set_config('work_management.operator_actor','operator:test',false)",
+  );
   const findings = await pool.query(
     "SELECT finding_id, finding_class FROM work_management.membership_reconciliation_findings WHERE scan_id=$1",
     [scanId],
@@ -506,10 +707,15 @@ function activate(
   eventId: string,
   scanId: string,
 ): Promise<unknown> {
-  return pool.query(
-    "SELECT work_management.set_membership_rollout_mode($1,'commands',$2,$3,$4)",
-    [eventId, scanId, "operator:test", new Date().toISOString()],
-  );
+  return (async () => {
+    await pool.query(
+      "SELECT set_config('work_management.operator_actor','operator:test',false)",
+    );
+    return await pool.query(
+      "SELECT work_management.set_membership_rollout_mode($1,'commands',$2,$3,$4)",
+      [eventId, scanId, "operator:test", new Date().toISOString()],
+    );
+  })();
 }
 
 function setReadOnly(
@@ -518,15 +724,15 @@ function setReadOnly(
   scanId: string,
   recordedAt = new Date().toISOString(),
 ): Promise<unknown> {
-  return pool.query(
-    "SELECT work_management.set_membership_rollout_mode($1,'read_only',$2,$3,$4)",
-    [
-      eventId,
-      scanId,
-      "operator:test",
-      recordedAt,
-    ],
-  );
+  return (async () => {
+    await pool.query(
+      "SELECT set_config('work_management.operator_actor','operator:test',false)",
+    );
+    return await pool.query(
+      "SELECT work_management.set_membership_rollout_mode($1,'read_only',$2,$3,$4)",
+      [eventId, scanId, "operator:test", recordedAt],
+    );
+  })();
 }
 
 async function commandsAvailable(pool: import("pg").Pool): Promise<boolean> {

@@ -2,6 +2,7 @@ import {
   API_ERROR_CATALOG,
   createApiError,
   createSuccessEnvelope,
+  parseCorrelationHeader,
   parseIdempotencyHeader,
   parseIfMatch,
 } from "../../platform/api/v1.ts";
@@ -26,7 +27,10 @@ import type {
   WorkManagementCommandMetadata,
   WorkManagementContextPort,
 } from "./work_management_contracts.ts";
-import { WorkManagementValidationError } from "./work_management_contracts.ts";
+import {
+  WorkManagementContextError,
+  WorkManagementValidationError,
+} from "./work_management_contracts.ts";
 import {
   parseApprovalCreation,
   requiredObject,
@@ -49,8 +53,13 @@ export async function handleWorkManagementV1Route(
   if (route === undefined) {
     return request.url.includes(BASE_PATH) ? methodNotAllowed() : null;
   }
+  let authenticated: WorkManagementAuthenticatedContext;
   try {
-    const authenticated = await dependencies.context.contextFor(request);
+    authenticated = await dependencies.context.contextFor(request);
+  } catch (error) {
+    return contextFailureResponse(error, request);
+  }
+  try {
     return await dispatch(
       request,
       route,
@@ -58,8 +67,51 @@ export async function handleWorkManagementV1Route(
       dependencies.application,
     );
   } catch (error) {
-    return validationResponse(error, undefined);
+    return validationResponse(error, authenticated.context.correlationId);
   }
+}
+
+function contextFailureResponse(error: unknown, request: Request): Response {
+  const code = contextFailureCode(error);
+  const parsedCorrelation = parseCorrelationHeader(
+    request.headers.get("X-Correlation-Id"),
+  );
+  const correlationId = parsedCorrelation.ok
+    ? parsedCorrelation.value
+    : "cor_route" as import("../../platform/api/v1.ts").CorrelationId;
+  const message = code === "UNAUTHENTICATED"
+    ? "Authentication is required."
+    : code === "ACTION_FORBIDDEN"
+    ? "The requested action is not permitted."
+    : "Work Management authentication is temporarily unavailable.";
+  return Response.json(
+    createApiError({
+      code,
+      message,
+      correlationId,
+      retryable: code === "DEPENDENCY_UNAVAILABLE",
+    }),
+    {
+      status: API_ERROR_CATALOG[code].httpStatus,
+      headers: responseHeaders(correlationId),
+    },
+  );
+}
+
+function contextFailureCode(
+  error: unknown,
+): "UNAUTHENTICATED" | "ACTION_FORBIDDEN" | "DEPENDENCY_UNAVAILABLE" {
+  if (error instanceof WorkManagementContextError) return error.code;
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = String(error.code);
+    if (code === "UNAUTHENTICATED" || code === "AUTHENTICATION_FAILED") {
+      return "UNAUTHENTICATED";
+    }
+    if (code === "ACTION_FORBIDDEN" || code === "AUTHORIZATION_DENIED") {
+      return "ACTION_FORBIDDEN";
+    }
+  }
+  return "DEPENDENCY_UNAVAILABLE";
 }
 
 type WorkManagementRoute =

@@ -46,6 +46,17 @@ export class WorkManagementIdempotencyInProgressError extends Error {
   }
 }
 
+export class WorkManagementReplayIntegrityError extends Error {
+  readonly code = "REPLAY_INTEGRITY_CONFLICT" as const;
+
+  constructor(readonly resultReference: string, message: string) {
+    super(
+      `Command replay result "${resultReference}" is invalid; ${message}.`,
+    );
+    this.name = "WorkManagementReplayIntegrityError";
+  }
+}
+
 export class WorkManagementCommandsDisabledError extends Error {
   readonly code = "COMMANDS_DISABLED" as const;
 
@@ -123,6 +134,7 @@ export class InMemoryWorkManagementTestUnitOfWork
         `Work command result "${existing.resultId}" is missing; expected durable replay state.`,
       );
     }
+    assertReplayIdentity(identity, existing.resultId, result.aggregate);
     return { value: result.aggregate as T, replayed: true };
   }
 }
@@ -221,7 +233,33 @@ async function replayPostgres<T extends WorkAggregate>(
       `Work command result "${status.resultReference}" is missing; expected durable replay state.`,
     );
   }
+  assertReplayIdentity(identity, status.resultReference, result.aggregate);
   return { value: result.aggregate as T, replayed: true };
+}
+
+function assertReplayIdentity(
+  identity: WorkCommandExecutionIdentity,
+  resultReference: string,
+  aggregate: WorkAggregate,
+): void {
+  if (resultReference !== identity.resultId) {
+    throw new WorkManagementReplayIntegrityError(
+      resultReference,
+      `expected result reference "${identity.resultId}"`,
+    );
+  }
+  if (
+    aggregate.aggregateType !== identity.aggregateType ||
+    aggregate.id !== identity.aggregateId ||
+    aggregate.tenantId !== identity.tenantId ||
+    aggregate.workspaceId !== identity.workspaceId ||
+    aggregate.dealId !== identity.dealId
+  ) {
+    throw new WorkManagementReplayIntegrityError(
+      resultReference,
+      "aggregate type, ID, or tenant/workspace/Deal scope differs from the claimed command",
+    );
+  }
 }
 
 function identityKey(identity: WorkCommandExecutionIdentity): string {

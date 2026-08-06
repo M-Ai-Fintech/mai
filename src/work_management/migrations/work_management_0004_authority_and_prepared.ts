@@ -1,21 +1,11 @@
 import { defineMigration } from "../../platform/persistence/v1.ts";
 
 /**
- * Installs immutable authority evaluations and the durable preparation ledger
- * used when a command must keep external work outside its final transaction.
+ * Installs immutable authority evaluations and retains the historical
+ * preparation ledger as read-only compatibility evidence. Synchronous
+ * transaction-local execution is the selected MAI-114 architecture.
  */
-export const workManagementAuthorityAndPreparedMigration = defineMigration({
-  owner: "work_management",
-  schema: "work_management",
-  id: "work_management-0005-authority-and-prepared",
-  version: 5,
-  forwardNotes:
-    "Persist digest-bound authority evaluations and short-lived command preparation state without replacing the atomic finalization boundary.",
-  rollbackNotes:
-    "Disable preparation and authority-proof consumers while retaining immutable evaluations, preparation evidence, and all prior command records.",
-  statements: [{
-    schema: "work_management",
-    sql: `
+export const workManagementAuthorityAndPreparedSql = `
       ALTER TABLE work_management.target_command_dispatches
         ADD COLUMN IF NOT EXISTS authority_proof_id TEXT,
         ADD COLUMN IF NOT EXISTS authority_proof_digest CHAR(64)
@@ -23,7 +13,7 @@ export const workManagementAuthorityAndPreparedMigration = defineMigration({
       CREATE INDEX IF NOT EXISTS work_management_target_dispatch_proof_idx
         ON work_management.target_command_dispatches (authority_proof_id, authority_proof_digest);
 
-      CREATE TABLE work_management.authority_evaluations (
+      CREATE TABLE IF NOT EXISTS work_management.authority_evaluations (
         evaluation_id TEXT PRIMARY KEY,
         evaluation_digest CHAR(64) NOT NULL
           CHECK (evaluation_digest ~ '^[0-9a-f]{64}$'),
@@ -53,18 +43,20 @@ export const workManagementAuthorityAndPreparedMigration = defineMigration({
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE (evaluation_digest)
       );
-      CREATE INDEX work_management_authority_evaluations_scope_idx
+      CREATE INDEX IF NOT EXISTS work_management_authority_evaluations_scope_idx
         ON work_management.authority_evaluations
         (tenant_id, workspace_id, deal_id, target_aggregate_type,
          target_aggregate_id, expected_target_version, evaluated_at);
-      CREATE INDEX work_management_authority_evaluations_package_idx
+      CREATE INDEX IF NOT EXISTS work_management_authority_evaluations_package_idx
         ON work_management.authority_evaluations
         (approval_package_id, approval_package_version, approval_package_digest);
+      DROP TRIGGER IF EXISTS authority_evaluations_no_update_or_delete
+        ON work_management.authority_evaluations;
       CREATE TRIGGER authority_evaluations_no_update_or_delete
         BEFORE UPDATE OR DELETE ON work_management.authority_evaluations
         FOR EACH ROW EXECUTE FUNCTION work_management.reject_corrective_record_mutation();
 
-      CREATE TABLE work_management.command_preparations (
+      CREATE TABLE IF NOT EXISTS work_management.command_preparations (
         command_id TEXT PRIMARY KEY,
         tenant_id TEXT NOT NULL,
         workspace_id TEXT NOT NULL,
@@ -86,14 +78,36 @@ export const workManagementAuthorityAndPreparedMigration = defineMigration({
         UNIQUE (tenant_id, workspace_id, deal_id, actor_id, command_type,
           aggregate_type, aggregate_id, idempotency_key)
       );
-      CREATE INDEX work_management_command_preparations_lease_idx
+      CREATE INDEX IF NOT EXISTS work_management_command_preparations_lease_idx
         ON work_management.command_preparations (state, lease_expires_at);
-      CREATE INDEX work_management_command_preparations_scope_idx
+      CREATE INDEX IF NOT EXISTS work_management_command_preparations_scope_idx
         ON work_management.command_preparations
         (tenant_id, workspace_id, deal_id, aggregate_type, aggregate_id);
+      DROP TRIGGER IF EXISTS command_preparations_no_delete
+        ON work_management.command_preparations;
       CREATE TRIGGER command_preparations_no_delete
         BEFORE DELETE ON work_management.command_preparations
         FOR EACH ROW EXECUTE FUNCTION work_management.reject_corrective_record_mutation();
-    `,
+      COMMENT ON TABLE work_management.command_preparations IS
+        'Retained compatibility evidence; MAI-114 production commands do not claim, prepare, or finalize through this table';
+      REVOKE INSERT, UPDATE, DELETE ON work_management.command_preparations FROM PUBLIC;
+    `;
+
+export const workManagementAuthorityAndPreparedMigration = defineMigration({
+  owner: "work_management",
+  schema: "work_management",
+  id: "work_management-0005-authority-and-prepared",
+  version: 5,
+  forwardNotes:
+    "Persist digest-bound authority evaluations and retain the superseded preparation ledger as read-only evidence; commands use the atomic transaction-local finalization boundary.",
+  rollbackNotes:
+    "Disable preparation and authority-proof consumers while retaining immutable evaluations, preparation evidence, and all prior command records.",
+  compatibleChecksums: [
+    "e90e06f280aafa4f06073c44da107c5670e5ddd2b152c1442b049fafe1871aee",
+    "97d303ac1085365613e64cf259a954a6f80f997d13496e4e810615c57e06e641",
+  ],
+  statements: [{
+    schema: "work_management",
+    sql: workManagementAuthorityAndPreparedSql,
   }],
 });

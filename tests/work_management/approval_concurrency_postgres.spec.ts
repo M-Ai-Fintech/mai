@@ -25,6 +25,7 @@ import { workManagementMigrations } from "../../src/work_management/migrations/i
 import { PostgresWorkManagementRepository } from "../../src/work_management/repository_sql.ts";
 import {
   createMai106Pool,
+  ensureMai114Roles,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
 
@@ -139,6 +140,7 @@ Deno.test({
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
+    await ensureMai114Roles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

@@ -84,13 +84,13 @@ export class PostgresWorkManagementRepository
     id: ApprovalRequestId,
   ): Promise<ApprovalRequest | undefined> {
     const result = await this.transaction.query<ApprovalRequestRow>(
-      `SELECT approval_request_id AS "approvalRequestId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", version, document, created_at AS "createdAt", updated_at AS "updatedAt"
+      `SELECT approval_request_id AS "approvalRequestId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", version, requester_id AS "requesterId", named_approver_id AS "namedApproverId", package_id AS "packageId", package_version AS "packageVersion", package_digest AS "packageDigest", state, document, created_at AS "createdAt", updated_at AS "updatedAt"
        FROM work_management.approval_requests_current
        WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND approval_request_id = $4`,
       [scope.tenantId, scope.workspaceId, scope.dealId, id],
     );
     const row = result.rows[0];
-    return row === undefined ? undefined : approvalRequestFromRow(row);
+    return row === undefined ? undefined : await approvalRequestFromRow(row);
   }
 
   async listHistory(

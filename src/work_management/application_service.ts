@@ -29,6 +29,7 @@ import {
   type WorkManagementAuthorizationPort,
 } from "./authorization_service.ts";
 import {
+  authorizationEvidence,
   type CommandInput,
   type CreateCommand,
   outcome,
@@ -39,13 +40,8 @@ import {
   WorkManagementCommandExecutor,
 } from "./command_execution.ts";
 import type { WorkManagementCommandUnitOfWork } from "./command_unit_of_work.ts";
-import { approvalDecisionId } from "./ids.ts";
-import type {
-  ApprovalRequestId,
-  TargetCommandType,
-  TaskId,
-  WorkstreamId,
-} from "./ids.ts";
+import { approvalDecisionId, targetCommandType } from "./ids.ts";
+import type { ApprovalRequestId, TaskId, WorkstreamId } from "./ids.ts";
 import {
   type ApprovalRequest,
   assertAuthorityEffective,
@@ -205,7 +201,7 @@ export class WorkManagementService {
           input.scope,
           input.workstreamId,
         );
-        await this.authorization.requireAllowed(
+        const attachmentAuthorization = await this.authorization.requireAllowed(
           { ...input, id: workstream.id },
           "attach_task",
           "workstream",
@@ -235,7 +231,16 @@ export class WorkManagementService {
           value: task,
           events: [
             { aggregate: task, eventType: "task.created" },
-            { aggregate: owner, eventType: "workstream.task_attached" },
+            {
+              aggregate: owner,
+              eventType: "workstream.task_attached",
+              authorizationEvidence: authorizationEvidence(
+                { scope: input.scope, id: workstream.id },
+                "attach_task",
+                "workstream",
+                attachmentAuthorization,
+              ),
+            },
           ],
         };
       },
@@ -275,7 +280,7 @@ export class WorkManagementService {
   async createApprovalRequest(
     input: CreateCommand<ApprovalRequestId> & {
       readonly namedApproverId: ApprovalRequest["namedApproverId"];
-      readonly requestedAction: TargetCommandType;
+      readonly requestedAction: string;
       readonly target: TargetReference;
       readonly evidence: readonly EvidenceSnapshotReference[];
       readonly payload: Readonly<Record<string, unknown>>;
@@ -306,7 +311,7 @@ export class WorkManagementService {
           requester: input.actor,
           now: this.options.clock.now(),
           namedApproverId: input.namedApproverId,
-          requestedAction: input.requestedAction,
+          requestedAction: targetCommandType(input.requestedAction),
           target: input.target,
           evidence: input.evidence,
           payload: input.payload,

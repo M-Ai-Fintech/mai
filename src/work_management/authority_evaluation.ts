@@ -202,6 +202,32 @@ function parseEvaluationFields(
   const limits = parsePersistedLimits(record.limits);
   const limitResults = parseLimitResults(record.limitResults, limits);
   const reasons = parseReasons(record.reasons);
+  const scope = parseAuthorityFacts({
+    target: facts.target,
+    scope: record.scope,
+    source: facts.source,
+  }).scope;
+  const declaredTarget = {
+    aggregateType: text(
+      record.targetAggregateType,
+      "Authority target aggregate type",
+    ),
+    aggregateId: text(
+      record.targetAggregateId,
+      "Authority target aggregate ID",
+    ),
+    expectedVersion: positiveInteger(
+      record.expectedTargetVersion,
+      "Authority target version",
+    ),
+    scope,
+  };
+  if (stableSerialize(facts.target) !== stableSerialize(declaredTarget)) {
+    throw invalidRecord(
+      facts.target,
+      "facts.target bound exactly to the persisted target aggregate, ID, version, and scope",
+    );
+  }
   const evaluation: AuthorityEvaluation = {
     schemaVersion: exactOne(record.schemaVersion),
     evaluationId: text(record.evaluationId, "Authority evaluation ID"),
@@ -212,24 +238,11 @@ function parseEvaluationFields(
       "Authority snapshot reference",
     ),
     commandType: text(record.commandType, "Authority command type"),
-    targetAggregateType: text(
-      record.targetAggregateType,
-      "Authority target aggregate type",
-    ),
-    targetAggregateId: text(
-      record.targetAggregateId,
-      "Authority target aggregate ID",
-    ),
-    expectedTargetVersion: positiveInteger(
-      record.expectedTargetVersion,
-      "Authority target version",
-    ),
+    targetAggregateType: declaredTarget.aggregateType,
+    targetAggregateId: declaredTarget.aggregateId,
+    expectedTargetVersion: declaredTarget.expectedVersion,
     approverId: text(record.approverId, "Authority approver ID"),
-    scope: parseAuthorityFacts({
-      target: facts.target,
-      scope: record.scope,
-      source: facts.source,
-    }).scope,
+    scope,
     facts,
     limits,
     limitResults,

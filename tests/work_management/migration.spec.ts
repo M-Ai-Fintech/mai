@@ -1,12 +1,15 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  workManagementActorBindingMigration,
   workManagementAuthorityAndPreparedMigration,
   workManagementCorrectiveMigration,
+  workManagementCorrectiveUpgradeMigration,
   workManagementMembershipAuthorityMigration,
   workManagementMembershipAuthorityUpgradeMigration,
   workManagementMembershipOperabilityMigration,
   workManagementMigration,
   workManagementMigrations,
+  workManagementRuntimeGateMigration,
 } from "../../src/work_management/migrations/index.ts";
 
 Deno.test("Work Management migration is additive, owned, and append-only", () => {
@@ -17,6 +20,9 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     workManagementMembershipAuthorityUpgradeMigration,
     workManagementAuthorityAndPreparedMigration,
     workManagementMembershipOperabilityMigration,
+    workManagementRuntimeGateMigration,
+    workManagementActorBindingMigration,
+    workManagementCorrectiveUpgradeMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
@@ -69,6 +75,9 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assertStringIncludes(membershipSql, "membership");
   assertStringIncludes(membershipSql, "membership_is_inconsistent");
   assertEquals(workManagementMembershipOperabilityMigration.version, 6);
+  assertEquals(workManagementRuntimeGateMigration.version, 7);
+  assertEquals(workManagementActorBindingMigration.version, 8);
+  assertEquals(workManagementCorrectiveUpgradeMigration.version, 9);
   assertStringIncludes(
     workManagementMembershipOperabilityMigration.statements[0].sql,
     "scan_sequence",

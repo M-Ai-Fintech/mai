@@ -4,8 +4,11 @@ import type { WorkManagementEvent } from "./events.ts";
 import type { WorkManagementTransaction } from "./repository.ts";
 import { PostgresWorkManagementRepository } from "./repository_sql.ts";
 import type { TargetCommandDispatch } from "./target_commands.ts";
+import { assertTransactionSafeEffects } from "./transaction_port_policy.ts";
 
 export interface WorkManagementAuditPort {
+  readonly transactionSafe?: true;
+  readonly transactionMode?: "mai106_local";
   append(
     transaction: TransactionHandle,
     event: WorkManagementEvent,
@@ -44,9 +47,16 @@ export class PostgresWorkManagementTransactionalEffects
   implements WorkManagementTransactionalEffects {
   constructor(
     private readonly audit: WorkManagementAuditPort,
-    private readonly outbox: Pick<OutboxRepository, "append"> =
-      new OutboxRepository(),
-  ) {}
+    outbox?: Pick<OutboxRepository, "append">,
+    allowNamedTestAdapters = false,
+  ) {
+    this.outbox = outbox ?? new OutboxRepository();
+    if (!allowNamedTestAdapters) {
+      assertTransactionSafeEffects(this.audit, this.outbox);
+    }
+  }
+
+  private readonly outbox: Pick<OutboxRepository, "append">;
 
   async appendDomainEvent(
     transaction: WorkManagementTransaction,

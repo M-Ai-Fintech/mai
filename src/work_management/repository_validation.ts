@@ -23,6 +23,7 @@ import {
   WorkManagementError,
   type Workstream,
 } from "./model.ts";
+import { approvalPackageDigest } from "./approval_requests.ts";
 
 export interface WorkstreamRow {
   readonly workstreamId: string;
@@ -54,6 +55,12 @@ export interface ApprovalRequestRow {
   readonly dealId: string;
   readonly version: string | number;
   readonly document: unknown;
+  readonly requesterId?: string;
+  readonly namedApproverId?: string;
+  readonly packageId?: string;
+  readonly packageVersion?: string | number;
+  readonly packageDigest?: string;
+  readonly state?: string;
   readonly createdAt: Date | string;
   readonly updatedAt: Date | string;
 }
@@ -175,6 +182,51 @@ export function parseStoredApprovalRequest(
   return Object.freeze({ ...value, package: freezePackage(value.package) });
 }
 
+/**
+ * Loads a persisted request only after recomputing its immutable package
+ * digest.  Database columns and JSON documents are treated as mutually
+ * reinforcing evidence; a tampered document cannot be made valid by keeping
+ * the old digest column.
+ */
+export async function parseStoredApprovalRequestVerified(
+  row: ApprovalRequestRow,
+): Promise<ApprovalRequest> {
+  const value = parseStoredApprovalRequest(row);
+  assertNormalizedApprovalColumns(value, row);
+  const expectedDigest = await approvalPackageDigest(value.package);
+  if (expectedDigest === value.package.contentDigest) return value;
+  throw new WorkManagementError(
+    "REFERENCE_MISMATCH",
+    `Approval Request "${value.id}" package digest "${value.package.contentDigest}" differs from recomputed digest "${expectedDigest}"; expected immutable package content.`,
+  );
+}
+
+function assertNormalizedApprovalColumns(
+  value: ApprovalRequest,
+  row: ApprovalRequestRow,
+): void {
+  const checks: readonly [string, unknown, unknown][] = [
+    ["requester", row.requesterId, value.requesterId],
+    ["named approver", row.namedApproverId, value.namedApproverId],
+    ["package ID", row.packageId, value.package.id],
+    ["package version", row.packageVersion, value.package.version],
+    ["package digest", row.packageDigest, value.package.contentDigest],
+    ["state", row.state, value.state],
+  ];
+  for (const [label, persisted, document] of checks) {
+    if (persisted === undefined) continue;
+    if (String(persisted) === String(document)) continue;
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Approval Request "${value.id}" normalized ${label} "${
+        String(persisted)
+      }" differs from document "${
+        String(document)
+      }"; expected one immutable persisted representation.`,
+    );
+  }
+}
+
 export function assertStoredScope(
   aggregate: Pick<
     Workstream | Task | ApprovalRequest,
@@ -248,7 +300,10 @@ function parsePackage(value: unknown): ApprovalPackage {
         snapshot.policyVersion,
         "Authority snapshot policy version",
       ),
-      capturedAt: text(snapshot.capturedAt, "Authority snapshot captured time"),
+      capturedAt: canonicalInstant(
+        snapshot.capturedAt,
+        "Authority snapshot captured time",
+      ),
       scope: parseScope(snapshot.scope),
     },
     payload: record(document.payload, "Approval package payload"),
@@ -256,6 +311,18 @@ function parsePackage(value: unknown): ApprovalPackage {
   };
   assertPackage(packageValue);
   return packageValue;
+}
+
+function canonicalInstant(value: unknown, label: string): string {
+  const instant = text(value, label);
+  const parsed = Date.parse(instant);
+  if (Number.isFinite(parsed) && new Date(parsed).toISOString() === instant) {
+    return instant;
+  }
+  throw new WorkManagementError(
+    "INVALID_INPUT",
+    `${label} "${instant}" is invalid; expected a canonical ISO-8601 UTC instant.`,
+  );
 }
 
 function parseAuthorityLimit(value: unknown) {

@@ -1,5 +1,5 @@
 export const membershipReconciliationSql = `
-  CREATE TABLE work_management.membership_reconciliation_scans (
+  CREATE TABLE IF NOT EXISTS work_management.membership_reconciliation_scans (
     scan_id TEXT PRIMARY KEY,
     scan_sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
     detected_at TIMESTAMPTZ NOT NULL,
@@ -7,7 +7,7 @@ export const membershipReconciliationSql = `
     scope JSONB NOT NULL CHECK (scope = '{"scope":"all"}'::jsonb),
     status TEXT NOT NULL CHECK (status = 'completed')
   );
-  CREATE TABLE work_management.membership_reconciliation_findings (
+  CREATE TABLE IF NOT EXISTS work_management.membership_reconciliation_findings (
     finding_id TEXT PRIMARY KEY,
     scan_id TEXT NOT NULL REFERENCES work_management.membership_reconciliation_scans(scan_id),
     finding_class TEXT NOT NULL CHECK (finding_class IN (
@@ -17,7 +17,7 @@ export const membershipReconciliationSql = `
       'task_owner_scope_mismatch', 'task_missing_from_authoritative_membership',
       'authoritative_task_missing', 'authoritative_task_wrong_workstream',
       'authoritative_task_scope_mismatch', 'ambiguous_legacy_ownership',
-      'terminal_workstream_non_terminal_task'
+      'terminal_workstream_non_terminal_task', 'legacy_rollout_missing_scan'
     )),
     severity TEXT NOT NULL CHECK (severity = 'blocking'),
     action TEXT NOT NULL CHECK (action = 'block_commands'),
@@ -36,10 +36,10 @@ export const membershipReconciliationSql = `
     detected_at TIMESTAMPTZ NOT NULL,
     UNIQUE (scan_id, finding_class, tenant_id, workspace_id, deal_id, workstream_id, task_id)
   );
-  CREATE INDEX work_management_membership_findings_scan_idx
+  CREATE INDEX IF NOT EXISTS work_management_membership_findings_scan_idx
     ON work_management.membership_reconciliation_findings
     (scan_id, severity, finding_class, tenant_id, workspace_id, deal_id, workstream_id, task_id);
-  CREATE TABLE work_management.membership_reconciliation_resolutions (
+  CREATE TABLE IF NOT EXISTS work_management.membership_reconciliation_resolutions (
     resolution_id TEXT PRIMARY KEY,
     finding_id TEXT NOT NULL UNIQUE REFERENCES work_management.membership_reconciliation_findings(finding_id),
     action TEXT NOT NULL CHECK (action = 'resolve'),
@@ -48,19 +48,82 @@ export const membershipReconciliationSql = `
     resolved_by TEXT NOT NULL,
     recorded_at TIMESTAMPTZ NOT NULL
   );
-  CREATE TABLE work_management.membership_rollout_events (
+  REVOKE INSERT ON work_management.membership_reconciliation_scans FROM PUBLIC;
+  REVOKE INSERT ON work_management.membership_reconciliation_findings FROM PUBLIC;
+  REVOKE INSERT ON work_management.membership_reconciliation_resolutions FROM PUBLIC;
+  CREATE TABLE IF NOT EXISTS work_management.membership_reconciliation_activation (
+    activation_id BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (activation_id = TRUE),
+    mode TEXT NOT NULL CHECK (mode IN ('disabled', 'read_only', 'commands')),
+    latest_scan_id TEXT REFERENCES work_management.membership_reconciliation_scans(scan_id),
+    unresolved_blocking_count BIGINT NOT NULL CHECK (unresolved_blocking_count >= 0),
+    recorded_at TIMESTAMPTZ NOT NULL,
+    CHECK (mode <> 'commands' OR latest_scan_id IS NOT NULL)
+  );
+  INSERT INTO work_management.membership_reconciliation_activation
+    (activation_id, mode, latest_scan_id, unresolved_blocking_count, recorded_at)
+    VALUES (TRUE, 'read_only', NULL, 0, CURRENT_TIMESTAMP)
+    ON CONFLICT (activation_id) DO NOTHING;
+  REVOKE INSERT, UPDATE, DELETE ON
+    work_management.membership_reconciliation_activation FROM PUBLIC;
+  GRANT SELECT ON work_management.membership_reconciliation_activation TO PUBLIC;
+  DROP TRIGGER IF EXISTS membership_activation_no_direct_mutation
+    ON work_management.membership_reconciliation_activation;
+  CREATE OR REPLACE FUNCTION work_management.reject_direct_activation_mutation()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  DECLARE
+    owner_name TEXT;
+    expected_capability TEXT;
+  BEGIN
+    SELECT pg_get_userbyid(relowner) INTO owner_name
+      FROM pg_class WHERE oid = 'work_management.membership_reconciliation_activation'::regclass;
+    expected_capability := md5(current_user || txid_current()::text ||
+      'mai114-activation-writer-v1');
+    IF NOT (
+      current_user = 'postgres' AND session_user = 'postgres'
+    ) AND (
+      current_user IS DISTINCT FROM owner_name
+      OR current_setting('work_management.activation_writer', true)
+        IS DISTINCT FROM expected_capability
+    ) THEN
+      RAISE EXCEPTION 'membership activation changes require the governed migration or rollout function';
+    END IF;
+    RETURN COALESCE(NEW, OLD);
+  END;
+  $$;
+  CREATE TRIGGER membership_activation_no_direct_mutation
+    BEFORE INSERT OR UPDATE OR DELETE
+    ON work_management.membership_reconciliation_activation
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_activation_mutation();
+  CREATE TABLE IF NOT EXISTS work_management.membership_rollout_events (
     event_id TEXT PRIMARY KEY,
     event_sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
     mode TEXT NOT NULL CHECK (mode IN ('disabled', 'read_only', 'commands')),
     scan_id TEXT REFERENCES work_management.membership_reconciliation_scans(scan_id),
     actor_id TEXT NOT NULL,
-    recorded_at TIMESTAMPTZ NOT NULL
+    recorded_at TIMESTAMPTZ NOT NULL,
+    CHECK (mode <> 'commands' OR scan_id IS NOT NULL)
   );
-  CREATE INDEX work_management_membership_rollout_latest_idx
+  CREATE INDEX IF NOT EXISTS work_management_membership_rollout_latest_idx
     ON work_management.membership_rollout_events (event_sequence DESC);
+  DROP TRIGGER IF EXISTS membership_scans_no_direct_insert
+    ON work_management.membership_reconciliation_scans;
+  DROP TRIGGER IF EXISTS membership_findings_no_direct_insert
+    ON work_management.membership_reconciliation_findings;
+  DROP TRIGGER IF EXISTS membership_resolutions_no_direct_insert
+    ON work_management.membership_reconciliation_resolutions;
+  DROP TRIGGER IF EXISTS membership_scans_no_update_or_delete
+    ON work_management.membership_reconciliation_scans;
+  DROP TRIGGER IF EXISTS membership_findings_no_update_or_delete
+    ON work_management.membership_reconciliation_findings;
+  DROP TRIGGER IF EXISTS membership_resolutions_no_update_or_delete
+    ON work_management.membership_reconciliation_resolutions;
+  DROP TRIGGER IF EXISTS membership_rollout_no_update_or_delete
+    ON work_management.membership_rollout_events;
+  DROP TRIGGER IF EXISTS membership_rollout_no_direct_insert
+    ON work_management.membership_rollout_events;
   REVOKE INSERT ON work_management.membership_rollout_events FROM PUBLIC;
 
-  CREATE FUNCTION work_management.membership_finding_identity(
+  CREATE OR REPLACE FUNCTION work_management.membership_finding_identity(
     requested_scan_id TEXT, requested_class TEXT, requested_scope JSONB,
     requested_values JSONB
   ) RETURNS TEXT LANGUAGE sql IMMUTABLE AS $$
@@ -68,12 +131,37 @@ export const membershipReconciliationSql = `
       requested_class, requested_scope::text, requested_values::text))
   $$;
 
-  CREATE FUNCTION work_management.reject_membership_evidence_mutation()
+  CREATE OR REPLACE FUNCTION work_management.reject_membership_evidence_mutation()
   RETURNS trigger LANGUAGE plpgsql AS $$
   BEGIN
     RAISE EXCEPTION 'work_management membership reconciliation evidence is append-only';
   END;
   $$;
+  CREATE OR REPLACE FUNCTION work_management.reject_direct_membership_evidence_insert()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  DECLARE
+    expected_capability TEXT;
+  BEGIN
+    expected_capability := md5(current_user || txid_current()::text ||
+      CASE WHEN TG_TABLE_NAME = 'membership_reconciliation_resolutions'
+        THEN 'mai114-resolution-writer-v1'
+        ELSE 'mai114-scan-writer-v1' END);
+    IF current_setting('work_management.membership_writer', true)
+      IS DISTINCT FROM expected_capability THEN
+      RAISE EXCEPTION 'membership reconciliation evidence requires the governed scan or resolution function';
+    END IF;
+    RETURN NEW;
+  END;
+  $$;
+  CREATE TRIGGER membership_scans_no_direct_insert
+    BEFORE INSERT ON work_management.membership_reconciliation_scans
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_membership_evidence_insert();
+  CREATE TRIGGER membership_findings_no_direct_insert
+    BEFORE INSERT ON work_management.membership_reconciliation_findings
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_membership_evidence_insert();
+  CREATE TRIGGER membership_resolutions_no_direct_insert
+    BEFORE INSERT ON work_management.membership_reconciliation_resolutions
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_membership_evidence_insert();
   CREATE TRIGGER membership_scans_no_update_or_delete
     BEFORE UPDATE OR DELETE ON work_management.membership_reconciliation_scans
     FOR EACH ROW EXECUTE FUNCTION work_management.reject_membership_evidence_mutation();
@@ -87,10 +175,11 @@ export const membershipReconciliationSql = `
     BEFORE UPDATE OR DELETE ON work_management.membership_rollout_events
     FOR EACH ROW EXECUTE FUNCTION work_management.reject_membership_evidence_mutation();
 
-  CREATE FUNCTION work_management.reject_direct_rollout_insert()
+  CREATE OR REPLACE FUNCTION work_management.reject_direct_rollout_insert()
   RETURNS trigger LANGUAGE plpgsql AS $$
-  DECLARE
-    latest_scan_id TEXT;
+    DECLARE
+    current_scan_id TEXT;
+    current_unresolved_count BIGINT;
   BEGIN
     IF current_setting('work_management.rollout_writer', true) IS DISTINCT FROM
         md5(current_user || txid_current()::text || 'mai114-governed-rollout-v1')
@@ -101,18 +190,15 @@ export const membershipReconciliationSql = `
       RAISE EXCEPTION 'membership rollout events require the governed activation function';
     END IF;
     IF to_jsonb(NEW)->>'mode' = 'commands' THEN
-      SELECT scan_id INTO latest_scan_id
-        FROM work_management.membership_reconciliation_scans
-      ORDER BY scan_sequence DESC LIMIT 1;
-      IF latest_scan_id IS DISTINCT FROM to_jsonb(NEW)->>'scan_id'
-        OR EXISTS (
-          SELECT 1 FROM work_management.membership_reconciliation_status
-          WHERE severity = 'blocking' AND current_status = 'unresolved'
-        )
-        OR EXISTS (
-          SELECT 1 FROM work_management.membership_reconciliation_findings
-          WHERE scan_id = to_jsonb(NEW)->>'scan_id'
-        ) THEN
+      SELECT latest_scan_id, unresolved_blocking_count
+        INTO current_scan_id, current_unresolved_count
+        FROM work_management.membership_reconciliation_activation
+        WHERE activation_id = TRUE;
+      IF to_jsonb(NEW)->>'scan_id' IS NULL
+        OR current_scan_id IS DISTINCT FROM to_jsonb(NEW)->>'scan_id'
+        OR current_unresolved_count <> 0
+        OR EXISTS (SELECT 1 FROM work_management.membership_reconciliation_findings
+          WHERE scan_id = to_jsonb(NEW)->>'scan_id') THEN
         RAISE EXCEPTION 'command rollout event requires the latest clean reconciliation scan';
       END IF;
     END IF;
@@ -123,19 +209,19 @@ export const membershipReconciliationSql = `
     BEFORE INSERT ON work_management.membership_rollout_events
     FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_rollout_insert();
 
-  CREATE FUNCTION work_management.lock_membership_rollout()
+  CREATE OR REPLACE FUNCTION work_management.lock_membership_rollout()
   RETURNS VOID LANGUAGE sql AS $$
     SELECT pg_advisory_xact_lock(hashtextextended(
       'work_management:membership-rollout', 0))
   $$;
 
-  CREATE FUNCTION work_management.lock_membership_rollout_shared()
+  CREATE OR REPLACE FUNCTION work_management.lock_membership_rollout_shared()
   RETURNS VOID LANGUAGE sql AS $$
     SELECT pg_advisory_xact_lock_shared(hashtextextended(
       'work_management:membership-rollout', 0))
   $$;
 
-  CREATE FUNCTION work_management.insert_membership_finding(
+  CREATE OR REPLACE FUNCTION work_management.insert_membership_finding(
     requested_scan_id TEXT, requested_class TEXT, requested_tenant TEXT,
     requested_workspace TEXT, requested_deal TEXT, requested_workstream TEXT,
     requested_workstream_version BIGINT, requested_task TEXT,
@@ -176,9 +262,9 @@ export const membershipReconciliationSql = `
   END;
   $$;
 
-  CREATE FUNCTION work_management.scan_membership_authority(
+  CREATE OR REPLACE FUNCTION work_management.scan_membership_authority(
     requested_scan_id TEXT, requested_detected_at TIMESTAMPTZ
-  ) RETURNS BIGINT LANGUAGE plpgsql AS $$
+  ) RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER AS $$
   DECLARE
     existing_detected_at TIMESTAMPTZ;
     source_record RECORD;
@@ -197,6 +283,10 @@ export const membershipReconciliationSql = `
         WHERE scan_id = requested_scan_id;
       RETURN finding_count;
     END IF;
+    PERFORM set_config(
+      'work_management.membership_writer',
+      md5(current_user || txid_current()::text || 'mai114-scan-writer-v1'),
+      true);
     INSERT INTO work_management.membership_reconciliation_scans
       (scan_id, detected_at, completed_at, scope, status)
       VALUES (requested_scan_id, requested_detected_at, CURRENT_TIMESTAMP,
@@ -471,11 +561,24 @@ export const membershipReconciliationSql = `
     SELECT count(*) INTO finding_count
       FROM work_management.membership_reconciliation_findings
       WHERE scan_id = requested_scan_id;
+    PERFORM set_config(
+      'work_management.activation_writer',
+      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      true);
+    UPDATE work_management.membership_reconciliation_activation
+      SET mode = 'read_only', latest_scan_id = requested_scan_id,
+        unresolved_blocking_count = (
+          SELECT count(*) FROM work_management.membership_reconciliation_status
+          WHERE severity = 'blocking' AND current_status = 'unresolved'
+        ), recorded_at = requested_detected_at
+      WHERE activation_id = TRUE;
+    PERFORM set_config('work_management.membership_writer', 'forbidden', true);
+    PERFORM set_config('work_management.activation_writer', 'forbidden', true);
     RETURN finding_count;
   END;
   $$;
 
-  CREATE VIEW work_management.membership_reconciliation_status AS
+  CREATE OR REPLACE VIEW work_management.membership_reconciliation_status AS
     WITH resolved_findings AS (
       SELECT finding_id AS resolved_finding_id
       FROM work_management.membership_reconciliation_resolutions
@@ -488,16 +591,21 @@ export const membershipReconciliationSql = `
     FROM work_management.membership_reconciliation_findings
     LEFT JOIN resolved_findings ON finding_id = resolved_finding_id;
 
-  CREATE FUNCTION work_management.resolve_membership_finding(
+  CREATE OR REPLACE FUNCTION work_management.resolve_membership_finding(
     requested_resolution_id TEXT, requested_finding_id TEXT,
     verification_scan_id TEXT, requested_resolution JSONB,
     requested_actor TEXT, requested_recorded_at TIMESTAMPTZ
-  ) RETURNS VOID LANGUAGE plpgsql AS $$
+  ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
   DECLARE
     finding_record JSONB;
     verification_detected_at TIMESTAMPTZ;
     existing_resolution JSONB;
   BEGIN
+    PERFORM work_management.assert_operator_actor(requested_actor);
+    PERFORM set_config(
+      'work_management.membership_writer',
+      md5(current_user || txid_current()::text || 'mai114-resolution-writer-v1'),
+      true);
     SELECT to_jsonb(membership_reconciliation_findings) INTO finding_record
       FROM work_management.membership_reconciliation_findings
       WHERE finding_id = requested_finding_id;
@@ -539,6 +647,7 @@ export const membershipReconciliationSql = `
         RAISE EXCEPTION 'membership resolution identity % conflicts with immutable evidence',
           requested_resolution_id;
       END IF;
+      PERFORM set_config('work_management.membership_writer', 'forbidden', true);
       RETURN;
     END IF;
     IF requested_resolution->>'action' NOT IN ('mapped', 'retained')
@@ -557,17 +666,36 @@ export const membershipReconciliationSql = `
         recorded_at) VALUES (requested_resolution_id, requested_finding_id,
         'resolve', 'resolved', requested_resolution, requested_actor,
         requested_recorded_at);
+    PERFORM set_config(
+      'work_management.activation_writer',
+      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      true);
+    UPDATE work_management.membership_reconciliation_activation
+      SET mode = CASE WHEN mode = 'commands' THEN 'read_only' ELSE mode END,
+        unresolved_blocking_count = (
+          SELECT count(*) FROM work_management.membership_reconciliation_status
+          WHERE severity = 'blocking' AND current_status = 'unresolved'
+        ), recorded_at = requested_recorded_at
+      WHERE activation_id = TRUE;
+    PERFORM set_config('work_management.membership_writer', 'forbidden', true);
+    PERFORM set_config('work_management.activation_writer', 'forbidden', true);
   END;
   $$;
 
-  CREATE FUNCTION work_management.set_membership_rollout_mode(
+  CREATE OR REPLACE FUNCTION work_management.set_membership_rollout_mode(
     requested_event_id TEXT, requested_mode TEXT, requested_scan_id TEXT,
     requested_actor TEXT, requested_recorded_at TIMESTAMPTZ
   ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
   DECLARE
     existing_event JSONB;
-    latest_scan_id TEXT;
+    current_activation_scan_id TEXT;
+    current_activation_unresolved_count BIGINT;
   BEGIN
+    PERFORM work_management.assert_operator_actor(requested_actor);
+    IF current_setting('work_management.operator_actor', true)
+      IS DISTINCT FROM requested_actor THEN
+      RAISE EXCEPTION 'membership rollout actor must come from the governed operator session';
+    END IF;
     PERFORM work_management.lock_membership_rollout();
     PERFORM set_config(
       'work_management.rollout_writer',
@@ -589,17 +717,24 @@ export const membershipReconciliationSql = `
       RETURN;
     END IF;
     IF requested_mode = 'commands' THEN
-      SELECT scan_id INTO latest_scan_id
-        FROM work_management.membership_reconciliation_scans
-        ORDER BY scan_sequence DESC LIMIT 1;
-      IF latest_scan_id IS DISTINCT FROM requested_scan_id THEN
-        RAISE EXCEPTION 'command activation scan % is stale; expected latest scan %',
-          requested_scan_id, latest_scan_id;
+      IF requested_scan_id IS NULL THEN
+        RAISE EXCEPTION 'command activation requires a completed reconciliation scan';
       END IF;
-      IF EXISTS (
-        SELECT 1 FROM work_management.membership_reconciliation_status
-        WHERE severity = 'blocking' AND current_status = 'unresolved'
+      SELECT latest_scan_id, unresolved_blocking_count
+        INTO current_activation_scan_id, current_activation_unresolved_count
+        FROM work_management.membership_reconciliation_activation
+        WHERE activation_id = TRUE;
+      IF current_activation_scan_id IS DISTINCT FROM requested_scan_id THEN
+        RAISE EXCEPTION 'command activation scan % is stale; expected latest scan %',
+          requested_scan_id, current_activation_scan_id;
+      END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM work_management.membership_reconciliation_scans
+        WHERE scan_id = requested_scan_id AND status = 'completed'
       ) THEN
+        RAISE EXCEPTION 'command activation scan % is missing or incomplete', requested_scan_id;
+      END IF;
+      IF current_activation_unresolved_count <> 0 THEN
         RAISE EXCEPTION 'Work Management commands are blocked by unresolved membership findings';
       END IF;
       IF EXISTS (
@@ -609,23 +744,178 @@ export const membershipReconciliationSql = `
         RAISE EXCEPTION 'command activation scan % is not clean; expected zero findings',
           requested_scan_id;
       END IF;
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'work_management.membership_rollout_events'::regclass
+          AND conname = 'membership_rollout_commands_scan_check'
+          AND convalidated
+      ) THEN
+        IF EXISTS (
+          SELECT 1 FROM work_management.membership_rollout_events
+          WHERE mode = 'commands' AND scan_id IS NULL
+            AND NOT EXISTS (
+              SELECT finding_id
+              FROM work_management.membership_reconciliation_findings
+              WHERE finding_class = 'legacy_rollout_missing_scan'
+                AND detected_values->>'eventId' = event_id
+                AND finding_id IN (
+                  SELECT finding_id
+                  FROM work_management.membership_reconciliation_resolutions
+                )
+            )
+        ) THEN
+          RAISE EXCEPTION 'command activation is blocked by legacy rollout events without a reconciliation scan';
+        END IF;
+      END IF;
     END IF;
     INSERT INTO work_management.membership_rollout_events
       (event_id, mode, scan_id, actor_id, recorded_at)
       VALUES (requested_event_id, requested_mode, requested_scan_id,
         requested_actor, requested_recorded_at);
+    PERFORM set_config(
+      'work_management.activation_writer',
+      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      true);
+    UPDATE work_management.membership_reconciliation_activation
+      SET mode = requested_mode, latest_scan_id = requested_scan_id,
+        recorded_at = requested_recorded_at
+      WHERE activation_id = TRUE;
     PERFORM set_config('work_management.rollout_writer', 'forbidden', true);
+    PERFORM set_config('work_management.activation_writer', 'forbidden', true);
   END;
   $$;
 
-  CREATE FUNCTION work_management.membership_commands_available()
+  CREATE OR REPLACE FUNCTION work_management.membership_commands_available()
   RETURNS boolean LANGUAGE sql STABLE AS $$
     SELECT COALESCE((SELECT mode = 'commands'
-      FROM work_management.membership_rollout_events
-      ORDER BY event_sequence DESC LIMIT 1), false)
-      AND NOT EXISTS (
-        SELECT 1 FROM work_management.membership_reconciliation_status
-        WHERE severity = 'blocking' AND current_status = 'unresolved'
+      AND latest_scan_id IS NOT NULL
+      AND unresolved_blocking_count = 0
+      AND EXISTS (SELECT 1 FROM work_management.membership_reconciliation_scans
+        WHERE scan_id = latest_scan_id AND status = 'completed')
+      AND (
+        EXISTS (SELECT 1 FROM pg_constraint
+          WHERE conrelid = 'work_management.membership_rollout_events'::regclass
+            AND conname = 'membership_rollout_commands_scan_check'
+            AND convalidated)
+        OR NOT EXISTS (
+          SELECT 1 FROM work_management.membership_rollout_events
+          WHERE mode = 'commands' AND scan_id IS NULL
+            AND NOT EXISTS (
+              SELECT finding_id
+              FROM work_management.membership_reconciliation_findings
+              WHERE finding_class = 'legacy_rollout_missing_scan'
+                AND detected_values->>'eventId' = event_id
+                AND finding_id IN (
+                  SELECT finding_id
+                  FROM work_management.membership_reconciliation_resolutions
+                )
+            )
+        )
       )
+      FROM work_management.membership_reconciliation_activation
+      WHERE activation_id = TRUE), false)
   $$;
+
+  DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mai_work_management_owner')
+      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mai_work_management_runtime')
+      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mai_work_management_operator') THEN
+      RAISE EXCEPTION 'MAI-114 roles must be pre-provisioned by platform operations before migration';
+    END IF;
+  END
+  $$;
+  CREATE TABLE IF NOT EXISTS work_management.membership_operator_actor_bindings (
+    session_role TEXT NOT NULL,
+    actor_id TEXT NOT NULL,
+    PRIMARY KEY (session_role, actor_id),
+    active BOOLEAN NOT NULL DEFAULT TRUE
+  );
+  REVOKE ALL ON work_management.membership_operator_actor_bindings FROM PUBLIC;
+  DROP TRIGGER IF EXISTS membership_operator_actor_bindings_no_update_or_delete
+    ON work_management.membership_operator_actor_bindings;
+  CREATE OR REPLACE FUNCTION work_management.reject_operator_actor_binding_mutation()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    RAISE EXCEPTION 'operator actor bindings are append-only; expected governed provisioning';
+  END;
+  $$;
+  CREATE TRIGGER membership_operator_actor_bindings_no_update_or_delete
+    BEFORE UPDATE OR DELETE ON work_management.membership_operator_actor_bindings
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_operator_actor_binding_mutation();
+  CREATE TABLE IF NOT EXISTS work_management.membership_operator_actor_binding_events (
+    event_id TEXT PRIMARY KEY,
+    event_sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
+    session_role TEXT NOT NULL,
+    actor_id TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('bind', 'revoke')),
+    recorded_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (session_role, actor_id, event_id)
+  );
+  REVOKE ALL ON work_management.membership_operator_actor_binding_events FROM PUBLIC;
+  DROP TRIGGER IF EXISTS membership_operator_actor_binding_events_no_update_or_delete
+    ON work_management.membership_operator_actor_binding_events;
+  CREATE OR REPLACE FUNCTION work_management.reject_operator_actor_binding_event_mutation()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    RAISE EXCEPTION 'operator actor binding events are append-only';
+  END;
+  $$;
+  CREATE TRIGGER membership_operator_actor_binding_events_no_update_or_delete
+    BEFORE UPDATE OR DELETE ON work_management.membership_operator_actor_binding_events
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_operator_actor_binding_event_mutation();
+  CREATE OR REPLACE FUNCTION work_management.assert_operator_actor(requested_actor TEXT)
+  RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+  BEGIN
+    IF COALESCE((
+      SELECT action = 'bind'
+      FROM work_management.membership_operator_actor_binding_events
+      WHERE session_role = session_user AND actor_id = requested_actor
+        AND (session_role, actor_id) IN (
+          SELECT session_role, actor_id
+          FROM work_management.membership_operator_actor_bindings
+        )
+      ORDER BY event_sequence DESC LIMIT 1
+    ), false) IS NOT TRUE THEN
+      RAISE EXCEPTION 'operator actor % is not bound to authenticated database session %', requested_actor, session_user;
+    END IF;
+  END;
+  $$;
+
+  REVOKE ALL PRIVILEGES ON FUNCTION
+    work_management.scan_membership_authority(TEXT,TIMESTAMPTZ) FROM PUBLIC;
+  GRANT ALL PRIVILEGES ON FUNCTION
+    work_management.scan_membership_authority(TEXT,TIMESTAMPTZ) TO CURRENT_USER;
+  REVOKE ALL PRIVILEGES ON FUNCTION
+    work_management.resolve_membership_finding(TEXT,TEXT,TEXT,JSONB,TEXT,TIMESTAMPTZ)
+    FROM PUBLIC;
+  GRANT ALL PRIVILEGES ON FUNCTION
+    work_management.resolve_membership_finding(TEXT,TEXT,TEXT,JSONB,TEXT,TIMESTAMPTZ)
+    TO CURRENT_USER;
+  REVOKE ALL PRIVILEGES ON FUNCTION
+    work_management.set_membership_rollout_mode(TEXT,TEXT,TEXT,TEXT,TIMESTAMPTZ)
+    FROM PUBLIC;
+  GRANT ALL PRIVILEGES ON FUNCTION
+    work_management.set_membership_rollout_mode(TEXT,TEXT,TEXT,TEXT,TIMESTAMPTZ)
+    TO CURRENT_USER;
+  REVOKE ALL PRIVILEGES ON FUNCTION
+    work_management.membership_commands_available() FROM PUBLIC;
+  GRANT ALL PRIVILEGES ON FUNCTION
+    work_management.membership_commands_available() TO CURRENT_USER;
+  GRANT USAGE ON SCHEMA work_management TO mai_work_management_runtime, mai_work_management_operator;
+  GRANT SELECT ON work_management.membership_reconciliation_activation TO mai_work_management_runtime;
+  GRANT SELECT ON work_management.membership_reconciliation_scans,
+    work_management.membership_rollout_events,
+    work_management.membership_reconciliation_findings,
+    work_management.membership_reconciliation_resolutions
+    TO mai_work_management_runtime;
+  GRANT ALL PRIVILEGES ON FUNCTION work_management.membership_commands_available() TO mai_work_management_runtime;
+  GRANT SELECT ON work_management.membership_reconciliation_scans,
+    work_management.membership_reconciliation_findings,
+    work_management.membership_reconciliation_resolutions,
+    work_management.membership_rollout_events TO mai_work_management_operator;
+  GRANT ALL PRIVILEGES ON FUNCTION work_management.scan_membership_authority(TEXT,TIMESTAMPTZ),
+    work_management.resolve_membership_finding(TEXT,TEXT,TEXT,JSONB,TEXT,TIMESTAMPTZ),
+    work_management.set_membership_rollout_mode(TEXT,TEXT,TEXT,TEXT,TIMESTAMPTZ)
+    TO mai_work_management_operator;
 `;

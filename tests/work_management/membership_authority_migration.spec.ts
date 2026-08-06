@@ -26,7 +26,10 @@ Deno.test("membership migration enforces one fail-closed authority model", () =>
   assertStringIncludes(sql, "DEFERRABLE INITIALLY DEFERRED");
   assertStringIncludes(sql, "append-only");
   assertStringIncludes(sql, "work_management-0004-read-only");
-  assert(!sql.includes("membership_is_inconsistent"));
+  assertStringIncludes(
+    sql,
+    "DROP FUNCTION IF EXISTS work_management.membership_is_inconsistent",
+  );
   assert(
     !/\b(DROP\s+(?:TABLE|SCHEMA)|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(
       sql,

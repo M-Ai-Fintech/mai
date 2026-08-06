@@ -1,5 +1,5 @@
 import type { TargetCommandDispatch } from "./target_commands.ts";
-import { parseTargetCommandDispatch } from "./target_commands.ts";
+import { parseTargetCommandDispatchVerified } from "./target_commands.ts";
 import type { AuthorityEvaluation } from "./authority_evaluation.ts";
 import type {
   AuthorityProofReference,
@@ -10,7 +10,7 @@ import {
   parseAuthorityProofReference,
   resolveAuthorityProof,
 } from "./authority_proof.ts";
-import { assertScope, WorkManagementError } from "./model.ts";
+import { assertScope, stableSerialize, WorkManagementError } from "./model.ts";
 
 export interface AuthorityProtectedTargetCommand {
   readonly schemaVersion: 1;
@@ -52,10 +52,27 @@ export async function validateAuthorityProtectedTargetCommand(
   const command = await parseProtectedCommand(value);
   const proof = await resolveAuthorityProof(command.authorityProof, resolver);
   assertAllowed(proof.evaluation);
+  assertFactsTarget(proof.evaluation);
   assertDispatchEvaluation(command.dispatch, proof.evaluation);
   assertDispatchProof(command.dispatch, command.authorityProof);
   assertConsumerWindow(proof.evaluation, consumedAt);
   return command;
+}
+
+function assertFactsTarget(evaluation: AuthorityEvaluation): void {
+  const expected = {
+    aggregateType: evaluation.targetAggregateType,
+    aggregateId: evaluation.targetAggregateId,
+    expectedVersion: evaluation.expectedTargetVersion,
+    scope: evaluation.scope,
+  };
+  if (stableSerialize(evaluation.facts.target) === stableSerialize(expected)) {
+    return;
+  }
+  throw new WorkManagementError(
+    "REFERENCE_MISMATCH",
+    `Authority evaluation "${evaluation.evaluationId}" facts target differs from its command target; expected one exact aggregate, ID, version, and scope proof.`,
+  );
 }
 
 function assertDispatchProof(
@@ -108,7 +125,7 @@ async function parseProtectedCommand(
   }
   return Object.freeze({
     schemaVersion: 1,
-    dispatch: parseTargetCommandDispatch(record.dispatch),
+    dispatch: await parseTargetCommandDispatchVerified(record.dispatch),
     authorityProof: await parseAuthorityProofReference(record.authorityProof),
   });
 }

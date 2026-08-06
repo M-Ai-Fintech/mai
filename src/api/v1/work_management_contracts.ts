@@ -49,6 +49,23 @@ export interface WorkManagementContextPort {
     | WorkManagementAuthenticatedContext;
 }
 
+/** Typed failures emitted by the authenticated context adapter. */
+export class WorkManagementContextError extends Error {
+  readonly code:
+    | "UNAUTHENTICATED"
+    | "ACTION_FORBIDDEN"
+    | "DEPENDENCY_UNAVAILABLE";
+
+  constructor(
+    code: WorkManagementContextError["code"],
+    message: string,
+  ) {
+    super(message);
+    this.name = "WorkManagementContextError";
+    this.code = code;
+  }
+}
+
 export interface WorkManagementReadInput<Id extends string> {
   readonly context: RequestContext;
   readonly actor: ActorReference;

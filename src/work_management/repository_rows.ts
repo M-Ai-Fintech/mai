@@ -5,7 +5,7 @@ import type {
   WorkstreamRow,
 } from "./repository_validation.ts";
 import {
-  parseStoredApprovalRequest,
+  parseStoredApprovalRequestVerified,
   parseStoredTask,
   parseStoredWorkstream,
 } from "./repository_validation.ts";
@@ -18,10 +18,10 @@ export function taskFromRow(row: TaskRow): Task {
   return parseStoredTask(row);
 }
 
-export function approvalRequestFromRow(
+export async function approvalRequestFromRow(
   row: ApprovalRequestRow,
-): ApprovalRequest {
-  return parseStoredApprovalRequest(row);
+): Promise<ApprovalRequest> {
+  return await parseStoredApprovalRequestVerified(row);
 }
 
 export function documentFor(

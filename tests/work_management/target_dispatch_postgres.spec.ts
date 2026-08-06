@@ -26,7 +26,7 @@ import type {
   ApprovalEvidencePort,
   ApprovalTargetPort,
 } from "../../src/work_management/approval_package_factory.ts";
-import { createPostgresWorkManagementComposition } from "../../src/work_management/composition.ts";
+import { createPostgresWorkManagementTestComposition } from "../../src/work_management/composition.ts";
 import type { WorkManagementEvent } from "../../src/work_management/events.ts";
 import {
   actor,
@@ -46,6 +46,7 @@ import type {
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
   createMai106Pool,
+  ensureMai114Roles,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
 
@@ -227,7 +228,7 @@ function composition(
   outbox?: Pick<OutboxRepository, "append">,
   ports?: CountingApprovalPorts,
 ) {
-  return createPostgresWorkManagementComposition({
+  return createPostgresWorkManagementTestComposition({
     mode: "commands",
     transactions: runner,
     audit: new RecordingAuditPort(),
@@ -487,6 +488,7 @@ function allow(): AuthorizationDecision {
 }
 
 async function migrate(pool: ReturnType<typeof createMai106Pool>) {
+  await ensureMai114Roles(pool);
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
     ...auditActivityMigrations,
@@ -513,7 +515,10 @@ async function resetDispatchContext(
       work_management.membership_reconciliation_resolutions,
       work_management.membership_reconciliation_findings,
       work_management.membership_reconciliation_scans,
+      work_management.membership_reconciliation_activation,
       work_management.membership_rollout_events,
+      work_management.membership_operator_actor_bindings,
+      work_management.membership_operator_actor_binding_events,
       platform.idempotency_records,
       platform.outbox,
       platform.inbox,
@@ -521,6 +526,11 @@ async function resetDispatchContext(
       audit_activity.redaction_overlays
     RESTART IDENTITY CASCADE
   `);
+  await pool.query(
+    `INSERT INTO work_management.membership_reconciliation_activation
+      (activation_id, mode, unresolved_blocking_count, recorded_at)
+      VALUES (TRUE, 'read_only', 0, now())`,
+  );
 }
 
 async function activateCommands(
@@ -529,8 +539,25 @@ async function activateCommands(
 ): Promise<void> {
   const scanId = `scan_${suffix}`;
   await pool.query(
+    `INSERT INTO work_management.membership_operator_actor_bindings
+      (session_role, actor_id) VALUES (current_user, $1)
+      ON CONFLICT (session_role, actor_id) DO NOTHING`,
+    ["test:dispatch-suite"],
+  );
+  await pool.query(
+    `INSERT INTO work_management.membership_operator_actor_binding_events
+      (event_id, session_role, actor_id, action, recorded_at)
+     VALUES ($1, current_user, $2, 'bind', now())
+     ON CONFLICT (event_id) DO NOTHING`,
+    [`binding_event_dispatch_${suffix}`, "test:dispatch-suite"],
+  );
+  await pool.query(
     "SELECT work_management.scan_membership_authority($1,$2)",
     [scanId, new Date().toISOString()],
+  );
+  await pool.query(
+    "SELECT set_config('work_management.operator_actor',$1,false)",
+    ["test:dispatch-suite"],
   );
   await pool.query(
     "SELECT work_management.set_membership_rollout_mode($1,'commands',$2,$3,$4)",

@@ -1,4 +1,5 @@
 import type { ActorReference } from "../platform/authz/v1.ts";
+import type { AuthorizationDecision } from "../platform/authz/v1.ts";
 import type { IdempotencyKey, RequestContext } from "../platform/api/v1.ts";
 import { payloadDigest } from "../platform/persistence/v1.ts";
 import type {
@@ -50,6 +51,18 @@ export type CreateCommand<Id extends string> = CommandInput<Id>;
 export interface EventChange {
   readonly aggregate: WorkAggregate;
   readonly eventType: WorkManagementEventType;
+  readonly authorizationEvidence?: AuthorizationEvidence;
+}
+
+export interface AuthorizationEvidence {
+  readonly action: string;
+  readonly resourceKind: string;
+  readonly resourceId: string;
+  readonly tenantId: string;
+  readonly workspaceId: string;
+  readonly dealId: string;
+  readonly reasonCode: string;
+  readonly authoritySnapshotReference?: string;
 }
 
 export interface CommandOutcome<T extends WorkAggregate> {
@@ -140,9 +153,18 @@ export class WorkManagementCommandExecutor {
         payload: eventPayload(change.aggregate, change.eventType),
         occurredAt: new Date(this.clock.now()),
       });
-      await transaction.appendHistory(event);
-      await this.effects.appendDomainEvent(transaction, event);
-      ids.push(event.eventId);
+      const eventWithAuthorization = change.authorizationEvidence === undefined
+        ? event
+        : {
+          ...event,
+          payload: Object.freeze({
+            ...event.payload,
+            authorization: change.authorizationEvidence,
+          }),
+        };
+      await transaction.appendHistory(eventWithAuthorization);
+      await this.effects.appendDomainEvent(transaction, eventWithAuthorization);
+      ids.push(eventWithAuthorization.eventId);
     }
     return ids;
   }
@@ -199,6 +221,29 @@ export class WorkManagementCommandExecutor {
     }
     return await authorityProofReference(evaluation);
   }
+}
+
+export function authorizationEvidence(
+  input: {
+    readonly scope: WorkScope;
+    readonly id: string;
+  },
+  actionName: string,
+  resourceKind: string,
+  decision: AuthorizationDecision,
+): AuthorizationEvidence {
+  return Object.freeze({
+    action: actionName,
+    resourceKind,
+    resourceId: input.id,
+    tenantId: input.scope.tenantId,
+    workspaceId: input.scope.workspaceId,
+    dealId: input.scope.dealId,
+    reasonCode: decision.reasonCode,
+    ...(decision.authoritySnapshotReference === undefined ? {} : {
+      authoritySnapshotReference: decision.authoritySnapshotReference,
+    }),
+  });
 }
 
 export function outcome<T extends WorkAggregate>(

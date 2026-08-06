@@ -13,9 +13,14 @@ import {
   type WorkHistoryRecord,
   WorkManagementRecordConflictError,
 } from "./repository.ts";
-import { parseStoredDecision } from "./repository_validation.ts";
 import {
-  parseTargetCommandDispatch,
+  parseStoredApprovalRequestVerified,
+  parseStoredDecision,
+  parseStoredTask,
+  parseStoredWorkstream,
+} from "./repository_validation.ts";
+import {
+  parseTargetCommandDispatchVerified,
   type TargetCommandDispatch,
 } from "./target_commands.ts";
 import {
@@ -190,15 +195,17 @@ export class PostgresWorkManagementRecords {
     resultId: string,
   ): Promise<WorkCommandResult | undefined> {
     const found = await this.transaction.query<CommandResultRow>(
-      `SELECT result_id AS "resultId", result, recorded_at AS "recordedAt"
+      `SELECT result_id AS "resultId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", aggregate_type AS "aggregateType", aggregate_id AS "aggregateId", aggregate_version AS "aggregateVersion", result, recorded_at AS "recordedAt"
        FROM work_management.command_results WHERE result_id = $1`,
       [resultId],
     );
     const row = found.rows[0];
     if (row === undefined) return;
+    const aggregate = await parseCommandAggregate(row.result);
+    assertCommandResultColumns(row, aggregate);
     return {
       resultId: row.resultId,
-      aggregate: parseCommandAggregate(row.result),
+      aggregate,
       recordedAt: new Date(row.recordedAt).toISOString(),
     };
   }
@@ -239,20 +246,29 @@ export class PostgresWorkManagementRecords {
       ],
     );
     if (inserted.rowCount === 1) return;
-    const existing = await this.transaction.query<
-      { readonly dispatch: unknown }
-    >(
-      `SELECT dispatch FROM work_management.target_command_dispatches
+    const existing = await this.transaction.query<TargetDispatchRow>(
+      `SELECT dispatch, dispatch_id AS "dispatchId", tenant_id AS "tenantId",
+         workspace_id AS "workspaceId", deal_id AS "dealId",
+         approval_request_id AS "approvalRequestId",
+         approval_request_version AS "approvalRequestVersion",
+         decision_id AS "decisionId", target_aggregate_type AS "targetAggregateType",
+         target_aggregate_id AS "targetAggregateId",
+         expected_target_version AS "expectedTargetVersion", package_id AS "packageId",
+         package_version AS "packageVersion", package_digest AS "packageDigest",
+         authority_snapshot_reference AS "authoritySnapshotReference",
+         authority_proof_id AS "authorityProofId", authority_proof_digest AS "authorityProofDigest",
+         idempotency_identity AS "idempotencyIdentity", command_type AS "commandType",
+         recorded_at AS "recordedAt"
+       FROM work_management.target_command_dispatches
        WHERE dispatch_id = $1`,
       [dispatch.dispatchId],
     );
     const row = existing.rows[0];
-    if (
-      row !== undefined && semanticallyEquivalent(
-        parseTargetCommandDispatch(row.dispatch),
-        dispatch,
-      )
-    ) return;
+    if (row !== undefined) {
+      const stored = await parseTargetCommandDispatchVerified(row.dispatch);
+      assertTargetDispatchColumns(row, stored);
+      if (semanticallyEquivalent(stored, dispatch)) return;
+    }
     throw new WorkManagementRecordConflictError(
       "target command",
       dispatch.dispatchId,
@@ -263,13 +279,29 @@ export class PostgresWorkManagementRecords {
     scope: WorkScope,
     requestId: ApprovalRequestId,
   ): Promise<readonly TargetCommandDispatch[]> {
-    const result = await this.transaction.query<{ readonly dispatch: unknown }>(
-      `SELECT dispatch FROM work_management.target_command_dispatches
+    const result = await this.transaction.query<TargetDispatchRow>(
+      `SELECT dispatch, dispatch_id AS "dispatchId", tenant_id AS "tenantId",
+         workspace_id AS "workspaceId", deal_id AS "dealId",
+         approval_request_id AS "approvalRequestId",
+         approval_request_version AS "approvalRequestVersion",
+         decision_id AS "decisionId", target_aggregate_type AS "targetAggregateType",
+         target_aggregate_id AS "targetAggregateId",
+         expected_target_version AS "expectedTargetVersion", package_id AS "packageId",
+         package_version AS "packageVersion", package_digest AS "packageDigest",
+         authority_snapshot_reference AS "authoritySnapshotReference",
+         authority_proof_id AS "authorityProofId", authority_proof_digest AS "authorityProofDigest",
+         idempotency_identity AS "idempotencyIdentity", command_type AS "commandType",
+         recorded_at AS "recordedAt"
+       FROM work_management.target_command_dispatches
        WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
          AND approval_request_id = $4 ORDER BY recorded_at ASC`,
       [scope.tenantId, scope.workspaceId, scope.dealId, requestId],
     );
-    return result.rows.map((row) => parseTargetCommandDispatch(row.dispatch));
+    return await Promise.all(result.rows.map(async (row) => {
+      const dispatch = await parseTargetCommandDispatchVerified(row.dispatch);
+      assertTargetDispatchColumns(row, dispatch);
+      return dispatch;
+    }));
   }
 
   appendAuthorityEvaluation(evaluation: AuthorityEvaluation): Promise<void> {
@@ -317,8 +349,76 @@ interface DecisionConflictRow {
 
 interface CommandResultRow {
   readonly resultId: string;
+  readonly tenantId: string;
+  readonly workspaceId: string;
+  readonly dealId: string;
+  readonly aggregateType: string;
+  readonly aggregateId: string;
+  readonly aggregateVersion: string | number;
   readonly result: unknown;
   readonly recordedAt: string;
+}
+
+interface TargetDispatchRow {
+  readonly dispatch: unknown;
+  readonly dispatchId: string;
+  readonly tenantId: string;
+  readonly workspaceId: string;
+  readonly dealId: string;
+  readonly approvalRequestId: string;
+  readonly approvalRequestVersion: string | number;
+  readonly decisionId: string;
+  readonly targetAggregateType: string;
+  readonly targetAggregateId: string;
+  readonly expectedTargetVersion: string | number;
+  readonly packageId: string;
+  readonly packageVersion: string | number;
+  readonly packageDigest: string;
+  readonly authoritySnapshotReference: string;
+  readonly authorityProofId: string | null;
+  readonly authorityProofDigest: string | null;
+  readonly idempotencyIdentity: string;
+  readonly commandType: string;
+  readonly recordedAt: string;
+}
+
+function assertTargetDispatchColumns(
+  row: TargetDispatchRow,
+  dispatch: TargetCommandDispatch,
+): void {
+  const proof = dispatch.authorityProof;
+  const matches = [
+    row.dispatchId === dispatch.dispatchId,
+    row.tenantId === dispatch.tenantId,
+    row.workspaceId === dispatch.workspaceId,
+    row.dealId === dispatch.dealId,
+    row.approvalRequestId === dispatch.approvalRequestId,
+    Number(row.approvalRequestVersion) === dispatch.approvalRequestVersion,
+    row.decisionId === dispatch.decisionId,
+    row.targetAggregateType === dispatch.targetAggregateType,
+    row.targetAggregateId === dispatch.targetAggregateId,
+    Number(row.expectedTargetVersion) === dispatch.expectedTargetVersion,
+    row.packageId === dispatch.packageId,
+    Number(row.packageVersion) === dispatch.packageVersion,
+    row.packageDigest === dispatch.packageDigest,
+    row.authoritySnapshotReference === dispatch.authoritySnapshotReference,
+    row.authorityProofId === (proof?.proofId ?? null),
+    row.authorityProofDigest === (proof?.proofDigest ?? null),
+    row.idempotencyIdentity === dispatch.idempotencyIdentity,
+    row.commandType === dispatch.commandType,
+    canonicalTimestamp(row.recordedAt) === dispatch.recordedAt,
+  ];
+  if (matches.every(Boolean)) return;
+  throw new WorkManagementRecordConflictError(
+    "target command",
+    row.dispatchId,
+  );
+}
+
+function canonicalTimestamp(value: string): string {
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) return "invalid";
+  return instant.toISOString();
 }
 
 function equivalentDecision(
@@ -374,7 +474,7 @@ function equivalentEvent(
   }, event);
 }
 
-function parseCommandAggregate(value: unknown): WorkAggregate {
+async function parseCommandAggregate(value: unknown): Promise<WorkAggregate> {
   if (!isWorkAggregate(value)) {
     throw new Error(
       `Work command result "${
@@ -382,7 +482,62 @@ function parseCommandAggregate(value: unknown): WorkAggregate {
       }" is invalid; expected a complete aggregate snapshot.`,
     );
   }
-  return Object.freeze(structuredClone(value));
+  const common = {
+    tenantId: value.tenantId,
+    workspaceId: value.workspaceId,
+    dealId: value.dealId,
+    version: value.version,
+    document: value,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+  if (value.aggregateType === "workstream") {
+    return parseStoredWorkstream({ ...common, workstreamId: value.id });
+  }
+  if (value.aggregateType === "task") {
+    return parseStoredTask({
+      ...common,
+      taskId: value.id,
+      workstreamId: value.workstreamId,
+    });
+  }
+  return await parseStoredApprovalRequestVerified({
+    ...common,
+    approvalRequestId: value.id,
+    requesterId: value.requesterId,
+    namedApproverId: value.namedApproverId,
+    packageId: value.package.id,
+    packageVersion: value.package.version,
+    packageDigest: value.package.contentDigest,
+    state: value.state,
+  });
+}
+
+function assertCommandResultColumns(
+  row: CommandResultRow,
+  aggregate: WorkAggregate,
+): void {
+  const actual = [
+    aggregate.tenantId,
+    aggregate.workspaceId,
+    aggregate.dealId,
+    aggregate.aggregateType,
+    aggregate.id,
+    String(aggregate.version),
+  ];
+  const persisted = [
+    row.tenantId,
+    row.workspaceId,
+    row.dealId,
+    row.aggregateType,
+    row.aggregateId,
+    String(row.aggregateVersion),
+  ];
+  if (actual.every((value, index) => value === persisted[index])) return;
+  throw new WorkManagementRecordConflictError(
+    "command result",
+    row.resultId,
+  );
 }
 
 function isWorkAggregate(value: unknown): value is WorkAggregate {
@@ -396,5 +551,7 @@ function isWorkAggregate(value: unknown): value is WorkAggregate {
     typeof candidate.tenantId === "string" &&
     typeof candidate.workspaceId === "string" &&
     typeof candidate.dealId === "string" &&
-    Number.isSafeInteger(candidate.version);
+    Number.isSafeInteger(candidate.version) &&
+    typeof candidate.createdAt === "string" &&
+    typeof candidate.updatedAt === "string";
 }

@@ -9,6 +9,7 @@ import { PostgresAuthorityEvaluationStore } from "../../src/work_management/auth
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
   createMai106Pool,
+  ensureMai114Roles,
   mai106DatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
@@ -25,6 +26,7 @@ Deno.test({
   ignore: databaseUrl === undefined,
   async fn() {
     const pool = createMai106Pool(databaseUrl!);
+    await ensureMai114Roles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

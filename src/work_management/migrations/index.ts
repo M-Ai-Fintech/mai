@@ -12,6 +12,15 @@ import {
 import {
   workManagementMembershipOperabilityMigration,
 } from "./work_management_0006_membership_operability.ts";
+import {
+  workManagementRuntimeGateMigration,
+} from "./work_management_0007_runtime_gate.ts";
+import {
+  workManagementActorBindingMigration,
+} from "./work_management_0008_actor_binding.ts";
+import {
+  workManagementCorrectiveUpgradeMigration,
+} from "./work_management_0009_corrective_upgrade.ts";
 
 export const workManagementMigrations = Object.freeze([
   workManagementMigration,
@@ -20,13 +29,19 @@ export const workManagementMigrations = Object.freeze([
   workManagementMembershipAuthorityUpgradeMigration,
   workManagementAuthorityAndPreparedMigration,
   workManagementMembershipOperabilityMigration,
+  workManagementRuntimeGateMigration,
+  workManagementActorBindingMigration,
+  workManagementCorrectiveUpgradeMigration,
 ]);
 
 export {
+  workManagementActorBindingMigration,
   workManagementAuthorityAndPreparedMigration,
   workManagementCorrectiveMigration,
+  workManagementCorrectiveUpgradeMigration,
   workManagementMembershipAuthorityMigration,
   workManagementMembershipAuthorityUpgradeMigration,
   workManagementMembershipOperabilityMigration,
   workManagementMigration,
+  workManagementRuntimeGateMigration,
 };

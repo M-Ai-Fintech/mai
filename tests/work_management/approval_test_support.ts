@@ -230,10 +230,29 @@ export function restrictiveProjection(): AuthorizationDecision {
         field("target"),
       ],
       omit: [field("requester_id"), field("named_approver_id")],
-      redact: [],
+      redact: [
+        field("package_payload"),
+        field("evidence_references"),
+        field("requester_id"),
+        field("named_approver_id"),
+        field("authority_snapshot"),
+        field("target"),
+      ],
       approvedClassifications: [
         { name: field("id"), classification: "public" },
         { name: field("workflow_state"), classification: "restricted" },
+        { name: field("package_payload"), classification: "restricted" },
+        { name: field("evidence_references"), classification: "restricted" },
+        {
+          name: field("requester_id"),
+          classification: "relationship_ownership",
+        },
+        {
+          name: field("named_approver_id"),
+          classification: "relationship_ownership",
+        },
+        { name: field("authority_snapshot"), classification: "internal_audit" },
+        { name: field("target"), classification: "restricted" },
       ],
     },
   };

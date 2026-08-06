@@ -41,6 +41,10 @@ interface CommonCompositionOptions {
 export interface InMemoryWorkManagementTestCompositionOptions
   extends CommonCompositionOptions {}
 
+/** Explicit PostgreSQL test adapter; production composition never self-registers caller ports. */
+export interface PostgresWorkManagementTestCompositionOptions
+  extends PostgresWorkManagementCompositionOptions {}
+
 export interface PostgresWorkManagementCompositionOptions
   extends CommonCompositionOptions {
   readonly mode: "disabled" | "read_only" | "commands";
@@ -95,15 +99,18 @@ export function createPostgresWorkManagementComposition(
     assertTransactionSafeAdapter("authorization", options.authorization);
     assertTransactionSafeAdapter(
       "target",
-      options.targets ?? new RejectingApprovalTargetTestPort(),
+      options.targets ??
+        new RejectingApprovalTargetTestPort(),
     );
     assertTransactionSafeAdapter(
       "evidence",
-      options.evidence ?? new RejectingApprovalEvidenceTestPort(),
+      options.evidence ??
+        new RejectingApprovalEvidenceTestPort(),
     );
     assertTransactionSafeAdapter(
       "authority",
-      options.authority ?? new RejectingApprovalAuthorityTestPort(),
+      options.authority ??
+        new RejectingApprovalAuthorityTestPort(),
     );
   }
   const idempotency = new IdempotencyRepository({
@@ -119,9 +126,13 @@ export function createPostgresWorkManagementComposition(
   const effects = new PostgresWorkManagementTransactionalEffects(
     options.audit,
     options.outbox,
+    options.mode === "read_only",
   );
   const serviceConfiguration: CommonCompositionOptions = {
     ...options,
+    targets: options.targets ?? new RejectingApprovalTargetTestPort(),
+    evidence: options.evidence ?? new RejectingApprovalEvidenceTestPort(),
+    authority: options.authority ?? new RejectingApprovalAuthorityTestPort(),
     requireAuthorityEvaluation: options.mode === "commands"
       ? true
       : options.requireAuthorityEvaluation ?? false,
@@ -132,6 +143,57 @@ export function createPostgresWorkManagementComposition(
     service: new WorkManagementService(
       serviceOptions(serviceConfiguration, unitOfWork, effects),
     ),
+  };
+}
+
+/**
+ * Creates an explicitly named PostgreSQL test composition with named fakes.
+ * Caller-provided ports are never accepted by the production composition.
+ */
+export function createPostgresWorkManagementTestComposition(
+  options: PostgresWorkManagementTestCompositionOptions,
+): PostgresWorkManagementComposition {
+  if (options.mode === "disabled") {
+    throw new Error(
+      "Work Management test composition is disabled; expected read_only or commands.",
+    );
+  }
+  const targets = options.targets ?? new RejectingApprovalTargetTestPort();
+  const evidence = options.evidence ?? new RejectingApprovalEvidenceTestPort();
+  const authority = options.authority ??
+    new RejectingApprovalAuthorityTestPort();
+  const authorization = options.authorization;
+  const effects = new PostgresWorkManagementTransactionalEffects(
+    options.audit,
+    options.outbox === undefined ? undefined : options.outbox,
+    true,
+  );
+  const idempotency = new IdempotencyRepository({
+    now: () => new Date(options.clock.now()),
+  });
+  const postgres = new PostgresWorkManagementUnitOfWork(
+    options.transactions,
+    idempotency,
+  );
+  return {
+    adapter: "postgres",
+    mode: options.mode,
+    service: new WorkManagementService(serviceOptions(
+      {
+        ...options,
+        authorization,
+        targets,
+        evidence,
+        authority,
+        requireAuthorityEvaluation: options.mode === "commands"
+          ? true
+          : options.requireAuthorityEvaluation ?? false,
+      },
+      options.mode === "read_only"
+        ? new ReadOnlyWorkManagementUnitOfWork(postgres)
+        : postgres,
+      effects,
+    )),
   };
 }
 
