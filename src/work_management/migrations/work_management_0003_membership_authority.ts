@@ -9,9 +9,6 @@ export const workManagementMembershipAuthorityMigration = defineMigration({
     "Fail closed on existing Workstream/Task membership divergence and enforce Workstream taskIds as authoritative with exact Task workstreamId back-references at transaction commit.",
   rollbackNotes:
     "Disable Work Management commands and retain all aggregate and history records; do not remove membership enforcement until divergent records are reconciled.",
-  compatibleChecksums: [
-    "5a26d7534f4852afa9b64671e4ebaa25e6c20b69fa6e7b9446efebca62b534bb",
-  ],
   statements: [{
     schema: "work_management",
     sql: `

@@ -21,6 +21,7 @@ export interface IdempotencyClaim {
 }
 
 export type IdempotencyClaimResult =
+  | { readonly status: "absent" }
   | { readonly status: "claimed" }
   | { readonly status: "in_progress" | "abandoned" }
   | {
@@ -65,6 +66,26 @@ export class IdempotencyRepository {
     if (inserted.rowCount === 1) return { status: "claimed" };
     const existing = await loadClaim(transaction, claim);
     return existingClaimResult(existing, claim);
+  }
+
+  /** Reads an existing command without inserting a claim. */
+  async inspect(
+    transaction: TransactionHandle,
+    claim: IdempotencyClaim,
+  ): Promise<IdempotencyClaimResult> {
+    assertDigest(claim.payloadDigest);
+    const result = await transaction.query<IdempotencyRow>(
+      `SELECT payload_digest AS "payloadDigest", state,
+         result_reference AS "resultReference",
+         error_reference AS "errorReference"
+       FROM platform.idempotency_records
+       WHERE tenant_id = $1 AND actor_id = $2 AND command_type = $3
+         AND target_type = $4 AND target_id = $5 AND idempotency_key = $6`,
+      claimIdentity(claim),
+    );
+    const row = result.rows[0];
+    if (row === undefined) return { status: "absent" };
+    return existingClaimResult(row, claim);
   }
 
   /**

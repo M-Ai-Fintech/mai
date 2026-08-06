@@ -13,6 +13,8 @@ import {
   type WorkManagementTransaction,
 } from "./repository.ts";
 import { PostgresWorkManagementRepository } from "./repository_sql.ts";
+import type { AuthorityEvaluation } from "./authority_evaluation.ts";
+import { WorkManagementError } from "./model.ts";
 
 export interface WorkCommandExecutionIdentity extends WorkScope {
   readonly actorId: ActorId;
@@ -32,7 +34,12 @@ export interface WorkManagementCommandUnitOfWork {
   run<T extends WorkAggregate>(
     identity: WorkCommandExecutionIdentity,
     operation: (transaction: WorkManagementTransaction) => Promise<T>,
-  ): Promise<{ readonly value: T; readonly replayed: boolean }>;
+  ): Promise<{
+    readonly value: T;
+    readonly replayed: boolean;
+    readonly denied?: boolean;
+    readonly denial?: AuthorityEvaluation;
+  }>;
 }
 
 export class WorkManagementIdempotencyInProgressError extends Error {
@@ -62,9 +69,21 @@ export class WorkManagementCommandsDisabledError extends Error {
 
   constructor() {
     super(
-      "Work Management commands are disabled until membership reconciliation is clean and activation is explicitly recorded; expected read-only inspection or governed rollout.",
+      "Work Management commands are disabled in read_only or disabled mode until membership reconciliation is clean and activation is explicitly recorded; expected read-only inspection or governed rollout.",
     );
     this.name = "WorkManagementCommandsDisabledError";
+  }
+}
+
+export class WorkManagementAuthorityDeniedError extends WorkManagementError {
+  constructor(readonly evaluation: AuthorityEvaluation) {
+    super(
+      "HUMAN_AUTHORITY_REQUIRED",
+      `Approval authority denied the command; reasons: ${
+        evaluation.reasons.join(", ")
+      }.`,
+    );
+    this.name = "WorkManagementAuthorityDeniedError";
   }
 }
 
@@ -145,6 +164,7 @@ export class PostgresWorkManagementUnitOfWork
   constructor(
     private readonly transactions: PostgresTransactionRunner,
     private readonly idempotency: IdempotencyRepository,
+    private readonly mode: "disabled" | "read_only" | "commands" = "commands",
   ) {}
 
   read<TResult>(
@@ -158,11 +178,29 @@ export class PostgresWorkManagementUnitOfWork
   run<T extends WorkAggregate>(
     identity: WorkCommandExecutionIdentity,
     operation: (transaction: WorkManagementTransaction) => Promise<T>,
-  ): Promise<{ readonly value: T; readonly replayed: boolean }> {
+  ): Promise<{
+    readonly value: T;
+    readonly replayed: boolean;
+    readonly denied?: boolean;
+    readonly denial?: AuthorityEvaluation;
+  }> {
     return this.transactions.run(async (handle) => {
-      await assertMembershipCommandsAvailable(handle);
       const repository = new PostgresWorkManagementRepository(handle);
       const claim = postgresClaim(identity);
+      const inspected = await this.idempotency.inspect(handle, claim);
+      if (inspected.status === "replay") {
+        return await replayPostgres<T>(repository, identity, inspected);
+      }
+      if (inspected.status !== "absent") {
+        throw new WorkManagementIdempotencyInProgressError(
+          identity.idempotencyKey,
+          inspected.status,
+        );
+      }
+      if (this.mode !== "commands") {
+        throw new WorkManagementCommandsDisabledError();
+      }
+      await assertMembershipCommandsAvailable(handle);
       const status = await this.idempotency.claim(handle, claim);
       if (status.status === "replay") {
         return await replayPostgres<T>(repository, identity, status);
@@ -173,7 +211,24 @@ export class PostgresWorkManagementUnitOfWork
           status.status,
         );
       }
-      const value = await operation(repository);
+      let value: T;
+      try {
+        value = await operation(repository);
+      } catch (error) {
+        if (!(error instanceof WorkManagementAuthorityDeniedError)) throw error;
+        await repository.appendAuthorityEvaluation(error.evaluation);
+        await this.idempotency.fail(
+          handle,
+          claim,
+          error.evaluation.evaluationId,
+        );
+        return {
+          value: undefined as unknown as T,
+          replayed: false,
+          denied: true,
+          denial: error.evaluation,
+        };
+      }
       await repository.saveCommandResult({
         resultId: identity.resultId,
         aggregate: value,
@@ -218,9 +273,18 @@ async function replayPostgres<T extends WorkAggregate>(
   identity: WorkCommandExecutionIdentity,
   status: {
     readonly resultReference: string | undefined;
+    readonly errorReference?: string;
     readonly state: "completed" | "failed";
   },
 ): Promise<{ readonly value: T; readonly replayed: boolean }> {
+  if (status.state === "failed" && status.errorReference !== undefined) {
+    const evaluation = await repository.findAuthorityEvaluationById(
+      status.errorReference,
+    );
+    if (evaluation !== undefined) {
+      throw new WorkManagementAuthorityDeniedError(evaluation);
+    }
+  }
   if (status.state !== "completed" || status.resultReference === undefined) {
     throw new WorkManagementIdempotencyInProgressError(
       identity.idempotencyKey,

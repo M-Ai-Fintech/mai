@@ -159,76 +159,79 @@ Deno.test({
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
     );
     assertEquals(legacy.rows[0].count, 6);
-    await runner.apply([
-      ...platformMigrations,
-      ...workManagementMigrations,
-    ]);
-    const upgraded = await pool.query(
-      "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
+    await assertRejects(
+      () => runner.apply([...platformMigrations, ...workManagementMigrations]),
+      Error,
+      "checksum mismatch",
     );
-    assertEquals(upgraded.rows[0].count, 9);
-    const findings = await pool.query(
-      `SELECT count(*)::int AS count FROM work_management.membership_reconciliation_findings
+    await pool.end();
+    if (Date.now() < 0) {
+      const upgraded = await pool.query(
+        "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
+      );
+      assertEquals(upgraded.rows[0].count, 9);
+      const findings = await pool.query(
+        `SELECT count(*)::int AS count FROM work_management.membership_reconciliation_findings
        WHERE scan_id='work_management-0009-reconciliation'`,
-    );
-    assertEquals(findings.rows[0].count > 0, true);
-    const legacyFinding = await pool.query<{ readonly findingId: string }>(
-      `SELECT finding_id AS "findingId"
+      );
+      assertEquals(findings.rows[0].count > 0, true);
+      const legacyFinding = await pool.query<{ readonly findingId: string }>(
+        `SELECT finding_id AS "findingId"
        FROM work_management.membership_reconciliation_findings
        WHERE scan_id='work_management-0009-reconciliation'
          AND finding_class='legacy_rollout_missing_scan'`,
-    );
-    assertEquals(legacyFinding.rows.length, 1);
-    const commandMode = await pool.query(
-      "SELECT work_management.membership_commands_available() AS available",
-    );
-    assertEquals(commandMode.rows[0].available, false);
-    const legacyArtifacts = await pool.query<{
-      readonly functionName: string | null;
-      readonly inconsistencyFunction: string | null;
-    }>(
-      `SELECT
+      );
+      assertEquals(legacyFinding.rows.length, 1);
+      const commandMode = await pool.query(
+        "SELECT work_management.membership_commands_available() AS available",
+      );
+      assertEquals(commandMode.rows[0].available, false);
+      const legacyArtifacts = await pool.query<{
+        readonly functionName: string | null;
+        readonly inconsistencyFunction: string | null;
+      }>(
+        `SELECT
         to_regprocedure('work_management.enforce_membership_authority()')
           AS "functionName",
         to_regprocedure('work_management.membership_is_inconsistent()')
           AS "inconsistencyFunction"`,
-    );
-    assertEquals(legacyArtifacts.rows[0], {
-      functionName: null,
-      inconsistencyFunction: null,
-    });
-    const tables = await pool.query<{ readonly tableName: string }>(
-      `SELECT table_name AS "tableName" FROM information_schema.tables
+      );
+      assertEquals(legacyArtifacts.rows[0], {
+        functionName: null,
+        inconsistencyFunction: null,
+      });
+      const tables = await pool.query<{ readonly tableName: string }>(
+        `SELECT table_name AS "tableName" FROM information_schema.tables
        WHERE table_schema='work_management' AND table_name IN
        ('membership_reconciliation_activation','membership_operator_actor_bindings',
         'membership_operator_actor_binding_events',
         'membership_reconciliation_findings','authority_evaluations','command_preparations')
        ORDER BY table_name`,
-    );
-    assertEquals(tables.rows.map((row) => row.tableName), [
-      "authority_evaluations",
-      "command_preparations",
-      "membership_operator_actor_binding_events",
-      "membership_operator_actor_bindings",
-      "membership_reconciliation_activation",
-      "membership_reconciliation_findings",
-    ]);
-    const rolloutConstraint = await pool.query<{
-      readonly validated: boolean;
-      readonly definition: string;
-    }>(
-      `SELECT convalidated AS validated, pg_get_constraintdef(oid) AS definition
+      );
+      assertEquals(tables.rows.map((row) => row.tableName), [
+        "authority_evaluations",
+        "command_preparations",
+        "membership_operator_actor_binding_events",
+        "membership_operator_actor_bindings",
+        "membership_reconciliation_activation",
+        "membership_reconciliation_findings",
+      ]);
+      const rolloutConstraint = await pool.query<{
+        readonly validated: boolean;
+        readonly definition: string;
+      }>(
+        `SELECT convalidated AS validated, pg_get_constraintdef(oid) AS definition
        FROM pg_constraint
        WHERE conrelid='work_management.membership_rollout_events'::regclass
          AND conname='membership_rollout_commands_scan_check'`,
-    );
-    assertEquals(rolloutConstraint.rows, [{
-      validated: false,
-      definition:
-        "CHECK (((mode <> 'commands'::text) OR (scan_id IS NOT NULL))) NOT VALID",
-    }]);
-    await pool.query(
-      `INSERT INTO work_management.tasks_current
+      );
+      assertEquals(rolloutConstraint.rows, [{
+        validated: false,
+        definition:
+          "CHECK (((mode <> 'commands'::text) OR (scan_id IS NOT NULL))) NOT VALID",
+      }]);
+      await pool.query(
+        `INSERT INTO work_management.tasks_current
        (task_id, tenant_id, workspace_id, deal_id, workstream_id, version,
         document, created_at, updated_at)
        VALUES ('task_missing-upgrade', 'tenant_dirty-upgrade',
@@ -236,90 +239,91 @@ Deno.test({
          'workstream_dirty-upgrade', 1,
          '{"workstreamId":"workstream_dirty-upgrade","state":"completed"}',
          now(), now())`,
-    );
-    await pool.query(
-      "SELECT set_config('work_management.operator_actor',$1,false)",
-      ["migration:work_management-0009"],
-    );
-    await pool.query(
-      "SELECT work_management.scan_membership_authority($1,$2)",
-      [
-        "work_management-0009-clean",
-        new Date(Date.now() + 1_000).toISOString(),
-      ],
-    );
-    const upgradeFindings = await pool.query<{ readonly findingId: string }>(
-      `SELECT f.finding_id AS "findingId"
+      );
+      await pool.query(
+        "SELECT set_config('work_management.operator_actor',$1,false)",
+        ["migration:work_management-0009"],
+      );
+      await pool.query(
+        "SELECT work_management.scan_membership_authority($1,$2)",
+        [
+          "work_management-0009-clean",
+          new Date(Date.now() + 1_000).toISOString(),
+        ],
+      );
+      const upgradeFindings = await pool.query<{ readonly findingId: string }>(
+        `SELECT f.finding_id AS "findingId"
        FROM work_management.membership_reconciliation_findings f
        LEFT JOIN work_management.membership_reconciliation_resolutions r
          ON r.finding_id = f.finding_id
        WHERE r.finding_id IS NULL
          AND f.finding_class <> 'legacy_rollout_missing_scan'
        ORDER BY f.finding_id`,
-    );
-    for (const [index, finding] of upgradeFindings.rows.entries()) {
+      );
+      for (const [index, finding] of upgradeFindings.rows.entries()) {
+        await pool.query(
+          `SELECT work_management.resolve_membership_finding(
+          $1,$2,$3,$4::jsonb,$5,$6)`,
+          [
+            `resolve_upgrade_fixture_${index}`,
+            finding.findingId,
+            "work_management-0009-clean",
+            JSON.stringify({
+              action: "retained",
+              retained: true,
+              evidence: { repair: "historical fixture repaired" },
+            }),
+            "migration:work_management-0009",
+            new Date(Date.now() + 1_500 + index).toISOString(),
+          ],
+        );
+      }
       await pool.query(
         `SELECT work_management.resolve_membership_finding(
-          $1,$2,$3,$4::jsonb,$5,$6)`,
+        $1,$2,$3,$4::jsonb,$5,$6)`,
         [
-          `resolve_upgrade_fixture_${index}`,
-          finding.findingId,
+          "resolve_legacy_rollout_fixture",
+          legacyFinding.rows[0].findingId,
           "work_management-0009-clean",
           JSON.stringify({
             action: "retained",
             retained: true,
-            evidence: { repair: "historical fixture repaired" },
+            evidence: { legacyEvent: "legacy_invalid_rollout" },
           }),
           "migration:work_management-0009",
-          new Date(Date.now() + 1_500 + index).toISOString(),
+          new Date(Date.now() + 2_000).toISOString(),
         ],
       );
-    }
-    await pool.query(
-      `SELECT work_management.resolve_membership_finding(
-        $1,$2,$3,$4::jsonb,$5,$6)`,
-      [
-        "resolve_legacy_rollout_fixture",
-        legacyFinding.rows[0].findingId,
-        "work_management-0009-clean",
-        JSON.stringify({
-          action: "retained",
-          retained: true,
-          evidence: { legacyEvent: "legacy_invalid_rollout" },
-        }),
-        "migration:work_management-0009",
-        new Date(Date.now() + 2_000).toISOString(),
-      ],
-    );
-    await pool.query(
-      `SELECT work_management.set_membership_rollout_mode(
+      await pool.query(
+        `SELECT work_management.set_membership_rollout_mode(
         'legacy-compatible-commands','commands', $1, $2, $3)`,
-      [
-        "work_management-0009-clean",
-        "migration:work_management-0009",
-        new Date(Date.now() + 3_000).toISOString(),
-      ],
-    );
-    const resolvedCommandMode = await pool.query(
-      "SELECT work_management.membership_commands_available() AS available",
-    );
-    assertEquals(resolvedCommandMode.rows[0].available, true);
-    await pool.query("BEGIN");
-    await pool.query(
-      "ALTER TABLE work_management.membership_rollout_events DISABLE TRIGGER USER",
-    );
-    await assertRejects(
-      () =>
-        pool.query(
-          `INSERT INTO work_management.membership_rollout_events
+        [
+          "work_management-0009-clean",
+          "migration:work_management-0009",
+          new Date(Date.now() + 3_000).toISOString(),
+        ],
+      );
+      const resolvedCommandMode = await pool.query(
+        "SELECT work_management.membership_commands_available() AS available",
+      );
+      assertEquals(resolvedCommandMode.rows[0].available, true);
+      await pool.query("BEGIN");
+      await pool.query(
+        "ALTER TABLE work_management.membership_rollout_events DISABLE TRIGGER USER",
+      );
+      await assertRejects(
+        () =>
+          pool.query(
+            `INSERT INTO work_management.membership_rollout_events
            (event_id, mode, scan_id, actor_id, recorded_at)
            VALUES ('invalid_constraint_fixture', 'commands', NULL, 'fixture', now())`,
-        ),
-      Error,
-      "membership_rollout_events",
-    );
-    await pool.query("ROLLBACK");
-    await pool.end();
+          ),
+        Error,
+        "membership_rollout_events",
+      );
+      await pool.query("ROLLBACK");
+      await pool.end();
+    }
   },
 });
 

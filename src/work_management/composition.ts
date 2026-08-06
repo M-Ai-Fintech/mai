@@ -17,11 +17,8 @@ import {
 import {
   InMemoryWorkManagementTestUnitOfWork,
   PostgresWorkManagementUnitOfWork,
-  type WorkCommandExecutionIdentity,
   type WorkManagementCommandUnitOfWork,
 } from "./command_unit_of_work.ts";
-import type { WorkAggregate } from "./model.ts";
-import type { WorkManagementTransaction } from "./repository.ts";
 import {
   NoopWorkManagementTestEffects,
   PostgresWorkManagementTransactionalEffects,
@@ -61,7 +58,7 @@ export interface InMemoryWorkManagementTestComposition {
 
 export interface PostgresWorkManagementComposition {
   readonly adapter: "postgres";
-  readonly mode: "read_only" | "commands";
+  readonly mode: "disabled" | "read_only" | "commands";
   readonly service: WorkManagementService;
 }
 
@@ -85,33 +82,25 @@ export function createInMemoryWorkManagementTestComposition(
 export function createPostgresWorkManagementComposition(
   options: PostgresWorkManagementCompositionOptions,
 ): PostgresWorkManagementComposition {
-  if (options.mode === "disabled") {
-    throw new Error(
-      "Work Management composition is disabled; expected read_only or commands mode after governed rollout approval.",
-    );
-  }
+  assertTransactionSafeAdapter("authorization", options.authorization);
+  assertTransactionSafeAdapter(
+    "target",
+    options.targets ?? new UnconfiguredApprovalTargetPort(),
+  );
+  assertTransactionSafeAdapter(
+    "evidence",
+    options.evidence ?? new UnconfiguredApprovalEvidencePort(),
+  );
+  assertTransactionSafeAdapter(
+    "authority",
+    options.authority ?? new UnconfiguredApprovalAuthorityPort(),
+  );
   if (options.mode === "commands") {
     if (options.requireAuthorityEvaluation === false) {
       throw new Error(
         "Work Management commands require server authority evaluation and immutable proof; expected requireAuthorityEvaluation=true.",
       );
     }
-    assertTransactionSafeAdapter("authorization", options.authorization);
-    assertTransactionSafeAdapter(
-      "target",
-      options.targets ??
-        new RejectingApprovalTargetTestPort(),
-    );
-    assertTransactionSafeAdapter(
-      "evidence",
-      options.evidence ??
-        new RejectingApprovalEvidenceTestPort(),
-    );
-    assertTransactionSafeAdapter(
-      "authority",
-      options.authority ??
-        new RejectingApprovalAuthorityTestPort(),
-    );
   }
   const idempotency = new IdempotencyRepository({
     now: () => new Date(options.clock.now()),
@@ -119,10 +108,8 @@ export function createPostgresWorkManagementComposition(
   const postgres = new PostgresWorkManagementUnitOfWork(
     options.transactions,
     idempotency,
+    options.mode,
   );
-  const unitOfWork = options.mode === "read_only"
-    ? new ReadOnlyWorkManagementUnitOfWork(postgres)
-    : postgres;
   const effects = new PostgresWorkManagementTransactionalEffects(
     options.audit,
     options.outbox,
@@ -130,9 +117,9 @@ export function createPostgresWorkManagementComposition(
   );
   const serviceConfiguration: CommonCompositionOptions = {
     ...options,
-    targets: options.targets ?? new RejectingApprovalTargetTestPort(),
-    evidence: options.evidence ?? new RejectingApprovalEvidenceTestPort(),
-    authority: options.authority ?? new RejectingApprovalAuthorityTestPort(),
+    targets: options.targets ?? new UnconfiguredApprovalTargetPort(),
+    evidence: options.evidence ?? new UnconfiguredApprovalEvidencePort(),
+    authority: options.authority ?? new UnconfiguredApprovalAuthorityPort(),
     requireAuthorityEvaluation: options.mode === "commands"
       ? true
       : options.requireAuthorityEvaluation ?? false,
@@ -141,7 +128,7 @@ export function createPostgresWorkManagementComposition(
     adapter: "postgres",
     mode: options.mode,
     service: new WorkManagementService(
-      serviceOptions(serviceConfiguration, unitOfWork, effects),
+      serviceOptions(serviceConfiguration, postgres, effects),
     ),
   };
 }
@@ -158,10 +145,10 @@ export function createPostgresWorkManagementTestComposition(
       "Work Management test composition is disabled; expected read_only or commands.",
     );
   }
-  const targets = options.targets ?? new RejectingApprovalTargetTestPort();
-  const evidence = options.evidence ?? new RejectingApprovalEvidenceTestPort();
+  const targets = options.targets ?? new UnconfiguredApprovalTargetPort();
+  const evidence = options.evidence ?? new UnconfiguredApprovalEvidencePort();
   const authority = options.authority ??
-    new RejectingApprovalAuthorityTestPort();
+    new UnconfiguredApprovalAuthorityPort();
   const authorization = options.authorization;
   const effects = new PostgresWorkManagementTransactionalEffects(
     options.audit,
@@ -174,6 +161,7 @@ export function createPostgresWorkManagementTestComposition(
   const postgres = new PostgresWorkManagementUnitOfWork(
     options.transactions,
     idempotency,
+    options.mode,
   );
   return {
     adapter: "postgres",
@@ -189,9 +177,7 @@ export function createPostgresWorkManagementTestComposition(
           ? true
           : options.requireAuthorityEvaluation ?? false,
       },
-      options.mode === "read_only"
-        ? new ReadOnlyWorkManagementUnitOfWork(postgres)
-        : postgres,
+      postgres,
       effects,
     )),
   };
@@ -207,36 +193,14 @@ function serviceOptions(
     effects,
     authorization: options.authorization,
     clock: options.clock,
-    targets: options.targets ?? new RejectingApprovalTargetTestPort(),
-    evidence: options.evidence ?? new RejectingApprovalEvidenceTestPort(),
-    authority: options.authority ?? new RejectingApprovalAuthorityTestPort(),
+    targets: options.targets ?? new UnconfiguredApprovalTargetPort(),
+    evidence: options.evidence ?? new UnconfiguredApprovalEvidencePort(),
+    authority: options.authority ?? new UnconfiguredApprovalAuthorityPort(),
     requireAuthorityEvaluation: options.requireAuthorityEvaluation ?? false,
   };
 }
 
-class ReadOnlyWorkManagementUnitOfWork
-  implements WorkManagementCommandUnitOfWork {
-  constructor(private readonly delegate: WorkManagementCommandUnitOfWork) {}
-
-  read<TResult>(
-    operation: (transaction: WorkManagementTransaction) => Promise<TResult>,
-  ): Promise<TResult> {
-    return this.delegate.read(operation);
-  }
-
-  run<T extends WorkAggregate>(
-    identity: WorkCommandExecutionIdentity,
-    _operation: (transaction: WorkManagementTransaction) => Promise<T>,
-  ): Promise<{ readonly value: T; readonly replayed: boolean }> {
-    return Promise.reject(
-      new Error(
-        `Work Management command "${identity.commandType}" is disabled in read_only mode; expected commands mode after reconciliation.`,
-      ),
-    );
-  }
-}
-
-class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
+class UnconfiguredApprovalTargetPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
   readonly transactionMode = "mai106_local" as const;
   validate(): Promise<never> {
@@ -256,7 +220,7 @@ class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
   }
 }
 
-class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
+class UnconfiguredApprovalEvidencePort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
   readonly transactionMode = "mai106_local" as const;
   validate(): Promise<never> {
@@ -268,7 +232,7 @@ class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
   }
 }
 
-class RejectingApprovalAuthorityTestPort
+class UnconfiguredApprovalAuthorityPort
   implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
   readonly transactionMode = "mai106_local" as const;

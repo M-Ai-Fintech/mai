@@ -85,27 +85,33 @@ export class TransactionPortPolicyError extends Error {
 /** Rejects a production adapter that could perform uncontrolled I/O in a command transaction. */
 export function assertTransactionSafeAdapter(
   port: WorkManagementPort,
-  _adapter: {
-    readonly transactionSafe?: true;
-    readonly transactionMode?: "mai106_local";
-  },
+  adapter: unknown,
 ): void {
-  throw new TransactionPortPolicyError(
-    port,
-    "finalize_transaction",
-    WORK_MANAGEMENT_PORT_POLICY[port],
-  );
+  if (!isTransactionLocalAdapter(adapter)) {
+    throw new TransactionPortPolicyError(
+      port,
+      "finalize_transaction",
+      WORK_MANAGEMENT_PORT_POLICY[port],
+    );
+  }
 }
 
 export function assertTransactionSafeEffects(
-  _audit: object,
-  _outbox: object,
+  audit: unknown,
+  outbox: unknown,
 ): void {
-  throw new TransactionPortPolicyError(
-    "audit",
-    "finalize_transaction",
-    WORK_MANAGEMENT_PORT_POLICY.audit,
-  );
+  assertTransactionSafeAdapter("audit", audit);
+  assertTransactionSafeAdapter("outbox", outbox);
+}
+
+function isTransactionLocalAdapter(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const adapter = value as Record<string, unknown>;
+  if (
+    adapter.transactionSafe !== true ||
+    adapter.transactionMode !== "mai106_local"
+  ) return false;
+  return adapter.external !== true && adapter.networked !== true;
 }
 
 function localPolicy(

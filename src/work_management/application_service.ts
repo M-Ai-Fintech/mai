@@ -39,7 +39,10 @@ import {
   type WorkManagementClock,
   WorkManagementCommandExecutor,
 } from "./command_execution.ts";
-import type { WorkManagementCommandUnitOfWork } from "./command_unit_of_work.ts";
+import {
+  WorkManagementAuthorityDeniedError,
+  type WorkManagementCommandUnitOfWork,
+} from "./command_unit_of_work.ts";
 import { approvalDecisionId, targetCommandType } from "./ids.ts";
 import type { ApprovalRequestId, TaskId, WorkstreamId } from "./ids.ts";
 import {
@@ -336,12 +339,7 @@ export class WorkManagementService {
             evaluatedAt: this.options.clock.now(),
           });
           if (evaluation.outcome !== "allowed") {
-            throw new WorkManagementError(
-              "HUMAN_AUTHORITY_REQUIRED",
-              `Approval Request "${input.id}" authority evaluation denied; reasons: ${
-                evaluation.reasons.join(", ")
-              }.`,
-            );
+            throw new WorkManagementAuthorityDeniedError(evaluation);
           }
           await transaction.appendAuthorityEvaluation(evaluation);
         }

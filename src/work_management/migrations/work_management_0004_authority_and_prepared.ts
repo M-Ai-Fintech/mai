@@ -102,10 +102,6 @@ export const workManagementAuthorityAndPreparedMigration = defineMigration({
     "Persist digest-bound authority evaluations and retain the superseded preparation ledger as read-only evidence; commands use the atomic transaction-local finalization boundary.",
   rollbackNotes:
     "Disable preparation and authority-proof consumers while retaining immutable evaluations, preparation evidence, and all prior command records.",
-  compatibleChecksums: [
-    "e90e06f280aafa4f06073c44da107c5670e5ddd2b152c1442b049fafe1871aee",
-    "97d303ac1085365613e64cf259a954a6f80f997d13496e4e810615c57e06e641",
-  ],
   statements: [{
     schema: "work_management",
     sql: workManagementAuthorityAndPreparedSql,

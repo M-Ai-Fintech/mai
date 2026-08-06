@@ -30,6 +30,7 @@ import {
 import { targetCommandDispatch } from "./target_commands.ts";
 import { authorityProofReference } from "./authority_proof.ts";
 import type { WorkManagementTransactionalEffects } from "./transactional_effects.ts";
+import { WorkManagementAuthorityDeniedError } from "./command_unit_of_work.ts";
 
 export interface WorkManagementClock {
   now(): string;
@@ -119,6 +120,9 @@ export class WorkManagementCommandExecutor {
       }
       return command.value;
     });
+    if (result.denied && result.denial !== undefined) {
+      throw new WorkManagementAuthorityDeniedError(result.denial);
+    }
     return result.value;
   }
 

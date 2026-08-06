@@ -60,7 +60,6 @@ function canonicalMigration(migration: ContextMigration): string {
     version: migration.version,
     forwardNotes: migration.forwardNotes,
     rollbackNotes: migration.rollbackNotes,
-    compatibleChecksums: migration.compatibleChecksums,
     statements: migration.statements,
   });
 }
@@ -95,10 +94,7 @@ function assertMatchingChecksum(
   applied: string,
   requested: string,
 ): void {
-  if (
-    applied === requested ||
-    migration.compatibleChecksums?.includes(applied) === true
-  ) return;
+  if (applied === requested) return;
   throw new Error(
     `Migration "${migration.id}" checksum mismatch "${requested}"; expected applied checksum "${applied}".`,
   );

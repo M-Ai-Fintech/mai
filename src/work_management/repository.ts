@@ -102,6 +102,9 @@ export interface WorkManagementTransaction {
     packageVersion: number,
     packageDigest: string,
   ): Promise<AuthorityEvaluation | undefined>;
+  findAuthorityEvaluationById(
+    evaluationId: string,
+  ): Promise<AuthorityEvaluation | undefined>;
 }
 
 export interface WorkManagementRepository extends WorkManagementTransaction {
@@ -323,6 +326,12 @@ export class InMemoryWorkManagementRepository
       evaluation.requirement.packageDigest === packageDigest
     );
     return Promise.resolve(clone(match));
+  }
+
+  findAuthorityEvaluationById(
+    evaluationId: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    return Promise.resolve(clone(this.authorityEvaluations.get(evaluationId)));
   }
 
   run<TResult>(

@@ -78,6 +78,20 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assertEquals(workManagementRuntimeGateMigration.version, 7);
   assertEquals(workManagementActorBindingMigration.version, 8);
   assertEquals(workManagementCorrectiveUpgradeMigration.version, 9);
+  const versions = workManagementMigrations.map((migration) =>
+    migration.version
+  );
+  assertEquals(new Set(versions).size, versions.length);
+  assertEquals(
+    workManagementMigrations.some((migration) =>
+      "compatibleChecksums" in migration
+    ),
+    false,
+  );
+  assertEquals(
+    new Set(workManagementMigrations.map((migration) => migration.id)).size,
+    workManagementMigrations.length,
+  );
   assertStringIncludes(
     workManagementMembershipOperabilityMigration.statements[0].sql,
     "scan_sequence",

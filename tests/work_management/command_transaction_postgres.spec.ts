@@ -17,7 +17,7 @@ import {
   PostgresTransactionRunner,
   type TransactionHandle,
 } from "../../src/platform/persistence/v1.ts";
-import { createPostgresWorkManagementTestComposition } from "../../src/work_management/composition.ts";
+import { createPostgresWorkManagementComposition } from "../../src/work_management/composition.ts";
 import type { WorkManagementEvent } from "../../src/work_management/events.ts";
 import {
   actor,
@@ -245,7 +245,7 @@ function composition(
   runner: PostgresTransactionRunner,
   audit: WorkManagementAuditPort,
 ) {
-  return createPostgresWorkManagementTestComposition({
+  return createPostgresWorkManagementComposition({
     mode: "commands",
     transactions: runner,
     audit,
@@ -259,6 +259,8 @@ function composition(
 }
 
 class RecordingAuditPort implements WorkManagementAuditPort {
+  readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   private readonly repository = new PostgresAuditEventRepository();
 
   async append(
@@ -272,6 +274,8 @@ class RecordingAuditPort implements WorkManagementAuditPort {
 }
 
 class FailingAuditPort implements WorkManagementAuditPort {
+  readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   append(): Promise<string> {
     return Promise.reject(new Error("audit-failure"));
   }

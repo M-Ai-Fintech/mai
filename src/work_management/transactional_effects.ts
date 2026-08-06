@@ -15,6 +15,22 @@ export interface WorkManagementAuditPort {
   ): Promise<string>;
 }
 
+interface TransactionLocalOutboxPort {
+  readonly transactionSafe: true;
+  readonly transactionMode: "mai106_local";
+  append: OutboxRepository["append"];
+}
+
+function transactionLocalOutbox(
+  outbox: Pick<OutboxRepository, "append">,
+): TransactionLocalOutboxPort {
+  return {
+    transactionSafe: true,
+    transactionMode: "mai106_local",
+    append: outbox.append.bind(outbox),
+  };
+}
+
 export interface WorkManagementTransactionalEffects {
   appendDomainEvent(
     transaction: WorkManagementTransaction,
@@ -50,7 +66,9 @@ export class PostgresWorkManagementTransactionalEffects
     outbox?: Pick<OutboxRepository, "append">,
     allowNamedTestAdapters = false,
   ) {
-    this.outbox = outbox ?? new OutboxRepository();
+    this.outbox = outbox === undefined
+      ? transactionLocalOutbox(new OutboxRepository())
+      : outbox;
     if (!allowNamedTestAdapters) {
       assertTransactionSafeEffects(this.audit, this.outbox);
     }

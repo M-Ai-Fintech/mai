@@ -192,6 +192,12 @@ export class PostgresWorkManagementRepository
     );
   }
 
+  findAuthorityEvaluationById(
+    evaluationId: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    return this.records.findAuthorityEvaluationById(evaluationId);
+  }
+
   private async saveCurrent(
     table:
       | "workstreams_current"

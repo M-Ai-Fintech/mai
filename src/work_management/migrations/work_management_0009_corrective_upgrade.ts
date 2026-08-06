@@ -16,9 +16,6 @@ export const workManagementCorrectiveUpgradeMigration = defineMigration({
     "Apply reconciliation, authority-proof, append-only, bounded-enforcement, actor-binding, and read-only preparation corrections to already-ledgered Work Management databases.",
   rollbackNotes:
     "Disable command activation while retaining all corrective tables, findings, authority evaluations, bindings, preparation evidence, and history.",
-  compatibleChecksums: [
-    "565f1b6b3499654b8121bb7ea06be774f4a5f3d6508d8b05f6c0a3ee4d29918c",
-  ],
   statements: [{
     schema: "work_management",
     sql: workManagementAuthorityAndPreparedSql,

@@ -330,6 +330,22 @@ export class PostgresWorkManagementRecords {
     }
     return await parseAuthorityEvaluation(result.rows[0].evaluation);
   }
+
+  async findAuthorityEvaluationById(
+    evaluationId: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    const result = await this.transaction.query<{
+      readonly evaluation: unknown;
+    }>(
+      `SELECT evaluation FROM work_management.authority_evaluations
+       WHERE evaluation_id = $1`,
+      [evaluationId],
+    );
+    const row = result.rows[0];
+    return row === undefined
+      ? undefined
+      : await parseAuthorityEvaluation(row.evaluation);
+  }
 }
 
 interface DecisionConflictRow {
