@@ -40,16 +40,24 @@ export const verificationChecks: VerificationCheck[] = [
     label: "Deno tests",
     command: "deno",
     args: [
-      "test",
-      "--env",
+      "run",
       "--allow-read",
-      "--allow-write",
-      "--allow-env",
-      "--allow-ffi",
       "--allow-run",
-      "--allow-net",
+      "--allow-env",
+      "scripts/run_canonical_deno_tests.ts",
     ],
     env: { DENO_ENV: "test" },
+  },
+  {
+    id: "deno-runner-tests",
+    label: "Canonical test-runner unit tests",
+    command: "deno",
+    args: [
+      "test",
+      "--allow-read",
+      "--allow-env",
+      "scripts/run_canonical_deno_tests_test.ts",
+    ],
   },
   {
     id: "frontend-tokens",
@@ -152,7 +160,7 @@ export async function executeCheck(
 function verificationCommand(check: VerificationCheck): Deno.Command {
   return new Deno.Command(check.command, {
     args: check.args,
-    env: check.env,
+    env: { ...Deno.env.toObject(), ...check.env },
     stdout: "piped",
     stderr: "piped",
   });
