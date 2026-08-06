@@ -165,7 +165,7 @@ export class WorkManagementCommandExecutor {
       dispatchId,
       request,
       actor: input.actor,
-      commandType: request.package.authority.action,
+      commandType: request.package.authority.commandType,
       correlationId: input.context.correlationId,
       causationId,
       idempotencyIdentity: identityKey(input, commandType),

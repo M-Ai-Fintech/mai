@@ -11,6 +11,8 @@ const FORBIDDEN_APPROVAL_FIELDS = Object.freeze([
   "package",
   "authority",
   "authoritySnapshot",
+  "action",
+  "commandType",
   "policyVersion",
   "decisionId",
   "currentTargetVersion",
@@ -18,7 +20,6 @@ const FORBIDDEN_APPROVAL_FIELDS = Object.freeze([
 ]);
 
 export interface ParsedApprovalCreation {
-  readonly action: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -50,7 +51,6 @@ export function parseApprovalCreation(
     ? undefined
     : requiredDigest(body.contentDigest, "contentDigest");
   return Object.freeze({
-    action: requiredString(body.action, "action"),
     target,
     evidence,
     payload,

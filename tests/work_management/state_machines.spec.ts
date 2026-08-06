@@ -6,6 +6,7 @@ import {
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   taskId,
   tenant,
   workspace,
@@ -129,25 +130,31 @@ Deno.test("AI and service actors cannot perform human-only work transitions", ()
 Deno.test("approval request enforces named approver, SoD, exact package, approve/reject and withdrawal", async () => {
   const approver = human("actor_approver");
   const requester = human("actor_requester");
+  const target = {
+    aggregateType: "evidence",
+    aggregateId: "evidence_1",
+    expectedVersion: aggregateVersion(2),
+    scope,
+  } as const;
   const packageValue = await createApprovalPackage({
     id: approvalPackageId("package_approval"),
     version: 3,
-    target: {
-      aggregateType: "evidence",
-      aggregateId: "evidence_1",
-      expectedVersion: aggregateVersion(2),
-      scope,
-    },
+    target,
     evidence: [{
       sourceType: "document",
       sourceId: "document_1",
       sourceVersion: "7",
     }],
     authority: {
-      action: "approve_evidence",
+      commandType: targetCommandType("approve_evidence"),
+      target,
       namedApproverId: approver.id,
       policyVersion: "policy-1",
       snapshotReference: "authority_snapshot_1",
+      scope,
+      effectiveAt: "2026-08-06T11:00:00.000Z",
+      expiresAt: "2026-08-06T13:00:00.000Z",
+      applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
       humanOnly: true,
     },
     authoritySnapshot: {

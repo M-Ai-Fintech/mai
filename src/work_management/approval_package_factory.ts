@@ -12,11 +12,14 @@ import {
 } from "./ids.ts";
 import {
   type ApprovalPackage,
+  assertAuthorityEffective,
   assertDifferentActors,
   assertHumanActor,
   assertScope,
+  type AuthorityRequirement,
   type AuthoritySnapshot,
   type EvidenceSnapshotReference,
+  stableSerialize,
   type TargetReference,
   WorkManagementError,
 } from "./model.ts";
@@ -41,17 +44,22 @@ export interface ApprovalAuthoritySnapshotPort {
     readonly scope: WorkScope;
     readonly requester: ActorReference;
     readonly namedApproverId: ActorId;
-    readonly action: string;
+    readonly target: TargetReference;
     readonly authorization: AuthorizationDecision;
-  }): Promise<AuthoritySnapshot>;
+  }): Promise<ResolvedApprovalAuthority>;
+}
+
+export interface ResolvedApprovalAuthority {
+  readonly requirement: AuthorityRequirement;
+  readonly snapshot: AuthoritySnapshot;
 }
 
 export interface ServerApprovalPackageInput {
   readonly requestId: ApprovalRequestId;
   readonly scope: WorkScope;
   readonly requester: ActorReference;
+  readonly now: string;
   readonly namedApproverId: ActorId;
-  readonly action: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -80,27 +88,21 @@ export async function buildServerApprovalPackage(
     `Approval Request "${input.requestId}" target`,
   );
   const evidence = await ports.evidence.validate(input.scope, input.evidence);
-  const snapshot = await ports.authority.resolve({
+  const resolved = await ports.authority.resolve({
     scope: input.scope,
     requester: input.requester,
     namedApproverId: input.namedApproverId,
-    action: input.action,
+    target,
     authorization: input.authorization,
   });
-  assertTrustedSnapshot(input, snapshot);
+  assertTrustedAuthority(input, target, resolved);
   const packageValue = await createApprovalPackage({
     id: packageIdFor(input.requestId),
     version: 1,
     target,
     evidence,
-    authority: {
-      action: input.action,
-      namedApproverId: input.namedApproverId,
-      policyVersion: snapshot.policyVersion,
-      snapshotReference: snapshot.snapshotId,
-      humanOnly: true,
-    },
-    authoritySnapshot: snapshot,
+    authority: resolved.requirement,
+    authoritySnapshot: resolved.snapshot,
     payload: input.payload,
   });
   if (
@@ -115,10 +117,12 @@ export async function buildServerApprovalPackage(
   return packageValue;
 }
 
-function assertTrustedSnapshot(
+function assertTrustedAuthority(
   input: ServerApprovalPackageInput,
-  snapshot: AuthoritySnapshot,
+  target: TargetReference,
+  resolved: ResolvedApprovalAuthority,
 ): void {
+  const { requirement, snapshot } = resolved;
   if (
     snapshot.actorId !== input.namedApproverId || snapshot.actorKind !== "human"
   ) {
@@ -131,6 +135,33 @@ function assertTrustedSnapshot(
     input.scope,
     snapshot.scope,
     `Authority snapshot "${snapshot.snapshotId}"`,
+  );
+  assertScope(
+    input.scope,
+    requirement.scope,
+    `Authority requirement "${snapshot.snapshotId}"`,
+  );
+  if (
+    requirement.namedApproverId !== input.namedApproverId ||
+    requirement.policyVersion !== snapshot.policyVersion ||
+    requirement.snapshotReference !== snapshot.snapshotId ||
+    requirement.humanOnly !== true
+  ) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Authority requirement "${snapshot.snapshotId}" does not match its named approver, policy, snapshot, or human-only contract; expected one server-verified authority.`,
+    );
+  }
+  if (stableSerialize(requirement.target) !== stableSerialize(target)) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Authority requirement "${snapshot.snapshotId}" target differs from the validated target; expected exact aggregate, ID, scope, and version.`,
+    );
+  }
+  assertAuthorityEffective(
+    requirement,
+    input.now,
+    String(packageIdFor(input.requestId)),
   );
   const authorizedReference = input.authorization.authoritySnapshotReference;
   if (

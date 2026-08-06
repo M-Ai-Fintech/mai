@@ -40,6 +40,7 @@ import { approvalDecisionId } from "./ids.ts";
 import type { ApprovalRequestId, TaskId, WorkstreamId } from "./ids.ts";
 import {
   type ApprovalRequest,
+  assertAuthorityEffective,
   type EvidenceSnapshotReference,
   type TargetReference,
   type Task,
@@ -261,13 +262,13 @@ export class WorkManagementService {
   async createApprovalRequest(
     input: CreateCommand<ApprovalRequestId> & {
       readonly namedApproverId: ApprovalRequest["namedApproverId"];
-      readonly action: string;
       readonly target: TargetReference;
       readonly evidence: readonly EvidenceSnapshotReference[];
       readonly payload: Readonly<Record<string, unknown>>;
       readonly claimedDigest?: string;
     },
   ): Promise<ApprovalRequest> {
+    const now = this.options.clock.now();
     const authorization = await this.authorization.requireAllowed(
       input,
       "create",
@@ -278,8 +279,8 @@ export class WorkManagementService {
       requestId: input.id,
       scope: input.scope,
       requester: input.actor,
+      now,
       namedApproverId: input.namedApproverId,
-      action: input.action,
       target: input.target,
       evidence: input.evidence,
       payload: input.payload,
@@ -300,7 +301,7 @@ export class WorkManagementService {
           requesterId: input.actor.id,
           namedApproverId: input.namedApproverId,
           package: packageValue,
-          now: this.options.clock.now(),
+          now,
         });
         await transaction.saveApprovalRequest(value, 0);
         return outcome(value, "approval.draft_created");
@@ -348,6 +349,11 @@ export class WorkManagementService {
           "approval_request",
           true,
           current.state,
+        );
+        assertAuthorityEffective(
+          current.package.authority,
+          this.options.clock.now(),
+          current.package.id,
         );
         assertExpectedVersion(input.id, current.version, input.expectedVersion);
         const targetVersion = await this.options.targets.currentVersion(

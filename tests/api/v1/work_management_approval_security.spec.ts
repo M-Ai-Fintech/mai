@@ -13,6 +13,7 @@ import { createInMemoryWorkManagementTestComposition } from "../../../src/work_m
 import {
   actor,
   deal,
+  targetCommandType,
   tenant,
   type WorkScope,
   workspace,
@@ -49,6 +50,7 @@ Deno.test("approval HTTP boundary rejects requester and authority spoofing", asy
     const forged of [
       { requesterId: actor("actor_spoofed") },
       { authoritySnapshot: { snapshotId: "forged" } },
+      { action: "client_selected_command" },
       { policyVersion: "forged" },
       { package: { contentDigest: "0".repeat(64) } },
     ]
@@ -142,7 +144,6 @@ function validBody(suffix: string): Record<string, unknown> {
   return {
     id: `approval_${suffix}`,
     namedApproverId: approverId,
-    action: "approve_evidence",
     target: {
       aggregateType: "evidence",
       aggregateId: `evidence_${suffix}`,
@@ -203,13 +204,28 @@ class TrustedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   ) {}
 
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
-    return Promise.resolve({
+    const snapshot = {
       snapshotId: "authority-snapshot-api-v1",
       actorId: this.actorId,
       actorKind: "human" as const,
       policyVersion: "policy-api-v1",
       capturedAt: "2026-08-06T12:00:00.000Z",
       scope: input.scope,
+    };
+    return Promise.resolve({
+      requirement: {
+        commandType: targetCommandType("approve_evidence"),
+        target: input.target,
+        namedApproverId: this.actorId,
+        policyVersion: snapshot.policyVersion,
+        snapshotReference: snapshot.snapshotId,
+        scope: input.scope,
+        effectiveAt: "2026-08-06T11:00:00.000Z",
+        expiresAt: "2026-08-06T13:00:00.000Z",
+        applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
+        humanOnly: true as const,
+      },
+      snapshot,
     });
   }
 }

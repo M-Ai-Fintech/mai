@@ -6,6 +6,7 @@ import type {
   ApprovalPackageId,
   ApprovalRequestId,
   DealId,
+  TargetCommandType,
   TaskId,
   TenantId,
   WorkEventId,
@@ -13,6 +14,7 @@ import type {
   WorkspaceId,
   WorkstreamId,
 } from "./ids.ts";
+import { targetCommandType } from "./ids.ts";
 
 export type WorkstreamState =
   | "planned"
@@ -50,11 +52,21 @@ export interface EvidenceSnapshotReference {
 }
 
 export interface AuthorityRequirement {
-  readonly action: string;
+  readonly commandType: TargetCommandType;
+  readonly target: TargetReference;
   readonly namedApproverId: ActorId;
   readonly policyVersion: string;
   readonly snapshotReference: string;
+  readonly scope: WorkScope;
+  readonly effectiveAt: string;
+  readonly expiresAt: string;
+  readonly applicableLimits: readonly AuthorityLimit[];
   readonly humanOnly: true;
+}
+
+export interface AuthorityLimit {
+  readonly name: string;
+  readonly value: string | number | boolean;
 }
 
 export interface AuthoritySnapshot {
@@ -267,7 +279,19 @@ export function freezePackage(packageValue: ApprovalPackage): ApprovalPackage {
     evidence: Object.freeze(
       packageValue.evidence.map((item) => Object.freeze({ ...item })),
     ),
-    authority: Object.freeze({ ...packageValue.authority }),
+    authority: Object.freeze({
+      ...packageValue.authority,
+      target: Object.freeze({
+        ...packageValue.authority.target,
+        scope: Object.freeze({ ...packageValue.authority.target.scope }),
+      }),
+      scope: Object.freeze({ ...packageValue.authority.scope }),
+      applicableLimits: Object.freeze(
+        packageValue.authority.applicableLimits.map((limit) =>
+          Object.freeze({ ...limit })
+        ),
+      ),
+    }),
     authoritySnapshot: Object.freeze({
       ...packageValue.authoritySnapshot,
       scope: Object.freeze({ ...packageValue.authoritySnapshot.scope }),
@@ -287,7 +311,9 @@ export function assertPackage(packageValue: ApprovalPackage): void {
     );
   }
   assertTargetReference(packageValue.target);
-  assertText(packageValue.authority.action, "Approval action", 128);
+  assertText(packageValue.authority.commandType, "Target command type", 128);
+  targetCommandType(packageValue.authority.commandType);
+  assertTargetReference(packageValue.authority.target);
   assertText(packageValue.authority.namedApproverId, "Named approver ID", 128);
   assertText(packageValue.authority.policyVersion, "Policy version", 128);
   assertText(
@@ -300,6 +326,33 @@ export function assertPackage(packageValue: ApprovalPackage): void {
       "HUMAN_AUTHORITY_REQUIRED",
       `Approval package "${packageValue.id}" is not human-only; expected humanOnly=true.`,
     );
+  }
+  assertScope(
+    packageValue.target.scope,
+    packageValue.authority.scope,
+    `Approval package "${packageValue.id}" authority`,
+  );
+  if (
+    stableSerialize(packageValue.target) !==
+      stableSerialize(packageValue.authority.target)
+  ) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Approval package "${packageValue.id}" authority target differs from package target; expected the exact aggregate, ID, scope, and version binding.`,
+    );
+  }
+  assertAuthorityWindow(packageValue.authority, packageValue.id);
+  for (const limit of packageValue.authority.applicableLimits) {
+    assertText(limit.name, "Authority limit name", 128);
+    if (
+      !["string", "number", "boolean"].includes(typeof limit.value) ||
+      (typeof limit.value === "number" && !Number.isFinite(limit.value))
+    ) {
+      throw new WorkManagementError(
+        "INVALID_INPUT",
+        `Approval package "${packageValue.id}" authority limit "${limit.name}" value is invalid; expected string, number, or boolean.`,
+      );
+    }
   }
   assertAuthoritySnapshot(packageValue.authoritySnapshot, packageValue.id);
   if (
@@ -340,6 +393,60 @@ export function assertPackage(packageValue: ApprovalPackage): void {
       `Approval package "${packageValue.id}" digest "${packageValue.contentDigest}" is invalid; expected lowercase SHA-256 hex.`,
     );
   }
+}
+
+export function assertAuthorityEffective(
+  authority: AuthorityRequirement,
+  at: string,
+  packageId: string,
+): void {
+  assertAuthorityWindow(authority, packageId);
+  const instant = canonicalInstant(at, `Approval package "${packageId}" check`);
+  const effective = canonicalInstant(
+    authority.effectiveAt,
+    `Approval package "${packageId}" effective time`,
+  );
+  const expiry = canonicalInstant(
+    authority.expiresAt,
+    `Approval package "${packageId}" expiry time`,
+  );
+  if (
+    instant >= effective && instant < expiry
+  ) return;
+  throw new WorkManagementError(
+    "HUMAN_AUTHORITY_REQUIRED",
+    `Approval package "${packageId}" authority is not effective at "${at}"; expected an instant from "${authority.effectiveAt}" until before "${authority.expiresAt}".`,
+  );
+}
+
+function assertAuthorityWindow(
+  authority: AuthorityRequirement,
+  packageId: string,
+): void {
+  const effective = canonicalInstant(
+    authority.effectiveAt,
+    `Approval package "${packageId}" effective time`,
+  );
+  const expiry = canonicalInstant(
+    authority.expiresAt,
+    `Approval package "${packageId}" expiry time`,
+  );
+  if (effective < expiry) return;
+  throw new WorkManagementError(
+    "INVALID_INPUT",
+    `Approval package "${packageId}" authority window "${authority.effectiveAt}" to "${authority.expiresAt}" is invalid; expected ordered ISO-8601 instants.`,
+  );
+}
+
+function canonicalInstant(value: string, label: string): number {
+  const parsed = Date.parse(value);
+  if (Number.isFinite(parsed) && new Date(parsed).toISOString() === value) {
+    return parsed;
+  }
+  throw new WorkManagementError(
+    "INVALID_INPUT",
+    `${label} "${value}" is invalid; expected a canonical ISO-8601 UTC instant.`,
+  );
 }
 
 function assertAuthoritySnapshot(

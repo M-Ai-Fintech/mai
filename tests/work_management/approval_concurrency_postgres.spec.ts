@@ -11,6 +11,7 @@ import {
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   tenant,
   workspace,
 } from "../../src/work_management/ids.ts";
@@ -44,21 +45,27 @@ async function approvalFixture(id: string) {
     kind: "human" as const,
     state: "active" as const,
   };
+  const target = {
+    aggregateType: "evidence",
+    aggregateId: `evidence_${id}`,
+    expectedVersion: aggregateVersion(1),
+    scope,
+  } as const;
   const packageValue = await createApprovalPackage({
     id: approvalPackageId(`package_${id}`),
     version: 1,
-    target: {
-      aggregateType: "evidence",
-      aggregateId: `evidence_${id}`,
-      expectedVersion: aggregateVersion(1),
-      scope,
-    },
+    target,
     evidence: [],
     authority: {
-      action: "approve",
+      commandType: targetCommandType("approve"),
+      target,
       namedApproverId: approver.id,
       policyVersion: "policy-1",
       snapshotReference: `snapshot_${id}`,
+      scope,
+      effectiveAt: "2026-08-06T11:00:00.000Z",
+      expiresAt: "2026-08-06T13:00:00.000Z",
+      applicableLimits: [],
       humanOnly: true,
     },
     authoritySnapshot: {

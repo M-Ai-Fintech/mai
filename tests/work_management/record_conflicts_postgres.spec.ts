@@ -13,6 +13,7 @@ import {
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   taskId,
   tenant,
   workEventId,
@@ -181,21 +182,27 @@ async function decidedRequest(
     kind: "human" as const,
     state: "active" as const,
   };
+  const target = {
+    aggregateType: "evidence",
+    aggregateId: `evidence_${suffix}`,
+    expectedVersion: aggregateVersion(1),
+    scope,
+  } as const;
   const packageValue = await createApprovalPackage({
     id: approvalPackageId(`package_conflict-${suffix}`),
     version: 1,
-    target: {
-      aggregateType: "evidence",
-      aggregateId: `evidence_${suffix}`,
-      expectedVersion: aggregateVersion(1),
-      scope,
-    },
+    target,
     evidence: [],
     authority: {
-      action: "approve_evidence",
+      commandType: targetCommandType("approve_evidence"),
+      target,
       namedApproverId: approver.id,
       policyVersion: "policy-v1",
       snapshotReference: `authority-${suffix}`,
+      scope,
+      effectiveAt: "2026-08-06T11:00:00.000Z",
+      expiresAt: "2026-08-06T13:00:00.000Z",
+      applicableLimits: [],
       humanOnly: true,
     },
     authoritySnapshot: {

@@ -4,6 +4,7 @@ import {
   actor,
   aggregateVersion,
   approvalRequestId,
+  targetCommandType,
 } from "../../src/work_management/ids.ts";
 import {
   allow,
@@ -31,7 +32,6 @@ Deno.test("server-trusted approval creation, semantic events, and dispatch are r
       requester,
     ),
     namedApproverId: approver.id,
-    action: "approve_evidence",
     target: target(),
     evidence: [{
       sourceType: "document",
@@ -42,6 +42,18 @@ Deno.test("server-trusted approval creation, semantic events, and dispatch are r
   });
   assertEquals(request.requesterId, requester.id);
   assertEquals(request.package.authoritySnapshot.actorId, approver.id);
+  assertEquals(request.package.authority, {
+    commandType: targetCommandType("approve_evidence"),
+    target: target(),
+    namedApproverId: approver.id,
+    policyVersion: "policy-v1",
+    snapshotReference: "authority-snapshot-v1",
+    scope,
+    effectiveAt: "2026-08-06T11:00:00.000Z",
+    expiresAt: "2026-08-06T13:00:00.000Z",
+    applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
+    humanOnly: true,
+  });
   assertEquals(request.state, "draft");
   const opened = await fixture.service.openApprovalRequest({
     ...command(request.id, "open-trusted", requester, 1),
@@ -98,6 +110,33 @@ Deno.test("server-trusted approval creation, semantic events, and dispatch are r
   assertEquals(dispatches[0].decisionId, approved.decision?.id);
   assertEquals(dispatches[0].expectedTargetVersion, target().expectedVersion);
   assertEquals(dispatches[0].packageDigest, request.package.contentDigest);
+  assertEquals(dispatches[0].commandType, "approve_evidence");
+});
+
+Deno.test("approval decision rejects authority that expired after package creation", async () => {
+  let now = "2026-08-06T12:00:00.000Z";
+  const fixture = createInMemoryWorkManagementTestComposition({
+    authorization: { authorize: allow },
+    clock: { now: () => now },
+    targets: new ExactTargetPort(),
+    evidence: new ScopedEvidencePort(),
+    authority: new NamedAuthorityPort(approver.id),
+  });
+  const request = await openRequest(fixture.service, "expired-authority");
+  now = "2026-08-06T13:00:00.000Z";
+  await assertRejects(
+    () =>
+      fixture.service.decideApprovalRequest({
+        ...command(request.id, "expired-authority", approver, request.version),
+        outcome: "approved",
+      }),
+    Error,
+    "not effective",
+  );
+  assertEquals(
+    (await fixture.repository.listTargetCommands(scope, request.id)).length,
+    0,
+  );
 });
 
 Deno.test("rejected, stale, and AI approval commands never dispatch", async () => {
@@ -109,7 +148,6 @@ Deno.test("rejected, stale, and AI approval commands never dispatch", async () =
       requester,
     ),
     namedApproverId: approver.id,
-    action: "approve_evidence",
     target: target(),
     evidence: [],
     payload: { summary: "review" },
@@ -156,7 +194,6 @@ Deno.test("rejected, stale, and AI approval commands never dispatch", async () =
       fixture.service.createApprovalRequest({
         ...command(approvalRequestId("approval_ai-denied"), "create-ai", ai),
         namedApproverId: approver.id,
-        action: "approve_evidence",
         target: target(),
         evidence: [],
         payload: {},
@@ -177,7 +214,6 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
-        action: "approve_evidence",
         target: target(),
         evidence: [],
         payload: { changed: true },
@@ -195,7 +231,6 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
-        action: "approve_evidence",
         target: target(),
         evidence: [{
           sourceType: "document",
@@ -219,13 +254,34 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
-        action: "approve_evidence",
         target: target(),
         evidence: [],
         payload: {},
       }),
     Error,
     "does not match",
+  );
+  const badTargetAuthority = composition(
+    new NamedAuthorityPort(approver.id, {
+      ...target(),
+      aggregateId: "evidence_other",
+    }),
+  );
+  await assertRejects(
+    () =>
+      badTargetAuthority.service.createApprovalRequest({
+        ...command(
+          approvalRequestId("approval_authority-target"),
+          "create-authority-target",
+          requester,
+        ),
+        namedApproverId: approver.id,
+        target: target(),
+        evidence: [],
+        payload: {},
+      }),
+    Error,
+    "target differs",
   );
 });
 
@@ -293,7 +349,6 @@ Deno.test("approval read DTO never serializes fields outside the final mask", as
       requester,
     ),
     namedApproverId: approver.id,
-    action: "approve_evidence",
     target: target(),
     evidence: [{
       sourceType: "document",

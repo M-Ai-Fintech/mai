@@ -30,6 +30,7 @@ export type ApprovalRequestId = WorkManagementId<"ApprovalRequestId">;
 export type ApprovalPackageId = WorkManagementId<"ApprovalPackageId">;
 export type ApprovalDecisionId = WorkManagementId<"ApprovalDecisionId">;
 export type WorkEventId = WorkManagementId<"WorkEventId">;
+export type TargetCommandType = WorkManagementId<"TargetCommandType">;
 
 export interface WorkScope {
   readonly tenantId: TenantId;
@@ -59,6 +60,15 @@ export function approvalDecisionId(value: string): ApprovalDecisionId {
 
 export function workEventId(value: string): WorkEventId {
   return prefixed(value, "work_event_", "work event ID");
+}
+
+export function targetCommandType(value: string): TargetCommandType {
+  if (/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(value) && value.length <= 128) {
+    return value as TargetCommandType;
+  }
+  throw new Error(
+    `Invalid target command type "${value}"; expected lower_snake_case semantic command text.`,
+  );
 }
 
 export function actor(value: string): ActorId {

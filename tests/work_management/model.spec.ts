@@ -1,10 +1,16 @@
-import { assert, assertEquals, assertThrows } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertNotEquals,
+  assertThrows,
+} from "@std/assert";
 import {
   actor,
   aggregateVersion,
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   taskId,
   tenant,
   workspace,
@@ -33,25 +39,31 @@ const approver = {
 };
 
 async function packageValue(): Promise<ApprovalPackage> {
+  const target = {
+    aggregateType: "evidence",
+    aggregateId: "evidence_1",
+    expectedVersion: aggregateVersion(4),
+    scope,
+  } as const;
   return await createApprovalPackage({
     id: approvalPackageId("package_diligence"),
     version: 1,
-    target: {
-      aggregateType: "evidence",
-      aggregateId: "evidence_1",
-      expectedVersion: aggregateVersion(4),
-      scope,
-    },
+    target,
     evidence: [{
       sourceType: "document_version",
       sourceId: "document_1",
       sourceVersion: "2",
     }],
     authority: {
-      action: "approve_evidence",
+      commandType: targetCommandType("approve_evidence"),
+      target,
       namedApproverId: approver.id,
       policyVersion: "policy-1",
       snapshotReference: "authority_snapshot_1",
+      scope,
+      effectiveAt: "2026-08-06T11:00:00.000Z",
+      expiresAt: "2026-08-06T13:00:00.000Z",
+      applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
       humanOnly: true,
     },
     authoritySnapshot: {
@@ -71,6 +83,8 @@ Deno.test("approval package digest binds immutable target, evidence, authority a
   assertEquals(value.contentDigest, await approvalPackageDigest(value));
   assert(Object.isFrozen(value));
   assert(Object.isFrozen(value.target));
+  assert(Object.isFrozen(value.authority.target));
+  assert(Object.isFrozen(value.authority.applicableLimits));
   assert(Object.isFrozen(value.payload));
   const changed = { ...value, payload: { summary: "changed" } };
   assertEquals(samePackage(value, changed), false);
@@ -78,6 +92,26 @@ Deno.test("approval package digest binds immutable target, evidence, authority a
     () => assertExactPackage(value, changed),
     Error,
     "does not match",
+  );
+  assertNotEquals(
+    await approvalPackageDigest({
+      ...value,
+      authority: {
+        ...value.authority,
+        commandType: targetCommandType("release_evidence"),
+      },
+    }),
+    value.contentDigest,
+  );
+  assertNotEquals(
+    await approvalPackageDigest({
+      ...value,
+      authority: {
+        ...value.authority,
+        applicableLimits: [{ name: "max_amount", value: 999_999 }],
+      },
+    }),
+    value.contentDigest,
   );
 });
 

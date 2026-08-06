@@ -105,7 +105,6 @@ export class WorkManagementV1Application {
       this.service.createApprovalRequest({
         ...toCommandInput(input),
         namedApproverId: input.namedApproverId,
-        action: input.action,
         target: input.target,
         evidence: input.evidence,
         payload: input.payload,

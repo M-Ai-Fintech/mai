@@ -9,6 +9,7 @@ import {
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   tenant,
   workspace,
 } from "../../src/work_management/ids.ts";
@@ -34,21 +35,27 @@ const scope = {
 async function fixture(id: string) {
   const approver = actor("actor_rollback-approver");
   const requester = actor("actor_rollback-requester");
+  const target = {
+    aggregateType: "evidence",
+    aggregateId: `evidence_${id}`,
+    expectedVersion: aggregateVersion(1),
+    scope,
+  } as const;
   const packageValue = await createApprovalPackage({
     id: approvalPackageId(`package_${id}`),
     version: 1,
-    target: {
-      aggregateType: "evidence",
-      aggregateId: `evidence_${id}`,
-      expectedVersion: aggregateVersion(1),
-      scope,
-    },
+    target,
     evidence: [],
     authority: {
-      action: "approve",
+      commandType: targetCommandType("approve"),
+      target,
       namedApproverId: approver,
       policyVersion: "policy-1",
       snapshotReference: `snapshot_${id}`,
+      scope,
+      effectiveAt: "2026-08-06T11:00:00.000Z",
+      expiresAt: "2026-08-06T13:00:00.000Z",
+      applicableLimits: [],
       humanOnly: true,
     },
     authoritySnapshot: {

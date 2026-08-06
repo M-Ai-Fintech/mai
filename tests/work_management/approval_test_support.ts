@@ -17,6 +17,7 @@ import {
   aggregateVersion,
   approvalRequestId,
   deal,
+  targetCommandType,
   tenant,
   type WorkScope,
   workspace,
@@ -78,7 +79,6 @@ export async function openRequest(
       requester,
     ),
     namedApproverId: approver.id,
-    action: "approve_evidence",
     target: target(),
     evidence: [],
     payload: {},
@@ -132,16 +132,32 @@ export class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   constructor(
     private readonly snapshotActorId:
       import("../../src/work_management/ids.ts").ActorId,
+    private readonly requirementTarget?: TargetReference,
   ) {}
 
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
-    return Promise.resolve({
+    const snapshot = {
       snapshotId: "authority-snapshot-v1",
       actorId: this.snapshotActorId,
       actorKind: "human" as const,
       policyVersion: "policy-v1",
       capturedAt: "2026-08-06T12:00:00.000Z",
       scope: input.scope,
+    };
+    return Promise.resolve({
+      requirement: {
+        commandType: targetCommandType("approve_evidence"),
+        target: this.requirementTarget ?? input.target,
+        namedApproverId: this.snapshotActorId,
+        policyVersion: snapshot.policyVersion,
+        snapshotReference: snapshot.snapshotId,
+        scope: input.scope,
+        effectiveAt: "2026-08-06T11:00:00.000Z",
+        expiresAt: "2026-08-06T13:00:00.000Z",
+        applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
+        humanOnly: true as const,
+      },
+      snapshot,
     });
   }
 }

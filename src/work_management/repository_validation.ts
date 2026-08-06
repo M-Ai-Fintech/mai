@@ -5,6 +5,7 @@ import {
   approvalPackageId,
   approvalRequestId,
   deal,
+  targetCommandType,
   taskId,
   tenant,
   type WorkScope,
@@ -218,7 +219,10 @@ function parsePackage(value: unknown): ApprovalPackage {
       parseEvidence,
     ),
     authority: {
-      action: text(authority.action, "Approval action"),
+      commandType: targetCommandType(
+        text(authority.commandType, "Target command type"),
+      ),
+      target: parseTarget(authority.target),
       namedApproverId: actor(
         text(authority.namedApproverId, "Named approver ID"),
       ),
@@ -227,12 +231,19 @@ function parsePackage(value: unknown): ApprovalPackage {
         authority.snapshotReference,
         "Authority snapshot reference",
       ),
-      humanOnly: true,
+      scope: parseScope(authority.scope),
+      effectiveAt: text(authority.effectiveAt, "Authority effective time"),
+      expiresAt: text(authority.expiresAt, "Authority expiry time"),
+      applicableLimits: array(
+        authority.applicableLimits,
+        "Authority applicable limits",
+      ).map(parseAuthorityLimit),
+      humanOnly: requiredHumanOnly(authority.humanOnly),
     },
     authoritySnapshot: {
       snapshotId: text(snapshot.snapshotId, "Authority snapshot ID"),
       actorId: actor(text(snapshot.actorId, "Authority snapshot actor ID")),
-      actorKind: "human",
+      actorKind: requiredHumanActorKind(snapshot.actorKind),
       policyVersion: text(
         snapshot.policyVersion,
         "Authority snapshot policy version",
@@ -245,6 +256,46 @@ function parsePackage(value: unknown): ApprovalPackage {
   };
   assertPackage(packageValue);
   return packageValue;
+}
+
+function parseAuthorityLimit(value: unknown) {
+  const limit = record(value, "Authority limit");
+  const limitValue = limit.value;
+  if (
+    !["string", "number", "boolean"].includes(typeof limitValue) ||
+    (typeof limitValue === "number" && !Number.isFinite(limitValue))
+  ) {
+    throw new WorkManagementError(
+      "INVALID_INPUT",
+      `Authority limit "${
+        String(limit.name)
+      }" value is invalid; expected string, number, or boolean.`,
+    );
+  }
+  return {
+    name: text(limit.name, "Authority limit name"),
+    value: limitValue as string | number | boolean,
+  };
+}
+
+function requiredHumanOnly(value: unknown): true {
+  if (value === true) return true;
+  throw new WorkManagementError(
+    "HUMAN_AUTHORITY_REQUIRED",
+    `Persisted authority humanOnly value "${
+      String(value)
+    }" is invalid; expected true.`,
+  );
+}
+
+function requiredHumanActorKind(value: unknown): "human" {
+  if (value === "human") return "human";
+  throw new WorkManagementError(
+    "HUMAN_AUTHORITY_REQUIRED",
+    `Persisted authority actor kind "${
+      String(value)
+    }" is invalid; expected human.`,
+  );
 }
 
 function parseTarget(value: unknown): ApprovalPackage["target"] {

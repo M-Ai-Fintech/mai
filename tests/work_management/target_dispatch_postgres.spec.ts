@@ -33,6 +33,7 @@ import {
   aggregateVersion,
   approvalRequestId,
   deal,
+  targetCommandType,
   tenant,
   type WorkScope,
   workspace,
@@ -71,7 +72,6 @@ Deno.test({
     const draft = await service.createApprovalRequest({
       ...command(requestId, `create-${suffix}`, requester),
       namedApproverId: approver.id,
-      action: "approve_evidence",
       target: target(suffix),
       evidence: [],
       payload: { summary: "dispatch" },
@@ -112,7 +112,6 @@ Deno.test({
     const draft = await service.createApprovalRequest({
       ...command(requestId, `create-fail-${suffix}`, requester),
       namedApproverId: approver.id,
-      action: "approve_evidence",
       target: target(suffix),
       evidence: [],
       payload: { summary: "rollback" },
@@ -202,13 +201,28 @@ class EmptyEvidencePort implements ApprovalEvidencePort {
 
 class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
-    return Promise.resolve({
+    const snapshot = {
       snapshotId: "authority-dispatch-v1",
       actorId: approver.id,
       actorKind: "human" as const,
       policyVersion: "policy-dispatch-v1",
       capturedAt: "2026-08-06T12:00:00.000Z",
       scope: input.scope,
+    };
+    return Promise.resolve({
+      requirement: {
+        commandType: targetCommandType("approve_evidence"),
+        target: input.target,
+        namedApproverId: approver.id,
+        policyVersion: snapshot.policyVersion,
+        snapshotReference: snapshot.snapshotId,
+        scope: input.scope,
+        effectiveAt: "2026-08-06T11:00:00.000Z",
+        expiresAt: "2026-08-06T13:00:00.000Z",
+        applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
+        humanOnly: true as const,
+      },
+      snapshot,
     });
   }
 }
