@@ -20,7 +20,7 @@ export interface WorkManagementAuthorizationInput {
 export interface WorkManagementAuthorizationPort {
   /** Synchronous commands require a transaction-local MAI-106 adapter. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "postgres_integration_local";
+  readonly transactionMode?: "postgres_transaction_local";
   authorize(
     input: WorkManagementAuthorizationInput,
   ): Promise<AuthorizationDecision> | AuthorizationDecision;

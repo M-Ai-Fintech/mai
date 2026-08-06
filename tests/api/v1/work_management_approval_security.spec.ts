@@ -108,8 +108,8 @@ Deno.test("approval HTTP boundary validates approver and evidence through truste
       sourceVersion: "1",
     }],
   });
-  assertEquals(crossDeal.status, 403);
-  assertStringIncludes(await crossDeal.text(), "ACTION_FORBIDDEN");
+  assertEquals(crossDeal.status, 422);
+  assertStringIncludes(await crossDeal.text(), "cross-Deal");
 });
 
 Deno.test("approval HTTP boundary creates from authenticated human identity", async () => {

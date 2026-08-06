@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import {
   AuthorityDenialError,
   createAuthorityDenial,
+  GovernedAuthorityDenialError,
   parseAuthorityDenial,
 } from "../../src/work_management/authority_denial.ts";
 import {
@@ -43,4 +44,33 @@ Deno.test("authority denial error preserves governed evidence", async () => {
   const error = new AuthorityDenialError(denial);
   assertEquals(error.code, "HUMAN_AUTHORITY_REQUIRED");
   assertEquals(error.evidence === denial, true);
+});
+
+Deno.test("authority denial parser fails closed for shape and scope tampering", async () => {
+  const denial = await createAuthorityDenial(input);
+  await assertRejects(
+    () => parseAuthorityDenial({ ...denial, unexpected: true }),
+    Error,
+  );
+  await assertRejects(
+    () => parseAuthorityDenial({ ...denial, scope: { tenantId: "only" } }),
+    Error,
+  );
+  await assertRejects(
+    () => parseAuthorityDenial({ ...denial, evaluatedAt: "not-a-time" }),
+    Error,
+  );
+  await assertRejects(
+    () => parseAuthorityDenial({ ...denial, expectedTargetVersion: "1" }),
+    Error,
+  );
+});
+
+Deno.test("governed denial carries an explicit reason without message parsing", () => {
+  const error = new GovernedAuthorityDenialError(
+    "TARGET_VERSION_MISMATCH",
+    "arbitrary diagnostic text",
+  );
+  assertEquals(error.kind, "governed_denial");
+  assertEquals(error.reason, "TARGET_VERSION_MISMATCH");
 });

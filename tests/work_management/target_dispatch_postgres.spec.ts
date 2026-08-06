@@ -26,7 +26,8 @@ import type {
   ApprovalEvidencePort,
   ApprovalTargetPort,
 } from "../../src/work_management/approval_package_factory.ts";
-import { createPostgresWorkManagementTestComposition } from "../../src/work_management/composition.ts";
+import { createPostgresWorkManagementComposition } from "../../src/work_management/composition.ts";
+import { WorkManagementAuthorityDeniedError } from "../../src/work_management/command_unit_of_work.ts";
 import type { WorkManagementEvent } from "../../src/work_management/events.ts";
 import {
   actor,
@@ -110,6 +111,64 @@ Deno.test({
         results: 1,
       },
     );
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
+    "PostgreSQL production composition persists and replays an authority denial across rollout modes",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await migrate(pool);
+    const runner = new PostgresTransactionRunner(pool);
+    const suffix = `denial-${Date.now()}`;
+    const requestId = approvalRequestId(`approval_${suffix}`);
+    const ports = new CountingApprovalPorts(true);
+    const input = {
+      ...command(requestId, `create-${suffix}`, requester),
+      namedApproverId: approver.id,
+      requestedAction: "approve_evidence",
+      target: target(suffix),
+      evidence: [] as const,
+      payload: { amount: 10 },
+    };
+    const commands = composition(runner, undefined, ports).service;
+    const first = await assertDenied(() =>
+      commands.createApprovalRequest(input)
+    );
+    assertEquals(first.evidence.reasons, ["AMOUNT_CEILING_EXCEEDED"]);
+    assertEquals(ports.calls, { target: 1, evidence: 1, authority: 1 });
+    for (const mode of ["commands", "read_only", "disabled"] as const) {
+      const replay = compositionWithMode(runner, mode, ports).service;
+      const repeated = await assertDenied(() =>
+        replay.createApprovalRequest(input)
+      );
+      assertEquals(evidenceDigest(repeated), evidenceDigest(first));
+    }
+    await assertRejects(
+      () =>
+        compositionWithMode(runner, "read_only", ports).service
+          .createApprovalRequest({
+            ...input,
+            payload: { amount: 11 },
+          }),
+      Error,
+      "payload digest changed",
+    );
+    const counts = await denialCounts(pool, requestId, input.idempotencyKey);
+    assertEquals(counts, {
+      aggregate: 0,
+      history: 0,
+      audit: 0,
+      outbox: 0,
+      notification: 0,
+      dispatch: 0,
+      denial: 0,
+      evaluation: 1,
+      idempotency: 1,
+    });
     await pool.end();
   },
 });
@@ -228,7 +287,7 @@ function composition(
   outbox?: Pick<OutboxRepository, "append">,
   ports?: CountingApprovalPorts,
 ) {
-  return createPostgresWorkManagementTestComposition({
+  return createPostgresWorkManagementComposition({
     mode: "commands",
     transactions: runner,
     audit: new RecordingAuditPort(),
@@ -236,7 +295,7 @@ function composition(
     authorization: {
       authorize: allow,
       transactionSafe: true,
-      transactionMode: "postgres_integration_local",
+      transactionMode: "postgres_transaction_local",
     },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
     targets: ports ?? new ExactTargetPort(),
@@ -251,8 +310,10 @@ class CountingApprovalPorts
     ApprovalEvidencePort,
     ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   readonly calls = { target: 0, evidence: 0, authority: 0 };
+
+  constructor(private readonly denyAmount = false) {}
 
   validate(
     _scope: WorkScope,
@@ -296,7 +357,9 @@ class CountingApprovalPorts
         scope: input.scope,
         effectiveAt: "2026-08-06T11:00:00.000Z",
         expiresAt: "2026-08-06T13:00:00.000Z",
-        applicableLimits: [],
+        applicableLimits: this.denyAmount
+          ? [{ name: "amount_minor_ceiling", value: 1 }]
+          : [],
         humanOnly: true as const,
       },
       facts: authorityFacts(input.target, input.scope),
@@ -304,7 +367,47 @@ class CountingApprovalPorts
   }
 }
 
+function compositionWithMode(
+  runner: PostgresTransactionRunner,
+  mode: "disabled" | "read_only" | "commands",
+  ports: CountingApprovalPorts,
+) {
+  return createPostgresWorkManagementComposition({
+    mode,
+    transactions: runner,
+    audit: new RecordingAuditPort(),
+    authorization: {
+      authorize: allow,
+      transactionSafe: true,
+      transactionMode: "postgres_transaction_local",
+    },
+    clock: { now: () => "2026-08-06T12:00:00.000Z" },
+    targets: ports,
+    evidence: ports,
+    authority: ports,
+  });
+}
+
+async function assertDenied(
+  operation: () => Promise<unknown>,
+): Promise<WorkManagementAuthorityDeniedError> {
+  try {
+    await operation();
+  } catch (error) {
+    if (error instanceof WorkManagementAuthorityDeniedError) return error;
+    throw error;
+  }
+  throw new Error("Expected a governed authority denial.");
+}
+
+function evidenceDigest(error: WorkManagementAuthorityDeniedError): string {
+  if ("denialDigest" in error.evidence) return error.evidence.denialDigest;
+  return error.evidence.digest;
+}
+
 class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
+  readonly transactionSafe = true as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   private readonly delegate = new OutboxRepository();
 
   append(transaction: TransactionHandle, event: OutboxEvent): Promise<void> {
@@ -317,7 +420,7 @@ class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
 
 class ExactTargetPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   validate(
     _scope: WorkScope,
     value: TargetReference,
@@ -332,7 +435,7 @@ class ExactTargetPort implements ApprovalTargetPort {
 
 class EmptyEvidencePort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   validate(
     _scope: WorkScope,
     values: readonly EvidenceSnapshotReference[],
@@ -343,7 +446,7 @@ class EmptyEvidencePort implements ApprovalEvidencePort {
 
 class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
     const snapshot = {
       snapshotId: "authority-dispatch-v1",
@@ -386,6 +489,8 @@ function authorityFacts(target: TargetReference, scope: WorkScope) {
 }
 
 class RecordingAuditPort implements WorkManagementAuditPort {
+  readonly transactionSafe = true as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   private readonly repository = new PostgresAuditEventRepository();
 
   async append(transaction: TransactionHandle, event: WorkManagementEvent) {
@@ -511,6 +616,7 @@ async function resetDispatchContext(
       work_management.aggregate_history,
       work_management.approval_decision_history,
       work_management.command_results,
+      work_management.authority_denials,
       work_management.target_command_dispatches,
       work_management.authority_evaluations,
       work_management.command_preparations,
@@ -643,5 +749,62 @@ async function approvalCreationCounts(
     outbox: queries[3].rows[0].count,
     idempotency: queries[4].rows[0].count,
     results: queries[5].rows[0].count,
+  };
+}
+
+async function denialCounts(
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+  requestId: string,
+  key: string,
+) {
+  const values = [scope.tenantId, scope.workspaceId, scope.dealId, requestId];
+  const targetId = `${scope.workspaceId}|${scope.dealId}|${requestId}`;
+  const results = await Promise.all([
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.approval_requests_current WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND approval_request_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.aggregate_history WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM audit_activity.audit_events WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM platform.outbox WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.notifications WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ).catch(() => ({ rows: [{ count: 0 }] })),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.target_command_dispatches WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND approval_request_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.authority_denials WHERE denial_id LIKE $1",
+      [`authority_denial_v1_%`],
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.authority_evaluations",
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM platform.idempotency_records WHERE tenant_id=$1 AND actor_id=$2 AND command_type='create_approval_request' AND target_id=$3 AND idempotency_key=$4",
+      [scope.tenantId, requester.id, targetId, key],
+    ),
+  ]);
+  return {
+    aggregate: results[0].rows[0].count,
+    history: results[1].rows[0].count,
+    audit: results[2].rows[0].count,
+    outbox: results[3].rows[0].count,
+    notification: results[4].rows[0].count,
+    dispatch: results[5].rows[0].count,
+    denial: results[6].rows[0].count,
+    evaluation: results[7].rows[0].count,
+    idempotency: results[8].rows[0].count,
   };
 }

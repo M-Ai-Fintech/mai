@@ -252,7 +252,7 @@ function composition(
     authorization: {
       authorize: allow,
       transactionSafe: true,
-      transactionMode: "postgres_integration_local",
+      transactionMode: "postgres_transaction_local",
     },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
@@ -260,7 +260,7 @@ function composition(
 
 class RecordingAuditPort implements WorkManagementAuditPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   private readonly repository = new PostgresAuditEventRepository();
 
   async append(
@@ -275,7 +275,7 @@ class RecordingAuditPort implements WorkManagementAuditPort {
 
 class FailingAuditPort implements WorkManagementAuditPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "postgres_integration_local" as const;
+  readonly transactionMode = "postgres_transaction_local" as const;
   append(): Promise<string> {
     return Promise.reject(new Error("audit-failure"));
   }

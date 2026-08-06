@@ -24,6 +24,15 @@ export function findForbiddenResourceNames(
   }));
 }
 
+export function findForbiddenResourcePathNames(
+  path: string,
+): ResourceNamingViolation[] {
+  return [...path.matchAll(TASK_DERIVED_TOKEN)].map(([token]) => ({
+    path,
+    token,
+  }));
+}
+
 async function collectFiles(path: string): Promise<string[]> {
   const files: string[] = [];
   for await (const entry of Deno.readDir(path)) {
@@ -43,6 +52,7 @@ if (import.meta.main) {
     const extension = relative.slice(relative.lastIndexOf("."));
     if (BINARY_EXTENSIONS.has(extension)) continue;
     const content = await Deno.readTextFile(path);
+    violations.push(...findForbiddenResourcePathNames(relative));
     violations.push(...findForbiddenResourceNames(content, relative));
   }
   if (violations.length > 0) {

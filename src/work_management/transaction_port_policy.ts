@@ -29,19 +29,19 @@ export const WORK_MANAGEMENT_PORT_POLICY: Readonly<
   Record<WorkManagementPort, WorkManagementPortPolicy>
 > = Object.freeze({
   authorization: localPolicy(
-    "Evaluate through the MAI-106 transaction-local authorization adapter while the command transaction is open.",
+    "Evaluate through the PostgreSQL transaction-local authorization adapter while the command transaction is open.",
     ["replay_authorization", "finalize_transaction"],
   ),
   target: localPolicy(
-    "Resolve target identity and version through the MAI-106 transaction-local adapter.",
+    "Resolve target identity and version through the PostgreSQL transaction-local adapter.",
     ["finalize_transaction"],
   ),
   evidence: localPolicy(
-    "Validate immutable evidence references through the MAI-106 transaction-local adapter.",
+    "Validate immutable evidence references through the PostgreSQL transaction-local adapter.",
     ["finalize_transaction"],
   ),
   authority: localPolicy(
-    "Resolve the named human authority snapshot through the MAI-106 transaction-local adapter.",
+    "Resolve the named human authority snapshot through the PostgreSQL transaction-local adapter.",
     ["finalize_transaction"],
   ),
   audit: localPolicy(
@@ -109,7 +109,7 @@ function isTransactionLocalAdapter(value: unknown): boolean {
   const adapter = value as Record<string, unknown>;
   if (
     adapter.transactionSafe !== true ||
-    adapter.transactionMode !== "postgres_integration_local"
+    adapter.transactionMode !== "postgres_transaction_local"
   ) return false;
   return adapter.external !== true && adapter.networked !== true;
 }

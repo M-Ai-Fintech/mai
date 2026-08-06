@@ -13,14 +13,12 @@ import {
 } from "./ids.ts";
 import {
   type ApprovalPackage,
-  assertAuthorityEffective,
   assertDifferentActors,
   assertHumanActor,
   assertScope,
   type AuthorityRequirement,
   type AuthoritySnapshot,
   type EvidenceSnapshotReference,
-  stableSerialize,
   type TargetReference,
   WorkManagementError,
 } from "./model.ts";
@@ -29,13 +27,14 @@ import { parseAuthorityFacts } from "./authority_facts.ts";
 import {
   AuthorityDenialError,
   createAuthorityDenial,
-  denialReasonFromMessage,
+  GovernedAuthorityDenialError,
+  InvalidTrustedAuthorityResponseError,
 } from "./authority_denial.ts";
 
 export interface ApprovalTargetPort {
-  /** True only for MAI-106 transaction-local adapters. */
+  /** True only for PostgreSQL transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "postgres_integration_local";
+  readonly transactionMode?: "postgres_transaction_local";
   validate(
     scope: WorkScope,
     target: TargetReference,
@@ -44,9 +43,9 @@ export interface ApprovalTargetPort {
 }
 
 export interface ApprovalEvidencePort {
-  /** True only for MAI-106 transaction-local adapters. */
+  /** True only for PostgreSQL transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "postgres_integration_local";
+  readonly transactionMode?: "postgres_transaction_local";
   validate(
     scope: WorkScope,
     evidence: readonly EvidenceSnapshotReference[],
@@ -54,9 +53,9 @@ export interface ApprovalEvidencePort {
 }
 
 export interface ApprovalAuthoritySnapshotPort {
-  /** True only for MAI-106 transaction-local adapters. */
+  /** True only for PostgreSQL transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "postgres_integration_local";
+  readonly transactionMode?: "postgres_transaction_local";
   resolve(input: {
     readonly scope: WorkScope;
     readonly requester: ActorReference;
@@ -119,8 +118,7 @@ export async function buildServerApprovalPackageWithAuthority(
   try {
     return await buildServerApprovalPackageWithAuthorityCore(input, ports);
   } catch (error) {
-    const reason = governedDenialReason(error);
-    if (reason === undefined) throw error;
+    if (!(error instanceof GovernedAuthorityDenialError)) throw error;
     const denial = await createAuthorityDenial({
       stage: "pre_package",
       scope: input.scope,
@@ -132,7 +130,7 @@ export async function buildServerApprovalPackageWithAuthority(
       expectedTargetVersion: input.target.expectedVersion,
       authorizationSnapshotReference:
         input.authorization.authoritySnapshotReference,
-      reasons: [reason],
+      reasons: [error.reason],
       evaluatedAt: input.now,
       idempotencyIdentity: input.idempotencyIdentity ??
         `create_approval_request|${input.requestId}|${input.requester.id}`,
@@ -169,6 +167,7 @@ async function buildServerApprovalPackageWithAuthorityCore(
     requestedAction: input.requestedAction,
     authorization: input.authorization,
   });
+  assertTrustedAuthorityResponse(resolved);
   const facts = resolved.facts === undefined
     ? undefined
     : parseAuthorityFacts(resolved.facts);
@@ -197,20 +196,6 @@ async function buildServerApprovalPackageWithAuthorityCore(
   };
 }
 
-function governedDenialReason(error: unknown) {
-  if (!(error instanceof WorkManagementError)) return undefined;
-  if (
-    ![
-      "NAMED_APPROVER_REQUIRED",
-      "REFERENCE_MISMATCH",
-      "HUMAN_AUTHORITY_REQUIRED",
-      "SEPARATION_OF_DUTIES",
-      "SCOPE_MISMATCH",
-    ].includes(error.code)
-  ) return undefined;
-  return denialReasonFromMessage(error.message);
-}
-
 function assertTrustedAuthority(
   input: ServerApprovalPackageInput,
   target: TargetReference,
@@ -220,57 +205,125 @@ function assertTrustedAuthority(
   if (
     snapshot.actorId !== input.namedApproverId || snapshot.actorKind !== "human"
   ) {
-    throw new WorkManagementError(
-      "NAMED_APPROVER_REQUIRED",
+    throw new GovernedAuthorityDenialError(
+      snapshot.actorKind === "human"
+        ? "NAMED_APPROVER_MISMATCH"
+        : "HUMAN_ONLY_AUTHORITY_REQUIRED",
       `Authority snapshot "${snapshot.snapshotId}" actor "${snapshot.actorId}" does not match named approver "${input.namedApproverId}"; expected one active human authority.`,
     );
   }
-  assertScope(
-    input.scope,
-    snapshot.scope,
-    `Authority snapshot "${snapshot.snapshotId}"`,
-  );
-  assertScope(
-    input.scope,
-    requirement.scope,
-    `Authority requirement "${snapshot.snapshotId}"`,
-  );
   if (
-    requirement.namedApproverId !== input.namedApproverId ||
-    requirement.policyVersion !== snapshot.policyVersion ||
-    requirement.snapshotReference !== snapshot.snapshotId ||
-    requirement.humanOnly !== true
+    !sameScope(input.scope, snapshot.scope) ||
+    !sameScope(input.scope, requirement.scope)
   ) {
-    throw new WorkManagementError(
-      "REFERENCE_MISMATCH",
-      `Authority requirement "${snapshot.snapshotId}" does not match its named approver, policy, snapshot, or human-only contract; expected one server-verified authority.`,
+    throw new GovernedAuthorityDenialError(
+      "DEAL_SCOPE_MISMATCH",
+      `Authority snapshot "${snapshot.snapshotId}" does not match the request scope; expected the same tenant, workspace, and Deal.`,
+    );
+  }
+  if (requirement.namedApproverId !== input.namedApproverId) {
+    throw new GovernedAuthorityDenialError(
+      "NAMED_APPROVER_MISMATCH",
+      `Authority requirement "${snapshot.snapshotId}" named approver differs from the requested approver; expected exact identity equality.`,
+    );
+  }
+  if (requirement.policyVersion !== snapshot.policyVersion) {
+    throw new GovernedAuthorityDenialError(
+      "POLICY_VERSION_MISMATCH",
+      `Authority requirement "${snapshot.snapshotId}" policy version differs from its snapshot; expected exact version equality.`,
+    );
+  }
+  if (requirement.snapshotReference !== snapshot.snapshotId) {
+    throw new GovernedAuthorityDenialError(
+      "SNAPSHOT_REFERENCE_MISMATCH",
+      `Authority requirement snapshot reference differs from "${snapshot.snapshotId}"; expected exact reference equality.`,
+    );
+  }
+  if (requirement.humanOnly !== true) {
+    throw new GovernedAuthorityDenialError(
+      "HUMAN_ONLY_AUTHORITY_REQUIRED",
+      `Authority requirement "${snapshot.snapshotId}" is not human-only; expected an active human approver.`,
     );
   }
   if (requirement.commandType !== input.requestedAction) {
-    throw new WorkManagementError(
-      "REFERENCE_MISMATCH",
-      `Requested approval action "${input.requestedAction}" differs from server-approved command "${requirement.commandType}"; expected the governed authority requirement.`,
+    throw new GovernedAuthorityDenialError(
+      "REQUESTED_ACTION_MISMATCH",
+      `Requested approval action "${input.requestedAction}" differs from server-approved command "${requirement.commandType}"; expected exact command equality.`,
     );
   }
-  if (stableSerialize(requirement.target) !== stableSerialize(target)) {
-    throw new WorkManagementError(
-      "REFERENCE_MISMATCH",
-      `Authority requirement "${snapshot.snapshotId}" target differs from the validated target; expected exact aggregate, ID, scope, and version.`,
+  if (requirement.target.aggregateType !== target.aggregateType) {
+    throw new GovernedAuthorityDenialError(
+      "TARGET_TYPE_MISMATCH",
+      `Authority requirement target type "${requirement.target.aggregateType}" differs from validated target type "${target.aggregateType}"; expected exact target identity.`,
     );
   }
-  assertAuthorityEffective(
-    requirement,
-    input.now,
-    String(packageIdFor(input.requestId)),
-  );
-  const authorizedReference = input.authorization.authoritySnapshotReference;
+  if (requirement.target.aggregateId !== target.aggregateId) {
+    throw new GovernedAuthorityDenialError(
+      "TARGET_ID_MISMATCH",
+      `Authority requirement target ID "${requirement.target.aggregateId}" differs from validated target ID "${target.aggregateId}"; expected exact target identity.`,
+    );
+  }
+  if (requirement.target.expectedVersion !== target.expectedVersion) {
+    throw new GovernedAuthorityDenialError(
+      "TARGET_VERSION_MISMATCH",
+      `Authority requirement target version "${requirement.target.expectedVersion}" differs from validated target version "${target.expectedVersion}"; expected exact version equality.`,
+    );
+  }
+  if (requirement.target.scope.dealId !== target.scope.dealId) {
+    throw new GovernedAuthorityDenialError(
+      "DEAL_SCOPE_MISMATCH",
+      `Authority requirement target Deal "${requirement.target.scope.dealId}" differs from validated target Deal "${target.scope.dealId}"; expected exact scope equality.`,
+    );
+  }
+  const evaluatedAt = Date.parse(input.now);
+  const effectiveAt = Date.parse(requirement.effectiveAt);
+  const expiresAt = Date.parse(requirement.expiresAt);
+  if (evaluatedAt < effectiveAt) {
+    throw new GovernedAuthorityDenialError(
+      "AUTHORITY_NOT_YET_EFFECTIVE",
+      `Authority requirement "${snapshot.snapshotId}" is not effective at "${input.now}"; expected the active authority window.`,
+    );
+  }
+  if (evaluatedAt >= expiresAt) {
+    throw new GovernedAuthorityDenialError(
+      "AUTHORITY_EXPIRED",
+      `Authority requirement "${snapshot.snapshotId}" expired at "${requirement.expiresAt}"; expected the active authority window.`,
+    );
+  }
   if (
-    authorizedReference !== undefined &&
-    authorizedReference !== snapshot.snapshotId
+    input.authorization.authoritySnapshotReference !== undefined &&
+    input.authorization.authoritySnapshotReference !== snapshot.snapshotId
   ) {
-    throw new WorkManagementError(
-      "REFERENCE_MISMATCH",
-      `Authority snapshot "${snapshot.snapshotId}" differs from authorization reference "${authorizedReference}"; expected the governed authorization snapshot.`,
+    throw new GovernedAuthorityDenialError(
+      "AUTHORIZATION_SNAPSHOT_MISMATCH",
+      `Authority snapshot "${snapshot.snapshotId}" differs from authorization reference "${input.authorization.authoritySnapshotReference}"; expected exact snapshot equality.`,
+    );
+  }
+}
+
+function sameScope(
+  left: WorkScope,
+  right: WorkScope,
+): boolean {
+  return left.tenantId === right.tenantId &&
+    left.workspaceId === right.workspaceId && left.dealId === right.dealId;
+}
+
+function assertTrustedAuthorityResponse(
+  value: unknown,
+): asserts value is ResolvedApprovalAuthority {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new InvalidTrustedAuthorityResponseError(
+      `Trusted authority response was not an object; expected requirement and snapshot fields.`,
+    );
+  }
+  const response = value as Record<string, unknown>;
+  if (
+    typeof response.requirement !== "object" || response.requirement === null ||
+    typeof response.snapshot !== "object" || response.snapshot === null
+  ) {
+    throw new InvalidTrustedAuthorityResponseError(
+      `Trusted authority response was incomplete; expected requirement and snapshot objects.`,
     );
   }
 }
