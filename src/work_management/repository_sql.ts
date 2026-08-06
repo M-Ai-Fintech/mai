@@ -64,6 +64,20 @@ export class PostgresWorkManagementRepository
     return row === undefined ? undefined : taskFromRow(row);
   }
 
+  async listTasksByWorkstream(
+    scope: WorkScope,
+    workstreamId: WorkstreamId,
+  ): Promise<readonly Task[]> {
+    const result = await this.transaction.query<TaskRow>(
+      `SELECT task_id AS "taskId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", workstream_id AS "workstreamId", version, document, created_at AS "createdAt", updated_at AS "updatedAt"
+       FROM work_management.tasks_current
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND workstream_id = $4
+       ORDER BY task_id`,
+      [scope.tenantId, scope.workspaceId, scope.dealId, workstreamId],
+    );
+    return result.rows.map(taskFromRow);
+  }
+
   async findApprovalRequest(
     scope: WorkScope,
     id: ApprovalRequestId,

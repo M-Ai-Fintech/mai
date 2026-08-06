@@ -16,7 +16,6 @@ import {
   assertExpectedVersion,
   assertParentChain,
   requireApproval,
-  requireOwnedTask,
   requireTask,
   requireVersion,
   requireWorkstream,
@@ -157,16 +156,14 @@ export class WorkManagementService {
           current.state,
         );
         assertExpectedVersion(input.id, current.version, input.expectedVersion);
-        const tasks = await Promise.all(
-          current.taskIds.map((id) => transaction.findTask(input.scope, id)),
-        );
+        const tasks = input.toState === "completed"
+          ? await transaction.listTasksByWorkstream(input.scope, current.id)
+          : [];
         const next = transitionWorkstream(current, {
           toState: input.toState,
           actor: input.actor,
           now: this.options.clock.now(),
-          tasks: tasks.map((task, index) =>
-            requireOwnedTask(task, current, index)
-          ),
+          tasks,
         });
         await transaction.saveWorkstream(next, current.version);
         return outcome(next, "workstream.state_changed");

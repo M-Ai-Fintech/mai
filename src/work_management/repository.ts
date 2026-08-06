@@ -60,6 +60,10 @@ export interface WorkManagementTransaction {
     id: WorkstreamId,
   ): Promise<Workstream | undefined>;
   findTask(scope: WorkScope, id: TaskId): Promise<Task | undefined>;
+  listTasksByWorkstream(
+    scope: WorkScope,
+    workstreamId: WorkstreamId,
+  ): Promise<readonly Task[]>;
   findApprovalRequest(
     scope: WorkScope,
     id: ApprovalRequestId,
@@ -125,6 +129,20 @@ export class InMemoryWorkManagementRepository
 
   findTask(scope: WorkScope, id: TaskId): Promise<Task | undefined> {
     return Promise.resolve(clone(this.tasks.get(key(scope, id))));
+  }
+
+  listTasksByWorkstream(
+    scope: WorkScope,
+    workstreamId: WorkstreamId,
+  ): Promise<readonly Task[]> {
+    return Promise.resolve(
+      [...this.tasks.values()].filter((task) =>
+        task.workstreamId === workstreamId &&
+        key(task, task.id) === key(scope, task.id)
+      ).sort((left, right) => left.id.localeCompare(right.id)).map(
+        cloneRequired,
+      ),
+    );
   }
 
   findApprovalRequest(

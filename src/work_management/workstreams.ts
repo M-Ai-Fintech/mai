@@ -80,8 +80,9 @@ function assertTasksComplete(
   workstream: Workstream,
   tasks: readonly Task[],
 ): void {
+  const ownedTasks = new Map(tasks.map((task) => [task.id, task]));
   for (const taskId of workstream.taskIds) {
-    const task = tasks.find((candidate) => candidate.id === taskId);
+    const task = ownedTasks.get(taskId);
     if (task === undefined) {
       throw new WorkManagementError(
         "INCOMPLETE_WORK",
@@ -95,6 +96,25 @@ function assertTasksComplete(
       );
     }
   }
+  for (const task of tasks) assertTaskBackReference(workstream, task);
+  if (ownedTasks.size !== workstream.taskIds.length) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Workstream "${workstream.id}" authoritative membership has "${workstream.taskIds.length}" Task IDs but "${ownedTasks.size}" Task back-references were found; expected exact membership equivalence.`,
+    );
+  }
+}
+
+function assertTaskBackReference(
+  workstream: Workstream,
+  task: Task,
+): void {
+  assertScope(workstreamScope(workstream), taskScope(task), "Task membership");
+  if (task.workstreamId === workstream.id) return;
+  throw new WorkManagementError(
+    "REFERENCE_MISMATCH",
+    `Task "${task.id}" back-reference "${task.workstreamId}" conflicts with Workstream "${workstream.id}"; expected the authoritative owner ID.`,
+  );
 }
 
 function changed(

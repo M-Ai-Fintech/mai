@@ -94,6 +94,32 @@ Deno.test("service completion fails closed for missing authoritative Task state"
   );
 });
 
+Deno.test("service completion fails closed for an unlisted Task back-reference", async () => {
+  const fixture = testComposition();
+  const workstream = await fixture.service.createWorkstream({
+    ...command(workstreamId("workstream_unlisted-task"), "unlisted-ws"),
+    name: "Unlisted Task",
+    ownerId: human.id,
+  });
+  await fixture.service.transitionWorkstream({
+    ...command(workstream.id, "unlisted-active", 1),
+    toState: "active",
+  });
+  await fixture.repository.saveTask(
+    storedTaskWithoutParent(taskId("task_unlisted"), workstream.id),
+    0,
+  );
+  await assertRejects(
+    () =>
+      fixture.service.transitionWorkstream({
+        ...command(workstream.id, "unlisted-complete", 2),
+        toState: "completed",
+      }),
+    Error,
+    "exact membership equivalence",
+  );
+});
+
 Deno.test("service ignores unrelated open Tasks in another exact scope", async () => {
   const fixture = testComposition();
   const workstream = await fixture.service.createWorkstream({
@@ -311,4 +337,13 @@ function storedTask(
     createdAt: "2026-08-06T12:00:00.000Z",
     updatedAt: "2026-08-06T12:00:00.000Z",
   };
+}
+
+function storedTaskWithoutParent(
+  id: ReturnType<typeof taskId>,
+  ownerId: ReturnType<typeof workstreamId>,
+) {
+  const task = storedTask(id, ownerId, taskId("task_unused-parent"));
+  const { parentTaskId: _parentTaskId, ...withoutParent } = task;
+  return withoutParent;
 }

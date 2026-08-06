@@ -93,6 +93,15 @@ export function parseStoredWorkstream(row: WorkstreamRow): Workstream {
 
 export function parseStoredTask(row: TaskRow): Task {
   const document = record(row.document, `Task "${row.taskId}" document`);
+  const documentWorkstreamId = workstreamId(
+    text(document.workstreamId, "Task document Workstream ID"),
+  );
+  if (documentWorkstreamId !== row.workstreamId) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Task "${row.taskId}" document Workstream "${documentWorkstreamId}" differs from row Workstream "${row.workstreamId}"; expected one validated back-reference.`,
+    );
+  }
   const target = document.target === undefined
     ? undefined
     : parseTarget(document.target);
@@ -102,7 +111,7 @@ export function parseStoredTask(row: TaskRow): Task {
     tenantId: tenant(row.tenantId),
     workspaceId: workspace(row.workspaceId),
     dealId: deal(row.dealId),
-    workstreamId: workstreamId(row.workstreamId),
+    workstreamId: documentWorkstreamId,
     ...(document.parentTaskId === undefined ? {} : {
       parentTaskId: taskId(text(document.parentTaskId, "Task parent ID")),
     }),

@@ -79,19 +79,6 @@ export async function requireApproval(
   );
 }
 
-export function requireOwnedTask(
-  task: Task | undefined,
-  owner: Workstream,
-  index: number,
-): Task {
-  if (task !== undefined) return task;
-  const id = owner.taskIds[index];
-  throw new WorkManagementError(
-    "INCOMPLETE_WORK",
-    `Workstream "${owner.id}" cannot complete because Task "${id}" is missing; expected every authoritative membership row.`,
-  );
-}
-
 export async function assertParentChain(
   transaction: WorkManagementTransaction,
   task: Task,
