@@ -193,9 +193,9 @@ export class WorkManagementService {
           input.workstreamId,
         );
         await this.authorization.requireAllowed(
-          input,
-          "create",
-          "task",
+          { ...input, id: workstream.id },
+          "attach_task",
+          "workstream",
           true,
           workstream.state,
         );

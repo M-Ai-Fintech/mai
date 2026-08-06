@@ -6,6 +6,9 @@ import {
 } from "../../src/platform/authz/v1.ts";
 import { parseIdempotencyKey } from "../../src/platform/api/v1.ts";
 import { createInMemoryWorkManagementTestComposition } from "../../src/work_management/composition.ts";
+import type {
+  WorkManagementAuthorizationInput,
+} from "../../src/work_management/authorization_service.ts";
 import {
   actor,
   deal,
@@ -210,6 +213,60 @@ Deno.test("service rejects an indirect persisted parent cycle", async () => {
   );
 });
 
+Deno.test("Task creation independently authorizes exact Workstream attachment atomically", async () => {
+  const authorization = new AttachmentAuthorizationFake();
+  const fixture = createInMemoryWorkManagementTestComposition({
+    authorization,
+    clock: fixedClock(),
+  });
+  const workstream = await fixture.service.createWorkstream({
+    ...command(workstreamId("workstream_attachment-auth"), "attachment-ws"),
+    name: "Attachment authorization",
+    ownerId: human.id,
+  });
+  authorization.reset();
+  const taskCommand = {
+    ...command(taskId("task_attachment-auth"), "attachment-task", 1),
+    workstreamId: workstream.id,
+    title: "Protected attachment",
+    assigneeId: human.id,
+  };
+
+  await assertRejects(
+    () => fixture.service.createTask(taskCommand),
+    Error,
+    "attach_task workstream",
+  );
+  assertEquals(authorization.requests, [
+    { action: "create", kind: "task", id: taskCommand.id, state: undefined },
+    {
+      action: "attach_task",
+      kind: "workstream",
+      id: workstream.id,
+      state: "planned",
+    },
+  ]);
+  assertEquals(
+    await fixture.repository.findTask(scope, taskCommand.id),
+    undefined,
+  );
+  assertEquals(
+    await fixture.repository.findWorkstream(scope, workstream.id),
+    workstream,
+  );
+  assertEquals(
+    await fixture.repository.listHistory(scope, "task", taskCommand.id),
+    [],
+  );
+
+  authorization.allowAttachment();
+  const task = await fixture.service.createTask(taskCommand);
+  const owner = await fixture.repository.findWorkstream(scope, workstream.id);
+  assertEquals(task.id, taskCommand.id);
+  assertEquals(owner?.taskIds, [task.id]);
+  assertEquals(owner?.version, 2);
+});
+
 async function createOwnedTaskFixture(
   service:
     import("../../src/work_management/application_service.ts").WorkManagementService,
@@ -315,6 +372,52 @@ function allowProjection(): AuthorizationDecision {
         { name: field("id"), classification: "public" },
         { name: field("owner_id"), classification: "relationship_ownership" },
       ],
+    },
+  };
+}
+
+class AttachmentAuthorizationFake {
+  private attachmentAllowed = false;
+  readonly requests: Array<{
+    readonly action: string;
+    readonly kind: string;
+    readonly id: string;
+    readonly state: string | undefined;
+  }> = [];
+
+  authorize(input: WorkManagementAuthorizationInput): AuthorizationDecision {
+    this.requests.push({
+      action: input.action,
+      kind: input.resource.kind,
+      id: input.resource.id,
+      state: input.resourceState,
+    });
+    if (input.action === action("attach_task") && !this.attachmentAllowed) {
+      return denyAttachment();
+    }
+    return allowAll();
+  }
+
+  allowAttachment(): void {
+    this.attachmentAllowed = true;
+  }
+
+  reset(): void {
+    this.requests.length = 0;
+  }
+}
+
+function denyAttachment(): AuthorizationDecision {
+  return {
+    outcome: "deny",
+    reasonCode: "NO_MATCHING_GRANT",
+    allowedActions: [],
+    approvedScope: undefined,
+    fieldMask: {
+      include: [],
+      omit: [],
+      redact: [],
+      approvedClassifications: [],
     },
   };
 }
