@@ -14,10 +14,13 @@ export const membershipReconciliationSql = `
       'task_document_back_reference_mismatch', 'task_owner_workstream_missing',
       'task_owner_scope_mismatch', 'task_missing_from_authoritative_membership',
       'authoritative_task_missing', 'authoritative_task_wrong_workstream',
-      'authoritative_task_scope_mismatch'
+      'authoritative_task_scope_mismatch', 'ambiguous_legacy_ownership',
+      'terminal_workstream_non_terminal_task'
     )),
     severity TEXT NOT NULL CHECK (severity = 'blocking'),
     action TEXT NOT NULL CHECK (action = 'block_commands'),
+    required_human_action TEXT NOT NULL CHECK (required_human_action IN
+      ('repair_membership', 'map_membership', 'review_ambiguous_ownership')),
     status TEXT NOT NULL CHECK (status = 'unresolved'),
     resolution JSONB CHECK (resolution IS NULL),
     tenant_id TEXT,
@@ -45,13 +48,14 @@ export const membershipReconciliationSql = `
   );
   CREATE TABLE work_management.membership_rollout_events (
     event_id TEXT PRIMARY KEY,
+    event_sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
     mode TEXT NOT NULL CHECK (mode IN ('disabled', 'read_only', 'commands')),
     scan_id TEXT REFERENCES work_management.membership_reconciliation_scans(scan_id),
     actor_id TEXT NOT NULL,
     recorded_at TIMESTAMPTZ NOT NULL
   );
   CREATE INDEX work_management_membership_rollout_latest_idx
-    ON work_management.membership_rollout_events (recorded_at DESC, event_id DESC);
+    ON work_management.membership_rollout_events (event_sequence DESC);
 
   CREATE FUNCTION work_management.membership_finding_identity(
     requested_scan_id TEXT, requested_class TEXT, requested_scope JSONB,
@@ -80,6 +84,25 @@ export const membershipReconciliationSql = `
     BEFORE UPDATE OR DELETE ON work_management.membership_rollout_events
     FOR EACH ROW EXECUTE FUNCTION work_management.reject_membership_evidence_mutation();
 
+  CREATE FUNCTION work_management.reject_direct_rollout_insert()
+  RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN
+    IF current_setting('work_management.rollout_writer', true) IS DISTINCT FROM 'governed' THEN
+      RAISE EXCEPTION 'membership rollout events require the governed activation function';
+    END IF;
+    RETURN NEW;
+  END;
+  $$;
+  CREATE TRIGGER membership_rollout_no_direct_insert
+    BEFORE INSERT ON work_management.membership_rollout_events
+    FOR EACH ROW EXECUTE FUNCTION work_management.reject_direct_rollout_insert();
+
+  CREATE FUNCTION work_management.lock_membership_rollout()
+  RETURNS VOID LANGUAGE sql AS $$
+    SELECT pg_advisory_xact_lock(hashtextextended(
+      'work_management:membership-rollout', 0))
+  $$;
+
   CREATE FUNCTION work_management.insert_membership_finding(
     requested_scan_id TEXT, requested_class TEXT, requested_tenant TEXT,
     requested_workspace TEXT, requested_deal TEXT, requested_workstream TEXT,
@@ -98,11 +121,22 @@ export const membershipReconciliationSql = `
       requested_scan_id, requested_class, finding_scope, requested_values);
     INSERT INTO work_management.membership_reconciliation_findings (
       finding_id, scan_id, finding_class, severity, action, status, resolution,
+      required_human_action,
       tenant_id, workspace_id, deal_id, workstream_id, workstream_version,
       task_id, task_version, detected_values, detected_at
     ) VALUES (
       generated_finding_id, requested_scan_id, requested_class, 'blocking',
-      'block_commands', 'unresolved', NULL, requested_tenant,
+      'block_commands', 'unresolved', NULL,
+      CASE
+        WHEN requested_class = 'ambiguous_legacy_ownership'
+          THEN 'review_ambiguous_ownership'
+        WHEN requested_class IN ('authoritative_task_missing',
+          'authoritative_task_wrong_workstream',
+          'authoritative_task_scope_mismatch')
+          THEN 'map_membership'
+        ELSE 'repair_membership'
+      END,
+      requested_tenant,
       requested_workspace, requested_deal, requested_workstream,
       requested_workstream_version, requested_task, requested_task_version,
       requested_values, requested_detected_at
@@ -150,6 +184,27 @@ export const membershipReconciliationSql = `
     END LOOP;
 
     FOR source_record IN
+      SELECT tenant_id, workspace_id, deal_id, workstream_id, version,
+        document
+      FROM work_management.workstreams_current
+      WHERE jsonb_typeof(document->'taskIds') = 'array'
+        AND EXISTS (
+          SELECT 1
+          FROM jsonb_array_elements(document->'taskIds') AS task_member
+          WHERE jsonb_typeof(task_member) <> 'string'
+             OR task_member #>> '{}' !~ '^task_[a-z0-9]+(?:[-_][a-z0-9]+)*$'
+        )
+    LOOP
+      PERFORM work_management.insert_membership_finding(requested_scan_id,
+        'malformed_workstream_task_ids', to_jsonb(source_record)->>'tenant_id',
+        to_jsonb(source_record)->>'workspace_id', to_jsonb(source_record)->>'deal_id',
+        to_jsonb(source_record)->>'workstream_id',
+        (to_jsonb(source_record)->>'version')::bigint, NULL, NULL,
+        jsonb_build_object('taskIds', to_jsonb(source_record)->'document'->'taskIds',
+          'reason', 'invalid_task_id_element'), requested_detected_at);
+    END LOOP;
+
+    FOR source_record IN
       WITH expanded_memberships AS (
         SELECT tenant_id, workspace_id, deal_id, workstream_id, version,
           jsonb_array_elements_text(document->'taskIds') AS expanded_task_id
@@ -168,6 +223,32 @@ export const membershipReconciliationSql = `
         to_jsonb(source_record)->>'workstream_id', (to_jsonb(source_record)->>'version')::bigint,
         to_jsonb(source_record)->>'expanded_task_id', NULL,
         jsonb_build_object('occurrences', (to_jsonb(source_record)->>'occurrence_count')::bigint),
+        requested_detected_at);
+    END LOOP;
+
+    FOR source_record IN
+      WITH expanded_memberships AS (
+        SELECT tenant_id, workspace_id, deal_id, workstream_id, version,
+          jsonb_array_elements_text(document->'taskIds') AS task_id
+        FROM work_management.workstreams_current
+        WHERE jsonb_typeof(document->'taskIds') = 'array'
+      )
+      SELECT tenant_id, workspace_id, deal_id, task_id,
+        min(workstream_id) AS workstream_id, max(version) AS version,
+        count(*)::bigint AS owner_count,
+        jsonb_agg(workstream_id ORDER BY workstream_id) AS owners
+      FROM expanded_memberships
+      GROUP BY tenant_id, workspace_id, deal_id, task_id
+      HAVING count(DISTINCT workstream_id) > 1
+    LOOP
+      PERFORM work_management.insert_membership_finding(requested_scan_id,
+        'ambiguous_legacy_ownership', to_jsonb(source_record)->>'tenant_id',
+        to_jsonb(source_record)->>'workspace_id', to_jsonb(source_record)->>'deal_id',
+        to_jsonb(source_record)->>'workstream_id',
+        (to_jsonb(source_record)->>'version')::bigint,
+        to_jsonb(source_record)->>'task_id', NULL,
+        jsonb_build_object('owners', to_jsonb(source_record)->'owners',
+          'ownerCount', (to_jsonb(source_record)->>'owner_count')::bigint),
         requested_detected_at);
     END LOOP;
 
@@ -229,12 +310,14 @@ export const membershipReconciliationSql = `
       ), workstream_owners AS (
         SELECT tenant_id AS owner_tenant_id,
           workspace_id AS owner_workspace_id, deal_id AS owner_deal_id,
-          workstream_id AS owner_workstream_id, document AS owner_document
+          workstream_id AS owner_workstream_id, version AS owner_workstream_version,
+          document AS owner_document
         FROM work_management.workstreams_current
       )
       SELECT task_tenant_id AS tenant_id, task_workspace_id AS workspace_id,
         task_deal_id AS deal_id, task_workstream_id AS workstream_id,
-        owned_task_id AS task_id, owned_task_version AS version
+        owner_workstream_version AS workstream_version,
+        owned_task_id AS task_id, owned_task_version AS task_version
       FROM task_owners JOIN workstream_owners
         ON task_tenant_id = owner_tenant_id
         AND task_workspace_id = owner_workspace_id
@@ -246,9 +329,45 @@ export const membershipReconciliationSql = `
       PERFORM work_management.insert_membership_finding(requested_scan_id,
         'task_missing_from_authoritative_membership', to_jsonb(source_record)->>'tenant_id',
         to_jsonb(source_record)->>'workspace_id', to_jsonb(source_record)->>'deal_id',
-        to_jsonb(source_record)->>'workstream_id', NULL, to_jsonb(source_record)->>'task_id',
-        (to_jsonb(source_record)->>'version')::bigint, jsonb_build_object('taskWorkstreamId',
+        to_jsonb(source_record)->>'workstream_id',
+        (to_jsonb(source_record)->>'workstream_version')::bigint,
+        to_jsonb(source_record)->>'task_id',
+        (to_jsonb(source_record)->>'task_version')::bigint, jsonb_build_object('taskWorkstreamId',
           to_jsonb(source_record)->>'workstream_id'), requested_detected_at);
+    END LOOP;
+
+    FOR source_record IN
+      SELECT owner_tenant_id AS tenant_id, owner_workspace_id AS workspace_id,
+        owner_deal_id AS deal_id, owner_workstream_id AS workstream_id,
+        owner_version AS workstream_version, task_id, task_version,
+        owner_state AS workstream_state, task_state
+      FROM (
+        SELECT tenant_id AS owner_tenant_id, workspace_id AS owner_workspace_id,
+          deal_id AS owner_deal_id, workstream_id AS owner_workstream_id,
+          version AS owner_version, document->>'state' AS owner_state
+        FROM work_management.workstreams_current
+      ) AS owners
+      JOIN (
+        SELECT tenant_id AS task_tenant_id, workspace_id AS task_workspace_id,
+          deal_id AS task_deal_id, workstream_id AS task_workstream_id,
+          task_id, version AS task_version, document->>'state' AS task_state
+        FROM work_management.tasks_current
+      ) AS tasks ON task_tenant_id = owner_tenant_id
+        AND task_workspace_id = owner_workspace_id
+        AND task_deal_id = owner_deal_id
+        AND task_workstream_id = owner_workstream_id
+      WHERE owner_state IN ('completed', 'cancelled')
+        AND task_state NOT IN ('completed', 'cancelled')
+    LOOP
+      PERFORM work_management.insert_membership_finding(requested_scan_id,
+        'terminal_workstream_non_terminal_task', to_jsonb(source_record)->>'tenant_id',
+        to_jsonb(source_record)->>'workspace_id', to_jsonb(source_record)->>'deal_id',
+        to_jsonb(source_record)->>'workstream_id',
+        (to_jsonb(source_record)->>'workstream_version')::bigint,
+        to_jsonb(source_record)->>'task_id',
+        (to_jsonb(source_record)->>'task_version')::bigint,
+        jsonb_build_object('workstreamState', to_jsonb(source_record)->>'workstream_state',
+          'taskState', to_jsonb(source_record)->>'task_state'), requested_detected_at);
     END LOOP;
 
     FOR source_record IN
@@ -373,6 +492,17 @@ export const membershipReconciliationSql = `
       END IF;
       RETURN;
     END IF;
+    IF requested_resolution->>'action' NOT IN ('mapped', 'retained')
+      OR requested_resolution->>'retained' IS DISTINCT FROM 'true'
+      OR jsonb_typeof(requested_resolution->'evidence') IS DISTINCT FROM 'object' THEN
+      RAISE EXCEPTION 'membership resolution % must retain immutable evidence with action mapped or retained and an evidence object',
+        requested_resolution_id;
+    END IF;
+    IF finding_record->>'finding_class' = 'ambiguous_legacy_ownership'
+      AND requested_resolution->>'action' IS DISTINCT FROM 'retained' THEN
+      RAISE EXCEPTION 'ambiguous membership finding % requires retained review evidence',
+        requested_finding_id;
+    END IF;
     INSERT INTO work_management.membership_reconciliation_resolutions
       (resolution_id, finding_id, action, status, resolution, resolved_by,
         recorded_at) VALUES (requested_resolution_id, requested_finding_id,
@@ -389,6 +519,8 @@ export const membershipReconciliationSql = `
     existing_event JSONB;
     latest_scan_id TEXT;
   BEGIN
+    PERFORM work_management.lock_membership_rollout();
+    PERFORM set_config('work_management.rollout_writer', 'governed', true);
     SELECT to_jsonb(membership_rollout_events) INTO existing_event
       FROM work_management.membership_rollout_events
       WHERE event_id = requested_event_id;
@@ -436,7 +568,7 @@ export const membershipReconciliationSql = `
   RETURNS boolean LANGUAGE sql STABLE AS $$
     SELECT COALESCE((SELECT mode = 'commands'
       FROM work_management.membership_rollout_events
-      ORDER BY recorded_at DESC, event_id DESC LIMIT 1), false)
+      ORDER BY event_sequence DESC LIMIT 1), false)
       AND NOT EXISTS (
         SELECT 1 FROM work_management.membership_reconciliation_status
         WHERE severity = 'blocking' AND current_status = 'unresolved'

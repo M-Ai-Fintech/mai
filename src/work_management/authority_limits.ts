@@ -62,6 +62,13 @@ export function evaluateAuthorityLimits(
 }
 
 function parseTypedAuthorityLimit(value: AuthorityLimit): TypedAuthorityLimit {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw invalidLimit(String(value), "an object with exactly name and value");
+  }
+  const keys = Object.keys(value as object);
+  if (keys.length !== 2 || !keys.includes("name") || !keys.includes("value")) {
+    throw invalidLimit(value.name, "an object with exactly name and value");
+  }
   switch (value.name) {
     case "amount_minor_ceiling":
       return {

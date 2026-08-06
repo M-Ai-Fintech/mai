@@ -149,15 +149,21 @@ Deno.test({
       targetOutbox: 1,
       approvalEvents: 1,
     });
-    const proof = await pool.query<{ readonly dispatch: Record<string, unknown> }>(
+    const proof = await pool.query<
+      { readonly dispatch: Record<string, unknown> }
+    >(
       "SELECT dispatch FROM work_management.target_command_dispatches WHERE approval_request_id=$1",
       [requestId],
     );
     const dispatch = proof.rows[0]?.dispatch;
-    if (dispatch === undefined) throw new Error("Dispatch proof row is missing.");
+    if (dispatch === undefined) {
+      throw new Error("Dispatch proof row is missing.");
+    }
+    const authorityProof = dispatch.authorityProof;
     assertEquals(
-      typeof dispatch.authorityProof?.proofId,
-      "string",
+      typeof authorityProof === "object" && authorityProof !== null &&
+        typeof (authorityProof as Record<string, unknown>).proofId === "string",
+      true,
     );
     await pool.end();
   },
@@ -224,7 +230,11 @@ function composition(
     transactions: runner,
     audit: new RecordingAuditPort(),
     ...(outbox === undefined ? {} : { outbox }),
-    authorization: { authorize: allow, transactionSafe: true },
+    authorization: {
+      authorize: allow,
+      transactionSafe: true,
+      transactionMode: "mai106_local",
+    },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
     targets: ports ?? new ExactTargetPort(),
     evidence: ports ?? new EmptyEvidencePort(),
@@ -238,6 +248,7 @@ class CountingApprovalPorts
     ApprovalEvidencePort,
     ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   readonly calls = { target: 0, evidence: 0, authority: 0 };
 
   validate(
@@ -303,6 +314,7 @@ class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
 
 class ExactTargetPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   validate(
     _scope: WorkScope,
     value: TargetReference,
@@ -317,6 +329,7 @@ class ExactTargetPort implements ApprovalTargetPort {
 
 class EmptyEvidencePort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   validate(
     _scope: WorkScope,
     values: readonly EvidenceSnapshotReference[],
@@ -327,6 +340,7 @@ class EmptyEvidencePort implements ApprovalEvidencePort {
 
 class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
     const snapshot = {
       snapshotId: "authority-dispatch-v1",

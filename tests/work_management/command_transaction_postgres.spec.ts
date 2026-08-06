@@ -171,7 +171,11 @@ function composition(
     mode: "commands",
     transactions: runner,
     audit,
-    authorization: { authorize: allow, transactionSafe: true },
+    authorization: {
+      authorize: allow,
+      transactionSafe: true,
+      transactionMode: "mai106_local",
+    },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
 }

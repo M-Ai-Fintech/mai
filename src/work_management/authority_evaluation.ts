@@ -373,15 +373,28 @@ function parseWindow(value: unknown): AuthorityEvaluationWindow {
 
 function assertEvaluationSemantics(value: AuthorityEvaluation): void {
   assertScope(value.scope, value.facts.scope, "Persisted authority evaluation");
-  const denied = value.limitResults.filter((result) => !result.satisfied).map((
-    result,
-  ) => result.reason);
-  const expectedOutcome = value.reasons[0] === "AUTHORITY_ALLOWED"
+  const expectedResults = evaluateAuthorityLimits(value.limits, value.facts);
+  if (
+    stableSerialize(expectedResults) !== stableSerialize(value.limitResults)
+  ) {
+    throw invalidRecord(
+      value.limitResults,
+      "limit results recomputed from the immutable facts and limits",
+    );
+  }
+  const evaluatedAt = Date.parse(value.evaluatedAt);
+  const effectiveAt = Date.parse(value.window.effectiveAt);
+  const expiresAt = Date.parse(value.window.expiresAt);
+  const windowReason = evaluatedAt < effectiveAt || evaluatedAt >= expiresAt
+    ? "AUTHORITY_WINDOW_INACTIVE" as const
+    : undefined;
+  const expectedReasons = evaluationReasons(expectedResults, windowReason);
+  const expectedOutcome = expectedReasons[0] === "AUTHORITY_ALLOWED"
     ? "allowed"
     : "denied";
   if (
     value.outcome !== expectedOutcome ||
-    denied.some((item) => !value.reasons.includes(item))
+    stableSerialize(value.reasons) !== stableSerialize(expectedReasons)
   ) {
     throw invalidRecord(
       value.outcome,

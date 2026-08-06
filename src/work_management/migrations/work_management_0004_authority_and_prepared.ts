@@ -7,8 +7,8 @@ import { defineMigration } from "../../platform/persistence/v1.ts";
 export const workManagementAuthorityAndPreparedMigration = defineMigration({
   owner: "work_management",
   schema: "work_management",
-  id: "work_management-0004-authority-and-prepared",
-  version: 4,
+  id: "work_management-0005-authority-and-prepared",
+  version: 5,
   forwardNotes:
     "Persist digest-bound authority evaluations and short-lived command preparation state without replacing the atomic finalization boundary.",
   rollbackNotes:

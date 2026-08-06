@@ -148,6 +148,7 @@ export class WorkManagementService {
       "workstream",
       true,
     );
+    await this.reauthorizeWorkstreamState(input, input.toState);
     return await this.commands.execute(
       withPayload(input, { toState: input.toState }),
       "transition_workstream",
@@ -188,6 +189,7 @@ export class WorkManagementService {
   ): Promise<Task> {
     await this.authorization.requireAllowed(input, "create", "task", true);
     requireVersion(input.workstreamId, input.expectedVersion);
+    await this.reauthorizeTaskAttachment(input);
     return await this.commands.execute(
       withPayload(input, taskPayload(input)),
       "create_task",
@@ -239,6 +241,7 @@ export class WorkManagementService {
     input: CommandInput<TaskId> & { readonly toState: Task["state"] },
   ): Promise<Task> {
     await this.authorization.requireAllowed(input, "transition", "task", true);
+    await this.reauthorizeTaskState(input, input.toState);
     return await this.commands.execute(
       withPayload(input, { toState: input.toState }),
       "transition_task",
@@ -267,6 +270,7 @@ export class WorkManagementService {
   async createApprovalRequest(
     input: CreateCommand<ApprovalRequestId> & {
       readonly namedApproverId: ApprovalRequest["namedApproverId"];
+      readonly requestedAction?: string;
       readonly target: TargetReference;
       readonly evidence: readonly EvidenceSnapshotReference[];
       readonly payload: Readonly<Record<string, unknown>>;
@@ -282,6 +286,7 @@ export class WorkManagementService {
     return await this.commands.execute(
       withPayload(input, {
         namedApproverId: input.namedApproverId,
+        requestedAction: input.requestedAction,
         target: input.target,
         evidence: input.evidence,
         payload: input.payload,
@@ -296,6 +301,7 @@ export class WorkManagementService {
           requester: input.actor,
           now: this.options.clock.now(),
           namedApproverId: input.namedApproverId,
+          requestedAction: input.requestedAction,
           target: input.target,
           evidence: input.evidence,
           payload: input.payload,
@@ -370,6 +376,7 @@ export class WorkManagementService {
       "approval_request",
       true,
     );
+    await this.reauthorizeApprovalState(input, actionName);
     const commandType = `${actionName}_approval_request`;
     return await this.commands.execute(
       withPayload(input, { outcome: input.outcome, reason: input.reason }),
@@ -490,6 +497,7 @@ export class WorkManagementService {
       "approval_request",
       humanOnly,
     );
+    await this.reauthorizeApprovalState(input, actionName, humanOnly);
     return await this.commands.execute(
       withPayload(input, { reason: input.reason }),
       `${actionName}_approval_request`,
@@ -509,6 +517,77 @@ export class WorkManagementService {
         return outcome(next, eventType);
       },
     );
+  }
+
+  /** Re-checks current state before a durable replay may disclose its result. */
+  private async reauthorizeWorkstreamState(
+    input: CommandInput<WorkstreamId>,
+    toState: Workstream["state"],
+  ): Promise<void> {
+    await this.options.unitOfWork.read(async (transaction) => {
+      const current = await requireWorkstream(transaction, input);
+      await this.authorization.requireAllowed(
+        input,
+        "transition",
+        "workstream",
+        true,
+        current.state,
+      );
+      void toState;
+    });
+  }
+
+  private async reauthorizeTaskAttachment(
+    input: CommandInput<TaskId> & { readonly workstreamId: WorkstreamId },
+  ): Promise<void> {
+    await this.options.unitOfWork.read(async (transaction) => {
+      const workstream = await requireWorkstreamById(
+        transaction,
+        input.scope,
+        input.workstreamId,
+      );
+      await this.authorization.requireAllowed(
+        { ...input, id: workstream.id },
+        "attach_task",
+        "workstream",
+        true,
+        workstream.state,
+      );
+    });
+  }
+
+  private async reauthorizeTaskState(
+    input: CommandInput<TaskId>,
+    toState: Task["state"],
+  ): Promise<void> {
+    await this.options.unitOfWork.read(async (transaction) => {
+      const current = await requireTask(transaction, input);
+      await this.authorization.requireAllowed(
+        input,
+        "transition",
+        "task",
+        true,
+        current.state,
+      );
+      void toState;
+    });
+  }
+
+  private async reauthorizeApprovalState(
+    input: CommandInput<ApprovalRequestId>,
+    actionName: string,
+    humanOnly = true,
+  ): Promise<void> {
+    await this.options.unitOfWork.read(async (transaction) => {
+      const current = await requireApproval(transaction, input);
+      await this.authorization.requireAllowed(
+        input,
+        actionName,
+        "approval_request",
+        humanOnly,
+        current.state,
+      );
+    });
   }
 }
 

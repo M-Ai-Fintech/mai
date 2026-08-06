@@ -89,6 +89,33 @@ function isTargetCommandDispatch(
     return false;
   }
   const candidate = value as Record<string, unknown>;
+  const allowedKeys = [
+    "dispatchId",
+    "tenantId",
+    "workspaceId",
+    "dealId",
+    "approvalRequestId",
+    "approvalRequestVersion",
+    "decisionId",
+    "outcome",
+    "targetAggregateType",
+    "targetAggregateId",
+    "expectedTargetVersion",
+    "packageId",
+    "packageVersion",
+    "packageDigest",
+    "authoritySnapshotReference",
+    "actor",
+    "commandType",
+    "correlationId",
+    "causationId",
+    "idempotencyIdentity",
+    "recordedAt",
+    "authorityProof",
+  ];
+  if (Object.keys(candidate).some((key) => !allowedKeys.includes(key))) {
+    return false;
+  }
   const strings = [
     "dispatchId",
     "tenantId",
@@ -107,14 +134,34 @@ function isTargetCommandDispatch(
     "idempotencyIdentity",
     "recordedAt",
   ];
-  return strings.every((key) => typeof candidate[key] === "string") &&
+  return strings.every((key) =>
+    typeof candidate[key] === "string" &&
+    (candidate[key] as string).length > 0
+  ) &&
     candidate.outcome === "approved" &&
-    Number.isSafeInteger(candidate.approvalRequestVersion) &&
-    Number.isSafeInteger(candidate.expectedTargetVersion) &&
-    Number.isSafeInteger(candidate.packageVersion) &&
-    typeof candidate.actor === "object" && candidate.actor !== null &&
+    positiveVersion(candidate.approvalRequestVersion) &&
+    positiveVersion(candidate.expectedTargetVersion) &&
+    positiveVersion(candidate.packageVersion) &&
+    isActor(candidate.actor) &&
     (candidate.authorityProof === undefined ||
       isAuthorityProofReference(candidate.authorityProof));
+}
+
+function positiveVersion(value: unknown): boolean {
+  return Number.isSafeInteger(value) && Number(value) > 0;
+}
+
+function isActor(value: unknown): value is ActorReference {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).length === 3 &&
+    typeof record.id === "string" && record.id.length > 0 &&
+    (record.kind === "human" || record.kind === "ai" ||
+      record.kind === "service" || record.kind === "external") &&
+    (record.state === "active" || record.state === "inactive" ||
+      record.state === "revoked");
 }
 
 function isAuthorityProofReference(

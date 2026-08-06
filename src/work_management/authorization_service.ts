@@ -20,6 +20,7 @@ export interface WorkManagementAuthorizationInput {
 export interface WorkManagementAuthorizationPort {
   /** Synchronous commands require a transaction-local MAI-106 adapter. */
   readonly transactionSafe?: true;
+  readonly transactionMode?: "mai106_local";
   authorize(
     input: WorkManagementAuthorizationInput,
   ): Promise<AuthorizationDecision> | AuthorizationDecision;

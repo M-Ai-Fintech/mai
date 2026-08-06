@@ -11,7 +11,6 @@ const FORBIDDEN_APPROVAL_FIELDS = Object.freeze([
   "package",
   "authority",
   "authoritySnapshot",
-  "action",
   "commandType",
   "policyVersion",
   "decisionId",
@@ -20,6 +19,7 @@ const FORBIDDEN_APPROVAL_FIELDS = Object.freeze([
 ]);
 
 export interface ParsedApprovalCreation {
+  readonly requestedAction?: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -32,7 +32,13 @@ export function parseApprovalCreation(
   scope: WorkScope,
 ): ParsedApprovalCreation {
   rejectClientAuthorityFields(body);
+  rejectUnknownApprovalFields(body);
   const targetValue = requiredObject(body.target, "target");
+  rejectUnknownFields(targetValue, [
+    "aggregateType",
+    "aggregateId",
+    "expectedVersion",
+  ], "target");
   const target: TargetReference = Object.freeze({
     aggregateType: requiredString(
       targetValue.aggregateType,
@@ -50,12 +56,39 @@ export function parseApprovalCreation(
   const claimedDigest = body.contentDigest === undefined
     ? undefined
     : requiredDigest(body.contentDigest, "contentDigest");
+  const requestedAction = body.action === undefined
+    ? undefined
+    : requiredSelector(body.action, "action");
   return Object.freeze({
+    ...(requestedAction === undefined ? {} : { requestedAction }),
     target,
     evidence,
     payload,
     ...(claimedDigest === undefined ? {} : { claimedDigest }),
   });
+}
+
+function rejectUnknownApprovalFields(body: Record<string, unknown>): void {
+  rejectUnknownFields(body, [
+    "id",
+    "namedApproverId",
+    "target",
+    "evidence",
+    "payload",
+    "contentDigest",
+    "action",
+  ], "approval request");
+}
+
+function rejectUnknownFields(
+  record: Record<string, unknown>,
+  allowed: readonly string[],
+  label: string,
+): void {
+  const unexpected = Object.keys(record).find((key) => !allowed.includes(key));
+  if (unexpected !== undefined) {
+    invalid(`${label}.${unexpected}`, "a governed field", record[unexpected]);
+  }
 }
 
 export function requiredObject(
@@ -165,6 +198,15 @@ function requiredInteger(value: unknown, field: string): number {
     return value;
   }
   invalid(field, "a positive safe integer", value);
+}
+
+function requiredSelector(value: unknown, field: string): string {
+  if (
+    typeof value === "string" && /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(value)
+  ) {
+    return value;
+  }
+  invalid(field, "a lower_snake_case requested action selector", value);
 }
 
 function requiredDigest(value: unknown, field: string): string {

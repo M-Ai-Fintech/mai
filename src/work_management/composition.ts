@@ -170,6 +170,7 @@ class ReadOnlyWorkManagementUnitOfWork
 
 class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -189,6 +190,7 @@ class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
 
 class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -201,6 +203,7 @@ class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
 class RejectingApprovalAuthorityTestPort
   implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
+  readonly transactionMode = "mai106_local" as const;
   resolve(): Promise<never> {
     return Promise.reject(
       new Error(

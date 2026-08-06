@@ -14,6 +14,11 @@ import {
   workstreamId,
 } from "../../src/work_management/ids.ts";
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementCorrectiveMigration,
+  workManagementMembershipAuthorityMigration,
+  workManagementMigration,
+} from "../../src/work_management/migrations/index.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
   createMai106Pool,
@@ -40,7 +45,7 @@ Deno.test({
     const ledger = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner = 'work_management'",
     );
-    assertEquals(ledger.rows[0].count, 4);
+    assertEquals(ledger.rows[0].count, 5);
     const suffix = Date.now().toString();
     const eventId = `work_event_migration-${suffix}`;
     await pool.query(
@@ -114,6 +119,47 @@ Deno.test({
       [eventId],
     );
     assertEquals(retained.rows[0].count, 1);
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
+    "PostgreSQL migration upgrades the reviewed 0003 stream without checksum replacement",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await pool.query("DROP SCHEMA IF EXISTS work_management CASCADE");
+    await pool.query("DROP SCHEMA IF EXISTS platform CASCADE");
+    const runner = new PostgresMigrationRunner(pool);
+    await runner.apply([
+      ...platformMigrations,
+      workManagementMigration,
+      workManagementCorrectiveMigration,
+      workManagementMembershipAuthorityMigration,
+    ]);
+    const legacy = await pool.query(
+      "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
+    );
+    assertEquals(legacy.rows[0].count, 3);
+    await runner.apply([
+      ...platformMigrations,
+      ...workManagementMigrations,
+    ]);
+    const upgraded = await pool.query(
+      "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
+    );
+    assertEquals(upgraded.rows[0].count, 5);
+    const tables = await pool.query<{ readonly tableName: string }>(
+      `SELECT table_name AS "tableName" FROM information_schema.tables
+       WHERE table_schema='work_management' AND table_name IN
+       ('membership_reconciliation_findings','authority_evaluations')
+       ORDER BY table_name`,
+    );
+    assertEquals(tables.rows.map((row) => row.tableName), [
+      "authority_evaluations",
+      "membership_reconciliation_findings",
+    ]);
     await pool.end();
   },
 });

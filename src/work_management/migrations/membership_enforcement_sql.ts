@@ -1,4 +1,10 @@
 export const membershipEnforcementSql = `
+  DROP TRIGGER IF EXISTS workstreams_membership_authority
+    ON work_management.workstreams_current;
+  DROP TRIGGER IF EXISTS tasks_membership_authority
+    ON work_management.tasks_current;
+  DROP FUNCTION IF EXISTS work_management.enforce_membership_authority();
+
   CREATE FUNCTION work_management.lock_membership_authority(
     requested_tenant TEXT, requested_workspace TEXT, requested_deal TEXT,
     requested_workstream TEXT
@@ -39,6 +45,15 @@ export const membershipEnforcementSql = `
     IF jsonb_typeof(stored_document->'taskIds') IS DISTINCT FROM 'array' THEN
       RAISE EXCEPTION 'workstream % taskIds is %, expected an array',
         requested_workstream, stored_document->'taskIds';
+    END IF;
+    IF stored_document->>'state' IN ('completed', 'cancelled') AND EXISTS (
+      SELECT 1 FROM work_management.tasks_current
+      WHERE tenant_id = requested_tenant AND workspace_id = requested_workspace
+        AND deal_id = requested_deal AND workstream_id = requested_workstream
+        AND document->>'state' NOT IN ('completed', 'cancelled')
+    ) THEN
+      RAISE EXCEPTION 'terminal workstream % cannot own a non-terminal Task; expected completed or cancelled Task state',
+        requested_workstream;
     END IF;
     SELECT expanded_task_id INTO duplicate_task_id
       FROM jsonb_array_elements_text(stored_document->'taskIds')
@@ -115,6 +130,11 @@ export const membershipEnforcementSql = `
         requested_task, stored_workstream, requested_tenant,
         requested_workspace, requested_deal;
     END IF;
+    IF owner_document->>'state' IN ('completed', 'cancelled')
+      AND stored_document->>'state' NOT IN ('completed', 'cancelled') THEN
+      RAISE EXCEPTION 'terminal workstream % cannot own non-terminal Task %; expected completed or cancelled Task state',
+        stored_workstream, requested_task;
+    END IF;
   END;
   $$;
 
@@ -134,20 +154,16 @@ export const membershipEnforcementSql = `
   RETURNS trigger LANGUAGE plpgsql AS $$
   DECLARE
     changed_row JSONB;
-    previous_row JSONB;
   BEGIN
     changed_row := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
+    IF TG_OP = 'UPDATE' AND to_jsonb(OLD)->>'workstream_id' IS DISTINCT FROM
+      to_jsonb(NEW)->>'workstream_id' THEN
+      RAISE EXCEPTION 'Task % workstream ownership is immutable; expected a new Task for a different Workstream',
+        to_jsonb(OLD)->>'task_id';
+    END IF;
     PERFORM work_management.validate_task_membership(changed_row->>'tenant_id',
       changed_row->>'workspace_id', changed_row->>'deal_id',
       changed_row->>'workstream_id', changed_row->>'task_id');
-    IF TG_OP = 'UPDATE' THEN
-      previous_row := to_jsonb(OLD);
-      IF previous_row->>'workstream_id' IS DISTINCT FROM changed_row->>'workstream_id' THEN
-        PERFORM work_management.validate_workstream_membership(
-          previous_row->>'tenant_id', previous_row->>'workspace_id',
-          previous_row->>'deal_id', previous_row->>'workstream_id');
-      END IF;
-    END IF;
     RETURN NULL;
   END;
   $$;

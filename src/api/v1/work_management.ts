@@ -108,6 +108,7 @@ export class WorkManagementV1Application {
       this.service.createApprovalRequest({
         ...toCommandInput(input),
         namedApproverId: input.namedApproverId,
+        requestedAction: input.requestedAction,
         target: input.target,
         evidence: input.evidence,
         payload: input.payload,
@@ -285,7 +286,8 @@ function mapError(
   if (error instanceof WorkManagementVersionConflictError) {
     return createApiError({
       code: "VERSION_CONFLICT",
-      message: error.message,
+      message:
+        "The resource version no longer matches; retry with a fresh ETag.",
       correlationId,
       retryable: true,
       expectedVersion: error
@@ -302,7 +304,7 @@ function mapError(
   ) {
     return createApiError({
       code: "IDEMPOTENCY_CONFLICT",
-      message: error.message,
+      message: "The idempotency key conflicts with an existing command.",
       correlationId,
       retryable: false,
     });
@@ -310,7 +312,7 @@ function mapError(
   if (error instanceof WorkManagementCommandsDisabledError) {
     return createApiError({
       code: "DEPENDENCY_UNAVAILABLE",
-      message: error.message,
+      message: "Work Management commands are temporarily unavailable.",
       correlationId,
       retryable: true,
     });
@@ -350,24 +352,39 @@ function workError(
   if (code !== "VALIDATION_FAILED") {
     return createApiError({
       code,
-      message: error.message,
+      message: publicWorkErrorMessage(code),
       correlationId,
       retryable: false,
     });
   }
   return createApiError({
     code,
-    message: error.message,
+    message: publicWorkErrorMessage(code),
     correlationId,
     retryable: false,
     fieldErrors: {
       command: [{
         field: "command",
         code: "INVALID_TYPE",
-        message: error.message,
+        message: publicWorkErrorMessage(code),
       }],
     },
   });
+}
+
+function publicWorkErrorMessage(
+  code: string,
+): string {
+  if (code === "ACTION_FORBIDDEN") {
+    return "The requested action is not permitted.";
+  }
+  if (code === "INVALID_TRANSITION") {
+    return "The requested state transition is invalid.";
+  }
+  if (code === "STALE_VERSION") {
+    return "The approval package is stale; refresh the target and retry.";
+  }
+  return "The Work Management command is invalid.";
 }
 
 export function protectedNotFound(

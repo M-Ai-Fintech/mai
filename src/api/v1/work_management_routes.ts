@@ -466,9 +466,7 @@ function validationResponse(
 ): Response {
   const value = correlationId ??
     ("cor_route" as import("../../platform/api/v1.ts").CorrelationId);
-  const message = error instanceof Error
-    ? error.message
-    : "The Work Management request is invalid; expected an authenticated scoped command.";
+  const message = validationPublicMessage(error);
   return Response.json(
     createApiError({
       code: "VALIDATION_FAILED",
@@ -481,6 +479,20 @@ function validationResponse(
     }),
     { status: 422, headers: responseHeaders(value) },
   );
+}
+
+function validationPublicMessage(error: unknown): string {
+  const detail = error instanceof Error ? error.message : "";
+  if (detail.includes("Idempotency-Key")) {
+    return "The request is invalid: Idempotency-Key is required.";
+  }
+  if (detail.toLowerCase().includes("strong")) {
+    return "The request is invalid: a strong ETag is required in If-Match.";
+  }
+  if (detail.includes("If-Match")) {
+    return "The request is invalid: If-Match is required.";
+  }
+  return "The Work Management request is invalid.";
 }
 
 function responseHeaders(

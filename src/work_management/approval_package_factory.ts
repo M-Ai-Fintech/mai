@@ -29,6 +29,7 @@ import { parseAuthorityFacts } from "./authority_facts.ts";
 export interface ApprovalTargetPort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
+  readonly transactionMode?: "mai106_local";
   validate(
     scope: WorkScope,
     target: TargetReference,
@@ -39,6 +40,7 @@ export interface ApprovalTargetPort {
 export interface ApprovalEvidencePort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
+  readonly transactionMode?: "mai106_local";
   validate(
     scope: WorkScope,
     evidence: readonly EvidenceSnapshotReference[],
@@ -48,11 +50,13 @@ export interface ApprovalEvidencePort {
 export interface ApprovalAuthoritySnapshotPort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
+  readonly transactionMode?: "mai106_local";
   resolve(input: {
     readonly scope: WorkScope;
     readonly requester: ActorReference;
     readonly namedApproverId: ActorId;
     readonly target: TargetReference;
+    readonly requestedAction?: string;
     readonly authorization: AuthorizationDecision;
   }): Promise<ResolvedApprovalAuthority>;
 }
@@ -75,6 +79,7 @@ export interface ServerApprovalPackageInput {
   readonly requester: ActorReference;
   readonly now: string;
   readonly namedApproverId: ActorId;
+  readonly requestedAction?: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -121,6 +126,7 @@ export async function buildServerApprovalPackageWithAuthority(
     requester: input.requester,
     namedApproverId: input.namedApproverId,
     target,
+    requestedAction: input.requestedAction,
     authorization: input.authorization,
   });
   const facts = resolved.facts === undefined
@@ -184,6 +190,15 @@ function assertTrustedAuthority(
     throw new WorkManagementError(
       "REFERENCE_MISMATCH",
       `Authority requirement "${snapshot.snapshotId}" does not match its named approver, policy, snapshot, or human-only contract; expected one server-verified authority.`,
+    );
+  }
+  if (
+    input.requestedAction !== undefined &&
+    requirement.commandType !== input.requestedAction
+  ) {
+    throw new WorkManagementError(
+      "REFERENCE_MISMATCH",
+      `Requested approval action "${input.requestedAction}" differs from server-approved command "${requirement.commandType}"; expected the governed authority requirement.`,
     );
   }
   if (stableSerialize(requirement.target) !== stableSerialize(target)) {

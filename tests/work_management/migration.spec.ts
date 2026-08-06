@@ -3,6 +3,7 @@ import {
   workManagementAuthorityAndPreparedMigration,
   workManagementCorrectiveMigration,
   workManagementMembershipAuthorityMigration,
+  workManagementMembershipAuthorityUpgradeMigration,
   workManagementMigration,
   workManagementMigrations,
 } from "../../src/work_management/migrations/index.ts";
@@ -12,6 +13,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     workManagementMigration,
     workManagementCorrectiveMigration,
     workManagementMembershipAuthorityMigration,
+    workManagementMembershipAuthorityUpgradeMigration,
     workManagementAuthorityAndPreparedMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
@@ -29,7 +31,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     !/\b(?:platform|deal_management|evidence_knowledge|identity_access|notifications)\s*\./i
       .test(sql),
   );
-  assertEquals(workManagementAuthorityAndPreparedMigration.version, 4);
+  assertEquals(workManagementAuthorityAndPreparedMigration.version, 5);
   const authoritySql = workManagementAuthorityAndPreparedMigration.statements
     .map((statement) => statement.sql).join("\n");
   assertStringIncludes(authoritySql, "authority_evaluations");
@@ -38,6 +40,10 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     authoritySql,
     "authority_evaluations_no_update_or_delete",
   );
+  assertEquals(workManagementMembershipAuthorityUpgradeMigration.version, 4);
+  const upgradeSql = workManagementMembershipAuthorityUpgradeMigration
+    .statements.map((statement) => statement.sql).join("\n");
+  assertStringIncludes(upgradeSql, "work_management-0004-read-only");
   assertEquals(workManagementCorrectiveMigration.owner, "work_management");
   assertEquals(workManagementCorrectiveMigration.version, 2);
   const correctiveSql = workManagementCorrectiveMigration.statements.map(
@@ -55,10 +61,9 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   );
   assertEquals(workManagementMembershipAuthorityMigration.version, 3);
   const membershipSql = workManagementMembershipAuthorityMigration.statements
-    .map(
-      (statement) => statement.sql,
-    ).join("\n");
+    .map((statement) => statement.sql).join("\n");
+  assertStringIncludes(membershipSql, "membership_is_inconsistent");
   assertStringIncludes(membershipSql.toLowerCase(), "deferrable");
   assertStringIncludes(membershipSql, "membership");
-  assertStringIncludes(membershipSql, "membership_commands_available");
+  assertStringIncludes(membershipSql, "membership_is_inconsistent");
 });

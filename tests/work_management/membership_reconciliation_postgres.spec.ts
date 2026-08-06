@@ -27,6 +27,11 @@ Deno.test({
       const runner = new PostgresMigrationRunner(pool);
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
+      await setReadOnly(
+        pool,
+        `reset_read_only_${suffix}`,
+        "work_management-0004-initial",
+      );
       assertEquals(await commandsAvailable(pool), false);
       await seedDivergences(pool, scope, suffix);
       const firstAt = new Date().toISOString();
@@ -35,7 +40,7 @@ Deno.test({
         "SELECT work_management.scan_membership_authority($1,$2) AS count",
         [firstScan, firstAt],
       );
-      assertEquals(Number(scanned.rows[0].count), 9);
+      assertEquals(Number(scanned.rows[0].count), 10);
       const classes = await pool.query(
         `SELECT finding_class FROM work_management.membership_reconciliation_findings
          WHERE scan_id=$1 ORDER BY finding_class`,
@@ -50,7 +55,7 @@ Deno.test({
         Error,
         "unresolved membership findings",
       );
-      assertEquals(await findingCount(pool, firstScan), 9);
+      assertEquals(await findingCount(pool, firstScan), 10);
       await repairDivergences(pool, scope);
       const cleanAt = new Date(Date.parse(firstAt) + 1).toISOString();
       const cleanScan = `scan_clean_${suffix}`;
@@ -85,9 +90,63 @@ Deno.test({
         Error,
         "append-only",
       );
-      await setReadOnly(pool, `rollback_read_only_${suffix}`, cleanScan);
+      await setReadOnly(
+        pool,
+        `rollback_read_only_${suffix}`,
+        cleanScan,
+        new Date(Date.now() + 10_000).toISOString(),
+      );
       assertEquals(await commandsAvailable(pool), false);
-      assertEquals(await findingCount(pool, firstScan), 9);
+      await assertRejects(
+        () =>
+          pool.query(
+            `INSERT INTO work_management.membership_rollout_events
+             (event_id, mode, scan_id, actor_id, recorded_at)
+             VALUES ($1, 'commands', $2, 'operator:direct', now())`,
+            [`direct_rollout_${suffix}`, cleanScan],
+          ),
+        Error,
+        "governed activation",
+      );
+      assertEquals(await findingCount(pool, firstScan), 10);
+      const terminalWorkstream = `ws_terminal_${suffix}`;
+      const terminalTask = `task_terminal_${suffix}`;
+      await pool.query("BEGIN");
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current DISABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current DISABLE TRIGGER USER",
+      );
+      await insertWorkstream(pool, scope, terminalWorkstream, {
+        state: "completed",
+        taskIds: [terminalTask],
+      });
+      await pool.query(
+        `INSERT INTO work_management.tasks_current
+         (task_id,tenant_id,workspace_id,deal_id,workstream_id,version,document,created_at,updated_at)
+         VALUES ($1,$2,$3,$4,$5,1,$6,now(),now())`,
+        [terminalTask, ...scope, terminalWorkstream, {
+          workstreamId: terminalWorkstream,
+          state: "open",
+        }],
+      );
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current ENABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current ENABLE TRIGGER USER",
+      );
+      await pool.query("COMMIT");
+      await assertRejects(
+        () =>
+          pool.query(
+            "SELECT work_management.validate_workstream_membership($1,$2,$3,$4)",
+            [...scope, terminalWorkstream],
+          ),
+        Error,
+        "terminal workstream",
+      );
       await proveConcurrentAttachment(pool, scope, suffix);
     } finally {
       await pool.end();
@@ -96,6 +155,7 @@ Deno.test({
 });
 
 const expectedClasses = [
+  "ambiguous_legacy_ownership",
   "authoritative_task_missing",
   "authoritative_task_scope_mismatch",
   "authoritative_task_wrong_workstream",
@@ -259,7 +319,11 @@ async function resolveFindings(
         `resolution_${suffix}_${index}`,
         finding.finding_id,
         cleanScan,
-        { procedure: "operator_reconciled_and_rescanned" },
+        {
+          action: "retained",
+          retained: true,
+          evidence: { procedure: "operator_reconciled_and_rescanned" },
+        },
         "operator:test",
         new Date(Date.now() + 3_000 + index).toISOString(),
       ],
@@ -282,6 +346,7 @@ function setReadOnly(
   pool: import("pg").Pool,
   eventId: string,
   scanId: string,
+  recordedAt = new Date().toISOString(),
 ): Promise<unknown> {
   return pool.query(
     "SELECT work_management.set_membership_rollout_mode($1,'read_only',$2,$3,$4)",
@@ -289,7 +354,7 @@ function setReadOnly(
       eventId,
       scanId,
       "operator:test",
-      new Date(Date.now() + 10_000).toISOString(),
+      recordedAt,
     ],
   );
 }

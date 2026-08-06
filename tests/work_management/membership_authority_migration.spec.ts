@@ -4,16 +4,18 @@ import {
   assertStringIncludes,
   assertThrows,
 } from "@std/assert";
-import { workManagementMembershipAuthorityMigration } from "../../src/work_management/migrations/work_management_0003_membership_authority.ts";
+import {
+  workManagementMembershipAuthorityUpgradeMigration,
+} from "../../src/work_management/migrations/work_management_0004_membership_authority.ts";
 import { parseStoredTask } from "../../src/work_management/repository_validation.ts";
 
 Deno.test("membership migration enforces one fail-closed authority model", () => {
   assertEquals(
-    workManagementMembershipAuthorityMigration.owner,
+    workManagementMembershipAuthorityUpgradeMigration.owner,
     "work_management",
   );
-  assertEquals(workManagementMembershipAuthorityMigration.version, 3);
-  const sql = workManagementMembershipAuthorityMigration.statements.map(
+  assertEquals(workManagementMembershipAuthorityUpgradeMigration.version, 4);
+  const sql = workManagementMembershipAuthorityUpgradeMigration.statements.map(
     (statement) => statement.sql,
   ).join("\n");
   assertStringIncludes(sql, "membership_reconciliation_findings");
@@ -23,13 +25,17 @@ Deno.test("membership migration enforces one fail-closed authority model", () =>
   assertStringIncludes(sql, "pg_advisory_xact_lock");
   assertStringIncludes(sql, "DEFERRABLE INITIALLY DEFERRED");
   assertStringIncludes(sql, "append-only");
-  assertStringIncludes(sql, "work_management-0003-read-only");
+  assertStringIncludes(sql, "work_management-0004-read-only");
   assert(!sql.includes("membership_is_inconsistent"));
-  assert(!/\b(DROP|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(sql));
+  assert(
+    !/\b(DROP\s+(?:TABLE|SCHEMA)|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(
+      sql,
+    ),
+  );
 });
 
 Deno.test("membership finding ledger covers every divergence class", () => {
-  const sql = workManagementMembershipAuthorityMigration.statements.map(
+  const sql = workManagementMembershipAuthorityUpgradeMigration.statements.map(
     (statement) => statement.sql,
   ).join("\n");
   for (

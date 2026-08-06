@@ -1,6 +1,4 @@
 import { defineMigration } from "../../platform/persistence/v1.ts";
-import { membershipEnforcementSql } from "./membership_enforcement_sql.ts";
-import { membershipReconciliationSql } from "./membership_reconciliation_sql.ts";
 
 export const workManagementMembershipAuthorityMigration = defineMigration({
   owner: "work_management",
@@ -8,26 +6,98 @@ export const workManagementMembershipAuthorityMigration = defineMigration({
   id: "work_management-0003-membership-authority",
   version: 3,
   forwardNotes:
-    "Install durable append-only membership reconciliation evidence, default commands to read-only, and enforce Workstream taskIds authority with affected-membership checks.",
+    "Fail closed on existing Workstream/Task membership divergence and enforce Workstream taskIds as authoritative with exact Task workstreamId back-references at transaction commit.",
   rollbackNotes:
-    "Return Work Management to read-only while retaining scans, findings, resolutions, rollout events, aggregate history, and current records for operator reconciliation.",
+    "Disable Work Management commands and retain all aggregate and history records; do not remove membership enforcement until divergent records are reconciled.",
   statements: [{
     schema: "work_management",
-    sql: membershipReconciliationSql,
-  }, {
-    schema: "work_management",
-    sql: membershipEnforcementSql,
-  }, {
-    schema: "work_management",
     sql: `
-      SELECT work_management.scan_membership_authority(
-        'work_management-0003-initial', CURRENT_TIMESTAMP
-      );
-      SELECT work_management.set_membership_rollout_mode(
-        'work_management-0003-read-only', 'read_only',
-        'work_management-0003-initial', 'migration:work_management-0003',
-        CURRENT_TIMESTAMP
-      );
+      CREATE FUNCTION work_management.membership_is_inconsistent()
+      RETURNS boolean LANGUAGE sql STABLE AS $$
+        WITH task_memberships AS (
+          SELECT tenant_id AS task_tenant_id,
+            workspace_id AS task_workspace_id, deal_id AS task_deal_id,
+            workstream_id AS task_workstream_id, task_id AS referenced_task_id
+          FROM work_management.tasks_current
+        ), owner_memberships AS (
+          SELECT tenant_id AS owner_tenant_id,
+            workspace_id AS owner_workspace_id, deal_id AS owner_deal_id,
+            workstream_id AS owner_workstream_id,
+            document->'taskIds' AS owner_task_ids
+          FROM work_management.workstreams_current
+        ), authoritative_memberships AS (
+          SELECT tenant_id AS authoritative_tenant_id,
+            workspace_id AS authoritative_workspace_id,
+            deal_id AS authoritative_deal_id,
+            workstream_id AS authoritative_workstream_id,
+            jsonb_array_elements_text(
+              CASE WHEN jsonb_typeof(document->'taskIds') = 'array'
+                THEN document->'taskIds' ELSE '[]'::jsonb END
+            ) AS authoritative_task_id
+          FROM work_management.workstreams_current
+        ), resolved_memberships AS (
+          SELECT tenant_id AS resolved_tenant_id,
+            workspace_id AS resolved_workspace_id, deal_id AS resolved_deal_id,
+            workstream_id AS resolved_workstream_id,
+            task_id AS resolved_task_id
+          FROM work_management.tasks_current
+        )
+        SELECT EXISTS (
+          SELECT 1 FROM work_management.workstreams_current
+          WHERE jsonb_typeof(document->'taskIds') IS DISTINCT FROM 'array'
+        ) OR EXISTS (
+          SELECT 1 FROM work_management.tasks_current
+          WHERE document->>'workstreamId' IS DISTINCT FROM workstream_id
+        ) OR EXISTS (
+          SELECT 1 FROM task_memberships
+          LEFT JOIN owner_memberships
+            ON task_tenant_id = owner_tenant_id
+           AND task_workspace_id = owner_workspace_id
+           AND task_deal_id = owner_deal_id
+           AND task_workstream_id = owner_workstream_id
+          WHERE owner_workstream_id IS NULL
+             OR NOT (owner_task_ids ? referenced_task_id)
+        ) OR EXISTS (
+          SELECT 1 FROM authoritative_memberships
+          LEFT JOIN resolved_memberships
+            ON authoritative_tenant_id = resolved_tenant_id
+           AND authoritative_workspace_id = resolved_workspace_id
+           AND authoritative_deal_id = resolved_deal_id
+           AND authoritative_workstream_id = resolved_workstream_id
+           AND authoritative_task_id = resolved_task_id
+          WHERE resolved_task_id IS NULL
+        ) OR EXISTS (
+          SELECT 1 FROM authoritative_memberships
+          GROUP BY authoritative_tenant_id, authoritative_workspace_id,
+            authoritative_deal_id, authoritative_workstream_id,
+            authoritative_task_id
+          HAVING count(*) > 1
+        )
+      $$;
+      DO $$
+      BEGIN
+        IF work_management.membership_is_inconsistent() THEN
+          RAISE EXCEPTION 'work_management membership is inconsistent; expected Workstream taskIds authority and exact Task workstreamId back-references before migration';
+        END IF;
+      END;
+      $$;
+      CREATE FUNCTION work_management.enforce_membership_authority()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF work_management.membership_is_inconsistent() THEN
+          RAISE EXCEPTION 'work_management membership is inconsistent; expected Workstream taskIds authority and exact Task workstreamId back-references';
+        END IF;
+        RETURN NULL;
+      END;
+      $$;
+      CREATE CONSTRAINT TRIGGER workstreams_membership_authority
+        AFTER INSERT OR UPDATE OR DELETE ON work_management.workstreams_current
+        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+        EXECUTE FUNCTION work_management.enforce_membership_authority();
+      CREATE CONSTRAINT TRIGGER tasks_membership_authority
+        AFTER INSERT OR UPDATE OR DELETE ON work_management.tasks_current
+        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+        EXECUTE FUNCTION work_management.enforce_membership_authority();
     `,
   }],
 });

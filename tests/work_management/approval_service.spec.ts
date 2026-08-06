@@ -285,6 +285,27 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
   );
 });
 
+Deno.test("requested approval action must match the server-approved authority command", async () => {
+  const fixture = composition();
+  await assertRejects(
+    () =>
+      fixture.service.createApprovalRequest({
+        ...command(
+          approvalRequestId("approval-action-mismatch"),
+          "create-action-mismatch",
+          requester,
+        ),
+        namedApproverId: approver.id,
+        requestedAction: "reject_evidence",
+        target: target(),
+        evidence: [],
+        payload: { summary: "review" },
+      }),
+    Error,
+    "server-approved command",
+  );
+});
+
 Deno.test("approval terminal events never reuse the review notification", async () => {
   const fixture = composition();
   const rejected = await openRequest(fixture.service, "event-rejected");

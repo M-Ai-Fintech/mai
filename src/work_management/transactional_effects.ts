@@ -92,7 +92,13 @@ function targetOutboxEvent(dispatch: TargetCommandDispatch): OutboxEvent {
     aggregateVersion: dispatch.approvalRequestVersion,
     eventType: "work_management.target_command_ready",
     schemaVersion: 1,
-    payload: Object.freeze({ ...dispatch, actor: { ...dispatch.actor } }),
+    payload: Object.freeze({
+      schemaVersion: 1,
+      dispatch: Object.freeze({ ...dispatch, actor: { ...dispatch.actor } }),
+      ...(dispatch.authorityProof === undefined
+        ? {}
+        : { authorityProof: Object.freeze({ ...dispatch.authorityProof }) }),
+    }),
     correlationId: dispatch.correlationId,
     causationId: dispatch.causationId,
     occurredAt: recordedAt,
