@@ -1,11 +1,11 @@
 ---
 id: MAI-113
 title: 'Evidence, citations, facts, interpretations, assumptions and calculations'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-05 12:42'
+updated_date: '2026-08-06 01:49'
 labels:
   - backend
   - architecture
@@ -143,9 +143,9 @@ Embedding provider, data residency and model/prompt retention choices remain exp
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Evidence binds to exact source; approved facts are immutable or superseded; targeted staleness/invalidation and vector isolation pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Evidence binds to exact source; approved facts are immutable or superseded; targeted staleness/invalidation and vector isolation pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -403,4 +403,14 @@ Final migration test organization correction:
 - Preserved one migration metadata test, four backfill/repair PostgreSQL tests, and four deferred-constraint PostgreSQL tests.
 - Restored the complete MAI-113 modified_files inventory, including original vertical-slice files and all post-merge correction files.
 - This connector environment cannot execute the private repository's Deno/PostgreSQL suites; TypeScript syntax parsing completed locally for all four split files. Full repository verification remains required before a final readiness claim.
+
+Finisher chronology 2026-08-05: before the subsequent MAI-113 test and metadata corrections, merged-source git diff check from Wave C closure to the then-current master was non-passing for trailing whitespace in evidence_knowledge migrations 0003 and 0004. No task closure occurred at that point. This note supersedes an uncommitted malformed local record; the active repair will preserve migration runtime checksums and rerun all finisher gates.
+
+Wave D finisher repair completed after pull from origin/master. Re-expressed physical trailing spaces in published evidence_knowledge migrations 0003 and 0004 without changing their runtime SQL; checksums remained ab437ce0efa822b79402e2015c1bcba73f364d984c5c86f75206c6ec56d64f93 and 5f728f555875ecefd40011a243c743ad55d980077066e755364174081b7fd2bd. Added a regression assertion for both checksums. Focused migration coverage: 10 passed, 0 failed. Isolated PostgreSQL setup completed successfully; backfill and deferred constraint coverage: 8 passed, 0 failed. Canonical DENO_ENV=test deno task verify completed with all 17 categories passing. Graphify update ran once after the green canonical gate.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Delivered and merged the Evidence Knowledge vertical slice, then completed a checksum-preserving migration source cleanup. Verified published migration checksums, focused migration tests, isolated PostgreSQL backfill and constraint tests, and the full 17-category canonical verification; Graphify was refreshed after the green gate.
+<!-- SECTION:FINAL_SUMMARY:END -->

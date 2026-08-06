@@ -1,5 +1,8 @@
 import { defineMigration } from "../../platform/persistence/v1.ts";
 
+// Preserve the published migration checksum while avoiding physical trailing whitespace.
+const SQL_TRAILING_SPACE = " ";
+
 export const evidenceKnowledgeMigration0003 = defineMigration({
   owner: "evidence_knowledge",
   schema: "evidence_knowledge",
@@ -26,10 +29,10 @@ export const evidenceKnowledgeMigration0003 = defineMigration({
         effective_approved_count INTEGER;
         single_version_id TEXT;
       BEGIN
-        FOR target_fact_id, target_tenant_id, target_workspace_id, target_deal_id, target_current_id IN 
-          SELECT fact_id, tenant_id, workspace_id, deal_id, current_fact_version_id 
-          FROM evidence_knowledge.facts 
-          WHERE status = 'approved' 
+        FOR target_fact_id, target_tenant_id, target_workspace_id, target_deal_id, target_current_id IN${SQL_TRAILING_SPACE}
+          SELECT fact_id, tenant_id, workspace_id, deal_id, current_fact_version_id${SQL_TRAILING_SPACE}
+          FROM evidence_knowledge.facts${SQL_TRAILING_SPACE}
+          WHERE status = 'approved'${SQL_TRAILING_SPACE}
         LOOP
           effective_approved_count := 0;
           single_version_id := NULL;
@@ -62,7 +65,7 @@ export const evidenceKnowledgeMigration0003 = defineMigration({
           END LOOP;
 
           IF effective_approved_count = 0 THEN
-            RAISE EXCEPTION 'Approved Fact % in scope %/%/% has no effective approved version', 
+            RAISE EXCEPTION 'Approved Fact % in scope %/%/% has no effective approved version',${SQL_TRAILING_SPACE}
               target_fact_id, target_tenant_id, target_workspace_id, target_deal_id;
           END IF;
 
@@ -91,7 +94,7 @@ export const evidenceKnowledgeMigration0003 = defineMigration({
             END IF;
           ELSE
             IF effective_approved_count > 1 THEN
-              RAISE EXCEPTION 'Approved Fact % in scope %/%/% has % independently eligible approved versions with no current pointer', 
+              RAISE EXCEPTION 'Approved Fact % in scope %/%/% has % independently eligible approved versions with no current pointer',${SQL_TRAILING_SPACE}
                 target_fact_id, target_tenant_id, target_workspace_id, target_deal_id, effective_approved_count;
             END IF;
 
