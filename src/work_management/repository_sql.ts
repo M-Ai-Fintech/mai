@@ -24,6 +24,7 @@ import {
 } from "./repository.ts";
 import { PostgresWorkManagementRecords } from "./repository_sql_records.ts";
 import type { TargetCommandDispatch } from "./target_commands.ts";
+import type { AuthorityEvaluation } from "./authority_evaluation.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -173,6 +174,22 @@ export class PostgresWorkManagementRepository
     requestId: ApprovalRequestId,
   ): Promise<readonly TargetCommandDispatch[]> {
     return await this.records.listTargetCommands(scope, requestId);
+  }
+
+  appendAuthorityEvaluation(evaluation: AuthorityEvaluation): Promise<void> {
+    return this.records.appendAuthorityEvaluation(evaluation);
+  }
+
+  findAuthorityEvaluation(
+    packageId: string,
+    packageVersion: number,
+    packageDigest: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    return this.records.findAuthorityEvaluation(
+      packageId,
+      packageVersion,
+      packageDigest,
+    );
   }
 
   private async saveCurrent(

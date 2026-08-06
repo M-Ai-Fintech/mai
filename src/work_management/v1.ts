@@ -14,6 +14,14 @@ export * from "./read_models.ts";
 export * from "./record_identity.ts";
 export * from "./target_commands.ts";
 export * from "./transactional_effects.ts";
+export * from "./authority_facts.ts";
+export * from "./authority_limits.ts";
+export * from "./authority_evaluation.ts";
+export * from "./authority_proof.ts";
+export * from "./authority_consumer_contract.ts";
+export * from "./transaction_port_policy.ts";
+export * from "./transaction_replay_policy.ts";
+export * from "./prepared_command_execution.ts";
 
 export const WORK_MANAGEMENT_API_VERSION = "v1" as const;
 export const WORK_MANAGEMENT_EVENT_SCHEMA_VERSION = 1 as const;

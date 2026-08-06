@@ -16,6 +16,13 @@ export const workManagementAuthorityAndPreparedMigration = defineMigration({
   statements: [{
     schema: "work_management",
     sql: `
+      ALTER TABLE work_management.target_command_dispatches
+        ADD COLUMN IF NOT EXISTS authority_proof_id TEXT,
+        ADD COLUMN IF NOT EXISTS authority_proof_digest CHAR(64)
+          CHECK (authority_proof_digest IS NULL OR authority_proof_digest ~ '^[0-9a-f]{64}$');
+      CREATE INDEX IF NOT EXISTS work_management_target_dispatch_proof_idx
+        ON work_management.target_command_dispatches (authority_proof_id, authority_proof_digest);
+
       CREATE TABLE work_management.authority_evaluations (
         evaluation_id TEXT PRIMARY KEY,
         evaluation_digest CHAR(64) NOT NULL

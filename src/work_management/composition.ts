@@ -27,6 +27,7 @@ import {
   PostgresWorkManagementTransactionalEffects,
   type WorkManagementAuditPort,
 } from "./transactional_effects.ts";
+import { assertTransactionSafeAdapter } from "./transaction_port_policy.ts";
 
 interface CommonCompositionOptions {
   readonly authorization: WorkManagementAuthorizationPort;
@@ -34,6 +35,7 @@ interface CommonCompositionOptions {
   readonly targets?: ApprovalTargetPort;
   readonly evidence?: ApprovalEvidencePort;
   readonly authority?: ApprovalAuthoritySnapshotPort;
+  readonly requireAuthorityEvaluation?: boolean;
 }
 
 export interface InMemoryWorkManagementTestCompositionOptions
@@ -84,6 +86,21 @@ export function createPostgresWorkManagementComposition(
       "Work Management composition is disabled; expected read_only or commands mode after governed rollout approval.",
     );
   }
+  if (options.mode === "commands") {
+    assertTransactionSafeAdapter("authorization", options.authorization);
+    assertTransactionSafeAdapter(
+      "target",
+      options.targets ?? new RejectingApprovalTargetTestPort(),
+    );
+    assertTransactionSafeAdapter(
+      "evidence",
+      options.evidence ?? new RejectingApprovalEvidenceTestPort(),
+    );
+    assertTransactionSafeAdapter(
+      "authority",
+      options.authority ?? new RejectingApprovalAuthorityTestPort(),
+    );
+  }
   const idempotency = new IdempotencyRepository({
     now: () => new Date(options.clock.now()),
   });
@@ -98,11 +115,16 @@ export function createPostgresWorkManagementComposition(
     options.audit,
     options.outbox,
   );
+  const serviceConfiguration: CommonCompositionOptions = {
+    ...options,
+    requireAuthorityEvaluation: options.requireAuthorityEvaluation ??
+      options.mode === "commands",
+  };
   return {
     adapter: "postgres",
     mode: options.mode,
     service: new WorkManagementService(
-      serviceOptions(options, unitOfWork, effects),
+      serviceOptions(serviceConfiguration, unitOfWork, effects),
     ),
   };
 }
@@ -120,6 +142,7 @@ function serviceOptions(
     targets: options.targets ?? new RejectingApprovalTargetTestPort(),
     evidence: options.evidence ?? new RejectingApprovalEvidenceTestPort(),
     authority: options.authority ?? new RejectingApprovalAuthorityTestPort(),
+    requireAuthorityEvaluation: options.requireAuthorityEvaluation ?? false,
   };
 }
 
@@ -146,6 +169,7 @@ class ReadOnlyWorkManagementUnitOfWork
 }
 
 class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
+  readonly transactionSafe = true as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -164,6 +188,7 @@ class RejectingApprovalTargetTestPort implements ApprovalTargetPort {
 }
 
 class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
+  readonly transactionSafe = true as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -175,6 +200,7 @@ class RejectingApprovalEvidenceTestPort implements ApprovalEvidencePort {
 
 class RejectingApprovalAuthorityTestPort
   implements ApprovalAuthoritySnapshotPort {
+  readonly transactionSafe = true as const;
   resolve(): Promise<never> {
     return Promise.reject(
       new Error(

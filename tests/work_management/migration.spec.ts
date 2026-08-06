@@ -1,5 +1,6 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  workManagementAuthorityAndPreparedMigration,
   workManagementCorrectiveMigration,
   workManagementMembershipAuthorityMigration,
   workManagementMigration,
@@ -11,6 +12,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     workManagementMigration,
     workManagementCorrectiveMigration,
     workManagementMembershipAuthorityMigration,
+    workManagementAuthorityAndPreparedMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
@@ -26,6 +28,15 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assert(
     !/\b(?:platform|deal_management|evidence_knowledge|identity_access|notifications)\s*\./i
       .test(sql),
+  );
+  assertEquals(workManagementAuthorityAndPreparedMigration.version, 4);
+  const authoritySql = workManagementAuthorityAndPreparedMigration.statements
+    .map((statement) => statement.sql).join("\n");
+  assertStringIncludes(authoritySql, "authority_evaluations");
+  assertStringIncludes(authoritySql, "command_preparations");
+  assertStringIncludes(
+    authoritySql,
+    "authority_evaluations_no_update_or_delete",
   );
   assertEquals(workManagementCorrectiveMigration.owner, "work_management");
   assertEquals(workManagementCorrectiveMigration.version, 2);
@@ -49,5 +60,5 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     ).join("\n");
   assertStringIncludes(membershipSql.toLowerCase(), "deferrable");
   assertStringIncludes(membershipSql, "membership");
-  assertStringIncludes(membershipSql, "membership_is_inconsistent");
+  assertStringIncludes(membershipSql, "membership_commands_available");
 });

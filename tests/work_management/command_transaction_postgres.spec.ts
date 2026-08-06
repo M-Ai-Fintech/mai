@@ -171,7 +171,7 @@ function composition(
     mode: "commands",
     transactions: runner,
     audit,
-    authorization: { authorize: allow },
+    authorization: { authorize: allow, transactionSafe: true },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
 }
@@ -275,6 +275,27 @@ async function migrate(pool: ReturnType<typeof createMai106Pool>) {
     ...auditActivityMigrations,
     ...workManagementMigrations,
   ]);
+  await activateCommands(pool, `command-${Date.now()}`);
+}
+
+async function activateCommands(
+  pool: ReturnType<typeof createMai106Pool>,
+  suffix: string,
+): Promise<void> {
+  const scanId = `scan_${suffix}`;
+  await pool.query(
+    "SELECT work_management.scan_membership_authority($1,$2)",
+    [scanId, new Date().toISOString()],
+  );
+  await pool.query(
+    "SELECT work_management.set_membership_rollout_mode($1,'commands',$2,$3,$4)",
+    [
+      `activate_${suffix}`,
+      scanId,
+      "test:command-suite",
+      new Date().toISOString(),
+    ],
+  );
 }
 
 async function sideEffectCounts(

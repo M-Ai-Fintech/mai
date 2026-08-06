@@ -18,9 +18,22 @@ import {
   parseTargetCommandDispatch,
   type TargetCommandDispatch,
 } from "./target_commands.ts";
+import {
+  PostgresAuthorityEvaluationStore,
+} from "./authority_evaluation_store.ts";
+import {
+  type AuthorityEvaluation,
+  parseAuthorityEvaluation,
+} from "./authority_evaluation.ts";
 
 export class PostgresWorkManagementRecords {
-  constructor(private readonly transaction: TransactionHandle) {}
+  private readonly authorityEvaluations: PostgresAuthorityEvaluationStore;
+
+  constructor(private readonly transaction: TransactionHandle) {
+    this.authorityEvaluations = new PostgresAuthorityEvaluationStore(
+      transaction,
+    );
+  }
 
   async listHistory(
     scope: WorkScope,
@@ -197,9 +210,10 @@ export class PostgresWorkManagementRecords {
          approval_request_version, decision_id, target_aggregate_type,
          target_aggregate_id, expected_target_version, package_id,
          package_version, package_digest, authority_snapshot_reference,
-         idempotency_identity, command_type, dispatch, recorded_at
+         authority_proof_id, authority_proof_digest, idempotency_identity,
+         command_type, dispatch, recorded_at
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-         $13, $14, $15, $16, $17, $18)
+         $13, $14, $15, $16, $17, $18, $19, $20)
        ON CONFLICT (dispatch_id) DO NOTHING`,
       [
         dispatch.dispatchId,
@@ -216,6 +230,8 @@ export class PostgresWorkManagementRecords {
         dispatch.packageVersion,
         dispatch.packageDigest,
         dispatch.authoritySnapshotReference,
+        dispatch.authorityProof?.proofId ?? null,
+        dispatch.authorityProof?.proofDigest ?? null,
         dispatch.idempotencyIdentity,
         dispatch.commandType,
         JSON.stringify(dispatch),
@@ -254,6 +270,33 @@ export class PostgresWorkManagementRecords {
       [scope.tenantId, scope.workspaceId, scope.dealId, requestId],
     );
     return result.rows.map((row) => parseTargetCommandDispatch(row.dispatch));
+  }
+
+  appendAuthorityEvaluation(evaluation: AuthorityEvaluation): Promise<void> {
+    return this.authorityEvaluations.append(evaluation);
+  }
+
+  async findAuthorityEvaluation(
+    packageId: string,
+    packageVersion: number,
+    packageDigest: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    const result = await this.transaction.query<{
+      readonly evaluation: unknown;
+    }>(
+      `SELECT evaluation FROM work_management.authority_evaluations
+       WHERE approval_package_id = $1 AND approval_package_version = $2
+         AND approval_package_digest = $3`,
+      [packageId, packageVersion, packageDigest],
+    );
+    if (result.rows.length === 0) return undefined;
+    if (result.rows.length !== 1) {
+      throw new WorkManagementRecordConflictError(
+        "authority evaluation",
+        packageId,
+      );
+    }
+    return await parseAuthorityEvaluation(result.rows[0].evaluation);
   }
 }
 

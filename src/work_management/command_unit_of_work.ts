@@ -3,6 +3,7 @@ import {
   IdempotencyConflictError,
   IdempotencyRepository,
   type PostgresTransactionRunner,
+  type TransactionHandle,
 } from "../platform/persistence/v1.ts";
 import type { ActorId, WorkScope } from "./ids.ts";
 import type { WorkAggregate } from "./model.ts";
@@ -42,6 +43,17 @@ export class WorkManagementIdempotencyInProgressError extends Error {
       `Work Management idempotency key "${idempotencyKey}" is "${state}"; expected one command executor and no concurrent duplicate execution.`,
     );
     this.name = "WorkManagementIdempotencyInProgressError";
+  }
+}
+
+export class WorkManagementCommandsDisabledError extends Error {
+  readonly code = "COMMANDS_DISABLED" as const;
+
+  constructor() {
+    super(
+      "Work Management commands are disabled until membership reconciliation is clean and activation is explicitly recorded; expected read-only inspection or governed rollout.",
+    );
+    this.name = "WorkManagementCommandsDisabledError";
   }
 }
 
@@ -136,6 +148,7 @@ export class PostgresWorkManagementUnitOfWork
     operation: (transaction: WorkManagementTransaction) => Promise<T>,
   ): Promise<{ readonly value: T; readonly replayed: boolean }> {
     return this.transactions.run(async (handle) => {
+      await assertMembershipCommandsAvailable(handle);
       const repository = new PostgresWorkManagementRepository(handle);
       const claim = postgresClaim(identity);
       const status = await this.idempotency.claim(handle, claim);
@@ -158,6 +171,16 @@ export class PostgresWorkManagementUnitOfWork
       return { value, replayed: false };
     });
   }
+}
+
+async function assertMembershipCommandsAvailable(
+  handle: TransactionHandle,
+): Promise<void> {
+  const result = await handle.query<{ readonly available: boolean }>(
+    "SELECT work_management.membership_commands_available() AS available",
+  );
+  if (result.rows[0]?.available === true) return;
+  throw new WorkManagementCommandsDisabledError();
 }
 
 function postgresClaim(identity: WorkCommandExecutionIdentity) {

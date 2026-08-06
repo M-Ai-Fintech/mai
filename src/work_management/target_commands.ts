@@ -2,6 +2,7 @@ import type { ActorReference } from "../platform/authz/v1.ts";
 import type { AggregateVersion, CorrelationId } from "../platform/api/v1.ts";
 import type { WorkScope } from "./ids.ts";
 import type { ApprovalRequest } from "./model.ts";
+import type { AuthorityProofReference } from "./authority_proof.ts";
 
 export interface TargetCommandDispatch extends WorkScope {
   readonly dispatchId: string;
@@ -22,6 +23,7 @@ export interface TargetCommandDispatch extends WorkScope {
   readonly causationId: string;
   readonly idempotencyIdentity: string;
   readonly recordedAt: string;
+  readonly authorityProof?: AuthorityProofReference;
 }
 
 /** Builds the foreign-context command envelope without executing it. */
@@ -34,6 +36,7 @@ export function targetCommandDispatch(input: {
   readonly causationId: string;
   readonly idempotencyIdentity: string;
   readonly recordedAt: string;
+  readonly authorityProof?: AuthorityProofReference;
 }): TargetCommandDispatch | undefined {
   const decision = input.request.decision;
   if (decision?.outcome !== "approved") return;
@@ -60,6 +63,9 @@ export function targetCommandDispatch(input: {
     causationId: input.causationId,
     idempotencyIdentity: input.idempotencyIdentity,
     recordedAt: input.recordedAt,
+    ...(input.authorityProof === undefined
+      ? {}
+      : { authorityProof: Object.freeze({ ...input.authorityProof }) }),
   });
 }
 
@@ -106,5 +112,24 @@ function isTargetCommandDispatch(
     Number.isSafeInteger(candidate.approvalRequestVersion) &&
     Number.isSafeInteger(candidate.expectedTargetVersion) &&
     Number.isSafeInteger(candidate.packageVersion) &&
-    typeof candidate.actor === "object" && candidate.actor !== null;
+    typeof candidate.actor === "object" && candidate.actor !== null &&
+    (candidate.authorityProof === undefined ||
+      isAuthorityProofReference(candidate.authorityProof));
+}
+
+function isAuthorityProofReference(
+  value: unknown,
+): value is AuthorityProofReference {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).length === 5 &&
+    typeof record.proofId === "string" &&
+    record.proofVersion === 1 &&
+    typeof record.evaluationId === "string" &&
+    typeof record.evaluationDigest === "string" &&
+    /^[0-9a-f]{64}$/.test(record.evaluationDigest) &&
+    typeof record.proofDigest === "string" &&
+    /^[0-9a-f]{64}$/.test(record.proofDigest);
 }

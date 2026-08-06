@@ -27,6 +27,7 @@ import {
   type WorkRecordNamespace,
 } from "./record_identity.ts";
 import { targetCommandDispatch } from "./target_commands.ts";
+import { authorityProofReference } from "./authority_proof.ts";
 import type { WorkManagementTransactionalEffects } from "./transactional_effects.ts";
 
 export interface WorkManagementClock {
@@ -62,6 +63,7 @@ export class WorkManagementCommandExecutor {
     private readonly unitOfWork: WorkManagementCommandUnitOfWork,
     private readonly effects: WorkManagementTransactionalEffects,
     private readonly clock: WorkManagementClock,
+    private readonly requireAuthorityProof = false,
   ) {}
 
   async execute<T extends WorkAggregate>(
@@ -161,6 +163,9 @@ export class WorkManagementCommandExecutor {
       digest,
       `target:${request.decision!.id}`,
     );
+    const authorityProof = this.requireAuthorityProof
+      ? await this.requiredAuthorityProof(transaction, request)
+      : undefined;
     const dispatch = targetCommandDispatch({
       dispatchId,
       request,
@@ -170,10 +175,29 @@ export class WorkManagementCommandExecutor {
       causationId,
       idempotencyIdentity: identityKey(input, commandType),
       recordedAt: this.clock.now(),
+      authorityProof,
     });
     if (dispatch === undefined) return;
     await transaction.appendTargetCommand(dispatch);
     await this.effects.appendTargetCommand(transaction, dispatch);
+  }
+
+  private async requiredAuthorityProof(
+    transaction: WorkManagementTransaction,
+    request: ApprovalRequest,
+  ) {
+    const evaluation = await transaction.findAuthorityEvaluation(
+      request.package.id,
+      request.package.version,
+      request.package.contentDigest,
+    );
+    if (evaluation === undefined) {
+      throw new WorkManagementError(
+        "REFERENCE_MISMATCH",
+        `Approval Request "${request.id}" has no immutable authority evaluation for package "${request.package.id}"; expected proof before target dispatch.`,
+      );
+    }
+    return await authorityProofReference(evaluation);
   }
 }
 

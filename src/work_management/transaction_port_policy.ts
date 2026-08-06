@@ -87,6 +87,19 @@ export class TransactionPortPolicyError extends Error {
   }
 }
 
+/** Rejects a production adapter that could perform uncontrolled I/O in a command transaction. */
+export function assertTransactionSafeAdapter(
+  port: WorkManagementPort,
+  adapter: { readonly transactionSafe?: true },
+): void {
+  if (adapter.transactionSafe === true) return;
+  throw new TransactionPortPolicyError(
+    port,
+    "finalize_transaction",
+    WORK_MANAGEMENT_PORT_POLICY[port],
+  );
+}
+
 function externalPolicy(
   permittedPhases: readonly CommandExecutionPhase[],
   rule: string,

@@ -55,8 +55,11 @@ export class PostgresAuthorityEvaluationStore
          evaluation_id, evaluation_digest, approval_package_id,
          approval_package_version, approval_package_digest, tenant_id,
          workspace_id, deal_id, target_aggregate_type, target_aggregate_id,
-         expected_target_version, evaluated_at, evaluation
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         expected_target_version, policy_version, snapshot_reference,
+         command_type, approver_id, facts, limits, limit_results, outcome,
+         reasons, effective_at, expires_at, evaluated_at, evaluation
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+         $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
        ON CONFLICT (evaluation_id) DO NOTHING`,
       insertValues(parsed),
     );
@@ -93,6 +96,17 @@ function insertValues(value: AuthorityEvaluation): readonly unknown[] {
     value.targetAggregateType,
     value.targetAggregateId,
     value.expectedTargetVersion,
+    value.policyVersion,
+    value.snapshotReference,
+    value.commandType,
+    value.approverId,
+    JSON.stringify(value.facts),
+    JSON.stringify(value.limits),
+    JSON.stringify(value.limitResults),
+    value.outcome,
+    JSON.stringify(value.reasons),
+    value.window.effectiveAt,
+    value.window.expiresAt,
     value.evaluatedAt,
     JSON.stringify(value),
   ];

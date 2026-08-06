@@ -32,10 +32,14 @@ export async function protectTargetCommand(
 ): Promise<AuthorityProtectedTargetCommand> {
   assertDispatchEvaluation(dispatch, evaluation);
   assertAllowed(evaluation);
+  const authorityProof = await authorityProofReference(evaluation);
   return Object.freeze({
     schemaVersion: 1,
-    dispatch: Object.freeze(structuredClone(dispatch)),
-    authorityProof: await authorityProofReference(evaluation),
+    dispatch: Object.freeze({
+      ...structuredClone(dispatch),
+      authorityProof,
+    }),
+    authorityProof,
   });
 }
 
@@ -49,8 +53,28 @@ export async function validateAuthorityProtectedTargetCommand(
   const proof = await resolveAuthorityProof(command.authorityProof, resolver);
   assertAllowed(proof.evaluation);
   assertDispatchEvaluation(command.dispatch, proof.evaluation);
+  assertDispatchProof(command.dispatch, command.authorityProof);
   assertConsumerWindow(proof.evaluation, consumedAt);
   return command;
+}
+
+function assertDispatchProof(
+  dispatch: TargetCommandDispatch,
+  reference: AuthorityProofReference,
+): void {
+  const proof = dispatch.authorityProof;
+  if (
+    proof !== undefined &&
+    proof.proofId === reference.proofId &&
+    proof.proofVersion === reference.proofVersion &&
+    proof.evaluationId === reference.evaluationId &&
+    proof.evaluationDigest === reference.evaluationDigest &&
+    proof.proofDigest === reference.proofDigest
+  ) return;
+  throw new WorkManagementError(
+    "REFERENCE_MISMATCH",
+    `Target command dispatch "${dispatch.dispatchId}" is missing its exact authority proof reference; expected proof "${reference.proofId}".`,
+  );
 }
 
 /** Exposes only consumer status, never facts, limits, mandate, or proof content. */

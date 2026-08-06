@@ -3,7 +3,10 @@ import type {
   ApprovalEvidencePort,
   ApprovalTargetPort,
 } from "./approval_package_factory.ts";
-import { buildServerApprovalPackage } from "./approval_package_factory.ts";
+import {
+  buildServerApprovalPackageWithAuthority,
+} from "./approval_package_factory.ts";
+import { evaluateApprovalAuthority } from "./authority_evaluation.ts";
 import {
   createApprovalRequest,
   decideApprovalRequest,
@@ -67,6 +70,7 @@ export interface WorkManagementApplicationOptions {
   readonly targets: ApprovalTargetPort;
   readonly evidence: ApprovalEvidencePort;
   readonly authority: ApprovalAuthoritySnapshotPort;
+  readonly requireAuthorityEvaluation?: boolean;
   readonly clock: WorkManagementClock;
 }
 
@@ -85,6 +89,7 @@ export class WorkManagementService {
       options.unitOfWork,
       options.effects,
       options.clock,
+      options.requireAuthorityEvaluation === true,
     );
   }
 
@@ -285,7 +290,7 @@ export class WorkManagementService {
       "create_approval_request",
       "approval_request",
       async (transaction) => {
-        const packageValue = await buildServerApprovalPackage({
+        const packageResult = await buildServerApprovalPackageWithAuthority({
           requestId: input.id,
           scope: input.scope,
           requester: input.actor,
@@ -297,6 +302,33 @@ export class WorkManagementService {
           claimedDigest: input.claimedDigest,
           authorization,
         }, this.options);
+        if (
+          this.options.requireAuthorityEvaluation === true &&
+          packageResult.facts === undefined
+        ) {
+          throw new WorkManagementError(
+            "HUMAN_AUTHORITY_REQUIRED",
+            `Approval Request "${input.id}" authority facts are unavailable; expected a trusted server authority evaluation before persistence.`,
+          );
+        }
+        const packageValue = packageResult.packageValue;
+        if (packageResult.facts !== undefined) {
+          const evaluation = await evaluateApprovalAuthority({
+            package: packageValue,
+            expectedPackage: packageValue,
+            facts: packageResult.facts,
+            evaluatedAt: this.options.clock.now(),
+          });
+          if (evaluation.outcome !== "allowed") {
+            throw new WorkManagementError(
+              "HUMAN_AUTHORITY_REQUIRED",
+              `Approval Request "${input.id}" authority evaluation denied; reasons: ${
+                evaluation.reasons.join(", ")
+              }.`,
+            );
+          }
+          await transaction.appendAuthorityEvaluation(evaluation);
+        }
         const value = createApprovalRequest({
           ...input.scope,
           id: input.id,

@@ -23,8 +23,12 @@ import {
   type TargetReference,
   WorkManagementError,
 } from "./model.ts";
+import type { AuthorityFacts } from "./authority_facts.ts";
+import { parseAuthorityFacts } from "./authority_facts.ts";
 
 export interface ApprovalTargetPort {
+  /** True only for MAI-106 transaction-local adapters. */
+  readonly transactionSafe?: true;
   validate(
     scope: WorkScope,
     target: TargetReference,
@@ -33,6 +37,8 @@ export interface ApprovalTargetPort {
 }
 
 export interface ApprovalEvidencePort {
+  /** True only for MAI-106 transaction-local adapters. */
+  readonly transactionSafe?: true;
   validate(
     scope: WorkScope,
     evidence: readonly EvidenceSnapshotReference[],
@@ -40,6 +46,8 @@ export interface ApprovalEvidencePort {
 }
 
 export interface ApprovalAuthoritySnapshotPort {
+  /** True only for MAI-106 transaction-local adapters. */
+  readonly transactionSafe?: true;
   resolve(input: {
     readonly scope: WorkScope;
     readonly requester: ActorReference;
@@ -52,6 +60,13 @@ export interface ApprovalAuthoritySnapshotPort {
 export interface ResolvedApprovalAuthority {
   readonly requirement: AuthorityRequirement;
   readonly snapshot: AuthoritySnapshot;
+  /** Facts returned by a trusted server adapter, never from the HTTP body. */
+  readonly facts?: unknown;
+}
+
+export interface ServerApprovalPackageResult {
+  readonly packageValue: ApprovalPackage;
+  readonly facts?: AuthorityFacts;
 }
 
 export interface ServerApprovalPackageInput {
@@ -76,6 +91,19 @@ export async function buildServerApprovalPackage(
     readonly authority: ApprovalAuthoritySnapshotPort;
   },
 ): Promise<ApprovalPackage> {
+  return (await buildServerApprovalPackageWithAuthority(input, ports))
+    .packageValue;
+}
+
+/** Builds the package and returns validated server-owned authority facts. */
+export async function buildServerApprovalPackageWithAuthority(
+  input: ServerApprovalPackageInput,
+  ports: {
+    readonly targets: ApprovalTargetPort;
+    readonly evidence: ApprovalEvidencePort;
+    readonly authority: ApprovalAuthoritySnapshotPort;
+  },
+): Promise<ServerApprovalPackageResult> {
   assertHumanActor(
     input.requester,
     `create Approval Request "${input.requestId}"`,
@@ -95,6 +123,9 @@ export async function buildServerApprovalPackage(
     target,
     authorization: input.authorization,
   });
+  const facts = resolved.facts === undefined
+    ? undefined
+    : parseAuthorityFacts(resolved.facts);
   assertTrustedAuthority(input, target, resolved);
   const packageValue = await createApprovalPackage({
     id: packageIdFor(input.requestId),
@@ -114,7 +145,10 @@ export async function buildServerApprovalPackage(
       `Approval Request "${input.requestId}" claimed digest "${input.claimedDigest}" does not match the server digest; expected exact package content.`,
     );
   }
-  return packageValue;
+  return {
+    packageValue,
+    ...(facts === undefined ? {} : { facts }),
+  };
 }
 
 function assertTrustedAuthority(

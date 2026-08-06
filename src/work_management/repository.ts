@@ -11,6 +11,7 @@ import type {
 import { WorkManagementError } from "./model.ts";
 import { semanticallyEquivalent } from "./record_identity.ts";
 import type { TargetCommandDispatch } from "./target_commands.ts";
+import type { AuthorityEvaluation } from "./authority_evaluation.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -95,6 +96,12 @@ export interface WorkManagementTransaction {
     scope: WorkScope,
     requestId: ApprovalRequestId,
   ): Promise<readonly TargetCommandDispatch[]>;
+  appendAuthorityEvaluation(evaluation: AuthorityEvaluation): Promise<void>;
+  findAuthorityEvaluation(
+    packageId: string,
+    packageVersion: number,
+    packageDigest: string,
+  ): Promise<AuthorityEvaluation | undefined>;
 }
 
 export interface WorkManagementRepository extends WorkManagementTransaction {
@@ -119,6 +126,10 @@ export class InMemoryWorkManagementRepository
   private readonly decisionRequests = new Map<string, ApprovalRequest>();
   private readonly commandResults = new Map<string, WorkCommandResult>();
   private readonly targetCommands = new Map<string, TargetCommandDispatch>();
+  private readonly authorityEvaluations = new Map<
+    string,
+    AuthorityEvaluation
+  >();
 
   findWorkstream(
     scope: WorkScope,
@@ -288,6 +299,32 @@ export class InMemoryWorkManagementRepository
     );
   }
 
+  appendAuthorityEvaluation(
+    evaluation: AuthorityEvaluation,
+  ): Promise<void> {
+    const key = evaluation.evaluationId;
+    const current = this.authorityEvaluations.get(key);
+    if (current === undefined) {
+      this.authorityEvaluations.set(key, clone(evaluation)!);
+      return Promise.resolve();
+    }
+    if (semanticallyEquivalent(current, evaluation)) return Promise.resolve();
+    throw new WorkManagementRecordConflictError("authority evaluation", key);
+  }
+
+  findAuthorityEvaluation(
+    packageId: string,
+    packageVersion: number,
+    packageDigest: string,
+  ): Promise<AuthorityEvaluation | undefined> {
+    const match = [...this.authorityEvaluations.values()].find((evaluation) =>
+      evaluation.requirement.packageId === packageId &&
+      evaluation.requirement.packageVersion === packageVersion &&
+      evaluation.requirement.packageDigest === packageDigest
+    );
+    return Promise.resolve(clone(match));
+  }
+
   run<TResult>(
     callback: (
       transaction: WorkManagementTransaction,
@@ -303,6 +340,7 @@ export class InMemoryWorkManagementRepository
     const decisionRequests = new Map(this.decisionRequests);
     const commandResults = new Map(this.commandResults);
     const targetCommands = new Map(this.targetCommands);
+    const authorityEvaluations = new Map(this.authorityEvaluations);
     return Promise.resolve().then(() => callback(this)).catch(
       (error: unknown) => {
         restore(this.workstreams, workstreams);
@@ -313,6 +351,7 @@ export class InMemoryWorkManagementRepository
         restore(this.decisionRequests, decisionRequests);
         restore(this.commandResults, commandResults);
         restore(this.targetCommands, targetCommands);
+        restore(this.authorityEvaluations, authorityEvaluations);
         throw error;
       },
     );

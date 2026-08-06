@@ -149,6 +149,16 @@ Deno.test({
       targetOutbox: 1,
       approvalEvents: 1,
     });
+    const proof = await pool.query<{ readonly dispatch: Record<string, unknown> }>(
+      "SELECT dispatch FROM work_management.target_command_dispatches WHERE approval_request_id=$1",
+      [requestId],
+    );
+    const dispatch = proof.rows[0]?.dispatch;
+    if (dispatch === undefined) throw new Error("Dispatch proof row is missing.");
+    assertEquals(
+      typeof dispatch.authorityProof?.proofId,
+      "string",
+    );
     await pool.end();
   },
 });
@@ -214,7 +224,7 @@ function composition(
     transactions: runner,
     audit: new RecordingAuditPort(),
     ...(outbox === undefined ? {} : { outbox }),
-    authorization: { authorize: allow },
+    authorization: { authorize: allow, transactionSafe: true },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
     targets: ports ?? new ExactTargetPort(),
     evidence: ports ?? new EmptyEvidencePort(),
@@ -227,6 +237,7 @@ class CountingApprovalPorts
     ApprovalTargetPort,
     ApprovalEvidencePort,
     ApprovalAuthoritySnapshotPort {
+  readonly transactionSafe = true as const;
   readonly calls = { target: 0, evidence: 0, authority: 0 };
 
   validate(
@@ -274,6 +285,7 @@ class CountingApprovalPorts
         applicableLimits: [],
         humanOnly: true as const,
       },
+      facts: authorityFacts(input.target, input.scope),
     });
   }
 }
@@ -290,6 +302,7 @@ class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
 }
 
 class ExactTargetPort implements ApprovalTargetPort {
+  readonly transactionSafe = true as const;
   validate(
     _scope: WorkScope,
     value: TargetReference,
@@ -303,6 +316,7 @@ class ExactTargetPort implements ApprovalTargetPort {
 }
 
 class EmptyEvidencePort implements ApprovalEvidencePort {
+  readonly transactionSafe = true as const;
   validate(
     _scope: WorkScope,
     values: readonly EvidenceSnapshotReference[],
@@ -312,6 +326,7 @@ class EmptyEvidencePort implements ApprovalEvidencePort {
 }
 
 class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
+  readonly transactionSafe = true as const;
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
     const snapshot = {
       snapshotId: "authority-dispatch-v1",
@@ -331,12 +346,26 @@ class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
         scope: input.scope,
         effectiveAt: "2026-08-06T11:00:00.000Z",
         expiresAt: "2026-08-06T13:00:00.000Z",
-        applicableLimits: [{ name: "max_amount", value: 1_000_000 }],
+        applicableLimits: [{ name: "amount_minor_ceiling", value: 1_000_000 }],
         humanOnly: true as const,
       },
+      facts: authorityFacts(input.target, input.scope),
       snapshot,
     });
   }
+}
+
+function authorityFacts(target: TargetReference, scope: WorkScope) {
+  return {
+    target,
+    scope,
+    amount: { minorUnits: 10, currency: "USD" },
+    source: {
+      sourceId: "trusted-test-authority-facts",
+      sourceVersion: "1",
+      capturedAt: "2026-08-06T12:00:00.000Z",
+    },
+  };
 }
 
 class RecordingAuditPort implements WorkManagementAuditPort {
@@ -447,6 +476,27 @@ async function migrate(pool: ReturnType<typeof createMai106Pool>) {
     ...auditActivityMigrations,
     ...workManagementMigrations,
   ]);
+  await activateCommands(pool, `dispatch-${Date.now()}`);
+}
+
+async function activateCommands(
+  pool: ReturnType<typeof createMai106Pool>,
+  suffix: string,
+): Promise<void> {
+  const scanId = `scan_${suffix}`;
+  await pool.query(
+    "SELECT work_management.scan_membership_authority($1,$2)",
+    [scanId, new Date().toISOString()],
+  );
+  await pool.query(
+    "SELECT work_management.set_membership_rollout_mode($1,'commands',$2,$3,$4)",
+    [
+      `activate_${suffix}`,
+      scanId,
+      "test:dispatch-suite",
+      new Date().toISOString(),
+    ],
+  );
 }
 
 async function dispatchCounts(

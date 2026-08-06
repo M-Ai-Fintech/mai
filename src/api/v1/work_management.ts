@@ -9,7 +9,10 @@ import {
   type CommandInput,
   WorkManagementService,
 } from "../../work_management/application_service.ts";
-import { WorkManagementIdempotencyInProgressError } from "../../work_management/command_unit_of_work.ts";
+import {
+  WorkManagementCommandsDisabledError,
+  WorkManagementIdempotencyInProgressError,
+} from "../../work_management/command_unit_of_work.ts";
 import {
   type WorkAggregate,
   WorkManagementError,
@@ -302,6 +305,14 @@ function mapError(
       message: error.message,
       correlationId,
       retryable: false,
+    });
+  }
+  if (error instanceof WorkManagementCommandsDisabledError) {
+    return createApiError({
+      code: "DEPENDENCY_UNAVAILABLE",
+      message: error.message,
+      correlationId,
+      retryable: true,
     });
   }
   if (error instanceof WorkManagementError) {
