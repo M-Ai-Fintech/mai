@@ -16,7 +16,6 @@ import {
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
   workManagementCorrectiveMigration,
-  workManagementMembershipAuthorityMigration,
   workManagementMigration,
 } from "../../src/work_management/migrations/index.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
@@ -136,8 +135,16 @@ Deno.test({
       ...platformMigrations,
       workManagementMigration,
       workManagementCorrectiveMigration,
-      workManagementMembershipAuthorityMigration,
     ]);
+    await pool.query(
+      `INSERT INTO platform.migration_ledger
+       (context_owner, schema_name, migration_id, version, checksum,
+        forward_notes, rollback_notes)
+       VALUES ('work_management','work_management',
+        'work_management-0003-membership-authority',3,$1,
+        'legacy checksum fixture','legacy rollback fixture')`,
+      ["5a26d7534f4852afa9b64671e4ebaa25e6c20b69fa6e7b9446efebca62b534bb"],
+    );
     const legacy = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
     );

@@ -40,7 +40,12 @@ import {
 } from "./command_execution.ts";
 import type { WorkManagementCommandUnitOfWork } from "./command_unit_of_work.ts";
 import { approvalDecisionId } from "./ids.ts";
-import type { ApprovalRequestId, TaskId, WorkstreamId } from "./ids.ts";
+import type {
+  ApprovalRequestId,
+  TargetCommandType,
+  TaskId,
+  WorkstreamId,
+} from "./ids.ts";
 import {
   type ApprovalRequest,
   assertAuthorityEffective,
@@ -270,7 +275,7 @@ export class WorkManagementService {
   async createApprovalRequest(
     input: CreateCommand<ApprovalRequestId> & {
       readonly namedApproverId: ApprovalRequest["namedApproverId"];
-      readonly requestedAction: string;
+      readonly requestedAction: TargetCommandType;
       readonly target: TargetReference;
       readonly evidence: readonly EvidenceSnapshotReference[];
       readonly payload: Readonly<Record<string, unknown>>;

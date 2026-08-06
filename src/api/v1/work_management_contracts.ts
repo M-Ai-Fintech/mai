@@ -12,6 +12,7 @@ import type {
 } from "../../work_management/v1.ts";
 import type {
   ApprovalRequestId,
+  TargetCommandType,
   TaskId,
   WorkScope,
   WorkstreamId,
@@ -94,7 +95,7 @@ export interface CreateApprovalRequestCommand
   extends WorkManagementCommandInput<ApprovalRequestId> {
   readonly namedApproverId: ApprovalRequest["namedApproverId"];
   /** Client semantic selector; the server authority requirement remains authoritative. */
-  readonly requestedAction: string;
+  readonly requestedAction: TargetCommandType;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;

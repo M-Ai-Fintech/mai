@@ -8,6 +8,7 @@ import {
   type ActorId,
   approvalPackageId,
   type ApprovalRequestId,
+  type TargetCommandType,
   type WorkScope,
 } from "./ids.ts";
 import {
@@ -56,7 +57,7 @@ export interface ApprovalAuthoritySnapshotPort {
     readonly requester: ActorReference;
     readonly namedApproverId: ActorId;
     readonly target: TargetReference;
-    readonly requestedAction: string;
+    readonly requestedAction: TargetCommandType;
     readonly authorization: AuthorizationDecision;
   }): Promise<ResolvedApprovalAuthority>;
 }
@@ -79,7 +80,7 @@ export interface ServerApprovalPackageInput {
   readonly requester: ActorReference;
   readonly now: string;
   readonly namedApproverId: ActorId;
-  readonly requestedAction: string;
+  readonly requestedAction: TargetCommandType;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
