@@ -50,7 +50,6 @@ Deno.test("approval HTTP boundary rejects requester and authority spoofing", asy
     const forged of [
       { requesterId: actor("actor_spoofed") },
       { authoritySnapshot: { snapshotId: "forged" } },
-      { action: "client_selected_command" },
       { policyVersion: "forged" },
       { package: { contentDigest: "0".repeat(64) } },
     ]
@@ -59,6 +58,23 @@ Deno.test("approval HTTP boundary rejects requester and authority spoofing", asy
     assertEquals(response.status, 422);
     assertStringIncludes(await response.text(), "server-owned");
   }
+});
+
+Deno.test("approval HTTP action is only a requested selector", async () => {
+  const response = await request({
+    ...validBody("requested-action"),
+    action: "reject_evidence",
+  });
+  assertEquals(response.status, 422);
+});
+
+Deno.test("approval HTTP creation requires a bounded requested action", async () => {
+  const response = await request({
+    ...validBody("missing-action"),
+    action: undefined,
+  });
+  assertEquals(response.status, 422);
+  assertStringIncludes(await response.text(), "VALIDATION_FAILED");
 });
 
 Deno.test("approval HTTP boundary rejects tampering and malformed nested values", async () => {
@@ -144,6 +160,7 @@ function validBody(suffix: string): Record<string, unknown> {
   return {
     id: `approval_${suffix}`,
     namedApproverId: approverId,
+    action: "approve_evidence",
     target: {
       aggregateType: "evidence",
       aggregateId: `evidence_${suffix}`,

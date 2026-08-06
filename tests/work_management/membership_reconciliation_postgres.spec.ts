@@ -27,10 +27,16 @@ Deno.test({
       const runner = new PostgresMigrationRunner(pool);
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
       await runner.apply([...platformMigrations, ...workManagementMigrations]);
+      await resetIsolatedContext(pool);
+      const baselineScan = `scan_baseline_${suffix}`;
+      await pool.query(
+        "SELECT work_management.scan_membership_authority($1,$2)",
+        [baselineScan, new Date().toISOString()],
+      );
       await setReadOnly(
         pool,
         `reset_read_only_${suffix}`,
-        "work_management-0004-initial",
+        baselineScan,
       );
       assertEquals(await commandsAvailable(pool), false);
       await seedDivergences(pool, scope, suffix);
@@ -97,20 +103,31 @@ Deno.test({
         new Date(Date.now() + 10_000).toISOString(),
       );
       assertEquals(await commandsAvailable(pool), false);
-      await assertRejects(
-        () =>
-          pool.query(
-            `INSERT INTO work_management.membership_rollout_events
-             (event_id, mode, scan_id, actor_id, recorded_at)
-             VALUES ($1, 'commands', $2, 'operator:direct', now())`,
-            [`direct_rollout_${suffix}`, cleanScan],
-          ),
-        Error,
-        "governed activation",
-      );
+      const direct = await pool.connect();
+      try {
+        await direct.query(
+          "SELECT set_config('work_management.rollout_writer','governed',false)",
+        );
+        await assertRejects(
+          () =>
+            direct.query(
+              `INSERT INTO work_management.membership_rollout_events
+               (event_id, mode, scan_id, actor_id, recorded_at)
+               VALUES ($1, 'commands', $2, 'operator:direct', now())`,
+              [`direct_rollout_${suffix}`, cleanScan],
+            ),
+          Error,
+          "governed activation",
+        );
+      } finally {
+        await direct.query(
+          "SELECT set_config('work_management.rollout_writer','forbidden',false)",
+        );
+        direct.release();
+      }
       assertEquals(await findingCount(pool, firstScan), 10);
       const terminalWorkstream = `ws_terminal_${suffix}`;
-      const terminalTask = `task_terminal_${suffix}`;
+      const terminalTask = `task_terminal-${suffix}`;
       await pool.query("BEGIN");
       await pool.query(
         "ALTER TABLE work_management.workstreams_current DISABLE TRIGGER USER",
@@ -147,12 +164,111 @@ Deno.test({
         Error,
         "terminal workstream",
       );
+      const nullStateWorkstream = `ws_terminal-null-${suffix}`;
+      const nullStateTask = `task_terminal-null-${suffix}`;
+      await pool.query("BEGIN");
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current DISABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current DISABLE TRIGGER USER",
+      );
+      await insertWorkstream(pool, scope, nullStateWorkstream, {
+        state: "completed",
+        taskIds: [nullStateTask],
+      });
+      await pool.query(
+        `INSERT INTO work_management.tasks_current
+         (task_id,tenant_id,workspace_id,deal_id,workstream_id,version,document,created_at,updated_at)
+         VALUES ($1,$2,$3,$4,$5,1,$6,now(),now())`,
+        [nullStateTask, ...scope, nullStateWorkstream, {
+          workstreamId: nullStateWorkstream,
+        }],
+      );
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current ENABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current ENABLE TRIGGER USER",
+      );
+      await pool.query("COMMIT");
+      await assertRejects(
+        () =>
+          pool.query(
+            "SELECT work_management.validate_workstream_membership($1,$2,$3,$4)",
+            [...scope, nullStateWorkstream],
+          ),
+        Error,
+        "terminal workstream",
+      );
+      const malformedWorkstream = `ws_malformed-row-${suffix}`;
+      const malformedTask = `task_bad_${suffix}`;
+      await pool.query("BEGIN");
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current DISABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current DISABLE TRIGGER USER",
+      );
+      await insertWorkstream(pool, scope, malformedWorkstream, {
+        taskIds: [malformedTask],
+      });
+      await insertTask(
+        pool,
+        scope,
+        malformedTask,
+        malformedWorkstream,
+        malformedWorkstream,
+      );
+      await pool.query(
+        "ALTER TABLE work_management.workstreams_current ENABLE TRIGGER USER",
+      );
+      await pool.query(
+        "ALTER TABLE work_management.tasks_current ENABLE TRIGGER USER",
+      );
+      await pool.query("COMMIT");
+      const malformedScan = `scan_malformed-${suffix}`;
+      await pool.query(
+        "SELECT work_management.scan_membership_authority($1,$2)",
+        [malformedScan, new Date(Date.now() + 20_000).toISOString()],
+      );
+      const malformedClasses = await pool.query(
+        "SELECT finding_class FROM work_management.membership_reconciliation_findings WHERE scan_id=$1 AND workstream_id=$2 ORDER BY finding_class",
+        [malformedScan, malformedWorkstream],
+      );
+      assertEquals(
+        malformedClasses.rows.map((row) => row.finding_class),
+        ["malformed_task_id", "malformed_workstream_task_ids"],
+      );
       await proveConcurrentAttachment(pool, scope, suffix);
     } finally {
       await pool.end();
     }
   },
 });
+
+async function resetIsolatedContext(pool: import("pg").Pool): Promise<void> {
+  await pool.query(`
+    TRUNCATE TABLE
+      work_management.tasks_current,
+      work_management.workstreams_current,
+      work_management.approval_requests_current,
+      work_management.aggregate_history,
+      work_management.approval_decision_history,
+      work_management.command_results,
+      work_management.target_command_dispatches,
+      work_management.authority_evaluations,
+      work_management.command_preparations,
+      work_management.membership_reconciliation_resolutions,
+      work_management.membership_reconciliation_findings,
+      work_management.membership_reconciliation_scans,
+      work_management.membership_rollout_events,
+      platform.idempotency_records,
+      platform.outbox,
+      platform.inbox
+    RESTART IDENTITY CASCADE
+  `);
+}
 
 const expectedClasses = [
   "ambiguous_legacy_ownership",
@@ -183,13 +299,13 @@ async function seedDivergences(
     );
     const workstreams = [
       ["malformed", { taskIds: {} }],
-      ["duplicate", { taskIds: [`task_dup_${suffix}`, `task_dup_${suffix}`] }],
+      ["duplicate", { taskIds: [`task_dup-${suffix}`, `task_dup-${suffix}`] }],
       ["missing_member", { taskIds: [] }],
-      ["author_missing", { taskIds: [`task_missing_${suffix}`] }],
-      ["wrong_owner", { taskIds: [`task_wrong_${suffix}`] }],
-      ["actual_owner", { taskIds: [`task_wrong_${suffix}`] }],
-      ["scope_owner", { taskIds: [`task_scope_${suffix}`] }],
-      ["backref", { taskIds: [`task_back_${suffix}`] }],
+      ["author_missing", { taskIds: [`task_missing-${suffix}`] }],
+      ["wrong_owner", { taskIds: [`task_wrong-${suffix}`] }],
+      ["actual_owner", { taskIds: [`task_wrong-${suffix}`] }],
+      ["scope_owner", { taskIds: [`task_scope-${suffix}`] }],
+      ["backref", { taskIds: [`task_back-${suffix}`] }],
     ];
     for (const [name, document] of workstreams) {
       await insertWorkstream(pool, scope, `ws_${name}_${suffix}`, document);
@@ -204,54 +320,54 @@ async function seedDivergences(
       pool,
       [`other_${tenant}`, workspace, deal],
       `ws_scope_other_${suffix}`,
-      { taskIds: [`task_scope_${suffix}`] },
+      { taskIds: [`task_scope-${suffix}`] },
     );
     await insertTask(
       pool,
       scope,
-      `task_dup_${suffix}`,
+      `task_dup-${suffix}`,
       `ws_duplicate_${suffix}`,
       `ws_duplicate_${suffix}`,
     );
     await insertTask(
       pool,
       scope,
-      `task_orphan_${suffix}`,
+      `task_orphan-${suffix}`,
       `ws_absent_${suffix}`,
       `ws_absent_${suffix}`,
     );
     await insertTask(
       pool,
       scope,
-      `task_cross_${suffix}`,
+      `task_cross-${suffix}`,
       `ws_cross_${suffix}`,
       `ws_cross_${suffix}`,
     );
     await insertTask(
       pool,
       scope,
-      `task_unlisted_${suffix}`,
+      `task_unlisted-${suffix}`,
       `ws_missing_member_${suffix}`,
       `ws_missing_member_${suffix}`,
     );
     await insertTask(
       pool,
       scope,
-      `task_wrong_${suffix}`,
+      `task_wrong-${suffix}`,
       `ws_actual_owner_${suffix}`,
       `ws_actual_owner_${suffix}`,
     );
     await insertTask(
       pool,
       [`other_${tenant}`, workspace, deal],
-      `task_scope_${suffix}`,
+      `task_scope-${suffix}`,
       `ws_scope_other_${suffix}`,
       `ws_scope_other_${suffix}`,
     );
     await insertTask(
       pool,
       scope,
-      `task_back_${suffix}`,
+      `task_back-${suffix}`,
       `ws_backref_${suffix}`,
       `ws_conflict_${suffix}`,
     );
@@ -273,6 +389,9 @@ async function repairDivergences(
   scope: string[],
 ): Promise<void> {
   const [tenant, workspace, deal] = scope;
+  const otherTenant = `other_${tenant}`;
+  const repairedWorkstream = `ws_repaired-${tenant}`;
+  const repairedOtherWorkstream = `ws_repaired-${otherTenant}`;
   await pool.query("BEGIN");
   try {
     await pool.query(
@@ -282,12 +401,58 @@ async function repairDivergences(
       "ALTER TABLE work_management.tasks_current DISABLE TRIGGER USER",
     );
     await pool.query(
-      "DELETE FROM work_management.tasks_current WHERE workspace_id=$1 AND deal_id=$2 AND (tenant_id=$3 OR tenant_id=$4)",
-      [workspace, deal, tenant, `other_${tenant}`],
+      `INSERT INTO work_management.workstreams_current
+       (workstream_id,tenant_id,workspace_id,deal_id,version,document,created_at,updated_at)
+       VALUES ($1,$2,$3,$4,1,'{"taskIds":[]}'::jsonb,now(),now()),
+              ($5,$6,$3,$4,1,'{"taskIds":[]}'::jsonb,now(),now())`,
+      [
+        repairedWorkstream,
+        tenant,
+        workspace,
+        deal,
+        repairedOtherWorkstream,
+        otherTenant,
+      ],
     );
     await pool.query(
-      "DELETE FROM work_management.workstreams_current WHERE workspace_id=$1 AND deal_id=$2 AND (tenant_id=$3 OR tenant_id=$4)",
-      [workspace, deal, tenant, `other_${tenant}`],
+      `UPDATE work_management.workstreams_current
+       SET document=jsonb_set(document,'{taskIds}','[]'::jsonb), version=version+1
+       WHERE workspace_id=$1 AND deal_id=$2 AND tenant_id IN ($3,$4)
+         AND workstream_id NOT IN ($5,$6)`,
+      [
+        workspace,
+        deal,
+        tenant,
+        otherTenant,
+        repairedWorkstream,
+        repairedOtherWorkstream,
+      ],
+    );
+    await pool.query(
+      `UPDATE work_management.tasks_current
+       SET workstream_id=CASE WHEN tenant_id=$3 THEN $5 ELSE $6 END,
+           document=jsonb_set(document,'{workstreamId}',to_jsonb(CASE WHEN tenant_id=$3 THEN $5 ELSE $6 END)),
+           version=version+1
+       WHERE workspace_id=$1 AND deal_id=$2 AND tenant_id IN ($3,$4)`,
+      [
+        workspace,
+        deal,
+        tenant,
+        otherTenant,
+        repairedWorkstream,
+        repairedOtherWorkstream,
+      ],
+    );
+    await pool.query(
+      `UPDATE work_management.workstreams_current AS w
+       SET document=jsonb_set(w.document,'{taskIds}',COALESCE(
+         (SELECT jsonb_agg(to_jsonb(t.task_id) ORDER BY t.task_id)
+          FROM work_management.tasks_current AS t
+          WHERE t.tenant_id=w.tenant_id AND t.workspace_id=w.workspace_id
+            AND t.deal_id=w.deal_id AND t.workstream_id=w.workstream_id),
+         '[]'::jsonb)), version=version+1
+       WHERE w.workspace_id=$1 AND w.deal_id=$2 AND w.workstream_id IN ($3,$4)`,
+      [workspace, deal, repairedWorkstream, repairedOtherWorkstream],
     );
     await pool.query(
       "ALTER TABLE work_management.workstreams_current ENABLE TRIGGER USER",
@@ -309,7 +474,7 @@ async function resolveFindings(
   suffix: string,
 ): Promise<void> {
   const findings = await pool.query(
-    "SELECT finding_id FROM work_management.membership_reconciliation_findings WHERE scan_id=$1",
+    "SELECT finding_id, finding_class FROM work_management.membership_reconciliation_findings WHERE scan_id=$1",
     [scanId],
   );
   for (const [index, finding] of findings.rows.entries()) {
@@ -320,9 +485,14 @@ async function resolveFindings(
         finding.finding_id,
         cleanScan,
         {
-          action: "retained",
+          action: finding.finding_class === "ambiguous_legacy_ownership"
+            ? "retained"
+            : "mapped",
           retained: true,
-          evidence: { procedure: "operator_reconciled_and_rescanned" },
+          evidence: {
+            procedure: "operator_reconciled_and_rescanned",
+            mapping: "scope-qualified-repaired-workstream",
+          },
         },
         "operator:test",
         new Date(Date.now() + 3_000 + index).toISOString(),
@@ -433,8 +603,8 @@ async function proveConcurrentAttachment(
     }
   };
   await Promise.all([
-    attach(`task_concurrent_a_${suffix}`),
-    attach(`task_concurrent_b_${suffix}`),
+    attach(`task_concurrent-a-${suffix}`),
+    attach(`task_concurrent-b-${suffix}`),
   ]);
   const result = await pool.query(
     "SELECT jsonb_array_length(document->'taskIds') AS count FROM work_management.workstreams_current WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND workstream_id=$4",

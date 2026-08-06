@@ -176,7 +176,9 @@ export class PostgresWorkManagementUnitOfWork
 async function assertMembershipCommandsAvailable(
   handle: TransactionHandle,
 ): Promise<void> {
-  await handle.query("SELECT work_management.lock_membership_rollout()");
+  await handle.query(
+    "SELECT work_management.lock_membership_rollout_shared()",
+  );
   const result = await handle.query<{ readonly available: boolean }>(
     "SELECT work_management.membership_commands_available() AS available",
   );

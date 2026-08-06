@@ -9,6 +9,9 @@ import {
 import {
   workManagementMembershipAuthorityUpgradeMigration,
 } from "./work_management_0004_membership_authority.ts";
+import {
+  workManagementMembershipOperabilityMigration,
+} from "./work_management_0006_membership_operability.ts";
 
 export const workManagementMigrations = Object.freeze([
   workManagementMigration,
@@ -16,6 +19,7 @@ export const workManagementMigrations = Object.freeze([
   workManagementMembershipAuthorityMigration,
   workManagementMembershipAuthorityUpgradeMigration,
   workManagementAuthorityAndPreparedMigration,
+  workManagementMembershipOperabilityMigration,
 ]);
 
 export {
@@ -23,5 +27,6 @@ export {
   workManagementCorrectiveMigration,
   workManagementMembershipAuthorityMigration,
   workManagementMembershipAuthorityUpgradeMigration,
+  workManagementMembershipOperabilityMigration,
   workManagementMigration,
 };

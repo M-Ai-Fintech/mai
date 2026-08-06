@@ -9,6 +9,9 @@ export const workManagementMembershipAuthorityMigration = defineMigration({
     "Fail closed on existing Workstream/Task membership divergence and enforce Workstream taskIds as authoritative with exact Task workstreamId back-references at transaction commit.",
   rollbackNotes:
     "Disable Work Management commands and retain all aggregate and history records; do not remove membership enforcement until divergent records are reconciled.",
+  compatibleChecksums: [
+    "5a26d7534f4852afa9b64671e4ebaa25e6c20b69fa6e7b9446efebca62b534bb",
+  ],
   statements: [{
     schema: "work_management",
     sql: `
@@ -74,30 +77,8 @@ export const workManagementMembershipAuthorityMigration = defineMigration({
           HAVING count(*) > 1
         )
       $$;
-      DO $$
-      BEGIN
-        IF work_management.membership_is_inconsistent() THEN
-          RAISE EXCEPTION 'work_management membership is inconsistent; expected Workstream taskIds authority and exact Task workstreamId back-references before migration';
-        END IF;
-      END;
-      $$;
-      CREATE FUNCTION work_management.enforce_membership_authority()
-      RETURNS trigger LANGUAGE plpgsql AS $$
-      BEGIN
-        IF work_management.membership_is_inconsistent() THEN
-          RAISE EXCEPTION 'work_management membership is inconsistent; expected Workstream taskIds authority and exact Task workstreamId back-references';
-        END IF;
-        RETURN NULL;
-      END;
-      $$;
-      CREATE CONSTRAINT TRIGGER workstreams_membership_authority
-        AFTER INSERT OR UPDATE OR DELETE ON work_management.workstreams_current
-        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
-        EXECUTE FUNCTION work_management.enforce_membership_authority();
-      CREATE CONSTRAINT TRIGGER tasks_membership_authority
-        AFTER INSERT OR UPDATE OR DELETE ON work_management.tasks_current
-        DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
-        EXECUTE FUNCTION work_management.enforce_membership_authority();
+      -- Enforcement is installed only by 0004 after append-only findings are
+      -- Keep legacy data untouched so this compatibility stream does not abort dirty records
     `,
   }],
 });

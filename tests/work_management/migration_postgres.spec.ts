@@ -45,7 +45,7 @@ Deno.test({
     const ledger = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner = 'work_management'",
     );
-    assertEquals(ledger.rows[0].count, 5);
+    assertEquals(ledger.rows[0].count, 6);
     const suffix = Date.now().toString();
     const eventId = `work_event_migration-${suffix}`;
     await pool.query(
@@ -142,6 +142,12 @@ Deno.test({
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
     );
     assertEquals(legacy.rows[0].count, 3);
+    await pool.query(
+      `INSERT INTO work_management.workstreams_current
+       (workstream_id, tenant_id, workspace_id, deal_id, version, document, created_at, updated_at)
+       VALUES ('workstream_dirty-upgrade', 'tenant_dirty-upgrade', 'workspace_dirty-upgrade',
+         'deal_dirty-upgrade', 1, '{"taskIds":["task_missing-upgrade"]}', now(), now())`,
+    );
     await runner.apply([
       ...platformMigrations,
       ...workManagementMigrations,
@@ -149,7 +155,16 @@ Deno.test({
     const upgraded = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner='work_management'",
     );
-    assertEquals(upgraded.rows[0].count, 5);
+    assertEquals(upgraded.rows[0].count, 6);
+    const findings = await pool.query(
+      `SELECT count(*)::int AS count FROM work_management.membership_reconciliation_findings
+       WHERE scan_id='work_management-0004-initial'`,
+    );
+    assertEquals(findings.rows[0].count > 0, true);
+    const commandMode = await pool.query(
+      "SELECT work_management.membership_commands_available() AS available",
+    );
+    assertEquals(commandMode.rows[0].available, false);
     const tables = await pool.query<{ readonly tableName: string }>(
       `SELECT table_name AS "tableName" FROM information_schema.tables
        WHERE table_schema='work_management' AND table_name IN

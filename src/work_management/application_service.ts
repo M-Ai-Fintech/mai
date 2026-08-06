@@ -270,7 +270,7 @@ export class WorkManagementService {
   async createApprovalRequest(
     input: CreateCommand<ApprovalRequestId> & {
       readonly namedApproverId: ApprovalRequest["namedApproverId"];
-      readonly requestedAction?: string;
+      readonly requestedAction: string;
       readonly target: TargetReference;
       readonly evidence: readonly EvidenceSnapshotReference[];
       readonly payload: Readonly<Record<string, unknown>>;

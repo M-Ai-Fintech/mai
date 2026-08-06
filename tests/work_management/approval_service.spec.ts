@@ -32,6 +32,7 @@ Deno.test("server-trusted approval creation, semantic events, and dispatch are r
       requester,
     ),
     namedApproverId: approver.id,
+    requestedAction: "approve_evidence",
     target: target(),
     evidence: [{
       sourceType: "document",
@@ -148,6 +149,7 @@ Deno.test("rejected, stale, and AI approval commands never dispatch", async () =
       requester,
     ),
     namedApproverId: approver.id,
+    requestedAction: "approve_evidence",
     target: target(),
     evidence: [],
     payload: { summary: "review" },
@@ -194,6 +196,7 @@ Deno.test("rejected, stale, and AI approval commands never dispatch", async () =
       fixture.service.createApprovalRequest({
         ...command(approvalRequestId("approval_ai-denied"), "create-ai", ai),
         namedApproverId: approver.id,
+        requestedAction: "approve_evidence",
         target: target(),
         evidence: [],
         payload: {},
@@ -214,6 +217,7 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
+        requestedAction: "approve_evidence",
         target: target(),
         evidence: [],
         payload: { changed: true },
@@ -231,6 +235,7 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
+        requestedAction: "approve_evidence",
         target: target(),
         evidence: [{
           sourceType: "document",
@@ -254,6 +259,7 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
+        requestedAction: "approve_evidence",
         target: target(),
         evidence: [],
         payload: {},
@@ -276,6 +282,7 @@ Deno.test("approval package rejects spoofed digest, cross-Deal evidence, and aut
           requester,
         ),
         namedApproverId: approver.id,
+        requestedAction: "approve_evidence",
         target: target(),
         evidence: [],
         payload: {},
@@ -291,7 +298,7 @@ Deno.test("requested approval action must match the server-approved authority co
     () =>
       fixture.service.createApprovalRequest({
         ...command(
-          approvalRequestId("approval-action-mismatch"),
+          approvalRequestId("approval_action-mismatch"),
           "create-action-mismatch",
           requester,
         ),
@@ -370,6 +377,7 @@ Deno.test("approval read DTO never serializes fields outside the final mask", as
       requester,
     ),
     namedApproverId: approver.id,
+    requestedAction: "approve_evidence",
     target: target(),
     evidence: [{
       sourceType: "document",

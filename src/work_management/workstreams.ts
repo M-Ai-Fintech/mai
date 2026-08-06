@@ -43,7 +43,12 @@ export function attachTask(
   workstream: Workstream,
   task: Pick<
     Task,
-    "id" | "tenantId" | "workspaceId" | "dealId" | "workstreamId"
+    | "id"
+    | "tenantId"
+    | "workspaceId"
+    | "dealId"
+    | "workstreamId"
+    | "state"
   >,
 ): Workstream {
   assertScope(workstreamScope(workstream), taskScope(task), "Task attachment");
@@ -51,6 +56,15 @@ export function attachTask(
     throw new WorkManagementError(
       "REFERENCE_MISMATCH",
       `Task "${task.id}" workstream "${task.workstreamId}" does not match Workstream "${workstream.id}"; expected the owning workstream ID.`,
+    );
+  }
+  if (
+    workstream.state === "completed" &&
+    task.state !== "completed" && task.state !== "cancelled"
+  ) {
+    throw new WorkManagementError(
+      "INCOMPLETE_WORK",
+      `Terminal Workstream "${workstream.id}" cannot attach non-terminal Task "${task.id}"; expected completed or cancelled Task state.`,
     );
   }
   if (workstream.taskIds.includes(task.id)) return workstream;

@@ -79,6 +79,7 @@ export async function openRequest(
       requester,
     ),
     namedApproverId: approver.id,
+    requestedAction: "approve_evidence",
     target: target(),
     evidence: [],
     payload: {},

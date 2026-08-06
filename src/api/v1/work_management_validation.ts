@@ -1,4 +1,7 @@
-import { aggregateVersion } from "../../work_management/ids.ts";
+import {
+  aggregateVersion,
+  targetCommandType,
+} from "../../work_management/ids.ts";
 import type {
   EvidenceSnapshotReference,
   TargetReference,
@@ -19,7 +22,7 @@ const FORBIDDEN_APPROVAL_FIELDS = Object.freeze([
 ]);
 
 export interface ParsedApprovalCreation {
-  readonly requestedAction?: string;
+  readonly requestedAction: ReturnType<typeof targetCommandType>;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -56,11 +59,11 @@ export function parseApprovalCreation(
   const claimedDigest = body.contentDigest === undefined
     ? undefined
     : requiredDigest(body.contentDigest, "contentDigest");
-  const requestedAction = body.action === undefined
-    ? undefined
-    : requiredSelector(body.action, "action");
+  const requestedAction = targetCommandType(
+    requiredSelector(body.action, "action"),
+  );
   return Object.freeze({
-    ...(requestedAction === undefined ? {} : { requestedAction }),
+    requestedAction,
     target,
     evidence,
     payload,
@@ -136,6 +139,11 @@ function parseEvidence(value: unknown): readonly EvidenceSnapshotReference[] {
   }
   return Object.freeze(value.map((entry, index) => {
     const item = requiredObject(entry, `evidence[${index}]`);
+    rejectUnknownFields(
+      item,
+      ["sourceType", "sourceId", "sourceVersion", "checksum"],
+      `evidence[${index}]`,
+    );
     return Object.freeze({
       sourceType: requiredString(
         item.sourceType,

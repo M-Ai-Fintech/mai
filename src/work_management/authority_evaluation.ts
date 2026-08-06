@@ -270,20 +270,28 @@ function parsePersistedLimits(value: unknown): readonly TypedAuthorityLimit[] {
     const record = strictObject(entry, undefined, "Typed authority limit");
     switch (record.kind) {
       case "amount_minor_ceiling":
+        exactPersistedKeys(record, ["kind", "minorUnits"]);
         return { name: record.kind, value: record.minorUnits as number };
       case "currency":
+        exactPersistedKeys(record, ["kind", "currency"]);
         return { name: record.kind, value: record.currency as string };
       case "percentage_bps_ceiling":
+        exactPersistedKeys(record, ["kind", "basisPoints"]);
         return { name: record.kind, value: record.basisPoints as number };
       case "mandate_required":
+        exactPersistedKeys(record, ["kind", "required"]);
         return { name: record.kind, value: record.required as boolean };
       case "mandate_id":
+        exactPersistedKeys(record, ["kind", "mandateId"]);
         return { name: record.kind, value: record.mandateId as string };
       case "mandate_version":
+        exactPersistedKeys(record, ["kind", "version"]);
         return { name: record.kind, value: record.version as string };
       case "category":
+        exactPersistedKeys(record, ["kind", "category"]);
         return { name: record.kind, value: record.category as string };
       case "deal_scope":
+        exactPersistedKeys(record, ["kind", "dealId"]);
         return { name: record.kind, value: record.dealId as string };
       default:
         throw invalidRecord(
@@ -293,6 +301,19 @@ function parsePersistedLimits(value: unknown): readonly TypedAuthorityLimit[] {
     }
   });
   return parseTypedAuthorityLimits(generic);
+}
+
+function exactPersistedKeys(
+  record: Record<string, unknown>,
+  expected: readonly string[],
+): void {
+  const unexpected = Object.keys(record).find((key) => !expected.includes(key));
+  if (unexpected !== undefined || expected.some((key) => !(key in record))) {
+    throw invalidRecord(
+      unexpected ?? expected.find((key) => !(key in record)),
+      `exact fields ${expected.join(", ")}`,
+    );
+  }
 }
 
 function parseLimitResults(

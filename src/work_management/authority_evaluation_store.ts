@@ -51,6 +51,7 @@ export class PostgresAuthorityEvaluationStore
   async append(value: AuthorityEvaluation): Promise<void> {
     const parsed = await parseAuthorityEvaluation(value);
     let inserted: { readonly rowCount?: number | null };
+    await this.transaction.query("SAVEPOINT authority_evaluation_append");
     try {
       inserted = await this.transaction.query(
         `INSERT INTO work_management.authority_evaluations (
@@ -65,7 +66,16 @@ export class PostgresAuthorityEvaluationStore
        ON CONFLICT (evaluation_id) DO NOTHING`,
         insertValues(parsed),
       );
+      await this.transaction.query(
+        "RELEASE SAVEPOINT authority_evaluation_append",
+      );
     } catch (error) {
+      await this.transaction.query(
+        "ROLLBACK TO SAVEPOINT authority_evaluation_append",
+      );
+      await this.transaction.query(
+        "RELEASE SAVEPOINT authority_evaluation_append",
+      );
       if (!isUniqueViolation(error)) throw error;
       const conflicting = await this.findByDigest(parsed.digest);
       if (conflicting !== undefined) assertEquivalent(conflicting, parsed);
@@ -91,7 +101,9 @@ export class PostgresAuthorityEvaluationStore
           target_aggregate_type AS "targetAggregateType", target_aggregate_id AS "targetAggregateId",
           expected_target_version AS "expectedTargetVersion", policy_version AS "policyVersion",
           snapshot_reference AS "snapshotReference", command_type AS "commandType",
-          approver_id AS "approverId", outcome, effective_at AS "effectiveAt",
+          approver_id AS "approverId", facts, limits,
+          limit_results AS "limitResults", reasons, outcome,
+          effective_at AS "effectiveAt",
           expires_at AS "expiresAt", evaluated_at AS "evaluatedAt"
        FROM work_management.authority_evaluations
        WHERE evaluation_id = $1`,
@@ -136,6 +148,10 @@ interface EvaluationRow {
   readonly snapshotReference: string;
   readonly commandType: string;
   readonly approverId: string;
+  readonly facts: unknown;
+  readonly limits: unknown;
+  readonly limitResults: unknown;
+  readonly reasons: unknown;
   readonly outcome: string;
   readonly effectiveAt: string | Date;
   readonly expiresAt: string | Date;
@@ -161,6 +177,10 @@ function assertNormalizedRow(
     snapshotReference: row.snapshotReference,
     commandType: row.commandType,
     approverId: row.approverId,
+    facts: row.facts,
+    limits: row.limits,
+    limitResults: row.limitResults,
+    reasons: row.reasons,
     outcome: row.outcome,
     effectiveAt: instant(row.effectiveAt),
     expiresAt: instant(row.expiresAt),
@@ -181,6 +201,10 @@ function assertNormalizedRow(
     snapshotReference: value.snapshotReference,
     commandType: value.commandType,
     approverId: value.approverId,
+    facts: value.facts,
+    limits: value.limits,
+    limitResults: value.limitResults,
+    reasons: value.reasons,
     outcome: value.outcome,
     effectiveAt: value.window.effectiveAt,
     expiresAt: value.window.expiresAt,

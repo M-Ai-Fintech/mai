@@ -11,20 +11,18 @@ import {
   TransactionPortPolicyError,
   WORK_MANAGEMENT_PORT_POLICY,
 } from "../../src/work_management/transaction_port_policy.ts";
+import { createPostgresWorkManagementComposition } from "../../src/work_management/composition.ts";
 
-Deno.test("port policy keeps uncontrolled I/O outside PostgreSQL finalization", () => {
+Deno.test("commands use only explicitly marked MAI-106 transaction-local ports", () => {
   for (
     const port of ["authorization", "target", "evidence", "authority"] as const
   ) {
     assertEquals(
       WORK_MANAGEMENT_PORT_POLICY[port].control,
-      "uncontrolled_external",
+      "transaction_local",
     );
-    assertThrows(
-      () => assertWorkManagementPortPhase(port, "finalize_transaction"),
-      TransactionPortPolicyError,
-      `port "${port}" cannot run`,
-    );
+    assertWorkManagementPortPhase(port, "finalize_transaction");
+    assertWorkManagementPortPhase(port, "external_prepare");
   }
   for (const port of ["audit", "outbox", "proof"] as const) {
     assertEquals(
@@ -38,6 +36,26 @@ Deno.test("port policy keeps uncontrolled I/O outside PostgreSQL finalization", 
       `port "${port}" cannot run`,
     );
   }
+});
+
+Deno.test("production commands cannot disable authority evaluation", () => {
+  assertThrows(
+    () =>
+      createPostgresWorkManagementComposition({
+        mode: "commands",
+        transactions: { run: () => Promise.reject(new Error("unused")) },
+        audit: { append: () => Promise.reject(new Error("unused")) },
+        authorization: {
+          authorize: () => ({ outcome: "allow" } as never),
+          transactionSafe: true,
+          transactionMode: "mai106_local",
+        },
+        requireAuthorityEvaluation: false,
+        clock: { now: () => "2026-08-06T12:00:00.000Z" },
+      } as never),
+    Error,
+    "requireAuthorityEvaluation=true",
+  );
 });
 
 Deno.test("finalize rejects attachment, target-version, state, and expiry races", () => {

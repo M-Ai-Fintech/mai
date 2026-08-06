@@ -4,6 +4,7 @@ import {
   workManagementCorrectiveMigration,
   workManagementMembershipAuthorityMigration,
   workManagementMembershipAuthorityUpgradeMigration,
+  workManagementMembershipOperabilityMigration,
   workManagementMigration,
   workManagementMigrations,
 } from "../../src/work_management/migrations/index.ts";
@@ -15,6 +16,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     workManagementMembershipAuthorityMigration,
     workManagementMembershipAuthorityUpgradeMigration,
     workManagementAuthorityAndPreparedMigration,
+    workManagementMembershipOperabilityMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
@@ -63,7 +65,12 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   const membershipSql = workManagementMembershipAuthorityMigration.statements
     .map((statement) => statement.sql).join("\n");
   assertStringIncludes(membershipSql, "membership_is_inconsistent");
-  assertStringIncludes(membershipSql.toLowerCase(), "deferrable");
+  assert(!/RAISE\s+EXCEPTION/i.test(membershipSql));
   assertStringIncludes(membershipSql, "membership");
   assertStringIncludes(membershipSql, "membership_is_inconsistent");
+  assertEquals(workManagementMembershipOperabilityMigration.version, 6);
+  assertStringIncludes(
+    workManagementMembershipOperabilityMigration.statements[0].sql,
+    "scan_sequence",
+  );
 });

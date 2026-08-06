@@ -30,24 +30,21 @@ export interface WorkManagementPortPolicy {
 export const WORK_MANAGEMENT_PORT_POLICY: Readonly<
   Record<WorkManagementPort, WorkManagementPortPolicy>
 > = Object.freeze({
-  authorization: externalPolicy(
-    [
-      "replay_authorization",
-      "external_prepare",
-    ],
-    "Evaluate current disclosure and state-sensitive command authority without a database lock.",
+  authorization: localPolicy(
+    "Evaluate through the MAI-106 transaction-local authorization adapter while the command transaction is open.",
+    ["replay_authorization", "external_prepare", "finalize_transaction"],
   ),
-  target: externalPolicy(
-    ["external_prepare"],
-    "Resolve target identity and version before the atomic finalize transaction.",
+  target: localPolicy(
+    "Resolve target identity and version through the MAI-106 transaction-local adapter.",
+    ["external_prepare", "finalize_transaction"],
   ),
-  evidence: externalPolicy(
-    ["external_prepare"],
-    "Validate immutable evidence references before the atomic finalize transaction.",
+  evidence: localPolicy(
+    "Validate immutable evidence references through the MAI-106 transaction-local adapter.",
+    ["external_prepare", "finalize_transaction"],
   ),
-  authority: externalPolicy(
-    ["external_prepare"],
-    "Resolve the named human authority snapshot before the atomic finalize transaction.",
+  authority: localPolicy(
+    "Resolve the named human authority snapshot through the MAI-106 transaction-local adapter.",
+    ["external_prepare", "finalize_transaction"],
   ),
   audit: localPolicy(
     "Append immutable audit evidence using the active PostgreSQL transaction handle.",
@@ -106,17 +103,15 @@ export function assertTransactionSafeAdapter(
   );
 }
 
-function externalPolicy(
-  permittedPhases: readonly CommandExecutionPhase[],
+function localPolicy(
   rule: string,
+  permittedPhases: readonly CommandExecutionPhase[] = [
+    "finalize_transaction",
+  ],
 ): WorkManagementPortPolicy {
-  return { control: "uncontrolled_external", permittedPhases, rule };
-}
-
-function localPolicy(rule: string): WorkManagementPortPolicy {
   return {
     control: "transaction_local",
-    permittedPhases: ["finalize_transaction"],
+    permittedPhases,
     rule,
   };
 }

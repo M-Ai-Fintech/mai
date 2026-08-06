@@ -87,6 +87,11 @@ export function createPostgresWorkManagementComposition(
     );
   }
   if (options.mode === "commands") {
+    if (options.requireAuthorityEvaluation === false) {
+      throw new Error(
+        "Work Management commands require server authority evaluation and immutable proof; expected requireAuthorityEvaluation=true.",
+      );
+    }
     assertTransactionSafeAdapter("authorization", options.authorization);
     assertTransactionSafeAdapter(
       "target",
@@ -117,8 +122,9 @@ export function createPostgresWorkManagementComposition(
   );
   const serviceConfiguration: CommonCompositionOptions = {
     ...options,
-    requireAuthorityEvaluation: options.requireAuthorityEvaluation ??
-      options.mode === "commands",
+    requireAuthorityEvaluation: options.mode === "commands"
+      ? true
+      : options.requireAuthorityEvaluation ?? false,
   };
   return {
     adapter: "postgres",

@@ -23,6 +23,7 @@ Deno.test({
         ...platformMigrations,
         ...workManagementMigrations,
       ]);
+      await resetPerformanceContext(pool);
       await seedRepresentativeData(pool, tenant, suffix);
       await pool.query("ANALYZE work_management.workstreams_current");
       await pool.query("ANALYZE work_management.tasks_current");
@@ -60,6 +61,29 @@ Deno.test({
   },
 });
 
+async function resetPerformanceContext(pool: import("pg").Pool): Promise<void> {
+  await pool.query(`
+    TRUNCATE TABLE
+      work_management.tasks_current,
+      work_management.workstreams_current,
+      work_management.approval_requests_current,
+      work_management.aggregate_history,
+      work_management.approval_decision_history,
+      work_management.command_results,
+      work_management.target_command_dispatches,
+      work_management.authority_evaluations,
+      work_management.command_preparations,
+      work_management.membership_reconciliation_resolutions,
+      work_management.membership_reconciliation_findings,
+      work_management.membership_reconciliation_scans,
+      work_management.membership_rollout_events,
+      platform.idempotency_records,
+      platform.outbox,
+      platform.inbox
+    RESTART IDENTITY CASCADE
+  `);
+}
+
 async function seedRepresentativeData(
   pool: import("pg").Pool,
   tenant: string,
@@ -80,7 +104,7 @@ async function seedRepresentativeData(
       SELECT 'ws_perf_' || $2 || '_' || workstream_number, $1,
         'workspace_perf', 'deal_perf', 1,
         jsonb_build_object('taskIds', (
-          SELECT jsonb_agg('task_perf_' || $2 || '_' || workstream_number || '_' || task_number)
+          SELECT jsonb_agg('task_perf-' || $2 || '-' || workstream_number || '-' || task_number)
           FROM generate_series(1,20) AS task_numbers(task_number)
         )), now(), now()
       FROM generate_series(1,200) AS workstream_numbers(workstream_number)
@@ -91,7 +115,7 @@ async function seedRepresentativeData(
       `
       INSERT INTO work_management.tasks_current
         (task_id,tenant_id,workspace_id,deal_id,workstream_id,version,document,created_at,updated_at)
-      SELECT 'task_perf_' || $2 || '_' || workstream_number || '_' || task_number,
+      SELECT 'task_perf-' || $2 || '-' || workstream_number || '-' || task_number,
         $1, 'workspace_perf', 'deal_perf',
         'ws_perf_' || $2 || '_' || workstream_number, 1,
         jsonb_build_object('workstreamId', 'ws_perf_' || $2 || '_' || workstream_number),

@@ -352,21 +352,21 @@ function workError(
   if (code !== "VALIDATION_FAILED") {
     return createApiError({
       code,
-      message: publicWorkErrorMessage(code),
+      message: publicWorkErrorMessage(code, error),
       correlationId,
       retryable: false,
     });
   }
   return createApiError({
     code,
-    message: publicWorkErrorMessage(code),
+    message: publicWorkErrorMessage(code, error),
     correlationId,
     retryable: false,
     fieldErrors: {
       command: [{
         field: "command",
         code: "INVALID_TYPE",
-        message: publicWorkErrorMessage(code),
+        message: publicWorkErrorMessage(code, error),
       }],
     },
   });
@@ -374,7 +374,11 @@ function workError(
 
 function publicWorkErrorMessage(
   code: string,
+  error?: WorkManagementError,
 ): string {
+  if (error?.message.includes("cross-Deal")) {
+    return "The requested cross-Deal reference is invalid.";
+  }
   if (code === "ACTION_FORBIDDEN") {
     return "The requested action is not permitted.";
   }

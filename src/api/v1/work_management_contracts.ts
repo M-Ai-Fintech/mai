@@ -93,7 +93,8 @@ export interface TransitionTaskCommand
 export interface CreateApprovalRequestCommand
   extends WorkManagementCommandInput<ApprovalRequestId> {
   readonly namedApproverId: ApprovalRequest["namedApproverId"];
-  readonly requestedAction?: string;
+  /** Client semantic selector; the server authority requirement remains authoritative. */
+  readonly requestedAction: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;

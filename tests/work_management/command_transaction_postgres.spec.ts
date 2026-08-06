@@ -279,7 +279,35 @@ async function migrate(pool: ReturnType<typeof createMai106Pool>) {
     ...auditActivityMigrations,
     ...workManagementMigrations,
   ]);
+  await resetCommandContext(pool);
   await activateCommands(pool, `command-${Date.now()}`);
+}
+
+async function resetCommandContext(
+  pool: ReturnType<typeof createMai106Pool>,
+): Promise<void> {
+  await pool.query(`
+    TRUNCATE TABLE
+      work_management.tasks_current,
+      work_management.workstreams_current,
+      work_management.approval_requests_current,
+      work_management.aggregate_history,
+      work_management.approval_decision_history,
+      work_management.command_results,
+      work_management.target_command_dispatches,
+      work_management.authority_evaluations,
+      work_management.command_preparations,
+      work_management.membership_reconciliation_resolutions,
+      work_management.membership_reconciliation_findings,
+      work_management.membership_reconciliation_scans,
+      work_management.membership_rollout_events,
+      platform.idempotency_records,
+      platform.outbox,
+      platform.inbox,
+      audit_activity.audit_events,
+      audit_activity.redaction_overlays
+    RESTART IDENTITY CASCADE
+  `);
 }
 
 async function activateCommands(

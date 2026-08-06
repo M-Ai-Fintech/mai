@@ -483,6 +483,15 @@ function validationResponse(
 
 function validationPublicMessage(error: unknown): string {
   const detail = error instanceof Error ? error.message : "";
+  if (detail.includes("server-owned")) {
+    return "The request contains server-owned fields.";
+  }
+  if (detail.toLowerCase().includes("payload")) {
+    return "The request payload is invalid.";
+  }
+  if (detail.includes("cross-Deal")) {
+    return "The requested cross-Deal reference is invalid.";
+  }
   if (detail.includes("Idempotency-Key")) {
     return "The request is invalid: Idempotency-Key is required.";
   }

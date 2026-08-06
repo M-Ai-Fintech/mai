@@ -46,11 +46,11 @@ export const membershipEnforcementSql = `
       RAISE EXCEPTION 'workstream % taskIds is %, expected an array',
         requested_workstream, stored_document->'taskIds';
     END IF;
-    IF stored_document->>'state' IN ('completed', 'cancelled') AND EXISTS (
+    IF stored_document->>'state' = 'completed' AND EXISTS (
       SELECT 1 FROM work_management.tasks_current
       WHERE tenant_id = requested_tenant AND workspace_id = requested_workspace
         AND deal_id = requested_deal AND workstream_id = requested_workstream
-        AND document->>'state' NOT IN ('completed', 'cancelled')
+        AND (document->>'state' IS NULL OR document->>'state' NOT IN ('completed', 'cancelled'))
     ) THEN
       RAISE EXCEPTION 'terminal workstream % cannot own a non-terminal Task; expected completed or cancelled Task state',
         requested_workstream;
@@ -130,8 +130,8 @@ export const membershipEnforcementSql = `
         requested_task, stored_workstream, requested_tenant,
         requested_workspace, requested_deal;
     END IF;
-    IF owner_document->>'state' IN ('completed', 'cancelled')
-      AND stored_document->>'state' NOT IN ('completed', 'cancelled') THEN
+    IF owner_document->>'state' = 'completed'
+      AND (stored_document->>'state' IS NULL OR stored_document->>'state' NOT IN ('completed', 'cancelled')) THEN
       RAISE EXCEPTION 'terminal workstream % cannot own non-terminal Task %; expected completed or cancelled Task state',
         stored_workstream, requested_task;
     END IF;

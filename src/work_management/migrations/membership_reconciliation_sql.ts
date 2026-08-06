@@ -1,6 +1,7 @@
 export const membershipReconciliationSql = `
   CREATE TABLE work_management.membership_reconciliation_scans (
     scan_id TEXT PRIMARY KEY,
+    scan_sequence BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
     detected_at TIMESTAMPTZ NOT NULL,
     completed_at TIMESTAMPTZ NOT NULL,
     scope JSONB NOT NULL CHECK (scope = '{"scope":"all"}'::jsonb),
@@ -10,7 +11,8 @@ export const membershipReconciliationSql = `
     finding_id TEXT PRIMARY KEY,
     scan_id TEXT NOT NULL REFERENCES work_management.membership_reconciliation_scans(scan_id),
     finding_class TEXT NOT NULL CHECK (finding_class IN (
-      'malformed_workstream_task_ids', 'duplicate_authoritative_task_id',
+      'malformed_workstream_task_ids', 'malformed_task_id',
+      'duplicate_authoritative_task_id',
       'task_document_back_reference_mismatch', 'task_owner_workstream_missing',
       'task_owner_scope_mismatch', 'task_missing_from_authoritative_membership',
       'authoritative_task_missing', 'authoritative_task_wrong_workstream',
@@ -56,6 +58,7 @@ export const membershipReconciliationSql = `
   );
   CREATE INDEX work_management_membership_rollout_latest_idx
     ON work_management.membership_rollout_events (event_sequence DESC);
+  REVOKE INSERT ON work_management.membership_rollout_events FROM PUBLIC;
 
   CREATE FUNCTION work_management.membership_finding_identity(
     requested_scan_id TEXT, requested_class TEXT, requested_scope JSONB,
@@ -86,9 +89,32 @@ export const membershipReconciliationSql = `
 
   CREATE FUNCTION work_management.reject_direct_rollout_insert()
   RETURNS trigger LANGUAGE plpgsql AS $$
+  DECLARE
+    latest_scan_id TEXT;
   BEGIN
-    IF current_setting('work_management.rollout_writer', true) IS DISTINCT FROM 'governed' THEN
+    IF current_setting('work_management.rollout_writer', true) IS DISTINCT FROM
+        md5(current_user || txid_current()::text || 'mai114-governed-rollout-v1')
+      OR current_user IS DISTINCT FROM (
+        SELECT pg_get_userbyid(proowner) FROM pg_proc
+        WHERE oid = 'work_management.set_membership_rollout_mode(text,text,text,text,timestamp with time zone)'::regprocedure
+      ) THEN
       RAISE EXCEPTION 'membership rollout events require the governed activation function';
+    END IF;
+    IF to_jsonb(NEW)->>'mode' = 'commands' THEN
+      SELECT scan_id INTO latest_scan_id
+        FROM work_management.membership_reconciliation_scans
+      ORDER BY scan_sequence DESC LIMIT 1;
+      IF latest_scan_id IS DISTINCT FROM to_jsonb(NEW)->>'scan_id'
+        OR EXISTS (
+          SELECT 1 FROM work_management.membership_reconciliation_status
+          WHERE severity = 'blocking' AND current_status = 'unresolved'
+        )
+        OR EXISTS (
+          SELECT 1 FROM work_management.membership_reconciliation_findings
+          WHERE scan_id = to_jsonb(NEW)->>'scan_id'
+        ) THEN
+        RAISE EXCEPTION 'command rollout event requires the latest clean reconciliation scan';
+      END IF;
     END IF;
     RETURN NEW;
   END;
@@ -100,6 +126,12 @@ export const membershipReconciliationSql = `
   CREATE FUNCTION work_management.lock_membership_rollout()
   RETURNS VOID LANGUAGE sql AS $$
     SELECT pg_advisory_xact_lock(hashtextextended(
+      'work_management:membership-rollout', 0))
+  $$;
+
+  CREATE FUNCTION work_management.lock_membership_rollout_shared()
+  RETURNS VOID LANGUAGE sql AS $$
+    SELECT pg_advisory_xact_lock_shared(hashtextextended(
       'work_management:membership-rollout', 0))
   $$;
 
@@ -192,7 +224,8 @@ export const membershipReconciliationSql = `
           SELECT 1
           FROM jsonb_array_elements(document->'taskIds') AS task_member
           WHERE jsonb_typeof(task_member) <> 'string'
-             OR task_member #>> '{}' !~ '^task_[a-z0-9]+(?:[-_][a-z0-9]+)*$'
+             OR length(task_member #>> '{}') > 64
+             OR task_member #>> '{}' !~ '^task_[a-z0-9]+(?:-[a-z0-9]+)*$'
         )
     LOOP
       PERFORM work_management.insert_membership_finding(requested_scan_id,
@@ -202,6 +235,22 @@ export const membershipReconciliationSql = `
         (to_jsonb(source_record)->>'version')::bigint, NULL, NULL,
         jsonb_build_object('taskIds', to_jsonb(source_record)->'document'->'taskIds',
           'reason', 'invalid_task_id_element'), requested_detected_at);
+    END LOOP;
+
+    FOR source_record IN
+      SELECT tenant_id, workspace_id, deal_id, workstream_id, task_id, version
+      FROM work_management.tasks_current
+      WHERE length(task_id) > 64
+        OR task_id !~ '^task_[a-z0-9]+(?:-[a-z0-9]+)*$'
+    LOOP
+      PERFORM work_management.insert_membership_finding(requested_scan_id,
+        'malformed_task_id', to_jsonb(source_record)->>'tenant_id',
+        to_jsonb(source_record)->>'workspace_id', to_jsonb(source_record)->>'deal_id',
+        to_jsonb(source_record)->>'workstream_id', NULL,
+        to_jsonb(source_record)->>'task_id',
+        (to_jsonb(source_record)->>'version')::bigint,
+        jsonb_build_object('taskId', to_jsonb(source_record)->>'task_id'),
+        requested_detected_at);
     END LOOP;
 
     FOR source_record IN
@@ -356,8 +405,8 @@ export const membershipReconciliationSql = `
         AND task_workspace_id = owner_workspace_id
         AND task_deal_id = owner_deal_id
         AND task_workstream_id = owner_workstream_id
-      WHERE owner_state IN ('completed', 'cancelled')
-        AND task_state NOT IN ('completed', 'cancelled')
+      WHERE owner_state = 'completed'
+        AND (task_state IS NULL OR task_state NOT IN ('completed', 'cancelled'))
     LOOP
       PERFORM work_management.insert_membership_finding(requested_scan_id,
         'terminal_workstream_non_terminal_task', to_jsonb(source_record)->>'tenant_id',
@@ -514,13 +563,16 @@ export const membershipReconciliationSql = `
   CREATE FUNCTION work_management.set_membership_rollout_mode(
     requested_event_id TEXT, requested_mode TEXT, requested_scan_id TEXT,
     requested_actor TEXT, requested_recorded_at TIMESTAMPTZ
-  ) RETURNS VOID LANGUAGE plpgsql AS $$
+  ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
   DECLARE
     existing_event JSONB;
     latest_scan_id TEXT;
   BEGIN
     PERFORM work_management.lock_membership_rollout();
-    PERFORM set_config('work_management.rollout_writer', 'governed', true);
+    PERFORM set_config(
+      'work_management.rollout_writer',
+      md5(current_user || txid_current()::text || 'mai114-governed-rollout-v1'),
+      true);
     SELECT to_jsonb(membership_rollout_events) INTO existing_event
       FROM work_management.membership_rollout_events
       WHERE event_id = requested_event_id;
@@ -533,12 +585,13 @@ export const membershipReconciliationSql = `
         RAISE EXCEPTION 'membership rollout event identity % conflicts with immutable evidence',
           requested_event_id;
       END IF;
+      PERFORM set_config('work_management.rollout_writer', 'forbidden', true);
       RETURN;
     END IF;
     IF requested_mode = 'commands' THEN
       SELECT scan_id INTO latest_scan_id
         FROM work_management.membership_reconciliation_scans
-        ORDER BY detected_at DESC, scan_id DESC LIMIT 1;
+        ORDER BY scan_sequence DESC LIMIT 1;
       IF latest_scan_id IS DISTINCT FROM requested_scan_id THEN
         RAISE EXCEPTION 'command activation scan % is stale; expected latest scan %',
           requested_scan_id, latest_scan_id;
@@ -561,6 +614,7 @@ export const membershipReconciliationSql = `
       (event_id, mode, scan_id, actor_id, recorded_at)
       VALUES (requested_event_id, requested_mode, requested_scan_id,
         requested_actor, requested_recorded_at);
+    PERFORM set_config('work_management.rollout_writer', 'forbidden', true);
   END;
   $$;
 

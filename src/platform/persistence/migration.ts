@@ -10,6 +10,7 @@ export interface ContextMigration {
   readonly version: number;
   readonly forwardNotes: string;
   readonly rollbackNotes: string;
+  readonly compatibleChecksums?: readonly string[];
   readonly statements: readonly MigrationStatement[];
 }
 
@@ -28,6 +29,9 @@ export function defineMigration(
   }
   return Object.freeze({
     ...migration,
+    ...(migration.compatibleChecksums === undefined ? {} : {
+      compatibleChecksums: Object.freeze([...migration.compatibleChecksums]),
+    }),
     statements: Object.freeze([...migration.statements]),
   });
 }

@@ -97,6 +97,42 @@ Deno.test("service completion fails closed for missing authoritative Task state"
   );
 });
 
+Deno.test("service cannot attach an open Task to a completed Workstream", async () => {
+  const fixture = testComposition();
+  const workstream = await fixture.service.createWorkstream({
+    ...command(workstreamId("workstream_terminal-attach"), "terminal-create"),
+    name: "Terminal attachment",
+    ownerId: human.id,
+  });
+  const active = await fixture.service.transitionWorkstream({
+    ...command(workstream.id, "terminal-active", 1),
+    toState: "active",
+  });
+  const completed = await fixture.service.transitionWorkstream({
+    ...command(workstream.id, "terminal-complete", active.version),
+    toState: "completed",
+  });
+  await assertRejects(
+    () =>
+      fixture.service.createTask({
+        ...command(
+          taskId("task_terminal-attach"),
+          "terminal-task",
+          completed.version,
+        ),
+        workstreamId: completed.id,
+        title: "Must fail",
+        assigneeId: human.id,
+      }),
+    Error,
+    "cannot attach non-terminal Task",
+  );
+  assertEquals(
+    await fixture.repository.findTask(scope, taskId("task_terminal-attach")),
+    undefined,
+  );
+});
+
 Deno.test("service completion fails closed for an unlisted Task back-reference", async () => {
   const fixture = testComposition();
   const workstream = await fixture.service.createWorkstream({

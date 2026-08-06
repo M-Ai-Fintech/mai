@@ -56,7 +56,7 @@ export interface ApprovalAuthoritySnapshotPort {
     readonly requester: ActorReference;
     readonly namedApproverId: ActorId;
     readonly target: TargetReference;
-    readonly requestedAction?: string;
+    readonly requestedAction: string;
     readonly authorization: AuthorizationDecision;
   }): Promise<ResolvedApprovalAuthority>;
 }
@@ -79,7 +79,7 @@ export interface ServerApprovalPackageInput {
   readonly requester: ActorReference;
   readonly now: string;
   readonly namedApproverId: ActorId;
-  readonly requestedAction?: string;
+  readonly requestedAction: string;
   readonly target: TargetReference;
   readonly evidence: readonly EvidenceSnapshotReference[];
   readonly payload: Readonly<Record<string, unknown>>;
@@ -192,10 +192,7 @@ function assertTrustedAuthority(
       `Authority requirement "${snapshot.snapshotId}" does not match its named approver, policy, snapshot, or human-only contract; expected one server-verified authority.`,
     );
   }
-  if (
-    input.requestedAction !== undefined &&
-    requirement.commandType !== input.requestedAction
-  ) {
+  if (requirement.commandType !== input.requestedAction) {
     throw new WorkManagementError(
       "REFERENCE_MISMATCH",
       `Requested approval action "${input.requestedAction}" differs from server-approved command "${requirement.commandType}"; expected the governed authority requirement.`,
