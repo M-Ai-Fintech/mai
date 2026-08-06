@@ -3,7 +3,7 @@ import type {
   ActorReference,
   AuthorizationDecision,
 } from "../../../src/platform/authz/v1.ts";
-import { createWorkManagementComposition } from "../../../src/work_management/composition.ts";
+import { createInMemoryWorkManagementTestComposition } from "../../../src/work_management/composition.ts";
 import {
   actor,
   deal,
@@ -45,7 +45,7 @@ function allow(): AuthorizationDecision {
 
 Deno.test("Work Management application denies before protected repository load", async () => {
   let loads = 0;
-  const composition = createWorkManagementComposition({
+  const composition = createInMemoryWorkManagementTestComposition({
     authorization: {
       authorize: () => ({
         outcome: "deny",
@@ -65,9 +65,12 @@ Deno.test("Work Management application denies before protected repository load",
   const original = composition.repository.findWorkstream.bind(
     composition.repository,
   );
-  composition.repository.findWorkstream = async (...args) => {
+  composition.repository.findWorkstream = async (
+    scope: import("../../../src/work_management/v1.ts").WorkScope,
+    id: import("../../../src/work_management/v1.ts").WorkstreamId,
+  ) => {
     loads += 1;
-    return await original(...args);
+    return await original(scope, id);
   };
   const application = new WorkManagementV1Application(composition.service);
   const result = await application.readWorkstream({
@@ -88,7 +91,7 @@ Deno.test("Work Management application denies before protected repository load",
 });
 
 Deno.test("Work Management route requires idempotency and If-Match for transitions", async () => {
-  const composition = createWorkManagementComposition({
+  const composition = createInMemoryWorkManagementTestComposition({
     authorization: { authorize: allow },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
@@ -113,7 +116,7 @@ Deno.test("Work Management route requires idempotency and If-Match for transitio
 });
 
 Deno.test("Work Management route creates a scoped workstream and returns a strong ETag", async () => {
-  const composition = createWorkManagementComposition({
+  const composition = createInMemoryWorkManagementTestComposition({
     authorization: { authorize: allow },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
@@ -139,4 +142,50 @@ Deno.test("Work Management route creates a scoped workstream and returns a stron
   );
   assertEquals(response?.status, 201);
   assertEquals(response?.headers.get("ETag"), '"v1"');
+});
+
+Deno.test("Work Management rejects weak ETags and requires owner If-Match for Task creation", async () => {
+  const composition = createInMemoryWorkManagementTestComposition({
+    authorization: { authorize: allow },
+    clock: { now: () => "2026-08-06T12:00:00.000Z" },
+  });
+  const dependencies = {
+    context: { contextFor: () => ({ context, actor: human }) },
+    application: new WorkManagementV1Application(composition.service),
+  };
+  const weak = await handleWorkManagementV1Route(
+    new Request(
+      "http://localhost/api/v1/work-management/workstreams/workstream_one/transition",
+      {
+        method: "POST",
+        body: JSON.stringify({ toState: "active" }),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": "idem_weak",
+          "If-Match": 'W/"v1"',
+        },
+      },
+    ),
+    dependencies,
+  );
+  assertEquals(weak?.status, 422);
+  assertStringIncludes(await weak!.text(), "strong");
+  const task = await handleWorkManagementV1Route(
+    new Request("http://localhost/api/v1/work-management/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "task_owner-version",
+        workstreamId: "workstream_one",
+        title: "Owner version",
+        assigneeId: "actor_requester",
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": "idem_task-owner",
+      },
+    }),
+    dependencies,
+  );
+  assertEquals(task?.status, 422);
+  assertStringIncludes(await task!.text(), "If-Match");
 });

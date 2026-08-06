@@ -1,11 +1,15 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  workManagementCorrectiveMigration,
   workManagementMigration,
   workManagementMigrations,
 } from "../../src/work_management/migrations/index.ts";
 
 Deno.test("Work Management migration is additive, owned, and append-only", () => {
-  assertEquals(workManagementMigrations, [workManagementMigration]);
+  assertEquals(workManagementMigrations, [
+    workManagementMigration,
+    workManagementCorrectiveMigration,
+  ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
   assertEquals(workManagementMigration.version, 1);
@@ -20,5 +24,16 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assert(
     !/\b(?:platform|deal_management|evidence_knowledge|identity_access|notifications)\s*\./i
       .test(sql),
+  );
+  assertEquals(workManagementCorrectiveMigration.owner, "work_management");
+  assertEquals(workManagementCorrectiveMigration.version, 2);
+  const correctiveSql = workManagementCorrectiveMigration.statements.map(
+    (statement) => statement.sql,
+  ).join("\n");
+  assertStringIncludes(correctiveSql, "command_results");
+  assertStringIncludes(correctiveSql, "target_command_dispatches");
+  assertStringIncludes(correctiveSql, "corrective records are append-only");
+  assert(
+    !/\b(DROP|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(correctiveSql),
   );
 });

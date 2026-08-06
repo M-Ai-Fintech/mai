@@ -2,16 +2,13 @@ import {
   API_ERROR_CATALOG,
   createApiError,
   createSuccessEnvelope,
+  parseIdempotencyHeader,
   parseIfMatch,
 } from "../../platform/api/v1.ts";
-import { parseIdempotencyHeader } from "../../platform/api/v1.ts";
 import {
   actor as workActor,
-  aggregateVersion,
-  approvalDecisionId,
   approvalRequestId,
   taskId,
-  workEventId,
   workstreamId,
 } from "../../work_management/v1.ts";
 import {
@@ -30,6 +27,12 @@ import type {
   WorkManagementContextPort,
 } from "./work_management_contracts.ts";
 import { WorkManagementValidationError } from "./work_management_contracts.ts";
+import {
+  parseApprovalCreation,
+  requiredObject,
+  requiredState,
+  requiredString,
+} from "./work_management_validation.ts";
 
 const BASE_PATH = "/api/v1/work-management";
 
@@ -76,7 +79,13 @@ type WorkManagementRoute =
     readonly command?: ApprovalCommand;
   };
 
-type ApprovalCommand = "open" | "approve" | "reject" | "withdraw";
+type ApprovalCommand =
+  | "open"
+  | "approve"
+  | "reject"
+  | "withdraw"
+  | "invalidate"
+  | "expire";
 
 async function dispatch(
   request: Request,
@@ -90,177 +99,229 @@ async function dispatch(
     workspaceId: requireWorkspace(context.workspaceId),
     dealId: requireDeal(context.dealId),
   };
-  const command = route.command;
   if (
     request.method === "GET" && route.id !== undefined &&
-    command === undefined
+    route.command === undefined
   ) {
-    const id = routeId(route);
     const result = route.kind === "workstreams"
       ? await application.readWorkstream({
         context,
         actor,
         scope,
-        id: workstreamId(id),
+        id: workstreamId(route.id),
       })
       : route.kind === "tasks"
-      ? await application.readTask({ context, actor, scope, id: taskId(id) })
+      ? await application.readTask({
+        context,
+        actor,
+        scope,
+        id: taskId(route.id),
+      })
       : await application.readApprovalRequest({
         context,
         actor,
         scope,
-        id: approvalRequestId(id),
+        id: approvalRequestId(route.id),
       });
     return writeResult(result, context.correlationId, 200);
   }
   if (request.method !== "POST") return methodNotAllowed();
   const body = await jsonBody(request);
-  const metadata = commandMetadata(request, body, route.id);
-  if (route.id === undefined && command === undefined) {
-    const result = route.kind === "workstreams"
-      ? await application.createWorkstream(
-        {
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id: workstreamId(requiredString(body.id, "id")),
-          name: requiredString(body.name, "name"),
-          ownerId: actorId(requiredString(body.ownerId, "ownerId")),
-        } satisfies CreateWorkstreamCommand,
-      )
-      : route.kind === "tasks"
-      ? await application.createTask(
-        {
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id: taskId(requiredString(body.id, "id")),
-          workstreamId: workstreamId(
-            requiredString(body.workstreamId, "workstreamId"),
-          ),
-          ...(body.parentTaskId === undefined ? {} : {
-            parentTaskId: taskId(
-              requiredString(body.parentTaskId, "parentTaskId"),
-            ),
-          }),
-          title: requiredString(body.title, "title"),
-          assigneeId: actorId(requiredString(body.assigneeId, "assigneeId")),
-        } satisfies CreateTaskCommand,
-      )
-      : await application.createApprovalRequest(
-        {
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id: approvalRequestId(requiredString(body.id, "id")),
-          requesterId: actorId(requiredString(body.requesterId, "requesterId")),
-          namedApproverId: actorId(
-            requiredString(body.namedApproverId, "namedApproverId"),
-          ),
-          package: requiredObject(
-            body.package,
-            "package",
-          ) as unknown as CreateApprovalRequestCommand["package"],
-        } satisfies CreateApprovalRequestCommand,
-      );
-    return writeResult(result, context.correlationId, 201);
+  rejectServerOwnedMetadata(body);
+  const metadata = commandMetadata(request, requiresVersion(route));
+  if (route.id === undefined && route.command === undefined) {
+    return await createCollection(
+      route,
+      body,
+      metadata,
+      authenticated,
+      scope,
+      application,
+    );
   }
   if (route.id !== undefined && route.kind !== "approval_requests") {
-    if (route.kind === "workstreams" && route.id !== undefined) {
-      const result = await application.transitionWorkstream(
-        {
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id: workstreamId(route.id),
-          toState: requiredState(body.toState, [
-            "planned",
-            "active",
-            "blocked",
-            "completed",
-            "cancelled",
-          ]),
-        } satisfies TransitionWorkstreamCommand,
-      );
-      return writeResult(result, context.correlationId, 200);
-    }
-    if (route.kind === "tasks" && route.id !== undefined) {
-      const result = await application.transitionTask(
-        {
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id: taskId(route.id),
-          toState: requiredState(body.toState, [
-            "open",
-            "in_progress",
-            "blocked",
-            "completed",
-            "cancelled",
-          ]),
-        } satisfies TransitionTaskCommand,
-      );
-      return writeResult(result, context.correlationId, 200);
-    }
+    return await transitionWorkItem(
+      route,
+      body,
+      metadata,
+      authenticated,
+      scope,
+      application,
+    );
   }
   if (
     route.kind === "approval_requests" && route.id !== undefined &&
     route.command !== undefined
   ) {
-    const id = approvalRequestId(route.id);
-    if (route.command === "open" || route.command === "withdraw") {
-      const result = route.command === "open"
-        ? await application.openApprovalRequest({
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id,
-        })
-        : await application.withdrawApprovalRequest({
-          ...metadata,
-          context,
-          actor,
-          scope,
-          id,
-        });
-      return writeResult(result, context.correlationId, 200);
-    }
-    const result = await application.decideApprovalRequest(
+    return await transitionApproval(
+      route.id,
+      route.command,
+      body,
+      metadata,
+      authenticated,
+      scope,
+      application,
+    );
+  }
+  return methodNotAllowed();
+}
+
+async function createCollection(
+  route: WorkManagementRoute,
+  body: Record<string, unknown>,
+  metadata: WorkManagementCommandMetadata,
+  authenticated: WorkManagementAuthenticatedContext,
+  scope: import("../../work_management/v1.ts").WorkScope,
+  application: WorkManagementV1Application,
+): Promise<Response> {
+  const { context, actor } = authenticated;
+  const result = route.kind === "workstreams"
+    ? await application.createWorkstream(
       {
         ...metadata,
         context,
         actor,
         scope,
-        id,
-        package: requiredObject(
-          body.package,
-          "package",
-        ) as unknown as ApprovalDecisionCommand["package"],
-        decisionId: approvalDecisionId(
-          requiredString(body.decisionId, "decisionId"),
+        id: workstreamId(requiredString(body.id, "id")),
+        name: requiredString(body.name, "name"),
+        ownerId: actorId(requiredString(body.ownerId, "ownerId")),
+      } satisfies CreateWorkstreamCommand,
+    )
+    : route.kind === "tasks"
+    ? await application.createTask(
+      {
+        ...metadata,
+        context,
+        actor,
+        scope,
+        id: taskId(requiredString(body.id, "id")),
+        workstreamId: workstreamId(
+          requiredString(body.workstreamId, "workstreamId"),
         ),
-        outcome: route.command === "approve" ? "approved" : "rejected",
-        ...(body.reason === undefined
-          ? {}
-          : { reason: requiredString(body.reason, "reason") }),
+        ...(body.parentTaskId === undefined ? {} : {
+          parentTaskId: taskId(
+            requiredString(body.parentTaskId, "parentTaskId"),
+          ),
+        }),
+        title: requiredString(body.title, "title"),
+        assigneeId: actorId(requiredString(body.assigneeId, "assigneeId")),
+      } satisfies CreateTaskCommand,
+    )
+    : await createApproval(body, metadata, authenticated, scope, application);
+  return writeResult(result, context.correlationId, 201);
+}
+
+async function createApproval(
+  body: Record<string, unknown>,
+  metadata: WorkManagementCommandMetadata,
+  authenticated: WorkManagementAuthenticatedContext,
+  scope: import("../../work_management/v1.ts").WorkScope,
+  application: WorkManagementV1Application,
+) {
+  const parsed = parseApprovalCreation(body, scope);
+  return await application.createApprovalRequest(
+    {
+      ...metadata,
+      ...authenticated,
+      scope,
+      id: approvalRequestId(requiredString(body.id, "id")),
+      namedApproverId: actorId(
+        requiredString(body.namedApproverId, "namedApproverId"),
+      ),
+      ...parsed,
+    } satisfies CreateApprovalRequestCommand,
+  );
+}
+
+async function transitionWorkItem(
+  route: Extract<
+    WorkManagementRoute,
+    { readonly kind: "workstreams" | "tasks" }
+  >,
+  body: Record<string, unknown>,
+  metadata: WorkManagementCommandMetadata,
+  authenticated: WorkManagementAuthenticatedContext,
+  scope: import("../../work_management/v1.ts").WorkScope,
+  application: WorkManagementV1Application,
+): Promise<Response> {
+  const { context, actor } = authenticated;
+  if (route.id === undefined) return methodNotAllowed();
+  const result = route.kind === "workstreams"
+    ? await application.transitionWorkstream(
+      {
+        ...metadata,
+        context,
+        actor,
+        scope,
+        id: workstreamId(route.id),
+        toState: requiredState(body.toState, [
+          "planned",
+          "active",
+          "blocked",
+          "completed",
+          "cancelled",
+        ]),
+      } satisfies TransitionWorkstreamCommand,
+    )
+    : await application.transitionTask(
+      {
+        ...metadata,
+        context,
+        actor,
+        scope,
+        id: taskId(route.id),
+        toState: requiredState(body.toState, [
+          "open",
+          "in_progress",
+          "blocked",
+          "completed",
+          "cancelled",
+        ]),
+      } satisfies TransitionTaskCommand,
+    );
+  return writeResult(result, context.correlationId, 200);
+}
+
+async function transitionApproval(
+  routeId: string,
+  command: ApprovalCommand,
+  body: Record<string, unknown>,
+  metadata: WorkManagementCommandMetadata,
+  authenticated: WorkManagementAuthenticatedContext,
+  scope: import("../../work_management/v1.ts").WorkScope,
+  application: WorkManagementV1Application,
+): Promise<Response> {
+  const input = {
+    ...metadata,
+    ...authenticated,
+    scope,
+    id: approvalRequestId(routeId),
+    ...(body.reason === undefined
+      ? {}
+      : { reason: requiredString(body.reason, "reason") }),
+  };
+  const result = command === "open"
+    ? await application.openApprovalRequest(input)
+    : command === "withdraw"
+    ? await application.withdrawApprovalRequest(input)
+    : command === "invalidate"
+    ? await application.invalidateApprovalRequest(input)
+    : command === "expire"
+    ? await application.expireApprovalRequest(input)
+    : await application.decideApprovalRequest(
+      {
+        ...input,
+        outcome: command === "approve" ? "approved" : "rejected",
       } satisfies ApprovalDecisionCommand,
     );
-    return writeResult(result, context.correlationId, 200);
-  }
-  return methodNotAllowed();
+  return writeResult(result, authenticated.context.correlationId, 200);
 }
 
 function parseRoute(pathname: string): WorkManagementRoute | undefined {
   const parts = pathname.split("/").filter(Boolean);
   if (
     parts[0] !== "api" || parts[1] !== "v1" || parts[2] !== "work-management"
-  ) return undefined;
+  ) return;
   const collection = parts[3];
   if (collection === "workstreams" || collection === "tasks") {
     if (parts.length === 4) return { kind: collection };
@@ -274,37 +335,35 @@ function parseRoute(pathname: string): WorkManagementRoute | undefined {
         command: "transition",
       };
     }
-    return undefined;
+    return;
   }
-  if (collection !== "approval-requests") return undefined;
+  if (collection !== "approval-requests") return;
   if (parts.length === 4) return { kind: "approval_requests" };
   if (parts.length === 5) {
     return { kind: "approval_requests", id: decodeURIComponent(parts[4]) };
   }
-  if (
-    parts.length === 6 &&
-    ["open", "approve", "reject", "withdraw"].includes(parts[5])
-  ) {
+  const command = parseApprovalCommand(parts[5]);
+  if (parts.length === 6 && command !== undefined) {
     return {
       kind: "approval_requests",
       id: decodeURIComponent(parts[4]),
-      command: parts[5] as ApprovalCommand,
+      command,
     };
   }
-  return undefined;
 }
 
-function routeId(route: WorkManagementRoute): string {
-  if (route.id !== undefined) return route.id;
-  throw new WorkManagementValidationError(
-    "Work Management item ID is missing; expected a scoped resource identifier.",
-  );
+function parseApprovalCommand(
+  value: string | undefined,
+): ApprovalCommand | undefined {
+  if (
+    value === "open" || value === "approve" || value === "reject" ||
+    value === "withdraw" || value === "invalidate" || value === "expire"
+  ) return value;
 }
 
 function commandMetadata(
   request: Request,
-  body: Record<string, unknown>,
-  id: string | undefined,
+  versionRequired: boolean,
 ): WorkManagementCommandMetadata {
   const idempotency = parseIdempotencyHeader(
     request.headers.get("Idempotency-Key"),
@@ -314,50 +373,42 @@ function commandMetadata(
       "Idempotency-Key is required; expected an idem_ identifier.",
     );
   }
+  if (!versionRequired) return { idempotencyKey: idempotency.value };
   const ifMatch = parseIfMatch(request.headers.get("If-Match"));
-  const expectedVersion = id === undefined
-    ? undefined
-    : ifMatch.ok
-    ? ifMatch.value
-    : (() => {
-      throw new WorkManagementValidationError(
-        `If-Match is invalid; expected a strong \\"v<version>\\" ETag.`,
-      );
-    })();
-  const event = body.eventId === undefined
-    ? workEventId(`work_event_${idempotency.value.slice("idem_".length)}`)
-    : workEventId(requiredString(body.eventId, "eventId"));
-  const currentTargetVersion = body.currentTargetVersion === undefined
-    ? undefined
-    : aggregateVersion(Number(body.currentTargetVersion));
-  return {
-    idempotencyKey: idempotency.value,
-    eventId: event,
-    ...(expectedVersion === undefined ? {} : { expectedVersion }),
-    ...(currentTargetVersion === undefined ? {} : { currentTargetVersion }),
-  };
+  if (!ifMatch.ok) {
+    throw new WorkManagementValidationError(
+      'If-Match is invalid; expected one strong "v<version>" ETag.',
+    );
+  }
+  return { idempotencyKey: idempotency.value, expectedVersion: ifMatch.value };
 }
 
-function requiredWorkspace(
-  value: string | undefined,
-): import("../../work_management/v1.ts").WorkspaceId {
-  if (value !== undefined) {
-    return value as import("../../work_management/v1.ts").WorkspaceId;
-  }
+function requiresVersion(route: WorkManagementRoute): boolean {
+  return route.id !== undefined || route.kind === "tasks";
+}
+
+function rejectServerOwnedMetadata(body: Record<string, unknown>): void {
+  const forbidden = ["eventId", "decisionId", "currentTargetVersion"].find((
+    field,
+  ) => body[field] !== undefined);
+  if (forbidden === undefined) return;
   throw new WorkManagementValidationError(
-    "Work Management requires workspace scope; expected an authenticated workspace ID.",
+    `Field "${forbidden}" is server-owned; expected semantic identity derived by Work Management.`,
   );
 }
 
 function requireWorkspace(
   value: import("../../platform/api/v1.ts").WorkspaceId | undefined,
 ) {
-  return requiredWorkspace(value);
+  if (value !== undefined) return value;
+  throw new WorkManagementValidationError(
+    "Work Management requires workspace scope; expected an authenticated workspace ID.",
+  );
 }
 
 function requireDeal(
   value: import("../../platform/api/v1.ts").DealId | undefined,
-): import("../../work_management/v1.ts").DealId {
+) {
   if (value !== undefined) return value;
   throw new WorkManagementValidationError(
     "Work Management requires deal scope; expected an authenticated deal ID.",
@@ -374,42 +425,8 @@ function actorId(value: string): import("../../work_management/v1.ts").ActorId {
   }
 }
 
-function requiredString(value: unknown, field: string): string {
-  if (typeof value === "string" && value.trim() !== "") return value;
-  throw new WorkManagementValidationError(
-    `Field "${field}" is invalid; expected a non-empty string.`,
-  );
-}
-
-function requiredObject(
-  value: unknown,
-  field: string,
-): Record<string, unknown> {
-  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  throw new WorkManagementValidationError(
-    `Field "${field}" is invalid; expected a JSON object.`,
-  );
-}
-
-function requiredState<T extends string>(
-  value: unknown,
-  states: readonly T[],
-): T {
-  if (typeof value === "string" && states.includes(value as T)) {
-    return value as T;
-  }
-  throw new WorkManagementValidationError(
-    `State "${String(value)}" is invalid; expected one of ${
-      states.join(", ")
-    }.`,
-  );
-}
-
 async function jsonBody(request: Request): Promise<Record<string, unknown>> {
-  const value: unknown = await request.json();
-  return requiredObject(value, "body");
+  return requiredObject(await request.json(), "body");
 }
 
 function writeResult(
@@ -418,29 +435,29 @@ function writeResult(
   successStatus: number,
 ): Response {
   if (result.kind === "error") {
-    const status = API_ERROR_CATALOG[result.error.error.code].httpStatus;
     return Response.json(result.error, {
-      status,
+      status: API_ERROR_CATALOG[result.error.error.code].httpStatus,
       headers: responseHeaders(correlationId),
     });
   }
-  const value = result.value as {
-    readonly value?: unknown;
-    readonly etag?: string;
-  };
-  const etag = value.etag;
+  const view = readView(result.value);
   const headers = responseHeaders(correlationId);
-  if (etag !== undefined) headers.ETag = etag;
-  return Response.json(
-    createSuccessEnvelope(
-      value.value ?? result.value,
-      { correlationId },
-    ),
-    {
-      status: successStatus,
-      headers,
-    },
-  );
+  if (view.etag !== undefined) headers.ETag = view.etag;
+  return Response.json(createSuccessEnvelope(view.value, { correlationId }), {
+    status: successStatus,
+    headers,
+  });
+}
+
+function readView(
+  value: unknown,
+): { readonly value: unknown; readonly etag?: string } {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return { value };
+  }
+  const record = Object.fromEntries(Object.entries(value));
+  if (typeof record.etag !== "string" || !("value" in record)) return { value };
+  return { value: record.value, etag: record.etag };
 }
 
 function validationResponse(

@@ -20,25 +20,21 @@ import type {
   Task,
   Workstream,
 } from "./model.ts";
-import { assertText, stableSerialize, WorkManagementError } from "./model.ts";
+import { assertText, WorkManagementError } from "./model.ts";
 
 export type WorkManagementEventType =
   | "workstream.created"
+  | "workstream.task_attached"
   | "workstream.state_changed"
   | "task.created"
   | "task.state_changed"
+  | "approval.draft_created"
   | "approval.requested"
-  | "approval.decision_recorded"
+  | "approval.approved"
+  | "approval.rejected"
   | "approval.withdrawn"
   | "approval.invalidated"
   | "approval.expired";
-
-export interface ApprovalNotificationPayload {
-  readonly notificationType: "approval_request";
-  readonly title: string;
-  readonly body: string;
-  readonly recipients: readonly { readonly recipientId: ActorId }[];
-}
 
 export interface WorkManagementEvent extends OutboxEvent {
   readonly eventId: WorkEventId;
@@ -130,26 +126,26 @@ export function approvalEventPayload(
   };
 }
 
-export function approvalNotificationPayload(
-  request: ApprovalRequest,
-): ApprovalNotificationPayload {
-  const title = "Approval request requires review";
-  const body =
-    `Approval request ${request.id} is ready for the named approver.`;
-  return Object.freeze({
-    notificationType: "approval_request",
-    title,
-    body,
-    recipients: Object.freeze([{ recipientId: request.namedApproverId }]),
-  });
+export function recipientSafeApprovalPayload(payload: unknown): boolean {
+  return !containsProtectedField(payload);
 }
 
-export function recipientSafeApprovalPayload(
-  payload: ApprovalNotificationPayload,
-): boolean {
-  const serialized = stableSerialize(payload);
-  return !serialized.includes("evidence") &&
-    !serialized.includes("rationale") && !serialized.includes("target");
+function containsProtectedField(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsProtectedField);
+  if (typeof value !== "object" || value === null) return false;
+  return Object.entries(value).some(([key, child]) => {
+    const normalized = key.toLowerCase();
+    return [
+      "evidence",
+      "rationale",
+      "target",
+      "authority",
+      "payload",
+      "strategy",
+    ]
+      .some((forbidden) => normalized.includes(forbidden)) ||
+      containsProtectedField(child);
+  });
 }
 
 export type WorkstreamEventAggregateId = WorkstreamId;

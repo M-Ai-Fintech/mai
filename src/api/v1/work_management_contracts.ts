@@ -2,8 +2,9 @@ import type { ActorReference } from "../../platform/authz/v1.ts";
 import type { AggregateVersion } from "../../platform/api/v1.ts";
 import type { IdempotencyKey, RequestContext } from "../../platform/api/v1.ts";
 import type {
-  ApprovalPackage,
   ApprovalRequest,
+  EvidenceSnapshotReference,
+  TargetReference,
   Task,
   TaskState,
   Workstream,
@@ -12,7 +13,6 @@ import type {
 import type {
   ApprovalRequestId,
   TaskId,
-  WorkEventId,
   WorkScope,
   WorkstreamId,
 } from "../../work_management/v1.ts";
@@ -31,7 +31,9 @@ export type WorkManagementCommand =
   | "open_approval_request"
   | "approve_approval_request"
   | "reject_approval_request"
-  | "withdraw_approval_request";
+  | "withdraw_approval_request"
+  | "invalidate_approval_request"
+  | "expire_approval_request";
 
 export interface WorkManagementAuthenticatedContext {
   readonly context: RequestContext;
@@ -55,9 +57,7 @@ export interface WorkManagementReadInput<Id extends string> {
 
 export interface WorkManagementCommandMetadata {
   readonly idempotencyKey: IdempotencyKey;
-  readonly eventId: WorkEventId;
   readonly expectedVersion?: AggregateVersion;
-  readonly currentTargetVersion?: AggregateVersion;
   readonly reason?: string;
 }
 
@@ -92,17 +92,25 @@ export interface TransitionTaskCommand
 
 export interface CreateApprovalRequestCommand
   extends WorkManagementCommandInput<ApprovalRequestId> {
-  readonly requesterId: ApprovalRequest["requesterId"];
   readonly namedApproverId: ApprovalRequest["namedApproverId"];
-  readonly package: ApprovalPackage;
+  readonly action: string;
+  readonly target: TargetReference;
+  readonly evidence: readonly EvidenceSnapshotReference[];
+  readonly payload: Readonly<Record<string, unknown>>;
+  readonly claimedDigest?: string;
 }
 
 export interface ApprovalDecisionCommand
   extends WorkManagementCommandInput<ApprovalRequestId> {
-  readonly package: ApprovalPackage;
-  readonly decisionId: import("../../work_management/v1.ts").ApprovalDecisionId;
   readonly outcome: "approved" | "rejected";
   readonly reason?: string;
+}
+
+export interface WorkManagementCommandReceipt {
+  readonly id: string;
+  readonly aggregateType: WorkManagementResource;
+  readonly state: string;
+  readonly version: AggregateVersion;
 }
 
 export interface WorkManagementReadView<T> {

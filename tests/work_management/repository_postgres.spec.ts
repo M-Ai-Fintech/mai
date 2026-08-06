@@ -65,7 +65,7 @@ Deno.test({
     const runner = new PostgresTransactionRunner(pool);
     const value = createWorkstream({
       ...scope,
-      id: workstreamId(`workstream_pg_${Date.now()}`),
+      id: workstreamId(`workstream_pg-${Date.now()}`),
       name: "PostgreSQL repository",
       ownerId: actor("actor_owner"),
       now: new Date().toISOString(),

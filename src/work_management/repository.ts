@@ -5,9 +5,12 @@ import type {
   ApprovalDecision,
   ApprovalRequest,
   Task,
+  WorkAggregate,
   Workstream,
 } from "./model.ts";
 import { WorkManagementError } from "./model.ts";
+import { semanticallyEquivalent } from "./record_identity.ts";
+import type { TargetCommandDispatch } from "./target_commands.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -16,6 +19,23 @@ import type {
 } from "./ids.ts";
 
 export type WorkHistoryRecord = WorkManagementEvent;
+
+export interface WorkCommandResult {
+  readonly resultId: string;
+  readonly aggregate: WorkAggregate;
+  readonly recordedAt: string;
+}
+
+export class WorkManagementRecordConflictError extends Error {
+  readonly code = "IMMUTABLE_RECORD_CONFLICT" as const;
+
+  constructor(readonly recordType: string, readonly recordId: string) {
+    super(
+      `Work Management ${recordType} "${recordId}" conflicts with a different immutable record; expected exact semantic replay.`,
+    );
+    this.name = "WorkManagementRecordConflictError";
+  }
+}
 
 export class WorkManagementVersionConflictError extends Error {
   readonly code = "VERSION_CONFLICT" as const;
@@ -64,6 +84,13 @@ export interface WorkManagementTransaction {
     requestId: ApprovalRequestId,
   ): Promise<readonly ApprovalDecision[]>;
   appendHistory(event: WorkHistoryRecord): Promise<void>;
+  saveCommandResult(result: WorkCommandResult): Promise<void>;
+  findCommandResult(resultId: string): Promise<WorkCommandResult | undefined>;
+  appendTargetCommand(dispatch: TargetCommandDispatch): Promise<void>;
+  listTargetCommands(
+    scope: WorkScope,
+    requestId: ApprovalRequestId,
+  ): Promise<readonly TargetCommandDispatch[]>;
 }
 
 export interface WorkManagementRepository extends WorkManagementTransaction {
@@ -85,6 +112,9 @@ export class InMemoryWorkManagementRepository
   private readonly approvals = new Map<string, ApprovalRequest>();
   private readonly history = new Map<string, WorkHistoryRecord[]>();
   private readonly decisions = new Map<string, ApprovalDecision>();
+  private readonly decisionRequests = new Map<string, ApprovalRequest>();
+  private readonly commandResults = new Map<string, WorkCommandResult>();
+  private readonly targetCommands = new Map<string, TargetCommandDispatch>();
 
   findWorkstream(
     scope: WorkScope,
@@ -137,27 +167,31 @@ export class InMemoryWorkManagementRepository
     request: ApprovalRequest,
     decision: ApprovalDecision,
   ): Promise<void> {
-    const decisionKey = key(request, request.id);
+    const decisionKey = decision.id;
     const existing = this.decisions.get(decisionKey);
     if (existing === undefined) {
       this.decisions.set(decisionKey, cloneRequired(decision));
+      this.decisionRequests.set(decisionKey, cloneRequired(request));
       return Promise.resolve();
     }
-    if (existing.id === decision.id) return Promise.resolve();
-    throw new WorkManagementError(
-      "DECISION_ALREADY_RECORDED",
-      `Approval Request "${request.id}" already has immutable decision "${existing.id}"; expected one decision history row.`,
-    );
+    const existingRequest = this.decisionRequests.get(decisionKey);
+    if (
+      semanticallyEquivalent(existing, decision) &&
+      semanticallyEquivalent(existingRequest, request)
+    ) return Promise.resolve();
+    throw new WorkManagementRecordConflictError("decision", decision.id);
   }
 
   listApprovalDecisions(
     scope: WorkScope,
     requestId: ApprovalRequestId,
   ): Promise<readonly ApprovalDecision[]> {
-    const decision = this.decisions.get(key(scope, requestId));
-    return Promise.resolve(
-      decision === undefined ? [] : [cloneRequired(decision)],
-    );
+    const values = [...this.decisions.entries()].filter(([decisionId]) => {
+      const request = this.decisionRequests.get(decisionId);
+      return request !== undefined && request.id === requestId &&
+        key(request, request.id) === key(scope, requestId);
+    }).map(([, decision]) => cloneRequired(decision));
+    return Promise.resolve(values);
   }
 
   appendHistory(event: WorkHistoryRecord): Promise<void> {
@@ -171,8 +205,15 @@ export class InMemoryWorkManagementRepository
       `${event.aggregateType}:${event.aggregateId}`,
     );
     const entries = this.history.get(aggregateKey) ?? [];
-    if (entries.some((item) => item.eventId === event.eventId)) {
-      return Promise.resolve();
+    const sameId = [...this.history.values()].flat().find((item) =>
+      item.eventId === event.eventId
+    );
+    if (sameId !== undefined) {
+      if (semanticallyEquivalent(sameId, event)) return Promise.resolve();
+      throw new WorkManagementRecordConflictError(
+        "history event",
+        event.eventId,
+      );
     }
     if (
       entries.some((item) => item.aggregateVersion === event.aggregateVersion)
@@ -187,6 +228,48 @@ export class InMemoryWorkManagementRepository
     return Promise.resolve();
   }
 
+  saveCommandResult(result: WorkCommandResult): Promise<void> {
+    const existing = this.commandResults.get(result.resultId);
+    if (existing === undefined) {
+      this.commandResults.set(result.resultId, cloneRequired(result));
+      return Promise.resolve();
+    }
+    if (semanticallyEquivalent(existing, result)) return Promise.resolve();
+    throw new WorkManagementRecordConflictError(
+      "command result",
+      result.resultId,
+    );
+  }
+
+  findCommandResult(resultId: string): Promise<WorkCommandResult | undefined> {
+    return Promise.resolve(clone(this.commandResults.get(resultId)));
+  }
+
+  appendTargetCommand(dispatch: TargetCommandDispatch): Promise<void> {
+    const existing = this.targetCommands.get(dispatch.dispatchId);
+    if (existing === undefined) {
+      this.targetCommands.set(dispatch.dispatchId, cloneRequired(dispatch));
+      return Promise.resolve();
+    }
+    if (semanticallyEquivalent(existing, dispatch)) return Promise.resolve();
+    throw new WorkManagementRecordConflictError(
+      "target command",
+      dispatch.dispatchId,
+    );
+  }
+
+  listTargetCommands(
+    scope: WorkScope,
+    requestId: ApprovalRequestId,
+  ): Promise<readonly TargetCommandDispatch[]> {
+    return Promise.resolve(
+      [...this.targetCommands.values()].filter((item) =>
+        item.approvalRequestId === requestId &&
+        key(item, requestId) === key(scope, requestId)
+      ).map(cloneRequired),
+    );
+  }
+
   run<TResult>(
     callback: (
       transaction: WorkManagementTransaction,
@@ -199,6 +282,9 @@ export class InMemoryWorkManagementRepository
       [...this.history].map(([key, events]) => [key, [...events]]),
     );
     const decisions = new Map(this.decisions);
+    const decisionRequests = new Map(this.decisionRequests);
+    const commandResults = new Map(this.commandResults);
+    const targetCommands = new Map(this.targetCommands);
     return Promise.resolve().then(() => callback(this)).catch(
       (error: unknown) => {
         restore(this.workstreams, workstreams);
@@ -206,6 +292,9 @@ export class InMemoryWorkManagementRepository
         restore(this.approvals, approvals);
         restore(this.history, history);
         restore(this.decisions, decisions);
+        restore(this.decisionRequests, decisionRequests);
+        restore(this.commandResults, commandResults);
+        restore(this.targetCommands, targetCommands);
         throw error;
       },
     );

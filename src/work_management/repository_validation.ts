@@ -150,7 +150,7 @@ export function parseStoredApprovalRequest(
     ], "Approval Request state") as ApprovalRequest["state"],
     ...(document.decision === undefined
       ? {}
-      : { decision: parseDecision(document.decision) }),
+      : { decision: parseStoredDecision(document.decision) }),
     version: aggregateVersion(Number(row.version)),
     createdAt: instant(row.createdAt, "Approval Request creation time"),
     updatedAt: instant(row.updatedAt, "Approval Request update time"),
@@ -262,7 +262,7 @@ function parseEvidence(value: unknown): ApprovalPackage["evidence"][number] {
   };
 }
 
-function parseDecision(value: unknown): ApprovalDecision {
+export function parseStoredDecision(value: unknown): ApprovalDecision {
   const decision = record(value, "Approval decision");
   const outcome = decision.outcome;
   if (outcome !== "approved" && outcome !== "rejected") {

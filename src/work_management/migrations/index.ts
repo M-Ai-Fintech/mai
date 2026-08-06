@@ -1,4 +1,9 @@
-export {
+import { workManagementMigration } from "./work_management_0001.ts";
+import { workManagementCorrectiveMigration } from "./work_management_0002_corrective.ts";
+
+export const workManagementMigrations = Object.freeze([
   workManagementMigration,
-  workManagementMigrations,
-} from "./work_management_0001.ts";
+  workManagementCorrectiveMigration,
+]);
+
+export { workManagementCorrectiveMigration, workManagementMigration };

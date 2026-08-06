@@ -4,14 +4,21 @@ import {
   type ErrorEnvelope,
   formatEtag,
 } from "../../platform/api/v1.ts";
-import { WorkManagementError } from "../../work_management/model.ts";
+import { IdempotencyConflictError } from "../../platform/persistence/v1.ts";
 import {
   type CommandInput,
-  type CreateCommand,
-  WorkManagementIdempotencyConflictError,
-  type WorkManagementService,
-} from "../../work_management/composition.ts";
-import { WorkManagementVersionConflictError } from "../../work_management/repository.ts";
+  WorkManagementService,
+} from "../../work_management/application_service.ts";
+import { WorkManagementIdempotencyInProgressError } from "../../work_management/command_unit_of_work.ts";
+import {
+  type WorkAggregate,
+  WorkManagementError,
+} from "../../work_management/model.ts";
+import type { WorkManagementReadDto } from "../../work_management/read_models.ts";
+import {
+  WorkManagementRecordConflictError,
+  WorkManagementVersionConflictError,
+} from "../../work_management/repository.ts";
 import type {
   ApprovalDecisionCommand,
   CreateApprovalRequestCommand,
@@ -21,6 +28,7 @@ import type {
   TransitionWorkstreamCommand,
   WorkManagementApiResult,
   WorkManagementCommandInput,
+  WorkManagementCommandReceipt,
   WorkManagementReadInput,
   WorkManagementReadResult,
   WorkManagementReadView,
@@ -31,80 +39,51 @@ export * from "./work_management_contracts.ts";
 export class WorkManagementV1Application {
   constructor(private readonly service: WorkManagementService) {}
 
-  async readWorkstream(
+  readWorkstream(
     input: WorkManagementReadInput<
       import("../../work_management/v1.ts").WorkstreamId
     >,
-  ): Promise<
-    WorkManagementReadResult<import("../../work_management/v1.ts").Workstream>
-  > {
-    return await this.read(input, (value) => this.service.getWorkstream(value));
+  ): Promise<WorkManagementReadResult<WorkManagementReadDto>> {
+    return this.read(input, () => this.service.getWorkstream(input));
   }
 
-  async readTask(
+  readTask(
     input: WorkManagementReadInput<
       import("../../work_management/v1.ts").TaskId
     >,
-  ): Promise<
-    WorkManagementReadResult<import("../../work_management/v1.ts").Task>
-  > {
-    return await this.read(input, (value) => this.service.getTask(value));
+  ): Promise<WorkManagementReadResult<WorkManagementReadDto>> {
+    return this.read(input, () => this.service.getTask(input));
   }
 
-  async readApprovalRequest(
+  readApprovalRequest(
     input: WorkManagementReadInput<
       import("../../work_management/v1.ts").ApprovalRequestId
     >,
-  ): Promise<
-    WorkManagementReadResult<
-      import("../../work_management/v1.ts").ApprovalRequest
-    >
-  > {
-    return await this.read(
-      input,
-      (value) => this.service.getApprovalRequest(value),
-    );
+  ): Promise<WorkManagementReadResult<WorkManagementReadDto>> {
+    return this.read(input, () => this.service.getApprovalRequest(input));
   }
 
-  async createWorkstream(
-    input: CreateWorkstreamCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<import("../../work_management/v1.ts").Workstream>
-    >
-  > {
-    return await this.command(input, () =>
+  createWorkstream(input: CreateWorkstreamCommand) {
+    return this.command(input, () =>
       this.service.createWorkstream({
-        ...toCreateCommand(input, "workstream.created"),
+        ...toCommandInput(input),
         name: input.name,
         ownerId: input.ownerId,
       }));
   }
 
-  async transitionWorkstream(
-    input: TransitionWorkstreamCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<import("../../work_management/v1.ts").Workstream>
-    >
-  > {
-    return await this.command(input, () =>
+  transitionWorkstream(input: TransitionWorkstreamCommand) {
+    return this.command(input, () =>
       this.service.transitionWorkstream({
-        ...toCommandInput(input, "workstream.state_changed"),
+        ...toCommandInput(input),
         toState: input.toState,
       }));
   }
 
-  async createTask(
-    input: CreateTaskCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<import("../../work_management/v1.ts").Task>
-    >
-  > {
-    return await this.command(input, () =>
+  createTask(input: CreateTaskCommand) {
+    return this.command(input, () =>
       this.service.createTask({
-        ...toCreateCommand(input, "task.created"),
+        ...toCommandInput(input),
         workstreamId: input.workstreamId,
         parentTaskId: input.parentTaskId,
         title: input.title,
@@ -113,112 +92,101 @@ export class WorkManagementV1Application {
       }));
   }
 
-  async transitionTask(
-    input: TransitionTaskCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<import("../../work_management/v1.ts").Task>
-    >
-  > {
-    return await this.command(input, () =>
+  transitionTask(input: TransitionTaskCommand) {
+    return this.command(input, () =>
       this.service.transitionTask({
-        ...toCommandInput(input, "task.state_changed"),
+        ...toCommandInput(input),
         toState: input.toState,
       }));
   }
 
-  async createApprovalRequest(
-    input: CreateApprovalRequestCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<
-        import("../../work_management/v1.ts").ApprovalRequest
-      >
-    >
-  > {
-    return await this.command(input, () =>
+  createApprovalRequest(input: CreateApprovalRequestCommand) {
+    return this.command(input, () =>
       this.service.createApprovalRequest({
-        ...toCreateCommand(input, "approval.requested"),
-        requesterId: input.requesterId,
+        ...toCommandInput(input),
         namedApproverId: input.namedApproverId,
-        package: input.package,
+        action: input.action,
+        target: input.target,
+        evidence: input.evidence,
+        payload: input.payload,
+        claimedDigest: input.claimedDigest,
       }));
   }
 
-  async openApprovalRequest(
+  openApprovalRequest(
     input: WorkManagementCommandInput<
       import("../../work_management/v1.ts").ApprovalRequestId
     >,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<
-        import("../../work_management/v1.ts").ApprovalRequest
-      >
-    >
-  > {
-    return await this.command(input, () =>
-      this.service.openApprovalRequest(
-        toCommandInput(input, "approval.requested"),
-      ));
+  ) {
+    return this.command(
+      input,
+      () => this.service.openApprovalRequest(toCommandInput(input)),
+    );
   }
 
-  async decideApprovalRequest(
-    input: ApprovalDecisionCommand,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<
-        import("../../work_management/v1.ts").ApprovalRequest
-      >
-    >
-  > {
-    return await this.command(input, () =>
+  decideApprovalRequest(input: ApprovalDecisionCommand) {
+    return this.command(input, () =>
       this.service.decideApprovalRequest({
-        ...toCommandInput(input, "approval.decision_recorded"),
-        package: input.package,
+        ...toCommandInput(input),
         outcome: input.outcome,
-        decisionId: input.decisionId,
       }));
   }
 
-  async withdrawApprovalRequest(
+  withdrawApprovalRequest(
     input: WorkManagementCommandInput<
       import("../../work_management/v1.ts").ApprovalRequestId
     >,
-  ): Promise<
-    WorkManagementApiResult<
-      WorkManagementReadView<
-        import("../../work_management/v1.ts").ApprovalRequest
-      >
-    >
-  > {
-    return await this.command(input, () =>
-      this.service.withdrawApprovalRequest(
-        toCommandInput(input, "approval.withdrawn"),
-      ));
+  ) {
+    return this.command(
+      input,
+      () => this.service.withdrawApprovalRequest(toCommandInput(input)),
+    );
   }
 
-  private async read<T extends { readonly version: number }, Id extends string>(
-    input: WorkManagementReadInput<Id>,
-    loader: (
-      value: WorkManagementReadInput<Id>,
-    ) => Promise<
-      | { readonly kind: "loaded"; readonly value: T }
-      | {
-        readonly kind: "protected_not_found";
-        readonly response: ErrorEnvelope;
-      }
+  invalidateApprovalRequest(
+    input: WorkManagementCommandInput<
+      import("../../work_management/v1.ts").ApprovalRequestId
     >,
-  ): Promise<WorkManagementReadResult<T>> {
+  ) {
+    return this.command(
+      input,
+      () => this.service.invalidateApprovalRequest(toCommandInput(input)),
+    );
+  }
+
+  expireApprovalRequest(
+    input: WorkManagementCommandInput<
+      import("../../work_management/v1.ts").ApprovalRequestId
+    >,
+  ) {
+    return this.command(
+      input,
+      () => this.service.expireApprovalRequest(toCommandInput(input)),
+    );
+  }
+
+  private async read<Id extends string>(
+    input: WorkManagementReadInput<Id>,
+    loader: () => Promise<
+      import("../../work_management/application_service.ts").WorkReadResult
+    >,
+  ): Promise<WorkManagementReadResult<WorkManagementReadDto>> {
     const scopeError = validateScope(input.context, input.scope);
     if (scopeError !== undefined) return scopeError;
     try {
-      const result = await loader(input);
+      const result = await loader();
       if (result.kind === "protected_not_found") {
         return { kind: "error", error: result.response };
       }
       return {
         kind: "ok",
-        value: { value: result.value, etag: formatEtag(result.value.version) },
+        value: {
+          value: result.value,
+          etag: formatEtag(
+            result
+              .version as import("../../platform/api/v1.ts").AggregateVersion,
+          ),
+        },
       };
     } catch (error) {
       return {
@@ -228,15 +196,25 @@ export class WorkManagementV1Application {
     }
   }
 
-  private async command<T extends { readonly version: number }>(
+  private async command<T extends WorkAggregate>(
     input: WorkManagementCommandInput<string>,
     operation: () => Promise<T>,
-  ): Promise<WorkManagementApiResult<WorkManagementReadView<T>>> {
+  ): Promise<
+    WorkManagementApiResult<
+      WorkManagementReadView<WorkManagementCommandReceipt>
+    >
+  > {
     const scopeError = validateScope(input.context, input.scope);
     if (scopeError !== undefined) return scopeError;
     try {
       const value = await operation();
-      return { kind: "ok", value: { value, etag: formatEtag(value.version) } };
+      return {
+        kind: "ok",
+        value: {
+          value: commandReceipt(value),
+          etag: formatEtag(value.version),
+        },
+      };
     } catch (error) {
       return {
         kind: "error",
@@ -248,7 +226,6 @@ export class WorkManagementV1Application {
 
 function toCommandInput<Id extends string>(
   input: WorkManagementCommandInput<Id>,
-  eventType: import("../../work_management/v1.ts").WorkManagementEventType,
 ): CommandInput<Id> {
   return {
     context: input.context,
@@ -256,20 +233,19 @@ function toCommandInput<Id extends string>(
     scope: input.scope,
     id: input.id,
     idempotencyKey: input.idempotencyKey,
-    eventId: input.eventId,
-    eventType,
     expectedVersion: input.expectedVersion,
-    currentTargetVersion: input.currentTargetVersion,
     reason: input.reason,
     commandPayload: input.commandPayload,
   };
 }
 
-function toCreateCommand<Id extends string>(
-  input: WorkManagementCommandInput<Id>,
-  eventType: import("../../work_management/v1.ts").WorkManagementEventType,
-): CreateCommand<Id> {
-  return toCommandInput(input, eventType);
+function commandReceipt(value: WorkAggregate): WorkManagementCommandReceipt {
+  return Object.freeze({
+    id: value.id,
+    aggregateType: value.aggregateType,
+    state: value.state,
+    version: value.version,
+  });
 }
 
 function validateScope(
@@ -278,8 +254,7 @@ function validateScope(
 ): WorkManagementApiResult<never> | undefined {
   if (
     context.workspaceId === scope.workspaceId &&
-    context.dealId === scope.dealId &&
-    context.tenantId === scope.tenantId
+    context.dealId === scope.dealId && context.tenantId === scope.tenantId
   ) return;
   return {
     kind: "error",
@@ -318,7 +293,11 @@ function mapError(
           .expectedVersion) as import("../../platform/api/v1.ts").AggregateVersion,
     });
   }
-  if (error instanceof WorkManagementIdempotencyConflictError) {
+  if (
+    error instanceof IdempotencyConflictError ||
+    error instanceof WorkManagementIdempotencyInProgressError ||
+    error instanceof WorkManagementRecordConflictError
+  ) {
     return createApiError({
       code: "IDEMPOTENCY_CONFLICT",
       message: error.message,
@@ -327,31 +306,38 @@ function mapError(
     });
   }
   if (error instanceof WorkManagementError) {
-    const code = error.code === "INVALID_TRANSITION" ||
-        error.code === "DECISION_ALREADY_RECORDED"
-      ? "INVALID_TRANSITION"
-      : error.code === "STALE_APPROVAL_PACKAGE"
-      ? "STALE_VERSION"
-      : error.code === "HUMAN_AUTHORITY_REQUIRED" ||
-          error.code === "NAMED_APPROVER_REQUIRED" ||
-          error.code === "SEPARATION_OF_DUTIES"
-      ? "ACTION_FORBIDDEN"
-      : "VALIDATION_FAILED";
-    if (code === "VALIDATION_FAILED") {
-      return createApiError({
-        code,
-        message: error.message,
-        correlationId,
-        retryable: false,
-        fieldErrors: {
-          command: [{
-            field: "command",
-            code: "INVALID_TYPE",
-            message: error.message,
-          }],
-        },
-      });
-    }
+    return workError(error, correlationId);
+  }
+  return createApiError({
+    code: "DEPENDENCY_UNAVAILABLE",
+    message:
+      "Work Management could not complete the command; expected a durable transaction boundary.",
+    correlationId,
+    retryable: true,
+  });
+}
+
+function workError(
+  error: WorkManagementError,
+  correlationId: import("../../platform/api/v1.ts").CorrelationId,
+): ErrorEnvelope {
+  const code = error.code === "INVALID_TRANSITION" ||
+      error.code === "DECISION_ALREADY_RECORDED" ||
+      error.code === "INCOMPLETE_WORK"
+    ? "INVALID_TRANSITION"
+    : error.code === "STALE_APPROVAL_PACKAGE"
+    ? "STALE_VERSION"
+    : error.code === "HUMAN_AUTHORITY_REQUIRED" ||
+        error.code === "NAMED_APPROVER_REQUIRED" ||
+        error.code === "SEPARATION_OF_DUTIES"
+    ? "ACTION_FORBIDDEN"
+    : error.code === "SCOPE_MISMATCH"
+    ? "PROTECTED_NOT_FOUND"
+    : "VALIDATION_FAILED";
+  if (code === "PROTECTED_NOT_FOUND") {
+    return createProtectedNotFoundError(correlationId);
+  }
+  if (code !== "VALIDATION_FAILED") {
     return createApiError({
       code,
       message: error.message,
@@ -360,11 +346,17 @@ function mapError(
     });
   }
   return createApiError({
-    code: "DEPENDENCY_UNAVAILABLE",
-    message:
-      "Work Management could not complete the command; expected a durable transaction boundary.",
+    code,
+    message: error.message,
     correlationId,
-    retryable: true,
+    retryable: false,
+    fieldErrors: {
+      command: [{
+        field: "command",
+        code: "INVALID_TYPE",
+        message: error.message,
+      }],
+    },
   });
 }
 

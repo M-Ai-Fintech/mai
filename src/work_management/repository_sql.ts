@@ -1,6 +1,4 @@
-import type { AggregateVersion } from "../platform/api/v1.ts";
 import type { TransactionHandle } from "../platform/persistence/transaction.ts";
-import type { WorkManagementEvent } from "./events.ts";
 import type {
   ApprovalDecision,
   ApprovalRequest,
@@ -19,10 +17,13 @@ import {
   workstreamFromRow,
 } from "./repository_rows.ts";
 import {
+  type WorkCommandResult,
   type WorkHistoryRecord,
   type WorkManagementTransaction,
   WorkManagementVersionConflictError,
 } from "./repository.ts";
+import { PostgresWorkManagementRecords } from "./repository_sql_records.ts";
+import type { TargetCommandDispatch } from "./target_commands.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -32,7 +33,11 @@ import type {
 
 export class PostgresWorkManagementRepository
   implements WorkManagementTransaction {
-  constructor(readonly transaction: TransactionHandle) {}
+  private readonly records: PostgresWorkManagementRecords;
+
+  constructor(readonly transaction: TransactionHandle) {
+    this.records = new PostgresWorkManagementRecords(transaction);
+  }
 
   async findWorkstream(
     scope: WorkScope,
@@ -78,23 +83,7 @@ export class PostgresWorkManagementRepository
     aggregateType: string,
     aggregateId: string,
   ): Promise<readonly WorkHistoryRecord[]> {
-    const result = await this.transaction.query<WorkManagementEvent>(
-      `SELECT event_id AS "eventId", tenant_id AS "tenantId", workspace_id AS "workspaceId", deal_id AS "dealId", aggregate_type AS "aggregateType", aggregate_id AS "aggregateId", aggregate_version AS "aggregateVersion", event_type AS "eventType", actor_id AS "actorId", actor_kind AS "actorKind", correlation_id AS "correlationId", 1 AS "schemaVersion", payload, occurred_at AS "occurredAt", occurred_at AS "availableAt"
-       FROM work_management.aggregate_history
-       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND aggregate_type = $4 AND aggregate_id = $5
-       ORDER BY aggregate_version ASC`,
-      [
-        scope.tenantId,
-        scope.workspaceId,
-        scope.dealId,
-        aggregateType,
-        aggregateId,
-      ],
-    );
-    return result.rows.map((row) => ({
-      ...row,
-      aggregateVersion: Number(row.aggregateVersion) as AggregateVersion,
-    }));
+    return await this.records.listHistory(scope, aggregateType, aggregateId);
   }
 
   saveWorkstream(
@@ -137,70 +126,39 @@ export class PostgresWorkManagementRepository
     request: ApprovalRequest,
     decision: ApprovalDecision,
   ): Promise<void> {
-    await this.transaction.query(
-      `INSERT INTO work_management.approval_decision_history (
-         decision_id, tenant_id, workspace_id, deal_id, approval_request_id,
-         approval_request_version, package_id, package_version, package_digest,
-         outcome, approver_id, decision, recorded_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-       ON CONFLICT (decision_id) DO NOTHING`,
-      [
-        decision.id,
-        request.tenantId,
-        request.workspaceId,
-        request.dealId,
-        request.id,
-        request.version,
-        decision.packageId,
-        decision.packageVersion,
-        request.package.contentDigest,
-        decision.outcome,
-        decision.approverId,
-        JSON.stringify(decision),
-        decision.recordedAt,
-      ],
-    );
+    await this.records.appendApprovalDecision(request, decision);
   }
 
   async listApprovalDecisions(
     scope: WorkScope,
     requestId: ApprovalRequestId,
   ): Promise<readonly ApprovalDecision[]> {
-    const result = await this.transaction.query<{
-      readonly decision: unknown;
-    }>(
-      `SELECT decision FROM work_management.approval_decision_history
-       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
-         AND approval_request_id = $4 ORDER BY recorded_at ASC`,
-      [scope.tenantId, scope.workspaceId, scope.dealId, requestId],
-    );
-    return result.rows.map((row) => parseDecisionDocument(row.decision));
+    return await this.records.listApprovalDecisions(scope, requestId);
   }
 
   async appendHistory(event: WorkHistoryRecord): Promise<void> {
-    await this.transaction.query(
-      `INSERT INTO work_management.aggregate_history (
-         event_id, tenant_id, workspace_id, deal_id, aggregate_type,
-         aggregate_id, aggregate_version, event_type, actor_id, actor_kind,
-         correlation_id, payload, occurred_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-       ON CONFLICT (event_id) DO NOTHING`,
-      [
-        event.eventId,
-        event.tenantId,
-        event.workspaceId,
-        event.dealId,
-        event.aggregateType,
-        event.aggregateId,
-        event.aggregateVersion,
-        event.eventType,
-        event.actorId,
-        event.actorKind,
-        event.correlationId,
-        JSON.stringify(event.payload),
-        event.occurredAt,
-      ],
-    );
+    await this.records.appendHistory(event);
+  }
+
+  async saveCommandResult(result: WorkCommandResult): Promise<void> {
+    await this.records.saveCommandResult(result);
+  }
+
+  async findCommandResult(
+    resultId: string,
+  ): Promise<WorkCommandResult | undefined> {
+    return await this.records.findCommandResult(resultId);
+  }
+
+  async appendTargetCommand(dispatch: TargetCommandDispatch): Promise<void> {
+    await this.records.appendTargetCommand(dispatch);
+  }
+
+  async listTargetCommands(
+    scope: WorkScope,
+    requestId: ApprovalRequestId,
+  ): Promise<readonly TargetCommandDispatch[]> {
+    return await this.records.listTargetCommands(scope, requestId);
   }
 
   private async saveCurrent(
@@ -247,9 +205,18 @@ export class PostgresWorkManagementRepository
     }
     const updated = await this.transaction.query(
       `UPDATE work_management.${table}
-       SET version = $5, document = $6, updated_at = $8
-       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND ${idColumn} = $4 AND version = $9`,
-      [...values, expectedVersion],
+       SET version = $5, document = $6, updated_at = $7
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND ${idColumn} = $4 AND version = $8`,
+      [
+        aggregate.tenantId,
+        aggregate.workspaceId,
+        aggregate.dealId,
+        id,
+        aggregate.version,
+        JSON.stringify(document),
+        aggregate.updatedAt,
+        expectedVersion,
+      ],
     );
     if (updated.rowCount === 1) return;
     const current = await this.transaction.query<{ version: string }>(
@@ -296,9 +263,18 @@ export class PostgresWorkManagementRepository
       );
     }
     const updated = await this.transaction.query(
-      `UPDATE work_management.tasks_current SET version = $6, document = $7, updated_at = $9
-       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND task_id = $4 AND version = $10`,
-      [...values, expectedVersion],
+      `UPDATE work_management.tasks_current SET version = $5, document = $6, updated_at = $7
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND task_id = $4 AND version = $8`,
+      [
+        aggregate.tenantId,
+        aggregate.workspaceId,
+        aggregate.dealId,
+        aggregate.id,
+        aggregate.version,
+        JSON.stringify(document),
+        aggregate.updatedAt,
+        expectedVersion,
+      ],
     );
     if (updated.rowCount === 1) return;
     throw await this.conflict(
@@ -344,9 +320,24 @@ export class PostgresWorkManagementRepository
       );
     }
     const updated = await this.transaction.query(
-      `UPDATE work_management.approval_requests_current SET version = $5, requester_id = $6, named_approver_id = $7, package_id = $8, package_version = $9, package_digest = $10, state = $11, document = $12, updated_at = $14
-       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND approval_request_id = $4 AND version = $15`,
-      [...values, expectedVersion],
+      `UPDATE work_management.approval_requests_current SET version = $5, requester_id = $6, named_approver_id = $7, package_id = $8, package_version = $9, package_digest = $10, state = $11, document = $12, updated_at = $13
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND approval_request_id = $4 AND version = $14`,
+      [
+        aggregate.tenantId,
+        aggregate.workspaceId,
+        aggregate.dealId,
+        aggregate.id,
+        aggregate.version,
+        aggregate.requesterId,
+        aggregate.namedApproverId,
+        aggregate.package.id,
+        aggregate.package.version,
+        aggregate.package.contentDigest,
+        aggregate.state,
+        JSON.stringify(document),
+        aggregate.updatedAt,
+        expectedVersion,
+      ],
     );
     if (updated.rowCount === 1) return;
     throw await this.conflict(
@@ -378,15 +369,4 @@ export class PostgresWorkManagementRepository
       result.rows[0] === undefined ? undefined : Number(result.rows[0].version),
     );
   }
-}
-
-function parseDecisionDocument(value: unknown): ApprovalDecision {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(
-      `Approval decision history value "${
-        String(value)
-      }" is invalid; expected a JSON object.`,
-    );
-  }
-  return value as ApprovalDecision;
 }
