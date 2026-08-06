@@ -16,11 +16,35 @@ Deno.test("membership migration enforces one fail-closed authority model", () =>
   const sql = workManagementMembershipAuthorityMigration.statements.map(
     (statement) => statement.sql,
   ).join("\n");
-  assertStringIncludes(sql, "membership_is_inconsistent");
-  assertStringIncludes(sql, "jsonb_array_elements_text");
+  assertStringIncludes(sql, "membership_reconciliation_findings");
+  assertStringIncludes(sql, "scan_membership_authority");
+  assertStringIncludes(sql, "membership_commands_available");
+  assertStringIncludes(sql, "set_membership_rollout_mode");
+  assertStringIncludes(sql, "pg_advisory_xact_lock");
   assertStringIncludes(sql, "DEFERRABLE INITIALLY DEFERRED");
-  assertStringIncludes(sql, "Workstream taskIds authority");
+  assertStringIncludes(sql, "append-only");
+  assertStringIncludes(sql, "work_management-0003-read-only");
+  assert(!sql.includes("membership_is_inconsistent"));
   assert(!/\b(DROP|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(sql));
+});
+
+Deno.test("membership finding ledger covers every divergence class", () => {
+  const sql = workManagementMembershipAuthorityMigration.statements.map(
+    (statement) => statement.sql,
+  ).join("\n");
+  for (
+    const findingClass of [
+      "malformed_workstream_task_ids",
+      "duplicate_authoritative_task_id",
+      "task_document_back_reference_mismatch",
+      "task_owner_workstream_missing",
+      "task_owner_scope_mismatch",
+      "task_missing_from_authoritative_membership",
+      "authoritative_task_missing",
+      "authoritative_task_wrong_workstream",
+      "authoritative_task_scope_mismatch",
+    ]
+  ) assertStringIncludes(sql, findingClass);
 });
 
 Deno.test("persisted Task rejects a conflicting document back-reference", () => {
