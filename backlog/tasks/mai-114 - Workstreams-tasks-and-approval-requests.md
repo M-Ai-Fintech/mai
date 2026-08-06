@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-06 14:31'
+updated_date: '2026-08-06 14:34'
 labels:
   - backend
   - architecture
@@ -40,39 +40,71 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 modified_files:
+  - src/api/v1/work_management.ts
   - src/api/v1/work_management_contracts.ts
   - src/api/v1/work_management_routes.ts
+  - src/api/v1/work_management_validation.ts
   - src/platform/authz/projection.ts
+  - src/platform/persistence/migration.ts
+  - src/platform/persistence/migration_runner.ts
+  - src/work_management/application_helpers.ts
   - src/work_management/application_service.ts
+  - src/work_management/approval_package_factory.ts
+  - src/work_management/approval_requests.ts
   - src/work_management/authority_consumer_contract.ts
   - src/work_management/authority_evaluation.ts
+  - src/work_management/authority_evaluation_store.ts
+  - src/work_management/authority_facts.ts
+  - src/work_management/authority_immutability.ts
+  - src/work_management/authority_limits.ts
+  - src/work_management/authority_proof.ts
+  - src/work_management/authorization_service.ts
   - src/work_management/command_execution.ts
   - src/work_management/command_unit_of_work.ts
   - src/work_management/composition.ts
+  - src/work_management/events.ts
+  - src/work_management/ids.ts
   - src/work_management/migrations/index.ts
   - src/work_management/migrations/membership_enforcement_sql.ts
   - src/work_management/migrations/membership_reconciliation_sql.ts
+  - src/work_management/migrations/work_management_0001.ts
+  - src/work_management/migrations/work_management_0002_corrective.ts
+  - src/work_management/migrations/work_management_0003_membership_authority.ts
   - >-
     src/work_management/migrations/work_management_0004_authority_and_prepared.ts
   - src/work_management/migrations/work_management_0004_membership_authority.ts
+  - >-
+    src/work_management/migrations/work_management_0006_membership_operability.ts
   - src/work_management/migrations/work_management_0007_runtime_gate.ts
   - src/work_management/migrations/work_management_0008_actor_binding.ts
   - src/work_management/migrations/work_management_0009_corrective_upgrade.ts
-  - src/work_management/prepared_command_execution.ts
+  - src/work_management/model.ts
+  - src/work_management/notification_projections.ts
+  - src/work_management/read_models.ts
+  - src/work_management/read_service.ts
+  - src/work_management/record_identity.ts
+  - src/work_management/repository.ts
   - src/work_management/repository_rows.ts
   - src/work_management/repository_sql.ts
   - src/work_management/repository_sql_records.ts
   - src/work_management/repository_validation.ts
   - src/work_management/target_commands.ts
+  - src/work_management/tasks.ts
   - src/work_management/transaction_port_policy.ts
   - src/work_management/transactional_effects.ts
-  - src/work_management/transaction_replay_policy.ts
+  - src/work_management/transition_tables.ts
   - src/work_management/v1.ts
+  - src/work_management/workstreams.ts
   - tests/api/v1/work_management.spec.ts
+  - tests/api/v1/work_management_approval_security.spec.ts
+  - tests/api/v1/work_management_authority_proof.spec.ts
   - tests/platform/support/postgres.ts
   - tests/work_management/approval_concurrency_postgres.spec.ts
   - tests/work_management/approval_rollback_postgres.spec.ts
+  - tests/work_management/approval_service.spec.ts
   - tests/work_management/approval_test_support.ts
+  - tests/work_management/authority_consumer_contract.spec.ts
+  - tests/work_management/authority_evaluation.spec.ts
   - tests/work_management/authority_evaluation_postgres.spec.ts
   - tests/work_management/authority_test_support.ts
   - tests/work_management/command_transaction_postgres.spec.ts
@@ -81,12 +113,14 @@ modified_files:
   - tests/work_management/membership_reconciliation_postgres.spec.ts
   - tests/work_management/migration.spec.ts
   - tests/work_management/migration_postgres.spec.ts
-  - tests/work_management/prepared_command_execution.spec.ts
+  - tests/work_management/model.spec.ts
+  - tests/work_management/record_conflicts.spec.ts
   - tests/work_management/record_conflicts_postgres.spec.ts
   - tests/work_management/repository_postgres.spec.ts
-  - tests/work_management/target_dispatch_postgres.spec.ts
+  - tests/work_management/service.spec.ts
+  - tests/work_management/state_machines.spec.ts
   - tests/work_management/target_commands.spec.ts
-  - tests/work_management/transaction_replay_policy.spec.ts
+  - tests/work_management/target_dispatch_postgres.spec.ts
 priority: high
 ordinal: 50000
 ---
@@ -231,6 +265,14 @@ Final PostgreSQL evidence: serial command `for f in tests/work_management/*postg
 Final focused evidence: non-PostgreSQL Work Management/API suite completed 65 passed, 0 failed; scoped deno fmt --check and deno lint checked 41 files; affected deno check passed; git diff --check passed. Canonical `DENO_ENV=test MAI123_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:55432/mai_test_mai123 deno task verify` completed with all 17 categories PASS. Global fmt/lint remain pre-existing repository drift outside this task's changed-file scope; focused changed-file checks are green.
 
 Authoritative branch precondition note: branch is delivery/MAI-114-workstreams-tasks-and-approval-requests at e947e10 before the final closure commit and contains the reviewed history through 68bea26. Two `git fetch origin` attempts failed because parent worktree metadata `/home/luis/mai/.git/worktrees/MAI-114/FETCH_HEAD` is read-only; PR state was verified through the GitHub connector. MAI-110/111/113 remain Done. PR #51 remains open/Draft/unmerged. AC and DoD remain unchecked. Required human reviews remain data-model, security, API/bounded-context architecture, migration, database performance, authorization policy, idempotency/transaction, operational rollout/rollback, and review before executable server wiring.
+
+Final closure commit and push: 8ddfac42f7e764a41388c6895b196b4c8242db9 (pushed to delivery/MAI-114-workstreams-tasks-and-approval-requests). PR #51 head now matches this commit and remains open/Draft/unmerged.
+
+Final closure gate: focused non-PostgreSQL Work Management/API tests 65 passed, 0 failed; every MAI-114 PostgreSQL spec executed serially against redacted isolated MAI106_DATABASE_URL with 20 passed, 0 failed, 0 ignored; canonical DENO_ENV=test MAI123_DATABASE_URL=[redacted] deno task verify passed all 17 categories. Scoped fmt/lint/check and git diff --check passed.
+
+Independent final security/architecture and data/migration/operability/test reviews are CLEAN with zero unresolved in-scope findings. Runtime deviation recorded: requested Terra Medium/Luna Medium unavailable; coordinator, implementation specialists, and reviewers ran on 5.6 Sol Medium. Two fetch attempts were blocked by read-only parent worktree metadata; PR/branch state was verified through the GitHub connector.
+
+MAI-114 remains In Progress with all acceptance criteria and DoD unchecked. Human reviews still required for data model, security, API/bounded-context architecture, migration, database performance, authorization policy, idempotency/transaction, rollout/rollback, and executable-server wiring.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -264,5 +306,11 @@ author: @codex
 created: 2026-08-06 14:31
 ---
 Final closure pass complete at e947e10 plus uncommitted corrective changes. Both independent adversarial reviews report CLEAN; focused tests, fresh isolated PostgreSQL suite (20/20), and canonical verification are green. Keeping MAI-114 In Progress and PR #51 Draft for required human reviews; no Graphify, merge, or Done transition.
+---
+
+author: @codex
+created: 2026-08-06 14:34
+---
+Final closure committed and pushed at 8ddfac42f7e764a41388c6895b196b4c8242db9. PR #51 remains Draft/open/unmerged; final focused, PostgreSQL, canonical, migration, replay, authority, and adversarial-review evidence is recorded above. No known in-scope blocker remains; human review gates remain.
 ---
 <!-- COMMENTS:END -->
