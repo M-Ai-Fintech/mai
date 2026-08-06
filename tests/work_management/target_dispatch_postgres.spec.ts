@@ -252,13 +252,28 @@ class CountingApprovalPorts
 
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
     this.calls.authority += 1;
-    return Promise.resolve({
+    const snapshot = {
       snapshotId: `authority-replay-${this.calls.authority}`,
       actorId: approver.id,
       actorKind: "human" as const,
       policyVersion: `policy-replay-${this.calls.authority}`,
       capturedAt: `2026-08-06T12:00:0${this.calls.authority}.000Z`,
       scope: input.scope,
+    };
+    return Promise.resolve({
+      snapshot,
+      requirement: {
+        commandType: targetCommandType("approve_evidence"),
+        target: input.target,
+        namedApproverId: approver.id,
+        policyVersion: snapshot.policyVersion,
+        snapshotReference: snapshot.snapshotId,
+        scope: input.scope,
+        effectiveAt: "2026-08-06T11:00:00.000Z",
+        expiresAt: "2026-08-06T13:00:00.000Z",
+        applicableLimits: [],
+        humanOnly: true as const,
+      },
     });
   }
 }
