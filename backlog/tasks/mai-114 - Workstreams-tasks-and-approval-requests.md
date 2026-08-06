@@ -1,11 +1,11 @@
 ---
 id: MAI-114
 title: 'Workstreams, tasks and approval requests'
-status: In Progress
+status: Done
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-06 21:45'
+updated_date: '2026-08-06 22:08'
 labels:
   - backend
   - architecture
@@ -104,9 +104,9 @@ Extra-large complexity; Wave 7 serial and unlocks BE-P12. Recommended model: gpt
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Workstream/task/approval states, named authority, SoD, exact package version and AI-denial tests pass.
-- [ ] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
-- [ ] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
+- [x] #1 Workstream/task/approval states, named authority, SoD, exact package version and AI-denial tests pass.
+- [x] #2 Scope, exclusions, required ADRs, approval gates and review requirements are reflected in implementation evidence.
+- [x] #3 No unauthorized backend/frontend/Figma redesign or production-provider certification is introduced.
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -225,6 +225,8 @@ Canonical verification recovery 2026-08-06: starting head 41e6621; final commit 
 Post-merge corrective pass started on master at 73c2557430733d7c9d0ce728ad0d0d9345e3bdd8 per owner direction. Scope: split MAI-114 Work Management production modules by responsibility to restore the under-500-line/ focused-function standards; preserve transaction, authorization, idempotency, denial, replay, migration, naming, and dispatch behavior; restore Deal Management production runtime to DATABASE_URL-only while tests inject the semantic integration-test connection explicitly; audit related Deal Management reconciliation docs/scripts/tests for foreign-context behavior; run focused, affected, zero-ignored PostgreSQL, diff-check, and terminal canonical verification. No branch, PR, Graphify, prompt, Wave F, Done, or AC/DoD transition is authorized.
 
 Post-merge corrective work completed directly on master. Commit: dbfb939 (fix(MAI-114): repair post-merge structure and runtime boundaries). Structural refactors split the Work Management application facade into focused workstream, task, and approval services; split route parsing, dispatch, and response mapping; split authority parsing, approval-package validation, SQL record helpers, membership-reconciliation SQL responsibilities, and the large PostgreSQL test scenarios/support modules. Every modified or added file in the correction is below the 500-line limit. Existing transaction, authorization, authority-denial, idempotency, replay, migration, naming, and dispatch behavior was preserved. Deal Management production runtime now reads DATABASE_URL only; integration-test database configuration is injected by tests, and the operator procedure reflects the production/test boundary. Semantic naming improvements remain; no task-ID-derived runtime names were reintroduced. Focused Work Management/API tests: 44 passed, 0 failed. Focused Deal Management tests: 12 passed, 0 failed; five database-backed cases were ignored in that focused invocation without a database, while the complete PostgreSQL partition passed them with zero ignored. Affected PostgreSQL tests: membership 1/1, target dispatch 4/4, migration 2/2, historical upgrade 1/1; zero failures and zero ignored. Complete PostgreSQL serial suite: 50 files passed, zero failures, zero ignored. git diff --check passed. Terminal DENO_ENV=test deno task verify completed with exit 0 and all canonical categories passed. Commit-hook Graphify output was restored and no Graphify artifacts are included. No branch, PR, prompt, Wave F work, Wave E closure, Done transition, or AC/DoD transition was performed. MAI-114 remains In Progress with AC/DoD unchecked; human review and final Wave E closure remain required.
+
+Final Wave E closure, 2026-08-06: owner explicitly waived a repeat/terminal canonical verification requirement and directed the finisher to treat that gate as accepted because its runtime cost is infeasible. This is a closure waiver, not a claim of a newly observed canonical pass. Post-merge corrective evidence, focused checks, affected isolated PostgreSQL checks, historical checksum repair, and review evidence remain recorded above. Finisher Graphify refresh completed once with no working-tree changes.
 <!-- SECTION:NOTES:END -->
 
 ## Comments
@@ -287,3 +289,9 @@ created: 2026-08-06 21:45
 Post-merge corrective commit d7b4fd7 is pushed directly to master. Focused migration reassembly and historical-upgrade checks pass 5/5; semantic resource naming check passes; Work Management/API focused checks and affected PostgreSQL checks pass. Shared IdempotencyRepository.inspect and authz projection changes were removed/localized. Historical 0004 checksum remains pinned at 6e81ac47cae1c9e2a002a59921565635759d40fa653772515015114390d9ca6e. MAI-114 remains In Progress with AC/DoD unchecked. Final canonical invocation was launched with both required disposable database variables, but the PTY did not return a terminal exit line; Wave E closure therefore still requires a verifiable terminal canonical result and human review.
 ---
 <!-- COMMENTS:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Wave E closed by owner-directed waiver of repeat canonical verification. MAI-114 delivered Work Management state machines, named human approvers and separation of duties, exact-version approval packages, permission-safe API contracts, durable transaction/idempotency behavior, migrations, and regression coverage. Post-merge checksum and structure corrections are recorded in implementation evidence; follow-up quality improvements are deferred by owner direction.
+<!-- SECTION:FINAL_SUMMARY:END -->
