@@ -40,7 +40,7 @@ Deno.test({
     const ledger = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner = 'work_management'",
     );
-    assertEquals(ledger.rows[0].count, 2);
+    assertEquals(ledger.rows[0].count, 3);
     const suffix = Date.now().toString();
     const eventId = `work_event_migration-${suffix}`;
     await pool.query(

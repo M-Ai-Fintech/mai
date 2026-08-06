@@ -1,6 +1,7 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
   workManagementCorrectiveMigration,
+  workManagementMembershipAuthorityMigration,
   workManagementMigration,
   workManagementMigrations,
 } from "../../src/work_management/migrations/index.ts";
@@ -9,6 +10,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assertEquals(workManagementMigrations, [
     workManagementMigration,
     workManagementCorrectiveMigration,
+    workManagementMembershipAuthorityMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
@@ -36,4 +38,16 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assert(
     !/\b(DROP|TRUNCATE|DELETE\s+FROM|ALTER\s+TABLE)\b/i.test(correctiveSql),
   );
+  assertEquals(
+    workManagementMembershipAuthorityMigration.owner,
+    "work_management",
+  );
+  assertEquals(workManagementMembershipAuthorityMigration.version, 3);
+  const membershipSql = workManagementMembershipAuthorityMigration.statements
+    .map(
+      (statement) => statement.sql,
+    ).join("\n");
+  assertStringIncludes(membershipSql.toLowerCase(), "deferrable");
+  assertStringIncludes(membershipSql, "membership");
+  assertStringIncludes(membershipSql, "membership_is_inconsistent");
 });
