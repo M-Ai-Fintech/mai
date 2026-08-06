@@ -15,19 +15,46 @@ Read `prompts/OPERATING_RULES.md`.
 
 Wave I is closed and every declared dependency is Done.
 
-Require clean synchronized master, active To Do tasks with `delivery-wave-j`, and no duplicate branch/worktree/PR.
+Require clean synchronized master, active To Do tasks with `delivery-wave-j`,
+and no duplicate branch/worktree/PR.
 
-| Task | Branch | Worktree | Prompt |
-|---|---|---|---|
-| MAI-126 | `delivery/MAI-126-frontend-adapter-migration` | `../mai-worktrees/wave_j/MAI-126` | `MAI-126.md` |
+| Task    | Branch                                                              | Worktree                          | Prompt       |
+| ------- | ------------------------------------------------------------------- | --------------------------------- | ------------ |
+| MAI-126 | `delivery/MAI-126-frontend-adapter-migration`                       | `../mai-worktrees/wave_j/MAI-126` | `MAI-126.md` |
 | MAI-143 | `delivery/MAI-143-governed-model-backed-financial-risk-integration` | `../mai-worktrees/wave_j/MAI-143` | `MAI-143.md` |
-| MAI-149 | `delivery/MAI-149-enterprise-readiness-evidence` | `../mai-worktrees/wave_j/MAI-149` | `MAI-149.md` |
-| MAI-152 | `delivery/MAI-152-audited-agent-feedback-and-offline-improvement` | `../mai-worktrees/wave_j/MAI-152` | `MAI-152.md` |
+| MAI-149 | `delivery/MAI-149-enterprise-readiness-evidence`                    | `../mai-worktrees/wave_j/MAI-149` | `MAI-149.md` |
+| MAI-152 | `delivery/MAI-152-audited-agent-feedback-and-offline-improvement`   | `../mai-worktrees/wave_j/MAI-152` | `MAI-152.md` |
 
-Create all from one verified master commit. Plan with focused `rg`, eliminate collisions, write `## Wave J execution plan — <TASK-ID>` in local `AGENTS.md`, persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To Do until Luna starts.
+Create all from one verified master commit. Plan with focused `rg`, eliminate
+collisions, write `## Wave J execution plan — <TASK-ID>` in local `AGENTS.md`,
+persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To
+Do until Luna starts.
 
 ## Sol exception
 
 - `MAI-126` → `plan_MAI-126.md` with 5.6 Sol High.
 
-Return base, gates, matrix, plans, collision analysis, parallel groups, merge order, blockers, and confirmation no implementation or Graphify ran.
+Return base, gates, matrix, plans, collision analysis, parallel groups, merge
+order, blockers, and confirmation no implementation or Graphify ran.
+
+## Required within-task delegation design
+
+For each task plan, define:
+
+- authoritative task coordinator;
+- proposed read-only subagents;
+- proposed writing slices;
+- one concrete `/goal` draft per proposed subagent;
+- exclusive paths per writing slice;
+- forbidden shared paths;
+- coordinator-owned shared and integration files;
+- maximum concurrent subagents;
+- maximum concurrent writers;
+- slice dependencies;
+- integration order;
+- slice-level checks;
+- final task-wide verification.
+
+Do not spawn implementation subagents from the maestro. The maestro plans the
+delegation model; the Luna task coordinator executes it after the task start
+gate.
