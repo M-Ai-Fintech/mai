@@ -23,8 +23,8 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   contextFor,
@@ -35,7 +35,7 @@ import {
   SequentialDealIdFactory,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const context = contextFor();
 const scope = {
   tenantId: requiredTenantId(context.request.tenantId),
@@ -78,7 +78,7 @@ function operator() {
 }
 
 async function truncate(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     "TRUNCATE deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, audit_activity.audit_events, platform.outbox CASCADE",
@@ -98,7 +98,9 @@ function repository(transactions: PostgresTransactionRunner) {
 
 type Corruption = {
   readonly name: string;
-  readonly apply: (pool: ReturnType<typeof createMai106Pool>) => Promise<void>;
+  readonly apply: (
+    pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+  ) => Promise<void>;
   readonly code: string;
 };
 
@@ -226,7 +228,7 @@ Deno.test({
     "PostgreSQL exact reconciliation evidence rejects every corruption shape",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,

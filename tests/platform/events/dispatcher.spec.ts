@@ -68,14 +68,15 @@ function fixtureClaimedEvent(): ClaimedOutboxEvent {
   if (!version.ok) throw new Error("Fixture aggregate version is invalid.");
   return {
     eventId: "event_dispatch",
-    tenantId: "tenant_mai106" as ClaimedOutboxEvent["tenantId"],
+    tenantId: "tenant_postgresintegration" as ClaimedOutboxEvent["tenantId"],
     aggregateType: "fixture",
     aggregateId: "aggregate_1",
     aggregateVersion: version.value,
     eventType: "fixture.updated",
     schemaVersion: 1,
     payload: {},
-    correlationId: "cor_mai106" as ClaimedOutboxEvent["correlationId"],
+    correlationId:
+      "cor_postgresintegration" as ClaimedOutboxEvent["correlationId"],
     occurredAt: new Date("2026-07-30T12:00:00.000Z"),
     availableAt: new Date("2026-07-30T12:00:00.000Z"),
     attemptCount: 1,

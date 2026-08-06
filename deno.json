@@ -12,7 +12,7 @@
     "verify:fast:benchmark": "deno run --cached-only --frozen --allow-read=. --allow-run=deno --no-prompt scripts/verify_fast_benchmark.ts",
     "verify:integration": "deno run --allow-env --allow-net --allow-ffi --allow-sys scripts/verify_integration.ts",
     "test:smoke": "deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/smoke.spec.ts",
-    "db:start": "docker compose up -d",
+    "db:start": "docker compose up -d postgres-integration-test",
     "db:stop": "docker compose down",
     "db:setup": "deno run --env --allow-read --allow-env --allow-net src/core/db/setup.ts",
     "gui:start": "npm --prefix gui run dev"

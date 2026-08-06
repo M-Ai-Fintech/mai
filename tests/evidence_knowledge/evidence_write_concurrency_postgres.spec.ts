@@ -34,12 +34,12 @@ import {
   parseEvidenceId,
 } from "../../src/evidence_knowledge/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 
 class TestVerifier implements ExactDocumentVersionVerificationPort {
   verify(
@@ -66,7 +66,7 @@ Deno.test({
     "PostgreSQL evidence write concurrent identical Citation and Evidence replay",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -126,7 +126,7 @@ Deno.test({
   name: "PostgreSQL evidence write concurrent conflicting Citation",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -195,7 +195,7 @@ Deno.test({
   name: "PostgreSQL evidence write concurrent conflicting Evidence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -264,7 +264,7 @@ Deno.test({
   name: "PostgreSQL evidence write cross-scope Citation conflict rejection",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,

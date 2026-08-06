@@ -302,15 +302,17 @@ export function loadDealManagementEnvironment(input: {
   readonly authorization?: DealAuthorizationPort;
 }): DealManagementCompositionResult {
   const environment = input.environment ?? {
-    MAI106_DATABASE_URL: Deno.env.get("MAI106_DATABASE_URL"),
+    POSTGRES_INTEGRATION_TEST_DATABASE_URL: Deno.env.get(
+      "POSTGRES_INTEGRATION_TEST_DATABASE_URL",
+    ),
     DATABASE_URL: Deno.env.get("DATABASE_URL"),
   };
-  const databaseUrl = environment.MAI106_DATABASE_URL ??
+  const databaseUrl = environment.POSTGRES_INTEGRATION_TEST_DATABASE_URL ??
     environment.DATABASE_URL;
   if (databaseUrl === undefined || databaseUrl.trim().length === 0) {
     return loadUnavailable(
       "missing_configuration",
-      "Deal Management database configuration is missing; expected MAI106_DATABASE_URL or DATABASE_URL.",
+      "Deal Management database configuration is missing; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL.",
     );
   }
   if (input.authentication === undefined) {

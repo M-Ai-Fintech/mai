@@ -5,11 +5,11 @@ import {
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test("documents migration is one owned additive stream with retention-safe notes", () => {
   assertEquals(documentsMigrations.length, 1);
@@ -29,7 +29,7 @@ Deno.test({
   name: "documents migration creates append-only version and provenance tables",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetDocumentsSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -70,7 +70,7 @@ Deno.test({
 });
 
 async function resetDocumentsSchema(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query("DROP SCHEMA IF EXISTS documents CASCADE");
   await pool.query(

@@ -5,19 +5,19 @@ import {
   PostgresMigrationRunner,
 } from "../../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
+  createPostgresIntegrationTestPool,
   dropTaskSchema,
-  mai106DatabaseUrl,
+  postgresIntegrationTestDatabaseUrl,
 } from "../support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "PostgreSQL migrations apply once and reject checksum drift",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    const schema = "mai106_checksum";
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    const schema = "postgres_integration_checksum";
     await dropTaskSchema(pool, schema);
     const runner = new PostgresMigrationRunner(pool);
     await clearMigrationEvidence(pool, schema);
@@ -47,8 +47,8 @@ Deno.test({
   name: "failed PostgreSQL migration rolls back its context changes",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    const schema = "mai106_failure";
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    const schema = "postgres_integration_failure";
     await dropTaskSchema(pool, schema);
     const runner = new PostgresMigrationRunner(pool);
     const migration = defineMigration({
@@ -81,8 +81,8 @@ Deno.test({
   name: "concurrent migration runners serialize one owner stream",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    const schema = "mai106_locking";
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    const schema = "postgres_integration_locking";
     await dropTaskSchema(pool, schema);
     await clearMigrationEvidence(pool, schema);
     const migration = tableMigration(schema, "TEXT");
@@ -106,7 +106,7 @@ Deno.test({
   name: "migration runner enforces ownership on structural inputs",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     const migration: ContextMigration = {
       owner: "platform",
       schema: "platform",
@@ -148,7 +148,7 @@ function tableMigration(schema: string, columnType: string) {
 }
 
 async function clearMigrationEvidence(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   owner: string,
 ): Promise<void> {
   await pool.query(

@@ -20,8 +20,8 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   contextFor,
@@ -33,7 +33,7 @@ import {
   SequentialDealIdFactory,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 class SequentialLifecycleIds implements LifecycleIdFactory {
   private milestoneSequence = 0;
@@ -65,7 +65,7 @@ function auditedRepository(
 }
 
 async function truncate(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     "TRUNCATE deal_management.lifecycle_transition_history, deal_management.lifecycle_current, deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, audit_activity.audit_events, platform.outbox CASCADE",
@@ -73,7 +73,7 @@ async function truncate(
 }
 
 async function count(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   table: string,
 ): Promise<string> {
   const result = await pool.query<{ count: string }>(
@@ -87,7 +87,7 @@ Deno.test({
     "Deal lifecycle PostgreSQL persistence is scoped, audited, replayable, and atomic",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
@@ -211,7 +211,7 @@ Deno.test({
   name: "lifecycle transition history is append-only at the database boundary",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       const migrations = [
         ...platformMigrations,
@@ -267,7 +267,7 @@ Deno.test({
 });
 
 async function insertHistoryRow(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     `INSERT INTO deal_management.lifecycle_transition_history (
@@ -295,7 +295,7 @@ async function insertHistoryRow(
 }
 
 async function historySnapshot(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<readonly HistorySnapshot[]> {
   const result = await pool.query<HistorySnapshot>(
     `SELECT subject_id AS "subjectId", next_state AS "nextState",

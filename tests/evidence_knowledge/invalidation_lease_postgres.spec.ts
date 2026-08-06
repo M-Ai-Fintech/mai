@@ -18,18 +18,18 @@ import {
   parseWorkspaceId,
 } from "../../src/platform/api/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "invalidation receipts reclaim expired workers and fence stale owners",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await reset(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,

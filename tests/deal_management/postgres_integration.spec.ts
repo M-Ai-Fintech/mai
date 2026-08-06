@@ -18,8 +18,8 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   contextFor,
@@ -32,14 +32,14 @@ import {
   SequentialDealIdFactory,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name:
     "Deal Management PostgreSQL migration and repository retain atomic history, receipts, and outbox rows",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...dealManagementMigrations,
@@ -141,7 +141,7 @@ Deno.test({
     "Deal Management PostgreSQL claims concurrent creates and validates stored integrity",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,

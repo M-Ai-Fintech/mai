@@ -31,7 +31,7 @@ export const approvedComponentFamilies = [
 ];
 
 const nonPublicDirectories = new Set(["FoundationStatus", "internal"]);
-const forbiddenMai98Paths = [
+const forbiddenTemporaryReviewPaths = [
   "gui/components/Sidebar",
   "gui/components/TopBar",
   "gui/app/deals/page.tsx",
@@ -41,7 +41,9 @@ const forbiddenMai98Paths = [
 
 function publicDirectories() {
   return readdirSync(componentsRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !nonPublicDirectories.has(entry.name))
+    .filter((entry) =>
+      entry.isDirectory() && !nonPublicDirectories.has(entry.name)
+    )
     .map((entry) => entry.name)
     .sort();
 }
@@ -50,7 +52,9 @@ function assertApprovedDirectoryBoundary(violations) {
   const approved = new Set(approvedComponentFamilies);
   for (const directory of publicDirectories()) {
     if (!approved.has(directory)) {
-      violations.push(`gui/components/${directory}: unapproved public component family`);
+      violations.push(
+        `gui/components/${directory}: unapproved public component family`,
+      );
     }
   }
   if (existsSync(resolve(componentsRoot, "index.ts"))) {
@@ -81,8 +85,8 @@ function assertTriadsAndTokens(violations) {
   }
 }
 
-function assertMai98Absent(violations) {
-  for (const path of forbiddenMai98Paths) {
+function assertTemporaryReviewAbsent(violations) {
+  for (const path of forbiddenTemporaryReviewPaths) {
     if (existsSync(resolve(repositoryRoot, path))) {
       violations.push(`${path}: MAI-98 scope must remain absent`);
     }
@@ -93,7 +97,7 @@ export function componentViolations() {
   const violations = [];
   assertApprovedDirectoryBoundary(violations);
   assertTriadsAndTokens(violations);
-  assertMai98Absent(violations);
+  assertTemporaryReviewAbsent(violations);
   return violations;
 }
 
@@ -103,6 +107,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error(`Component verification failed:\n${violations.join("\n")}`);
     process.exitCode = 1;
   } else {
-    console.log(`Verified ${approvedComponentFamilies.length} approved component families.`);
+    console.log(
+      `Verified ${approvedComponentFamilies.length} approved component families.`,
+    );
   }
 }

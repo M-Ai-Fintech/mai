@@ -39,7 +39,9 @@ Deno.test("MAI-142 artifact manifest checksum matches the checked-in model", asy
 });
 
 Deno.test("MAI-142 distinguishes missing, unreadable, corrupt, and invalid artifacts", async () => {
-  const tempDirectory = await Deno.makeTempDir({ prefix: "mai142-artifact-" });
+  const tempDirectory = await Deno.makeTempDir({
+    prefix: "reference-artifact-",
+  });
   const manifestPath = `${tempDirectory}/candidate.manifest.json`;
   const baseManifest = JSON.parse(
     await Deno.readTextFile(MANIFEST_PATH),
@@ -78,7 +80,9 @@ Deno.test("MAI-142 distinguishes missing, unreadable, corrupt, and invalid artif
 });
 
 Deno.test("MAI-142 rejects an artifact whose manifest tensor name is incompatible", async () => {
-  const tempDirectory = await Deno.makeTempDir({ prefix: "mai142-contract-" });
+  const tempDirectory = await Deno.makeTempDir({
+    prefix: "reference-contract-",
+  });
   const manifestPath = `${tempDirectory}/candidate.manifest.json`;
   const manifest = JSON.parse(await Deno.readTextFile(MANIFEST_PATH)) as {
     input: { name: string };

@@ -27,8 +27,8 @@ import {
   type TransactionHandle,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   contextFor,
@@ -40,7 +40,7 @@ import {
   SequentialDealIdFactory,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const context = contextFor();
 const scope = {
   tenantId: requiredTenantId(context.request.tenantId),
@@ -83,7 +83,7 @@ function operator() {
 }
 
 async function truncate(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     "TRUNCATE deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.command_claims, deal_management.command_receipts, deal_management.aggregate_history, deal_management.deals, deal_management.reconciliation_manifest, audit_activity.audit_events, platform.outbox CASCADE",
@@ -95,7 +95,7 @@ Deno.test({
     "PostgreSQL reconciliation persists dry-run, apply, verification, and rollback routing",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
@@ -274,7 +274,7 @@ Deno.test({
     "executor apply propagates infrastructure failures and persists only typed mismatches",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await prepareFailureDatabase(pool);
       const transactions = new PostgresTransactionRunner(pool);
@@ -325,7 +325,7 @@ Deno.test({
 });
 
 async function prepareFailureDatabase(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
@@ -388,7 +388,7 @@ function auditedRepository(transactions: PostgresTransactionRunner) {
 }
 
 async function assertCollisionPreservesEvidence(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   repository: PostgresDealRepository,
   mapper: DeterministicLegacyDealMapper,
   service: DealManagementService,
@@ -427,7 +427,7 @@ function seedConflictingDeal(service: DealManagementService, dealId: DealId) {
 }
 
 async function collisionEvidence(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   dealId: string,
 ) {
   const result = await pool.query(
@@ -445,7 +445,7 @@ Deno.test({
   name: "PostgreSQL routing serializes competing stale updates",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
@@ -515,7 +515,7 @@ function routingChange(correlationId: string) {
 }
 
 async function count(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   table: string,
 ): Promise<string> {
   const result = await pool.query<{ count: string }>(

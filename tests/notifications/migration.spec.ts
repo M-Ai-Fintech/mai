@@ -137,16 +137,18 @@ Deno.test("PostgreSQL notification migration is idempotent and receipts are appe
 });
 
 function requiredDatabaseUrl(): string {
-  const databaseUrl = Deno.env.get("MAI123_DATABASE_URL");
+  const databaseUrl = Deno.env.get(
+    "NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL",
+  );
   if (databaseUrl === undefined) {
     throw new Error(
-      "MAI123_DATABASE_URL is required; expected a fresh isolated PostgreSQL database for MAI-123 integration evidence.",
+      "NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL is required; expected a fresh isolated PostgreSQL database for MAI-123 integration evidence.",
     );
   }
   const parsed = new URL(databaseUrl);
-  if (parsed.pathname !== "/mai_test_mai123") {
+  if (parsed.pathname !== "/mai_test_notifications_integration") {
     throw new Error(
-      `MAI123_DATABASE_URL database "${parsed.pathname}" is unsafe; expected "/mai_test_mai123".`,
+      `NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL database "${parsed.pathname}" is unsafe; expected "/mai_test_notifications_integration".`,
     );
   }
   return databaseUrl;

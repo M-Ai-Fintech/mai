@@ -139,9 +139,10 @@ function fixtureClaimedJob(): ClaimedJob {
     operationId: "op_worker" as ClaimedJob["operationId"],
     jobType: "fixture.execute",
     schemaVersion: 1,
-    tenantId: "tenant_mai106" as ClaimedJob["tenantId"],
-    initiatingActorId: "actor_mai106" as ClaimedJob["initiatingActorId"],
-    correlationId: "cor_mai106" as ClaimedJob["correlationId"],
+    tenantId: "tenant_postgresintegration" as ClaimedJob["tenantId"],
+    initiatingActorId:
+      "actor_postgresintegration" as ClaimedJob["initiatingActorId"],
+    correlationId: "cor_postgresintegration" as ClaimedJob["correlationId"],
     idempotencyKey: "idem_worker" as ClaimedJob["idempotencyKey"],
     inputVersionReferences: [{
       aggregateType: "fixture",

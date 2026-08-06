@@ -15,8 +15,8 @@ import {
 } from "../../src/identity_access/v1.ts";
 import type { AuthenticationPort } from "../../src/identity_access/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   type AuthorizationDecision,
@@ -33,17 +33,19 @@ import {
 } from "../../src/platform/persistence/v1.ts";
 import { identityAccessMigrations } from "../../src/identity_access/v1.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "executable bootstrap authenticates persisted Identity Access policy",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     let router: ApiServerRouter | undefined;
     try {
       await new PostgresMigrationRunner(pool).apply(identityAccessMigrations);
-      router = createExecutableApiServer({ MAI106_DATABASE_URL: databaseUrl });
+      router = createExecutableApiServer({
+        POSTGRES_INTEGRATION_TEST_DATABASE_URL: databaseUrl,
+      });
       if (router.dealManagement.kind !== "configured") return;
       await new PostgresMigrationRunner(pool).apply(
         router.dealManagement.composition
@@ -73,7 +75,7 @@ Deno.test({
 });
 
 async function seedExecutableIdentity(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   const now = "2026-08-03T12:00:00.000Z";
   const expiry = "2099-08-03T12:00:00.000Z";
@@ -108,7 +110,7 @@ async function seedExecutableIdentity(
 }
 
 async function cleanExecutableIdentity(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     "DELETE FROM deal_management.deals WHERE tenant_id = 'tenant_northstar'",
@@ -173,7 +175,7 @@ class PublicOnlyAuthorization implements DealAuthorizationPort {
 }
 
 function configuredRouter(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   authorization: DealAuthorizationPort = new PublicOnlyAuthorization(),
 ): ApiServerRouter {
   return createApiServer({
@@ -209,7 +211,7 @@ function dealRequest(
 }
 
 async function cleanDatabase(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     `TRUNCATE audit_activity.redaction_overlays, audit_activity.audit_events,
@@ -225,7 +227,7 @@ Deno.test({
     "configured application server creates and reads a scoped Deal through PostgreSQL",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       const router = configuredRouter(pool);
       assertEquals(router.dealManagement.kind, "configured");
@@ -329,7 +331,7 @@ Deno.test({
   name: "configured server retains tenant and workspace scope",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       const router = configuredRouter(pool, new PublicOnlyAuthorization());
       if (router.dealManagement.kind !== "configured") return;

@@ -18,8 +18,8 @@ import {
   workspaceId,
 } from "../../src/identity_access/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import { PostgresMigrationRunner } from "../../src/platform/persistence/v1.ts";
 import { identityAccessMigrations } from "../../src/identity_access/v1.ts";
@@ -28,7 +28,7 @@ Deno.test("executable API bootstrap fails startup without database configuration
   const error = assertThrows(
     () => createExecutableApiServer({}),
     Error,
-    "expected MAI106_DATABASE_URL or DATABASE_URL",
+    "expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL",
   );
   assertEquals(error.message.includes("password"), false);
 });
@@ -136,9 +136,11 @@ function sessionRow(
 
 Deno.test({
   name: "PostgreSQL authorization isolates same-actor sessions by identity",
-  ignore: mai106DatabaseUrl() === undefined,
+  ignore: postgresIntegrationTestDatabaseUrl() === undefined,
   async fn() {
-    const pool = createMai106Pool(mai106DatabaseUrl()!);
+    const pool = createPostgresIntegrationTestPool(
+      postgresIntegrationTestDatabaseUrl()!,
+    );
     const now = "2026-08-03T12:00:00.000Z";
     const expiry = "2099-08-03T12:00:00.000Z";
     try {
@@ -163,9 +165,11 @@ Deno.test({
 Deno.test({
   name:
     "PostgreSQL authentication rejects mismatches and unsafe persisted facts",
-  ignore: mai106DatabaseUrl() === undefined,
+  ignore: postgresIntegrationTestDatabaseUrl() === undefined,
   async fn() {
-    const pool = createMai106Pool(mai106DatabaseUrl()!);
+    const pool = createPostgresIntegrationTestPool(
+      postgresIntegrationTestDatabaseUrl()!,
+    );
     try {
       await new PostgresMigrationRunner(pool).apply(identityAccessMigrations);
       await seedIdentityIsolation(
@@ -255,7 +259,7 @@ Deno.test({
 });
 
 async function assertAuthenticationDenied(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   authentication: PostgresIdentityAccessAuthentication,
   label: string,
   mutate: () => Promise<void>,
@@ -271,7 +275,7 @@ async function assertAuthenticationDenied(
 }
 
 async function cleanupIdentityIsolation(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     "DELETE FROM access.role_policies WHERE aggregate_id IN ('role_restricted','role_privileged')",
@@ -316,7 +320,7 @@ function authorizationInput(
 }
 
 async function seedIdentityIsolation(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   issuedAt: string,
   expiresAt: string,
 ): Promise<void> {

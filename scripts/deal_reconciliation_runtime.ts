@@ -45,7 +45,9 @@ export async function createRuntime(
   const composition = loadComposition();
   let credential: string;
   try {
-    credential = requiredCredential(Deno.env.get("MAI110_OPERATOR_SESSION"));
+    credential = requiredCredential(
+      Deno.env.get("DEAL_MANAGEMENT_OPERATOR_SESSION"),
+    );
   } catch (error) {
     await composition.close();
     throw error;
@@ -100,7 +102,7 @@ function productionOperatorDependencies(
 function requiredCredential(value: string | undefined): string {
   if (value?.trim()) return value;
   throw new Error(
-    "Operator credential is missing; expected MAI110_OPERATOR_SESSION.",
+    "Operator credential is missing; expected DEAL_MANAGEMENT_OPERATOR_SESSION.",
   );
 }
 

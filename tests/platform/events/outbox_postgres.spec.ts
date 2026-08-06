@@ -12,19 +12,19 @@ import {
 } from "../../../src/platform/persistence/v1.ts";
 import { OutboxRepository } from "../../../src/platform/events/v1.ts";
 import {
-  createMai106Pool,
+  createPostgresIntegrationTestPool,
   dropTaskSchema,
-  mai106DatabaseUrl,
+  postgresIntegrationTestDatabaseUrl,
 } from "../support/postgres.ts";
 import pg from "pg";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "aggregate update and outbox append are atomic and restart durable",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await resetOutboxFixture(pool);
     const transactions = transactionRunner(pool);
@@ -60,7 +60,7 @@ Deno.test({
       })
     );
     assertEquals(claimed.map(({ eventId }) => eventId), ["event_atomic"]);
-    await dropTaskSchema(pool, "mai106_events");
+    await dropTaskSchema(pool, "postgres_integration_events");
     await pool.end();
   },
 });
@@ -69,7 +69,7 @@ Deno.test({
   name: "expired outbox leases recover without an early duplicate claim",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await pool.query("TRUNCATE platform.outbox");
     const transactions = transactionRunner(pool);
@@ -125,7 +125,7 @@ Deno.test({
   name: "outbox publication, retry, and dead-letter states stay durable",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await pool.query("TRUNCATE platform.outbox");
     const transactions = transactionRunner(pool);
@@ -202,7 +202,7 @@ Deno.test({
   name: "concurrent outbox dispatchers have one lease winner",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await pool.query("TRUNCATE platform.outbox");
     const transactions = transactionRunner(pool);
@@ -252,26 +252,26 @@ async function claimOne(
 
 async function resetOutboxFixture(pool: pg.Pool): Promise<void> {
   await pool.query("TRUNCATE platform.outbox");
-  await dropTaskSchema(pool, "mai106_events");
+  await dropTaskSchema(pool, "postgres_integration_events");
   await pool.query(`
-    CREATE SCHEMA mai106_events;
-    CREATE TABLE mai106_events.aggregate_fixture (
+    CREATE SCHEMA postgres_integration_events;
+    CREATE TABLE postgres_integration_events.aggregate_fixture (
       tenant_id TEXT NOT NULL,
       aggregate_id TEXT NOT NULL,
       material_value TEXT NOT NULL,
       version BIGINT NOT NULL CHECK (version > 0),
       PRIMARY KEY (tenant_id, aggregate_id)
     );
-    INSERT INTO mai106_events.aggregate_fixture
+    INSERT INTO postgres_integration_events.aggregate_fixture
       (tenant_id, aggregate_id, material_value, version)
-    VALUES ('tenant_mai106', 'aggregate_1', 'initial', 1);
+    VALUES ('tenant_postgresintegration', 'aggregate_1', 'initial', 1);
   `);
 }
 
 function fixtureUpdate(materialValue: string) {
   return {
-    table: "mai106_events.aggregate_fixture",
-    tenantId: requiredId(parseTenantId("tenant_mai106")),
+    table: "postgres_integration_events.aggregate_fixture",
+    tenantId: requiredId(parseTenantId("tenant_postgresintegration")),
     aggregateId: "aggregate_1",
     expectedVersion: requiredId(parseAggregateVersion(1)),
     changes: { material_value: materialValue },
@@ -281,14 +281,14 @@ function fixtureUpdate(materialValue: string) {
 function fixtureEvent(eventId: string) {
   return {
     eventId,
-    tenantId: requiredId(parseTenantId("tenant_mai106")),
+    tenantId: requiredId(parseTenantId("tenant_postgresintegration")),
     aggregateType: "fixture",
     aggregateId: "aggregate_1",
     aggregateVersion: requiredId(parseAggregateVersion(2)),
     eventType: "fixture.updated",
     schemaVersion: 1,
     payload: { material: true },
-    correlationId: requiredId(parseCorrelationId("cor_mai106")),
+    correlationId: requiredId(parseCorrelationId("cor_postgresintegration")),
     occurredAt: new Date("2026-07-30T12:00:00.000Z"),
     availableAt: new Date("2026-07-30T12:00:00.000Z"),
   };
@@ -296,7 +296,7 @@ function fixtureEvent(eventId: string) {
 
 async function fixtureVersion(pool: pg.Pool): Promise<string> {
   const result = await pool.query<{ version: string }>(
-    "SELECT version::text FROM mai106_events.aggregate_fixture",
+    "SELECT version::text FROM postgres_integration_events.aggregate_fixture",
   );
   return result.rows[0].version;
 }

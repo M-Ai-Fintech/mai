@@ -9,12 +9,12 @@ import {
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-export const databaseUrl =
-  Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ?? mai106DatabaseUrl();
+export const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
+  postgresIntegrationTestDatabaseUrl();
 
 const evidenceMigrations = [
   evidenceKnowledgeMigration,
@@ -32,7 +32,7 @@ export interface MigrationScope {
 export async function openMigratedPool(
   throughVersion: 1 | 2 | 3 | 4,
 ): Promise<pg.Pool> {
-  const pool = createMai106Pool(databaseUrl!);
+  const pool = createPostgresIntegrationTestPool(databaseUrl!);
   await resetSchema(pool);
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
