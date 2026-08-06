@@ -91,6 +91,10 @@ const approvalSchema: ProjectionSchema<ApprovalProjectionSource> = {
   version: definition("version", "version", "public"),
 };
 
+/** Projects an authorized Workstream into a permission-safe read DTO.
+ *
+ * @example projectWorkstream(workstream, decision)
+ */
 export function projectWorkstream(
   value: Workstream,
   decision: AuthorizationDecision,
@@ -98,6 +102,10 @@ export function projectWorkstream(
   return project(value, workstreamSchema, decision);
 }
 
+/** Projects an authorized Task into a permission-safe read DTO.
+ *
+ * @example projectTask(task, decision)
+ */
 export function projectTask(
   value: Task,
   decision: AuthorizationDecision,
@@ -105,6 +113,10 @@ export function projectTask(
   return project(value, taskSchema, decision);
 }
 
+/** Projects an authorized Approval Request into a permission-safe read DTO.
+ *
+ * @example projectApprovalRequest(request, decision)
+ */
 export function projectApprovalRequest(
   value: ApprovalRequest,
   decision: AuthorizationDecision,
@@ -117,7 +129,7 @@ function project<Source extends object>(
   schema: ProjectionSchema<Source>,
   decision: AuthorizationDecision,
 ): WorkManagementReadDto {
-  const fieldMask = {
+  const fieldMask = localizeUnrenderableRedactions(schema, {
     ...decision.fieldMask,
     include: decision.fieldMask.include.filter((name) =>
       !decision.fieldMask.omit.includes(name)
@@ -128,7 +140,7 @@ function project<Source extends object>(
     approvedClassifications: decision.fieldMask.approvedClassifications.filter(
       (approved) => !decision.fieldMask.omit.includes(approved.name),
     ),
-  };
+  });
   const dto = projectAuthorizedDto(
     value,
     schema,
@@ -142,6 +154,27 @@ function project<Source extends object>(
       ? {}
       : { expiresAt: decision.expiresAt }),
   });
+}
+
+function localizeUnrenderableRedactions<Source extends object>(
+  schema: ProjectionSchema<Source>,
+  fieldMask: AuthorizationDecision["fieldMask"],
+): AuthorizationDecision["fieldMask"] {
+  const omitted = new Set(
+    Object.values(schema)
+      .filter((definition) =>
+        fieldMask.redact.includes(definition.field) &&
+        definition.redactedPlaceholder === undefined
+      )
+      .map((definition) => definition.field),
+  );
+  return {
+    ...fieldMask,
+    include: fieldMask.include.filter((name) => !omitted.has(name)),
+    approvedClassifications: fieldMask.approvedClassifications.filter(
+      (approved) => !omitted.has(approved.name),
+    ),
+  };
 }
 
 function approvalSource(value: ApprovalRequest): ApprovalProjectionSource {

@@ -19,25 +19,39 @@ export interface WorkManagementV1RouteDependencies {
   readonly application: WorkManagementV1Application;
 }
 
+/** Handles one Work Management v1 request or returns null for another route.
+ *
+ * @example await handleWorkManagementV1Route(request, dependencies)
+ */
 export async function handleWorkManagementV1Route(
   request: Request,
   dependencies: WorkManagementV1RouteDependencies,
 ): Promise<Response | null> {
-  const route = parseWorkManagementRoute(new URL(request.url).pathname);
-  if (route === undefined) {
-    return isWorkManagementPath(new URL(request.url).pathname)
-      ? methodNotAllowed()
-      : null;
-  }
+  const path = new URL(request.url).pathname;
+  const route = parseWorkManagementRoute(path);
+  if (route === undefined) return unmatchedWorkManagementRoute(path);
   const authenticated = await authenticate(request, dependencies);
   if (authenticated instanceof Response) return authenticated;
+  return dispatchSafely(
+    request,
+    route,
+    authenticated,
+    dependencies.application,
+  );
+}
+
+function unmatchedWorkManagementRoute(path: string): Response | null {
+  return isWorkManagementPath(path) ? methodNotAllowed() : null;
+}
+
+async function dispatchSafely(
+  request: Request,
+  route: Parameters<typeof dispatch>[1],
+  authenticated: WorkManagementAuthenticatedContext,
+  application: WorkManagementV1Application,
+): Promise<Response> {
   try {
-    return await dispatch(
-      request,
-      route,
-      authenticated,
-      dependencies.application,
-    );
+    return await dispatch(request, route, authenticated, application);
   } catch (error) {
     return validationResponse(error, authenticated.context.correlationId);
   }

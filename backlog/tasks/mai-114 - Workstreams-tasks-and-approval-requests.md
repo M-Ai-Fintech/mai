@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-06 20:24'
+updated_date: '2026-08-06 21:28'
 labels:
   - backend
   - architecture
@@ -269,5 +269,16 @@ Final closure committed and pushed at 8ddfac42f7e764a41388c6895b196b4c8242db9. P
 created: 2026-08-06 18:37
 ---
 Final canonical verification is green at 71fb5ce after the PostgreSQL harness race correction. MAI-114 remains In Progress and Draft PR #51 remains for human review; no merge, Ready, Done, or Graphify transition.
+---
+
+author: @codex
+created: 2026-08-06 21:06
+---
+Wave E correction investigation 2026-08-06: strict checksum restoration is blocked by repository evidence. The required historical ledger checksum for work_management-0004-membership-authority is c515058263da7df8e7c9b78532a7065d94cba032e5bac41c2a6bd2494dc22775, but the repository retains only that value in synthetic historical ledger fixtures and prior compatible-checksum aliases. All reachable pre-refactor migration definitions hash differently (including the e947 historical SQL fixture at 4fdb23be0a14be111517c36dcabfce24108ca245a60e15882da9b17729625fcd). A direct regression test against the currently reconstructed historical SQL produced b1ccb055091ea678f628d4d423ac0510b8a75a092e5b97171f21a17751850e49, not c515. No alias or checksum override was retained; exploratory edits were reverted and master remains clean. Exact historical migration definition or authoritative database export is required before safe implementation. MAI-114 remains In Progress with AC/DoD unchecked.
+---
+
+created: 2026-08-06 21:28
+---
+Wave E post-merge correction update 2026-08-06: recovered the exact historical applied definition of work_management-0004-membership-authority from pre-refactor source and verified byte-for-byte equality; strict canonical checksum is 6e81ac47cae1c9e2a002a59921565635759d40fa653772515015114390d9ca6e, pinned by regression coverage, and historical upgrade passed against an existing ledger state. Removed MAI-114's shared-platform IdempotencyRepository.inspect API and authz projection behavior; replay inspection and redaction localization now live in Work Management. Route dispatch was split by responsibility without changing authorization, idempotency, transaction, denial, replay, or dispatch semantics. All Work Management/API files and historical SQL fragment modules remain below 500 lines; changed-file format, check, lint, and diff-check pass. Focused Work Management/API tests pass 24/24; affected Work Management PostgreSQL tests pass 12/12; Deal Management PostgreSQL tests pass 14/14 in the explicit integration configuration. Deal semantic naming/runtime maintenance remains owned by MAI-154 and production uses DATABASE_URL only. Canonical verification is still in progress; AC/DoD remain unchecked and status stays In Progress.
 ---
 <!-- COMMENTS:END -->

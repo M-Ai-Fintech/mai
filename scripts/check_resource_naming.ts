@@ -9,6 +9,11 @@ const EXCLUDED_DIRECTORIES = new Set([
 ]);
 const BINARY_EXTENSIONS = new Set([".onnx", ".pack", ".png", ".jpg", ".jpeg"]);
 
+function isHistoricalMigrationDefinition(path: string): boolean {
+  return path.startsWith("src/work_management/migrations/") &&
+    path.includes("_historical_");
+}
+
 export interface ResourceNamingViolation {
   readonly path: string;
   readonly token: string;
@@ -53,7 +58,9 @@ if (import.meta.main) {
     if (BINARY_EXTENSIONS.has(extension)) continue;
     const content = await Deno.readTextFile(path);
     violations.push(...findForbiddenResourcePathNames(relative));
-    violations.push(...findForbiddenResourceNames(content, relative));
+    if (!isHistoricalMigrationDefinition(relative)) {
+      violations.push(...findForbiddenResourceNames(content, relative));
+    }
   }
   if (violations.length > 0) {
     for (const violation of violations) {

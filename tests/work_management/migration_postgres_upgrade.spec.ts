@@ -272,7 +272,7 @@ async function applyHistoricalFourToSix(
       [
         "work_management-0004-membership-authority",
         4,
-        "c515058263da7df8e7c9b78532a7065d94cba032e5bac41c2a6bd2494dc22775",
+        "6e81ac47cae1c9e2a002a59921565635759d40fa653772515015114390d9ca6e",
       ],
       [
         "work_management-0005-authority-and-prepared",

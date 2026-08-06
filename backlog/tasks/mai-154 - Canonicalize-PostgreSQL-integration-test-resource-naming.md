@@ -4,7 +4,7 @@ title: Canonicalize PostgreSQL integration-test resource naming
 status: In Progress
 assignee: []
 created_date: '2026-08-06 17:10'
-updated_date: '2026-08-06 18:37'
+updated_date: '2026-08-06 21:28'
 labels: []
 dependencies: []
 priority: medium
@@ -33,5 +33,10 @@ Final verification 2026-08-06: root cause was canonical Deno parallel execution 
 created: 2026-08-06 18:37
 ---
 Canonical verification blocker resolved in 71fb5ce. PostgreSQL setup/migration collisions are eliminated by deliberate category-level serialization; parallel non-database verification remains enabled.
+---
+
+created: 2026-08-06 21:28
+---
+Ownership clarification 2026-08-06: retained Deal Management semantic naming and runtime/test configuration maintenance is MAI-154-owned, not MAI-114 domain behavior. Production executable configuration is DATABASE_URL-only; tests inject POSTGRES_INTEGRATION_TEST_DATABASE_URL explicitly. The reconciliation operator runtime uses semantic deal_reconciliation_runtime.ts and related documentation uses the production/test boundary. MAI-114 only localized its own Work Management replay/redaction behavior and restored shared platform contracts.
 ---
 <!-- COMMENTS:END -->

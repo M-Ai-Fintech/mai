@@ -42,14 +42,6 @@ function copyApprovedField<Source extends object>(
   definition: ProjectionField<Source>,
   fieldMask: FieldMask,
 ): void {
-  // A redact obligation without a governed placeholder is an omission, never
-  // permission to copy the protected source value.  This is intentionally
-  // checked before the include mask so a restrictive decision cannot be
-  // bypassed by requesting both include and redact for the same field.
-  if (
-    fieldMask.redact.includes(definition.field) &&
-    definition.redactedPlaceholder === undefined
-  ) return;
   if (isApprovedField(definition, fieldMask)) {
     output[outputKey] = source[definition.sourceKey];
   }

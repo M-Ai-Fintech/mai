@@ -26,6 +26,10 @@ import {
 } from "./read_service.ts";
 import type { WorkManagementTransactionalEffects } from "./transactional_effects.ts";
 
+/** Coordinates Work Management reads and command application services.
+ *
+ * @example new WorkManagementService(options)
+ */
 export class WorkManagementService {
   private readonly reads: WorkManagementReadService;
   private readonly workstreams: WorkstreamApplicationService;

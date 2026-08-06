@@ -1,4 +1,5 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
+import { migrationChecksum } from "../../src/platform/persistence/migration_runner.ts";
 import {
   workManagementActorBindingMigration,
   workManagementAuthorityAndPreparedMigration,
@@ -102,5 +103,12 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assertStringIncludes(
     workManagementMembershipOperabilityMigration.statements[0].sql,
     "scan_sequence",
+  );
+});
+
+Deno.test("membership authority migration preserves its historical checksum", async () => {
+  assertEquals(
+    await migrationChecksum(workManagementMembershipAuthorityUpgradeMigration),
+    "6e81ac47cae1c9e2a002a59921565635759d40fa653772515015114390d9ca6e",
   );
 });

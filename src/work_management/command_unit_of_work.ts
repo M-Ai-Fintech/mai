@@ -18,6 +18,7 @@ import {
   type AuthorityDenial,
   AuthorityDenialError,
 } from "./authority_denial.ts";
+import { inspectWorkManagementIdempotency } from "./idempotency_replay.ts";
 
 export interface WorkCommandExecutionIdentity extends WorkScope {
   readonly actorId: ActorId;
@@ -187,7 +188,7 @@ export class PostgresWorkManagementUnitOfWork
     return this.transactions.run(async (handle) => {
       const repository = new PostgresWorkManagementRepository(handle);
       const claim = postgresClaim(identity);
-      const inspected = await this.idempotency.inspect(handle, claim);
+      const inspected = await inspectWorkManagementIdempotency(handle, claim);
       if (inspected.status === "replay") {
         return await replayPostgres<T>(repository, identity, inspected);
       }
