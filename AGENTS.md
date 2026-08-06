@@ -103,3 +103,6 @@ the GUI, `gui/AGENTS.md` contains the Next.js-version rule.
 
 - Structured JSON when logging for debugging / observability.
 - Plain text only for user-facing CLI output.
+## Resource naming
+
+Backlog task IDs are governance and traceability identifiers, not names for runtime resources. Never use task IDs in environment variables, database or schema names, Docker resources, code symbols, helpers, filenames, queues, topics, metrics, fixtures, or runtime configuration. Task IDs remain valid in Backlog records, branches, pull requests, commits, comments, and historical references.
