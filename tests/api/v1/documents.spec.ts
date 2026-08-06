@@ -161,7 +161,7 @@ Deno.test("documents v1 rejects stale versions and mismatched deterministic keys
 Deno.test("documents composition exposes owned migrations with adapters disabled", async () => {
   const pool = new pg.Pool({
     connectionString:
-      "postgres://postgres:postgres@localhost:55432/mai_test_mai106",
+      "postgres://postgres:postgres@localhost:55432/mai_test_postgres_integration",
   });
   const composition = createDocumentsComposition({
     pool,

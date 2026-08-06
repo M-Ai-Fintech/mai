@@ -31,12 +31,12 @@ import {
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const scope: WorkScope = {
   tenantId: tenant("tenant_command-pg"),
   workspaceId: workspace("workspace_command-pg"),
@@ -60,8 +60,8 @@ Deno.test({
     "PostgreSQL command transaction durably replays without duplicate side effects",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
@@ -106,7 +106,7 @@ Deno.test({
   name: "PostgreSQL identical concurrent commands execute once",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
@@ -138,7 +138,7 @@ Deno.test({
     "PostgreSQL concurrent Task attachments use one Workstream If-Match and roll back the loser",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
@@ -213,7 +213,7 @@ Deno.test({
     "PostgreSQL audit failure rolls back aggregate history outbox result and idempotency",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
@@ -252,7 +252,7 @@ function composition(
     authorization: {
       authorize: allow,
       transactionSafe: true,
-      transactionMode: "mai106_local",
+      transactionMode: "postgres_integration_local",
     },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
   });
@@ -260,7 +260,7 @@ function composition(
 
 class RecordingAuditPort implements WorkManagementAuditPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   private readonly repository = new PostgresAuditEventRepository();
 
   async append(
@@ -275,7 +275,7 @@ class RecordingAuditPort implements WorkManagementAuditPort {
 
 class FailingAuditPort implements WorkManagementAuditPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   append(): Promise<string> {
     return Promise.reject(new Error("audit-failure"));
   }
@@ -355,8 +355,10 @@ function allow(): AuthorizationDecision {
   };
 }
 
-async function migrate(pool: ReturnType<typeof createMai106Pool>) {
-  await ensureMai114Roles(pool);
+async function migrate(
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+) {
+  await ensureWorkManagementTestRoles(pool);
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
     ...auditActivityMigrations,
@@ -367,7 +369,7 @@ async function migrate(pool: ReturnType<typeof createMai106Pool>) {
 }
 
 async function resetCommandContext(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
@@ -402,7 +404,7 @@ async function resetCommandContext(
 }
 
 async function activateCommands(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   suffix: string,
 ): Promise<void> {
   const scanId = `scan_${suffix}`;
@@ -439,7 +441,7 @@ async function activateCommands(
 }
 
 async function sideEffectCounts(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   id: string,
   key: string,
 ) {

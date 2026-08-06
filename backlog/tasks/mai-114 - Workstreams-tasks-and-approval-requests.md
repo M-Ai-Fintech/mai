@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-07-30 09:28'
-updated_date: '2026-08-06 14:34'
+updated_date: '2026-08-06 15:53'
 labels:
   - backend
   - architecture
@@ -40,87 +40,27 @@ documentation:
     backlog/docs/decisions/proposed-api-contracts/doc-33 -
     Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
 modified_files:
-  - src/api/v1/work_management.ts
-  - src/api/v1/work_management_contracts.ts
-  - src/api/v1/work_management_routes.ts
-  - src/api/v1/work_management_validation.ts
-  - src/platform/authz/projection.ts
+  - src/platform/persistence/idempotency.ts
   - src/platform/persistence/migration.ts
   - src/platform/persistence/migration_runner.ts
-  - src/work_management/application_helpers.ts
   - src/work_management/application_service.ts
-  - src/work_management/approval_package_factory.ts
-  - src/work_management/approval_requests.ts
-  - src/work_management/authority_consumer_contract.ts
-  - src/work_management/authority_evaluation.ts
-  - src/work_management/authority_evaluation_store.ts
-  - src/work_management/authority_facts.ts
-  - src/work_management/authority_immutability.ts
-  - src/work_management/authority_limits.ts
-  - src/work_management/authority_proof.ts
-  - src/work_management/authorization_service.ts
   - src/work_management/command_execution.ts
   - src/work_management/command_unit_of_work.ts
   - src/work_management/composition.ts
-  - src/work_management/events.ts
-  - src/work_management/ids.ts
-  - src/work_management/migrations/index.ts
-  - src/work_management/migrations/membership_enforcement_sql.ts
-  - src/work_management/migrations/membership_reconciliation_sql.ts
-  - src/work_management/migrations/work_management_0001.ts
-  - src/work_management/migrations/work_management_0002_corrective.ts
   - src/work_management/migrations/work_management_0003_membership_authority.ts
   - >-
     src/work_management/migrations/work_management_0004_authority_and_prepared.ts
   - src/work_management/migrations/work_management_0004_membership_authority.ts
-  - >-
-    src/work_management/migrations/work_management_0006_membership_operability.ts
-  - src/work_management/migrations/work_management_0007_runtime_gate.ts
-  - src/work_management/migrations/work_management_0008_actor_binding.ts
   - src/work_management/migrations/work_management_0009_corrective_upgrade.ts
-  - src/work_management/model.ts
-  - src/work_management/notification_projections.ts
-  - src/work_management/read_models.ts
-  - src/work_management/read_service.ts
-  - src/work_management/record_identity.ts
   - src/work_management/repository.ts
-  - src/work_management/repository_rows.ts
   - src/work_management/repository_sql.ts
   - src/work_management/repository_sql_records.ts
-  - src/work_management/repository_validation.ts
-  - src/work_management/target_commands.ts
-  - src/work_management/tasks.ts
   - src/work_management/transaction_port_policy.ts
   - src/work_management/transactional_effects.ts
-  - src/work_management/transition_tables.ts
-  - src/work_management/v1.ts
-  - src/work_management/workstreams.ts
-  - tests/api/v1/work_management.spec.ts
-  - tests/api/v1/work_management_approval_security.spec.ts
-  - tests/api/v1/work_management_authority_proof.spec.ts
-  - tests/platform/support/postgres.ts
-  - tests/work_management/approval_concurrency_postgres.spec.ts
-  - tests/work_management/approval_rollback_postgres.spec.ts
-  - tests/work_management/approval_service.spec.ts
-  - tests/work_management/approval_test_support.ts
-  - tests/work_management/authority_consumer_contract.spec.ts
-  - tests/work_management/authority_evaluation.spec.ts
-  - tests/work_management/authority_evaluation_postgres.spec.ts
-  - tests/work_management/authority_test_support.ts
   - tests/work_management/command_transaction_postgres.spec.ts
-  - tests/work_management/membership_authority_migration.spec.ts
-  - tests/work_management/membership_enforcement_performance_postgres.spec.ts
-  - tests/work_management/membership_reconciliation_postgres.spec.ts
   - tests/work_management/migration.spec.ts
   - tests/work_management/migration_postgres.spec.ts
-  - tests/work_management/model.spec.ts
-  - tests/work_management/record_conflicts.spec.ts
-  - tests/work_management/record_conflicts_postgres.spec.ts
-  - tests/work_management/repository_postgres.spec.ts
-  - tests/work_management/service.spec.ts
-  - tests/work_management/state_machines.spec.ts
-  - tests/work_management/target_commands.spec.ts
-  - tests/work_management/target_dispatch_postgres.spec.ts
+  - tests/work_management/transaction_port_policy.spec.ts
 priority: high
 ordinal: 50000
 ---
@@ -273,6 +213,8 @@ Final closure gate: focused non-PostgreSQL Work Management/API tests 65 passed, 
 Independent final security/architecture and data/migration/operability/test reviews are CLEAN with zero unresolved in-scope findings. Runtime deviation recorded: requested Terra Medium/Luna Medium unavailable; coordinator, implementation specialists, and reviewers ran on 5.6 Sol Medium. Two fetch attempts were blocked by read-only parent worktree metadata; PR/branch state was verified through the GitHub connector.
 
 MAI-114 remains In Progress with all acceptance criteria and DoD unchecked. Human reviews still required for data model, security, API/bounded-context architecture, migration, database performance, authorization policy, idempotency/transaction, rollout/rollback, and executable-server wiring.
+
+PR #51 focused correction handoff 2026-08-06: actual model 5.6 Luna Medium, one agent, no sub-agents or model substitution. Starting head 5a5a2b720a9a8214bf0176fb25f29d3aaa245544; final commit 1eddf34. Corrected production MAI-106 local adapter and audit/outbox marker validation; production composition now constructs commands, read_only, and disabled modes, and command_transaction_postgres uses the production factory. Denied authority evaluations now persist immutably with exact failed idempotency references and replay without trusted-port reinvocation or approval/event/notification/dispatch writes. Restored strict migration checksum equality, removed all checksum aliases, and verified unique ordered Work Management migration IDs/versions; disposable local database was reset because branch-local historical checksums are intentionally incompatible. Completed idempotent replay is inspected before rollout gating; new execution remains blocked in read_only/disabled. Focused: 46 passed, 0 failed; scoped fmt/lint/check/diff-check passed. PostgreSQL: every MAI-114 PostgreSQL spec executed, 20 passed, 0 failed, 0 ignored against approved isolated MAI106 target. Canonical: DENO_ENV=test with approved isolated MAI106/MAI123 targets, all 17 categories passed. Rollout remains disabled/read_only until governed reconciliation; rollback retains append-only records. Remaining human reviews: data model, security, API/bounded-context architecture, migration/performance, authorization policy, idempotency/transaction, and operational rollout/rollback. No prompts changed; no Graphify artifact is included. MAI-114 remains In Progress with AC/DoD unchecked.
 <!-- SECTION:NOTES:END -->
 
 ## Comments

@@ -37,12 +37,12 @@ import {
   parseEvidenceId,
 } from "../../src/evidence_knowledge/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 
 class TestVerifier implements ExactDocumentVersionVerificationPort {
   constructor(private readonly shouldPass: boolean = true) {}
@@ -75,7 +75,7 @@ Deno.test({
   name: "PostgreSQL evidence write fresh write and exact replay",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -120,7 +120,7 @@ Deno.test({
   name: "PostgreSQL evidence write concurrent identical replay",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -162,7 +162,7 @@ Deno.test({
   name: "PostgreSQL evidence write citation conflict matrix",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -240,7 +240,7 @@ Deno.test({
   name: "PostgreSQL evidence write evidence conflict rejection",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -291,7 +291,7 @@ Deno.test({
   name: "PostgreSQL evidence write atomic rollback on error",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -347,7 +347,7 @@ Deno.test({
     "PostgreSQL evidence write authorization and verification rejection leaves zero rows",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,

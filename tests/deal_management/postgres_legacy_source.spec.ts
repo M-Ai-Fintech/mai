@@ -16,8 +16,8 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   contextFor,
@@ -26,7 +26,7 @@ import {
   requiredWorkspaceId,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const dealId = "10000000-0000-4000-8000-000000000001";
 const unmappedDealId = "10000000-0000-4000-8000-000000000002";
 const partyId = "20000000-0000-4000-8000-000000000001";
@@ -110,7 +110,7 @@ Deno.test({
   name: "PostgreSQL legacy source uses reviewed scope and canonical mappings",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await prepareDatabase(pool);
       await seedLegacyEvidence(pool);
@@ -149,7 +149,7 @@ async function assertProductionMapping(
 }
 
 async function assertProductionDryRunMatchesApply(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   const context = contextFor(
     "tenant_postgres-legacy",
@@ -203,7 +203,9 @@ async function assertProductionDryRunMatchesApply(
   }
 }
 
-async function evidenceCounts(pool: ReturnType<typeof createMai106Pool>) {
+async function evidenceCounts(
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+) {
   const [deals, history, receipts, claims] = await Promise.all([
     pool.query("SELECT COUNT(*)::int AS count FROM deal_management.deals"),
     pool.query(
@@ -225,7 +227,7 @@ async function evidenceCounts(pool: ReturnType<typeof createMai106Pool>) {
 }
 
 async function assertOptionalMandateMapping(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   source: PostgresLegacyDealSource,
 ): Promise<void> {
   await pool.query(
@@ -276,7 +278,7 @@ function assertMappedDeal(
 }
 
 async function prepareDatabase(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
@@ -288,7 +290,7 @@ async function prepareDatabase(
 }
 
 async function seedLegacyEvidence(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await seedLegacyRows(pool);
   await seedDealMapping(pool);
@@ -296,7 +298,7 @@ async function seedLegacyEvidence(
 }
 
 async function seedLegacyRows(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   const statements: readonly [string, unknown[]][] = [
     [
@@ -333,7 +335,7 @@ async function seedLegacyRows(
 }
 
 async function seedDealMapping(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     `INSERT INTO deal_management.legacy_deal_mappings VALUES
@@ -344,7 +346,7 @@ async function seedDealMapping(
 }
 
 async function seedReferenceMappings(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     `INSERT INTO deal_management.legacy_reference_mappings VALUES
@@ -379,7 +381,7 @@ async function assertScopeRejections(
 }
 
 async function cleanDatabase(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(
     `TRUNCATE deal_management.legacy_reference_mappings,

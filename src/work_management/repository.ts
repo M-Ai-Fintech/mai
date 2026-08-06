@@ -12,6 +12,7 @@ import { WorkManagementError } from "./model.ts";
 import { semanticallyEquivalent } from "./record_identity.ts";
 import type { TargetCommandDispatch } from "./target_commands.ts";
 import type { AuthorityEvaluation } from "./authority_evaluation.ts";
+import type { AuthorityDenial } from "./authority_denial.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -105,6 +106,10 @@ export interface WorkManagementTransaction {
   findAuthorityEvaluationById(
     evaluationId: string,
   ): Promise<AuthorityEvaluation | undefined>;
+  appendAuthorityDenial(denial: AuthorityDenial): Promise<void>;
+  findAuthorityDenialById(
+    denialId: string,
+  ): Promise<AuthorityDenial | undefined>;
 }
 
 export interface WorkManagementRepository extends WorkManagementTransaction {
@@ -133,6 +138,7 @@ export class InMemoryWorkManagementRepository
     string,
     AuthorityEvaluation
   >();
+  private readonly authorityDenials = new Map<string, AuthorityDenial>();
 
   findWorkstream(
     scope: WorkScope,
@@ -332,6 +338,25 @@ export class InMemoryWorkManagementRepository
     evaluationId: string,
   ): Promise<AuthorityEvaluation | undefined> {
     return Promise.resolve(clone(this.authorityEvaluations.get(evaluationId)));
+  }
+
+  appendAuthorityDenial(denial: AuthorityDenial): Promise<void> {
+    const current = this.authorityDenials.get(denial.denialId);
+    if (current === undefined) {
+      this.authorityDenials.set(denial.denialId, clone(denial)!);
+    } else if (!semanticallyEquivalent(current, denial)) {
+      throw new WorkManagementRecordConflictError(
+        "authority denial",
+        denial.denialId,
+      );
+    }
+    return Promise.resolve();
+  }
+
+  findAuthorityDenialById(
+    denialId: string,
+  ): Promise<AuthorityDenial | undefined> {
+    return Promise.resolve(clone(this.authorityDenials.get(denialId)));
   }
 
   run<TResult>(

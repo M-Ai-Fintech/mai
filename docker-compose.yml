@@ -1,15 +1,23 @@
 services:
-  db:
+  postgres-integration-test:
     image: pgvector/pgvector:pg15
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
-      POSTGRES_DB: ${DB_NAME:-mai}
+      POSTGRES_USER: ${POSTGRES_INTEGRATION_TEST_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_INTEGRATION_TEST_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_INTEGRATION_TEST_DATABASE:-mai_test_postgres_integration}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_INTEGRATION_TEST_PORT:-55432}:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mai-postgres-integration-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "pg_isready -U $${POSTGRES_INTEGRATION_TEST_USER:-postgres} -d $${POSTGRES_INTEGRATION_TEST_DATABASE:-mai_test_postgres_integration}",
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  pgdata:
+  mai-postgres-integration-test-data:

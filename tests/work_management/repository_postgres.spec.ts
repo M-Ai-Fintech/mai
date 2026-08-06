@@ -19,9 +19,9 @@ import {
 } from "../../src/platform/persistence/v1.ts";
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import { PostgresWorkManagementRepository } from "../../src/work_management/repository_sql.ts";
 
@@ -52,14 +52,14 @@ Deno.test("in-memory Work Management repository enforces scoped optimistic versi
   );
 });
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "PostgreSQL Work Management repository persists scoped rows",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

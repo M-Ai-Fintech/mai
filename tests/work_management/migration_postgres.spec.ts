@@ -21,20 +21,20 @@ import {
 } from "../../src/work_management/migrations/index.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name:
     "PostgreSQL Work Management migrations apply twice and rollback mode retains evidence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     const migrations = new PostgresMigrationRunner(pool);
     await migrations.apply([
       ...platformMigrations,
@@ -47,7 +47,7 @@ Deno.test({
     const ledger = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner = 'work_management'",
     );
-    assertEquals(ledger.rows[0].count, 9);
+    assertEquals(ledger.rows[0].count, 10);
     const suffix = Date.now().toString();
     const eventId = `work_event_migration-${suffix}`;
     await pool.query(
@@ -130,8 +130,8 @@ Deno.test({
     "PostgreSQL migration upgrades the reviewed 0003 stream without checksum replacement",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await pool.query("DROP SCHEMA IF EXISTS work_management CASCADE");
     await pool.query("DROP SCHEMA IF EXISTS platform CASCADE");
     await pool.query("DROP SCHEMA IF EXISTS audit_activity CASCADE");
@@ -332,8 +332,8 @@ Deno.test({
     "PostgreSQL membership upgrade waits for a legacy writer and records its committed divergence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await pool.query("DROP SCHEMA IF EXISTS work_management CASCADE");
     await pool.query("DROP SCHEMA IF EXISTS platform CASCADE");
     await pool.query("DROP SCHEMA IF EXISTS audit_activity CASCADE");
@@ -373,7 +373,7 @@ Deno.test({
 });
 
 async function waitForMigrationTableLock(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<boolean> {
   const deadline = Date.now() + 2_000;
   while (Date.now() < deadline) {
@@ -391,7 +391,7 @@ async function waitForMigrationTableLock(
 }
 
 async function applyHistoricalFourToSix(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   const reconciliation = await exportedTemplate(
     "src/work_management/migrations/membership_reconciliation_sql.ts",

@@ -60,18 +60,18 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "document processing worker filters a mixed durable job queue",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await pool.query(
       "TRUNCATE platform.job_attempts, platform.jobs RESTART IDENTITY CASCADE",
@@ -305,7 +305,7 @@ function fixtureVersion(scope: DocumentScope): DocumentVersion {
 
 function fixtureScope(): DocumentScope {
   return {
-    tenantId: requiredId("tenant_mai106", parseTenantId),
+    tenantId: requiredId("tenant_postgresintegration", parseTenantId),
     workspaceId: requiredId("workspace_dealroom", parseWorkspaceId),
     dealId: requiredId("deal_horizon", parseDealId),
   };

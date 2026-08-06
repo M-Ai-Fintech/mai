@@ -109,7 +109,7 @@ function isTransactionLocalAdapter(value: unknown): boolean {
   const adapter = value as Record<string, unknown>;
   if (
     adapter.transactionSafe !== true ||
-    adapter.transactionMode !== "mai106_local"
+    adapter.transactionMode !== "postgres_integration_local"
   ) return false;
   return adapter.external !== true && adapter.networked !== true;
 }

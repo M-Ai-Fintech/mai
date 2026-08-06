@@ -27,7 +27,7 @@ EPOCHS = 800
 LEARNING_RATE = 0.12
 MODEL_ID = "mai-financial-risk-reference"
 MODEL_VERSION = "1.0.0"
-TRAINING_CODE_VERSION = "mai142-reference-export-v1"
+TRAINING_CODE_VERSION = "reference-export-v1"
 GENERATED_TIMESTAMP = "2026-08-01T00:00:00Z"
 INPUT_FEATURES = (
     "ebitda",
@@ -112,7 +112,7 @@ def make_raw_model(weights: np.ndarray, bias: np.ndarray) -> onnx.ModelProto:
     ]
     graph = helper.make_graph(
         nodes,
-        "mai142_reference_graph",
+        "reference_model_graph",
         [input_info],
         [output_info],
         initializer=[
@@ -122,7 +122,7 @@ def make_raw_model(weights: np.ndarray, bias: np.ndarray) -> onnx.ModelProto:
     )
     model = helper.make_model(
         graph,
-        producer_name="mai142-reference-export",
+        producer_name="reference-export",
         producer_version=TRAINING_CODE_VERSION,
         opset_imports=[helper.make_opsetid("", 17)],
     )
@@ -226,8 +226,8 @@ def export_artifact(output_dir: Path) -> tuple[str, str]:
 def assert_reproducible() -> None:
     """Export twice in clean temporary directories and compare checksums."""
 
-    with tempfile.TemporaryDirectory(prefix="mai142-export-") as first_dir:
-        with tempfile.TemporaryDirectory(prefix="mai142-export-") as second_dir:
+    with tempfile.TemporaryDirectory(prefix="reference-export-") as first_dir:
+        with tempfile.TemporaryDirectory(prefix="reference-export-") as second_dir:
             first_hash, _ = export_artifact(Path(first_dir))
             second_hash, _ = export_artifact(Path(second_dir))
     if first_hash != second_hash:

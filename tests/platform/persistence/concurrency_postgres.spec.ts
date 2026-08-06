@@ -10,30 +10,30 @@ import {
   parseTenantId,
 } from "../../../src/platform/api/v1.ts";
 import {
-  createMai106Pool,
+  createPostgresIntegrationTestPool,
   dropTaskSchema,
-  mai106DatabaseUrl,
+  postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../support/postgres.ts";
 import pg from "pg";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "concurrent tenant-scoped aggregate updates have one winner",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetConcurrencyFixture(pool);
     const runner = new PostgresTransactionRunner(
       new PostgresTestTransactionPool(pool),
     );
     const expectedVersion = requiredVersion(1);
-    const tenantId = requiredTenant("tenant_mai106");
+    const tenantId = requiredTenant("tenant_postgresintegration");
     const update = (materialValue: string) =>
       runner.run((transaction) =>
         updateAggregateVersion(transaction, {
-          table: "mai106_concurrency.aggregate_fixture",
+          table: "postgres_integration_concurrency.aggregate_fixture",
           tenantId,
           aggregateId: "aggregate_1",
           expectedVersion,
@@ -56,10 +56,10 @@ Deno.test({
       true,
     );
     const row = await pool.query<{ version: string }>(
-      "SELECT version::text FROM mai106_concurrency.aggregate_fixture",
+      "SELECT version::text FROM postgres_integration_concurrency.aggregate_fixture",
     );
     assertEquals(row.rows[0].version, "2");
-    await dropTaskSchema(pool, "mai106_concurrency");
+    await dropTaskSchema(pool, "postgres_integration_concurrency");
     await pool.end();
   },
 });
@@ -68,14 +68,14 @@ Deno.test({
   name: "exact referenced aggregate versions are checked independently",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetConcurrencyFixture(pool);
     const runner = new PostgresTransactionRunner(
       new PostgresTestTransactionPool(pool),
     );
     const reference = {
-      table: "mai106_concurrency.aggregate_fixture",
-      tenantId: requiredTenant("tenant_mai106"),
+      table: "postgres_integration_concurrency.aggregate_fixture",
+      tenantId: requiredTenant("tenant_postgresintegration"),
       aggregateId: "aggregate_1",
     };
 
@@ -96,25 +96,25 @@ Deno.test({
       VersionConflictError,
       "REFERENCED_VERSION_MISMATCH",
     );
-    await dropTaskSchema(pool, "mai106_concurrency");
+    await dropTaskSchema(pool, "postgres_integration_concurrency");
     await pool.end();
   },
 });
 
 async function resetConcurrencyFixture(pool: pg.Pool): Promise<void> {
-  await dropTaskSchema(pool, "mai106_concurrency");
+  await dropTaskSchema(pool, "postgres_integration_concurrency");
   await pool.query(`
-    CREATE SCHEMA mai106_concurrency;
-    CREATE TABLE mai106_concurrency.aggregate_fixture (
+    CREATE SCHEMA postgres_integration_concurrency;
+    CREATE TABLE postgres_integration_concurrency.aggregate_fixture (
       tenant_id TEXT NOT NULL,
       aggregate_id TEXT NOT NULL,
       material_value TEXT NOT NULL,
       version BIGINT NOT NULL CHECK (version > 0),
       PRIMARY KEY (tenant_id, aggregate_id)
     );
-    INSERT INTO mai106_concurrency.aggregate_fixture
+    INSERT INTO postgres_integration_concurrency.aggregate_fixture
       (tenant_id, aggregate_id, material_value, version)
-    VALUES ('tenant_mai106', 'aggregate_1', 'initial', 1);
+    VALUES ('tenant_postgresintegration', 'aggregate_1', 'initial', 1);
   `);
 }
 

@@ -1,10 +1,10 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "../..");
 const read = (file) => readFileSync(resolve(root, file), "utf8");
 const matrix = JSON.parse(
-  read("gui/conformance/mai102-authority-matrix.json"),
+  read("gui/conformance/frontend-conformance-authority-matrix.json"),
 );
 const errors = [];
 const expectedOwners = new Map([
@@ -17,7 +17,9 @@ const expectedBreakpoints = ["desktop", "tablet", "mobile"];
 const families = matrix.families ?? [];
 const ids = families.map((family) => family.id);
 
-if (matrix.schemaVersion !== 1) errors.push("authority matrix schema must be 1");
+if (matrix.schemaVersion !== 1) {
+  errors.push("authority matrix schema must be 1");
+}
 if (matrix.figmaFileKey !== "otMJE31OKIxdXogV4RNbGQ") {
   errors.push("approved Figma file key mismatch");
 }
@@ -44,7 +46,9 @@ for (const family of families) {
     errors.push(`${family.id}: state coverage missing`);
   }
   const names = Object.keys(family.breakpoints ?? {}).sort();
-  if (JSON.stringify(names) !== JSON.stringify([...expectedBreakpoints].sort())) {
+  if (
+    JSON.stringify(names) !== JSON.stringify([...expectedBreakpoints].sort())
+  ) {
     errors.push(`${family.id}: desktop/tablet/mobile coverage incomplete`);
   }
   for (const breakpoint of expectedBreakpoints) {

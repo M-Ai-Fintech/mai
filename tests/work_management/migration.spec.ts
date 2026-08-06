@@ -2,6 +2,7 @@ import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import {
   workManagementActorBindingMigration,
   workManagementAuthorityAndPreparedMigration,
+  workManagementAuthorityDenialsMigration,
   workManagementCorrectiveMigration,
   workManagementCorrectiveUpgradeMigration,
   workManagementMembershipAuthorityMigration,
@@ -23,6 +24,7 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
     workManagementRuntimeGateMigration,
     workManagementActorBindingMigration,
     workManagementCorrectiveUpgradeMigration,
+    workManagementAuthorityDenialsMigration,
   ]);
   assertEquals(workManagementMigration.owner, "work_management");
   assertEquals(workManagementMigration.schema, "work_management");
@@ -78,6 +80,11 @@ Deno.test("Work Management migration is additive, owned, and append-only", () =>
   assertEquals(workManagementRuntimeGateMigration.version, 7);
   assertEquals(workManagementActorBindingMigration.version, 8);
   assertEquals(workManagementCorrectiveUpgradeMigration.version, 9);
+  assertEquals(workManagementAuthorityDenialsMigration.version, 10);
+  assertStringIncludes(
+    workManagementAuthorityDenialsMigration.statements[0].sql,
+    "authority_denials",
+  );
   const versions = workManagementMigrations.map((migration) =>
     migration.version
   );

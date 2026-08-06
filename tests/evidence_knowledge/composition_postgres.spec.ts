@@ -2,12 +2,12 @@ import { assertEquals } from "@std/assert";
 import pg from "pg";
 import { createEvidenceKnowledgeComposition } from "../../src/evidence_knowledge/composition.ts";
 import { FakeExactDocumentVersionVerificationPort } from "../../src/evidence_knowledge/document_version_verification.ts";
-import { mai106DatabaseUrl } from "../platform/support/postgres.ts";
+import { postgresIntegrationTestDatabaseUrl } from "../platform/support/postgres.ts";
 
 Deno.test("Evidence Knowledge composition exposes only its owned migration stream", async () => {
   const pool = new pg.Pool({
-    connectionString: mai106DatabaseUrl() ??
-      "postgres://postgres:postgres@localhost:55432/mai_test_mai106",
+    connectionString: postgresIntegrationTestDatabaseUrl() ??
+      "postgres://postgres:postgres@localhost:55432/mai_test_postgres_integration",
   });
   const composition = createEvidenceKnowledgeComposition({ pool });
   assertEquals(composition.migrations.map(({ owner }) => owner), [

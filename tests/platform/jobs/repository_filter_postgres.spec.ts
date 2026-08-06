@@ -15,18 +15,18 @@ import {
   PostgresTransactionRunner,
 } from "../../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "filtered claims lease only explicitly allowed job types",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = new PostgresTransactionRunner(
@@ -140,8 +140,8 @@ function fixtureJob(jobId: string, operationId: string, jobType: string) {
     operationId: requiredId(parseOperationId(operationId)),
     jobType,
     schemaVersion: 1,
-    tenantId: requiredId(parseTenantId("tenant_mai106")),
-    initiatingActorId: requiredId(parseActorId("actor_mai106")),
+    tenantId: requiredId(parseTenantId("tenant_postgresintegration")),
+    initiatingActorId: requiredId(parseActorId("actor_postgresintegration")),
     correlationId: requiredId(parseCorrelationId("cor_filter")),
     idempotencyKey: requiredId(
       parseIdempotencyKey(`idem_${jobId.replaceAll("_", "-")}`),

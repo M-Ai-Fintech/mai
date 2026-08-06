@@ -24,9 +24,9 @@ import {
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import { PostgresWorkManagementRepository } from "../../src/work_management/repository_sql.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
 const scope = {
@@ -133,14 +133,14 @@ Deno.test("simultaneous approval decisions accept one exact aggregate version", 
   );
 });
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 Deno.test({
   name:
     "PostgreSQL simultaneous approval decisions serialize on the exact version",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

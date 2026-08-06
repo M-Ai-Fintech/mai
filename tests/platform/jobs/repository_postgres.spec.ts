@@ -17,19 +17,19 @@ import {
   sanitizedJobFailure,
 } from "../../../src/platform/jobs/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../support/postgres.ts";
 import pg from "pg";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "jobs survive repository recreation and claims are lease-exclusive",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = transactionRunner(pool);
@@ -103,7 +103,7 @@ Deno.test({
   name: "retry adds attempts and exhausted work remains dead-lettered",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = transactionRunner(pool);
@@ -162,7 +162,7 @@ Deno.test({
     "stale job attempts cannot mutate a recovered lease with reused worker ID",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = transactionRunner(pool);
@@ -208,7 +208,9 @@ Deno.test({
     const attemptTenants = await pool.query<{ tenant_id: string }>(
       "SELECT DISTINCT tenant_id FROM platform.job_attempts",
     );
-    assertEquals(attemptTenants.rows, [{ tenant_id: "tenant_mai106" }]);
+    assertEquals(attemptTenants.rows, [{
+      tenant_id: "tenant_postgresintegration",
+    }]);
     await pool.end();
   },
 });
@@ -218,7 +220,7 @@ Deno.test({
     "expired workers cannot transition or renew while recovered attempts remain fenced",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = transactionRunner(pool);
@@ -365,7 +367,7 @@ Deno.test({
     "job completion, cancellation, timeout, and append-only attempts persist",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await truncateJobs(pool);
     const transactions = transactionRunner(pool);
@@ -529,9 +531,9 @@ function fixtureJob(jobId: string, operationId: string) {
     operationId: requiredId(parseOperationId(operationId)),
     jobType: "fixture.execute",
     schemaVersion: 1,
-    tenantId: requiredId(parseTenantId("tenant_mai106")),
-    initiatingActorId: requiredId(parseActorId("actor_mai106")),
-    correlationId: requiredId(parseCorrelationId("cor_mai106")),
+    tenantId: requiredId(parseTenantId("tenant_postgresintegration")),
+    initiatingActorId: requiredId(parseActorId("actor_postgresintegration")),
+    correlationId: requiredId(parseCorrelationId("cor_postgresintegration")),
     idempotencyKey: requiredId(
       parseIdempotencyKey(`idem_${jobId.replaceAll("_", "-")}`),
     ),

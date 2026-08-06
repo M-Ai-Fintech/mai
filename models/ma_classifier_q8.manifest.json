@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "modelId": "mai-financial-risk-reference",
   "modelVersion": "1.0.0",
-  "trainingCodeVersion": "mai142-reference-export-v1",
+  "trainingCodeVersion": "reference-export-v1",
   "input": {
     "name": "financials",
     "dtype": "float32",

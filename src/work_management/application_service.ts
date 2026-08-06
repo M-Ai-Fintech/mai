@@ -320,6 +320,8 @@ export class WorkManagementService {
           payload: input.payload,
           claimedDigest: input.claimedDigest,
           authorization,
+          idempotencyIdentity:
+            `${input.actor.id}|create_approval_request|${input.id}|${input.idempotencyKey}`,
         }, this.options);
         if (
           this.options.requireAuthorityEvaluation === true &&

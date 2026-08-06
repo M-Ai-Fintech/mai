@@ -21,6 +21,7 @@ import {
 import {
   workManagementCorrectiveUpgradeMigration,
 } from "./work_management_0009_corrective_upgrade.ts";
+import { workManagementAuthorityDenialsMigration } from "./work_management_0010_authority_denials.ts";
 
 export const workManagementMigrations = Object.freeze([
   workManagementMigration,
@@ -32,11 +33,13 @@ export const workManagementMigrations = Object.freeze([
   workManagementRuntimeGateMigration,
   workManagementActorBindingMigration,
   workManagementCorrectiveUpgradeMigration,
+  workManagementAuthorityDenialsMigration,
 ]);
 
 export {
   workManagementActorBindingMigration,
   workManagementAuthorityAndPreparedMigration,
+  workManagementAuthorityDenialsMigration,
   workManagementCorrectiveMigration,
   workManagementCorrectiveUpgradeMigration,
   workManagementMembershipAuthorityMigration,

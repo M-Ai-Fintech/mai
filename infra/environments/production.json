@@ -17,7 +17,7 @@
   "providerAdapter": null,
   "stateBackend": {
     "type": "planned-remote",
-    "stateNamespace": "mai148-production",
+    "stateNamespace": "mai-production",
     "accessControl": true,
     "locking": true,
     "backup": true,
@@ -64,7 +64,7 @@
   "database": {
     "engine": "postgresql",
     "management": "managed-postgresql",
-    "environmentDatabase": "mai148_production",
+    "environmentDatabase": "mai_production",
     "connectivity": "approved-private",
     "automatedBackups": true,
     "pointInTimeRecovery": true,

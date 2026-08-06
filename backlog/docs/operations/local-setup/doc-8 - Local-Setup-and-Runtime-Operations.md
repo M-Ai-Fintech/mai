@@ -3,7 +3,7 @@ id: doc-8
 title: Local Setup and Runtime Operations
 type: guide
 created_date: '2026-07-24 15:35'
-updated_date: '2026-08-02 03:48'
+updated_date: '2026-08-06 16:56'
 tags:
   - operations
   - setup
@@ -25,7 +25,7 @@ tags:
 
 - Deno for the monolith and tests.
 - Node/npm for `gui/` development and GUI checks.
-- PostgreSQL when testing database-backed paths; the documented default connection is `postgres://postgres:postgres@localhost:5432/mai` unless `DATABASE_URL` is set.
+- PostgreSQL when testing database-backed paths. The shared isolated integration target is `POSTGRES_INTEGRATION_TEST_DATABASE_URL`, pointing to `mai_test_postgres_integration` on port 55432.
 - An ONNX model at `models/ma_classifier_q8.onnx` only when live ONNX inference is required.
 
 ## Google AI Studio configuration
@@ -87,3 +87,15 @@ Reference evidence for the hardened runner: on `linux/x86_64` with Deno 2.9.3 an
 - Authentication and authorization are outside the current MVP product route implementation.
 
 For production, move credentials to a managed secret system and make provider, database, VDR, and model-artifact configuration explicit. Do not use this local setup as a production deployment procedure.
+
+## Shared isolated PostgreSQL integration tests
+
+Start the disposable local target with:
+
+
+
+Use only the semantic contract below; never derive runtime or infrastructure names from a Backlog task ID:
+
+
+
+The canonical Docker service is `postgres-integration-test` and its named volume is `mai-postgres-integration-test-data`. Credentials must remain redacted in logs, commands copied into tickets, and evidence. The database is disposable integration-test state; do not point it at development, staging, or production. A bounded-context-specific test database must use that context and purpose in its name (for example, `mai_test_notifications_integration`). Clean up with `docker compose down` after verification when the local target is no longer needed. Historical `MAI106_DATABASE_URL` and `mai_test_mai106` references are migration evidence only and must not be used by current setup.

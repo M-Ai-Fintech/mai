@@ -24,8 +24,8 @@ import {
 } from "../../src/platform/persistence/v1.ts";
 import { VersionConflictError } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   parseDealId,
@@ -33,14 +33,14 @@ import {
   parseWorkspaceId,
 } from "../../src/platform/api/v1.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name:
     "documents repository appends immutable versions and protects scope reads",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetDocumentsSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
@@ -92,7 +92,7 @@ Deno.test({
   name: "documents source cursor uses an optimistic version fence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...documentsMigrations,
@@ -230,7 +230,7 @@ function requiredId<T>(
 }
 
 async function resetDocumentsSchema(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query("DROP SCHEMA IF EXISTS documents CASCADE");
   await pool.query(

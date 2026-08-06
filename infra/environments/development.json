@@ -17,7 +17,7 @@
   "providerAdapter": "local-compose",
   "stateBackend": {
     "type": "local-only",
-    "stateNamespace": "mai148-development-local",
+    "stateNamespace": "mai-development-local",
     "accessControl": true,
     "locking": true,
     "backup": true,
@@ -64,7 +64,7 @@
   "database": {
     "engine": "postgresql",
     "management": "managed-postgresql",
-    "environmentDatabase": "mai148_development",
+    "environmentDatabase": "mai_development",
     "connectivity": "local-only",
     "automatedBackups": true,
     "pointInTimeRecovery": true,

@@ -8,7 +8,7 @@ import { assertTransactionSafeEffects } from "./transaction_port_policy.ts";
 
 export interface WorkManagementAuditPort {
   readonly transactionSafe?: true;
-  readonly transactionMode?: "mai106_local";
+  readonly transactionMode?: "postgres_integration_local";
   append(
     transaction: TransactionHandle,
     event: WorkManagementEvent,
@@ -17,7 +17,7 @@ export interface WorkManagementAuditPort {
 
 interface TransactionLocalOutboxPort {
   readonly transactionSafe: true;
-  readonly transactionMode: "mai106_local";
+  readonly transactionMode: "postgres_integration_local";
   append: OutboxRepository["append"];
 }
 
@@ -26,7 +26,7 @@ function transactionLocalOutbox(
 ): TransactionLocalOutboxPort {
   return {
     transactionSafe: true,
-    transactionMode: "mai106_local",
+    transactionMode: "postgres_integration_local",
     append: outbox.append.bind(outbox),
   };
 }

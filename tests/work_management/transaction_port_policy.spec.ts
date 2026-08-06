@@ -6,7 +6,7 @@ import {
 
 const local = {
   transactionSafe: true as const,
-  transactionMode: "mai106_local" as const,
+  transactionMode: "postgres_integration_local" as const,
 };
 
 Deno.test("production transaction ports require the MAI-106 local marker", async () => {

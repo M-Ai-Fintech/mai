@@ -5,20 +5,20 @@ import {
 } from "../../src/platform/persistence/v1.ts";
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name:
     "PostgreSQL membership reconciliation retains evidence and gates commands",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     const suffix = crypto.randomUUID().replaceAll("-", "");
     const scope = [
       `tenant_recon_${suffix}`,

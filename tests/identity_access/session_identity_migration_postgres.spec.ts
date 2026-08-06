@@ -8,15 +8,15 @@ import {
   platformMigrations,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
-import { mai106DatabaseUrl } from "../platform/support/postgres.ts";
+import { postgresIntegrationTestDatabaseUrl } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "IAM session identity upgrades the current master schema safely",
   ignore: databaseUrl === undefined,
   async fn() {
-    const databaseName = `mai110_upgrade_${
+    const databaseName = `identity_access_upgrade_${
       crypto.randomUUID().replaceAll("-", "")
     }`;
     const admin = new pg.Pool({ connectionString: databaseUrl });

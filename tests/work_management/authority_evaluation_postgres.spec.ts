@@ -8,9 +8,9 @@ import { evaluateApprovalAuthority } from "../../src/work_management/authority_e
 import { PostgresAuthorityEvaluationStore } from "../../src/work_management/authority_evaluation_store.ts";
 import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import {
   authorityFacts,
@@ -18,15 +18,15 @@ import {
   completeLimits,
 } from "./authority_test_support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name:
     "PostgreSQL authority evaluations persist once, replay exactly, and reject tampering",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

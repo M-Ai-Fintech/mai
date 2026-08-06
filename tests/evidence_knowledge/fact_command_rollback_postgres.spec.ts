@@ -41,13 +41,13 @@ import {
 import { PostgresFactTransitionStore } from "../../src/evidence_knowledge/fact_command_repository.ts";
 import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import { OutboxRepository } from "../../src/platform/events/v1.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 const INJECTED_TIME = new Date("2026-08-04T12:00:00.000Z");
 
 class TestVerifier implements ExactDocumentVersionVerificationPort {
@@ -74,7 +74,7 @@ Deno.test({
     "PostgreSQL audit failure rolls back all authoritative side effects and leaves zero partial rows",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await reset(pool);
     await applyMigrations(pool);
 
@@ -221,7 +221,7 @@ Deno.test({
     "PostgreSQL authorization rejection and stale version rejection create zero audit or Fact mutation",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await reset(pool);
     await applyMigrations(pool);
 

@@ -43,13 +43,13 @@ import {
 } from "../../src/platform/api/v1.ts";
 import { VersionConflictError } from "../../src/platform/persistence/concurrency.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 
 class SimpleVerifier implements ExactDocumentVersionVerificationPort {
   constructor(private readonly expectedDocVersion: DocumentVersion) {}
@@ -79,7 +79,7 @@ Deno.test({
     "fact command PostgreSQL concurrency enforces single winner and rolls back loser",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await resetSchema(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,

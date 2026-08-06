@@ -120,7 +120,7 @@ export const workManagementCorrectiveUpgradeMigration = defineMigration({
       );
       SELECT set_config(
         'work_management.membership_writer',
-        md5(current_user || txid_current()::text || 'mai114-scan-writer-v1'),
+        md5(current_user || txid_current()::text || 'work-management-scan-writer-v1'),
         true
       );
       INSERT INTO work_management.membership_reconciliation_findings
@@ -136,7 +136,7 @@ export const workManagementCorrectiveUpgradeMigration = defineMigration({
       ON CONFLICT (finding_id) DO NOTHING;
       SELECT set_config(
         'work_management.activation_writer',
-        md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+        md5(current_user || txid_current()::text || 'work-management-activation-writer-v1'),
         true
       );
       UPDATE work_management.membership_reconciliation_activation

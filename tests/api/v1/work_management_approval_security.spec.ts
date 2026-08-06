@@ -65,7 +65,7 @@ Deno.test("approval HTTP action is only a requested selector", async () => {
     ...validBody("requested-action"),
     action: "reject_evidence",
   });
-  assertEquals(response.status, 422);
+  assertEquals(response.status, 403);
 });
 
 Deno.test("approval HTTP creation requires a bounded requested action", async () => {
@@ -108,8 +108,8 @@ Deno.test("approval HTTP boundary validates approver and evidence through truste
       sourceVersion: "1",
     }],
   });
-  assertEquals(crossDeal.status, 422);
-  assertStringIncludes(await crossDeal.text(), "cross-Deal");
+  assertEquals(crossDeal.status, 403);
+  assertStringIncludes(await crossDeal.text(), "ACTION_FORBIDDEN");
 });
 
 Deno.test("approval HTTP boundary creates from authenticated human identity", async () => {

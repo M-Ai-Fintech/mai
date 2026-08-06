@@ -77,7 +77,7 @@ export const membershipReconciliationSql = `
     SELECT pg_get_userbyid(relowner) INTO owner_name
       FROM pg_class WHERE oid = 'work_management.membership_reconciliation_activation'::regclass;
     expected_capability := md5(current_user || txid_current()::text ||
-      'mai114-activation-writer-v1');
+      'work-management-activation-writer-v1');
     IF NOT (
       current_user = 'postgres' AND session_user = 'postgres'
     ) AND (
@@ -144,8 +144,8 @@ export const membershipReconciliationSql = `
   BEGIN
     expected_capability := md5(current_user || txid_current()::text ||
       CASE WHEN TG_TABLE_NAME = 'membership_reconciliation_resolutions'
-        THEN 'mai114-resolution-writer-v1'
-        ELSE 'mai114-scan-writer-v1' END);
+        THEN 'work-management-resolution-writer-v1'
+        ELSE 'work-management-scan-writer-v1' END);
     IF current_setting('work_management.membership_writer', true)
       IS DISTINCT FROM expected_capability THEN
       RAISE EXCEPTION 'membership reconciliation evidence requires the governed scan or resolution function';
@@ -182,7 +182,7 @@ export const membershipReconciliationSql = `
     current_unresolved_count BIGINT;
   BEGIN
     IF current_setting('work_management.rollout_writer', true) IS DISTINCT FROM
-        md5(current_user || txid_current()::text || 'mai114-governed-rollout-v1')
+        md5(current_user || txid_current()::text || 'work-management-governed-rollout-v1')
       OR current_user IS DISTINCT FROM (
         SELECT pg_get_userbyid(proowner) FROM pg_proc
         WHERE oid = 'work_management.set_membership_rollout_mode(text,text,text,text,timestamp with time zone)'::regprocedure
@@ -285,7 +285,7 @@ export const membershipReconciliationSql = `
     END IF;
     PERFORM set_config(
       'work_management.membership_writer',
-      md5(current_user || txid_current()::text || 'mai114-scan-writer-v1'),
+      md5(current_user || txid_current()::text || 'work-management-scan-writer-v1'),
       true);
     INSERT INTO work_management.membership_reconciliation_scans
       (scan_id, detected_at, completed_at, scope, status)
@@ -563,7 +563,7 @@ export const membershipReconciliationSql = `
       WHERE scan_id = requested_scan_id;
     PERFORM set_config(
       'work_management.activation_writer',
-      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      md5(current_user || txid_current()::text || 'work-management-activation-writer-v1'),
       true);
     UPDATE work_management.membership_reconciliation_activation
       SET mode = 'read_only', latest_scan_id = requested_scan_id,
@@ -604,7 +604,7 @@ export const membershipReconciliationSql = `
     PERFORM work_management.assert_operator_actor(requested_actor);
     PERFORM set_config(
       'work_management.membership_writer',
-      md5(current_user || txid_current()::text || 'mai114-resolution-writer-v1'),
+      md5(current_user || txid_current()::text || 'work-management-resolution-writer-v1'),
       true);
     SELECT to_jsonb(membership_reconciliation_findings) INTO finding_record
       FROM work_management.membership_reconciliation_findings
@@ -668,7 +668,7 @@ export const membershipReconciliationSql = `
         requested_recorded_at);
     PERFORM set_config(
       'work_management.activation_writer',
-      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      md5(current_user || txid_current()::text || 'work-management-activation-writer-v1'),
       true);
     UPDATE work_management.membership_reconciliation_activation
       SET mode = CASE WHEN mode = 'commands' THEN 'read_only' ELSE mode END,
@@ -699,7 +699,7 @@ export const membershipReconciliationSql = `
     PERFORM work_management.lock_membership_rollout();
     PERFORM set_config(
       'work_management.rollout_writer',
-      md5(current_user || txid_current()::text || 'mai114-governed-rollout-v1'),
+      md5(current_user || txid_current()::text || 'work-management-governed-rollout-v1'),
       true);
     SELECT to_jsonb(membership_rollout_events) INTO existing_event
       FROM work_management.membership_rollout_events
@@ -774,7 +774,7 @@ export const membershipReconciliationSql = `
         requested_actor, requested_recorded_at);
     PERFORM set_config(
       'work_management.activation_writer',
-      md5(current_user || txid_current()::text || 'mai114-activation-writer-v1'),
+      md5(current_user || txid_current()::text || 'work-management-activation-writer-v1'),
       true);
     UPDATE work_management.membership_reconciliation_activation
       SET mode = requested_mode, latest_scan_id = requested_scan_id,

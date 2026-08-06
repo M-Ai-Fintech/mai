@@ -12,20 +12,20 @@ import {
   sanitizedFailure,
 } from "../../../src/platform/events/v1.ts";
 import {
-  createMai106Pool,
+  createPostgresIntegrationTestPool,
   dropTaskSchema,
-  mai106DatabaseUrl,
+  postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../support/postgres.ts";
 import pg from "pg";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "inbox deduplicates effects and exposes conflicting payload digests",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await resetInboxFixture(pool);
     const transactions = transactionRunner(pool);
@@ -37,7 +37,7 @@ Deno.test({
         status: "claimed",
       });
       await transaction.query(
-        "INSERT INTO mai106_inbox.effects (message_id) VALUES ($1)",
+        "INSERT INTO postgres_integration_inbox.effects (message_id) VALUES ($1)",
         [message.messageIdentity],
       );
       await repository.complete(
@@ -53,7 +53,7 @@ Deno.test({
       { status: "duplicate", state: "processed" },
     );
     const effects = await pool.query<{ count: string }>(
-      "SELECT COUNT(*)::text AS count FROM mai106_inbox.effects",
+      "SELECT COUNT(*)::text AS count FROM postgres_integration_inbox.effects",
     );
     assertEquals(effects.rows[0].count, "1");
     const processed = await pool.query<{ processed_at: Date }>(
@@ -74,7 +74,7 @@ Deno.test({
       InboxConflictError,
       "INBOX_CONFLICT",
     );
-    await dropTaskSchema(pool, "mai106_inbox");
+    await dropTaskSchema(pool, "postgres_integration_inbox");
     await pool.end();
   },
 });
@@ -84,7 +84,7 @@ Deno.test({
     "concurrent inbox claims have one winner and retry keeps failure evidence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await new PostgresMigrationRunner(pool).apply(platformMigrations);
     await pool.query("TRUNCATE platform.inbox");
     const transactions = transactionRunner(pool);
@@ -135,17 +135,17 @@ function transactionRunner(pool: pg.Pool): PostgresTransactionRunner {
 
 async function resetInboxFixture(pool: pg.Pool): Promise<void> {
   await pool.query("TRUNCATE platform.inbox");
-  await dropTaskSchema(pool, "mai106_inbox");
+  await dropTaskSchema(pool, "postgres_integration_inbox");
   await pool.query(`
-    CREATE SCHEMA mai106_inbox;
-    CREATE TABLE mai106_inbox.effects (
+    CREATE SCHEMA postgres_integration_inbox;
+    CREATE TABLE postgres_integration_inbox.effects (
       message_id TEXT PRIMARY KEY
     )
   `);
 }
 
 async function fixtureMessage(payload: unknown) {
-  const tenant = parseTenantId("tenant_mai106");
+  const tenant = parseTenantId("tenant_postgresintegration");
   if (!tenant.ok) throw new Error("Fixture tenant is invalid.");
   return {
     tenantId: tenant.value,

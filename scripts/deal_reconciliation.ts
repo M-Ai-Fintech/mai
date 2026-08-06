@@ -211,7 +211,7 @@ async function loadRuntime(
   scope: DealScope,
   options: ReconciliationOptions,
 ): Promise<ReconciliationRuntime> {
-  const runtimePath = path ?? "./scripts/mai_110_runtime.ts";
+  const runtimePath = path ?? "./scripts/deal_reconciliation_runtime.ts";
   const imported: unknown = await importRuntime(runtimePath);
   if (!isRuntimeModule(imported)) {
     throw new Error(

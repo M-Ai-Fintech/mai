@@ -31,12 +31,12 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const scope: WorkScope = {
   tenantId: tenant("tenant_record-pg"),
   workspaceId: workspace("workspace_record-pg"),
@@ -53,8 +53,8 @@ Deno.test({
     "PostgreSQL immutable record IDs accept exact replay and reject semantic aliasing",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
-    await ensureMai114Roles(pool);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await ensureWorkManagementTestRoles(pool);
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,

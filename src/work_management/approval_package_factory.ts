@@ -26,11 +26,16 @@ import {
 } from "./model.ts";
 import type { AuthorityFacts } from "./authority_facts.ts";
 import { parseAuthorityFacts } from "./authority_facts.ts";
+import {
+  AuthorityDenialError,
+  createAuthorityDenial,
+  denialReasonFromMessage,
+} from "./authority_denial.ts";
 
 export interface ApprovalTargetPort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "mai106_local";
+  readonly transactionMode?: "postgres_integration_local";
   validate(
     scope: WorkScope,
     target: TargetReference,
@@ -41,7 +46,7 @@ export interface ApprovalTargetPort {
 export interface ApprovalEvidencePort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "mai106_local";
+  readonly transactionMode?: "postgres_integration_local";
   validate(
     scope: WorkScope,
     evidence: readonly EvidenceSnapshotReference[],
@@ -51,7 +56,7 @@ export interface ApprovalEvidencePort {
 export interface ApprovalAuthoritySnapshotPort {
   /** True only for MAI-106 transaction-local adapters. */
   readonly transactionSafe?: true;
-  readonly transactionMode?: "mai106_local";
+  readonly transactionMode?: "postgres_integration_local";
   resolve(input: {
     readonly scope: WorkScope;
     readonly requester: ActorReference;
@@ -86,6 +91,7 @@ export interface ServerApprovalPackageInput {
   readonly payload: Readonly<Record<string, unknown>>;
   readonly claimedDigest?: string;
   readonly authorization: AuthorizationDecision;
+  readonly idempotencyIdentity?: string;
 }
 
 /** Builds an immutable package only from trusted, server-validated evidence. */
@@ -103,6 +109,39 @@ export async function buildServerApprovalPackage(
 
 /** Builds the package and returns validated server-owned authority facts. */
 export async function buildServerApprovalPackageWithAuthority(
+  input: ServerApprovalPackageInput,
+  ports: {
+    readonly targets: ApprovalTargetPort;
+    readonly evidence: ApprovalEvidencePort;
+    readonly authority: ApprovalAuthoritySnapshotPort;
+  },
+): Promise<ServerApprovalPackageResult> {
+  try {
+    return await buildServerApprovalPackageWithAuthorityCore(input, ports);
+  } catch (error) {
+    const reason = governedDenialReason(error);
+    if (reason === undefined) throw error;
+    const denial = await createAuthorityDenial({
+      stage: "pre_package",
+      scope: input.scope,
+      requesterId: input.requester.id,
+      namedApproverId: input.namedApproverId,
+      requestedAction: input.requestedAction,
+      targetAggregateType: input.target.aggregateType,
+      targetAggregateId: input.target.aggregateId,
+      expectedTargetVersion: input.target.expectedVersion,
+      authorizationSnapshotReference:
+        input.authorization.authoritySnapshotReference,
+      reasons: [reason],
+      evaluatedAt: input.now,
+      idempotencyIdentity: input.idempotencyIdentity ??
+        `create_approval_request|${input.requestId}|${input.requester.id}`,
+    });
+    throw new AuthorityDenialError(denial);
+  }
+}
+
+async function buildServerApprovalPackageWithAuthorityCore(
   input: ServerApprovalPackageInput,
   ports: {
     readonly targets: ApprovalTargetPort;
@@ -156,6 +195,20 @@ export async function buildServerApprovalPackageWithAuthority(
     packageValue,
     ...(facts === undefined ? {} : { facts }),
   };
+}
+
+function governedDenialReason(error: unknown) {
+  if (!(error instanceof WorkManagementError)) return undefined;
+  if (
+    ![
+      "NAMED_APPROVER_REQUIRED",
+      "REFERENCE_MISMATCH",
+      "HUMAN_AUTHORITY_REQUIRED",
+      "SEPARATION_OF_DUTIES",
+      "SCOPE_MISMATCH",
+    ].includes(error.code)
+  ) return undefined;
+  return denialReasonFromMessage(error.message);
 }
 
 function assertTrustedAuthority(

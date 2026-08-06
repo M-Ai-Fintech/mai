@@ -25,6 +25,7 @@ import {
 import { PostgresWorkManagementRecords } from "./repository_sql_records.ts";
 import type { TargetCommandDispatch } from "./target_commands.ts";
 import type { AuthorityEvaluation } from "./authority_evaluation.ts";
+import type { AuthorityDenial } from "./authority_denial.ts";
 import type {
   ApprovalRequestId,
   TaskId,
@@ -196,6 +197,16 @@ export class PostgresWorkManagementRepository
     evaluationId: string,
   ): Promise<AuthorityEvaluation | undefined> {
     return this.records.findAuthorityEvaluationById(evaluationId);
+  }
+
+  appendAuthorityDenial(denial: AuthorityDenial): Promise<void> {
+    return this.records.appendAuthorityDenial(denial);
+  }
+
+  findAuthorityDenialById(
+    denialId: string,
+  ): Promise<AuthorityDenial | undefined> {
+    return this.records.findAuthorityDenialById(denialId);
   }
 
   private async saveCurrent(

@@ -202,7 +202,7 @@ function serviceOptions(
 
 class UnconfiguredApprovalTargetPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -222,7 +222,7 @@ class UnconfiguredApprovalTargetPort implements ApprovalTargetPort {
 
 class UnconfiguredApprovalEvidencePort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   validate(): Promise<never> {
     return Promise.reject(
       new Error(
@@ -235,7 +235,7 @@ class UnconfiguredApprovalEvidencePort implements ApprovalEvidencePort {
 class UnconfiguredApprovalAuthorityPort
   implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   resolve(): Promise<never> {
     return Promise.reject(
       new Error(

@@ -24,6 +24,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["run", "--allow-read", "scripts/check_docs.ts"],
   },
   {
+    id: "resource-naming",
+    label: "Semantic resource naming",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_resource_naming.ts"],
+  },
+  {
     id: "i18n-strings",
     label: "I18n Strings Check",
     command: "deno",

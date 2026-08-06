@@ -14,8 +14,8 @@ import {
   PostgresTransactionRunner,
 } from "../../src/platform/persistence/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import { auditActivityMigrations } from "../../src/audit_activity/v1.ts";
 import {
@@ -24,7 +24,7 @@ import {
   requiredWorkspaceId,
 } from "./support.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const context = contextFor();
 const scope = {
   tenantId: requiredTenantId(context.request.tenantId),
@@ -35,7 +35,7 @@ Deno.test({
   name: "PostgreSQL verification is atomic, compare-and-swap, and fail closed",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
@@ -260,7 +260,7 @@ function verificationInput(
 }
 
 async function seedDeal(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   deal: {
     id: string;
     tenantId: string;
@@ -344,7 +344,9 @@ async function assertApplied(
   assertEquals(record?.routingMode, "legacy");
 }
 
-async function reset(pool: ReturnType<typeof createMai106Pool>): Promise<void> {
+async function reset(
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+): Promise<void> {
   await pool.query(
     "TRUNCATE deal_management.reconciliation_routing_history, deal_management.reconciliation_records, deal_management.deals CASCADE",
   );

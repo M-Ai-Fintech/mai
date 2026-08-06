@@ -42,13 +42,13 @@ import { PostgresFactTransitionStore } from "../../src/evidence_knowledge/fact_c
 import { loadEffectiveFactVersionStatus } from "../../src/evidence_knowledge/fact_version_status.ts";
 import type { AuthoritySnapshot } from "../../src/audit_activity/v1.ts";
 import {
-  createMai106Pool,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 import { OutboxRepository } from "../../src/platform/events/v1.ts";
 
 const databaseUrl = Deno.env.get("EVIDENCE_KNOWLEDGE_DATABASE_URL") ??
-  mai106DatabaseUrl();
+  postgresIntegrationTestDatabaseUrl();
 
 class TestVerifier implements ExactDocumentVersionVerificationPort {
   verify(
@@ -74,7 +74,7 @@ Deno.test({
     "fact commands atomically persist idempotency, history, provenance, invalidation, audit, and outbox evidence",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await reset(pool);
 
     await new PostgresMigrationRunner(pool).apply([
@@ -285,7 +285,7 @@ Deno.test({
   name: "PostgreSQL audit failure rolls back complete fact transaction",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await reset(pool);
 
     await new PostgresMigrationRunner(pool).apply([

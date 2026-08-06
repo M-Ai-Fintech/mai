@@ -100,9 +100,9 @@ Deno.test("transaction metadata installs through an injected future-scope port",
 
   await runner.run(
     (transaction) => transaction.query("SELECT 1"),
-    { tenant: "tenant_mai106" },
+    { tenant: "tenant_postgresintegration" },
   );
-  assertEquals(installer.metadata, [{ tenant: "tenant_mai106" }]);
+  assertEquals(installer.metadata, [{ tenant: "tenant_postgresintegration" }]);
   assertEquals(connection.commands, ["BEGIN", "SELECT 1", "COMMIT", "RELEASE"]);
 });
 

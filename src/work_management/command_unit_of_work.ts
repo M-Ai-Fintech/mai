@@ -14,7 +14,10 @@ import {
 } from "./repository.ts";
 import { PostgresWorkManagementRepository } from "./repository_sql.ts";
 import type { AuthorityEvaluation } from "./authority_evaluation.ts";
-import { WorkManagementError } from "./model.ts";
+import {
+  type AuthorityDenial,
+  AuthorityDenialError,
+} from "./authority_denial.ts";
 
 export interface WorkCommandExecutionIdentity extends WorkScope {
   readonly actorId: ActorId;
@@ -38,7 +41,7 @@ export interface WorkManagementCommandUnitOfWork {
     readonly value: T;
     readonly replayed: boolean;
     readonly denied?: boolean;
-    readonly denial?: AuthorityEvaluation;
+    readonly denial?: AuthorityEvaluation | AuthorityDenial;
   }>;
 }
 
@@ -75,14 +78,11 @@ export class WorkManagementCommandsDisabledError extends Error {
   }
 }
 
-export class WorkManagementAuthorityDeniedError extends WorkManagementError {
-  constructor(readonly evaluation: AuthorityEvaluation) {
-    super(
-      "HUMAN_AUTHORITY_REQUIRED",
-      `Approval authority denied the command; reasons: ${
-        evaluation.reasons.join(", ")
-      }.`,
-    );
+export class WorkManagementAuthorityDeniedError extends AuthorityDenialError {
+  constructor(
+    override readonly evidence: AuthorityEvaluation | AuthorityDenial,
+  ) {
+    super(evidence);
     this.name = "WorkManagementAuthorityDeniedError";
   }
 }
@@ -182,7 +182,7 @@ export class PostgresWorkManagementUnitOfWork
     readonly value: T;
     readonly replayed: boolean;
     readonly denied?: boolean;
-    readonly denial?: AuthorityEvaluation;
+    readonly denial?: AuthorityEvaluation | AuthorityDenial;
   }> {
     return this.transactions.run(async (handle) => {
       const repository = new PostgresWorkManagementRepository(handle);
@@ -215,18 +215,24 @@ export class PostgresWorkManagementUnitOfWork
       try {
         value = await operation(repository);
       } catch (error) {
-        if (!(error instanceof WorkManagementAuthorityDeniedError)) throw error;
-        await repository.appendAuthorityEvaluation(error.evaluation);
+        if (!(error instanceof AuthorityDenialError)) throw error;
+        if (isAuthorityEvaluation(error.evidence)) {
+          await repository.appendAuthorityEvaluation(error.evidence);
+        } else {
+          await repository.appendAuthorityDenial(error.evidence);
+        }
         await this.idempotency.fail(
           handle,
           claim,
-          error.evaluation.evaluationId,
+          isAuthorityEvaluation(error.evidence)
+            ? error.evidence.evaluationId
+            : error.evidence.denialId,
         );
         return {
           value: undefined as unknown as T,
           replayed: false,
           denied: true,
-          denial: error.evaluation,
+          denial: error.evidence,
         };
       }
       await repository.saveCommandResult({
@@ -284,6 +290,16 @@ async function replayPostgres<T extends WorkAggregate>(
     if (evaluation !== undefined) {
       throw new WorkManagementAuthorityDeniedError(evaluation);
     }
+    const denial = await repository.findAuthorityDenialById(
+      status.errorReference,
+    );
+    if (denial !== undefined) {
+      throw new WorkManagementAuthorityDeniedError(denial);
+    }
+    throw new WorkManagementReplayIntegrityError(
+      status.errorReference,
+      "failed idempotency state has no immutable authority evidence",
+    );
   }
   if (status.state !== "completed" || status.resultReference === undefined) {
     throw new WorkManagementIdempotencyInProgressError(
@@ -299,6 +315,12 @@ async function replayPostgres<T extends WorkAggregate>(
   }
   assertReplayIdentity(identity, status.resultReference, result.aggregate);
   return { value: result.aggregate as T, replayed: true };
+}
+
+function isAuthorityEvaluation(
+  evidence: AuthorityEvaluation | AuthorityDenial,
+): evidence is AuthorityEvaluation {
+  return "evaluationId" in evidence;
 }
 
 function assertReplayIdentity(

@@ -4,7 +4,7 @@ import { createApiServer } from "../../src/api/server.ts";
 import {
   createOperatorRuntime,
   type OperatorRuntimeDependencies,
-} from "../../scripts/mai_110_runtime.ts";
+} from "../../scripts/deal_reconciliation_runtime.ts";
 import {
   createDealManagementComposition,
   loadDealManagementEnvironment,
@@ -111,7 +111,8 @@ function runtimeDependencies(
 Deno.test("runtime reads only approved explicit environment values", () => {
   const result = loadDealManagementEnvironment({
     environment: {
-      MAI106_DATABASE_URL: "postgresql://user:secret@localhost/mai",
+      POSTGRES_INTEGRATION_TEST_DATABASE_URL:
+        "postgresql://user:secret@localhost/mai",
       DATABASE_URL: "postgresql://other:secret@localhost/other",
       UNAPPROVED_SECRET: "must-not-be-read",
     },
@@ -127,7 +128,7 @@ Deno.test("missing and malformed database configuration fail safely", () => {
     kind: "unavailable",
     reason: "missing_configuration",
     message:
-      "Deal Management database configuration is missing; expected MAI106_DATABASE_URL or DATABASE_URL.",
+      "Deal Management database configuration is missing; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL.",
   });
   const secret = "postgresql://user:super-secret@localhost";
   const malformed = loadDealManagementEnvironment({

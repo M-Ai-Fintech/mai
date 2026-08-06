@@ -1,19 +1,19 @@
 services:
-  database:
+  postgres-local:
     image: pgvector/pgvector:pg15
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${MAI148_DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${MAI148_DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${MAI148_DB_NAME:-mai148_local}
+      POSTGRES_USER: ${LOCAL_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${LOCAL_POSTGRES_DATABASE:-mai_local}
     ports:
-      - "${MAI148_DB_PORT:-55438}:5432"
+      - "${LOCAL_POSTGRES_PORT:-55438}:5432"
     volumes:
-      - mai148-local-postgres:/var/lib/postgresql/data
+      - mai-postgres-local-data:/var/lib/postgresql/data
     networks:
       - private
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${MAI148_DB_USER:-postgres} -d $${MAI148_DB_NAME:-mai148_local}"]
+      test: ["CMD-SHELL", "pg_isready -U $${LOCAL_POSTGRES_USER:-postgres} -d $${LOCAL_POSTGRES_DATABASE:-mai_local}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,12 +24,12 @@ services:
       dockerfile: Dockerfile
     command: ["task", "api:start"]
     environment:
-      DATABASE_URL: postgresql://${MAI148_DB_USER:-postgres}:${MAI148_DB_PASSWORD:-postgres}@database:5432/${MAI148_DB_NAME:-mai148_local}
+      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:-postgres}:${LOCAL_POSTGRES_PASSWORD:-postgres}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:-mai_local}
       DENO_ENV: test
     ports:
-      - "${MAI148_API_PORT:-18000}:8000"
+      - "${LOCAL_API_PORT:-18000}:8000"
     depends_on:
-      database:
+      postgres-local:
         condition: service_healthy
     networks:
       - private
@@ -42,11 +42,11 @@ services:
       dockerfile: Dockerfile
     command: ["task", "worker:start"]
     environment:
-      DATABASE_URL: postgresql://${MAI148_DB_USER:-postgres}:${MAI148_DB_PASSWORD:-postgres}@database:5432/${MAI148_DB_NAME:-mai148_local}
-      MAI_WORKER_ID: ${MAI148_WORKER_ID:-worker_local}
-      MAI_WORKER_MODULE: ${MAI148_WORKER_MODULE:-}
+      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:-postgres}:${LOCAL_POSTGRES_PASSWORD:-postgres}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:-mai_local}
+      MAI_WORKER_ID: ${LOCAL_WORKER_ID:-worker_local}
+      MAI_WORKER_MODULE: ${LOCAL_WORKER_MODULE:-}
     depends_on:
-      database:
+      postgres-local:
         condition: service_healthy
     networks:
       - private
@@ -57,4 +57,4 @@ networks:
     internal: true
 
 volumes:
-  mai148-local-postgres:
+  mai-postgres-local-data:

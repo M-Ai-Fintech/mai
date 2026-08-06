@@ -45,12 +45,12 @@ import type {
 } from "../../src/work_management/model.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
-  createMai106Pool,
-  ensureMai114Roles,
-  mai106DatabaseUrl,
+  createPostgresIntegrationTestPool,
+  ensureWorkManagementTestRoles,
+  postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = mai106DatabaseUrl();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const scope: WorkScope = {
   tenantId: tenant("tenant_dispatch-pg"),
   workspaceId: workspace("workspace_dispatch-pg"),
@@ -64,7 +64,7 @@ Deno.test({
     "PostgreSQL approval creation claims stable input before trusted ports and durably replays",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = `replay-${Date.now()}`;
@@ -119,7 +119,7 @@ Deno.test({
     "PostgreSQL approved decision atomically emits one durable target command",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
@@ -176,7 +176,7 @@ Deno.test({
     "PostgreSQL target-command outbox failure rolls back decision and all companion writes",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createMai106Pool(databaseUrl!);
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
     await migrate(pool);
     const runner = new PostgresTransactionRunner(pool);
     const suffix = (Date.now() + 1).toString();
@@ -236,7 +236,7 @@ function composition(
     authorization: {
       authorize: allow,
       transactionSafe: true,
-      transactionMode: "mai106_local",
+      transactionMode: "postgres_integration_local",
     },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
     targets: ports ?? new ExactTargetPort(),
@@ -251,7 +251,7 @@ class CountingApprovalPorts
     ApprovalEvidencePort,
     ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   readonly calls = { target: 0, evidence: 0, authority: 0 };
 
   validate(
@@ -317,7 +317,7 @@ class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
 
 class ExactTargetPort implements ApprovalTargetPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   validate(
     _scope: WorkScope,
     value: TargetReference,
@@ -332,7 +332,7 @@ class ExactTargetPort implements ApprovalTargetPort {
 
 class EmptyEvidencePort implements ApprovalEvidencePort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   validate(
     _scope: WorkScope,
     values: readonly EvidenceSnapshotReference[],
@@ -343,7 +343,7 @@ class EmptyEvidencePort implements ApprovalEvidencePort {
 
 class NamedAuthorityPort implements ApprovalAuthoritySnapshotPort {
   readonly transactionSafe = true as const;
-  readonly transactionMode = "mai106_local" as const;
+  readonly transactionMode = "postgres_integration_local" as const;
   resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
     const snapshot = {
       snapshotId: "authority-dispatch-v1",
@@ -487,8 +487,10 @@ function allow(): AuthorizationDecision {
   };
 }
 
-async function migrate(pool: ReturnType<typeof createMai106Pool>) {
-  await ensureMai114Roles(pool);
+async function migrate(
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
+) {
+  await ensureWorkManagementTestRoles(pool);
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
     ...auditActivityMigrations,
@@ -499,7 +501,7 @@ async function migrate(pool: ReturnType<typeof createMai106Pool>) {
 }
 
 async function resetDispatchContext(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
 ): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
@@ -534,7 +536,7 @@ async function resetDispatchContext(
 }
 
 async function activateCommands(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   suffix: string,
 ): Promise<void> {
   const scanId = `scan_${suffix}`;
@@ -571,7 +573,7 @@ async function activateCommands(
 }
 
 async function dispatchCounts(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   requestId: string,
 ) {
   const values = [scope.tenantId, scope.workspaceId, scope.dealId, requestId];
@@ -602,7 +604,7 @@ async function dispatchCounts(
 }
 
 async function approvalCreationCounts(
-  pool: ReturnType<typeof createMai106Pool>,
+  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
   requestId: string,
   key: string,
 ) {

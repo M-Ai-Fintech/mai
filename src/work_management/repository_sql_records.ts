@@ -26,6 +26,8 @@ import {
 import {
   PostgresAuthorityEvaluationStore,
 } from "./authority_evaluation_store.ts";
+import type { AuthorityDenial } from "./authority_denial.ts";
+import { parseAuthorityDenial } from "./authority_denial.ts";
 import {
   type AuthorityEvaluation,
   parseAuthorityEvaluation,
@@ -345,6 +347,59 @@ export class PostgresWorkManagementRecords {
     return row === undefined
       ? undefined
       : await parseAuthorityEvaluation(row.evaluation);
+  }
+
+  async appendAuthorityDenial(denial: AuthorityDenial): Promise<void> {
+    const inserted = await this.transaction.query(
+      `INSERT INTO work_management.authority_denials (
+         denial_id, denial_digest, tenant_id, workspace_id, deal_id,
+         requester_id, named_approver_id, requested_action, denial_stage,
+         target_aggregate_type, target_aggregate_id, expected_target_version,
+         reasons, denial, evaluated_at, idempotency_identity
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+       ON CONFLICT (denial_id) DO NOTHING`,
+      [
+        denial.denialId,
+        denial.denialDigest,
+        denial.scope.tenantId,
+        denial.scope.workspaceId,
+        denial.scope.dealId,
+        denial.requesterId,
+        denial.namedApproverId,
+        denial.requestedAction,
+        denial.stage,
+        denial.targetAggregateType ?? null,
+        denial.targetAggregateId ?? null,
+        denial.expectedTargetVersion ?? null,
+        JSON.stringify(denial.reasons),
+        JSON.stringify(denial),
+        denial.evaluatedAt,
+        denial.idempotencyIdentity,
+      ],
+    );
+    if (inserted.rowCount === 1) return;
+    const current = await this.findAuthorityDenialById(denial.denialId);
+    if (
+      current !== undefined &&
+      semanticallyEquivalent(current, denial)
+    ) return;
+    throw new WorkManagementRecordConflictError(
+      "authority denial",
+      denial.denialId,
+    );
+  }
+
+  async findAuthorityDenialById(
+    denialId: string,
+  ): Promise<AuthorityDenial | undefined> {
+    const result = await this.transaction.query<{ readonly denial: unknown }>(
+      `SELECT denial FROM work_management.authority_denials WHERE denial_id = $1`,
+      [denialId],
+    );
+    const row = result.rows[0];
+    return row === undefined
+      ? undefined
+      : await parseAuthorityDenial(row.denial);
   }
 }
 
