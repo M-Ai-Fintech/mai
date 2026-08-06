@@ -268,40 +268,42 @@ export class WorkManagementService {
       readonly claimedDigest?: string;
     },
   ): Promise<ApprovalRequest> {
-    const now = this.options.clock.now();
     const authorization = await this.authorization.requireAllowed(
       input,
       "create",
       "approval_request",
       true,
     );
-    const packageValue = await buildServerApprovalPackage({
-      requestId: input.id,
-      scope: input.scope,
-      requester: input.actor,
-      now,
-      namedApproverId: input.namedApproverId,
-      target: input.target,
-      evidence: input.evidence,
-      payload: input.payload,
-      claimedDigest: input.claimedDigest,
-      authorization,
-    }, this.options);
     return await this.commands.execute(
       withPayload(input, {
         namedApproverId: input.namedApproverId,
-        package: packageValue,
+        target: input.target,
+        evidence: input.evidence,
+        payload: input.payload,
+        claimedDigest: input.claimedDigest,
       }),
       "create_approval_request",
       "approval_request",
       async (transaction) => {
+        const packageValue = await buildServerApprovalPackage({
+          requestId: input.id,
+          scope: input.scope,
+          requester: input.actor,
+          now: this.options.clock.now(),
+          namedApproverId: input.namedApproverId,
+          target: input.target,
+          evidence: input.evidence,
+          payload: input.payload,
+          claimedDigest: input.claimedDigest,
+          authorization,
+        }, this.options);
         const value = createApprovalRequest({
           ...input.scope,
           id: input.id,
           requesterId: input.actor.id,
           namedApproverId: input.namedApproverId,
           package: packageValue,
-          now,
+          now: this.options.clock.now(),
         });
         await transaction.saveApprovalRequest(value, 0);
         return outcome(value, "approval.draft_created");

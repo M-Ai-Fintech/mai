@@ -60,6 +60,61 @@ const approver = actorRef("actor_dispatch-approver");
 
 Deno.test({
   name:
+    "PostgreSQL approval creation claims stable input before trusted ports and durably replays",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createMai106Pool(databaseUrl!);
+    await migrate(pool);
+    const runner = new PostgresTransactionRunner(pool);
+    const suffix = `replay-${Date.now()}`;
+    const requestId = approvalRequestId(`approval_${suffix}`);
+    const ports = new CountingApprovalPorts();
+    const input = {
+      ...command(requestId, `create-${suffix}`, requester),
+      namedApproverId: approver.id,
+      action: "approve_evidence",
+      target: target(suffix),
+      evidence: [] as const,
+      payload: { summary: "stable semantic input" },
+    };
+    const firstServices = [
+      composition(runner, undefined, ports).service,
+      composition(runner, undefined, ports).service,
+    ];
+    const concurrent = await Promise.all(
+      firstServices.map((service) => service.createApprovalRequest(input)),
+    );
+    const restarted = await composition(runner, undefined, ports).service
+      .createApprovalRequest(input);
+    await assertRejects(
+      () =>
+        composition(runner, undefined, ports).service.createApprovalRequest({
+          ...input,
+          payload: { summary: "changed semantic input" },
+        }),
+      Error,
+      "payload digest changed",
+    );
+    assertEquals(concurrent[0], concurrent[1]);
+    assertEquals(restarted, concurrent[0]);
+    assertEquals(ports.calls, { target: 1, evidence: 1, authority: 1 });
+    assertEquals(
+      await approvalCreationCounts(pool, requestId, input.idempotencyKey),
+      {
+        aggregate: 1,
+        history: 1,
+        audit: 1,
+        outbox: 1,
+        idempotency: 1,
+        results: 1,
+      },
+    );
+    await pool.end();
+  },
+});
+
+Deno.test({
+  name:
     "PostgreSQL approved decision atomically emits one durable target command",
   ignore: databaseUrl === undefined,
   async fn() {
@@ -152,6 +207,7 @@ Deno.test({
 function composition(
   runner: PostgresTransactionRunner,
   outbox?: Pick<OutboxRepository, "append">,
+  ports?: CountingApprovalPorts,
 ) {
   return createPostgresWorkManagementComposition({
     mode: "commands",
@@ -160,10 +216,51 @@ function composition(
     ...(outbox === undefined ? {} : { outbox }),
     authorization: { authorize: allow },
     clock: { now: () => "2026-08-06T12:00:00.000Z" },
-    targets: new ExactTargetPort(),
-    evidence: new EmptyEvidencePort(),
-    authority: new NamedAuthorityPort(),
+    targets: ports ?? new ExactTargetPort(),
+    evidence: ports ?? new EmptyEvidencePort(),
+    authority: ports ?? new NamedAuthorityPort(),
   });
+}
+
+class CountingApprovalPorts
+  implements
+    ApprovalTargetPort,
+    ApprovalEvidencePort,
+    ApprovalAuthoritySnapshotPort {
+  readonly calls = { target: 0, evidence: 0, authority: 0 };
+
+  validate(
+    _scope: WorkScope,
+    value: TargetReference,
+  ): Promise<TargetReference>;
+  validate(
+    _scope: WorkScope,
+    value: readonly EvidenceSnapshotReference[],
+  ): Promise<readonly EvidenceSnapshotReference[]>;
+  validate(
+    _scope: WorkScope,
+    value: TargetReference | readonly EvidenceSnapshotReference[],
+  ): Promise<TargetReference | readonly EvidenceSnapshotReference[]> {
+    if (Array.isArray(value)) this.calls.evidence += 1;
+    else this.calls.target += 1;
+    return Promise.resolve(value);
+  }
+
+  currentVersion(value: TargetReference) {
+    return Promise.resolve(value.expectedVersion);
+  }
+
+  resolve(input: Parameters<ApprovalAuthoritySnapshotPort["resolve"]>[0]) {
+    this.calls.authority += 1;
+    return Promise.resolve({
+      snapshotId: `authority-replay-${this.calls.authority}`,
+      actorId: approver.id,
+      actorKind: "human" as const,
+      policyVersion: `policy-replay-${this.calls.authority}`,
+      capturedAt: `2026-08-06T12:00:0${this.calls.authority}.000Z`,
+      scope: input.scope,
+    });
+  }
 }
 
 class FailingTargetOutbox implements Pick<OutboxRepository, "append"> {
@@ -365,5 +462,48 @@ async function dispatchCounts(
     dispatches: results[1].rows[0].count,
     targetOutbox: results[2].rows[0].count,
     approvalEvents: results[3].rows[0].count,
+  };
+}
+
+async function approvalCreationCounts(
+  pool: ReturnType<typeof createMai106Pool>,
+  requestId: string,
+  key: string,
+) {
+  const values = [scope.tenantId, scope.workspaceId, scope.dealId, requestId];
+  const targetId = `${scope.workspaceId}|${scope.dealId}|${requestId}`;
+  const queries = await Promise.all([
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.approval_requests_current WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND approval_request_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.aggregate_history WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM audit_activity.audit_events WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM platform.outbox WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM platform.idempotency_records WHERE tenant_id=$1 AND actor_id=$2 AND command_type='create_approval_request' AND target_id=$3 AND idempotency_key=$4",
+      [scope.tenantId, requester.id, targetId, key],
+    ),
+    pool.query(
+      "SELECT count(*)::int AS count FROM work_management.command_results WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND aggregate_id=$4",
+      values,
+    ),
+  ]);
+  return {
+    aggregate: queries[0].rows[0].count,
+    history: queries[1].rows[0].count,
+    audit: queries[2].rows[0].count,
+    outbox: queries[3].rows[0].count,
+    idempotency: queries[4].rows[0].count,
+    results: queries[5].rows[0].count,
   };
 }
