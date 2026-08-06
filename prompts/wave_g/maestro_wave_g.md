@@ -1,7 +1,8 @@
 # Maestro — Wave G: Core business slices
 
-**Model:** 5.6 Terra Medium  
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run Graphify.
+**Model:** 5.6 Terra Medium\
+**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run
+Graphify.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -15,18 +16,47 @@ Read `prompts/OPERATING_RULES.md`.
 
 ## Entry gate
 
-Wave F is closed and the relevant Wave A algorithm contracts are Done. Every declared dependency must be Done.
+Wave F is closed and the relevant Wave A algorithm contracts are Done. Every
+declared dependency must be Done.
 
-Run Backlog overview/execution, require clean synchronized master, verify active To Do tasks with `delivery-wave-g`, and rule out duplicate branches/worktrees/PRs.
+Run Backlog overview/execution, require clean synchronized master, verify active
+To Do tasks with `delivery-wave-g`, and rule out duplicate
+branches/worktrees/PRs.
 
-| Task | Branch | Worktree | Prompt |
-|---|---|---|---|
-| MAI-116 | `delivery/MAI-116-valuation-scenarios-and-approval` | `../mai-worktrees/wave_g/MAI-116` | `MAI-116.md` |
-| MAI-117 | `delivery/MAI-117-matching-conflicts-and-shortlist` | `../mai-worktrees/wave_g/MAI-117` | `MAI-117.md` |
-| MAI-119 | `delivery/MAI-119-closing-control` | `../mai-worktrees/wave_g/MAI-119` | `MAI-119.md` |
-| MAI-122 | `delivery/MAI-122-deliverables-redaction-release-and-exports` | `../mai-worktrees/wave_g/MAI-122` | `MAI-122.md` |
+| Task    | Branch                                                                      | Worktree                          | Prompt       |
+| ------- | --------------------------------------------------------------------------- | --------------------------------- | ------------ |
+| MAI-116 | `delivery/MAI-116-valuation-scenarios-and-approval`                         | `../mai-worktrees/wave_g/MAI-116` | `MAI-116.md` |
+| MAI-117 | `delivery/MAI-117-matching-conflicts-and-shortlist`                         | `../mai-worktrees/wave_g/MAI-117` | `MAI-117.md` |
+| MAI-119 | `delivery/MAI-119-closing-control`                                          | `../mai-worktrees/wave_g/MAI-119` | `MAI-119.md` |
+| MAI-122 | `delivery/MAI-122-deliverables-redaction-release-and-exports`               | `../mai-worktrees/wave_g/MAI-122` | `MAI-122.md` |
 | MAI-125 | `delivery/MAI-125-pause-archive-restore-termination-retention-and-deletion` | `../mai-worktrees/wave_g/MAI-125` | `MAI-125.md` |
 
-Create all from one verified master commit. Plan with focused `rg`; eliminate collisions; write `## Wave G execution plan — <TASK-ID>` into local root `AGENTS.md`; persist with Backlog `planSet`; keep uncommitted/`skip-worktree`; leave To Do until Luna starts. No Sol exceptions.
+Create all from one verified master commit. Plan with focused `rg`; eliminate
+collisions; write `## Wave G execution plan — <TASK-ID>` into local root
+`AGENTS.md`; persist with Backlog `planSet`; keep uncommitted/`skip-worktree`;
+leave To Do until Luna starts. No Sol exceptions.
 
-Return base, gates, matrix, plans, collision analysis, parallel groups, merge order, blockers, and confirmation no implementation or Graphify ran.
+Return base, gates, matrix, plans, collision analysis, parallel groups, merge
+order, blockers, and confirmation no implementation or Graphify ran.
+
+## Required within-task delegation design
+
+For each task plan, define:
+
+- authoritative task coordinator;
+- proposed read-only subagents;
+- proposed writing slices;
+- one concrete `/goal` draft per proposed subagent;
+- exclusive paths per writing slice;
+- forbidden shared paths;
+- coordinator-owned shared and integration files;
+- maximum concurrent subagents;
+- maximum concurrent writers;
+- slice dependencies;
+- integration order;
+- slice-level checks;
+- final task-wide verification.
+
+Do not spawn implementation subagents from the maestro. The maestro plans the
+delegation model; the Luna task coordinator executes it after the task start
+gate.

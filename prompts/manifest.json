@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "luisfelipeluis49/mai",
   "models": {
     "orchestrator": "5.6 Terra Medium",
@@ -8,9 +8,52 @@
     "complex_planner": "5.6 Sol High"
   },
   "graphify_policy": "Only finish_wave_x.md may run graphify update . after every wave PR is merged and verification is green.",
-  "sol_plan_tasks": ["MAI-107", "MAI-120", "MAI-121", "MAI-126", "MAI-127", "MAI-129"],
+  "subagents": {
+    "enabled": true,
+    "goal_command": "/goal",
+    "coordination": "single-task-coordinator",
+    "scratch_worktrees": true,
+    "patch_only_handoffs": true,
+    "default_max_subagents": 6,
+    "default_max_writers": 4,
+    "single_authoritative_branch": true,
+    "single_authoritative_pr": true,
+    "single_backlog_writer": true,
+    "single_graphify_writer": true,
+    "serial_integration": true
+  },
+  "task_subagent_overrides": {
+    "MAI-114": { "max_subagents": 7, "max_writers": 4 },
+    "MAI-115": { "max_subagents": 6, "max_writers": 4 },
+    "MAI-118": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-120": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-121": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-126": { "max_subagents": 12, "max_writers": 6 },
+    "MAI-127": { "max_subagents": 10, "max_writers": 5 },
+    "MAI-129": { "max_subagents": 12, "max_writers": 4 },
+    "MAI-131": { "max_subagents": 14, "max_writers": 1 }
+  },
+  "sol_plan_tasks": [
+    "MAI-107",
+    "MAI-120",
+    "MAI-121",
+    "MAI-126",
+    "MAI-127",
+    "MAI-129"
+  ],
   "waves": {
-    "A": ["MAI-107", "MAI-108", "MAI-109", "MAI-142", "MAI-144", "MAI-145", "MAI-146", "MAI-147", "MAI-148", "MAI-151"],
+    "A": [
+      "MAI-107",
+      "MAI-108",
+      "MAI-109",
+      "MAI-142",
+      "MAI-144",
+      "MAI-145",
+      "MAI-146",
+      "MAI-147",
+      "MAI-148",
+      "MAI-151"
+    ],
     "B": ["MAI-110"],
     "C": ["MAI-111", "MAI-112", "MAI-123"],
     "D": ["MAI-113"],
