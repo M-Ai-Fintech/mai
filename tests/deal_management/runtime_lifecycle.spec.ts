@@ -111,9 +111,9 @@ function runtimeDependencies(
 Deno.test("runtime reads only approved explicit environment values", () => {
   const result = loadDealManagementEnvironment({
     environment: {
+      DATABASE_URL: "postgresql://user:secret@localhost/mai",
       POSTGRES_INTEGRATION_TEST_DATABASE_URL:
-        "postgresql://user:secret@localhost/mai",
-      DATABASE_URL: "postgresql://other:secret@localhost/other",
+        "postgresql://other:secret@localhost/mai_test_postgres_integration",
       UNAPPROVED_SECRET: "must-not-be-read",
     },
     authentication: new FakeAuthenticationPort(runtimePrincipal()),
@@ -128,7 +128,19 @@ Deno.test("missing and malformed database configuration fail safely", () => {
     kind: "unavailable",
     reason: "missing_configuration",
     message:
-      "Deal Management database configuration is missing; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL.",
+      "Deal Management database configuration is missing; expected DATABASE_URL.",
+  });
+  const testOnly = loadDealManagementEnvironment({
+    environment: {
+      POSTGRES_INTEGRATION_TEST_DATABASE_URL:
+        "postgresql://user:secret@localhost/mai_test_postgres_integration",
+    },
+  });
+  assertEquals(testOnly, {
+    kind: "unavailable",
+    reason: "missing_configuration",
+    message:
+      "Deal Management database configuration is missing; expected DATABASE_URL.",
   });
   const secret = "postgresql://user:super-secret@localhost";
   const malformed = loadDealManagementEnvironment({

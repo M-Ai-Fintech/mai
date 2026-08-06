@@ -8,10 +8,7 @@ import {
   PostgresIdentityAccessAuthentication,
 } from "./deal_management_bootstrap.ts";
 
-const DATABASE_KEYS = [
-  "POSTGRES_INTEGRATION_TEST_DATABASE_URL",
-  "DATABASE_URL",
-] as const;
+const DATABASE_KEYS = ["DATABASE_URL"] as const;
 
 /** Loads the executable Deal graph from repository-owned production adapters. */
 export function loadExecutableDealManagement(
@@ -33,12 +30,7 @@ export function loadExecutableDealManagement(
 }
 
 function explicitEnv(): Readonly<Record<string, string | undefined>> {
-  return {
-    POSTGRES_INTEGRATION_TEST_DATABASE_URL: Deno.env.get(
-      "POSTGRES_INTEGRATION_TEST_DATABASE_URL",
-    ),
-    DATABASE_URL: Deno.env.get("DATABASE_URL"),
-  };
+  return { DATABASE_URL: Deno.env.get("DATABASE_URL") };
 }
 
 function configuredDatabaseUrl(
@@ -49,7 +41,7 @@ function configuredDatabaseUrl(
   );
   if (value === undefined) {
     throw new Error(
-      "API database configuration is missing; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL.",
+      "API database configuration is missing; expected DATABASE_URL.",
     );
   }
   const protocol = new URL(value).protocol;

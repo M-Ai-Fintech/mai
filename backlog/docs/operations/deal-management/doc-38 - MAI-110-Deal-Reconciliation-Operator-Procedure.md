@@ -3,7 +3,7 @@ id: doc-38
 title: MAI-110 Deal Reconciliation Operator Procedure
 type: guide
 created_date: '2026-08-03 02:14'
-updated_date: '2026-08-06 16:56'
+updated_date: '2026-08-06 19:45'
 ---
 # MAI-110 Deal Reconciliation Operator Procedure
 
@@ -38,8 +38,7 @@ Runtime startup does not apply migrations. Apply `deal_management-0002-reconcili
 
 Deal runtime composition reads only these environment variables:
 
-- `POSTGRES_INTEGRATION_TEST_DATABASE_URL`, preferred for the isolated/test PostgreSQL database;
-- `DATABASE_URL`, the fallback database configuration;
+- `DATABASE_URL`, the production database configuration;
 - `DEAL_MANAGEMENT_OPERATOR_SESSION`, the approved operator session credential.
 
 The Deal runtime uses explicit `Deno.env.get(...)` reads and never enumerates the environment with `Deno.env.toObject()`. Do not place credentials in arguments, reports, errors, or logs. Validate database URLs before connecting and redact passwords in diagnostics.
@@ -47,7 +46,7 @@ The Deal runtime uses explicit `Deno.env.get(...)` reads and never enumerates th
 For operator commands, grant only the variables required by the command:
 
 ```bash
---allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION
+--allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION
 ```
 
 The runtime owns the pool it creates. A caller-injected pool is borrowed unless ownership transfer is explicitly selected; cleanup is idempotent and closes only owned pools. Authentication failure still closes an owned runtime pool.
@@ -65,10 +64,10 @@ Provide a bounded selector JSON array, not a complete `LegacyDealRecord`:
 The configured production `LegacyDealSource`, `LegacyReferenceResolver`, mapper, operator authentication, exact scope validation, canonical identity helpers, and operation-manifest builder are used for dry-run. The selector is resolved from the reviewed legacy source; the CLI does not treat caller-supplied Deal content as authoritative.
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<isolated-or-approved-database-url>' \
+DATABASE_URL='<isolated-or-approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode dry-run --input ./legacy-deal-selectors.json \
@@ -86,10 +85,10 @@ Abort if any required reference, currency, Deal type, confidentiality, party sid
 The repository-owned `scripts/deal_reconciliation_runtime.ts` runtime constructs Identity Access authentication, authoritative authorization, the scoped PostgreSQL Deal repository, transaction runner, audit/outbox appender, legacy source, reference resolver, mapper, and reconciliation store. The runtime module must not use permissive authorization or anonymous actors.
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<approved-database-url>' \
+DATABASE_URL='<approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode apply --input ./legacy-deal-selectors.json \
@@ -103,10 +102,10 @@ Apply is bounded per Deal and idempotent. The explicit confirmation is required 
 ## Resume
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<approved-database-url>' \
+DATABASE_URL='<approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode resume --input ./legacy-deal-selectors.json \
@@ -131,10 +130,10 @@ DENO_ENV=test deno test \
 This command must report zero failures and zero ignored PostgreSQL tests. For a bounded operator verification, use the production runtime:
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<approved-database-url>' \
+DATABASE_URL='<approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode verify --input ./legacy-deal-selectors.json \
@@ -150,10 +149,10 @@ The verification command loads each selected legacy record through the configure
 Rollback means changing one reconciled Deal from authoritative reads to the legacy compatibility adapter. It retains authoritative rows, history, receipts, audit events, outbox events, and reconciliation evidence. It does not delete or reverse data.
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<approved-database-url>' \
+DATABASE_URL='<approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode rollback-routing --input ./legacy-deal-selectors.json \
@@ -165,10 +164,10 @@ DENO_ENV=test deno run \
 The command reports the previous and next route, selected source, actor, correlation ID, reason, and timestamp. A subsequent read must identify `legacy` as the selected source through the named compatibility adapter. To restore one reviewed Deal to authoritative reads, use the explicit per-Deal operation:
 
 ```bash
-POSTGRES_INTEGRATION_TEST_DATABASE_URL='<approved-database-url>' \
+DATABASE_URL='<approved-database-url>' \
 DEAL_MANAGEMENT_OPERATOR_SESSION='<approved-operator-session>' \
 DENO_ENV=test deno run \
-  --allow-read --allow-env=POSTGRES_INTEGRATION_TEST_DATABASE_URL,DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
+  --allow-read --allow-env=DATABASE_URL,DEAL_MANAGEMENT_OPERATOR_SESSION \
   --allow-net --allow-ffi --allow-run \
   scripts/deal_reconciliation.ts \
   --mode authoritative-routing --input ./legacy-deal-selectors.json \

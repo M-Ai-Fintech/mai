@@ -28,9 +28,21 @@ Deno.test("executable API bootstrap fails startup without database configuration
   const error = assertThrows(
     () => createExecutableApiServer({}),
     Error,
-    "expected POSTGRES_INTEGRATION_TEST_DATABASE_URL or DATABASE_URL",
+    "expected DATABASE_URL",
   );
   assertEquals(error.message.includes("password"), false);
+});
+
+Deno.test("executable bootstrap ignores the integration-test environment variable", () => {
+  assertThrows(
+    () =>
+      createExecutableApiServer({
+        POSTGRES_INTEGRATION_TEST_DATABASE_URL:
+          "postgresql://user:secret@localhost/mai_test_postgres_integration",
+      }),
+    Error,
+    "expected DATABASE_URL",
+  );
 });
 
 Deno.test("executable API bootstrap rejects non-PostgreSQL configuration", () => {

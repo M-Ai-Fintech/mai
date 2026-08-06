@@ -44,7 +44,7 @@ Deno.test({
     try {
       await new PostgresMigrationRunner(pool).apply(identityAccessMigrations);
       router = createExecutableApiServer({
-        POSTGRES_INTEGRATION_TEST_DATABASE_URL: databaseUrl,
+        DATABASE_URL: databaseUrl,
       });
       if (router.dealManagement.kind !== "configured") return;
       await new PostgresMigrationRunner(pool).apply(
