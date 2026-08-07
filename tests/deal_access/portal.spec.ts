@@ -201,3 +201,83 @@ Deno.test("portal scope binds the requested object ID to its object kind", async
   assertEquals(result.kind, "protected_not_found");
   assertEquals(loader.calls, 0);
 });
+
+Deno.test("portal reads require the authenticated active external principal before protected loading", async () => {
+  const repository = await repositoryWithGrant();
+  const deniedActors: readonly [string, ActorReference, RequestContext][] = [
+    [
+      "human participant ID",
+      {
+        id: actor.id,
+        kind: "human",
+        state: "active",
+      },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "service participant ID",
+      {
+        id: actor.id,
+        kind: "service",
+        state: "active",
+      },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "AI participant ID",
+      {
+        id: actor.id,
+        kind: "ai",
+        state: "active",
+      },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "inactive external participant",
+      { ...actor, state: "inactive" },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "revoked external participant",
+      { ...actor, state: "revoked" },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "actor context mismatch",
+      { ...actor, id: "participant_other" as ActorId },
+      { ...context, actorId: actor.id },
+    ],
+    [
+      "wrong scope",
+      actor,
+      {
+        ...context,
+        workspaceId: "workspace_other" as WorkspaceId,
+        dealId: "deal_other" as DealId,
+      },
+    ],
+  ];
+
+  for (const [label, currentActor, currentContext] of deniedActors) {
+    const loader = new RecordingPortalObjectLoader(snapshot());
+    const result = await readPortalObject({
+      context: currentContext,
+      actor: currentActor,
+      repository,
+      grantId: externalGrantId("grant_portal-1"),
+      object: {
+        objectId: portalObjectId("object_document-1"),
+        kind: "document",
+      },
+      action: "read",
+      purpose: "document_review",
+      sponsor: "actor_sponsor" as ActorId,
+      requestedExpiry: "2026-08-08T12:00:00.000Z",
+      requestedFields: ["title"],
+      clock: { now: () => now },
+      loader,
+    });
+    assertEquals(result.kind, "protected_not_found", label);
+    assertEquals(loader.calls, 0, label);
+  }
+});

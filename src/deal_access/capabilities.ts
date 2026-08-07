@@ -1,4 +1,19 @@
-const MINIMUM_CAPABILITY_LENGTH = 32;
+const CAPABILITY_BYTE_LENGTH = 32;
+const CAPABILITY_LENGTH = 43;
+
+export type InvitationCapability = string & {
+  readonly __invitationCapability: unique symbol;
+};
+
+export function issueInvitationToken(): InvitationCapability {
+  const bytes = crypto.getRandomValues(new Uint8Array(CAPABILITY_BYTE_LENGTH));
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(
+    /=+$/,
+    "",
+  ) as InvitationCapability;
+}
 
 export async function digestInvitationToken(token: string): Promise<string> {
   assertCapabilityToken(token);
@@ -25,13 +40,11 @@ export async function verifyInvitationToken(
 }
 
 function assertCapabilityToken(token: string): void {
-  if (
-    token.trim().length >= MINIMUM_CAPABILITY_LENGTH && token.length <= 4096
-  ) {
+  if (token.length === CAPABILITY_LENGTH && /^[A-Za-z0-9_-]+$/.test(token)) {
     return;
   }
   throw new Error(
-    `Invitation capability "${token}" is invalid; expected 32-4096 non-whitespace characters.`,
+    "Invitation capability is invalid; expected a 256-bit base64url value issued by the trusted capability issuer.",
   );
 }
 

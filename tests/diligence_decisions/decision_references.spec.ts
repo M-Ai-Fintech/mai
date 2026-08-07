@@ -30,7 +30,7 @@ Deno.test(
     const projection = createDecisionProjection({
       requestId: request.id,
       currentRecordId: replacement,
-      state: "superseded",
+      state: "active",
       version: version(2),
       updatedAt: now(),
     });
@@ -46,7 +46,7 @@ Deno.test("contradictory current decision references are rejected", async () => 
   const projection = createDecisionProjection({
     requestId: request.id,
     currentRecordId: required("decision_record_new", parseDecisionRecordId),
-    state: "superseded",
+    state: "active",
     version: version(2),
     updatedAt: now(),
   });

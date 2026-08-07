@@ -101,6 +101,10 @@ export interface PortalSubmission {
   readonly aggregateType: "portal_submission";
   readonly id: SubmissionId;
   readonly scope: DealAccessScope;
+  readonly deliveryId: string;
+  readonly deliveryAttemptCount: number;
+  readonly lastDeliveryError?: string;
+  readonly deliveryCompletedAt?: string;
   readonly grantId: ExternalGrantId;
   readonly objectId: PortalObjectId;
   readonly payload: SubmissionPayload;
@@ -206,6 +210,8 @@ export function createPortalSubmission(input: {
     aggregateType: "portal_submission",
     id: input.id,
     scope: freezeScope(input.grant.scope),
+    deliveryId: input.id,
+    deliveryAttemptCount: 0,
     grantId: input.grant.id,
     objectId: input.objectId,
     payload: Object.freeze({ ...input.payload }),
@@ -346,6 +352,7 @@ function updateSubmission(
   return Object.freeze({
     ...submission,
     state,
+    ...(state === "accepted" ? { deliveryCompletedAt: now } : {}),
     version: (submission.version + 1) as AggregateVersion,
     updatedAt: now,
   });

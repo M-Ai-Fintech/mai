@@ -120,9 +120,11 @@ export class DealAccessService {
       scope,
       DEAL_ACCESS_ACTION.invite,
     );
-    const digest = await payloadDigest(commandPayload(command));
     const invitationTokenDigest = await digestInvitationToken(
       command.invitationToken,
+    );
+    const digest = await payloadDigest(
+      commandPayload(command, invitationTokenDigest),
     );
     const identity = commandIdentity(command, scope);
     return this.repository.transaction(async (store) => {

@@ -84,7 +84,7 @@ Deno.test("supersession changes only the projection and appends a new history en
   });
 
   const next = applyDecisionHistory(projection, entry, now());
-  assertEquals(next.state, "superseded");
+  assertEquals(next.state, "active");
   assertEquals(next.currentRecordId, "decision_record_new");
   assertEquals(oldRecord.outcome, "approved");
 });

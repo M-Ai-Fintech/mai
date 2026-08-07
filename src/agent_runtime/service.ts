@@ -16,6 +16,7 @@ import {
   type RunRecord,
   type RuntimeActor,
   type RuntimeScope,
+  runtimeScopeFromContext,
   type SourceVersionReference,
   type StepRecord,
 } from "./model.ts";
@@ -80,7 +81,7 @@ export class AgentRuntimeService {
     actor: RuntimeActor,
     input: CreateMissionInput,
   ): Promise<MissionRecord> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     await authorizeRuntimeAction(this.authorization, {
       context,
       actor: actorReference(actor),
@@ -146,13 +147,21 @@ export class AgentRuntimeService {
     missionId: MissionId,
     input: CreatePlanInput,
   ): Promise<PlanRecord> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     await authorizeRuntimeAction(this.authorization, {
       context,
       actor: actorReference(actor),
       scope,
       resource: { kind: RUNTIME_RESOURCE.plan, id: input.planId },
       action: RUNTIME_ACTION.proposePlan,
+      requestedFields: [],
+    });
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.mission, id: missionId },
+      action: RUNTIME_ACTION.useMission,
       requestedFields: [],
     });
     return this.store.transaction(async (transaction) => {
@@ -192,7 +201,7 @@ export class AgentRuntimeService {
     actor: RuntimeActor,
     planId: PlanId,
   ): Promise<PlanRecord> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     await authorizeRuntimeAction(this.authorization, {
       context,
       actor: actorReference(actor),
@@ -236,7 +245,7 @@ export class AgentRuntimeService {
     planId: PlanId,
     input: QueueRunInput,
   ): Promise<RunRecord> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     await authorizeRuntimeAction(this.authorization, {
       context,
       actor: actorReference(actor),
@@ -296,7 +305,7 @@ export class AgentRuntimeService {
     actor: RuntimeActor,
     runId: RunId,
   ): Promise<void> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     return this.cancelRun(context, actor, scope, runId);
   }
 
@@ -332,14 +341,6 @@ export class AgentRuntimeService {
       });
     });
   }
-}
-
-function scopeFromContext(context: RequestContext): RuntimeScope {
-  return {
-    tenantId: context.tenantId,
-    workspaceId: context.workspaceId,
-    dealId: context.dealId,
-  };
 }
 
 async function commandIdentity(

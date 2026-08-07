@@ -62,6 +62,10 @@ export interface SubmissionRow {
   tenantId: string;
   workspaceId: string;
   dealId: string;
+  deliveryId: string;
+  deliveryAttemptCount: string | number;
+  lastDeliveryError: string | null;
+  deliveryCompletedAt: Date | string | null;
   grantId: string;
   objectId: string;
   payload: SubmissionPayload;
@@ -140,10 +144,24 @@ export function toGrant(row: GrantRow): ExternalGrant {
 }
 
 export function toSubmission(row: SubmissionRow): PortalSubmission {
+  const deliveryAttemptCount = Number(row.deliveryAttemptCount);
+  if (!Number.isInteger(deliveryAttemptCount) || deliveryAttemptCount < 0) {
+    throw new DealAccessInvariantError(
+      `Submission "${row.submissionId}" delivery attempt count "${row.deliveryAttemptCount}" is invalid; expected a non-negative integer.`,
+    );
+  }
   return {
     aggregateType: "portal_submission",
     id: row.submissionId as PortalSubmission["id"],
     scope: scope(row),
+    deliveryId: row.deliveryId,
+    deliveryAttemptCount,
+    ...(row.lastDeliveryError === null
+      ? {}
+      : { lastDeliveryError: row.lastDeliveryError }),
+    ...(row.deliveryCompletedAt === null
+      ? {}
+      : { deliveryCompletedAt: instant(row.deliveryCompletedAt) }),
     grantId: row.grantId as PortalSubmission["grantId"],
     objectId: row.objectId as PortalSubmission["objectId"],
     payload: row.payload,
@@ -234,6 +252,10 @@ export function submissionValues(aggregate: PortalSubmission): unknown[] {
     aggregate.scope.tenantId,
     aggregate.scope.workspaceId,
     aggregate.scope.dealId,
+    aggregate.deliveryId,
+    aggregate.deliveryAttemptCount,
+    aggregate.lastDeliveryError ?? null,
+    aggregate.deliveryCompletedAt ?? null,
     aggregate.grantId,
     aggregate.objectId,
     JSON.stringify(aggregate.payload),

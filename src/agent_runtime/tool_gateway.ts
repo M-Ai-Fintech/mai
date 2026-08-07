@@ -30,6 +30,7 @@ export interface ToolInvocationRequest {
   readonly resourceId: string;
   readonly input: Readonly<Record<string, unknown>>;
   readonly sourceVersions: readonly SourceVersionReference[];
+  /** Gateway-owned admission fence immediately before the non-effecting invocation. */
   readonly beforeEffect: () => Promise<void>;
 }
 
@@ -50,13 +51,15 @@ export type ToolOutput = {
   readonly value: Readonly<Record<string, unknown>>;
 };
 
-export interface AuthorizedToolInvocation extends ToolInvocationRequest {
+export interface AuthorizedToolInvocation
+  extends Omit<ToolInvocationRequest, "beforeEffect"> {
   readonly authority: RuntimeAuthority;
 }
 
 export interface ToolDefinition {
   readonly name: string;
   readonly capability: ToolCapability;
+  /** Executes a data-only capability; durable or external effects are not permitted here. */
   execute(request: AuthorizedToolInvocation): Promise<ToolOutput>;
 }
 
@@ -105,10 +108,11 @@ export class ToolGateway {
       return { status: "denied", reason: authorization.reasonCode };
     }
     const authority = runtimeAuthority(authorization);
-    await request.beforeEffect();
+    const { beforeEffect, ...safeRequest } = request;
+    await beforeEffect();
     try {
       const output = await definition.execute({
-        ...request,
+        ...safeRequest,
         authority,
       });
       assertOutputCapability(definition, output);

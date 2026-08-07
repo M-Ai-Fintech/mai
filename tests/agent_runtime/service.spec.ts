@@ -7,9 +7,11 @@ import type {
 } from "../../src/agent_runtime/model.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
 import { RuntimeAuthorizationDeniedError } from "../../src/agent_runtime/authorization.ts";
+import { RuntimeScopeRequiredError } from "../../src/agent_runtime/model.ts";
 import {
   AllowingAuthorization,
   DenyingAuthorization,
+  PlanCreationWithoutMissionUseAuthorization,
 } from "./authorization_support.ts";
 
 Deno.test("mission creation replays the same idempotent command", async () => {
@@ -141,6 +143,76 @@ Deno.test("runtime commands require platform authorization beyond actor declarat
   assertEquals(stored?.cancellationRequestedAt, undefined);
 });
 
+Deno.test("runtime commands fail closed when the deal scope is incomplete", async () => {
+  const service = new AgentRuntimeService(
+    new InMemoryAgentRuntimeStore(),
+    new FixedClock(),
+    new AllowingAuthorization(),
+  );
+
+  await assertRejects(
+    () =>
+      service.createMission(
+        fixtureContext({ dealId: undefined }),
+        fixtureActor(),
+        {
+          missionId: "mission_missing_deal" as never,
+          objective: "Must remain unscoped",
+          idempotencyKey: "command_missing_deal",
+        },
+      ),
+    RuntimeScopeRequiredError,
+  );
+});
+
+Deno.test("plan proposal proves authorization over its existing parent mission", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const parentAuthorization = new PlanCreationWithoutMissionUseAuthorization();
+  const service = new AgentRuntimeService(
+    store,
+    new FixedClock(),
+    parentAuthorization,
+  );
+  const context = fixtureContext();
+  const actor = fixtureActor();
+  await assertRejects(
+    () =>
+      service.proposePlan(context, actor, "mission_private" as never, {
+        planId: "plan_caller_owned" as never,
+        version: 1,
+        sourceVersions: [],
+        steps: [],
+      }),
+    RuntimeAuthorizationDeniedError,
+    "use_mission",
+  );
+  assertEquals(
+    parentAuthorization.requests.map(({ resource, action }) => ({
+      kind: resource.kind,
+      id: resource.id,
+      action,
+    })),
+    [
+      {
+        kind: "agent_plan",
+        id: "plan_caller_owned",
+        action: "propose_plan",
+      },
+      {
+        kind: "agent_mission",
+        id: "mission_private",
+        action: "use_mission",
+      },
+    ],
+  );
+  assertEquals(
+    await store.transaction((transaction) =>
+      transaction.findPlan(context as never, "plan_caller_owned" as never)
+    ),
+    undefined,
+  );
+});
+
 Deno.test("active plan queue creates durable ordered steps and lineage", async () => {
   const store = new InMemoryAgentRuntimeStore();
   const service = new AgentRuntimeService(
@@ -251,6 +323,7 @@ function fixtureContext(
     actorId: "actor_alpha" as never,
     tenantId: "tenant_alpha" as never,
     workspaceId: "workspace_alpha" as never,
+    dealId: "deal_alpha" as never,
     correlationId: "cor_alpha" as never,
     origin: "http",
     ...overrides,

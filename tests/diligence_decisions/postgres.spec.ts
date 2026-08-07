@@ -153,7 +153,7 @@ Deno.test({
     );
     const stale = {
       ...winner,
-      state: "superseded" as const,
+      state: "active" as const,
       version: version(3),
     };
     const error = await assertRejects(
@@ -282,7 +282,7 @@ async function supersedeInPostgres(
     const nextProjection = {
       ...lockedProjection,
       currentRecordId: replacement.id,
-      state: "superseded" as const,
+      state: "active" as const,
       version: version(Number(lockedProjection.version) + 1),
       updatedAt: now(),
     };

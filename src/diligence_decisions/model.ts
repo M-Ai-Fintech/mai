@@ -26,7 +26,7 @@ export type DecisionRequestState =
   | "withdrawn"
   | "expired"
   | "invalidated";
-export type DecisionProjectionState = "active" | "superseded" | "invalidated";
+export type DecisionProjectionState = "active" | "invalidated";
 export type DecisionHistoryKind = "recorded" | "superseded" | "invalidated";
 
 export interface DecisionAuthoritySnapshot {
@@ -333,7 +333,7 @@ export function applyDecisionHistory(
       `Decision history "${entry.id}" targets record "${entry.recordId}"; expected current record "${projection.currentRecordId}".`,
     );
   }
-  const state = entry.kind === "invalidated" ? "invalidated" : "superseded";
+  const state = entry.kind === "invalidated" ? "invalidated" : "active";
   if (projection.state !== "active") {
     throw new DiligenceDecisionError(
       "IMMUTABLE_DECISION",
