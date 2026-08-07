@@ -14,6 +14,10 @@ import {
   createPostgresIntegrationTestPool,
   postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
+import {
+  createIsolatedPostgresDatabase,
+  dropIsolatedPostgresDatabase,
+} from "../../scripts/postgres_test_state.ts";
 import type { ActorReference } from "../../src/platform/authz/v1.ts";
 import type {
   DealId,
@@ -38,7 +42,12 @@ Deno.test({
   name: "PostgreSQL Closing repository persists and replays an exact command",
   ignore: databaseUrl === undefined,
   async fn() {
-    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    const suiteUrl = await createIsolatedPostgresDatabase(
+      databaseUrl!,
+      "tests/closing/repository_postgres.spec.ts",
+    );
+    const suiteDatabaseName = new URL(suiteUrl).pathname.slice(1);
+    const pool = createPostgresIntegrationTestPool(suiteUrl);
     try {
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
@@ -70,6 +79,7 @@ Deno.test({
       assertEquals(replay.workspace.history.length, 1);
     } finally {
       await pool.end();
+      await dropIsolatedPostgresDatabase(databaseUrl!, suiteDatabaseName);
     }
   },
 });
