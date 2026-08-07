@@ -2,8 +2,14 @@ import { payloadDigest } from "../platform/persistence/idempotency.ts";
 import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts";
 import type { RequestContext } from "../shared/contracts/request_context.ts";
 import {
+  actorReference,
+  authorizeRuntimeAction,
+  RUNTIME_ACTION,
+  RUNTIME_RESOURCE,
+  type RuntimeAuthorizationPort,
+} from "./authorization.ts";
+import {
   assertPlanTransition,
-  assertRuntimeContext,
   type MissionRecord,
   type PlanRecord,
   type PlanStepDefinition,
@@ -61,6 +67,7 @@ export class AgentRuntimeService {
   constructor(
     private readonly store: AgentRuntimeStore,
     private readonly clock: RuntimeClock,
+    private readonly authorization: RuntimeAuthorizationPort,
   ) {}
 
   /**
@@ -74,7 +81,14 @@ export class AgentRuntimeService {
     input: CreateMissionInput,
   ): Promise<MissionRecord> {
     const scope = scopeFromContext(context);
-    assertRuntimeContext(context, scope);
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.mission, id: input.missionId },
+      action: RUNTIME_ACTION.createMission,
+      requestedFields: [],
+    });
     const identity = await commandIdentity(
       context,
       actor,
@@ -88,7 +102,7 @@ export class AgentRuntimeService {
     return this.store.transaction(async (transaction) => {
       const claim = await transaction.claimIdempotency(identity);
       if (claim.status === "replay") {
-        return await requireMission(transaction, input.missionId);
+        return await requireMission(transaction, scope, input.missionId);
       }
       if (claim.status === "in_progress") {
         throw new RuntimeCommandInProgressError(
@@ -126,17 +140,23 @@ export class AgentRuntimeService {
     });
   }
 
-  proposePlan(
+  async proposePlan(
     context: RequestContext,
     actor: RuntimeActor,
     missionId: MissionId,
     input: CreatePlanInput,
   ): Promise<PlanRecord> {
     const scope = scopeFromContext(context);
-    assertRuntimeContext(context, scope);
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.plan, id: input.planId },
+      action: RUNTIME_ACTION.proposePlan,
+      requestedFields: [],
+    });
     return this.store.transaction(async (transaction) => {
-      const mission = await requireMission(transaction, missionId);
-      assertSameTenant(mission.scope, scope, missionId);
+      await requireMission(transaction, scope, missionId);
       const now = this.clock.now();
       const plan: PlanRecord = {
         planId: input.planId,
@@ -167,16 +187,23 @@ export class AgentRuntimeService {
     });
   }
 
-  activatePlan(
+  async activatePlan(
     context: RequestContext,
     actor: RuntimeActor,
     planId: PlanId,
   ): Promise<PlanRecord> {
     const scope = scopeFromContext(context);
-    assertRuntimeContext(context, scope);
-    assertHumanApproval(actor, planId);
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.plan, id: planId },
+      action: RUNTIME_ACTION.approvePlan,
+      requestedFields: [],
+      humanOnly: true,
+    });
     return this.store.transaction(async (transaction) => {
-      const plan = await transaction.findPlan(planId);
+      const plan = await transaction.findPlan(scope, planId);
       if (plan === undefined) {
         throw new Error(
           `Plan "${planId}" was not found; expected a proposed plan.`,
@@ -185,7 +212,7 @@ export class AgentRuntimeService {
       assertSameScope(plan.scope, scope, planId);
       assertPlanTransition(plan.state, "active");
       const active = { ...plan, state: "active" as const };
-      await transaction.createPlan(active);
+      await transaction.updatePlan(active);
       await transaction.appendEvent(
         runtimeEvent(
           "plan",
@@ -210,7 +237,14 @@ export class AgentRuntimeService {
     input: QueueRunInput,
   ): Promise<RunRecord> {
     const scope = scopeFromContext(context);
-    assertRuntimeContext(context, scope);
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.plan, id: planId },
+      action: RUNTIME_ACTION.queueRun,
+      requestedFields: [],
+    });
     const identity = await commandIdentity(
       context,
       actor,
@@ -224,15 +258,15 @@ export class AgentRuntimeService {
     return this.store.transaction(async (transaction) => {
       const claim = await transaction.claimIdempotency(identity);
       if (claim.status === "replay") {
-        return await requireRun(transaction, input.runId);
+        return await requireRun(transaction, scope, input.runId);
       }
       if (claim.status === "in_progress") {
         throw new RuntimeCommandInProgressError("run.queue", planId);
       }
-      const plan = await transaction.findPlan(planId);
+      const plan = await transaction.findPlan(scope, planId);
       if (plan === undefined || plan.state !== "active") {
         throw new Error(
-          `Plan "${planId}" is not active; expected a human-authorized active plan.`,
+          `Plan "${planId}" is not active in the requested scope; expected a scoped human-authorized active plan.`,
         );
       }
       const now = this.clock.now();
@@ -259,16 +293,29 @@ export class AgentRuntimeService {
 
   requestCancellation(
     context: RequestContext,
+    actor: RuntimeActor,
     runId: RunId,
   ): Promise<void> {
     const scope = scopeFromContext(context);
-    const actor: RuntimeActor = {
-      actorId: context.actorId,
-      kind: "human",
-      state: "active",
-    };
+    return this.cancelRun(context, actor, scope, runId);
+  }
+
+  private async cancelRun(
+    context: RequestContext,
+    actor: RuntimeActor,
+    scope: RuntimeScope,
+    runId: RunId,
+  ): Promise<void> {
+    await authorizeRuntimeAction(this.authorization, {
+      context,
+      actor: actorReference(actor),
+      scope,
+      resource: { kind: RUNTIME_RESOURCE.run, id: runId },
+      action: RUNTIME_ACTION.cancelRun,
+      requestedFields: [],
+    });
     return this.store.transaction(async (transaction) => {
-      const run = await requireRun(transaction, runId);
+      const run = await requireRun(transaction, scope, runId);
       assertSameScope(run.scope, scope, runId);
       await transaction.requestCancellation(runId, scope, this.clock.now());
       await transaction.appendEvent({
@@ -284,10 +331,6 @@ export class AgentRuntimeService {
         occurredAt: this.clock.now(),
       });
     });
-  }
-
-  getRun(runId: RunId): Promise<RunRecord | undefined> {
-    return this.store.transaction((transaction) => transaction.findRun(runId));
   }
 }
 
@@ -323,9 +366,10 @@ async function commandIdentity(
 
 async function requireMission(
   transaction: RuntimeTransaction,
+  scope: RuntimeScope,
   missionId: MissionId,
 ): Promise<MissionRecord> {
-  const mission = await transaction.findMission(missionId);
+  const mission = await transaction.findMission(scope, missionId);
   if (mission !== undefined) return mission;
   throw new Error(
     `Mission "${missionId}" was not found; expected a durable mission.`,
@@ -334,19 +378,12 @@ async function requireMission(
 
 async function requireRun(
   transaction: RuntimeTransaction,
+  scope: RuntimeScope,
   runId: RunId,
 ): Promise<RunRecord> {
-  const run = await transaction.findRun(runId);
+  const run = await transaction.findRun(scope, runId);
   if (run !== undefined) return run;
   throw new Error(`Run "${runId}" was not found; expected a durable run.`);
-}
-
-function assertSameTenant(
-  scope: RuntimeScope,
-  expected: RuntimeScope,
-  subject: string,
-): void {
-  assertSameScope(scope, expected, subject);
 }
 
 function assertSameScope(
@@ -360,13 +397,6 @@ function assertSameScope(
   ) return;
   throw new Error(
     `Runtime subject "${subject}" scope does not match the trusted request scope.`,
-  );
-}
-
-function assertHumanApproval(actor: RuntimeActor, planId: PlanId): void {
-  if (actor.kind === "human" && actor.state === "active") return;
-  throw new Error(
-    `Plan "${planId}" activation actor "${actor.actorId}" is not an active human; expected explicit human approval.`,
   );
 }
 

@@ -6,10 +6,19 @@ import type {
   RuntimeActor,
 } from "../../src/agent_runtime/model.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
+import { RuntimeAuthorizationDeniedError } from "../../src/agent_runtime/authorization.ts";
+import {
+  AllowingAuthorization,
+  DenyingAuthorization,
+} from "./authorization_support.ts";
 
 Deno.test("mission creation replays the same idempotent command", async () => {
   const store = new InMemoryAgentRuntimeStore();
-  const service = new AgentRuntimeService(store, new FixedClock());
+  const service = new AgentRuntimeService(
+    store,
+    new FixedClock(),
+    new AllowingAuthorization(),
+  );
   const context = fixtureContext();
   const actor = fixtureActor();
   const input = {
@@ -36,9 +45,109 @@ Deno.test("mission creation replays the same idempotent command", async () => {
   );
 });
 
+Deno.test("runtime commands reject an actor not bound to the request context", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const service = new AgentRuntimeService(
+    store,
+    new FixedClock(),
+    new AllowingAuthorization(),
+  );
+
+  await assertRejects(
+    () =>
+      service.createMission(fixtureContext(), {
+        actorId: "actor_other" as never,
+        kind: "human",
+        state: "active",
+      }, {
+        missionId: "mission_mismatch" as never,
+        objective: "Should not be created",
+        idempotencyKey: "command_mismatch",
+      }),
+    Error,
+    "actor",
+  );
+});
+
+Deno.test("runtime commands require platform authorization beyond actor declarations", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const clock = new FixedClock();
+  const service = new AgentRuntimeService(
+    store,
+    clock,
+    new AllowingAuthorization(),
+  );
+  await assertRejects(
+    () =>
+      service.createMission(fixtureContext(), {
+        actorId: "actor_alpha" as never,
+        kind: "human",
+        state: "inactive",
+      }, {
+        missionId: "mission_inactive" as never,
+        objective: "Must be denied",
+        idempotencyKey: "command_inactive",
+      }),
+    RuntimeAuthorizationDeniedError,
+    "ACTOR_INACTIVE",
+  );
+
+  const actor = fixtureActor();
+  await service.createMission(fixtureContext(), actor, {
+    missionId: "mission_cancel_auth" as never,
+    objective: "Protect cancellation",
+    idempotencyKey: "command_cancel_auth",
+  });
+  await service.proposePlan(
+    fixtureContext(),
+    actor,
+    "mission_cancel_auth" as never,
+    {
+      planId: "plan_cancel_auth" as never,
+      version: 1,
+      sourceVersions: [],
+      steps: [],
+    },
+  );
+  await service.activatePlan(
+    fixtureContext(),
+    actor,
+    "plan_cancel_auth" as never,
+  );
+  const run = await service.queueRun(
+    fixtureContext(),
+    actor,
+    "plan_cancel_auth" as never,
+    {
+      runId: "run_cancel_auth" as never,
+      correlationId: "cor_cancel_auth" as never,
+      idempotencyKey: "command_run_cancel_auth",
+      sourceVersions: [],
+    },
+  );
+  const deniedService = new AgentRuntimeService(
+    store,
+    clock,
+    new DenyingAuthorization(),
+  );
+  await assertRejects(
+    () => deniedService.requestCancellation(fixtureContext(), actor, run.runId),
+    RuntimeAuthorizationDeniedError,
+    "GRANT_REVOKED",
+  );
+  const stored = await store.transaction((transaction) =>
+    transaction.findRun(run.scope, run.runId)
+  );
+  assertEquals(stored?.cancellationRequestedAt, undefined);
+});
+
 Deno.test("active plan queue creates durable ordered steps and lineage", async () => {
   const store = new InMemoryAgentRuntimeStore();
-  const service = new AgentRuntimeService(store, new FixedClock());
+  const service = new AgentRuntimeService(
+    store,
+    new FixedClock(),
+    new AllowingAuthorization(),
+  );
   const context = fixtureContext();
   const actor = fixtureActor();
   await service.createMission(context, actor, {
@@ -61,7 +170,7 @@ Deno.test("active plan queue creates durable ordered steps and lineage", async (
     sourceVersions: [],
   });
   const steps = await store.transaction((transaction) =>
-    transaction.listSteps(run.runId)
+    transaction.listSteps(run.scope, run.runId)
   );
 
   assertEquals(steps.map(({ ordinal, state }) => ({ ordinal, state })), [
@@ -74,6 +183,51 @@ Deno.test("active plan queue creates durable ordered steps and lineage", async (
     "plan.activated",
     "run.queued",
   ]);
+});
+
+Deno.test("run queue rejects an active plan from another exact scope", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const service = new AgentRuntimeService(
+    store,
+    new FixedClock(),
+    new AllowingAuthorization(),
+  );
+  const context = fixtureContext();
+  const actor = fixtureActor();
+
+  await service.createMission(context, actor, {
+    missionId: "mission_scope" as never,
+    objective: "Keep scope bound",
+    idempotencyKey: "command_scope",
+  });
+  await service.proposePlan(context, actor, "mission_scope" as never, {
+    planId: "plan_scope" as never,
+    version: 1,
+    sourceVersions: [],
+    steps: [],
+  });
+  await service.activatePlan(context, actor, "plan_scope" as never);
+
+  await assertRejects(
+    () =>
+      service.queueRun(
+        fixtureContext({
+          workspaceId: "workspace_other" as never,
+          dealId: "deal_other" as never,
+          correlationId: "cor_other" as never,
+        }),
+        actor,
+        "plan_scope" as never,
+        {
+          runId: "run_scope" as never,
+          correlationId: "cor_other" as never,
+          idempotencyKey: "command_scope_run",
+          sourceVersions: [],
+        },
+      ),
+    Error,
+    "scope",
+  );
 });
 
 function fixtureStep(ordinal: number, name: string): PlanStepDefinition {
@@ -90,13 +244,16 @@ function fixtureStep(ordinal: number, name: string): PlanStepDefinition {
   };
 }
 
-function fixtureContext(): RequestContext {
+function fixtureContext(
+  overrides: Partial<RequestContext> = {},
+): RequestContext {
   return {
     actorId: "actor_alpha" as never,
     tenantId: "tenant_alpha" as never,
     workspaceId: "workspace_alpha" as never,
     correlationId: "cor_alpha" as never,
     origin: "http",
+    ...overrides,
   };
 }
 

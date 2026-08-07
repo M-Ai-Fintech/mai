@@ -1,4 +1,9 @@
-import type { ActorId } from "../shared/contracts/identifiers.ts";
+import {
+  action,
+  type AuthorizationDecision,
+  resourceKind,
+} from "../platform/authz/v1.ts";
+import type { RequestContext } from "../shared/contracts/request_context.ts";
 import type {
   RuntimeActor,
   RuntimeAuthority,
@@ -6,11 +11,17 @@ import type {
   SourceVersionReference,
 } from "./model.ts";
 import type { ToolActivityId } from "./ids.ts";
+import {
+  actorReference,
+  runtimeAuthority,
+  type RuntimeAuthorizationInput,
+} from "./authorization.ts";
 
 export type ToolCapability = "read" | "proposal" | "reversible_draft";
 
 export interface ToolInvocationRequest {
   readonly activityId: ToolActivityId;
+  readonly context: RequestContext;
   readonly actor: RuntimeActor;
   readonly scope: RuntimeScope;
   readonly toolName: string;
@@ -19,25 +30,19 @@ export interface ToolInvocationRequest {
   readonly resourceId: string;
   readonly input: Readonly<Record<string, unknown>>;
   readonly sourceVersions: readonly SourceVersionReference[];
+  readonly beforeEffect: () => Promise<void>;
 }
 
-export interface RuntimeAuthorizationRequest {
+export interface RuntimeAuthorizationRequest extends RuntimeAuthorizationInput {
   readonly activityId: ToolActivityId;
-  readonly actorId: ActorId;
-  readonly scope: RuntimeScope;
-  readonly action: string;
-  readonly resourceKind: string;
-  readonly resourceId: string;
 }
 
-export type RuntimeAuthorization =
-  | { readonly outcome: "allow"; readonly authority: RuntimeAuthority }
-  | { readonly outcome: "deny"; readonly reason: string };
+export type RuntimeAuthorization = AuthorizationDecision;
 
 export interface RuntimeAuthorizer {
   authorize(
     request: RuntimeAuthorizationRequest,
-  ): Promise<RuntimeAuthorization>;
+  ): Promise<AuthorizationDecision> | AuthorizationDecision;
 }
 
 export type ToolOutput = {
@@ -86,35 +91,41 @@ export class ToolGateway {
     }
     const authorization = await this.reauthorize({
       activityId: request.activityId,
-      actorId: request.actor.actorId,
+      context: request.context,
+      actor: actorReference(request.actor),
       scope: request.scope,
-      action: request.action,
-      resourceKind: request.resourceKind,
-      resourceId: request.resourceId,
+      action: action(request.action),
+      resource: {
+        kind: resourceKind(request.resourceKind),
+        id: request.resourceId,
+      },
+      requestedFields: [],
     });
     if (authorization.outcome === "deny") {
-      return { status: "denied", reason: authorization.reason };
+      return { status: "denied", reason: authorization.reasonCode };
     }
+    const authority = runtimeAuthority(authorization);
+    await request.beforeEffect();
     try {
       const output = await definition.execute({
         ...request,
-        authority: authorization.authority,
+        authority,
       });
       assertOutputCapability(definition, output);
       return {
         status: "succeeded",
         output,
-        authority: authorization.authority,
+        authority,
       };
     } catch {
       return { status: "failed", reason: "TOOL_EXECUTION_FAILED" };
     }
   }
 
-  reauthorize(
+  async reauthorize(
     request: RuntimeAuthorizationRequest,
-  ): Promise<RuntimeAuthorization> {
-    return this.authorizer.authorize(request);
+  ): Promise<AuthorizationDecision> {
+    return await this.authorizer.authorize(request);
   }
 }
 

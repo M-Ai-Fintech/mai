@@ -280,9 +280,17 @@ export function assertRuntimeContext(
   context: RequestContext,
   scope: RuntimeScope,
 ): void {
-  if (context.tenantId === scope.tenantId) return;
+  if (
+    context.tenantId === scope.tenantId &&
+    context.workspaceId === scope.workspaceId &&
+    context.dealId === scope.dealId
+  ) return;
   throw new Error(
-    `Runtime context tenant "${context.tenantId}" does not match scope tenant "${scope.tenantId}"; expected the trusted actor scope.`,
+    `Runtime context scope "${context.tenantId}/${context.workspaceId ?? ""}/${
+      context.dealId ?? ""
+    }" does not match scope "${scope.tenantId}/${scope.workspaceId ?? ""}/${
+      scope.dealId ?? ""
+    }"; expected the trusted actor scope.`,
   );
 }
 

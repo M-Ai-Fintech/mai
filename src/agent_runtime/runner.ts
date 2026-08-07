@@ -8,7 +8,9 @@ import type {
   RuntimeLineage,
   SourceVersionReference,
   StepRecord,
+  ToolActivityRecord,
 } from "./model.ts";
+import { runtimeAuthority } from "./authorization.ts";
 import { assertCostMetadata, SourceVersionInvalidatedError } from "./model.ts";
 import type { ResultId, ToolActivityId } from "./ids.ts";
 import type { AgentRuntimeStore, RuntimeTransaction } from "./repository.ts";
@@ -29,6 +31,7 @@ import {
   runtimeEvent,
   RuntimeToolDeniedError,
   stepAttempt,
+  stepAuthorizationRequest,
   toolActivity,
   toolRequest,
 } from "./runner_support.ts";
@@ -118,7 +121,7 @@ export class AgentRuntimeRunner {
       await this.preflight(run);
       let cost = run.cost;
       const steps = await this.store.transaction((transaction) =>
-        transaction.listSteps(run.runId)
+        transaction.listSteps(run.scope, run.runId)
       );
       for (const step of steps.filter(isRunnableStep)) {
         const output = await this.executeStep(run, step, cost);
@@ -136,7 +139,7 @@ export class AgentRuntimeRunner {
     await this.ensureRunnable(run);
     if (
       await this.store.transaction((transaction) =>
-        transaction.cancellationRequested(run)
+        transaction.cancellationRequested(run, this.clock.now())
       )
     ) throw new RuntimeCancelledError(run.runId);
     await assertSourcesCurrent(this.sources, run.sourceVersions);
@@ -156,7 +159,7 @@ export class AgentRuntimeRunner {
     };
     await this.store.transaction(async (transaction) => {
       await this.ensureLease(transaction, run);
-      await transaction.updateStep(started);
+      await transaction.updateStep(run, started, startedAt);
       await transaction.appendAttempt(
         stepAttempt(started, run, "started", startedAt),
       );
@@ -187,45 +190,42 @@ export class AgentRuntimeRunner {
       );
     }
     const activity = toolActivity(run, step, this.clock.now());
-    await this.store.transaction((transaction) =>
-      transaction.recordToolActivity(activity)
-    );
+    await this.recordToolActivity(run, activity);
     await this.ensureRunnable(run);
     const result = await this.gateway.invoke(
-      toolRequest(run, step, activity.activityId),
+      toolRequest(
+        run,
+        step,
+        activity.activityId,
+        () => this.ensureRunnable(run),
+      ),
     );
     if (result.status === "denied") {
-      await this.store.transaction((transaction) =>
-        transaction.recordToolActivity({
-          ...activity,
-          state: "denied",
-          denialReason: result.reason,
-          completedAt: this.clock.now(),
-        })
-      );
+      await this.recordToolActivity(run, {
+        ...activity,
+        state: "denied",
+        denialReason: result.reason,
+        completedAt: this.clock.now(),
+      });
       throw new RuntimeToolDeniedError(step.toolName, result.reason);
     }
     if (result.status === "failed") {
-      await this.store.transaction((transaction) =>
-        transaction.recordToolActivity({
-          ...activity,
-          state: "failed",
-          completedAt: this.clock.now(),
-        })
-      );
+      await this.recordToolActivity(run, {
+        ...activity,
+        state: "failed",
+        completedAt: this.clock.now(),
+      });
       throw new Error(
         `Tool "${step.toolName}" execution failed; expected a safe tool result.`,
       );
     }
     await this.ensureLeaseAfterEffect(run);
-    await this.store.transaction((transaction) =>
-      transaction.recordToolActivity({
-        ...activity,
-        state: "succeeded",
-        authority: result.authority,
-        completedAt: this.clock.now(),
-      })
-    );
+    await this.recordToolActivity(run, {
+      ...activity,
+      state: "succeeded",
+      authority: result.authority,
+      completedAt: this.clock.now(),
+    });
     return {
       kind: result.output.kind,
       value: result.output.value,
@@ -287,12 +287,12 @@ export class AgentRuntimeRunner {
           createdAt: now,
         });
       }
-      await transaction.updateStep({
+      await transaction.updateStep(run, {
         ...step,
         state: "succeeded",
         resultId,
         updatedAt: now,
-      });
+      }, now);
       await transaction.appendAttempt(
         stepAttempt(step, run, "completed", now, "succeeded"),
       );
@@ -314,7 +314,11 @@ export class AgentRuntimeRunner {
     const now = this.clock.now();
     await this.store.transaction(async (transaction) => {
       await this.ensureLease(transaction, run);
-      await transaction.updateStep({ ...step, state, updatedAt: now });
+      await transaction.updateStep(
+        run,
+        { ...step, state, updatedAt: now },
+        now,
+      );
       await transaction.appendAttempt(
         stepAttempt(step, run, "completed", now, state, failureCode(error)),
       );
@@ -380,7 +384,7 @@ export class AgentRuntimeRunner {
   private ensureRunnable(run: ClaimedRun): Promise<void> {
     return this.store.transaction(async (transaction) => {
       await this.ensureLease(transaction, run);
-      if (await transaction.cancellationRequested(run)) {
+      if (await transaction.cancellationRequested(run, this.clock.now())) {
         throw new RuntimeCancelledError(run.runId);
       }
       await assertSourcesCurrent(this.sources, run.sourceVersions);
@@ -391,6 +395,16 @@ export class AgentRuntimeRunner {
     await this.store.transaction((transaction) =>
       this.ensureLease(transaction, run)
     );
+  }
+
+  private async recordToolActivity(
+    run: ClaimedRun,
+    activity: ToolActivityRecord,
+  ): Promise<void> {
+    await this.store.transaction(async (transaction) => {
+      await this.ensureLease(transaction, run);
+      await transaction.recordToolActivity(activity);
+    });
   }
 
   private ensureLease(
@@ -405,18 +419,17 @@ export class AgentRuntimeRunner {
     step: StepRecord,
   ): Promise<RuntimeAuthority> {
     await this.ensureRunnable(run);
-    const decision = await this.gateway.reauthorize({
-      activityId:
+    const decision = await this.gateway.reauthorize(
+      stepAuthorizationRequest(
+        run,
+        step,
         `activity_${step.stepId}-${step.attemptCount}` as ToolActivityId,
-      actorId: run.actor.actorId,
-      scope: run.scope,
-      action: step.action ?? `execute_${step.kind}`,
-      resourceKind: step.resourceKind ?? "agent_runtime",
-      resourceId: step.resourceId ?? step.stepId,
-    });
+      ),
+    );
     if (decision.outcome === "deny") {
-      throw new RuntimeEffectDeniedError(step.stepId, decision.reason);
+      throw new RuntimeEffectDeniedError(step.stepId, decision.reasonCode);
     }
-    return decision.authority;
+    await this.ensureRunnable(run);
+    return runtimeAuthority(decision);
   }
 }

@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { InMemoryAgentRuntimeStore } from "../../src/agent_runtime/repository.ts";
 import {
   AgentRuntimeRunner,
@@ -9,7 +9,6 @@ import {
 } from "../../src/agent_runtime/runner.ts";
 import { AgentRuntimeService } from "../../src/agent_runtime/service.ts";
 import {
-  type RuntimeAuthorizer,
   type ToolDefinition,
   ToolGateway,
 } from "../../src/agent_runtime/tool_gateway.ts";
@@ -19,7 +18,14 @@ import type {
   SourceVersionReference,
   StepRecord,
 } from "../../src/agent_runtime/model.ts";
+import { RuntimeLeaseLostError } from "../../src/agent_runtime/model.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
+import {
+  AllowingAuthorization,
+  DenyingAuthorization,
+  LeaseExpiringAuthorization,
+  SequencedAuthorization,
+} from "./authorization_support.ts";
 
 Deno.test("runner records tool/model lineage, cost, and retained attempts", async () => {
   const store = new InMemoryAgentRuntimeStore();
@@ -35,7 +41,7 @@ Deno.test("runner records tool/model lineage, cost, and retained attempts", asyn
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([tool], new AllowingAuthorizer()),
+    new ToolGateway([tool], new AllowingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -44,10 +50,10 @@ Deno.test("runner records tool/model lineage, cost, and retained attempts", asyn
     runId: run.runId,
   });
   const results = await store.transaction((transaction) =>
-    transaction.listResults(run.runId)
+    transaction.listResults(run.scope, run.runId)
   );
   const attempts = await store.transaction((transaction) =>
-    transaction.listAttempts(run.runId)
+    transaction.listAttempts(run.scope, run.runId)
   );
 
   assertEquals(tool.invocations, 1);
@@ -71,7 +77,7 @@ Deno.test("denied tool fails the run without invoking the tool", async () => {
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([tool], new DenyingAuthorizer()),
+    new ToolGateway([tool], new DenyingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -80,13 +86,13 @@ Deno.test("denied tool fails the run without invoking the tool", async () => {
     runId: run.runId,
   });
   const stored = await store.transaction((transaction) =>
-    transaction.findRun(run.runId)
+    transaction.findRun(run.scope, run.runId)
   );
   const activities = await store.transaction((transaction) =>
-    transaction.listToolActivities(run.runId)
+    transaction.listToolActivities(run.scope, run.runId)
   );
   const steps = await store.transaction((transaction) =>
-    transaction.listSteps(run.runId)
+    transaction.listSteps(run.scope, run.runId)
   );
 
   assertEquals(stored?.state, "failed");
@@ -96,6 +102,52 @@ Deno.test("denied tool fails the run without invoking the tool", async () => {
   );
   assertEquals(steps[0].state, "failed");
   assertEquals(tool.invocations, 0);
+});
+
+Deno.test("lease loss during tool authorization blocks the tool effect", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const clock = new MutableClock();
+  const tool = new RecordingProposalTool();
+  await queueRun(store, clock, [toolStep(1)], "run_lease_race");
+  const authorizer = new LeaseExpiringAuthorization(() =>
+    clock.advance(60_001)
+  );
+  const runner = new AgentRuntimeRunner(
+    store,
+    clock,
+    new CurrentSources(),
+    new ToolGateway([tool], authorizer),
+    new RecordingModelExecutor(),
+  );
+
+  await assertRejects(
+    () => runner.executeOne("worker_a", 60_000),
+    RuntimeLeaseLostError,
+  );
+  assertEquals(tool.invocations, 0);
+});
+
+Deno.test("lease loss during executor authorization blocks the executor effect", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const clock = new MutableClock();
+  const executor = new RecordingModelExecutor();
+  await queueRun(store, clock, [modelStep(1)], "run_executor_lease_race");
+  const runner = new AgentRuntimeRunner(
+    store,
+    clock,
+    new CurrentSources(),
+    new ToolGateway(
+      [],
+      new LeaseExpiringAuthorization(() => clock.advance(60_001)),
+    ),
+    executor,
+  );
+
+  await assertRejects(
+    () => runner.executeOne("worker_a", 60_000),
+    RuntimeLeaseLostError,
+  );
+  assertEquals(executor.invocations, 0);
 });
 
 Deno.test("stale source versions invalidate before any tool effect", async () => {
@@ -118,7 +170,7 @@ Deno.test("stale source versions invalidate before any tool effect", async () =>
     store,
     clock,
     new StaleSources(),
-    new ToolGateway([tool], new AllowingAuthorizer()),
+    new ToolGateway([tool], new AllowingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -128,7 +180,9 @@ Deno.test("stale source versions invalidate before any tool effect", async () =>
   });
   assertEquals(tool.invocations, 0);
   assertEquals(
-    (await store.transaction((transaction) => transaction.findRun(run.runId)))
+    (await store.transaction((transaction) =>
+      transaction.findRun(run.scope, run.runId)
+    ))
       ?.state,
     "invalidated",
   );
@@ -151,7 +205,7 @@ Deno.test("expired worker lease is recovered with a retained lease-expired attem
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([tool], new AllowingAuthorizer()),
+    new ToolGateway([tool], new AllowingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -160,7 +214,7 @@ Deno.test("expired worker lease is recovered with a retained lease-expired attem
     runId: run.runId,
   });
   const attempts = await store.transaction((transaction) =>
-    transaction.listAttempts(run.runId)
+    transaction.listAttempts(run.scope, run.runId)
   );
   assertEquals(
     attempts.filter(({ outcome }) => outcome === "lease_expired").length,
@@ -188,7 +242,7 @@ Deno.test("runner reauthorizes each model effect and stops after permission loss
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([], new SequencedAuthorizer(["allow", "deny"])),
+    new ToolGateway([], new SequencedAuthorization(["allow", "deny"])),
     executor,
   );
 
@@ -198,7 +252,9 @@ Deno.test("runner reauthorizes each model effect and stops after permission loss
   });
   assertEquals(executor.invocations, 1);
   assertEquals(
-    (await store.transaction((transaction) => transaction.listSteps(run.runId)))
+    (await store.transaction((transaction) =>
+      transaction.listSteps(run.scope, run.runId)
+    ))
       .map(({ state }) => state),
     ["succeeded", "failed"],
   );
@@ -209,13 +265,21 @@ Deno.test("cancellation is durable and observed before the first effect", async 
   const clock = new MutableClock();
   const tool = new RecordingProposalTool();
   const run = await queueRun(store, clock, [toolStep(1)], "run_cancelled");
-  const service = new AgentRuntimeService(store, clock);
-  await service.requestCancellation(fixtureContext(), run.runId);
+  const service = new AgentRuntimeService(
+    store,
+    clock,
+    new AllowingAuthorization(),
+  );
+  await service.requestCancellation(
+    fixtureContext(),
+    fixtureActor(),
+    run.runId,
+  );
   const runner = new AgentRuntimeRunner(
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([tool], new AllowingAuthorizer()),
+    new ToolGateway([tool], new AllowingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -241,7 +305,7 @@ Deno.test("cost ceiling fails closed without retaining an over-ceiling result", 
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([], new AllowingAuthorizer()),
+    new ToolGateway([], new AllowingAuthorization()),
     new RecordingModelExecutor(),
   );
 
@@ -251,7 +315,7 @@ Deno.test("cost ceiling fails closed without retaining an over-ceiling result", 
   });
   assertEquals(
     await store.transaction((transaction) =>
-      transaction.listResults(run.runId)
+      transaction.listResults(run.scope, run.runId)
     ),
     [],
   );
@@ -266,7 +330,7 @@ Deno.test("retry retains the failed attempt and replays the retryable step", asy
     store,
     clock,
     new CurrentSources(),
-    new ToolGateway([], new AllowingAuthorizer()),
+    new ToolGateway([], new AllowingAuthorization()),
     executor,
   );
 
@@ -280,7 +344,7 @@ Deno.test("retry retains the failed attempt and replays the retryable step", asy
     runId: run.runId,
   });
   const attempts = await store.transaction((transaction) =>
-    transaction.listAttempts(run.runId)
+    transaction.listAttempts(run.scope, run.runId)
   );
   assertEquals(
     attempts.filter(({ scope, outcome }) =>
@@ -299,7 +363,11 @@ async function queueRun(
   sourceVersions: readonly SourceVersionReference[] = [],
   costLimit?: number,
 ) {
-  const service = new AgentRuntimeService(store, clock);
+  const service = new AgentRuntimeService(
+    store,
+    clock,
+    new AllowingAuthorization(),
+  );
   const context = fixtureContext();
   const actor = fixtureActor();
   await service.createMission(context, actor, {
@@ -385,45 +453,6 @@ class CurrentSources implements SourceVersionChecker {
 class StaleSources implements SourceVersionChecker {
   isCurrent(_reference: SourceVersionReference): Promise<boolean> {
     return Promise.resolve(false);
-  }
-}
-
-class AllowingAuthorizer implements RuntimeAuthorizer {
-  authorize(): ReturnType<RuntimeAuthorizer["authorize"]> {
-    return Promise.resolve({
-      outcome: "allow",
-      authority: {
-        snapshotReference: "authority_alpha",
-        decisionReference: "decision_alpha",
-        checkedAt: new Date("2026-08-07T12:00:00.000Z"),
-      },
-    });
-  }
-}
-
-class DenyingAuthorizer implements RuntimeAuthorizer {
-  authorize(): ReturnType<RuntimeAuthorizer["authorize"]> {
-    return Promise.resolve({ outcome: "deny", reason: "GRANT_REVOKED" });
-  }
-}
-
-class SequencedAuthorizer implements RuntimeAuthorizer {
-  private position = 0;
-
-  constructor(private readonly decisions: readonly ("allow" | "deny")[]) {}
-
-  authorize(): ReturnType<RuntimeAuthorizer["authorize"]> {
-    const decision = this.decisions[this.position++] ?? "deny";
-    return decision === "allow"
-      ? Promise.resolve({
-        outcome: "allow",
-        authority: {
-          snapshotReference: "authority_alpha",
-          decisionReference: "decision_alpha",
-          checkedAt: new Date("2026-08-07T12:00:00.000Z"),
-        },
-      })
-      : Promise.resolve({ outcome: "deny", reason: "GRANT_REVOKED" });
   }
 }
 

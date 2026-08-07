@@ -1,11 +1,11 @@
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   agentRuntimeMigrations,
+  AgentRuntimeReadService,
   AgentRuntimeRunner,
   AgentRuntimeService,
   PostgresAgentRuntimeStore,
   PostgresRuntimeAuditOutboxSink,
-  type RuntimeAuthorizer,
   RuntimeLeaseLostError,
   type RuntimeStepExecutor,
   type StepExecutionContext,
@@ -30,6 +30,7 @@ import {
   postgresIntegrationTestDatabaseUrl,
   PostgresTestTransactionPool,
 } from "../platform/support/postgres.ts";
+import { AllowingAuthorization } from "./authorization_support.ts";
 
 const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
@@ -45,7 +46,11 @@ Deno.test({
       new PostgresRuntimeAuditOutboxSink(),
     );
     const clock = new FixedClock();
-    const service = new AgentRuntimeService(store, clock);
+    const service = new AgentRuntimeService(
+      store,
+      clock,
+      new AllowingAuthorization(),
+    );
     const context = fixtureContext();
     const actor = fixtureActor();
     const suffix = uniqueSuffix();
@@ -76,7 +81,7 @@ Deno.test({
       store,
       clock,
       new CurrentSources(),
-      new ToolGateway([tool], new AllowingAuthorizer()),
+      new ToolGateway([tool], new AllowingAuthorization()),
       new PersistedModelExecutor(),
     );
 
@@ -84,13 +89,19 @@ Deno.test({
       status: "succeeded",
       runId,
     });
-    const stored = await service.getRun(run.runId);
+    const stored = await new AgentRuntimeReadService(
+      store,
+      new AllowingAuthorization(),
+    ).getRun(context, actor, run.runId);
     const evidence = await store.transaction(async (transaction) => ({
-      attempts: await transaction.listAttempts(run.runId),
-      results: await transaction.listResults(run.runId),
-      activities: await transaction.listToolActivities(run.runId),
+      attempts: await transaction.listAttempts(run.scope, run.runId),
+      results: await transaction.listResults(run.scope, run.runId),
+      activities: await transaction.listToolActivities(run.scope, run.runId),
     }));
-    assertEquals(stored?.state, "succeeded");
+    assertEquals(
+      stored.kind === "loaded" ? stored.value.state : undefined,
+      "succeeded",
+    );
     assertEquals(evidence.results.map(({ kind }) => kind), [
       "proposal",
       "calculation",
@@ -103,6 +114,49 @@ Deno.test({
       1,
     );
     assertEquals(tool.invocations, 1);
+
+    const firstStep = await store.transaction((transaction) =>
+      transaction.listSteps(run.scope, run.runId)
+    ).then((steps) => steps[0]);
+    assert(firstStep !== undefined);
+    const otherContext = {
+      ...context,
+      workspaceId: "workspace_other" as never,
+      dealId: "deal_other" as never,
+      correlationId: `cor_other_${suffix}` as never,
+    };
+    const reads = new AgentRuntimeReadService(
+      store,
+      new AllowingAuthorization(),
+    );
+    const protectedReads = await Promise.all([
+      reads.getMission(otherContext, actor, missionId as never),
+      reads.getPlan(otherContext, actor, planId as never),
+      reads.getRun(otherContext, actor, run.runId),
+      reads.getStep(otherContext, actor, firstStep.stepId),
+      reads.getToolActivity(
+        otherContext,
+        actor,
+        evidence.activities[0]?.activityId ?? "activity_missing",
+      ),
+      reads.getResult(
+        otherContext,
+        actor,
+        evidence.results[0]?.resultId ?? "result_missing",
+      ),
+      reads.getArtifact(otherContext, actor, "artifact_missing"),
+      reads.getAttempt(
+        otherContext,
+        actor,
+        evidence.attempts[0]?.attemptId ?? "attempt_missing",
+      ),
+      reads.listSteps(otherContext, actor, run.runId),
+      reads.listToolActivities(otherContext, actor, run.runId),
+      reads.listResults(otherContext, actor, run.runId),
+      reads.listArtifacts(otherContext, actor, run.runId),
+      reads.listAttempts(otherContext, actor, run.runId),
+    ]);
+    assert(protectedReads.every(({ kind }) => kind === "protected_not_found"));
 
     const eventCount = await pool.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM agent_runtime.runtime_events
@@ -163,8 +217,30 @@ Deno.test({
         ),
       RuntimeLeaseLostError,
     );
+    const steps = await store.transaction((transaction) =>
+      transaction.listSteps(run.scope, run.runId)
+    );
+    const firstStep = steps[0];
+    assert(firstStep !== undefined);
+    await assertRejects(
+      () =>
+        store.transaction((transaction) =>
+          transaction.updateStep(
+            claimedOld,
+            { ...firstStep, state: "running", updatedAt: clock.now() },
+            clock.now(),
+          )
+        ),
+      RuntimeLeaseLostError,
+    );
+    assertEquals(
+      await store.transaction((transaction) =>
+        transaction.listResults(run.scope, run.runId)
+      ),
+      [],
+    );
     const attempts = await store.transaction((transaction) =>
-      transaction.listAttempts(run.runId)
+      transaction.listAttempts(run.scope, run.runId)
     );
     assertEquals(
       attempts.filter(({ outcome }) => outcome === "lease_expired").length,
@@ -200,7 +276,11 @@ async function queueRuntimeRun(
   clock: FixedClock,
   suffix: string,
 ) {
-  const service = new AgentRuntimeService(store, clock);
+  const service = new AgentRuntimeService(
+    store,
+    clock,
+    new AllowingAuthorization(),
+  );
   const context = fixtureContext();
   const actor = fixtureActor();
   const missionId = `mission_recovery_${suffix}`;
@@ -282,19 +362,6 @@ class FixedClock {
 class CurrentSources {
   isCurrent(_reference: SourceVersionReference): Promise<boolean> {
     return Promise.resolve(true);
-  }
-}
-
-class AllowingAuthorizer implements RuntimeAuthorizer {
-  authorize(): ReturnType<RuntimeAuthorizer["authorize"]> {
-    return Promise.resolve({
-      outcome: "allow",
-      authority: {
-        snapshotReference: "authority_runtime",
-        decisionReference: "decision_runtime",
-        checkedAt: new Date("2026-08-07T12:00:00.000Z"),
-      },
-    });
   }
 }
 

@@ -9,6 +9,8 @@ export * from "./repository.ts";
 export * from "./postgres_repository.ts";
 export * from "./postgres_event_sink.ts";
 export * from "./service.ts";
+export * from "./authorization.ts";
+export * from "./reads.ts";
 export * from "./runner.ts";
 export * from "./tool_gateway.ts";
 export * from "./migrations/index.ts";

@@ -5,6 +5,8 @@ import type {
   SourceVersionReference,
   StepRecord,
 } from "./model.ts";
+import { action, resourceKind } from "../platform/authz/v1.ts";
+import { actorReference } from "./authorization.ts";
 import {
   assertCostMetadata,
   RuntimeLeaseLostError,
@@ -12,7 +14,10 @@ import {
 } from "./model.ts";
 import type { ToolActivityId } from "./ids.ts";
 import type { SourceVersionChecker } from "./runner.ts";
-import { type ToolInvocationRequest } from "./tool_gateway.ts";
+import {
+  type RuntimeAuthorizationRequest,
+  type ToolInvocationRequest,
+} from "./tool_gateway.ts";
 
 export class RuntimeToolDeniedError extends Error {
   readonly code = "RUNTIME_TOOL_DENIED";
@@ -123,9 +128,11 @@ export function toolRequest(
   run: ClaimedRun,
   step: StepRecord,
   activityId: ToolActivityId,
+  beforeEffect: () => Promise<void>,
 ): ToolInvocationRequest {
   return {
     activityId,
+    context: runtimeContext(run),
     actor: run.actor,
     scope: run.scope,
     toolName: step.toolName!,
@@ -134,6 +141,39 @@ export function toolRequest(
     resourceId: step.resourceId!,
     input: step.input,
     sourceVersions: step.sourceVersions,
+    beforeEffect,
+  };
+}
+
+export function stepAuthorizationRequest(
+  run: ClaimedRun,
+  step: StepRecord,
+  activityId: ToolActivityId,
+): RuntimeAuthorizationRequest {
+  return {
+    activityId,
+    context: runtimeContext(run),
+    actor: actorReference(run.actor),
+    scope: run.scope,
+    action: action(step.action ?? `execute_${step.kind}`),
+    resource: {
+      kind: resourceKind(step.resourceKind ?? "agent_runtime"),
+      id: step.resourceId ?? step.stepId,
+    },
+    requestedFields: [],
+  };
+}
+
+function runtimeContext(run: ClaimedRun) {
+  return {
+    actorId: run.actor.actorId,
+    tenantId: run.scope.tenantId,
+    ...(run.scope.workspaceId === undefined
+      ? {}
+      : { workspaceId: run.scope.workspaceId }),
+    ...(run.scope.dealId === undefined ? {} : { dealId: run.scope.dealId }),
+    correlationId: run.correlationId,
+    origin: "job" as const,
   };
 }
 

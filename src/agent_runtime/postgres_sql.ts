@@ -71,6 +71,21 @@ export function scopeValues(scope: RuntimeScope): unknown[] {
   return [scope.tenantId, scope.workspaceId ?? null, scope.dealId ?? null];
 }
 
+export function scopedColumns(alias: string): string {
+  return `${alias}.tenant_id = $2 AND ${alias}.workspace_id IS NOT DISTINCT FROM $3
+    AND ${alias}.deal_id IS NOT DISTINCT FROM $4`;
+}
+
+export function scopedRunExists(alias: string): string {
+  return `EXISTS (
+    SELECT 1 FROM agent_runtime.runs scoped_run
+    WHERE scoped_run.run_id = ${alias}.run_id
+      AND scoped_run.tenant_id = $2
+      AND scoped_run.workspace_id IS NOT DISTINCT FROM $3
+      AND scoped_run.deal_id IS NOT DISTINCT FROM $4
+  )`;
+}
+
 export function idempotencyValues(identity: RuntimeCommandIdentity): unknown[] {
   return [
     identity.scope.tenantId,
