@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave G contains Linear issues MAI-39, MAI-41, MAI-42, MAI-43, and MAI-44. Run only after all five implementation PRs are owner-approved and merged. Linear issue state and merged GitHub source are authoritative.
 
 Objective

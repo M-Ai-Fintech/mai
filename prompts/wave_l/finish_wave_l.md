@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave L contains Linear issue MAI-70 — Data migration and MVP retirement. Run only after its owner-approved PR is merged. Linear state, migration manifests, reconciliation/rollback evidence, operator records, and merged source are authoritative.
 
 Objective

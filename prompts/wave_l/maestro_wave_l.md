@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave L contains Linear issue MAI-70 — Data migration and MVP retirement. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issue/history, and `plan_MAI-70.md` before planning.
 
 Objective
@@ -10,7 +12,7 @@ Relevant scope / architecture
 
 Create `delivery/MAI-70-data-migration-and-mvp-retirement` at `../mai-worktrees/wave_l/MAI-70` from synchronized master. The plan must inventory every legacy writer/reader, target mapping, migration, dual-read/write path, reconciliation rule, consumer cutover, compatibility path, retirement candidate, cutoff, rollback window, operator step, and exclusive file.
 
-Run `plan_MAI-70.md` as the deep planning handoff where justified. Persist `## Wave L execution plan — MAI-70` in Linear and local `AGENTS.md` according to repository convention.
+Use `plan_MAI-70.md` as the planning-only deep-plan handoff where justified. Persist `## Wave L execution plan — MAI-70` in Linear and local `AGENTS.md` according to repository convention.
 
 Known risks or constraints
 

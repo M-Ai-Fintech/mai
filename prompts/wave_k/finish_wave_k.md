@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave K contains Linear issues MAI-68 and MAI-69. Run only after both owner-approved PRs are merged. Linear state, merged source, retirement inventory, and model-adaptation decision evidence are authoritative.
 
 Objective

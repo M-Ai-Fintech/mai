@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave I contains Linear issues MAI-60 — Governed agent definitions and tools, and MAI-61 — Integration adapters and certification. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, both full issues, and their deep-plan prompts before planning.
 
 Objective
@@ -10,7 +12,7 @@ Relevant scope / architecture
 
 Create `delivery/MAI-60-governed-agent-definitions-and-tools` and `delivery/MAI-61-integration-adapters-and-certification` under `../mai-worktrees/wave_i/`. MAI-60 owns governed definitions/tools; MAI-61 owns provider adapters/readiness. Keep shared provider/domain boundaries explicit.
 
-Run `plan_MAI-60.md` and `plan_MAI-61.md` as planning-only handoffs where their deep-plan criteria remain justified. Persist Wave I execution plans in Linear and local `AGENTS.md` according to repository convention.
+Use `plan_MAI-60.md` and `plan_MAI-61.md` as planning-only deep-plan handoffs where their criteria remain justified. Persist Wave I execution plans in Linear and local `AGENTS.md` according to repository convention.
 
 Known risks or constraints
 

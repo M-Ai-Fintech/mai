@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave I contains Linear issues MAI-60 and MAI-61. Run only after both owner-approved PRs are merged. Linear issue state, merged source, provider evidence, and governed documentation are authoritative.
 
 Objective
