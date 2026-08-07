@@ -1,5 +1,8 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import type { ActorReference } from "../../src/platform/authz/v1.ts";
+import type {
+  ActorReference,
+  ApprovedScopeToken,
+} from "../../src/platform/authz/v1.ts";
 import {
   externalGrantId,
   invitationId,
@@ -107,15 +110,20 @@ class RecordingObjectLoader implements PortalObjectLoader {
 
 class ReauthorizingDelivery {
   calls = 0;
+  fences = 0;
+  recipientVisibleDeliveries = 0;
   readonly deliveryIds: string[] = [];
 
-  deliver(input: {
+  async deliver(input: {
+    readonly submission: PortalSubmission;
     readonly deliveryId: string;
-    readonly approvedScope: unknown;
+    readonly beforeExternalEffect: () => Promise<ApprovedScopeToken>;
   }): Promise<void> {
     this.calls += 1;
     this.deliveryIds.push(input.deliveryId);
-    return Promise.resolve();
+    await input.beforeExternalEffect();
+    this.fences += 1;
+    this.recipientVisibleDeliveries += 1;
   }
 }
 
@@ -124,15 +132,43 @@ class IdempotentDelivery {
   logicalDeliveries = 0;
   private readonly delivered = new Set<string>();
 
-  deliver(input: {
+  async deliver(input: {
+    readonly submission: PortalSubmission;
     readonly deliveryId: string;
-    readonly approvedScope: unknown;
+    readonly beforeExternalEffect: () => Promise<ApprovedScopeToken>;
   }): Promise<void> {
     this.attempts += 1;
+    await input.beforeExternalEffect();
     if (this.delivered.has(input.deliveryId)) return Promise.resolve();
     this.delivered.add(input.deliveryId);
     this.logicalDeliveries += 1;
-    return Promise.resolve();
+  }
+}
+
+class RevocationRaceDelivery {
+  readonly invoked: Promise<void>;
+  recipientVisibleDeliveries = 0;
+  private markInvoked!: () => void;
+  private releaseEffect!: () => void;
+
+  constructor() {
+    this.invoked = new Promise((resolve) => this.markInvoked = resolve);
+  }
+
+  async deliver(input: {
+    readonly submission: PortalSubmission;
+    readonly deliveryId: string;
+    readonly beforeExternalEffect: () => Promise<ApprovedScopeToken>;
+  }): Promise<void> {
+    const paused = new Promise<void>((resolve) => this.releaseEffect = resolve);
+    this.markInvoked();
+    await paused;
+    await input.beforeExternalEffect();
+    this.recipientVisibleDeliveries += 1;
+  }
+
+  release(): void {
+    this.releaseEffect();
   }
 }
 
@@ -377,6 +413,8 @@ Deno.test("queued submission reauthorizes immediately before delivery", async ()
 
   assertEquals(completed.state, "accepted");
   assertEquals(delivery.calls, 1);
+  assertEquals(delivery.fences, 1);
+  assertEquals(delivery.recipientVisibleDeliveries, 1);
   assertEquals(delivery.deliveryIds, [submitted.submission.deliveryId]);
 });
 
@@ -426,6 +464,59 @@ Deno.test("queued delivery retries one stable external identity after local comp
   assertEquals(completed.deliveryAttemptCount, 2);
   assertEquals(completed.lastDeliveryError, undefined);
   assertEquals(completed.deliveryCompletedAt, now);
+});
+
+Deno.test("queued delivery fences revocation before its recipient-visible effect", async () => {
+  const state = await prepared();
+  const submitted = await state.service.submitPortalData({
+    type: "submit_portal_data",
+    context: context(state.external.id, "http"),
+    actor: state.external,
+    idempotencyKey: "idem_submit-effect-fence" as IdempotencyKey,
+    grantId: state.invitation.grant.id,
+    object: { objectId: "object_submission-1", kind: "submission_form" },
+    purpose: "submission_review",
+    sponsor: human.id,
+    requestedExpiry: "2026-08-08T12:00:00.000Z",
+    requestedFields: ["title"],
+    payload: { title: "fenced response" },
+  }, new RecordingObjectLoader());
+  const delivery = new RevocationRaceDelivery();
+  const processing = state.service.processQueuedSubmission({
+    context: context(state.external.id, "job"),
+    actor: state.external,
+    submissionId: submitted.submission.id,
+    purpose: "submission_review",
+    sponsor: human.id,
+    requestedExpiry: "2026-08-08T12:00:00.000Z",
+    requestedFields: ["title"],
+  }, delivery);
+
+  await delivery.invoked;
+  await state.service.revokeGrant({
+    type: "revoke_grant",
+    context: context(human.id, "internal"),
+    actor: human,
+    idempotencyKey: "idem_revoke-effect-fence" as IdempotencyKey,
+    grantId: state.invitation.grant.id,
+    expectedVersion: 1,
+  });
+  delivery.release();
+
+  await assertRejects(
+    () => processing,
+    DealAccessAuthorizationError,
+  );
+  const current = await state.repository.transaction((store) =>
+    store.findSubmission(scope, submitted.submission.id)
+  );
+  if (current === undefined) {
+    throw new Error("Expected queued submission state.");
+  }
+  assertEquals(delivery.recipientVisibleDeliveries, 0);
+  assertEquals(current.state, "queued");
+  assertEquals(current.deliveryAttemptCount, 1);
+  assertEquals(current.lastDeliveryError !== undefined, true);
 });
 
 Deno.test("queued submission is not delivered after grant revocation", async () => {

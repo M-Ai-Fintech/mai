@@ -175,12 +175,13 @@ export interface QueuedSubmissionInput {
 
 export interface QueuedSubmissionDelivery {
   /**
-   * The adapter must use the supplied current authorization for its external
-   * request and deduplicate recipient-visible delivery by the stable identity.
+   * The adapter must invoke this fence immediately before each recipient-visible
+   * effect and use the returned current authorization for that same effect.
+   * Delivery attempts must deduplicate recipient-visible effects by deliveryId.
    */
   deliver(input: {
     readonly submission: PortalSubmission;
     readonly deliveryId: string;
-    readonly approvedScope: ApprovedScopeToken;
+    readonly beforeExternalEffect: () => Promise<ApprovedScopeToken>;
   }): Promise<void>;
 }

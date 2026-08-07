@@ -150,15 +150,15 @@ export async function processQueuedSubmission(input: {
   });
   if (prepared.submission.state === "queued") {
     try {
-      const approvedScope = await reauthorizeQueuedSubmission(
-        input.repository,
-        input.clock,
-        input.request,
-      );
       await input.delivery.deliver({
         submission: prepared.submission,
         deliveryId: prepared.submission.deliveryId,
-        approvedScope,
+        beforeExternalEffect: () =>
+          reauthorizeQueuedSubmission(
+            input.repository,
+            input.clock,
+            input.request,
+          ),
       });
     } catch (error) {
       await input.repository.transaction((store) =>
