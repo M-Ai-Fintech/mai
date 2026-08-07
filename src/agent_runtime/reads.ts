@@ -23,6 +23,7 @@ import type {
   StepRecord,
   ToolActivityRecord,
 } from "./model.ts";
+import { runtimeScopeFromContext } from "./model.ts";
 import type { MissionId, PlanId, RunId, StepId } from "./ids.ts";
 import type { AgentRuntimeStore, RuntimeTransaction } from "./repository.ts";
 
@@ -230,7 +231,7 @@ export class AgentRuntimeReadService {
       scope: RuntimeScope,
     ) => Promise<T | undefined>,
   ): Promise<RuntimeReadResult<T>> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     const decision = await this.authorize(
       context,
       actor,
@@ -256,7 +257,7 @@ export class AgentRuntimeReadService {
       scope: RuntimeScope,
     ) => Promise<T>,
   ): Promise<RuntimeReadResult<T>> {
-    const scope = scopeFromContext(context);
+    const scope = runtimeScopeFromContext(context);
     const decision = await this.authorize(
       context,
       actor,
@@ -294,14 +295,6 @@ export class AgentRuntimeReadService {
       requestedFields: [],
     }));
   }
-}
-
-function scopeFromContext(context: RequestContext): RuntimeScope {
-  return {
-    tenantId: context.tenantId,
-    workspaceId: context.workspaceId,
-    dealId: context.dealId,
-  };
 }
 
 function protectedNotFound(

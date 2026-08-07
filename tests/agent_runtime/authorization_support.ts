@@ -9,6 +9,10 @@ import type {
   RuntimeAuthorizationInput,
   RuntimeAuthorizationPort,
 } from "../../src/agent_runtime/authorization.ts";
+import {
+  RUNTIME_ACTION,
+  RUNTIME_RESOURCE,
+} from "../../src/agent_runtime/authorization.ts";
 import type { RuntimeActor } from "../../src/agent_runtime/model.ts";
 
 export class AllowingAuthorization implements RuntimeAuthorizationPort {
@@ -46,6 +50,25 @@ export class LeaseExpiringAuthorization implements RuntimeAuthorizationPort {
   authorize(input: RuntimeAuthorizationInput): AuthorizationDecision {
     this.advance();
     return evaluateAuthorization(policyRequest(input, [standardGrant(input)]));
+  }
+}
+
+export class PlanCreationWithoutMissionUseAuthorization
+  implements RuntimeAuthorizationPort {
+  readonly requests: RuntimeAuthorizationInput[] = [];
+
+  authorize(input: RuntimeAuthorizationInput): AuthorizationDecision {
+    this.requests.push(input);
+    const canProposePlan = input.resource.kind === RUNTIME_RESOURCE.plan &&
+      input.action === RUNTIME_ACTION.proposePlan;
+    return evaluateAuthorization(
+      policyRequest(
+        input,
+        canProposePlan
+          ? [standardGrant(input)]
+          : [{ ...standardGrant(input), state: "revoked" }],
+      ),
+    );
   }
 }
 

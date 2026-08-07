@@ -242,8 +242,8 @@ export async function loadIdempotency(
   const result = await transaction.query<RawIdempotencyRow>(
     `SELECT payload_digest AS "payloadDigest", result_reference AS "resultReference"
      FROM agent_runtime.command_idempotency
-     WHERE tenant_id = $1 AND workspace_id IS NOT DISTINCT FROM $2
-       AND deal_id IS NOT DISTINCT FROM $3 AND actor_id = $4
+     WHERE tenant_id = $1 AND workspace_id = $2
+       AND deal_id = $3 AND actor_id = $4
        AND command_type = $5 AND target_type = $6 AND target_id = $7
        AND idempotency_key = $8`,
     idempotencyValues(identity),

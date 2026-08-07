@@ -84,12 +84,14 @@ export class DealAccessSessionInvalidationCoordinator {
     if (record.grantId !== undefined) {
       await this.sessions.invalidateGrant(
         record.grantId as ExternalGrant["id"],
+        record.invalidationId,
       );
       return;
     }
     if (record.participationId !== undefined) {
       await this.sessions.invalidateParticipation(
         record.participationId as DealParticipation["id"],
+        record.invalidationId,
       );
       return;
     }

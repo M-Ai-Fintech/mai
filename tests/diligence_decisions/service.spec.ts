@@ -163,7 +163,7 @@ Deno.test("recording then superseding preserves the old immutable record", async
   if (projection === undefined) {
     throw new Error("Expected initial decision projection.");
   }
-  const superseded = await service.supersedeDecision({
+  const supersedeInput = {
     context: { ...context, actorId: approver.id },
     scope,
     requestId: request.id,
@@ -172,13 +172,14 @@ Deno.test("recording then superseding preserves the old immutable record", async
     expectedRequestVersion: requiredVersion(Number(request.version) + 1),
     expectedProjectionVersion: projection.version,
     outcome: "waived",
-    basis: basis("replacement"),
+    basis: recorded.value.basis,
     actor: approver,
     namedApproverId: approver.id,
     reason: "A later exact basis supersedes the prior disposition.",
     idempotencyKey: key("supersede"),
-  });
-  assertEquals(superseded.value.state, "superseded");
+  } as const;
+  const superseded = await service.supersedeDecision(supersedeInput);
+  assertEquals(superseded.value.state, "active");
   assertEquals(repository.records.get(oldRecord.id), oldRecord);
   assertEquals(
     repository.records.get(recordId("new"))?.supersedesRecordId,
@@ -192,6 +193,159 @@ Deno.test("recording then superseding preserves the old immutable record", async
     repository.projections.get(request.id)?.currentRecordId,
     recordId("new"),
   );
+  const chained = await service.supersedeDecision({
+    ...supersedeInput,
+    recordId: recordId("new"),
+    replacementRecordId: recordId("newer"),
+    expectedRequestVersion: requiredVersion(Number(request.version) + 2),
+    expectedProjectionVersion: requiredVersion(
+      Number(projection.version) + 1,
+    ),
+    outcome: "rejected",
+    basis: oldRecord.basis,
+    idempotencyKey: key("supersede-chain"),
+  });
+  assertEquals(chained.value.state, "active");
+  assertEquals(chained.value.currentRecordId, recordId("newer"));
+  assertEquals(repository.records.get(oldRecord.id), oldRecord);
+  assertEquals(
+    repository.records.get(recordId("new"))?.supersedesRecordId,
+    oldRecord.id,
+  );
+  assertEquals(
+    repository.records.get(recordId("newer"))?.supersedesRecordId,
+    recordId("new"),
+  );
+  assertEquals(
+    repository.requests.get(request.id)?.decisionRecordId,
+    recordId("newer"),
+  );
+  assertEquals(
+    repository.projections.get(request.id)?.currentRecordId,
+    recordId("newer"),
+  );
+  assertEquals(repository.history.size, 3);
+  assertEquals(
+    repository.history.get("decision_history_old-superseded")?.basisDigest,
+    oldRecord.basis.basisDigest,
+  );
+  assertEquals(
+    repository.history.get("decision_history_new-superseded")?.basisDigest,
+    oldRecord.basis.basisDigest,
+  );
+  const replay = await service.supersedeDecision(supersedeInput);
+  assertEquals(replay.status, "replayed");
+  assertEquals(replay.value.currentRecordId, recordId("newer"));
+});
+
+Deno.test("a superseded current record can be invalidated without rewriting history", async () => {
+  const repository = new MemoryRepository();
+  const request = createRequest("invalidate-after-supersede", "requested");
+  repository.requests.set(request.id, request);
+  const service = serviceFor(repository);
+  const recorded = await service.recordDecision({
+    context: { ...context, actorId: approver.id },
+    scope,
+    requestId: request.id,
+    recordId: recordId("invalidate-chain-old"),
+    expectedRequestVersion: request.version,
+    outcome: "approved",
+    basis: request.basis,
+    actor: approver,
+    namedApproverId: approver.id,
+    idempotencyKey: key("invalidate-chain-record"),
+  });
+  const initialProjection = repository.projections.get(request.id);
+  if (initialProjection === undefined) {
+    throw new Error("Expected projection fixture.");
+  }
+  const superseded = await service.supersedeDecision({
+    context: { ...context, actorId: approver.id },
+    scope,
+    requestId: request.id,
+    recordId: recorded.value.id,
+    replacementRecordId: recordId("invalidate-chain-new"),
+    expectedRequestVersion: requiredVersion(Number(request.version) + 1),
+    expectedProjectionVersion: initialProjection.version,
+    outcome: "waived",
+    basis: recorded.value.basis,
+    actor: approver,
+    namedApproverId: approver.id,
+    reason: "A current decision was superseded before invalidation.",
+    idempotencyKey: key("invalidate-chain-supersede"),
+  });
+  const invalidated = await service.invalidateDecision({
+    context: { ...context, actorId: approver.id },
+    scope,
+    requestId: request.id,
+    recordId: superseded.value.currentRecordId,
+    expectedRequestVersion: requiredVersion(Number(request.version) + 2),
+    expectedProjectionVersion: superseded.value.version,
+    basis: recorded.value.basis,
+    actor: approver,
+    namedApproverId: approver.id,
+    reason: "The current superseding decision was invalidated.",
+    idempotencyKey: key("invalidate-chain"),
+  });
+  assertEquals(invalidated.value.state, "invalidated");
+  assertEquals(
+    invalidated.value.currentRecordId,
+    recordId("invalidate-chain-new"),
+  );
+  assertEquals(repository.requests.get(request.id)?.state, "invalidated");
+  assertEquals(
+    repository.requests.get(request.id)?.decisionRecordId,
+    recordId("invalidate-chain-new"),
+  );
+  assertEquals(repository.records.get(recorded.value.id), recorded.value);
+  assertEquals(
+    repository.records.get(recordId("invalidate-chain-new"))?.basis,
+    recorded.value.basis,
+  );
+  assertEquals(repository.history.size, 3);
+});
+
+Deno.test("Decision supersession still requires an active human authority", async () => {
+  const repository = new MemoryRepository();
+  const request = createRequest("human-authority", "requested");
+  repository.requests.set(request.id, request);
+  const service = serviceFor(repository);
+  const recorded = await service.recordDecision({
+    context: { ...context, actorId: approver.id },
+    scope,
+    requestId: request.id,
+    recordId: recordId("human-authority-old"),
+    expectedRequestVersion: request.version,
+    outcome: "approved",
+    basis: request.basis,
+    actor: approver,
+    namedApproverId: approver.id,
+    idempotencyKey: key("human-authority-record"),
+  });
+  const projection = repository.projections.get(request.id);
+  if (projection === undefined) throw new Error("Expected projection fixture.");
+  const ai = { ...approver, kind: "ai" as const };
+  const error = await assertRejects(
+    () =>
+      service.supersedeDecision({
+        context: { ...context, actorId: ai.id },
+        scope,
+        requestId: request.id,
+        recordId: recorded.value.id,
+        replacementRecordId: recordId("human-authority-new"),
+        expectedRequestVersion: requiredVersion(Number(request.version) + 1),
+        expectedProjectionVersion: projection.version,
+        outcome: "waived",
+        basis: recorded.value.basis,
+        actor: ai,
+        namedApproverId: approver.id,
+        reason: "An AI actor must not supersede a human decision.",
+        idempotencyKey: key("human-authority-supersede"),
+      }),
+    DiligenceDecisionError,
+  );
+  assertEquals(error.code, "HUMAN_AUTHORITY_REQUIRED");
+  assertEquals(repository.records.has(recordId("human-authority-new")), false);
 });
 
 Deno.test("invalidation changes the request projection without rewriting the record", async () => {

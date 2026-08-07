@@ -69,7 +69,7 @@ class InvalidationIds implements DealAccessIdFactory {
 class FailOnceSessions {
   grantCalls = 0;
 
-  invalidateGrant(): Promise<void> {
+  invalidateGrant(_grantId: string, _invalidationId: string): Promise<void> {
     this.grantCalls += 1;
     if (this.grantCalls === 1) {
       return Promise.reject(new Error("session backend unavailable"));
@@ -77,8 +77,32 @@ class FailOnceSessions {
     return Promise.resolve();
   }
 
-  invalidateParticipation(): Promise<void> {
+  invalidateParticipation(
+    _participationId: string,
+    _invalidationId: string,
+  ): Promise<void> {
     return Promise.resolve();
+  }
+}
+
+class DeduplicatingSessions {
+  calls = 0;
+  logicalInvalidations = 0;
+  private readonly delivered = new Set<string>();
+
+  invalidateGrant(_grantId: string, invalidationId: string): Promise<void> {
+    this.calls += 1;
+    if (this.delivered.has(invalidationId)) return Promise.resolve();
+    this.delivered.add(invalidationId);
+    this.logicalInvalidations += 1;
+    return Promise.resolve();
+  }
+
+  invalidateParticipation(
+    _participationId: string,
+    invalidationId: string,
+  ): Promise<void> {
+    return this.invalidateGrant("participation", invalidationId);
   }
 }
 
@@ -173,5 +197,43 @@ Deno.test("HTTP callers cannot invoke the invalidation worker", async () => {
   await assertRejects(
     () => service.retrySessionInvalidations({ context: context("http") }),
     DealAccessAuthorizationError,
+  );
+});
+
+Deno.test("competing invalidation workers reuse one stable external identity", async () => {
+  const repository = new InMemoryDealAccessRepository();
+  const sessions = new DeduplicatingSessions();
+  await repository.transaction((store) =>
+    store.recordSessionInvalidation({
+      invalidationId: "invalidation_competing-1",
+      scope,
+      grantId: "grant_competing-1",
+      reason: "revoked",
+      state: "pending",
+      attemptCount: 0,
+    })
+  );
+  const createService = () =>
+    new DealAccessService({
+      repository,
+      authorization: new AllowingDealAccessAuthorization(),
+      ids: new InvalidationIds(),
+      clock: { now: () => now },
+      sessions,
+    });
+
+  const [first, second] = await Promise.all([
+    createService().retrySessionInvalidations({ context: context("job") }),
+    createService().retrySessionInvalidations({ context: context("job") }),
+  ]);
+
+  assertEquals(first.attempted + second.attempted, 2);
+  assertEquals(sessions.calls, 2);
+  assertEquals(sessions.logicalInvalidations, 1);
+  assertEquals(
+    await repository.transaction((store) =>
+      store.listPendingSessionInvalidations(scope)
+    ),
+    [],
   );
 });

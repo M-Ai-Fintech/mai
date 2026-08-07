@@ -168,10 +168,8 @@ function runtimeContext(run: ClaimedRun) {
   return {
     actorId: run.actor.actorId,
     tenantId: run.scope.tenantId,
-    ...(run.scope.workspaceId === undefined
-      ? {}
-      : { workspaceId: run.scope.workspaceId }),
-    ...(run.scope.dealId === undefined ? {} : { dealId: run.scope.dealId }),
+    workspaceId: run.scope.workspaceId,
+    dealId: run.scope.dealId,
     correlationId: run.correlationId,
     origin: "job" as const,
   };

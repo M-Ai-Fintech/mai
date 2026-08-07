@@ -50,7 +50,6 @@ export interface SourceVersionChecker {
 export interface StepExecutionContext {
   readonly run: ClaimedRun;
   readonly step: StepRecord;
-  beforeEffect(): Promise<RuntimeAuthority>;
 }
 
 export interface StepExecutionOutput {
@@ -65,6 +64,7 @@ export interface StepExecutionOutput {
 }
 
 export interface RuntimeStepExecutor {
+  /** Returns data only; the runner owns the fenced durable result boundary. */
   execute(
     step: StepRecord,
     context: StepExecutionContext,
@@ -219,7 +219,7 @@ export class AgentRuntimeRunner {
         `Tool "${step.toolName}" execution failed; expected a safe tool result.`,
       );
     }
-    await this.ensureLeaseAfterEffect(run);
+    await this.ensureBeforeDurableEffect(run);
     await this.recordToolActivity(run, {
       ...activity,
       state: "succeeded",
@@ -249,11 +249,12 @@ export class AgentRuntimeRunner {
     step: StepRecord,
   ): Promise<StepExecutionOutput> {
     await this.authorizeStepEffect(run, step);
-    return this.executor.execute(step, {
+    const output = await this.executor.execute(step, {
       run,
       step,
-      beforeEffect: () => this.authorizeStepEffect(run, step),
     });
+    await this.ensureBeforeDurableEffect(run);
+    return output;
   }
 
   private async persistStepSuccess(
@@ -391,7 +392,7 @@ export class AgentRuntimeRunner {
     });
   }
 
-  private async ensureLeaseAfterEffect(run: ClaimedRun): Promise<void> {
+  private async ensureBeforeDurableEffect(run: ClaimedRun): Promise<void> {
     await this.store.transaction((transaction) =>
       this.ensureLease(transaction, run)
     );

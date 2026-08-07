@@ -165,7 +165,7 @@ export function rowProjection(
     ),
     state: enumValue(
       row.state,
-      ["active", "superseded", "invalidated"],
+      ["active", "invalidated"],
       "projection state",
     ),
     version: rowVersion(row.version, "projection version"),

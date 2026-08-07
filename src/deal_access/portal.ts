@@ -62,6 +62,12 @@ export interface ReadPortalObjectInput {
 export async function readPortalObject(
   input: ReadPortalObjectInput,
 ): Promise<PortalReadResult> {
+  if (!isActiveExternalPrincipal(input)) {
+    return {
+      kind: "protected_not_found",
+      response: portalNotFound(input.context),
+    };
+  }
   const state = await loadPortalState(input);
   if (state === undefined) {
     return {
@@ -99,6 +105,14 @@ export async function readPortalObject(
     ),
     decision: guarded.decision,
   };
+}
+
+function isActiveExternalPrincipal(input: ReadPortalObjectInput): boolean {
+  return input.actor.kind === "external" &&
+    input.actor.state === "active" &&
+    input.actor.id === input.context.actorId &&
+    input.context.workspaceId !== undefined &&
+    input.context.dealId !== undefined;
 }
 
 function authorizationInput(

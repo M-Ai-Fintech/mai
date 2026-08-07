@@ -18,9 +18,13 @@ export async function claimCandidate(
 ): Promise<RawRunRow | undefined> {
   const result = await transaction.query<RawRunRow>(
     `${runSelect()}
-     WHERE state = 'queued'
-        OR (state = 'retry_scheduled' AND (next_attempt_at IS NULL OR next_attempt_at <= $1))
-        OR (state = 'running' AND lease_expires_at <= $1)
+     WHERE (
+       state = 'queued'
+       OR (state = 'retry_scheduled' AND (next_attempt_at IS NULL OR next_attempt_at <= $1))
+       OR (state = 'running' AND lease_expires_at <= $1)
+     )
+       AND workspace_id IS NOT NULL
+       AND deal_id IS NOT NULL
      ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1`,
     [now],
   );

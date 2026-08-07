@@ -4,6 +4,7 @@ import {
   AgentRuntimeService,
   RuntimeActorContextMismatchError,
 } from "../../src/agent_runtime/v1.ts";
+import { RuntimeScopeRequiredError } from "../../src/agent_runtime/model.ts";
 import {
   InMemoryAgentRuntimeStore,
 } from "../../src/agent_runtime/repository.ts";
@@ -85,6 +86,22 @@ Deno.test("protected runtime reads deny unauthorized and cross-scope identifiers
         run.runId,
       ),
     RuntimeActorContextMismatchError,
+  );
+});
+
+Deno.test("protected runtime reads reject incomplete deal scope before authorization or loading", async () => {
+  const reads = new AgentRuntimeReadService(
+    new InMemoryAgentRuntimeStore(),
+    new AllowingAuthorization(),
+  );
+  await assertRejects(
+    () =>
+      reads.getMission(
+        fixtureContext({ workspaceId: undefined, dealId: undefined }),
+        fixtureActor(),
+        "mission_missing_scope" as never,
+      ),
+    RuntimeScopeRequiredError,
   );
 });
 

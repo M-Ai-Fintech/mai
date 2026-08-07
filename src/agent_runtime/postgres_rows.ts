@@ -345,12 +345,15 @@ export function toAttempt(row: RawAttemptRow): RuntimeAttemptRecord {
 }
 
 function toScope(row: RawScopeRow): RuntimeScope {
+  if (row.workspaceId === null || row.dealId === null) {
+    throw new Error(
+      `Persisted runtime row for tenant "${row.tenantId}" is unscoped; expected workspace and deal identifiers after the runtime scope migration.`,
+    );
+  }
   return {
     tenantId: row.tenantId as TenantId,
-    ...(row.workspaceId === null
-      ? {}
-      : { workspaceId: row.workspaceId as WorkspaceId }),
-    ...(row.dealId === null ? {} : { dealId: row.dealId as DealId }),
+    workspaceId: row.workspaceId as WorkspaceId,
+    dealId: row.dealId as DealId,
   };
 }
 

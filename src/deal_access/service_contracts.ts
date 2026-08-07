@@ -30,6 +30,7 @@ import type {
   PortalReceiptId,
   SubmissionId,
 } from "./ids.ts";
+import type { InvitationCapability } from "./capabilities.ts";
 
 export interface DealAccessIdFactory {
   nextParticipationId(): ParticipationId;
@@ -45,8 +46,16 @@ export interface DealAccessClock {
 }
 
 export interface ExternalSessionInvalidator {
-  invalidateGrant(grantId: ExternalGrantId): Promise<void>;
-  invalidateParticipation(participationId: ParticipationId): Promise<void>;
+  /** The external system must deduplicate repeated calls by invalidationId. */
+  invalidateGrant(
+    grantId: ExternalGrantId,
+    invalidationId: string,
+  ): Promise<void>;
+  /** The external system must deduplicate repeated calls by invalidationId. */
+  invalidateParticipation(
+    participationId: ParticipationId,
+    invalidationId: string,
+  ): Promise<void>;
 }
 
 export interface DealAccessCommandContext {
@@ -79,7 +88,7 @@ export interface InviteParticipantCommand {
   readonly actor: ActorReference;
   readonly idempotencyKey: IdempotencyKey;
   readonly participantId: string;
-  readonly invitationToken: string;
+  readonly invitationToken: InvitationCapability;
   readonly purpose: string;
   readonly sponsor: HumanSponsor;
   readonly expiresAt: string;
@@ -99,7 +108,7 @@ export interface AcceptInvitationCommand {
   readonly actor: ActorReference;
   readonly idempotencyKey: IdempotencyKey;
   readonly participationId: ParticipationId;
-  readonly invitationToken: string;
+  readonly invitationToken: InvitationCapability;
   readonly expectedVersion: number;
 }
 
@@ -165,8 +174,13 @@ export interface QueuedSubmissionInput {
 }
 
 export interface QueuedSubmissionDelivery {
+  /**
+   * The adapter must use the supplied current authorization for its external
+   * request and deduplicate recipient-visible delivery by the stable identity.
+   */
   deliver(input: {
     readonly submission: PortalSubmission;
-    readonly beforeExternalEffect: () => Promise<ApprovedScopeToken>;
+    readonly deliveryId: string;
+    readonly approvedScope: ApprovedScopeToken;
   }): Promise<void>;
 }

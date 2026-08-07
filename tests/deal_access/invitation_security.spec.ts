@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
   type AuthorizationDecision,
   evaluateAuthorization,
@@ -13,6 +13,10 @@ import {
   portalObjectId,
 } from "../../src/deal_access/ids.ts";
 import { DealAccessAuthorizationError } from "../../src/deal_access/errors.ts";
+import {
+  digestInvitationToken,
+  issueInvitationToken,
+} from "../../src/deal_access/capabilities.ts";
 import {
   type DealAccessAuthorizationInput,
   type DealAccessAuthorizationPort,
@@ -41,7 +45,7 @@ const human: ActorReference = {
   kind: "human",
   state: "active",
 };
-const token = "invitation-capability-token-with-at-least-32-bytes";
+const token = issueInvitationToken();
 
 class InvitationIds implements DealAccessIdFactory {
   private sequence = 0;
@@ -210,7 +214,7 @@ Deno.test("wrong actor or capability cannot accept another participant invitatio
         },
         idempotencyKey: "idem_invitation-wrong-token" as IdempotencyKey,
         participationId: state.invitation.participation.id,
-        invitationToken: "wrong-capability-token-with-at-least-32-bytes",
+        invitationToken: issueInvitationToken(),
         expectedVersion: 1,
       }),
     DealAccessAuthorizationError,
@@ -266,4 +270,28 @@ Deno.test("expired and already-consumed invitations are not reusable", async () 
       }),
     DealAccessAuthorizationError,
   );
+});
+
+Deno.test("invalid invitation capabilities never appear in surfaced errors", async () => {
+  const raw = "predictable-secret-that-must-not-be-reflected";
+  const error = await assertRejects(
+    () => digestInvitationToken(raw),
+    Error,
+  );
+  assert(!error.message.includes(raw));
+  assert(!error.message.includes("predictable-secret"));
+});
+
+Deno.test("invitation evidence retains only the capability digest", async () => {
+  const state = fixture();
+  const invitation = await state.service.inviteParticipant(
+    inviteCommand("evidence"),
+  );
+  const evidence = JSON.stringify({
+    invitation,
+    events: state.repository.events,
+    outbox: state.repository.outbox,
+  });
+  assert(!evidence.includes(token));
+  assertEquals(invitation.participation.invitationTokenDigest.length, 64);
 });

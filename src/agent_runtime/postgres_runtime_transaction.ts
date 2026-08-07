@@ -86,8 +86,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
       `UPDATE agent_runtime.plan_versions
        SET state = $2
        WHERE plan_id = $1 AND tenant_id = $3
-         AND workspace_id IS NOT DISTINCT FROM $4
-         AND deal_id IS NOT DISTINCT FROM $5`,
+         AND workspace_id = $4
+         AND deal_id = $5`,
       [plan.planId, plan.state, ...scopeValues(plan.scope)],
     );
     if (result.rowCount === 1) return;
@@ -200,8 +200,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
     const result = await this.transaction.query(
       `SELECT 1 FROM agent_runtime.runs
        WHERE run_id = $1 AND state = 'running' AND tenant_id = $2
-         AND workspace_id IS NOT DISTINCT FROM $3
-         AND deal_id IS NOT DISTINCT FROM $4
+         AND workspace_id = $3
+         AND deal_id = $4
          AND lease_owner = $5 AND attempt_count = $6
          AND lease_expires_at = $7 AND lease_expires_at > $8
        FOR UPDATE`,
@@ -223,8 +223,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
       `SELECT cancellation_requested_at IS NOT NULL AS requested
        FROM agent_runtime.runs
        WHERE run_id = $1 AND state = 'running' AND tenant_id = $2
-         AND workspace_id IS NOT DISTINCT FROM $3
-         AND deal_id IS NOT DISTINCT FROM $4
+         AND workspace_id = $3
+         AND deal_id = $4
          AND lease_owner = $5 AND attempt_count = $6
          AND lease_expires_at = $7 AND lease_expires_at > $8
        FOR UPDATE`,
@@ -257,8 +257,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
            lease_expires_at = CASE WHEN $2 = ANY($6::text[]) THEN NULL ELSE lease_expires_at END,
            aggregate_version = aggregate_version + 1, updated_at = $7
        WHERE run_id = $1 AND state = 'running' AND tenant_id = $8
-         AND workspace_id IS NOT DISTINCT FROM $9
-         AND deal_id IS NOT DISTINCT FROM $10
+         AND workspace_id = $9
+         AND deal_id = $10
          AND lease_owner = $11 AND attempt_count = $12
          AND lease_expires_at = $13 AND lease_expires_at > $7
        RETURNING ${runSelectColumns()}`,
@@ -387,8 +387,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
     const result = await this.transaction.query(
       `UPDATE agent_runtime.command_idempotency
        SET result_reference = $9, completed_at = $10
-       WHERE tenant_id = $1 AND workspace_id IS NOT DISTINCT FROM $2
-         AND deal_id IS NOT DISTINCT FROM $3 AND actor_id = $4
+       WHERE tenant_id = $1 AND workspace_id = $2
+         AND deal_id = $3 AND actor_id = $4
          AND command_type = $5 AND target_type = $6 AND target_id = $7
          AND idempotency_key = $8 AND payload_digest = $11`,
       [
@@ -441,8 +441,8 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
        SET cancellation_requested_at = COALESCE(cancellation_requested_at, $5),
            updated_at = $5
        WHERE run_id = $1 AND tenant_id = $2
-         AND workspace_id IS NOT DISTINCT FROM $3
-         AND deal_id IS NOT DISTINCT FROM $4
+         AND workspace_id = $3
+         AND deal_id = $4
          AND state IN ('queued', 'running', 'retry_scheduled')`,
       [runId, ...scopeValues(scope), requestedAt],
     );

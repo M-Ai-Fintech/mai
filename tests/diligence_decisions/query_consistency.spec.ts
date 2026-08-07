@@ -57,7 +57,7 @@ Deno.test(
     const projection = createDecisionProjection({
       requestId: request.id,
       currentRecordId: required("decision_record_new", parseDecisionRecordId),
-      state: "superseded",
+      state: "active",
       version: 2 as never,
       updatedAt: now(),
     });

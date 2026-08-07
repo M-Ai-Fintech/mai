@@ -17,6 +17,7 @@ export const RUNTIME_ACTION = Object.freeze({
   createMission: action("create_mission"),
   execute: action("execute"),
   proposePlan: action("propose_plan"),
+  useMission: action("use_mission"),
   queueRun: action("queue_run"),
   read: action("read"),
 });

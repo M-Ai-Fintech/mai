@@ -14,6 +14,7 @@ import {
   portalObjectId,
 } from "../../src/deal_access/ids.ts";
 import { DealAccessAuthorizationError } from "../../src/deal_access/errors.ts";
+import { issueInvitationToken } from "../../src/deal_access/capabilities.ts";
 import {
   type DealAccessIdFactory,
   DealAccessService,
@@ -113,7 +114,7 @@ function inviteCommand(key: string) {
     actor: human,
     idempotencyKey: `idem_security-${key}` as IdempotencyKey,
     participantId: "participant_security",
-    invitationToken: "security-invitation-token-with-32-bytes-minimum",
+    invitationToken: issueInvitationToken(),
     purpose: "document_review",
     sponsor: { actorId: human.id, kind: "human" as const },
     expiresAt: "2026-08-08T12:00:00.000Z",

@@ -150,6 +150,43 @@ Deno.test("lease loss during executor authorization blocks the executor effect",
   assertEquals(executor.invocations, 0);
 });
 
+Deno.test("lease loss during executor execution fences durable success", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const clock = new MutableClock();
+  const executor = new LeaseExpiringModelExecutor(() => clock.advance(60_001));
+  const run = await queueRun(
+    store,
+    clock,
+    [modelStep(1)],
+    "run_executor_effect_race",
+  );
+  const runner = new AgentRuntimeRunner(
+    store,
+    clock,
+    new CurrentSources(),
+    new ToolGateway([], new AllowingAuthorization()),
+    executor,
+  );
+
+  await assertRejects(
+    () => runner.executeOne("worker_a", 60_000),
+    RuntimeLeaseLostError,
+  );
+  assertEquals(executor.invocations, 1);
+  assertEquals(
+    await store.transaction((transaction) =>
+      transaction.listResults(run.scope, run.runId)
+    ),
+    [],
+  );
+  assertEquals(
+    (await store.transaction((transaction) =>
+      transaction.listSteps(run.scope, run.runId)
+    ))[0]?.state,
+    "running",
+  );
+});
+
 Deno.test("stale source versions invalidate before any tool effect", async () => {
   const store = new InMemoryAgentRuntimeStore();
   const clock = new MutableClock();
@@ -423,6 +460,7 @@ function fixtureContext(): RequestContext {
     actorId: "actor_alpha" as never,
     tenantId: "tenant_alpha" as never,
     workspaceId: "workspace_alpha" as never,
+    dealId: "deal_alpha" as never,
     correlationId: "cor_alpha" as never,
     origin: "job",
   };
@@ -500,6 +538,20 @@ class RecordingModelExecutor implements RuntimeStepExecutor {
         totalCost: 3,
       },
     });
+  }
+}
+
+class LeaseExpiringModelExecutor extends RecordingModelExecutor {
+  constructor(private readonly advance: () => void) {
+    super();
+  }
+
+  override execute(
+    step: StepRecord,
+    context: StepExecutionContext,
+  ): Promise<StepExecutionOutput> {
+    this.advance();
+    return super.execute(step, context);
   }
 }
 

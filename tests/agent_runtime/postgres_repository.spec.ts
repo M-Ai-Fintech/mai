@@ -334,6 +334,7 @@ function fixtureContext(): RequestContext {
     actorId: "actor_runtime" as never,
     tenantId: "tenant_runtime" as never,
     workspaceId: "workspace_runtime" as never,
+    dealId: "deal_runtime" as never,
     correlationId: "cor_runtime" as never,
     origin: "job",
   };

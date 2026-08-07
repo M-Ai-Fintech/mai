@@ -7,9 +7,9 @@ import type {
   DealAccessAuthorizationPort,
 } from "../../src/deal_access/service.ts";
 import { buildDealAccessAuthorizationRequest } from "../../src/deal_access/policy.ts";
+import { issueInvitationToken } from "../../src/deal_access/capabilities.ts";
 
-export const INVITATION_TOKEN =
-  "deal-access-test-invitation-token-with-at-least-32-bytes";
+export const INVITATION_TOKEN = issueInvitationToken();
 
 export class AllowingDealAccessAuthorization
   implements DealAccessAuthorizationPort {

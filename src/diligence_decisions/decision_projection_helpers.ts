@@ -149,6 +149,8 @@ export function replayProjection(
   transaction: TransactionHandle,
   input: ChangeDecisionCommand,
 ): Promise<CommandResult<DecisionProjection>> {
+  // Replays return the current representation; immutable history retains the
+  // original transition response and its exact evidence provenance.
   return dependencies.config.repository.findProjection(
     transaction,
     input.scope,

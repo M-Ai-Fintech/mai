@@ -64,6 +64,7 @@ function fixtureRequest(toolName: string) {
     scope: {
       tenantId: "tenant_alpha",
       workspaceId: "workspace_alpha",
+      dealId: "deal_alpha",
     } as RuntimeScope,
     toolName,
     action: "read_evidence",
@@ -75,6 +76,7 @@ function fixtureRequest(toolName: string) {
       actorId: "actor_alpha",
       tenantId: "tenant_alpha",
       workspaceId: "workspace_alpha",
+      dealId: "deal_alpha",
       correlationId: "cor_alpha",
       origin: "http",
     } as RequestContext,

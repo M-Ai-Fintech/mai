@@ -19,8 +19,8 @@ import type {
 
 export interface RuntimeScope {
   readonly tenantId: TenantId;
-  readonly workspaceId?: WorkspaceId;
-  readonly dealId?: DealId;
+  readonly workspaceId: WorkspaceId;
+  readonly dealId: DealId;
 }
 
 export interface RuntimeActor {
@@ -276,6 +276,30 @@ export class RuntimeLeaseLostError extends Error {
   }
 }
 
+export class RuntimeScopeRequiredError extends Error {
+  readonly code = "RUNTIME_SCOPE_REQUIRED";
+
+  constructor(context: RequestContext) {
+    super(
+      `Runtime operations require tenant/workspace/deal scope; received "${context.tenantId}/${
+        context.workspaceId ?? ""
+      }/${context.dealId ?? ""}" with a missing required identifier.`,
+    );
+    this.name = "RuntimeScopeRequiredError";
+  }
+}
+
+export function runtimeScopeFromContext(context: RequestContext): RuntimeScope {
+  if (context.workspaceId === undefined || context.dealId === undefined) {
+    throw new RuntimeScopeRequiredError(context);
+  }
+  return {
+    tenantId: context.tenantId,
+    workspaceId: context.workspaceId,
+    dealId: context.dealId,
+  };
+}
+
 export function assertRuntimeContext(
   context: RequestContext,
   scope: RuntimeScope,
@@ -288,9 +312,7 @@ export function assertRuntimeContext(
   throw new Error(
     `Runtime context scope "${context.tenantId}/${context.workspaceId ?? ""}/${
       context.dealId ?? ""
-    }" does not match scope "${scope.tenantId}/${scope.workspaceId ?? ""}/${
-      scope.dealId ?? ""
-    }"; expected the trusted actor scope.`,
+    }" does not match scope "${scope.tenantId}/${scope.workspaceId}/${scope.dealId}"; expected the trusted actor scope.`,
   );
 }
 

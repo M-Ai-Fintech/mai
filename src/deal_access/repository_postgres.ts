@@ -110,7 +110,11 @@ class PostgresDealAccessStore implements DealAccessStore {
   ): Promise<PortalSubmission | undefined> {
     const result = await this.transaction.query<SubmissionRow>(
       `SELECT submission_id AS "submissionId", tenant_id AS "tenantId",
-         workspace_id AS "workspaceId", deal_id AS "dealId", grant_id AS "grantId",
+         workspace_id AS "workspaceId", deal_id AS "dealId",
+         delivery_id AS "deliveryId",
+         delivery_attempt_count AS "deliveryAttemptCount",
+         last_delivery_error AS "lastDeliveryError",
+         delivery_completed_at AS "deliveryCompletedAt", grant_id AS "grantId",
          object_id AS "objectId", payload, state, version,
          created_at AS "createdAt", updated_at AS "updatedAt"
        FROM deal_access.portal_submissions
@@ -226,18 +230,20 @@ class PostgresDealAccessStore implements DealAccessStore {
     if (expectedVersion === undefined) {
       await this.transaction.query(
         `INSERT INTO deal_access.portal_submissions (
-           submission_id, tenant_id, workspace_id, deal_id, grant_id,
-           object_id, payload, state, version, created_at, updated_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           submission_id, tenant_id, workspace_id, deal_id, delivery_id,
+           delivery_attempt_count, last_delivery_error, delivery_completed_at,
+           grant_id, object_id, payload, state, version, created_at, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         submissionValues(aggregate),
       );
       return;
     }
     const result = await this.transaction.query(
       `UPDATE deal_access.portal_submissions
-       SET state = $5, version = $6, updated_at = $7
+       SET state = $5, version = $6, updated_at = $7,
+           last_delivery_error = $8, delivery_completed_at = $9
        WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
-         AND submission_id = $4 AND version = $8`,
+         AND submission_id = $4 AND version = $10`,
       [
         aggregate.scope.tenantId,
         aggregate.scope.workspaceId,
@@ -246,10 +252,58 @@ class PostgresDealAccessStore implements DealAccessStore {
         aggregate.state,
         aggregate.version,
         aggregate.updatedAt,
+        aggregate.lastDeliveryError ?? null,
+        aggregate.deliveryCompletedAt ?? null,
         expectedVersion,
       ],
     );
     assertUpdated(result.rowCount, expectedVersion, aggregate.version);
+  }
+
+  async recordSubmissionDeliveryAttempt(
+    scope: DealAccessScope,
+    submissionId: string,
+  ): Promise<void> {
+    const result = await this.transaction.query(
+      `UPDATE deal_access.portal_submissions
+       SET delivery_attempt_count = delivery_attempt_count + 1,
+           last_delivery_error = NULL
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
+         AND submission_id = $4 AND state = 'queued'`,
+      [scope.tenantId, scope.workspaceId, scope.dealId, submissionId],
+    );
+    if (result.rowCount === 1) return;
+    const current = await this.findSubmission(scope, submissionId);
+    if (current?.state === "accepted") return;
+    throw new DealAccessInvariantError(
+      `Submission "${submissionId}" delivery attempt was not recorded in scope "${scope.dealId}"; expected a queued submission.`,
+    );
+  }
+
+  async recordSubmissionDeliveryFailure(
+    scope: DealAccessScope,
+    submissionId: string,
+    error: string,
+  ): Promise<void> {
+    const result = await this.transaction.query(
+      `UPDATE deal_access.portal_submissions
+       SET last_delivery_error = $5
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
+         AND submission_id = $4 AND state = 'queued'`,
+      [
+        scope.tenantId,
+        scope.workspaceId,
+        scope.dealId,
+        submissionId,
+        error.slice(0, 1000),
+      ],
+    );
+    if (result.rowCount === 1) return;
+    const current = await this.findSubmission(scope, submissionId);
+    if (current?.state === "accepted") return;
+    throw new DealAccessInvariantError(
+      `Submission "${submissionId}" delivery failure was not recorded in scope "${scope.dealId}"; expected a queued submission.`,
+    );
   }
 
   async saveReceipt(

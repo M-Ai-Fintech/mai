@@ -48,7 +48,7 @@ export function assertDecisionReferencesConsistent(
   const projectionState = projection?.state ?? "none";
   const expectedProjectionState = request.state === "invalidated"
     ? "invalidated"
-    : "active or superseded";
+    : "active";
   throw new DiligenceDecisionError(
     "REFERENCE_MISMATCH",
     `Decision request "${request.id}" in state "${request.state}" references current record "${requestRecordId}", but its projection references "${projectionRecordId}" in state "${projectionState}"; expected both references to be absent before a decision or to identify one shared current record with projection state "${expectedProjectionState}".`,
@@ -62,7 +62,7 @@ function projectionStateMatchesRequest(
   if (request.state === "invalidated") {
     return projection.state === "invalidated";
   }
-  return projection.state === "active" || projection.state === "superseded";
+  return projection.state === "active";
 }
 
 function assertSupersedableRequest(

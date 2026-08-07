@@ -97,15 +97,19 @@ export function commandIdentityFor(
 }
 
 export function commandPayload(command: SubmitPortalDataCommand): unknown;
-export function commandPayload(command: InviteParticipantCommand): unknown;
+export function commandPayload(
+  command: InviteParticipantCommand,
+  invitationTokenDigest: string,
+): unknown;
 export function commandPayload(
   command: InviteParticipantCommand | SubmitPortalDataCommand,
+  invitationTokenDigest?: string,
 ): unknown {
   if (command.type === "invite_participant") {
     return {
       type: command.type,
       participantId: command.participantId,
-      invitationToken: command.invitationToken,
+      invitationTokenDigest: invitationTokenDigest ?? "",
       purpose: command.purpose,
       sponsor: command.sponsor.actorId,
       expiresAt: command.expiresAt,

@@ -124,6 +124,10 @@ export async function processQueuedSubmission(input: {
     if (submission === undefined) {
       throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
     }
+    if (submission.state === "accepted") return { submission, scope };
+    if (submission.state !== "queued") {
+      throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
+    }
     const grant = await store.findGrant(scope, submission.grantId);
     const participation = grant === undefined
       ? undefined
@@ -138,13 +142,35 @@ export async function processQueuedSubmission(input: {
       participation,
       input.clock.now(),
     );
+    await store.recordSubmissionDeliveryAttempt(
+      scope,
+      submission.id,
+    );
     return { submission, scope };
   });
-  await input.delivery.deliver({
-    submission: prepared.submission,
-    beforeExternalEffect: () =>
-      reauthorizeQueuedSubmission(input.repository, input.clock, input.request),
-  });
+  if (prepared.submission.state === "queued") {
+    try {
+      const approvedScope = await reauthorizeQueuedSubmission(
+        input.repository,
+        input.clock,
+        input.request,
+      );
+      await input.delivery.deliver({
+        submission: prepared.submission,
+        deliveryId: prepared.submission.deliveryId,
+        approvedScope,
+      });
+    } catch (error) {
+      await input.repository.transaction((store) =>
+        store.recordSubmissionDeliveryFailure(
+          prepared.scope,
+          prepared.submission.id,
+          error instanceof Error ? error.message : String(error),
+        )
+      );
+      throw error;
+    }
+  }
   return input.repository.transaction(async (store) => {
     const current = await store.findSubmission(
       prepared.scope,
@@ -153,6 +179,7 @@ export async function processQueuedSubmission(input: {
     if (current === undefined) {
       throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
     }
+    if (current.state === "accepted") return current;
     const completed = completePortalSubmission(current, input.clock.now());
     await store.saveSubmission(completed, current.version);
     return completed;
