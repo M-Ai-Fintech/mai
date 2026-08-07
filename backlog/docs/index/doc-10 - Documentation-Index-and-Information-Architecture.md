@@ -3,7 +3,7 @@ id: doc-10
 title: Documentation Index and Information Architecture
 type: readme
 created_date: '2026-07-24 15:37'
-updated_date: '2026-07-30 09:33'
+updated_date: '2026-08-07 02:15'
 tags:
   - documentation
   - governance
@@ -14,7 +14,7 @@ tags:
 - **Authority ID:** DOC-IA-001
 - **Owner:** Repository maintainers
 - **Authority:** Canonical navigation for project documentation
-- **Freshness:** Current as of 2026-07-30
+- **Freshness:** Current as of 2026-08-06
 - **Language:** English
 - **Update trigger:** Any canonical path, authority, ownership rule or documentation class changes
 
@@ -22,16 +22,19 @@ tags:
 
 `backlog/docs/` is the governed documentation root. Use Backlog document workflows for creation, metadata, relocation and content updates. English is canonical. The inventory and machine-readable manifest are doc-12; governance is doc-11; generated/local knowledge classification is doc-13.
 
+The repository-level execution and verification authority is `prompts/OPERATING_RULES.md`; `prompts/README.md` explains prompt roles and `prompts/SUBAGENT_RULES.md` governs exceptional delegated execution. Operational setup and prewarming evidence belongs in doc-8.
+
 ## Start here
 
-1. Product/frontend authority: doc-9, doc-15–18, design/1–28 and the MAI-102 authority matrix.
-2. Target backend traceability: doc-19.
-3. Domain/context/workflow authority: doc-7 and doc-20.
-4. Security/data authority: doc-4 and doc-21.
-5. API/async/agent/integration authority: doc-3, doc-5, doc-6 and doc-22.
-6. Current-state migration inventory: doc-23.
-7. Approved implementation sequence: doc-24.
-8. Accepted decisions: doc-25–36.
+1. Execution and verification policy: `prompts/OPERATING_RULES.md`, with local environment operations in doc-8.
+2. Product/frontend authority: doc-9, doc-15–18, design/1–28 and the MAI-102 authority matrix.
+3. Target backend traceability: doc-19.
+4. Domain/context/workflow authority: doc-7 and doc-20.
+5. Security/data authority: doc-4 and doc-21.
+6. API/async/agent/integration authority: doc-3, doc-5, doc-6 and doc-22.
+7. Current-state migration inventory: doc-23.
+8. Approved implementation sequence: doc-24.
+9. Accepted decisions: doc-25–36.
 
 ## Canonical architecture and product documents
 

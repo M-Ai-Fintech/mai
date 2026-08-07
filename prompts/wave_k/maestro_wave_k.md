@@ -1,6 +1,5 @@
 # Maestro — Wave K: Final dependent side lanes
 
-**Model:** 5.6 Terra Medium. Do not implement, merge, or run Graphify.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -25,32 +24,16 @@ Create:
 - `delivery/MAI-153-governed-brazilian-ma-model-adaptation-strategy` at
   `../mai-worktrees/wave_k/MAI-153`.
 
-Plan both with Terra and focused `rg`; eliminate collisions; write
+Plan both with focused `rg`; eliminate collisions; write
 `## Wave K execution plan — <TASK-ID>` in local `AGENTS.md`; persist with
-Backlog `planSet`; keep uncommitted/`skip-worktree`; leave To Do until Luna
-starts. No Sol exceptions.
+Backlog `planSet`; keep uncommitted/`skip-worktree`; leave To Do until
+implementation starts. Use `prompts/OPERATING_RULES.md` for each plan's model
+route; record a written deep architecture, security, or planning justification
+if Sol is selected.
 
 Return base, gates, worktrees, plans, collisions, parallel launch, merge order,
 blockers, and confirmation no implementation or Graphify ran.
 
-## Required within-task delegation design
+## Execution policy
 
-For each task plan, define:
-
-- authoritative task coordinator;
-- proposed read-only subagents;
-- proposed writing slices;
-- one concrete `/goal` draft per proposed subagent;
-- exclusive paths per writing slice;
-- forbidden shared paths;
-- coordinator-owned shared and integration files;
-- maximum concurrent subagents;
-- maximum concurrent writers;
-- slice dependencies;
-- integration order;
-- slice-level checks;
-- final task-wide verification.
-
-Do not spawn implementation subagents from the maestro. The maestro plans the
-delegation model; the Luna task coordinator executes it after the task start
-gate.
+Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.

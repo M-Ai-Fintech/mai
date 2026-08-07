@@ -66,7 +66,9 @@ Deno.test("verification runner checks the approved frontend component boundary",
 });
 
 Deno.test("verification runner checks the application shell boundary", () => {
-  const shell = verificationChecks.find((check) => check.id === "frontend-shell");
+  const shell = verificationChecks.find((check) =>
+    check.id === "frontend-shell"
+  );
 
   assertEquals(shell, {
     id: "frontend-shell",
@@ -90,11 +92,34 @@ Deno.test("verification runner reports a failing child in its component summary"
         check: candidate,
         success: false,
         output: "expected failure",
+        durationMs: 0,
       }),
   );
 
   assert(hasFailures(results));
   assertEquals(results[0].check.id, "intentional-failure");
+});
+
+Deno.test("verification stops before expensive categories when preflight fails", async () => {
+  const executed: string[] = [];
+  const results = await runVerification(
+    [
+      verificationChecks[0],
+      verificationChecks[1],
+    ],
+    (check) => {
+      executed.push(check.id);
+      return Promise.resolve({
+        check,
+        success: false,
+        output: "missing approved test target",
+        durationMs: 1,
+      });
+    },
+  );
+
+  assertEquals(executed, ["environment-preflight"]);
+  assert(hasFailures(results));
 });
 
 Deno.test("verification runner returns a non-zero exit code for a controlled child failure", async () => {

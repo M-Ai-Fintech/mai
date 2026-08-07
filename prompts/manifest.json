@@ -1,21 +1,37 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "repository": "luisfelipeluis49/mai",
+  "policy": "prompts/OPERATING_RULES.md",
   "models": {
-    "orchestrator": "5.6 Terra Medium",
-    "implementer": "5.6 Luna Max",
-    "finisher": "5.6 Terra Medium",
-    "complex_planner": "5.6 Sol High"
+    "substantial_implementation": "5.6 Luna Max",
+    "small_or_mechanical": "5.6 Luna Medium",
+    "coordination_without_implementation": "5.6 Terra Medium",
+    "deep_architecture_security_or_planning": "Sol (explicit justification required)",
+    "runtime_identity_authority": "execution-selected model"
   },
-  "graphify_policy": "Only finish_wave_x.md may run graphify update . after every wave PR is merged and verification is green.",
+  "fast_mode": {
+    "default": true,
+    "surfaces": ["implementation", "debugging", "diagnosis", "interactive-correction"],
+    "repository_control": false,
+    "scope_effect": "latency only"
+  },
+  "agent_policy": {
+    "default": "one-accountable-agent",
+    "delegation": "only when genuinely separable and materially faster",
+    "independent_review_swarm": false,
+    "automatic_model_substitution": false
+  },
+  "graphify_policy": "Run graphify only at the explicitly authorized repository stage; policy and implementation prompts use focused repository inspection unless the task explicitly authorizes a refresh.",
   "subagents": {
     "enabled": true,
     "goal_command": "/goal",
     "coordination": "single-task-coordinator",
     "scratch_worktrees": true,
     "patch_only_handoffs": true,
-    "default_max_subagents": 6,
-    "default_max_writers": 4,
+    "default_max_subagents": 0,
+    "default_max_writers": 0,
+    "requires_coordinator_justification": true,
+    "override_activation": "Capacity is not permission; activate an override only after the coordinator records separability, ownership, integration order, and material elapsed-time benefit.",
     "single_authoritative_branch": true,
     "single_authoritative_pr": true,
     "single_backlog_writer": true,
@@ -41,6 +57,7 @@
     "MAI-127",
     "MAI-129"
   ],
+  "sol_plan_requires_explicit_justification": true,
   "waves": {
     "A": [
       "MAI-107",

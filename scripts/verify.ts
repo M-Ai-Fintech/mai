@@ -4,12 +4,14 @@ export interface VerificationCheck {
   command: string;
   args: string[];
   env?: Record<string, string>;
+  required?: boolean;
 }
 
 export interface VerificationResult {
   check: VerificationCheck;
   success: boolean;
   output: string;
+  durationMs: number;
 }
 
 export type CheckExecutor = (
@@ -17,6 +19,21 @@ export type CheckExecutor = (
 ) => Promise<VerificationResult>;
 
 export const verificationChecks: VerificationCheck[] = [
+  {
+    id: "environment-preflight",
+    label: "Environment preflight",
+    command: "deno",
+    args: [
+      "run",
+      "--env",
+      "--allow-read",
+      "--allow-env",
+      "--allow-net",
+      "--allow-run",
+      "scripts/preflight.ts",
+      "--json",
+    ],
+  },
   {
     id: "canonical-documentation",
     label: "Canonical documentation",
@@ -28,6 +45,23 @@ export const verificationChecks: VerificationCheck[] = [
     label: "Semantic resource naming",
     command: "deno",
     args: ["run", "--allow-read", "scripts/check_resource_naming.ts"],
+  },
+  {
+    id: "migration-integrity",
+    label: "Migration integrity",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_migration_integrity.ts"],
+  },
+  {
+    id: "repository-standards",
+    label: "Repository standards",
+    command: "deno",
+    args: [
+      "run",
+      "--allow-read",
+      "--allow-run=git",
+      "scripts/check_repository_standards.ts",
+    ],
   },
   {
     id: "i18n-strings",
@@ -44,20 +78,10 @@ export const verificationChecks: VerificationCheck[] = [
       "--allow-read",
       "--allow-run",
       "--allow-env",
+      "--allow-net",
       "scripts/run_canonical_deno_tests.ts",
     ],
     env: { DENO_ENV: "test" },
-  },
-  {
-    id: "deno-runner-tests",
-    label: "Canonical test-runner unit tests",
-    command: "deno",
-    args: [
-      "test",
-      "--allow-read",
-      "--allow-env",
-      "scripts/run_canonical_deno_tests_test.ts",
-    ],
   },
   {
     id: "frontend-tokens",
@@ -148,12 +172,22 @@ export const verificationChecks: VerificationCheck[] = [
 export async function executeCheck(
   check: VerificationCheck,
 ): Promise<VerificationResult> {
+  const startedAt = performance.now();
   try {
     const command = verificationCommand(check);
-    const output = await command.output();
-    return commandResult(check, output);
+    const child = command.spawn();
+    const output = await outputWithTimeout(child, 600_000);
+    return commandResult(
+      check,
+      output,
+      Math.round(performance.now() - startedAt),
+    );
   } catch (error) {
-    return failedCommandResult(check, error);
+    return failedCommandResult(
+      check,
+      error,
+      Math.round(performance.now() - startedAt),
+    );
   }
 }
 
@@ -168,16 +202,16 @@ function verificationCommand(check: VerificationCheck): Deno.Command {
 
 function commandResult(
   check: VerificationCheck,
-  output: Deno.CommandOutput,
+  output: CommandOutput,
+  durationMs: number,
 ): VerificationResult {
-  const decoder = new TextDecoder();
-  const text = decoder.decode(output.stdout) + decoder.decode(output.stderr);
-  return { check, success: output.success, output: text };
+  return { check, success: output.success, output: output.text, durationMs };
 }
 
 function failedCommandResult(
   check: VerificationCheck,
   error: unknown,
+  durationMs: number,
 ): VerificationResult {
   const reason = error instanceof Error ? error.message : String(error);
   const command = [check.command, ...check.args].join(" ");
@@ -185,7 +219,47 @@ function failedCommandResult(
     check,
     success: false,
     output: `Failed to run '${command}': ${reason}`,
+    durationMs,
   };
+}
+
+interface CommandOutput {
+  readonly success: boolean;
+  readonly text: string;
+}
+
+async function outputWithTimeout(
+  child: Deno.ChildProcess,
+  timeoutMs: number,
+): Promise<CommandOutput> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<CommandOutput>((resolve) => {
+    timeoutId = setTimeout(() => {
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        // The child can exit between the timeout and the signal.
+      }
+      resolve({ success: false, text: `Timed out after ${timeoutMs} ms.` });
+    }, timeoutMs);
+  });
+  const output = child.output().then((result) => ({
+    success: result.success,
+    text: decodeCommandOutput(result.stdout, result.stderr),
+  }));
+  try {
+    return await Promise.race([output, timeout]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
+function decodeCommandOutput(
+  stdout: Uint8Array,
+  stderr: Uint8Array,
+): string {
+  const decoder = new TextDecoder();
+  return decoder.decode(stdout) + decoder.decode(stderr);
 }
 
 export async function runVerification(
@@ -194,7 +268,9 @@ export async function runVerification(
 ): Promise<VerificationResult[]> {
   const results: VerificationResult[] = [];
   for (const check of checks) {
-    results.push(await executeAndReport(check, execute));
+    const result = await executeAndReport(check, execute);
+    results.push(result);
+    if (check.id === "environment-preflight" && !result.success) break;
   }
   reportVerificationSummary(results);
   return results;
@@ -217,12 +293,30 @@ function reportVerificationSummary(
 ): void {
   console.log("\nVerification summary:");
   for (const result of results) {
-    console.log(`  ${result.success ? "PASS" : "FAIL"} ${result.check.label}`);
+    const status = result.success
+      ? "PASS"
+      : result.check.required === false
+      ? "OPTIONAL-FAIL"
+      : "FAIL";
+    console.log(`  ${status} ${result.check.label} (${result.durationMs} ms)`);
   }
+  console.log(`VERIFICATION_RESULT_JSON=${
+    JSON.stringify({
+      results: results.map((result) => ({
+        id: result.check.id,
+        label: result.check.label,
+        required: result.check.required !== false,
+        success: result.success,
+        durationMs: result.durationMs,
+      })),
+    })
+  }`);
 }
 
 export function hasFailures(results: readonly VerificationResult[]): boolean {
-  return results.some((result) => !result.success);
+  return results.some((result) =>
+    result.check.required !== false && !result.success
+  );
 }
 
 if (import.meta.main) {

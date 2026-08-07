@@ -1,6 +1,5 @@
 # Maestro — Wave J: Cutover consumers and governance evidence
 
-**Model:** 5.6 Terra Medium. Do not implement, merge, or run Graphify.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -28,33 +27,13 @@ and no duplicate branch/worktree/PR.
 Create all from one verified master commit. Plan with focused `rg`, eliminate
 collisions, write `## Wave J execution plan — <TASK-ID>` in local `AGENTS.md`,
 persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To
-Do until Luna starts.
-
-## Sol exception
-
-- `MAI-126` → `plan_MAI-126.md` with 5.6 Sol High.
+Do until implementation starts. Use `prompts/OPERATING_RULES.md` for every
+plan's model route; record a written deep architecture, security, or planning
+justification if Sol is selected.
 
 Return base, gates, matrix, plans, collision analysis, parallel groups, merge
 order, blockers, and confirmation no implementation or Graphify ran.
 
-## Required within-task delegation design
+## Execution policy
 
-For each task plan, define:
-
-- authoritative task coordinator;
-- proposed read-only subagents;
-- proposed writing slices;
-- one concrete `/goal` draft per proposed subagent;
-- exclusive paths per writing slice;
-- forbidden shared paths;
-- coordinator-owned shared and integration files;
-- maximum concurrent subagents;
-- maximum concurrent writers;
-- slice dependencies;
-- integration order;
-- slice-level checks;
-- final task-wide verification.
-
-Do not spawn implementation subagents from the maestro. The maestro plans the
-delegation model; the Luna task coordinator executes it after the task start
-gate.
+Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.

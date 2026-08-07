@@ -1,17 +1,12 @@
 import pg from "pg";
+import { assertApprovedPostgresDatabaseUrl } from "../../../scripts/postgres_test_state.ts";
 
 const { Pool } = pg;
-const ISOLATED_DATABASE_NAME = "mai_test_postgres_integration";
 
 export function postgresIntegrationTestDatabaseUrl(): string | undefined {
   const databaseUrl = Deno.env.get("POSTGRES_INTEGRATION_TEST_DATABASE_URL");
   if (databaseUrl === undefined) return;
-  const parsed = new URL(databaseUrl);
-  if (parsed.pathname !== `/${ISOLATED_DATABASE_NAME}`) {
-    throw new Error(
-      `POSTGRES_INTEGRATION_TEST_DATABASE_URL database "${parsed.pathname}" is unsafe; expected "/${ISOLATED_DATABASE_NAME}".`,
-    );
-  }
+  assertApprovedPostgresDatabaseUrl(databaseUrl);
   return databaseUrl;
 }
 

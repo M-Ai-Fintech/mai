@@ -1,6 +1,11 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import pg from "pg";
 import {
+  createIsolatedPostgresDatabase,
+  dropIsolatedPostgresDatabase,
+  isolatedPostgresDatabaseName,
+} from "../../scripts/postgres_test_state.ts";
+import {
   iamIdentityMigration,
   iamSessionIdentityMigration,
 } from "../../src/identity_access/v1.ts";
@@ -16,14 +21,14 @@ Deno.test({
   name: "IAM session identity upgrades the current master schema safely",
   ignore: databaseUrl === undefined,
   async fn() {
-    const databaseName = `identity_access_upgrade_${
-      crypto.randomUUID().replaceAll("-", "")
-    }`;
-    const admin = new pg.Pool({ connectionString: databaseUrl });
-    const upgradedUrl = new URL(databaseUrl!);
-    upgradedUrl.pathname = `/${databaseName}`;
-    await admin.query(`CREATE DATABASE "${databaseName}" TEMPLATE template0`);
-    const pool = new pg.Pool({ connectionString: upgradedUrl.toString() });
+    const databasePath =
+      "tests/identity_access/session_identity_migration_postgres/historical";
+    const databaseName = isolatedPostgresDatabaseName(databasePath);
+    const upgradedUrl = await createIsolatedPostgresDatabase(
+      databaseUrl!,
+      databasePath,
+    );
+    const pool = new pg.Pool({ connectionString: upgradedUrl });
     try {
       const runner = new PostgresMigrationRunner(pool);
       await runner.apply([...platformMigrations, iamIdentityMigration]);
@@ -50,10 +55,7 @@ Deno.test({
       ]);
     } finally {
       await pool.end();
-      await admin.query(
-        `DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`,
-      );
-      await admin.end();
+      await dropIsolatedPostgresDatabase(databaseUrl!, databaseName);
     }
   },
 });

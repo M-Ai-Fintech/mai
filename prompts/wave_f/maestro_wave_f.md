@@ -1,6 +1,5 @@
 # Maestro — Wave F: Decisions, agent runtime, and access
 
-**Model:** 5.6 Terra Medium\
 **Role:** create worktrees, plan, and hand off. Do not implement, merge, or run
 Graphify.
 
@@ -28,37 +27,15 @@ and rule out duplicate branches/worktrees/PRs.
 | MAI-124 | `delivery/MAI-124-deal-team-and-external-participant-access` | `../mai-worktrees/wave_f/MAI-124` | `MAI-124.md` |
 
 Create all from the same verified master commit. For each worktree, inspect with
-focused `rg`, eliminate file collisions, write
+Use focused`rg`, eliminate file collisions, write
 `## Wave F execution plan — <TASK-ID>` in local root `AGENTS.md`, persist with
 Backlog `planSet`, keep it uncommitted/`skip-worktree`, and leave To Do until
-Luna starts.
-
-## Sol planning exception
-
-- `MAI-120` → `plan_MAI-120.md` with 5.6 Sol High.
-
-Use Terra for the other plans. Return base, gates, matrix, plans, collision
+implementation starts. Use `prompts/OPERATING_RULES.md` for every plan's model
+route; record a written deep architecture, security, or planning justification
+if Sol is selected. Return base, gates, matrix, plans, collision
 analysis, parallel groups, merge order, blockers, and confirmation no
 implementation or Graphify ran.
 
-## Required within-task delegation design
+## Execution policy
 
-For each task plan, define:
-
-- authoritative task coordinator;
-- proposed read-only subagents;
-- proposed writing slices;
-- one concrete `/goal` draft per proposed subagent;
-- exclusive paths per writing slice;
-- forbidden shared paths;
-- coordinator-owned shared and integration files;
-- maximum concurrent subagents;
-- maximum concurrent writers;
-- slice dependencies;
-- integration order;
-- slice-level checks;
-- final task-wide verification.
-
-Do not spawn implementation subagents from the maestro. The maestro plans the
-delegation model; the Luna task coordinator executes it after the task start
-gate.
+Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.

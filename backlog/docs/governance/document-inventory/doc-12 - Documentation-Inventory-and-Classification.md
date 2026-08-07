@@ -3,7 +3,7 @@ id: doc-12
 title: Documentation Inventory and Classification
 type: specification
 created_date: '2026-07-24 15:37'
-updated_date: '2026-08-03 03:10'
+updated_date: '2026-08-07 02:15'
 tags:
   - documentation
   - inventory
@@ -14,7 +14,7 @@ tags:
 - Authority ID: DOC-INV-001
 - Owner: Repository maintainers
 - Authority: Canonical classification inventory
-- Freshness: Current as of 2026-08-02
+- Freshness: Current as of 2026-08-06
 - Language: English
 - Update trigger: Addition, deletion, relocation, or reclassification of tracked documentation-like assets
 
@@ -263,6 +263,11 @@ Every project file below is individually classified; removed paths are retained 
 | `backlog/docs/operations/deal-management/doc-38 - MAI-110-Deal-Reconciliation-Operator-Procedure.md` | Deal Management and Platform Operations | Bounded MAI-110 reconciliation and rollback read-routing procedure | doc-38 | current 2026-08-02 | English | canonical |
 | `infra/README.md` | Platform Operations | Provider-neutral infrastructure implementation contract | implementation-local | current | English | referenced |
 | `infra/runbooks/*.md` | Platform Operations | MAI-148 operator procedures | implementation-local | current | English | referenced |
+
+| `prompts/OPERATING_RULES.md` | Developer Experience and Operations | Canonical repository execution, verification, model-routing, agent, environment, migration-integrity, and lifecycle policy | PROMPT-OPS-001 | current 2026-08-06 | English | canonical |
+| `prompts/README.md` | Developer Experience and Operations | Prompt asset navigation and role classification | `prompts/OPERATING_RULES.md` | current 2026-08-06 | English | referenced |
+| `prompts/SUBAGENT_RULES.md` | Developer Experience and Operations | Exceptional delegated-execution guardrails | `prompts/OPERATING_RULES.md` | current 2026-08-06 | English | referenced |
+| `prompts/manifest.json` | Developer Experience and Operations | Machine-readable prompt inventory and execution defaults | `prompts/OPERATING_RULES.md` | current 2026-08-06 | English | referenced |
 
 ## Managed work-record families and exclusions
 

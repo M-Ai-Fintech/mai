@@ -1,6 +1,5 @@
 # Finish — Wave C: Lifecycle, documents, and notifications
 
-**Model:** 5.6 Terra Medium  
 **Run only after:** every task PR below is owner-approved and merged into `master`.
 
 - `MAI-111` — Deal lifecycle, phases and milestones

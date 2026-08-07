@@ -1,6 +1,5 @@
 # Finish — Wave E: Work management
 
-**Model:** 5.6 Terra Medium\
 **Run only after:** the MAI-114 PR is owner-approved and merged into `master`.
 
 Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions. Require
@@ -8,26 +7,9 @@ clean synchronized master and merged PR evidence. Inspect merged source and the
 complete task; verify plan conformance, state machines, approver authority,
 separation of duties, exact package versions, ACs, DoD, and meaningful tests.
 
-## Parallel review and verification
+## Execution policy
 
-The finisher may use parallel read-only subagents for:
-
-- architecture review;
-- security and authorization review;
-- data-model and migration review;
-- concurrency and idempotency review;
-- API-contract review;
-- frontend conformance;
-- focused verification;
-- evidence reconciliation.
-
-Every review or verification subagent must receive a concrete `/goal`.
-
-Review subagents must not modify feature code, Backlog, Graphify, PR metadata,
-or `master`.
-
-Only the finisher may integrate wave-closure evidence, run Graphify, update
-Backlog status, commit closure metadata, and push `master`.
+Use one accountable finisher. Parallel read-only review is exceptional and must be genuinely separable and materially faster; use `prompts/SUBAGENT_RULES.md` only when justified.
 
 Run focused checks and `deno task verify`. Do not repair feature code here. When
 green, run exactly one `graphify update .`, then `git diff --check`.

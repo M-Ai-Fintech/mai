@@ -1,7 +1,6 @@
 # Maestro — Wave C: Lifecycle, documents, and notifications
 
-**Model:** 5.6 Terra Medium  
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run Graphify.
+**Role:** create worktrees, plan, and hand off. Do not implement or merge.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -41,10 +40,6 @@ For each worktree:
 4. include outcome, evidence, slices, exclusive files, tests, rollout/rollback, risks/checkpoints, and exclusions;
 5. persist the same plan with Backlog `planSet`;
 6. keep `AGENTS.md` uncommitted and mark it `skip-worktree`;
-7. leave the task To Do until Luna begins implementation.
+7. leave the task To Do until implementation begins.
 
-## Sol planning exceptions
-
-- None.
-
-Use Terra for all plans. Return the base commit, gate result, worktree/branch matrix, plan status, collision analysis, parallel launch groups, merge order, blockers, and confirmation that no implementation or Graphify ran.
+Use `prompts/OPERATING_RULES.md` for every plan's model route; record a written deep architecture, security, or planning justification if Sol is selected. Return the base commit, gate result, worktree/branch matrix, plan status, collision analysis, parallel launch groups, merge order, blockers, and confirmation that no implementation or Graphify ran.

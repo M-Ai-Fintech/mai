@@ -1,7 +1,6 @@
 # Maestro — Wave A: Independent foundations
 
-**Model:** 5.6 Terra Medium  
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run Graphify.
+**Role:** create worktrees, plan, and hand off. Do not implement or merge.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -37,10 +36,6 @@ Run Backlog overview/execution, fetch `origin/master`, require clean synchronize
 | MAI-148 | `delivery/MAI-148-deployment-and-operations-foundation` | `../mai-worktrees/wave_a/MAI-148` | `MAI-148.md` |
 | MAI-151 | `delivery/MAI-151-fast-developer-preflight` | `../mai-worktrees/wave_a/MAI-151` | `MAI-151.md` |
 
-Create all from one verified master commit. Inspect with focused `rg`, compare planned files, and eliminate unsafe overlap. For each task write `## Wave A execution plan — <TASK-ID>` in local root `AGENTS.md`, persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To Do until Luna starts.
+Create all from one verified master commit. Inspect with focused `rg`, compare planned files, and eliminate unsafe overlap. For each task write `## Wave A execution plan — <TASK-ID>` in local root `AGENTS.md`, persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To Do until implementation starts.
 
-## Sol planning exception
-
-- `MAI-107` → `plan_MAI-107.md` with 5.6 Sol High.
-
-Use Terra for all other plans. Return base, gates, matrix, plans, collision analysis, parallel launch groups, recommended merge order, blockers, and confirmation no implementation or Graphify ran.
+Use `prompts/OPERATING_RULES.md` for every plan's model route; record a written deep architecture, security, or planning justification if Sol is selected. Return base, gates, matrix, plans, collision analysis, parallel launch groups, recommended merge order, blockers, and confirmation no implementation or Graphify ran.

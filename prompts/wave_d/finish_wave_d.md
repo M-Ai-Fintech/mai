@@ -1,6 +1,5 @@
 # Finish — Wave D: Evidence
 
-**Model:** 5.6 Terra Medium  
 **Run only after:** the MAI-113 PR is owner-approved and merged into `master`.
 
 Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions. Require clean synchronized master and merged PR evidence. Inspect merged source and the complete MAI-113 record; verify plan conformance, exact-version provenance, isolation, staleness/invalidation, ACs, DoD, and meaningful tests.

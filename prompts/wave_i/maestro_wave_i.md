@@ -1,6 +1,5 @@
 # Maestro — Wave I: Governed agents and providers
 
-**Model:** 5.6 Terra Medium\
 **Role:** create worktrees, plan, and hand off. Do not implement, merge, or run
 Graphify.
 
@@ -27,36 +26,15 @@ branches/worktrees/PRs.
 
 Create both from one verified master commit. Inspect with focused `rg`,
 eliminate overlap, write local `AGENTS.md` plan sections, persist through
-Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To Do until Luna
-starts.
+Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To Do until
+implementation starts.
 
-## Sol planning exceptions
-
-- `MAI-121` → `plan_MAI-121.md`
-- `MAI-127` → `plan_MAI-127.md`
-
-Run both with 5.6 Sol High before Luna. Return base, gates, matrix, plans,
+Use `prompts/OPERATING_RULES.md` for every plan's model route; record a written
+deep architecture, security, or planning justification if Sol is selected.
+Return base, gates, matrix, plans,
 collision analysis, parallel groups, merge order, blockers, and confirmation no
 implementation or Graphify ran.
 
-## Required within-task delegation design
+## Execution policy
 
-For each task plan, define:
-
-- authoritative task coordinator;
-- proposed read-only subagents;
-- proposed writing slices;
-- one concrete `/goal` draft per proposed subagent;
-- exclusive paths per writing slice;
-- forbidden shared paths;
-- coordinator-owned shared and integration files;
-- maximum concurrent subagents;
-- maximum concurrent writers;
-- slice dependencies;
-- integration order;
-- slice-level checks;
-- final task-wide verification.
-
-Do not spawn implementation subagents from the maestro. The maestro plans the
-delegation model; the Luna task coordinator executes it after the task start
-gate.
+Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.

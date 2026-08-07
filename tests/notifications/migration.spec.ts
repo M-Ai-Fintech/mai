@@ -1,6 +1,10 @@
 import { assert, assertEquals, assertRejects, assertThrows } from "@std/assert";
 import pg from "pg";
 import {
+  assertApprovedPostgresDatabaseUrl,
+  isApprovedIntegrationDatabaseName,
+} from "../../scripts/postgres_test_state.ts";
+import {
   defineMigration,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
@@ -145,10 +149,14 @@ function requiredDatabaseUrl(): string {
       "NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL is required; expected a fresh isolated PostgreSQL database for MAI-123 integration evidence.",
     );
   }
-  const parsed = new URL(databaseUrl);
-  if (parsed.pathname !== "/mai_test_notifications_integration") {
+  assertApprovedPostgresDatabaseUrl(databaseUrl);
+  const databaseName = new URL(databaseUrl).pathname.slice(1);
+  if (
+    !isApprovedIntegrationDatabaseName(databaseName) ||
+    !databaseName.startsWith("mai_test_notifications_integration")
+  ) {
     throw new Error(
-      `NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL database "${parsed.pathname}" is unsafe; expected "/mai_test_notifications_integration".`,
+      `NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL database "/${databaseName}" is unsafe; expected "/mai_test_notifications_integration".`,
     );
   }
   return databaseUrl;

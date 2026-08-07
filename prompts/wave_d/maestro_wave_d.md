@@ -1,7 +1,6 @@
 # Maestro — Wave D: Evidence
 
-**Model:** 5.6 Terra Medium  
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run Graphify.
+**Role:** create worktrees, plan, and hand off. Do not implement or merge.
 
 Read `prompts/OPERATING_RULES.md`.
 
@@ -21,6 +20,6 @@ Create:
 |---|---|---|---|
 | MAI-113 | `delivery/MAI-113-evidence-citations-facts-interpretations-assumptions-and-calculations` | `../mai-worktrees/wave_d/MAI-113` | `MAI-113.md` |
 
-From the verified master commit, inspect current behavior with focused `rg`; write `## Wave D execution plan — MAI-113` into local root `AGENTS.md`; include outcome, evidence, slices, exclusive files, tests, rollout/rollback, risks/checkpoints, and exclusions; persist it with Backlog `planSet`; keep it uncommitted and `skip-worktree`; leave the task To Do until Luna starts.
+From the verified master commit, inspect current behavior with focused `rg`; write `## Wave D execution plan — MAI-113` into local root `AGENTS.md`; include outcome, evidence, slices, exclusive files, tests, rollout/rollback, risks/checkpoints, and exclusions; persist it with Backlog `planSet`; keep it uncommitted and `skip-worktree`; leave the task To Do until implementation starts.
 
-No Sol planning exception. Return base commit, gate, worktree/branch, plan status, collision analysis, blockers, and confirmation that no implementation or Graphify ran.
+Use `prompts/OPERATING_RULES.md` for the model route and record a written deep architecture, security, or planning justification if Sol is selected. Return base commit, gate, worktree/branch, plan status, collision analysis, blockers, and confirmation that no implementation or Graphify ran.

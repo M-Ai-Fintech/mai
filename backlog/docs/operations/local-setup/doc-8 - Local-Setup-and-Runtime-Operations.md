@@ -3,7 +3,7 @@ id: doc-8
 title: Local Setup and Runtime Operations
 type: guide
 created_date: '2026-07-24 15:35'
-updated_date: '2026-08-06 16:56'
+updated_date: '2026-08-07 02:16'
 tags:
   - operations
   - setup
@@ -15,7 +15,7 @@ tags:
 - **Authority ID:** OPS-LOCAL-001
 - **Owner:** Developer Experience and Operations
 - **Authority:** Canonical local setup and runtime-operations guide
-- **Freshness:** Current for `deno.json`, GUI package scripts, and local configuration documented by MAI-84
+- **Freshness:** Current for `deno.json`, GUI package scripts, and post-Wave-E execution and verification tooling
 - **Language:** English
 - **Update trigger:** Prerequisites, environment variables, task commands, default ports, persistence modes, model-artifact requirements, or local operational limits change.
 
@@ -99,3 +99,23 @@ Use only the semantic contract below; never derive runtime or infrastructure nam
 
 
 The canonical Docker service is `postgres-integration-test` and its named volume is `mai-postgres-integration-test-data`. Credentials must remain redacted in logs, commands copied into tickets, and evidence. The database is disposable integration-test state; do not point it at development, staging, or production. A bounded-context-specific test database must use that context and purpose in its name (for example, `mai_test_notifications_integration`). Clean up with `docker compose down` after verification when the local target is no longer needed. Historical `MAI106_DATABASE_URL` and `mai_test_mai106` references are migration evidence only and must not be used by current setup.
+
+## Post-Wave-E execution and verification
+
+The stable repository execution policy is `prompts/OPERATING_RULES.md`. Task prompts contain only task-specific context, risks, verification, and allowed state transitions. The policy makes Fast mode the active engineering default, keeps one accountable agent by default, and defines model routing, repair-versus-restart assessment, usage checkpoints, staged verification, migration integrity, and lifecycle authority.
+
+Use the idempotent environment workflow before expensive implementation or canonical verification:
+
+```bash
+# Keep these values explicit and local; use another free local port if 55432 is occupied.
+export POSTGRES_INTEGRATION_TEST_PORT=55432
+export POSTGRES_INTEGRATION_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/mai_test_postgres_integration
+export NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/mai_test_notifications_integration
+
+deno task prepare
+deno task preflight
+```
+
+Preparation starts or reuses the persistent `postgres-integration-test` service, waits for health, creates the two approved test databases when absent, warms Deno and GUI dependencies, and checks Playwright browser availability. Set `MAI_PREPARE_BROWSERS=1` when Chromium must be installed. The preflight never targets development, staging, or production databases; per-file PostgreSQL suites receive deterministic isolated databases and are serialized by the canonical runner.
+
+Use affected tests and complete categories during implementation. Run `deno task verify` once as the final gate after the relevant categories are green. The runner reuses the healthy PostgreSQL service, rejects missing required database tests, reports category/command failures and timeouts, and emits `PREFLIGHT_RESULT_JSON` and `VERIFICATION_RESULT_JSON` summaries.

@@ -1,6 +1,5 @@
 # Finish — Wave B: Deal core
 
-**Model:** 5.6 Terra Medium  
 **Run only after:** every task PR below is owner-approved and merged into `master`.
 
 - `MAI-110` — Deal management, parties and mandate

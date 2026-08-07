@@ -1,6 +1,7 @@
 # Finish — Wave A: Independent foundations
 
-**Model:** 5.6 Terra Medium. Run only after all ten Wave A PRs are owner-approved and merged.
+Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions.
+
 
 Require clean synchronized master and merged PR evidence. Inspect merged source and full records; verify identity security, registry PII boundaries, immutable audit, reproducible ONNX runtime, deterministic algorithms, canonical dispute contract, operations foundation, preflight behavior, ACs, DoD, and meaningful tests.
 
