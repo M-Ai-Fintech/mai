@@ -110,9 +110,9 @@ function inferenceFallback(model: string) {
 }
 
 async function realFineTunedInference(model: string, text: string) {
-  // @ai-sdk/core is a runtime peer without a root import-map alias.
+  // The repository's Google provider line uses the AI SDK v4 runtime package.
   // deno-lint-ignore no-import-prefix
-  const { generateText } = await import("npm:@ai-sdk/core@1.0.22");
+  const { generateText } = await import("npm:ai@4.3.19");
   const { google } = await import("@ai-sdk/google");
   const response = await generateText({
     model: google("gemini-3.5-flash"),

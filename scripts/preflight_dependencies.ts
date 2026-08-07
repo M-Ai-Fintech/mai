@@ -8,6 +8,8 @@ const WARM_DENO_ENTRIES = [
   "scripts/preflight.ts",
   "scripts/verify.ts",
   "scripts/run_canonical_deno_tests.ts",
+  "src/agent/tools/ai_tools.ts",
+  "npm:ai@4.3.19",
 ] as const;
 const TEST_ROOTS = ["tests", "src", "scripts"] as const;
 
@@ -159,7 +161,10 @@ async function collectTestEntries(root: string): Promise<string[]> {
 }
 
 function cachedDenoImportExpression(entries: readonly string[]): string {
-  const imports = entries.map((entry) => `import("./${entry}")`).join(",");
+  const imports = entries.map((entry) => {
+    const specifier = entry.startsWith("npm:") ? entry : `./${entry}`;
+    return `import("${specifier}")`;
+  }).join(",");
   return `await Promise.all([${imports}])`;
 }
 
