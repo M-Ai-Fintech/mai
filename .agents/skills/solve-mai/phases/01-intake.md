@@ -11,11 +11,11 @@ Establish the task boundary, project state, and authority before planning or edi
 ## Workflow
 
 1. Invoke `$model-selection` for intake and routing.
-2. Invoke `$backlog-mcp`.
-3. Through Backlog MCP, read:
-   - `get_backlog_instructions` with `overview`;
-   - `get_backlog_instructions` with `task-execution`;
-   - `task_view` for the task ID.
+2. Use Linear issue and document tools.
+3. Use Linear issue and document tools to read:
+   - the Linear workspace and issue/project context;
+   - the Linear issue/project context;
+   - `Linear issue lookup` for the task ID.
 4. Extract and reconcile:
    - outcome and scope boundaries;
    - status, assignee, priority, labels, and milestone;
@@ -23,7 +23,7 @@ Establish the task boundary, project state, and authority before planning or edi
    - project and task-specific Definition of Done;
    - dependencies, references, documentation, plan, notes, and comments;
    - declared modified files.
-5. If the task ID is unknown, use `task_search` before proposing any new task. Do not create duplicate work.
+5. If the task ID is unknown, use `Linear issue search` before proposing any new task. Do not create duplicate work.
 6. Read every applicable `AGENTS.md`.
 7. Inspect the local repository:
    - `git branch --show-current`;
@@ -31,12 +31,12 @@ Establish the task boundary, project state, and authority before planning or edi
    - recent relevant commits and branches;
    - the current upstream, if one exists.
 8. Check for duplicate ownership:
-   - `task_search` for the affected behavior or files;
+   - `Linear issue search` for the affected behavior or files;
    - local and remote branches containing the task ID;
    - commits containing the task ID;
    - existing PRs when GitHub access is available.
 9. Identify unrelated tracked and untracked changes. Preserve them throughout the task.
-10. When execution is authorized and prerequisites pass, use `task_edit` to set `status: "In Progress"` and the known assignee. Do not alter unrelated task fields.
+10. When execution is authorized and prerequisites pass, use `Linear issue update` to set `status: "In Progress"` and the known assignee. Do not alter unrelated task fields.
 
 ## Blockers
 
@@ -48,7 +48,7 @@ Stop before project edits when:
 - the worktree cannot be isolated safely;
 - required project instructions or task context are missing.
 
-Record a durable blocker with `task_edit.notesAppend` when it affects handoff. Use task comments for a decision that requires owner input.
+Record a durable blocker with `Linear issue update with appended notes` when it affects handoff. Use Linear issue comments for a decision that requires owner input.
 
 ## Completion gate
 

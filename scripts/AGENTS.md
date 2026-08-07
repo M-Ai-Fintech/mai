@@ -6,7 +6,7 @@ This directory contains automation, system verification, documentation governanc
 
 - **`verify.ts`**: Core system verification suite checking environments, dependencies, and subsystem readiness (`deno task verify`).
 - **`verify_integration.ts`**: System integration verification suite testing cross-module operations and external services (`deno task verify:integration`).
-- **`check_docs.ts`**: Documentation inventory, link integrity, and governance compliance checking tool.
+- **`check_docs.ts`**: Linear migration-map parity and documentation-governance compliance checking tool.
 - **`check_i18n.ts`**: Translation key completeness and internationalization integrity validator.
 - **Script Unit Tests**: `check_docs_test.ts`, `check_i18n_test.ts`, `verify_test.ts`, `verify_integration_test.ts`.
 - **Utilities & Datasets**: `install-git-hooks.sh`, `graphify-merged-rebuild.sh`, `dataset_ma_br_mock.jsonl`, `colab_training_notebook.ipynb`.
@@ -32,4 +32,4 @@ This directory contains automation, system verification, documentation governanc
 
 ## Documentation Governance
 
-DevOps processes and CI/CD automation rules are documented in [`backlog/docs/`](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md) (specifically `doc-05-DevOps-and-CI-CD.md`).
+DevOps processes and CI/CD automation rules are documented in the [MA&I Linear workspace](https://linear.app/mergesai/) and preserved in the migrated `doc-5` Linear Document (Engine Architecture). The repository migration map records its legacy path and identifier.

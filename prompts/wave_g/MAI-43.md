@@ -1,0 +1,26 @@
+# MAI-43 — Deliverables, redaction, release and exports
+
+**Skill:** `$solve-mai`\
+**Wave:** G
+
+Read `prompts/OPERATING_RULES.md` and `## Wave G execution plan — MAI-43` in local
+`AGENTS.md`; never commit the plan. Invoke `$solve-mai MAI-43`.
+
+## Execution policy
+
+Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+
+## Focus
+
+Deliver deliverable drafts/versions, stale marking, redaction, approval,
+release, export/distribution jobs, immutable manifests, recipient scope, and
+retry receipts.
+
+## Boundary
+
+Do not autonomously release artifacts or certify external
+rendering/communication providers.
+
+Use focused`rg`, TDD/release
+tests, task checks, and `deno task verify`. Set In Progress, record evidence,
+open a PR containing MAI-43, never self-merge, and do not mark Done.

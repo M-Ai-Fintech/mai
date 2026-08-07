@@ -1,0 +1,24 @@
+# MAI-28 — Evidence, citations, facts, interpretations, assumptions and calculations
+
+**Skill:** `$solve-mai`  
+**Wave:** D — Evidence
+
+Read `prompts/OPERATING_RULES.md`. Work only in the maestro-created worktree. Read the exact local plan:
+
+```markdown
+## Wave D execution plan — MAI-28
+```
+
+Stop if absent or inconsistent; never stage or commit the plan. Invoke `$solve-mai MAI-28`.
+
+## Focus
+
+Deliver exact-version evidence/citations, facts, interpretations, assumptions, calculation records, lineage, targeted invalidation, staleness, and isolated derived indexes.
+
+## Boundary
+
+Do not expose generic RAG/query-silo endpoints, approve AI output, or treat vector indexes as source truth.
+
+use focused `rg`, source/tests, governed docs, and Linear issue/document tools. Set In Progress when work starts. Follow the plan, use TDD/regression coverage, task-specific checks and `deno task verify`, record exact evidence and rollback, open a PR containing `MAI-28`, never self-merge, and do not mark Done.
+
+Return branch, plan, implementation, files, tests, Linear evidence, PR, and human actions.

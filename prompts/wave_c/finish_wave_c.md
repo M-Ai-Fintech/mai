@@ -2,11 +2,11 @@
 
 **Run only after:** every task PR below is owner-approved and merged into `master`.
 
-- `MAI-111` — Deal lifecycle, phases and milestones
-- `MAI-112` — Documents, sources and processing
-- `MAI-123` — Notifications and subscriptions
+- `MAI-25` — Deal lifecycle, phases and milestones
+- `MAI-26` — Documents, sources and processing
+- `MAI-27` — Notifications and subscriptions
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions. Require clean synchronized master, merged PR evidence, no unresolved review/replacement PR, and consistent dependencies.
+Read `prompts/OPERATING_RULES.md` and Linear completion context. Require clean synchronized master, merged PR evidence, no unresolved review/replacement PR, and consistent dependencies.
 
 Inspect merged source and full task records. Verify plan conformance, bounded ownership, ACs, DoD, meaningful tests, authorization/isolation, provenance, concurrency/idempotency, failures/retries, migration/rollback, and operator evidence as applicable.
 
@@ -18,6 +18,6 @@ Only after all review and verification are green, run once:
 graphify update .
 ```
 
-Verify generated files and `git diff --check`. Using Backlog CLI/MCP only, check supported AC/DoD items and mark each task Done only when every gate passes. Do not move tasks to `backlog/completed`.
+Verify generated files and `git diff --check`. Using Linear issue/document tools only, check supported AC/DoD items and mark each task Done only when every gate passes. Do not move tasks to `Linear/completed`.
 
-Remove only merged local worktrees/branches. Commit only Backlog finalization and Graphify output as `docs: close delivery wave C`, push master, and confirm no feature implementation occurred.
+Remove only merged local worktrees/branches. Commit only Linear completion context and Graphify output as `docs: close delivery wave C`, push master, and confirm no feature implementation occurred.

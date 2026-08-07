@@ -17,7 +17,7 @@ export type { DealDetailRecord, DealListRecord, PhaseTransitionRecord };
  * Primary Deal Repository for banker-facing M&A deal operations.
  *
  * Governed domain authority: MAI-103
- * @see backlog/docs/architecture/backend-redesign/domain-workflows/doc-20 - MAI-103-Bounded-Contexts-Aggregates-and-Workflow-State-Machines.md
+ * @see https://linear.app/mergesai/document/mai-103-bounded-contexts-aggregates-and-workflow-state-machines-0504b8e746a8 - MAI-103 Bounded Contexts, Aggregates, and Workflow State Machines
  */
 export class DealRepository extends DatabaseMemoryService {
   private static repoInstance: DealRepository | null = null;
@@ -93,4 +93,3 @@ export class DealRepository extends DatabaseMemoryService {
     });
   }
 }
-

@@ -63,7 +63,6 @@ MAI.
 
 ## Documentation Governance
 
-Canonical financial engine formulas and system specifications live under
-[`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-02-Engine-Specs.md`). This file provides directory-local
+Canonical financial engine formulas and system specifications live in Linear
+Documents in the [MAI workspace](https://linear.app/mergesai/). This file provides directory-local
 implementation guidance.

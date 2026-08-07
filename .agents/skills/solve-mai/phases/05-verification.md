@@ -5,7 +5,7 @@ Prove the requested outcome, regression coverage, and completion criteria with r
 ## Workflow
 
 1. Invoke `$model-selection` for verification.
-2. Call `task_view` through Backlog MCP immediately before mapping evidence to criteria.
+2. Call `Linear issue lookup` through Linear issue and document tools immediately before mapping evidence to criteria.
 3. Re-read the final diff and every modified file.
 4. Run verification in increasing scope:
    - the targeted regression test or reproduction;
@@ -20,22 +20,22 @@ Prove the requested outcome, regression coverage, and completion criteria with r
 10. Run `git diff --check` and inspect `git status --short`.
 11. Capture exact commands, exit status, results, and environment limitations.
 
-## Map evidence to Backlog
+## Map evidence to Linear
 
 For each acceptance criterion:
 
 1. identify the command, observation, or artifact that proves it;
 2. keep it unchecked when evidence is partial or unavailable;
-3. use `task_edit.acceptanceCriteriaCheck` with the current 1-based index only after proof;
-4. use `acceptanceCriteriaUncheck` if later evidence invalidates completion.
+3. use `Linear issue update for acceptance criteria` with the current 1-based index only after proof;
+4. use `use a Linear issue update to uncheck the criterion` if later evidence invalidates completion.
 
 For task-specific Definition of Done:
 
-- use `definitionOfDoneCheck` only for directly verified items;
+- use `Linear issue update for Definition of Done` only for directly verified items;
 - keep project defaults separate from task-specific DoD;
 - do not use DoD as a substitute for behavioral acceptance criteria.
 
-Record commands and results with `notesAppend`. Record unavailable environments as blockers, not passes.
+Record commands and results with `Linear issue update with appended verification notes`. Record unavailable environments as blockers, not passes.
 
 ## Failure handling
 
@@ -55,6 +55,6 @@ Verification is complete only when:
 - the user-visible path was exercised or its limitation is explicit;
 - configuration closure passes when applicable;
 - the worktree and diff contain only intended changes;
-- Backlog contains exact verification evidence.
+- Linear contains exact verification evidence.
 
 Unresolved required checks block review readiness.

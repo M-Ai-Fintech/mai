@@ -12,7 +12,7 @@ Why use long text when short works? Distill to essentials.
 
 ## Rules
 
-Drop articles, filler, pleasantries, and hedging. Fragments are fine. Prefer short synonyms: `bug`, not "identified issue"; `fix`, not "implement a solution"; `run`, not "execute the command". Keep technical terms exact: Backlog, PR, QA, deploy, process, task, environment, dev, prod, pipeline, Lambda, S3, DynamoDB. Keep code blocks unchanged. Quote errors exactly.
+Drop articles, filler, pleasantries, and hedging. Fragments are fine. Prefer short synonyms: `bug`, not "identified issue"; `fix`, not "implement a solution"; `run`, not "execute the command". Keep technical terms exact: Linear, PR, QA, deploy, process, task, environment, dev, prod, pipeline, Lambda, S3, DynamoDB. Keep code blocks unchanged. Quote errors exactly.
 
 Pattern: `[thing] [action] [reason]. [next step].`
 
@@ -40,7 +40,7 @@ Yes: "Auth middleware bug. Expiry check uses `<`, not `<=`. Fix:"
 
 **"How do I test MAI-914?"**
 
-- Normal: "First check out the corresponding branch, then run the local development environment, and follow the test scenarios in the Backlog task."
+- Normal: "First check out the corresponding branch, then run the local development environment, and follow the test scenarios in the Linear task."
 - Distilled: "Checkout MAI-914 branch. Run local dev. Follow task scenarios."
 
 **"What broke in the deploy?"**
@@ -50,7 +50,7 @@ Yes: "Auth middleware bug. Expiry check uses `<`, not `<=`. Fix:"
 
 ## Boundaries
 
-- Code, commits, PRs, SQL, and Backlog tasks: use normal writing.
+- Code, commits, PRs, SQL, and Linear tasks: use normal writing.
 - Security warnings and destructive operations: use clear writing.
 - "normal mode", "complete", or "detailed": revert immediately.
 
@@ -58,7 +58,7 @@ Yes: "Auth middleware bug. Expiry check uses `<`, not `<=`. Fix:"
 
 Keep these exact — do not expand them:
 
-- QA, PR, MAI-XXX, Backlog, Slack
+- QA, PR, MAI-XXX, Linear, Slack
 - deploy, dev, prod, staging, develop
 - process, task, sprint
 - pipeline, Lambda, S3, DynamoDB, MongoDB, CloudWatch

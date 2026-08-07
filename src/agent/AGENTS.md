@@ -67,7 +67,6 @@ Each specialized agent folder contains domain knowledge assets in `fonts/*.md`
 
 ## Documentation Governance
 
-Canonical multi-agent architecture documentation lives under
-[`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-04-Multi-Agent-Architecture.md`). Colocated knowledge assets
+Canonical multi-agent architecture documentation lives in Linear document `doc-3`
+([Agent Architecture and Workflows](https://linear.app/mergesai/document/agent-architecture-and-workflows-63b3e527b203)). Colocated knowledge assets
 (`src/agent/agents/**/fonts/*.md`) govern local implementation details.

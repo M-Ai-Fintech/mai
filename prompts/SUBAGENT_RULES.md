@@ -17,7 +17,7 @@ Before any writing delegation, record:
 | --- | --- | --- | --- | --- | --- | --- |
 
 No two writers own the same path. Shared registries, public exports, runtime
-composition, migration indexes, task-wide test support, Backlog, PR metadata,
+composition, migration indexes, task-wide test support, Linear, PR metadata,
 and Graphify outputs remain with one coordinator unless the plan names exactly
 one safer owner.
 
@@ -30,7 +30,7 @@ type, and test checks before accepting the next result.
 
 Read-only parallel work is allowed only when it answers disjoint questions and
 materially reduces elapsed time. It does not create an independent review
-swarm. No worker updates Backlog, merges, pushes, marks Done, runs Graphify,
+swarm. No worker updates Linear, merges, pushes, marks Done, runs Graphify,
 or claims whole-task completion.
 
 ## Completion packet
@@ -40,5 +40,5 @@ files, commands and terminal results, assumptions, risks, conflicts,
 integration order, and a binary `PASS` or `FAIL`. A skipped, timed-out,
 unavailable, or interrupted required check is non-passing.
 
-The coordinator alone owns the task-wide verification, Backlog evidence,
+The coordinator alone owns the task-wide verification, Linear evidence,
 state transition, commit, push, and final handoff.

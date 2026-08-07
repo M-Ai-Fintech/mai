@@ -1,0 +1,27 @@
+# MAI-44 — Pause, archive, restore, termination, retention and deletion
+
+**Skill:** `$solve-mai`\
+**Wave:** G
+
+Read `prompts/OPERATING_RULES.md` and `## Wave G execution plan — MAI-44` in local
+`AGENTS.md`; never commit the plan. Invoke `$solve-mai MAI-44`.
+
+## Execution policy
+
+Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+
+## Focus
+
+Deliver Deal Governance for pause/archive/restore/termination, consequence
+previews, retention/legal holds, deletion requests/approvals, resumable
+orchestration, and erasure manifests.
+
+## Boundary
+
+Do not physically erase without approved policy/infrastructure or create a
+generic delete path.
+
+Use focused`rg`, TDD/legal-hold
+and recovery tests, task checks, and `deno task verify`. Set In Progress, record
+migration/rollback evidence, open a PR containing MAI-44, never self-merge, and
+do not mark Done.

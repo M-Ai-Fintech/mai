@@ -6,7 +6,7 @@ unrelated work.
 ## Preconditions
 
 - Intake and discovery gates passed.
-- The approved plan is stored in Backlog.
+- The approved plan is stored in Linear.
 - Required investigation has selected an evidence-backed path.
 - The current branch and worktree are safe for task-scoped edits.
 
@@ -86,18 +86,18 @@ criteria:
 1. stop the current slice;
 2. explain the new work and why it is required;
 3. ask whether to expand the task or create a follow-up;
-4. update the Backlog plan only after approval.
+4. update the Linear plan only after approval.
 
 Do not mix cleanup, refactoring, or unrelated fixes into the task because the
 files are already open.
 
-## Backlog record
+## Linear record
 
 After a meaningful slice:
 
-- use `task_edit.notesAppend` for decisions, useful findings, and intermediate
+- use `Linear issue update with appended notes` for decisions, useful findings, and intermediate
   verification;
-- use `task_edit.modifiedFiles` with the complete current task-scoped path list;
+- use `Linear issue update with modified files` with the complete current task-scoped path list;
 - use `addReferences` or `addDocumentation` when new authoritative context
   appears;
 - keep status aligned with reality.
@@ -114,7 +114,7 @@ Implementation is complete only when:
 - unrelated worktree changes remain intact;
 - stale identifiers and consumers were checked;
 - generated and temporary artifacts are intentional;
-- Backlog records material implementation facts and current modified files.
+- Linear records material implementation facts and current modified files.
 
 Proceed to verification with uncommitted changes unless the repository workflow
 explicitly requires an earlier commit.

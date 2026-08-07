@@ -1,37 +1,40 @@
 # Repository Agent Instructions
 
-Canonical project architecture, domain, setup, operations, and product
-documentation lives under `backlog/docs/`. Start with the
-[Documentation Index](backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
+Linear is the system of record for active and completed project work and
+governed project documentation. Use the MAI team in
+<https://linear.app/mergesai/>. The local
+[migration map](docs/migrations/backlog-to-linear-map.json) preserves historical
+Backlog IDs and paths without becoming active authority.
 Do not place competing project-wide authority in this file.
 
-## Backlog.md workflow
+## Linear workflow
 
-This project uses Backlog.md as its system of record.
+This project uses Linear as its permanent active work and documentation system.
 
 For every request:
 
-1. Run `backlog instructions overview` before answering or acting.
-2. Use the overview to decide whether to search, read, create, or update a task.
-3. Read `task-execution` before planning or implementation and
-   `task-finalization` before completion.
-4. Run `backlog <command> --help` before unfamiliar CLI operations.
+1. Resolve the relevant Linear issue, project, and governed documents before
+   answering or acting.
+2. Use the Linear MAI team to search, read, create, or update work records.
+3. Read the full issue, acceptance criteria, dependencies, evidence, and
+   project context before planning or implementation.
+4. Record plans, evidence, documentation links, relations, and completion
+   summaries in Linear; use native issue/document operations for writes.
 
-Never edit Backlog tasks, documents, decisions, drafts, or milestones directly.
-Use the configured Backlog tools so metadata, relationships, and history remain
-consistent.
+Never create a competing local task or documentation system. Git remains the
+source of truth for code and history; legacy Backlog IDs are historical
+traceability only.
 
 ## Documentation governance
 
-- `backlog/docs/` is the governed documentation root.
+- Linear Documents are the governed documentation root for active project work.
 - Canonical documentation and ADRs are English.
-- English ADRs under `backlog/docs/decisions/` are authoritative.
-- Backlog Decisions remain unused until governed create, view, and edit
-  workflows are available.
+- English Linear Documents with the relevant architecture or decision context
+  are authoritative.
 - Colocated Storybook MDX and `src/agent/agents/**` knowledge assets have local
   implementation authority only.
 - `graphify-out/` is generated and non-authoritative.
-- Update the documentation inventory and ownership metadata whenever a
+- Update the relevant Linear Document and migration metadata whenever a
   documentation-like asset is added, removed, moved, or reclassified.
 
 ## Graphify
@@ -105,4 +108,4 @@ the GUI, `gui/AGENTS.md` contains the Next.js-version rule.
 - Plain text only for user-facing CLI output.
 ## Resource naming
 
-Backlog task IDs are governance and traceability identifiers, not names for runtime resources. Never use task IDs in environment variables, database or schema names, Docker resources, code symbols, helpers, filenames, queues, topics, metrics, fixtures, or runtime configuration. Task IDs remain valid in Backlog records, branches, pull requests, commits, comments, and historical references.
+Linear issue IDs are governance and traceability identifiers, not names for runtime resources. Never use Linear issue IDs or legacy Backlog identifiers in environment variables, database or schema names, Docker resources, code symbols, helpers, filenames, queues, topics, metrics, fixtures, or runtime configuration. Current issue IDs remain valid in Linear records, branches, pull requests, commits, comments, and current references; legacy Backlog IDs remain historical only.

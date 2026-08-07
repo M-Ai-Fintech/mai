@@ -7,29 +7,29 @@ Read `prompts/OPERATING_RULES.md`.
 
 ## Tasks
 
-- `MAI-115` — Findings, impacts and decisions
-- `MAI-120` — Agent mission and run platform
-- `MAI-124` — Deal team and external-participant access
+- `MAI-31` — Findings, impacts and decisions
+- `MAI-32` — Agent mission and run platform
+- `MAI-33` — Deal team and external-participant access
 
 ## Entry gate
 
-Wave E is closed; all task-specific dependencies through MAI-114 are Done. Every
+Wave E is closed; all task-specific dependencies through MAI-29 are Done. Every
 declared dependency remains authoritative.
 
-Run Backlog overview/execution instructions, fetch `origin/master`, require
+Run Linear workspace and issue/project context, fetch `origin/master`, require
 clean synchronized master, verify tasks are active To Do with `delivery-wave-f`,
 and rule out duplicate branches/worktrees/PRs.
 
 | Task    | Branch                                                       | Worktree                          | Prompt       |
 | ------- | ------------------------------------------------------------ | --------------------------------- | ------------ |
-| MAI-115 | `delivery/MAI-115-findings-impacts-and-decisions`            | `../mai-worktrees/wave_f/MAI-115` | `MAI-115.md` |
-| MAI-120 | `delivery/MAI-120-agent-mission-and-run-platform`            | `../mai-worktrees/wave_f/MAI-120` | `MAI-120.md` |
-| MAI-124 | `delivery/MAI-124-deal-team-and-external-participant-access` | `../mai-worktrees/wave_f/MAI-124` | `MAI-124.md` |
+| MAI-31 | `delivery/MAI-31-findings-impacts-and-decisions`            | `../mai-worktrees/wave_f/MAI-31` | `MAI-31.md` |
+| MAI-32 | `delivery/MAI-32-agent-mission-and-run-platform`            | `../mai-worktrees/wave_f/MAI-32` | `MAI-32.md` |
+| MAI-33 | `delivery/MAI-33-deal-team-and-external-participant-access` | `../mai-worktrees/wave_f/MAI-33` | `MAI-33.md` |
 
 Create all from the same verified master commit. For each worktree, inspect with
 Use focused`rg`, eliminate file collisions, write
 `## Wave F execution plan — <TASK-ID>` in local root `AGENTS.md`, persist with
-Backlog `planSet`, keep it uncommitted/`skip-worktree`, and leave To Do until
+the Linear issue description or plan metadata, keep it uncommitted/`skip-worktree`, and leave To Do until
 implementation starts. Use `prompts/OPERATING_RULES.md` for every plan's model
 route; record a written deep architecture, security, or planning justification
 if Sol is selected. Return base, gates, matrix, plans, collision

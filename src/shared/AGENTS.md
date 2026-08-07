@@ -37,6 +37,6 @@ shared utilities consumed across core, engines, agents, and API subsystems.
 
 ## Documentation Governance
 
-Canonical domain models and system architecture are governed under
-[`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-01-System-Architecture.md` and `doc-07-Domain-Models.md`).
+Canonical domain models and system architecture are governed by Linear
+Documents `doc-2` and `doc-7` in the
+[MAI workspace](https://linear.app/mergesai/).

@@ -1,6 +1,6 @@
 # Finish — Wave L: Migration and retirement
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions.
+Read `prompts/OPERATING_RULES.md` and Linear completion context.
 
 merged.
 
@@ -16,7 +16,7 @@ Use one accountable finisher. Parallel read-only review is exceptional and must 
 Run focused migration/recovery checks and `deno task verify`. Do not repair
 feature code. When green, run one `graphify update .` and `git diff --check`.
 
-Use Backlog CLI/MCP to mark MAI-129 Done only when every gate passes. Do not
-move to completed. Remove only merged worktree/branch. Commit Backlog/Graphify
+Use Linear issue/document tools to mark MAI-70 Done only when every gate passes. Do not
+move to completed. Remove only merged worktree/branch. Commit Linear/Graphify
 changes as `docs: close delivery wave L`, push master, and confirm no feature
 implementation occurred.

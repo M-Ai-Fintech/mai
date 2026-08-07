@@ -43,6 +43,6 @@ function warnAboutMissingApiKey(): void {
     "The system will operate in DRY-RUN/FALLBACK (mock) mode and no real API requests will be made.\n",
   );
   console.warn(
-    "Configure your key using backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md\n",
+    "Configure your key using Linear document doc-8 in https://linear.app/mergesai/\n",
   );
 }

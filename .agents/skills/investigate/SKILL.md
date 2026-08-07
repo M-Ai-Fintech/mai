@@ -1,7 +1,7 @@
 ---
 name: investigate
 description: >
-  Diagnose bugs in the MAI repository using Backlog task context and end-to-end code tracing.
+  Diagnose bugs in the MAI repository using Linear task context and end-to-end code tracing.
   Identify the root cause with file:line evidence and propose a minimal fix without implementing it.
   Use for "investiga", "investigate", "root cause", "por que não funciona", or a MAI-N task
   that needs diagnosis before coding. Use caveman output by default.
@@ -42,14 +42,14 @@ not replace that evidence with a static-analysis guess.
 
 ## Inputs
 
-1. Require a Backlog task ID such as `MAI-17`, or enough context to find it.
+1. Require a Linear task ID such as `MAI-17`, or enough context to find it.
 2. Default to the current repository, `/home/luis/mai`.
 3. Ask one concise question only when the target repository or failing flow remains ambiguous.
 
 ## Workflow
 
-1. Run `backlog instructions overview`.
-2. Read the task with `backlog task view MAI-N --plain`.
+1. Use the Linear workspace and issue/project context.
+2. Look up the Linear issue MAI-N.
 3. Extract symptoms, acceptance criteria, prior attempts, dependencies, and referenced files.
 4. Inspect `git status --short`, recent commits, and relevant repository instructions.
 5. Decide whether the defect meets **Escalate hard bugs**. If it does, invoke
@@ -62,7 +62,7 @@ not replace that evidence with a static-analysis guess.
    - persistence or external integration;
    - response, render, or generated artifact.
 7. Use `rg` to find definitions, callers, configuration, tests, and similar working paths.
-8. Compare intended behavior from Backlog with actual behavior in code.
+8. Compare intended behavior from Linear with actual behavior in code.
 9. Test competing hypotheses with read-only checks or focused reproduction when safe.
 10. Inspect local or deployed runtime logs when static analysis cannot distinguish hypotheses.
 11. Stop when one explanation accounts for every reported symptom.
@@ -97,7 +97,7 @@ Confidence: <high|medium|low> — <reason>.
 
 ## Boundaries
 
-- Do not edit files, create branches, commit, push, or update Backlog.
+- Do not edit files, create branches, commit, push, or update Linear.
 - Do not stop at the first plausible symptom.
 - Do not guess external state that can be checked.
 - Request approval before privileged access or potentially destructive diagnostics.

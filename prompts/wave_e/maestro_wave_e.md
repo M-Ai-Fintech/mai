@@ -7,27 +7,27 @@ Read `prompts/OPERATING_RULES.md`.
 
 ## Tasks
 
-- `MAI-114` — Workstreams, tasks and approval requests
+- `MAI-29` — Workstreams, tasks and approval requests
 
 ## Entry gate
 
-Wave D is closed; MAI-110 and MAI-111 are Done. Every declared dependency must
+Wave D is closed; MAI-24 and MAI-25 are Done. Every declared dependency must
 be Done.
 
-Run Backlog overview/execution instructions, fetch `origin/master`, require
-clean synchronized master, verify MAI-114 is active To Do with
+Run Linear workspace and issue/project context, fetch `origin/master`, require
+clean synchronized master, verify MAI-29 is active To Do with
 `delivery-wave-e`, and rule out duplicate work.
 
 Create:
 
 | Task    | Branch                                                     | Worktree                          | Prompt       |
 | ------- | ---------------------------------------------------------- | --------------------------------- | ------------ |
-| MAI-114 | `delivery/MAI-114-workstreams-tasks-and-approval-requests` | `../mai-worktrees/wave_e/MAI-114` | `MAI-114.md` |
+| MAI-29 | `delivery/MAI-29-workstreams-tasks-and-approval-requests` | `../mai-worktrees/wave_e/MAI-29` | `MAI-29.md` |
 
 From the verified master commit, inspect current behavior with focused `rg`;
-write `## Wave E execution plan — MAI-114` into local root `AGENTS.md`; include
+write `## Wave E execution plan — MAI-29` into local root `AGENTS.md`; include
 outcome, evidence, slices, exclusive files, tests, rollout/rollback,
-risks/checkpoints, and exclusions; persist it with Backlog `planSet`; keep it
+risks/checkpoints, and exclusions; persist it with the Linear issue description or plan metadata; keep it
 uncommitted and `skip-worktree`; leave the task To Do until implementation starts.
 
 Use `prompts/OPERATING_RULES.md` for the model route and record a written deep architecture, security, or planning justification if Sol is selected. Return base commit, gate, worktree/branch, plan

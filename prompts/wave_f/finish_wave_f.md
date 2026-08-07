@@ -1,9 +1,9 @@
 # Finish — Wave F: Decisions, agent runtime, and access
 
-**Run only after:** MAI-115, MAI-120, and MAI-124 PRs are owner-approved and
+**Run only after:** MAI-31, MAI-32, and MAI-33 PRs are owner-approved and
 merged.
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization. Require clean synchronized master
+Read `prompts/OPERATING_RULES.md` and Linear completion context. Require clean synchronized master
 and merged PR evidence. Inspect merged source and task records; verify immutable
 decisions, durable recovery, authority/isolation, external access boundaries,
 ACs, DoD, and meaningful tests.
@@ -16,7 +16,7 @@ Run focused security/recovery/integration checks and `deno task verify`. Do not
 repair feature code here. If green, run exactly one `graphify update .` and
 `git diff --check`.
 
-Using Backlog CLI/MCP only, mark tasks Done only when every gate passes; do not
+Using Linear issue/document tools only, mark issues Done only when every gate passes; do not
 move them to completed. Remove only merged worktrees/branches. Commit
-Backlog/Graphify changes as `docs: close delivery wave F`, push master, and
+Linear/Graphify changes as `docs: close delivery wave F`, push master, and
 confirm no feature implementation occurred.

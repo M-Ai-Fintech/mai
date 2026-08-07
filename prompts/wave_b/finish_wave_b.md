@@ -2,9 +2,9 @@
 
 **Run only after:** every task PR below is owner-approved and merged into `master`.
 
-- `MAI-110` — Deal management, parties and mandate
+- `MAI-24` — Deal management, parties and mandate
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions. Require clean synchronized master, merged PR evidence, no unresolved review/replacement PR, and consistent dependencies.
+Read `prompts/OPERATING_RULES.md` and Linear completion context. Require clean synchronized master, merged PR evidence, no unresolved review/replacement PR, and consistent dependencies.
 
 For each task, inspect the merged source and full task record. Verify plan conformance, bounded ownership, ACs, DoD, meaningful tests, authorization/isolation, provenance, concurrency/idempotency, failures/retries, migration/rollback, and operator evidence as applicable.
 
@@ -28,9 +28,9 @@ Verify generated files and `git diff --check`.
 
 ## Finalize
 
-Using Backlog CLI/MCP only, check AC/DoD items supported by current evidence and set each task Done only when every gate passes. Do not move tasks to `backlog/completed`.
+Using Linear issue/document tools only, check AC/DoD items supported by current evidence and set each issue Done only when every gate passes. Do not move tasks to `Linear/completed`.
 
-Remove only merged local worktrees/branches. Commit only Backlog finalization and generated Graphify changes to master as:
+Remove only merged local worktrees/branches. Commit only Linear completion context and generated Graphify changes to master as:
 
 ```text
 docs: close delivery wave B

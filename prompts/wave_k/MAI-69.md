@@ -1,0 +1,26 @@
+# MAI-69 — Governed Brazilian M&A model-adaptation strategy
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md` and `## Wave K execution plan — MAI-69` in local
+`AGENTS.md`; never commit it. Invoke `$solve-mai MAI-69`.
+
+## Execution policy
+
+Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+
+## Focus
+
+Evaluate base model, prompt engineering, governed retrieval, knowledge bundles,
+structured tools, few-shot, and fine-tuning/LoRA on one approved Brazilian M&A
+evaluation methodology, then record a formal Go/No-go.
+
+## Boundary
+
+Do not train/deploy an adapted model inside this task or label base-model/mock
+output as fine-tuned inference.
+
+Use source-backed evaluation,
+validation scripts and `deno task verify`. Set In Progress, record the formal
+decision and evidence, open a PR containing MAI-69, never self-merge, and do
+not mark Done.

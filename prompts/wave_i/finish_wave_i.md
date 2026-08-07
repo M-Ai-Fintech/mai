@@ -1,8 +1,8 @@
 # Finish — Wave I: Governed agents and providers
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions.
+Read `prompts/OPERATING_RULES.md` and Linear completion context.
 
-**Run only after:** MAI-121 and MAI-127 PRs are owner-approved and merged.
+**Run only after:** MAI-60 and MAI-61 PRs are owner-approved and merged.
 
 Require clean synchronized master and merged PR evidence. Inspect merged source
 and full records; verify agent versioning, ToolGateway authority, prohibited
@@ -17,7 +17,7 @@ Run focused security/provider/integration checks and `deno task verify`. Do not
 repair feature code. When green, run one `graphify update .` and
 `git diff --check`.
 
-Use Backlog CLI/MCP to mark tasks Done only when every gate passes. Do not move
-to completed. Remove only merged worktrees/branches. Commit Backlog/Graphify
+Use Linear issue/document tools to mark issues Done only when every gate passes. Do not move
+to completed. Remove only merged worktrees/branches. Commit Linear/Graphify
 changes as `docs: close delivery wave I`, push master, and confirm no feature
 implementation occurred.

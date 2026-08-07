@@ -4,8 +4,8 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-Project-wide documentation is governed from
-[`backlog/docs/`](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
+Project-wide documentation is governed by Linear Documents in the
+[MAI workspace](https://linear.app/mergesai/).
 This file contains only GUI-local agent instructions.
 
 # GUI Subsystem Agent Instructions (`gui/`)
@@ -52,7 +52,7 @@ All commands can be run from repository root using `npm --prefix gui run <script
 
 ## Documentation Governance
 
-Canonical frontend foundation architecture lives in
-[`doc-15`](../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).
+Canonical frontend foundation architecture lives in Linear document `doc-15`
+([Frontend Foundation Inventory](https://linear.app/mergesai/document/mai-95-frontend-foundation-inventory-903eec38cc51)).
 Storybook MDX is local implementation documentation, not cross-project design
 authority.

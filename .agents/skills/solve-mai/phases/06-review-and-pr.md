@@ -47,9 +47,9 @@ Push and create or update a PR only when the owner authorized remote mutation.
 
 The agent does not approve or merge its own PR. It does not deploy or force-push without separate explicit authorization.
 
-## Backlog record
+## Linear record
 
-Use `task_edit` to:
+Use `Linear issue update` to:
 
 - add the PR URL through `addReferences`;
 - append commit IDs, review status, checks, and remaining human action to notes;
@@ -66,6 +66,6 @@ This phase is complete when:
 - PR content includes task, tests, risks, and manual steps;
 - required checks are passing or blockers are recorded;
 - human review has been requested;
-- Backlog links the PR and records remaining action.
+- Linear links the PR and records remaining action.
 
 If remote mutation is not authorized, record the precise local state and handoff needed to create the PR.

@@ -39,4 +39,4 @@ Per root project governance rules in `AGENTS.md`:
 - **Local MDX scope**: Storybook MDX may document only the implementation beside
   it. It does not establish visual authority.
 - **System architecture**: The current boundary is governed by
-  [`doc-15`](../../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).
+  [`doc-15`](https://linear.app/mergesai/document/mai-95-frontend-foundation-inventory-903eec38cc51).

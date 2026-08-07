@@ -11,7 +11,8 @@
  * This additive surface does not migrate MVP routes; adoption is reversible by
  * removing consumer imports.
  *
- * @see backlog/docs/decisions/proposed-api-contracts/doc-33 - Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md
+ * @see Linear document doc-33 - Proposed ADR: API Style, Errors, Idempotency, and Concurrency
+ *      https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d
  */
 export * from "../../shared/contracts/identifiers.ts";
 export * from "../../shared/contracts/request_context.ts";

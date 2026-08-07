@@ -24,7 +24,7 @@ Collect the task ID, the reported symptom, its `file:line` or runtime evidence, 
 
    Completion: the source-to-runtime path is traceable from the faulty value to the observed behavior.
 
-3. **Audit the blast radius.** For a reusable pattern, inventory every applicable configuration, environment, deployment target, or consumer. Resolve each item in the current change, a linked Backlog follow-up, or an explicit, evidence-based non-applicability decision. For an isolated value, state why the pattern cannot recur.
+3. **Audit the blast radius.** For a reusable pattern, inventory every applicable configuration, environment, deployment target, or consumer. Resolve each item in the current change, a linked Linear follow-up, or an explicit, evidence-based non-applicability decision. For an isolated value, state why the pattern cannot recur.
 
    Completion: every in-scope instance has a recorded disposition; unverified instances are blockers.
 
@@ -36,7 +36,7 @@ Collect the task ID, the reported symptom, its `file:line` or runtime evidence, 
 
    Completion: evidence distinguishes the original failure from the corrected behavior.
 
-6. **Add regression evidence.** Add or update the narrowest test or executable verification that protects the source of truth and its consumer. Record the exact command and result in Backlog.md.
+6. **Add regression evidence.** Add or update the narrowest test or executable verification that protects the source of truth and its consumer. Record the exact command and result in Linear.
 
    Completion: the task has reproducible regression evidence, or a linked follow-up explains why automation is impossible.
 

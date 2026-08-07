@@ -1,0 +1,15 @@
+# MAI-20 — Negotiation proposal optimization
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md` and `## Wave A execution plan — MAI-20` in local `AGENTS.md`; never commit it. Invoke `$solve-mai MAI-20`.
+
+## Focus
+
+Harden deterministic/seeded negotiation proposal optimization with typed constraints, buyer/seller utilities, reservation bounds, convergence, replay, ranked alternatives, and violated-constraint explanations.
+
+## Boundary
+
+Do not own negotiation workflow, KYC policy, approval, acceptance, sending, release, or finalization.
+
+Use focused`rg`, deterministic/convergence tests and `deno task verify`. Set In Progress, record evidence, open a PR containing MAI-20, never self-merge, and do not mark Done.

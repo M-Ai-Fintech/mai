@@ -13,7 +13,7 @@ across the project.
 
 ## 1. Scope
 
-Read the Backlog task, applicable `AGENTS.md` files, governed documentation
+Read the Linear task, applicable `AGENTS.md` files, governed documentation
 needed for boundaries, current worktree state, and recent related work. Decide
 whether the pass is whole-repo, one subsystem, or a named risk class such as
 large functions, vague names, duplication, missing tests, comments, dependency
@@ -43,7 +43,7 @@ Group findings by ownership boundary and choose the smallest reviewable repair
 slices. Record proposed follow-up task titles and scopes for broad rewrites,
 risky behavior changes, or work that spans unrelated subsystems, then ask the
 owner before creating them. Keep mechanical fixes separate from semantic
-refactors. When Backlog is active, record the inventory before creating or
+refactors. When Linear is active, record the inventory before creating or
 changing cleanup tasks so the owner can choose the next slice.
 
 Completion: every finding is marked fix-now, delegate-now, follow-up, or
@@ -67,7 +67,7 @@ their patches.
 ## 5. Change
 
 Implement fix-now slices and integrate accepted subagent patches. Preserve
-behavior unless the Backlog task explicitly authorizes behavior changes. Add or
+behavior unless the Linear task explicitly authorizes behavior changes. Add or
 update tests for changed functions, renamed boundaries, extracted modules, and
 bug-prone cleanup.
 
@@ -78,8 +78,8 @@ recorded outside the PR scope.
 ## 6. Review
 
 Review the integrated diff against the finding inventory, `AGENTS.md`, tests,
-generated artifacts, and Backlog plan. Use a separate challenge subagent for the
-audit inventory, triage decisions, and final integrated diff before Backlog
+generated artifacts, and Linear plan. Use a separate challenge subagent for the
+audit inventory, triage decisions, and final integrated diff before Linear
 evidence or PR readiness is claimed.
 
 Completion: every review finding is fixed, recorded as an intentional tradeoff,
@@ -89,7 +89,7 @@ or split into follow-up work before verification is claimed.
 
 Run focused checks, `git diff --check`, `graphify update .` after code changes,
 and the repository verification gate when available. Record exact results in
-Backlog when the work is task-tracked.
+Linear when the work is task-tracked.
 
 Completion: every fix-now finding has direct verification evidence, broader
 checks are run or blocked with exact causes, and unrelated audit findings remain
@@ -103,6 +103,6 @@ owner explicitly requires it. When remote mutation is authorized, commit only
 task-scoped files, push without force, and create or update the PR with the task
 ID, finding summary, verification, risks, and remaining human action.
 
-Completion: Backlog contains the finding inventory and verification evidence,
+Completion: Linear contains the finding inventory and verification evidence,
 the branch contains only task-scoped changes, and either the PR URL or explicit
 no-remote handoff is recorded.

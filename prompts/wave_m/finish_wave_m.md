@@ -1,6 +1,6 @@
 # Finish — Wave M: Release gate
 
-Read `prompts/OPERATING_RULES.md` and Backlog finalization instructions.
+Read `prompts/OPERATING_RULES.md` and Linear completion context.
 
 merged.
 
@@ -19,8 +19,8 @@ must be genuinely separable and materially faster; use
 Run `deno task verify`. Do not repair feature code. When green, run exactly one
 `graphify update .` and `git diff --check`.
 
-Using Backlog CLI/MCP, mark MAI-131 Done only when every AC/DoD and release gate
+Using Linear issue/document tools, mark MAI-71 Done only when every AC/DoD and release gate
 is proven. Do not move it to completed. Remove only merged worktree/branch.
-Commit Backlog/Graphify changes as `docs: close delivery wave M`, push master,
+Commit Linear/Graphify changes as `docs: close delivery wave M`, push master,
 and return the production-candidate decision with evidence. Confirm no feature
 implementation occurred.

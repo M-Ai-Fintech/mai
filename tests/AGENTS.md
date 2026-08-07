@@ -29,9 +29,10 @@ microservices, engines, API endpoints, and end-to-end workflows.
 Integration-test resources use semantic names only. The shared isolated
 PostgreSQL contract is `POSTGRES_INTEGRATION_TEST_DATABASE_URL` pointing to
 `mai_test_postgres_integration`; bounded-context-specific databases must name
-their owner and purpose. Do not introduce Backlog task IDs into test
-environment variables, database names, schemas, helpers, fixtures, or test
-documentation.
+their owner and purpose. Do not introduce legacy Backlog IDs or current Linear
+issue IDs into test environment variables, database names, schemas, helpers,
+fixtures, or test documentation. Legacy Backlog IDs are historical migration
+metadata only.
 
 - **Runtime**: Deno test runner (`deno.json`).
 - **Standard Assertion Library**: `@std/assert`
@@ -62,6 +63,4 @@ documentation.
 ## Documentation Governance
 
 Canonical testing specifications and quality assurance procedures are documented
-in
-[`backlog/docs/`](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-09-Testing-and-Quality-Assurance.md`).
+in Linear Documents in the [MAI workspace](https://linear.app/mergesai/).

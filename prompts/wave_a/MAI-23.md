@@ -1,0 +1,15 @@
+# MAI-23 — Fast deterministic developer preflight
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md` and `## Wave A execution plan — MAI-23` in local `AGENTS.md`; never commit it. Invoke `$solve-mai MAI-23`.
+
+## Focus
+
+Create a fast deterministic offline developer preflight with minimum permissions, explicit fixtures, component status reporting, failure propagation, and a measured reference-runner budget.
+
+## Boundary
+
+Do not make it a banker CLI, use live providers/network/DB, or replace the full canonical and integration gates.
+
+Use focused`rg`, deterministic/preflight tests and `deno task verify`. Set In Progress, record measured evidence, open a PR containing MAI-23, never self-merge, and do not mark Done.

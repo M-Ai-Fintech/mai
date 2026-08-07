@@ -53,7 +53,7 @@ event bus, system bootstrapper, and Virtual Data Room (VDR) integration layer.
 ## Documentation Governance
 
 Canonical project architecture and database governance documentation lives in
-[`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-01-System-Architecture.md` and
-`doc-03-Data-Storage-and-Persistence.md`). This file provides directory-local
-implementation guidance.
+the [MA&I Linear workspace](https://linear.app/mergesai/), especially the
+migrated `doc-2` System and Core Architecture and `doc-3` Data and Memory
+Architecture Documents. This file provides directory-local implementation
+guidance.

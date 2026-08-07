@@ -1,12 +1,12 @@
 ---
 name: solve-mai
-description: Resolve a MAI Backlog task from scoped discovery to a human-reviewed pull request.
+description: Resolve a MAI Linear task from scoped discovery to a human-reviewed pull request.
 disable-model-invocation: true
 ---
 
 # Solve MAI
 
-Use this only with a task ID. Backlog MCP is the project-state interface. The owner approves every PR; `Done` requires every acceptance criterion, Definition of Done item, and required test to pass.
+Use this only with a task ID. Linear issue and document tools are the project-state interface. The owner approves every PR; `Done` requires every acceptance criterion, Definition of Done item, and required test to pass.
 
 ## 1. Intake
 
@@ -34,6 +34,6 @@ Read [review-and-pr](phases/06-review-and-pr.md). Completion: a human-reviewable
 
 ## 7. Finalization
 
-Read [finalization](phases/07-finalization.md). Completion: Backlog accurately records verification and remaining human action. Mark Done only after human approval and all completion gates pass.
+Read [finalization](phases/07-finalization.md). Completion: Linear accurately records verification and remaining human action. Mark Done only after human approval and all completion gates pass.
 
 At every phase, invoke `$model-selection` to choose the smallest capable model. Use `$investigate` for unclear defects and `$config-bug-closure` for configuration or provider defects. Use `$caveman` for routine updates.

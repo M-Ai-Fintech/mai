@@ -5,10 +5,10 @@ Read `prompts/OPERATING_RULES.md`.
 
 ## Tasks
 
-- `MAI-126` — Frontend adapter migration
-- `MAI-143` — Governed model-backed financial-risk integration
-- `MAI-149` — Enterprise security, privacy, and compliance readiness evidence
-- `MAI-152` — Audited agent feedback, evaluation, and offline improvement
+- `MAI-64` — Frontend adapter migration
+- `MAI-65` — Governed model-backed financial-risk integration
+- `MAI-66` — Enterprise security, privacy, and compliance readiness evidence
+- `MAI-67` — Audited agent feedback, evaluation, and offline improvement
 
 ## Entry gate
 
@@ -19,14 +19,14 @@ and no duplicate branch/worktree/PR.
 
 | Task    | Branch                                                              | Worktree                          | Prompt       |
 | ------- | ------------------------------------------------------------------- | --------------------------------- | ------------ |
-| MAI-126 | `delivery/MAI-126-frontend-adapter-migration`                       | `../mai-worktrees/wave_j/MAI-126` | `MAI-126.md` |
-| MAI-143 | `delivery/MAI-143-governed-model-backed-financial-risk-integration` | `../mai-worktrees/wave_j/MAI-143` | `MAI-143.md` |
-| MAI-149 | `delivery/MAI-149-enterprise-readiness-evidence`                    | `../mai-worktrees/wave_j/MAI-149` | `MAI-149.md` |
-| MAI-152 | `delivery/MAI-152-audited-agent-feedback-and-offline-improvement`   | `../mai-worktrees/wave_j/MAI-152` | `MAI-152.md` |
+| MAI-64 | `delivery/MAI-64-frontend-adapter-migration`                       | `../mai-worktrees/wave_j/MAI-64` | `MAI-64.md` |
+| MAI-65 | `delivery/MAI-65-governed-model-backed-financial-risk-integration` | `../mai-worktrees/wave_j/MAI-65` | `MAI-65.md` |
+| MAI-66 | `delivery/MAI-66-enterprise-readiness-evidence`                    | `../mai-worktrees/wave_j/MAI-66` | `MAI-66.md` |
+| MAI-67 | `delivery/MAI-67-audited-agent-feedback-and-offline-improvement`   | `../mai-worktrees/wave_j/MAI-67` | `MAI-67.md` |
 
 Create all from one verified master commit. Plan with focused `rg`, eliminate
 collisions, write `## Wave J execution plan — <TASK-ID>` in local `AGENTS.md`,
-persist with Backlog `planSet`, keep uncommitted/`skip-worktree`, and leave To
+persist with the Linear issue description or plan metadata, keep uncommitted/`skip-worktree`, and leave To
 Do until implementation starts. Use `prompts/OPERATING_RULES.md` for every
 plan's model route; record a written deep architecture, security, or planning
 justification if Sol is selected.

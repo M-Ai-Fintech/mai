@@ -1,0 +1,43 @@
+# MAI-70 — Data migration and MVP retirement
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md`. Read the applicable plan first; use the
+central model route and record a written deep-plan justification if Sol is
+selected. Read `## Wave L execution plan — MAI-70` in local `AGENTS.md`; never commit it.
+Invoke `$solve-mai MAI-70`.
+
+## Execution policy
+
+Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+
+## Suggested safe slice categories
+
+- Migration inventory
+- Transformations
+- Dual-read/write
+- Reconciliation
+- Consumer cutover
+- Legacy retirement
+- Rollback
+- Operational runbook
+- Migration verification
+
+All migration ordering and destructive operations remain coordinator-owned and
+serial.
+
+## Focus
+
+Execute the exclusive migration/dual-read/reconciliation/cutover/rollback
+program and retire legacy/MVP writers, registrations, schemas, tools, and
+compatibility paths only after consumer cutover.
+
+## Boundary
+
+Do not delete historical evidence, distort target domains with shims, or allow
+concurrent ownership of migration/cutover files.
+
+Use focused `rg`,
+rehearsal/reconciliation/rollback tests and `deno task verify`. Set In Progress,
+record exact manifests and operator evidence, open a PR containing MAI-70,
+never self-merge, and do not mark Done.

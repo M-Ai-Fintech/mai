@@ -1,0 +1,26 @@
+# MAI-65 — Integrate governed model-backed financial-risk calculations
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md` and `## Wave J execution plan — MAI-65` in local
+`AGENTS.md`; never commit it. Invoke `$solve-mai MAI-65`.
+
+## Execution policy
+
+Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+
+## Focus
+
+Integrate model-backed financial-risk inference through a domain-owned
+application service and typed port with exact model/input/evidence lineage,
+calculation records, proposed Findings, authorization, and provider
+certification.
+
+## Boundary
+
+Do not let the model create an unaudited human decision, hide fallback state, or
+bypass MAI-61.
+
+Use focused`rg`,
+model/lineage/security tests and `deno task verify`. Set In Progress, record
+evidence, open a PR containing MAI-65, never self-merge, and do not mark Done.

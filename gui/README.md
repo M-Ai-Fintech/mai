@@ -5,12 +5,12 @@ banker workspace. Product screens and production capabilities are not
 implemented by the current root scaffold.
 
 Project-wide product behavior is governed by the
-[MVP GUI and API Behavior](../backlog/docs/product/mvp-gui-and-api/doc-9%20-%20MVP-GUI-and-API-Behavior.md)
-document. The repository-wide documentation entry point is the
-[Documentation Index](../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
+[MVP GUI and API Behavior Linear Document](https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9).
+The repository-wide documentation entry point is the
+[MAI Linear workspace](https://linear.app/mergesai/).
 
 The exact MAI-95 keep, replace, and remove inventory is governed by the
-[Frontend Foundation Inventory](../backlog/docs/architecture/frontend-foundation/doc-15%20-%20MAI-95-Frontend-Foundation-Inventory.md).
+[Frontend Foundation Inventory Linear Document](https://linear.app/mergesai/document/mai-95-frontend-foundation-inventory-903eec38cc51).
 
 Figma file `otMJE31OKIxdXogV4RNbGQ` is the sole visual and interaction design
 authority. Product definitions `design/1–28` govern behavior and boundaries,

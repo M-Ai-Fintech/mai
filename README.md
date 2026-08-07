@@ -7,20 +7,22 @@ document-generation engines.
 
 ## Documentation
 
-The governed documentation root is `backlog/docs/`. Start with the
-[Documentation Index](backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md).
+Linear is the permanent system of record for active and completed work and
+governed project documentation. Open the [MAI Linear workspace](https://linear.app/mergesai/)
+and use the [migration map](docs/migrations/backlog-to-linear-map.json) for
+historical Backlog traceability.
 
 Key references:
 
-- [System and Core Architecture](backlog/docs/architecture/system-core/doc-2%20-%20System-and-Core-Architecture.md)
-- [Agent Architecture and Workflows](backlog/docs/architecture/agent-workflows/doc-3%20-%20Agent-Architecture-and-Workflows.md)
-- [M&A Domain Model](backlog/docs/domain/domain-model/doc-7%20-%20MA-Domain-Model.md)
-- [Local Setup and Runtime Operations](backlog/docs/operations/local-setup/doc-8%20-%20Local-Setup-and-Runtime-Operations.md)
-- [MVP GUI and API Behavior](backlog/docs/product/mvp-gui-and-api/doc-9%20-%20MVP-GUI-and-API-Behavior.md)
+- [System and Core Architecture](https://linear.app/mergesai/document/system-and-core-architecture-4a57aeede3db)
+- [Agent Architecture and Workflows](https://linear.app/mergesai/document/agent-architecture-and-workflows-63b3e527b203)
+- [M&A Domain Model](https://linear.app/mergesai/document/manda-domain-model-259ba512b0b3)
+- [Local Setup and Runtime Operations](https://linear.app/mergesai/document/local-setup-and-runtime-operations-8fd2fbfba9f7)
+- [MVP GUI and API Behavior](https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9)
 
 Documents elsewhere in the repository are colocated implementation references,
-agent knowledge, work records, or generated artifacts. They do not supersede
-the governed documentation.
+agent knowledge, migration metadata, or generated artifacts. They do not
+supersede Linear Documents.
 
 ## Quick start
 
@@ -60,7 +62,7 @@ src/          Deno API, agents, core services, and engines
 gui/          Next.js application and colocated component documentation
 tests/        Cross-module and contract tests
 scripts/      Verification, training, and repository tooling
-backlog/      Governed tasks, milestones, and canonical documentation
+docs/         Migration metadata and local repository references
 graphify-out/ Generated knowledge graph; non-authoritative
 ```
 

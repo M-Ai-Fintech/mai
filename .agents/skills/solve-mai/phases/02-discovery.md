@@ -26,13 +26,13 @@ Use repository evidence to define the smallest coherent solution, then obtain an
    - documentation changes;
    - risks, migrations, environment needs, and human checkpoints.
 8. Present the plan to the owner. A request to solve the identified review threads counts as approval of that stated scope, but material deviations still require a new approval loop.
-9. Record the approved plan with `task_edit.planSet`. Use `addReferences` and `addDocumentation` for sources needed by a replacement agent.
+9. Record the approved plan with `Linear issue update with the approved plan`. Use `addReferences` and `addDocumentation` for sources needed by a replacement agent.
 10. Create or switch to an isolated task branch following repository convention, such as `chore/MAI-86-agent-skills`. Preserve unrelated changes.
 
 ## Plan maintenance
 
-- Use `planAppend` for additive detail that does not change the approved outcome.
-- Use `planSet` when the implementation path changes materially.
+- Use `Linear issue description append` for additive detail that does not change the approved outcome.
+- Use `Linear issue description or plan metadata` when the implementation path changes materially.
 - If discovered work falls outside acceptance criteria, stop and ask whether to expand the task or create a follow-up.
 - Never silently convert a blocker or follow-up into required current scope.
 
@@ -44,7 +44,7 @@ Discovery is complete only when:
 - the intended behavior and current behavior are understood;
 - the plan is minimal, testable, and risk-aware;
 - the owner approved the plan;
-- the plan is stored through Backlog MCP;
+- the plan is stored through Linear issue and document tools;
 - an isolated task branch exists.
 
 No implementation begins before this gate passes.

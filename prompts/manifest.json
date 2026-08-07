@@ -1,6 +1,13 @@
 {
-  "schema_version": 3,
-  "repository": "luisfelipeluis49/mai",
+  "schema_version": 4,
+  "repository": "M-Ai-Fintech/mai",
+  "system_of_record": {
+    "active": "Linear",
+    "workspace": "https://linear.app/mergesai/",
+    "team_key": "MAI",
+    "migration_map": "docs/migrations/backlog-to-linear-map.json",
+    "legacy_system": "Backlog.md"
+  },
   "policy": "prompts/OPERATING_RULES.md",
   "models": {
     "substantial_implementation": "5.6 Luna Max",
@@ -34,54 +41,54 @@
     "override_activation": "Capacity is not permission; activate an override only after the coordinator records separability, ownership, integration order, and material elapsed-time benefit.",
     "single_authoritative_branch": true,
     "single_authoritative_pr": true,
-    "single_backlog_writer": true,
+    "single_linear_writer": true,
     "single_graphify_writer": true,
     "serial_integration": true
   },
   "task_subagent_overrides": {
-    "MAI-114": { "max_subagents": 7, "max_writers": 4 },
-    "MAI-115": { "max_subagents": 6, "max_writers": 4 },
-    "MAI-118": { "max_subagents": 8, "max_writers": 4 },
-    "MAI-120": { "max_subagents": 8, "max_writers": 4 },
-    "MAI-121": { "max_subagents": 8, "max_writers": 4 },
-    "MAI-126": { "max_subagents": 12, "max_writers": 6 },
-    "MAI-127": { "max_subagents": 10, "max_writers": 5 },
-    "MAI-129": { "max_subagents": 12, "max_writers": 4 },
-    "MAI-131": { "max_subagents": 14, "max_writers": 1 }
+    "MAI-29": { "max_subagents": 7, "max_writers": 4 },
+    "MAI-31": { "max_subagents": 6, "max_writers": 4 },
+    "MAI-48": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-32": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-60": { "max_subagents": 8, "max_writers": 4 },
+    "MAI-64": { "max_subagents": 12, "max_writers": 6 },
+    "MAI-61": { "max_subagents": 10, "max_writers": 5 },
+    "MAI-70": { "max_subagents": 12, "max_writers": 4 },
+    "MAI-71": { "max_subagents": 14, "max_writers": 1 }
   },
   "sol_plan_tasks": [
-    "MAI-107",
-    "MAI-120",
-    "MAI-121",
-    "MAI-126",
-    "MAI-127",
-    "MAI-129"
+    "MAI-14",
+    "MAI-32",
+    "MAI-60",
+    "MAI-64",
+    "MAI-61",
+    "MAI-70"
   ],
   "sol_plan_requires_explicit_justification": true,
   "waves": {
     "A": [
-      "MAI-107",
-      "MAI-108",
-      "MAI-109",
-      "MAI-142",
-      "MAI-144",
-      "MAI-145",
-      "MAI-146",
-      "MAI-147",
-      "MAI-148",
-      "MAI-151"
+      "MAI-14",
+      "MAI-15",
+      "MAI-16",
+      "MAI-17",
+      "MAI-18",
+      "MAI-19",
+      "MAI-20",
+      "MAI-21",
+      "MAI-22",
+      "MAI-23"
     ],
-    "B": ["MAI-110"],
-    "C": ["MAI-111", "MAI-112", "MAI-123"],
-    "D": ["MAI-113"],
-    "E": ["MAI-114"],
-    "F": ["MAI-115", "MAI-120", "MAI-124"],
-    "G": ["MAI-116", "MAI-117", "MAI-119", "MAI-122", "MAI-125"],
-    "H": ["MAI-118"],
-    "I": ["MAI-121", "MAI-127"],
-    "J": ["MAI-126", "MAI-143", "MAI-149", "MAI-152"],
-    "K": ["MAI-150", "MAI-153"],
-    "L": ["MAI-129"],
-    "M": ["MAI-131"]
+    "B": ["MAI-24"],
+    "C": ["MAI-25", "MAI-26", "MAI-27"],
+    "D": ["MAI-28"],
+    "E": ["MAI-29"],
+    "F": ["MAI-31", "MAI-32", "MAI-33"],
+    "G": ["MAI-39", "MAI-41", "MAI-42", "MAI-43", "MAI-44"],
+    "H": ["MAI-48"],
+    "I": ["MAI-60", "MAI-61"],
+    "J": ["MAI-64", "MAI-65", "MAI-66", "MAI-67"],
+    "K": ["MAI-68", "MAI-69"],
+    "L": ["MAI-70"],
+    "M": ["MAI-71"]
   }
 }

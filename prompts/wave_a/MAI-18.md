@@ -1,0 +1,15 @@
+# MAI-18 — Deterministic valuation and synergy algorithms
+
+**Skill:** `$solve-mai`
+
+Read `prompts/OPERATING_RULES.md` and `## Wave A execution plan — MAI-18` in local `AGENTS.md`; never commit it. Invoke `$solve-mai MAI-18`.
+
+## Focus
+
+Harden pure deterministic valuation and synergy calculations with typed money/percentage/unit semantics, denominator handling, golden vectors, provenance-ready outputs, and representative performance evidence.
+
+## Boundary
+
+Do not own policy thresholds, approval, persistence, workflow, or provider behavior.
+
+Use focused`rg`, golden/property tests and `deno task verify`. Set In Progress, record evidence, open a PR containing MAI-18, never self-merge, and do not mark Done.

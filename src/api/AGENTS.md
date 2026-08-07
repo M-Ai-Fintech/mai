@@ -43,7 +43,7 @@ platform.
 
 ## Documentation Governance
 
-Canonical API specification documentation lives under
-[`backlog/docs/`](../../backlog/docs/index/doc-10%20-%20Documentation-Index-and-Information-Architecture.md)
-(specifically `doc-06-API-Specification.md`). This file provides directory-local
+Canonical API specification documentation lives in Linear Documents in the
+[MAI workspace](https://linear.app/mergesai/) (legacy API references remain
+traceable through the migration map). This file provides directory-local
 implementation guidance.

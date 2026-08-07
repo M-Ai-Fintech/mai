@@ -31,12 +31,12 @@ Use this phase when the symptom, ownership, root cause, or minimal safe solution
 9. For configuration, Gemini, database, VDR, provider, dependency, or deployment defects, schedule `$config-bug-closure` as a verification gate.
 10. Select one minimal solution and list rejected hypotheses with evidence.
 
-## Backlog record
+## Linear record
 
-The `$investigate` skill diagnoses without changing Backlog. The Solve MAI caller records durable findings through `task_edit`:
+The `$investigate` skill diagnoses without changing Linear. The Solve MAI caller records durable findings through `Linear issue update`:
 
-- `notesAppend`: root cause, failing flow, rejected hypotheses, and reproduction evidence;
-- `planSet`: a materially changed implementation plan, after owner approval;
+- `Linear issue update with appended verification notes`: root cause, failing flow, rejected hypotheses, and reproduction evidence;
+- `Linear issue description or plan metadata`: a materially changed implementation plan, after owner approval;
 - `commentsAppend`: an unresolved decision requiring owner input.
 
 Do not check acceptance criteria during diagnosis.
@@ -50,6 +50,6 @@ Investigation is complete only when:
 - the chosen fix is narrower than rejected alternatives;
 - regression coverage is identified;
 - remaining uncertainty and environment limitations are explicit;
-- Backlog contains the findings needed for handoff.
+- Linear contains the findings needed for handoff.
 
 If no explanation meets this standard, stop and report the blocker instead of implementing a guess.

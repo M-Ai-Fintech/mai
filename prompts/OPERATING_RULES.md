@@ -28,7 +28,7 @@ and let the owner choose the next route.
 Fast mode is ON by default for implementation, debugging, diagnosis, and
 interactive correction. Fast mode changes execution latency only. It does not
 change scope, ownership, required tests, migration safety, model identity,
-Backlog state, or completion gates. Fast mode is controlled by the execution
+Linear issue state, or completion gates. Fast mode is controlled by the execution
 surface; this repository documents the expectation and does not invent a
 product-internal switch.
 
@@ -137,7 +137,7 @@ persistent pre-warmed server
 
 Use semantic test resource names and explicit environment variables. Never
 derive runtime resources, schemas, queues, fixtures, or environment variables
-from Backlog task IDs. Keep database-marked tests isolated and serialized when
+from legacy Backlog identifiers or current Linear issue IDs. Keep database-marked tests isolated and serialized when
 shared state requires it.
 
 Verify both migration paths:
@@ -171,7 +171,7 @@ dependencies, migration checksum mutation, and silently ignored required
 database tests. Checks must support the semantic exceptions above and avoid
 brittle broad parsers.
 
-## Git, Backlog, and lifecycle authority
+## Git, Linear, and lifecycle authority
 
 Routine operations inside an already-authorized task include repository-local
 edits, status/diff, normal fetch, approved test PostgreSQL access, Docker
@@ -179,14 +179,20 @@ commands for the approved test environment, and commit/push when explicitly
 authorized. They do not authorize production access, deployment, force push,
 unrelated repositories, or destructive remote actions.
 
-Backlog is the system of record. Use Backlog CLI/MCP for task and document
-records; never edit governed Markdown directly. Keep one task, one accountable
-agent, one authoritative branch/worktree, and one verification result. Keep
-implementation tasks In Progress and PRs Draft until the owner approves them.
-Only the authorized closure owner may make a Done/state transition after all
-acceptance criteria, focused checks, canonical verification, documentation,
-and review gates have evidence. This policy adaptation itself does not perform
-a Wave transition.
+Linear is the system of record for active and completed project work and
+governed project documentation. Use the Linear MAI team, issue/document tools,
+projects, and native relations for current task state, acceptance criteria,
+dependencies, evidence, project/wave context, and documentation. Never edit
+Linear-managed content through a local shadow copy. The durable migration map
+at `docs/migrations/backlog-to-linear-map.json` preserves historical Backlog
+identifiers and paths; those identifiers are not current work identifiers.
+
+Keep one issue, one accountable agent, one authoritative branch/worktree, and
+one verification result. Keep implementation issues In Progress and PRs Draft
+until the owner approves them. Only the authorized closure owner may make a
+Done/state transition after all acceptance criteria, focused checks, canonical
+verification, documentation, and review gates have evidence. This policy
+adaptation itself does not perform a Wave transition.
 
 ## Prompt shape and scope
 

@@ -7,19 +7,19 @@ Read `prompts/OPERATING_RULES.md`.
 
 ## Tasks
 
-- `MAI-118` — Negotiation
+- `MAI-48` — Negotiation
 
 ## Entry gate
 
-Wave G is closed; MAI-146 and MAI-147 are Done. Every declared dependency must
+Wave G is closed; MAI-20 and MAI-21 are Done. Every declared dependency must
 be Done.
 
-Run Backlog overview/execution, require clean synchronized master, verify
-MAI-118 is active To Do with `delivery-wave-h`, and rule out duplicate work.
+Run Linear workspace and issue/project context, require clean synchronized master, verify
+MAI-48 is active To Do with `delivery-wave-h`, and rule out duplicate work.
 
-Create `delivery/MAI-118-negotiation` in `../mai-worktrees/wave_h/MAI-118`. Plan
-with focused `rg`, write `## Wave H execution plan — MAI-118` in local root
-`AGENTS.md`, persist with Backlog `planSet`, keep it
+Create `delivery/MAI-48-negotiation` in `../mai-worktrees/wave_h/MAI-48`. Plan
+with focused `rg`, write `## Wave H execution plan — MAI-48` in local root
+`AGENTS.md`, persist with the Linear issue description or plan metadata, keep it
 uncommitted/`skip-worktree`, and leave the task To Do until implementation
 starts. Use `prompts/OPERATING_RULES.md` for the model route; no
 task-specific deep-plan exception is pre-authorized.

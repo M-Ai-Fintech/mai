@@ -19,5 +19,6 @@ delegation follows `prompts/SUBAGENT_RULES.md`. No independent review swarm is a
 default.
 
 Use the prompt registry in `manifest.json` for route metadata and wave
-relationships. Dependencies and Backlog state remain authoritative. This
-policy adaptation does not start Wave F or perform a Wave transition.
+relationships. Linear issue state and native relations remain authoritative;
+the migration map is historical traceability only. This policy adaptation does
+not start Wave F or perform a Wave transition.

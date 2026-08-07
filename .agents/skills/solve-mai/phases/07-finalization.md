@@ -1,13 +1,13 @@
 # Finalization
 
-Make Backlog the accurate final handoff and set the task to Done only when every required gate has passed.
+Make Linear the accurate final handoff and set the task to Done only when every required gate has passed.
 
 ## Workflow
 
 1. Invoke `$model-selection` for finalization.
-2. Through `$backlog-mcp`, read:
-   - `get_backlog_instructions` with `task-finalization`;
-   - the latest task state with `task_view`.
+2. Through `Linear issue and document tools`, read:
+   - the Linear completion context;
+   - the latest task state with `Linear issue lookup`.
 3. Reconcile the task against the repository and PR:
    - final outcome and scope;
    - current status and assignee;
@@ -18,7 +18,7 @@ Make Backlog the accurate final handoff and set the task to Done only when every
    - documentation and references;
    - PR, commits, checks, and human review;
    - risks, migrations, manual steps, and follow-ups.
-4. Correct stale metadata through `task_edit` without replacing unrelated values.
+4. Correct stale metadata through `Linear issue update` without replacing unrelated values.
 5. Write or replace the final summary only after the evidence is complete. Include:
    - what changed;
    - exact tests and outcomes;
@@ -30,7 +30,7 @@ Make Backlog the accurate final handoff and set the task to Done only when every
 
 ## Status decision
 
-Set `status: "Done"` through `task_edit` only when:
+Set `status: "Done"` through `Linear issue update` only when:
 
 - every required acceptance criterion is checked;
 - applicable DoD is complete;
@@ -43,7 +43,7 @@ Set `status: "Done"` through `task_edit` only when:
 
 Keep `status: "In Progress"` when review, checks, environment validation, or owner action remains. State the exact next action.
 
-Do not call `task_complete` during normal finalization. That tool moves already-Done tasks into the completed folder during periodic cleanup. Do not call `task_archive`; archive is for duplicate, canceled, or invalid work.
+Do not call `issue completion` during normal finalization. That tool moves already-Done tasks into the completed folder during periodic cleanup. Do not call `issue archival`; archive is for duplicate, canceled, or invalid work.
 
 ## Final handoff
 
@@ -53,7 +53,7 @@ Report:
 MAI-N: <result>.
 Changes: <files and commits>.
 Verification: <commands and outcomes>.
-Backlog: <status and recorded updates>.
+Linear: <status and recorded updates>.
 PR: <URL and review/check state>.
 Pending: <remaining risk or owner action>.
 ```
@@ -64,7 +64,7 @@ Use `$caveman` for routine wording without dropping evidence.
 
 Finalization is complete when:
 
-- Backlog matches repository and PR reality;
+- Linear matches repository and PR reality;
 - completion claims have direct evidence;
 - the final summary is reviewable by another person;
 - status reflects the remaining work accurately;

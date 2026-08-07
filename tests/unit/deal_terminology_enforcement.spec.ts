@@ -19,7 +19,7 @@ import { PostgresTransactionRunner } from "../../src/platform/persistence/v1.ts"
  * MAI-72 Terminology Enforcement Test Suite
  *
  * Governed Domain Authority: MAI-103
- * @see backlog/docs/architecture/backend-redesign/domain-workflows/doc-20 - MAI-103-Bounded-Contexts-Aggregates-and-Workflow-State-Machines.md
+ * @see https://linear.app/mergesai/document/mai-103-bounded-contexts-aggregates-and-workflow-state-machines-0504b8e746a8 - MAI-103 Bounded Contexts, Aggregates, and Workflow State Machines
  */
 
 Deno.test("MAI-72 Enforcement - Active business-domain TS APIs use Deal / DealId", () => {
