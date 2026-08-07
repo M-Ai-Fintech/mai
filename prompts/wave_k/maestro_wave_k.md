@@ -1,39 +1,27 @@
-# Maestro — Wave K: Final dependent side lanes
+Context
 
+Wave K contains Linear issues MAI-68 — legacy banker CLI retirement, and MAI-69 — governed Brazilian M&A model-adaptation strategy. Linear native relations and `prompts/manifest.json` are authoritative.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Tasks
+Prepare both Wave K side lanes without implementing: verify Wave J and task dependencies, create isolated worktrees from one synchronized master SHA, define collision-free plans, and hand off safe parallel execution.
 
-- `MAI-68` — Retire the legacy banker-facing CLI and preserve bounded operator
-  tooling
-- `MAI-69` — Evaluate and approve a governed Brazilian M&A model-adaptation
-  strategy
+Relevant scope / architecture
 
-## Entry gate
+Create `delivery/MAI-68-retire-legacy-banker-cli` and `delivery/MAI-69-governed-brazilian-ma-model-adaptation-strategy` under `../mai-worktrees/wave_k/`. MAI-68 owns bounded CLI retirement only; MAI-69 owns evaluation/strategy only.
 
-Wave J is closed and every declared dependency for MAI-68 and MAI-69 is Done.
+Persist `## Wave K execution plan — <TASK-ID>` in Linear and local `AGENTS.md` according to repository convention. Define replacement-coverage gates for MAI-68 and evaluation/dataset/provider gates for MAI-69.
 
-Require clean synchronized master, active To Do tasks with `delivery-wave-k`,
-and no duplicate work.
+Known risks or constraints
 
-Create:
+Do not implement, set issues In Progress, open implementation PRs, merge, or run Graphify. MAI-68 must not take MAI-70 migration ownership. MAI-69 must not train/deploy an adapted model.
 
-- `delivery/MAI-68-retire-legacy-banker-cli` at
-  `../mai-worktrees/wave_k/MAI-68`;
-- `delivery/MAI-69-governed-brazilian-ma-model-adaptation-strategy` at
-  `../mai-worktrees/wave_k/MAI-69`.
+Expected verification
 
-Plan both with focused `rg`; eliminate collisions; write
-`## Wave K execution plan — <TASK-ID>` in local `AGENTS.md`; persist with
-the Linear issue description or plan metadata; keep uncommitted/`skip-worktree`; leave To Do until
-implementation starts. Use `prompts/OPERATING_RULES.md` for each plan's model
-route; record a written deep architecture, security, or planning justification
-if Sol is selected.
+Confirm clean synchronized master, both issues Todo with dependencies Done, no duplicate work, shared base SHA, plan persistence, collision analysis, parallel launch, merge order, and no implementation changes.
 
-Return base, gates, worktrees, plans, collisions, parallel launch, merge order,
-blockers, and confirmation no implementation or Graphify ran.
+Allowed state transitions
 
-## Execution policy
+Planning only. Leave MAI-68 and MAI-69 Todo and Wave K open.
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+/goal

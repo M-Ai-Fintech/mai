@@ -1,33 +1,27 @@
-# Maestro — Wave M: Release gate
+Context
 
+Wave M contains Linear issue MAI-71 — End-to-end, security and operational release gate. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issue, and all dependency evidence before planning.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Task
+Prepare the final MAI-71 release-gate worktree and verification-stream plan without implementing features or making a release decision.
 
-- `MAI-71` — End-to-end, security and operational release gate
+Relevant scope / architecture
 
-## Entry gate
+Create `delivery/MAI-71-end-to-end-security-and-operational-release-gate` at `../mai-worktrees/wave_m/MAI-71` from synchronized master. Plan disjoint verification streams for workflows/E2E, authorization/isolation, external access, human authority, concurrency/idempotency, jobs/recovery, audit, provider failure, backup/restore, frontend, security/privacy, and operational evidence.
 
-Wave L is closed; MAI-64, MAI-61, MAI-70, MAI-22, and MAI-23 are Done, and
-every declared dependency is Done.
+MAI-71 is primarily parallel read-only verification. Set one authoritative coordinator and at most one writer for release artifacts. Persist `## Wave M execution plan — MAI-71` in Linear and local `AGENTS.md` according to repository convention.
 
-Require clean synchronized master, MAI-71 active To Do with `delivery-wave-m`,
-and no duplicate release-gate branch or PR.
+Known risks or constraints
 
-Create `delivery/MAI-71-end-to-end-security-and-operational-release-gate` at
-`../mai-worktrees/wave_m/MAI-71` from verified master.
+Do not implement, set MAI-71 In Progress during planning, open its implementation/release PR, merge, run Graphify, waive P0/P1 defects, or treat missing environment evidence as pass.
 
-Plan using `prompts/OPERATING_RULES.md` and focused `rg`: workflow/E2E, roles and external isolation,
-human authority, concurrency/idempotency, jobs/recovery, audit reconstruction,
-provider failures, backup/restore, operational evidence, P0/P1 handling, and
-final production-candidate decision. Write `## Wave M execution plan — MAI-71`
-in local `AGENTS.md`, persist with the Linear issue description or plan metadata, keep
-uncommitted/`skip-worktree`, and leave To Do until implementation starts.
+Expected verification
 
-Return base, gate, worktree, plan/test-stream matrix, blockers, and confirmation
-no implementation or Graphify ran.
+Confirm Wave L closed, every MAI-71 dependency Done, clean synchronized master, MAI-71 Todo, no duplicate branch/worktree/PR, exact base SHA, test-stream ownership, environment prerequisites, P0/P1 disposition rules, and no implementation changes.
 
-## Execution policy
+Allowed state transitions
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+Planning only. Leave MAI-71 Todo and make no production-candidate decision.
+
+/goal

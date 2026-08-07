@@ -1,26 +1,35 @@
-# MAI-65 — Integrate governed model-backed financial-risk calculations
+Context
 
-**Skill:** `$solve-mai`
+MAI-65 is the Wave J task for **Governed model-backed financial-risk integration**. Linear issue MAI-65 and its native relations are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, the applicable local `AGENTS.md` execution plan, and the full Linear issue before changing code.
 
-Read `prompts/OPERATING_RULES.md` and `## Wave J execution plan — MAI-65` in local
-`AGENTS.md`; never commit it. Invoke `$solve-mai MAI-65`.
+Use `$solve-mai` as the task workflow and begin with the repair-or-restart assessment.
 
-## Execution policy
+Objective
 
-Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+Integrate model-backed financial-risk inference through a domain-owned application service and typed port with exact model, prompt/input, evidence, calculation, provider, and result lineage; emit proposed Findings only through governed Diligence & Decisions contracts.
 
-## Focus
+Relevant scope / architecture
 
-Integrate model-backed financial-risk inference through a domain-owned
-application service and typed port with exact model/input/evidence lineage,
-calculation records, proposed Findings, authorization, and provider
-certification.
+Model inference is analysis, not decision authority. The domain service owns authorization, input shaping, lineage, calculation records, fallback state, and conversion of validated outputs into proposed Finding inputs.
 
-## Boundary
+Consume provider readiness from MAI-61 and Evidence/Diligence contracts through public versioned seams. Keep model/provider implementation behind project-owned ports.
 
-Do not let the model create an unaudited human decision, hide fallback state, or
-bypass MAI-61.
+Known risks or constraints
 
-Use focused`rg`,
-model/lineage/security tests and `deno task verify`. Set In Progress, record
-evidence, open a PR containing MAI-65, never self-merge, and do not mark Done.
+Do not let model output create or rewrite a human decision, hide fallback/degraded state, bypass provider certification, or lose exact evidence/model lineage.
+
+Do not broaden into provider selection, base Evidence ownership, feedback-loop implementation, or frontend redesign.
+
+Expected verification
+
+Run focused model-port, authorization, lineage, evidence-basis, calculation-record, proposed-Finding, provider-unavailable/fallback, malformed-output, and security tests.
+
+Run affected integration/PostgreSQL checks, changed-file type/lint/format, `git diff --check`, and canonical `DENO_ENV=test deno task verify` once ready. Record exact model/provider/lineage evidence in Linear and the Draft PR.
+
+Allowed state transitions
+
+Move Linear MAI-65 from Todo to In Progress only when implementation starts. Keep it In Progress and its PR Draft through owner/security/model review. Do not self-approve, self-merge, mark Done, perform Wave J closure, or alter downstream state.
+
+Only the authorized Wave J finisher may make the final Done transition after merged-source verification.
+
+/goal

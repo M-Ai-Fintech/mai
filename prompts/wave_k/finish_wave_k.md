@@ -1,21 +1,29 @@
-# Finish — Wave K: Final dependent side lanes
+Context
 
-Read `prompts/OPERATING_RULES.md` and Linear completion context.
+Wave K contains Linear issues MAI-68 and MAI-69. Run only after both owner-approved PRs are merged. Linear state, merged source, retirement inventory, and model-adaptation decision evidence are authoritative.
 
-owner-approved and merged.
+Objective
 
-Require clean synchronized master and merged PR evidence. Inspect merged source
-and records; verify CLI replacement coverage, preserved operator tooling,
-evaluation methodology, data governance, formal Go/No-go, ACs, DoD, and tests.
+Close Wave K only after proving legacy banker-facing CLI replacement/retirement is safe and the Brazilian M&A model-adaptation strategy has an evidence-backed formal Go/No-go without unauthorized model training/deployment.
 
-## Execution policy
+Relevant scope / architecture
 
-Use one accountable finisher. Parallel read-only review is exceptional and must be genuinely separable and materially faster; use `prompts/SUBAGENT_RULES.md` only when justified.
+Verify MAI-68 replacement coverage and preserved bounded operator tooling, plus MAI-69 common evaluation methodology, dataset governance, comparative evidence, limitations, rollback, and formal decision.
 
-Run focused checks and `deno task verify`. Do not repair feature code. When
-green, run one `graphify update .` and `git diff --check`.
+Parallel read-only reviewers may be used only when justified, each with a concrete `/goal`; only the finisher writes Linear closure evidence and Graphify/master metadata.
 
-Use Linear issue/document tools to mark issues Done only when every gate passes. Do not move
-to completed. Remove only merged worktrees/branches. Commit Linear/Graphify
-changes as `docs: close delivery wave K`, push master, and confirm no feature
-implementation occurred.
+Known risks or constraints
+
+Do not remove MAI-70 migration tooling, repair feature code, claim unsupported model adaptation, or hide evaluation/data-governance gaps.
+
+Expected verification
+
+Run focused CLI replacement/operations and model-evaluation/governance checks plus canonical `DENO_ENV=test deno task verify`. Reconcile ACs, merged evidence, retained tools, formal decision, and open P0/P1 findings.
+
+If green, run one `graphify update .`, `git diff --check`, mark MAI-68/69 Done in Linear, remove only merged branches/worktrees, commit `docs: close delivery wave K`, push master, and confirm clean synchronized master. Otherwise record blockers and leave Wave K open.
+
+Allowed state transitions
+
+The finisher may mark MAI-68 and MAI-69 Done and push the Wave K closure commit only after every gate passes. It may not implement fixes or start MAI-70 cutover.
+
+/goal

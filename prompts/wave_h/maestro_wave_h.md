@@ -1,32 +1,29 @@
-# Maestro — Wave H: Negotiation
+Context
 
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run
-Graphify.
+Wave H contains Linear issue MAI-48 — Negotiation. Linear native relations and `prompts/manifest.json` are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, and the full MAI-48 issue before planning.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Tasks
+Prepare MAI-48 execution without implementing: verify Wave G and all declared dependencies are Done, create the isolated negotiation worktree from synchronized master, produce the Linear-backed execution plan, and hand off one coherent task coordinator.
 
-- `MAI-48` — Negotiation
+Relevant scope / architecture
 
-## Entry gate
+Create `delivery/MAI-48-negotiation` at `../mai-worktrees/wave_h/MAI-48`. Plan proposal/counterproposal lifecycle, terms, internal position/BATNA, MAI-20 optimization, MAI-21 dispute integration, approval authority, delivery boundary, persistence/API, concurrency, and audit ownership.
 
-Wave G is closed; MAI-20 and MAI-21 are Done. Every declared dependency must
-be Done.
+Persist `## Wave H execution plan — MAI-48` in Linear plan metadata and local `AGENTS.md` according to repository convention. Include any justified within-task delegation design with disjoint paths and serial integration.
 
-Run Linear workspace and issue/project context, require clean synchronized master, verify
-MAI-48 is active To Do with `delivery-wave-h`, and rule out duplicate work.
+Known risks or constraints
 
-Create `delivery/MAI-48-negotiation` in `../mai-worktrees/wave_h/MAI-48`. Plan
-with focused `rg`, write `## Wave H execution plan — MAI-48` in local root
-`AGENTS.md`, persist with the Linear issue description or plan metadata, keep it
-uncommitted/`skip-worktree`, and leave the task To Do until implementation
-starts. Use `prompts/OPERATING_RULES.md` for the model route; no
-task-specific deep-plan exception is pre-authorized.
+Do not implement, set MAI-48 In Progress, open an implementation PR, merge, or run Graphify. Do not start from an unmerged Wave G branch. Shared delivery/provider or closing ownership must not be pulled into MAI-48.
 
-Return base, gate, branch/worktree, plan, collisions, blockers, and confirmation
-no implementation or Graphify ran.
+Expected verification
 
-## Execution policy
+Confirm clean synchronized master, MAI-48 Todo with valid native dependencies, no duplicate branch/worktree/PR, exact base SHA, persisted execution plan, ownership/collision analysis, and no implementation changes.
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+Return base SHA, gate, branch/worktree, plan summary, delegation/ownership design if justified, blockers, and confirmation no implementation or Graphify ran.
+
+Allowed state transitions
+
+Planning only. Leave MAI-48 Todo and all downstream issues unchanged. Do not perform Wave H closure.
+
+/goal

@@ -1,31 +1,27 @@
-# Maestro — Wave L: Migration and retirement
+Context
 
+Wave L contains Linear issue MAI-70 — Data migration and MVP retirement. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issue/history, and `plan_MAI-70.md` before planning.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Task
+Prepare the exclusive MAI-70 migration/cutover worktree and executable plan without performing migration or retirement.
 
-- `MAI-70` — Data migration and MVP retirement
+Relevant scope / architecture
 
-## Entry gate
+Create `delivery/MAI-70-data-migration-and-mvp-retirement` at `../mai-worktrees/wave_l/MAI-70` from synchronized master. The plan must inventory every legacy writer/reader, target mapping, migration, dual-read/write path, reconciliation rule, consumer cutover, compatibility path, retirement candidate, cutoff, rollback window, operator step, and exclusive file.
 
-Wave K is closed; all MAI-70 dependencies and consumer cutovers are Done.
+Run `plan_MAI-70.md` as the deep planning handoff where justified. Persist `## Wave L execution plan — MAI-70` in Linear and local `AGENTS.md` according to repository convention.
 
-Require clean synchronized master, MAI-70 active To Do with `delivery-wave-l`,
-and no duplicate migration/cutover owner.
+Known risks or constraints
 
-Create `delivery/MAI-70-data-migration-and-mvp-retirement` at
-`../mai-worktrees/wave_l/MAI-70` from verified master.
+Do not implement, set MAI-70 In Progress, open its implementation PR, merge, run Graphify, or mutate migration/cutover files during planning. MAI-70 must remain the sole migration/cutover owner; destructive ordering must be serial.
 
-Read `plan_MAI-70.md` first and use `prompts/OPERATING_RULES.md` for its model route; record a written deep architecture, security, or planning justification if Sol is selected. The final plan must inventory every
-migration, dual-read/write, reconciliation, consumer, compatibility path,
-retirement candidate, cutoff, rollback window, and exclusive file. Write
-`## Wave L execution plan — MAI-70` in local `AGENTS.md`, persist with Linear
-the Linear issue description or plan metadata, keep uncommitted/`skip-worktree`, and leave To Do until implementation starts.
+Expected verification
 
-Return base, gates, worktree, plan, exclusive-ownership proof, blockers, and
-confirmation no implementation or Graphify ran.
+Confirm Wave K closed, every MAI-70 dependency/consumer cutover Done, clean synchronized master, MAI-70 Todo, no duplicate migration owner/branch/worktree/PR, exact base SHA, persisted deep plan, exclusive ownership proof, rollback/reconciliation gates, and no implementation changes.
 
-## Execution policy
+Allowed state transitions
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+Planning only. Leave MAI-70 Todo and MAI-71 unchanged.
+
+/goal
