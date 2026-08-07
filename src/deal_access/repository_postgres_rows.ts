@@ -17,6 +17,11 @@ import type {
   PortalSubmission,
   SubmissionPayload,
 } from "./model.ts";
+import type {
+  SessionInvalidationReason,
+  SessionInvalidationRecord,
+  SessionInvalidationState,
+} from "./repository.ts";
 
 export interface ParticipationRow {
   participationId: string;
@@ -26,6 +31,7 @@ export interface ParticipationRow {
   invitationId: string;
   participantId: string;
   participantKind: "external";
+  invitationTokenDigest: string;
   state: DealParticipation["state"];
   version: string | number;
   createdAt: Date | string;
@@ -72,6 +78,20 @@ export interface ReceiptRow {
   submissionReference: string;
 }
 
+export interface SessionInvalidationRow {
+  invalidationId: string;
+  tenantId: string;
+  workspaceId: string;
+  dealId: string;
+  grantId: string | null;
+  participationId: string | null;
+  reason: SessionInvalidationReason;
+  state: SessionInvalidationState;
+  attemptCount: string | number;
+  lastError: string | null;
+  completedAt: Date | string | null;
+}
+
 export function grantSelect(predicate: string): string {
   return `SELECT grant_id AS "grantId", tenant_id AS "tenantId",
     workspace_id AS "workspaceId", deal_id AS "dealId",
@@ -92,6 +112,7 @@ export function toParticipation(row: ParticipationRow): DealParticipation {
     participantId: row.participantId,
     participantKind: row.participantKind,
     invitationId: row.invitationId as DealParticipation["invitationId"],
+    invitationTokenDigest: row.invitationTokenDigest,
     state: row.state,
     version: aggregateVersion(row.version, row.participationId),
     createdAt: instant(row.createdAt),
@@ -143,6 +164,32 @@ export function toReceipt(row: ReceiptRow): PortalReceipt {
   };
 }
 
+export function toSessionInvalidation(
+  row: SessionInvalidationRow,
+): SessionInvalidationRecord {
+  const attemptCount = Number(row.attemptCount);
+  if (!Number.isInteger(attemptCount) || attemptCount < 0) {
+    throw new DealAccessInvariantError(
+      `Session invalidation "${row.invalidationId}" attempt count "${row.attemptCount}" is invalid; expected a non-negative integer.`,
+    );
+  }
+  return {
+    invalidationId: row.invalidationId,
+    scope: scope(row),
+    reason: row.reason,
+    state: row.state,
+    attemptCount,
+    ...(row.grantId === null ? {} : { grantId: row.grantId }),
+    ...(row.participationId === null
+      ? {}
+      : { participationId: row.participationId }),
+    ...(row.lastError === null ? {} : { lastError: row.lastError }),
+    ...(row.completedAt === null
+      ? {}
+      : { completedAt: instant(row.completedAt) }),
+  };
+}
+
 export function participationValues(aggregate: DealParticipation): unknown[] {
   return [
     aggregate.id,
@@ -152,6 +199,7 @@ export function participationValues(aggregate: DealParticipation): unknown[] {
     aggregate.invitationId,
     aggregate.participantId,
     aggregate.participantKind,
+    aggregate.invitationTokenDigest,
     aggregate.state,
     aggregate.version,
     aggregate.createdAt,

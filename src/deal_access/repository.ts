@@ -32,6 +32,7 @@ export type CommandClaim =
   | { readonly state: "replay"; readonly result: unknown };
 
 export type SessionInvalidationReason = "revoked" | "offboarded" | "expired";
+export type SessionInvalidationState = "pending" | "completed";
 
 export interface SessionInvalidationRecord {
   readonly invalidationId: string;
@@ -39,6 +40,16 @@ export interface SessionInvalidationRecord {
   readonly grantId?: string;
   readonly participationId?: string;
   readonly reason: SessionInvalidationReason;
+  readonly state: SessionInvalidationState;
+  readonly attemptCount: number;
+  readonly lastError?: string;
+  readonly completedAt?: string;
+}
+
+export interface SessionInvalidationTarget {
+  readonly grantId?: string;
+  readonly participationId?: string;
+  readonly reason?: SessionInvalidationReason;
 }
 
 export interface DealAccessStore {
@@ -81,6 +92,24 @@ export interface DealAccessStore {
     receipt: PortalReceipt,
   ): Promise<void>;
   recordSessionInvalidation(record: SessionInvalidationRecord): Promise<void>;
+  listPendingSessionInvalidations(
+    scope: DealAccessScope,
+    target?: SessionInvalidationTarget,
+  ): Promise<SessionInvalidationRecord[]>;
+  recordSessionInvalidationAttempt(
+    scope: DealAccessScope,
+    invalidationId: string,
+  ): Promise<void>;
+  markSessionInvalidationFailure(
+    scope: DealAccessScope,
+    invalidationId: string,
+    error: string,
+  ): Promise<void>;
+  completeSessionInvalidation(
+    scope: DealAccessScope,
+    invalidationId: string,
+    completedAt: string,
+  ): Promise<void>;
   claimCommand(
     identity: CommandIdentity,
     digest: string,
@@ -250,7 +279,83 @@ class InMemoryDealAccessStore implements DealAccessStore {
   }
 
   recordSessionInvalidation(record: SessionInvalidationRecord): Promise<void> {
+    if (record.grantId === undefined && record.participationId === undefined) {
+      throw new DealAccessInvariantError(
+        `Session invalidation "${record.invalidationId}" has no target; expected a grant or participation ID.`,
+      );
+    }
+    if (
+      record.state !== "pending" || record.attemptCount !== 0 ||
+      record.completedAt !== undefined
+    ) {
+      throw new DealAccessInvariantError(
+        `Session invalidation "${record.invalidationId}" has initial state "${record.state}" and attempt count "${record.attemptCount}"; expected pending state with zero attempts.`,
+      );
+    }
     this.state.invalidations.push(record);
+    return Promise.resolve();
+  }
+
+  listPendingSessionInvalidations(
+    scope: DealAccessScope,
+    target?: SessionInvalidationTarget,
+  ): Promise<SessionInvalidationRecord[]> {
+    return Promise.resolve(
+      this.state.invalidations.filter((record) =>
+        sameScope(record.scope, scope) &&
+        record.state === "pending" &&
+        (target?.grantId === undefined || record.grantId === target.grantId) &&
+        (target?.participationId === undefined ||
+          record.participationId === target.participationId) &&
+        (target?.reason === undefined || record.reason === target.reason)
+      ),
+    );
+  }
+
+  recordSessionInvalidationAttempt(
+    scope: DealAccessScope,
+    invalidationId: string,
+  ): Promise<void> {
+    const index = this.invalidationIndex(scope, invalidationId);
+    const current = this.state.invalidations[index];
+    if (current.state === "completed") return Promise.resolve();
+    this.state.invalidations[index] = {
+      ...current,
+      attemptCount: current.attemptCount + 1,
+      lastError: undefined,
+    };
+    return Promise.resolve();
+  }
+
+  markSessionInvalidationFailure(
+    scope: DealAccessScope,
+    invalidationId: string,
+    error: string,
+  ): Promise<void> {
+    const index = this.invalidationIndex(scope, invalidationId);
+    const current = this.state.invalidations[index];
+    if (current.state === "completed") return Promise.resolve();
+    this.state.invalidations[index] = {
+      ...current,
+      lastError: error.slice(0, 1000),
+    };
+    return Promise.resolve();
+  }
+
+  completeSessionInvalidation(
+    scope: DealAccessScope,
+    invalidationId: string,
+    completedAt: string,
+  ): Promise<void> {
+    const index = this.invalidationIndex(scope, invalidationId);
+    const current = this.state.invalidations[index];
+    if (current.state === "completed") return Promise.resolve();
+    this.state.invalidations[index] = {
+      ...current,
+      state: "completed",
+      completedAt,
+      lastError: undefined,
+    };
     return Promise.resolve();
   }
 
@@ -298,6 +403,19 @@ class InMemoryDealAccessStore implements DealAccessStore {
   appendOutbox(event: OutboxEvent): Promise<void> {
     this.state.outbox.push(event);
     return Promise.resolve();
+  }
+
+  private invalidationIndex(
+    scope: DealAccessScope,
+    invalidationId: string,
+  ): number {
+    const index = this.state.invalidations.findIndex((record) =>
+      sameScope(record.scope, scope) && record.invalidationId === invalidationId
+    );
+    if (index >= 0) return index;
+    throw new DealAccessInvariantError(
+      `Session invalidation "${invalidationId}" was not found in scope "${scope.dealId}"; expected a durable pending record.`,
+    );
   }
 }
 

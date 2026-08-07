@@ -5,6 +5,7 @@
  * @example import { DealAccessService } from "./src/deal_access/v1.ts";
  */
 export * from "./ids.ts";
+export * from "./capabilities.ts";
 export * from "./errors.ts";
 export * from "./model.ts";
 export * from "./lifecycle.ts";

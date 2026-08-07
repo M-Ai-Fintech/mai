@@ -57,6 +57,7 @@ export interface DealParticipation {
   readonly participantId: string;
   readonly participantKind: "external";
   readonly invitationId: InvitationId;
+  readonly invitationTokenDigest: string;
   readonly state: ParticipationState;
   readonly version: AggregateVersion;
   readonly createdAt: string;
@@ -122,6 +123,7 @@ export function createParticipation(input: {
   readonly invitationId: InvitationId;
   readonly scope: DealAccessScope;
   readonly participantId: string;
+  readonly invitationTokenDigest: string;
   readonly now: string;
 }): DealParticipation {
   assertParticipant(input.participantId);
@@ -133,6 +135,7 @@ export function createParticipation(input: {
     participantId: input.participantId.trim(),
     participantKind: "external",
     invitationId: input.invitationId,
+    invitationTokenDigest: assertTokenDigest(input.invitationTokenDigest),
     state: "invited",
     version: 1 as AggregateVersion,
     createdAt: input.now,
@@ -273,6 +276,13 @@ function assertParticipant(value: string): void {
   if (value.trim() && value.length <= 255) return;
   throw new DealAccessInvariantError(
     `Participant ID "${value}" is invalid; expected 1-255 non-whitespace characters.`,
+  );
+}
+
+function assertTokenDigest(value: string): string {
+  if (/^[0-9a-f]{64}$/.test(value)) return value;
+  throw new DealAccessInvariantError(
+    `Invitation token digest "${value}" is invalid; expected 64 lowercase hexadecimal characters.`,
   );
 }
 

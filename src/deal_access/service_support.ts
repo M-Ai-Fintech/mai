@@ -44,6 +44,14 @@ export function assertHumanSponsorCommand(
   );
 }
 
+export function assertActorMatchesContext(
+  actor: ActorReference,
+  context: RequestContext,
+): void {
+  if (actor.id === context.actorId) return;
+  throw new DealAccessAuthorizationError("SCOPE_MISMATCH");
+}
+
 export function commandScope(context: RequestContext): DealAccessScope {
   if (context.workspaceId !== undefined && context.dealId !== undefined) {
     return {
@@ -97,6 +105,7 @@ export function commandPayload(
     return {
       type: command.type,
       participantId: command.participantId,
+      invitationToken: command.invitationToken,
       purpose: command.purpose,
       sponsor: command.sponsor.actorId,
       expiresAt: command.expiresAt,
@@ -121,6 +130,7 @@ export function createInvitation(
   command: InviteParticipantCommand,
   scope: DealAccessScope,
   ids: DealAccessIdFactory,
+  invitationTokenDigest: string,
   now: string,
 ): InvitationResult {
   const participation = createParticipation({
@@ -128,6 +138,7 @@ export function createInvitation(
     invitationId: ids.nextInvitationId(),
     scope,
     participantId: command.participantId,
+    invitationTokenDigest,
     now,
   });
   const grant = createExternalGrant({

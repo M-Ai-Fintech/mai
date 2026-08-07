@@ -36,6 +36,11 @@ import {
   createPostgresIntegrationTestPool,
   postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
+import {
+  AllowingDealAccessAuthorization,
+  INVITATION_TOKEN,
+} from "./support.ts";
+import { cleanRows, count, invalidationState } from "./postgres_support.ts";
 
 const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const now = "2026-08-07T12:00:00.000Z";
@@ -122,6 +127,7 @@ function inviteCommand(key: string, currentScope = scope) {
     actor: human,
     idempotencyKey: `idem_dealaccess-${key}` as IdempotencyKey,
     participantId: "participant_dealaccess_pg",
+    invitationToken: INVITATION_TOKEN,
     purpose: "document_review",
     sponsor: { actorId: human.id, kind: "human" as const },
     expiresAt: "2026-08-08T12:00:00.000Z",
@@ -144,29 +150,6 @@ async function applyMigrations(
   ]);
 }
 
-async function cleanRows(
-  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
-  tenantId: TenantId,
-): Promise<void> {
-  for (
-    const table of [
-      "portal_receipts",
-      "portal_submissions",
-      "external_grants",
-      "participations",
-      "command_claims",
-      "session_invalidations",
-    ]
-  ) {
-    await pool.query(`DELETE FROM deal_access.${table} WHERE tenant_id = $1`, [
-      tenantId,
-    ]);
-  }
-  await pool.query("DELETE FROM platform.outbox WHERE tenant_id = $1", [
-    tenantId,
-  ]);
-}
-
 Deno.test({
   name:
     "Deal Access PostgreSQL migrations, records, idempotency, and rollback are durable",
@@ -181,6 +164,7 @@ Deno.test({
       const repository = new PostgresDealAccessRepository(transactions);
       const service = new DealAccessService({
         repository,
+        authorization: new AllowingDealAccessAuthorization(),
         ids: new IntegrationIds(`primary-${runTag}`),
         clock: { now: () => now },
         sessions: {
@@ -208,7 +192,7 @@ Deno.test({
         actor: external,
         idempotencyKey: "idem_dealaccess-accept" as IdempotencyKey,
         participationId: invitation.participation.id,
-        participantId: invitation.participation.participantId,
+        invitationToken: INVITATION_TOKEN,
         expectedVersion: 1,
       });
       const result = await service.submitPortalData({
@@ -257,6 +241,12 @@ Deno.test({
         "1",
       );
       assertEquals(
+        await invalidationState(pool, scope.tenantId, {
+          grantId: invitation.grant.id,
+        }),
+        { state: "completed", attemptCount: 1, completed: true },
+      );
+      assertEquals(
         await count(pool, "deal_access.audit_events", scope.tenantId),
         "4",
       );
@@ -272,6 +262,12 @@ Deno.test({
       assertEquals(
         await count(pool, "deal_access.session_invalidations", scope.tenantId),
         "2",
+      );
+      assertEquals(
+        await invalidationState(pool, scope.tenantId, {
+          participationId: invitation.participation.id,
+        }),
+        { state: "completed", attemptCount: 1, completed: true },
       );
 
       const rollbackId = "participation_dealaccess-rollback";
@@ -325,6 +321,7 @@ Deno.test({
       const createService = (prefix: string) =>
         new DealAccessService({
           repository,
+          authorization: new AllowingDealAccessAuthorization(),
           ids: new IntegrationIds(prefix),
           clock: { now: () => now },
           sessions: {
@@ -372,6 +369,7 @@ Deno.test({
       );
       const expirationService = new DealAccessService({
         repository,
+        authorization: new AllowingDealAccessAuthorization(),
         ids: new IntegrationIds(`expiration-${runTag}`),
         clock: { now: () => "2026-08-09T12:00:00.000Z" },
         sessions: {
@@ -436,6 +434,7 @@ Deno.test({
             invitationId: invitationId("invitation_dealaccess-isolation"),
             scope: currentScope,
             participantId: "participant_dealaccess-isolation",
+            invitationTokenDigest: "0".repeat(64),
             now,
           });
           await store.saveParticipation(participation);
@@ -476,15 +475,3 @@ Deno.test({
     }
   },
 });
-
-async function count(
-  pool: ReturnType<typeof createPostgresIntegrationTestPool>,
-  table: string,
-  tenantId: TenantId,
-): Promise<string> {
-  const result = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM ${table} WHERE tenant_id = $1`,
-    [tenantId],
-  );
-  return result.rows[0].count;
-}

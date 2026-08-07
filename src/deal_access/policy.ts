@@ -8,8 +8,13 @@ import {
   type PolicyClock,
   purpose,
   resourceKind,
-  type RestrictionFact,
   sponsor,
+} from "../platform/authz/v1.ts";
+import type {
+  GrantFact,
+  RelationshipFact,
+  RestrictionFact,
+  RoleFact,
 } from "../platform/authz/v1.ts";
 import type { RequestContext } from "../shared/contracts/request_context.ts";
 import type { ActorId } from "../shared/contracts/identifiers.ts";
@@ -19,6 +24,7 @@ import type {
   PortalAction,
   PortalObjectKind,
 } from "./model.ts";
+import type { DealAccessAuthorizationInput } from "./service_contracts.ts";
 import {
   portalFieldClassification,
   type PortalFieldName,
@@ -27,6 +33,42 @@ import {
 export interface PortalResource {
   readonly objectId: string;
   readonly kind: PortalObjectKind;
+}
+
+export const DEAL_ACCESS_RESOURCE = resourceKind("deal");
+export const DEAL_ACCESS_ACTION = Object.freeze({
+  invite: action("manage_external_access"),
+  revoke: action("revoke_external_access"),
+  offboard: action("offboard_external_access"),
+});
+
+export interface DealAccessPolicyFacts {
+  readonly roleFacts: readonly RoleFact[];
+  readonly grantFacts: readonly GrantFact[];
+  readonly restrictionFacts: readonly RestrictionFact[];
+  readonly relationshipFacts: readonly RelationshipFact[];
+}
+
+export function buildDealAccessAuthorizationRequest(
+  input: DealAccessAuthorizationInput,
+  facts: DealAccessPolicyFacts,
+): AuthorizationRequest {
+  return {
+    context: input.context.request,
+    actor: input.context.actor,
+    scope: input.scope,
+    resource: input.resource,
+    action: input.action,
+    requestedFields: input.requestedFields.map((requested) => ({
+      ...requested,
+      name: field(requested.name),
+    })),
+    ...facts,
+    authorityRequirement: input.humanOnly
+      ? { action: input.action, humanOnly: true }
+      : undefined,
+    clock: { now: () => input.context.now },
+  };
 }
 
 export interface PortalAuthorizationInput {

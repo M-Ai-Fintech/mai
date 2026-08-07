@@ -36,6 +36,7 @@ function participation() {
     invitationId: invitationId("invitation_lifecycle-1"),
     scope,
     participantId: "participant_external-1",
+    invitationTokenDigest: "0".repeat(64),
     now,
   });
 }

@@ -15,6 +15,7 @@ import {
   type PortalObjectLoader,
   readPortalObject,
 } from "../../src/deal_access/portal.ts";
+import { InMemoryDealAccessRepository } from "../../src/deal_access/repository.ts";
 import type {
   ActorId,
   CorrelationId,
@@ -62,6 +63,7 @@ function participation() {
       invitationId: invitationId("invitation_portal-1"),
       scope,
       participantId: "participant_external-1",
+      invitationTokenDigest: "0".repeat(64),
       now,
     }),
     1,
@@ -104,13 +106,23 @@ function snapshot(): PortalObjectSnapshot {
   };
 }
 
+async function repositoryWithGrant(): Promise<InMemoryDealAccessRepository> {
+  const repository = new InMemoryDealAccessRepository();
+  await repository.transaction(async (store) => {
+    await store.saveParticipation(participation());
+    await store.saveGrant(grant());
+  });
+  return repository;
+}
+
 Deno.test("portal reads authorize before loading and omit internal fields", async () => {
+  const repository = await repositoryWithGrant();
   const loader = new RecordingPortalObjectLoader(snapshot());
   const result = await readPortalObject({
     context,
     actor,
-    participation: participation(),
-    grant: grant(),
+    repository,
+    grantId: externalGrantId("grant_portal-1"),
     object: {
       objectId: portalObjectId("object_document-1"),
       kind: "document",
@@ -139,12 +151,13 @@ Deno.test("portal reads authorize before loading and omit internal fields", asyn
 });
 
 Deno.test("portal denial returns protected not-found without loading", async () => {
+  const repository = await repositoryWithGrant();
   const loader = new RecordingPortalObjectLoader(snapshot());
   const result = await readPortalObject({
     context,
     actor,
-    participation: participation(),
-    grant: grant(),
+    repository,
+    grantId: externalGrantId("grant_portal-1"),
     object: {
       objectId: portalObjectId("object_document-1"),
       kind: "document",
@@ -165,12 +178,13 @@ Deno.test("portal denial returns protected not-found without loading", async () 
 });
 
 Deno.test("portal scope binds the requested object ID to its object kind", async () => {
+  const repository = await repositoryWithGrant();
   const loader = new RecordingPortalObjectLoader(snapshot());
   const result = await readPortalObject({
     context,
     actor,
-    participation: participation(),
-    grant: grant(),
+    repository,
+    grantId: externalGrantId("grant_portal-1"),
     object: {
       objectId: portalObjectId("object_document-1"),
       kind: "deal_summary",

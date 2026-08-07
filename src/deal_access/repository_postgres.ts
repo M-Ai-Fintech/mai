@@ -20,7 +20,9 @@ import type {
   DealAccessRepository,
   DealAccessStore,
   SessionInvalidationRecord,
+  SessionInvalidationTarget,
 } from "./repository.ts";
+import { PostgresSessionInvalidationStore } from "./repository_postgres_session_invalidations.ts";
 import {
   type GrantRow,
   grantSelect,
@@ -48,8 +50,11 @@ export class PostgresDealAccessRepository implements DealAccessRepository {
 
 class PostgresDealAccessStore implements DealAccessStore {
   private readonly outbox = new OutboxRepository();
+  private readonly invalidations: PostgresSessionInvalidationStore;
 
-  constructor(private readonly transaction: TransactionHandle) {}
+  constructor(private readonly transaction: TransactionHandle) {
+    this.invalidations = new PostgresSessionInvalidationStore(transaction);
+  }
 
   async findParticipation(
     scope: DealAccessScope,
@@ -59,7 +64,8 @@ class PostgresDealAccessStore implements DealAccessStore {
       `SELECT participation_id AS "participationId", tenant_id AS "tenantId",
          workspace_id AS "workspaceId", deal_id AS "dealId",
          invitation_id AS "invitationId", participant_id AS "participantId",
-         participant_kind AS "participantKind", state, version,
+         participant_kind AS "participantKind",
+         invitation_token_digest AS "invitationTokenDigest", state, version,
          created_at AS "createdAt", updated_at AS "updatedAt"
        FROM deal_access.participations
        WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3
@@ -153,8 +159,9 @@ class PostgresDealAccessStore implements DealAccessStore {
       await this.transaction.query(
         `INSERT INTO deal_access.participations (
            participation_id, tenant_id, workspace_id, deal_id, invitation_id,
-           participant_id, participant_kind, state, version, created_at, updated_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           participant_id, participant_kind, invitation_token_digest, state,
+           version, created_at, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
         participationValues(aggregate),
       );
       return;
@@ -268,24 +275,38 @@ class PostgresDealAccessStore implements DealAccessStore {
     );
   }
 
-  async recordSessionInvalidation(
-    record: SessionInvalidationRecord,
+  recordSessionInvalidation(record: SessionInvalidationRecord): Promise<void> {
+    return this.invalidations.record(record);
+  }
+
+  listPendingSessionInvalidations(
+    scope: DealAccessScope,
+    target?: SessionInvalidationTarget,
+  ): Promise<SessionInvalidationRecord[]> {
+    return this.invalidations.listPending(scope, target);
+  }
+
+  recordSessionInvalidationAttempt(
+    scope: DealAccessScope,
+    invalidationId: string,
   ): Promise<void> {
-    await this.transaction.query(
-      `INSERT INTO deal_access.session_invalidations (
-         invalidation_id, tenant_id, workspace_id, deal_id, grant_id,
-         participation_id, reason, created_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
-      [
-        record.invalidationId,
-        record.scope.tenantId,
-        record.scope.workspaceId,
-        record.scope.dealId,
-        record.grantId ?? null,
-        record.participationId ?? null,
-        record.reason,
-      ],
-    );
+    return this.invalidations.recordAttempt(scope, invalidationId);
+  }
+
+  markSessionInvalidationFailure(
+    scope: DealAccessScope,
+    invalidationId: string,
+    error: string,
+  ): Promise<void> {
+    return this.invalidations.markFailure(scope, invalidationId, error);
+  }
+
+  completeSessionInvalidation(
+    scope: DealAccessScope,
+    invalidationId: string,
+    completedAt: string,
+  ): Promise<void> {
+    return this.invalidations.complete(scope, invalidationId, completedAt);
   }
 
   async claimCommand(

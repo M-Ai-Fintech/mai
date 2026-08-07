@@ -35,6 +35,19 @@ export class DealAccessAuthorizationError extends Error {
   }
 }
 
+export class DealAccessSessionInvalidationError extends Error {
+  readonly code = "DEAL_ACCESS_SESSION_INVALIDATION_PENDING";
+  readonly invalidationId: string;
+
+  constructor(invalidationId: string) {
+    super(
+      `Deal Access session invalidation "${invalidationId}" remains pending after delivery failure; expected a durable retry.`,
+    );
+    this.name = "DealAccessSessionInvalidationError";
+    this.invalidationId = invalidationId;
+  }
+}
+
 export class DealAccessIdempotencyConflictError extends Error {
   readonly code = "DEAL_ACCESS_IDEMPOTENCY_CONFLICT";
 

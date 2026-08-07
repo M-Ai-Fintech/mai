@@ -1,9 +1,9 @@
-import type { ApprovedScopeToken } from "../platform/authz/v1.ts";
 import { payloadDigest } from "../platform/persistence/v1.ts";
 import {
-  completePortalSubmission,
-  createPortalReceipt,
-  createPortalSubmission,
+  digestInvitationToken,
+  verifyInvitationToken,
+} from "./capabilities.ts";
+import {
   type DealParticipation,
   type ExternalGrant,
   type PortalSubmission,
@@ -21,11 +21,16 @@ import {
   offboardParticipation,
   revokeGrant,
 } from "./lifecycle.ts";
-import { authorizePortalAccess } from "./policy.ts";
+import { DEAL_ACCESS_ACTION, DEAL_ACCESS_RESOURCE } from "./policy.ts";
 import type { PortalObjectLoader } from "./portal.ts";
-import { portalObjectId } from "./ids.ts";
+import { DealAccessSessionInvalidationCoordinator } from "./session_invalidation.ts";
+import {
+  processQueuedSubmission as processPortalSubmission,
+  submitPortalData as submitPortalDataCommand,
+} from "./service_portal.ts";
 import type {
   AcceptInvitationCommand,
+  DealAccessAuthorizationPort,
   DealAccessClock,
   DealAccessIdFactory,
   ExpireGrantsInput,
@@ -35,15 +40,17 @@ import type {
   OffboardParticipantCommand,
   QueuedSubmissionDelivery,
   QueuedSubmissionInput,
+  RetrySessionInvalidationsInput,
   RevokeGrantCommand,
+  SessionInvalidationRetryResult,
   SubmissionResult,
   SubmitPortalDataCommand,
 } from "./service_contracts.ts";
 import {
+  assertActorMatchesContext,
   assertExternalActor,
   assertHumanActor,
   assertHumanSponsorCommand,
-  authorizeQueuedSubmission,
   commandIdentity,
   commandIdentityFor,
   commandPayload,
@@ -51,12 +58,14 @@ import {
   createInvitation,
   persistInvitation,
   persistLifecycle,
-  persistSubmission,
 } from "./service_support.ts";
 
 export type {
   AcceptInvitationCommand,
+  DealAccessAuthorizationInput,
+  DealAccessAuthorizationPort,
   DealAccessClock,
+  DealAccessCommandContext,
   DealAccessIdFactory,
   ExpireGrantsInput,
   ExternalSessionInvalidator,
@@ -65,7 +74,9 @@ export type {
   OffboardParticipantCommand,
   QueuedSubmissionDelivery,
   QueuedSubmissionInput,
+  RetrySessionInvalidationsInput,
   RevokeGrantCommand,
+  SessionInvalidationRetryResult,
   SubmissionResult,
   SubmitPortalDataCommand,
 } from "./service_contracts.ts";
@@ -74,28 +85,45 @@ export class DealAccessService {
   private readonly repository: DealAccessRepository;
   private readonly ids: DealAccessIdFactory;
   private readonly clock: DealAccessClock;
-  private readonly sessions: ExternalSessionInvalidator;
+  private readonly invalidations: DealAccessSessionInvalidationCoordinator;
+  private readonly authorization: DealAccessAuthorizationPort;
 
   constructor(
     input: {
       readonly repository: DealAccessRepository;
+      readonly authorization: DealAccessAuthorizationPort;
       readonly ids: DealAccessIdFactory;
       readonly clock: DealAccessClock;
       readonly sessions: ExternalSessionInvalidator;
     },
   ) {
     this.repository = input.repository;
+    this.authorization = input.authorization;
     this.ids = input.ids;
     this.clock = input.clock;
-    this.sessions = input.sessions;
+    this.invalidations = new DealAccessSessionInvalidationCoordinator(
+      input.repository,
+      input.sessions,
+      input.clock,
+    );
   }
 
   async inviteParticipant(
     command: InviteParticipantCommand,
   ): Promise<InvitationResult> {
+    assertActorMatchesContext(command.actor, command.context);
     assertHumanSponsorCommand(command);
     const scope = commandScope(command.context);
+    await this.authorizeAdministrative(
+      command.actor,
+      command.context,
+      scope,
+      DEAL_ACCESS_ACTION.invite,
+    );
     const digest = await payloadDigest(commandPayload(command));
+    const invitationTokenDigest = await digestInvitationToken(
+      command.invitationToken,
+    );
     const identity = commandIdentity(command, scope);
     return this.repository.transaction(async (store) => {
       const claim = await store.claimCommand(identity, digest);
@@ -107,6 +135,7 @@ export class DealAccessService {
         command,
         scope,
         this.ids,
+        invitationTokenDigest,
         this.clock.now(),
       );
       await persistInvitation(
@@ -125,6 +154,7 @@ export class DealAccessService {
     command: AcceptInvitationCommand,
   ): Promise<DealParticipation> {
     assertExternalActor(command.actor);
+    assertActorMatchesContext(command.actor, command.context);
     const scope = commandScope(command.context);
     const digest = await payloadDigest(command);
     const identity = commandIdentityFor(
@@ -144,8 +174,25 @@ export class DealAccessService {
       );
       if (
         participation === undefined ||
-        participation.participantId !== command.participantId
+        participation.participantId !== command.actor.id
       ) {
+        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
+      }
+      if (
+        participation.state !== "invited" ||
+        !(await verifyInvitationToken(
+          command.invitationToken,
+          participation.invitationTokenDigest,
+        ))
+      ) {
+        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
+      }
+      const grants = await store.findGrants(scope, participation.id);
+      const grant = grants.find((candidate) =>
+        candidate.state === "active" &&
+        Date.parse(candidate.expiresAt) > Date.parse(this.clock.now())
+      );
+      if (grant === undefined) {
         throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
       }
       const active = activateParticipation(
@@ -168,77 +215,29 @@ export class DealAccessService {
     });
   }
 
-  async submitPortalData(
+  submitPortalData(
     command: SubmitPortalDataCommand,
     loader: PortalObjectLoader,
   ): Promise<SubmissionResult> {
-    assertExternalActor(command.actor);
-    const scope = commandScope(command.context);
-    const digest = await payloadDigest(commandPayload(command));
-    const identity = commandIdentityFor(command, scope, command.grantId);
-    return this.repository.transaction(async (store) => {
-      const claim = await store.claimCommand(identity, digest);
-      if (claim.state === "replay") return claim.result as SubmissionResult;
-      if (claim.state === "in_progress") {
-        throw new DealAccessIdempotencyConflictError(command.idempotencyKey);
-      }
-      const grant = await store.findGrant(scope, command.grantId);
-      const participation = grant === undefined
-        ? undefined
-        : await store.findParticipation(scope, grant.participationId);
-      if (grant === undefined || participation === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      const decision = authorizePortalAccess({
-        context: command.context,
-        actor: command.actor,
-        participation,
-        grant,
-        resource: command.object,
-        action: "submit",
-        purpose: command.purpose,
-        sponsor: command.sponsor,
-        requestedExpiry: command.requestedExpiry,
-        requestedFields: command.requestedFields,
-        clock: this.clock,
-      });
-      if (decision.outcome === "deny") {
-        throw new DealAccessAuthorizationError(decision.reasonCode);
-      }
-      if (await loader.load(decision.approvedScope) === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      const submission = createPortalSubmission({
-        id: this.ids.nextSubmissionId(),
-        grant,
-        participation,
-        objectId: portalObjectId(command.object.objectId),
-        payload: command.payload,
-        now: this.clock.now(),
-      });
-      const receipt = createPortalReceipt({
-        id: this.ids.nextPortalReceiptId(),
-        submission,
-        state: "accepted",
-        now: this.clock.now(),
-      });
-      await persistSubmission(
-        store,
-        submission,
-        receipt,
-        command,
-        this.ids,
-        this.clock.now(),
-      );
-      const result = { submission, receipt };
-      await store.completeCommand(identity, digest, result);
-      return result;
+    return submitPortalDataCommand({
+      repository: this.repository,
+      ids: this.ids,
+      clock: this.clock,
+      command,
+      loader,
     });
   }
 
   async revokeGrant(command: RevokeGrantCommand): Promise<ExternalGrant> {
     assertHumanActor(command.actor);
+    assertActorMatchesContext(command.actor, command.context);
     const scope = commandScope(command.context);
+    await this.authorizeAdministrative(
+      command.actor,
+      command.context,
+      scope,
+      DEAL_ACCESS_ACTION.revoke,
+    );
     const digest = await payloadDigest(command);
     const identity = commandIdentityFor(command, scope, command.grantId);
     const result = await this.repository.transaction(async (store) => {
@@ -271,11 +270,16 @@ export class DealAccessService {
         scope,
         grantId: revoked.id,
         reason: "revoked",
+        state: "pending",
+        attemptCount: 0,
       });
       await store.completeCommand(identity, digest, revoked);
       return revoked;
     });
-    await this.sessions.invalidateGrant(result.id);
+    await this.invalidations.flush(scope, {
+      grantId: result.id,
+      reason: "revoked",
+    });
     return result;
   }
 
@@ -283,7 +287,14 @@ export class DealAccessService {
     command: OffboardParticipantCommand,
   ): Promise<DealParticipation> {
     assertHumanActor(command.actor);
+    assertActorMatchesContext(command.actor, command.context);
     const scope = commandScope(command.context);
+    await this.authorizeAdministrative(
+      command.actor,
+      command.context,
+      scope,
+      DEAL_ACCESS_ACTION.offboard,
+    );
     const digest = await payloadDigest(command);
     const identity = commandIdentityFor(
       command,
@@ -344,11 +355,16 @@ export class DealAccessService {
         scope,
         participationId: offboarded.participation.id,
         reason: "offboarded",
+        state: "pending",
+        attemptCount: 0,
       });
       await store.completeCommand(identity, digest, offboarded.participation);
       return offboarded.participation;
     });
-    await this.sessions.invalidateParticipation(result.id);
+    await this.invalidations.flush(scope, {
+      participationId: result.id,
+      reason: "offboarded",
+    });
     return result;
   }
 
@@ -373,82 +389,53 @@ export class DealAccessService {
           scope,
           grantId: updated.id,
           reason: "expired",
+          state: "pending",
+          attemptCount: 0,
         });
       }
       return grants;
     });
-    for (const grant of expired) await this.sessions.invalidateGrant(grant.id);
+    await this.invalidations.flush(scope, { reason: "expired" });
     return expired.length;
   }
 
-  async processQueuedSubmission(
+  retrySessionInvalidations(
+    input: RetrySessionInvalidationsInput,
+  ): Promise<SessionInvalidationRetryResult> {
+    if (input.context.origin === "http") {
+      return Promise.reject(new DealAccessAuthorizationError("INTERNAL_ONLY"));
+    }
+    const scope = commandScope(input.context);
+    return this.invalidations.retry(scope);
+  }
+
+  processQueuedSubmission(
     input: QueuedSubmissionInput,
     delivery: QueuedSubmissionDelivery,
   ): Promise<PortalSubmission> {
-    assertExternalActor(input.actor);
-    const scope = commandScope(input.context);
-    const prepared = await this.repository.transaction(async (store) => {
-      const submission = await store.findSubmission(scope, input.submissionId);
-      if (submission === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      const grant = await store.findGrant(scope, submission.grantId);
-      const participation = grant === undefined
-        ? undefined
-        : await store.findParticipation(scope, grant.participationId);
-      if (grant === undefined || participation === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      await authorizeQueuedSubmission(
-        input,
-        submission,
-        grant,
-        participation,
-        this.clock.now(),
-      );
-      return { submission, scope };
-    });
-    await delivery.deliver({
-      submission: prepared.submission,
-      beforeExternalEffect: () => this.reauthorizeQueuedSubmission(input),
-    });
-    return this.repository.transaction(async (store) => {
-      const current = await store.findSubmission(
-        prepared.scope,
-        input.submissionId,
-      );
-      if (current === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      const completed = completePortalSubmission(current, this.clock.now());
-      await store.saveSubmission(completed, current.version);
-      return completed;
+    return processPortalSubmission({
+      repository: this.repository,
+      clock: this.clock,
+      request: input,
+      delivery,
     });
   }
 
-  private reauthorizeQueuedSubmission(
-    input: QueuedSubmissionInput,
-  ): Promise<ApprovedScopeToken> {
-    const scope = commandScope(input.context);
-    return this.repository.transaction(async (store) => {
-      const submission = await store.findSubmission(scope, input.submissionId);
-      if (submission === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      const grant = await store.findGrant(scope, submission.grantId);
-      const participation = grant === undefined
-        ? undefined
-        : await store.findParticipation(scope, grant.participationId);
-      if (grant === undefined || participation === undefined) {
-        throw new DealAccessAuthorizationError("PROTECTED_NOT_FOUND");
-      }
-      return authorizeQueuedSubmission(
-        input,
-        submission,
-        grant,
-        participation,
-        this.clock.now(),
-      );
+  private async authorizeAdministrative(
+    actor: InviteParticipantCommand["actor"],
+    request: InviteParticipantCommand["context"],
+    scope: ReturnType<typeof commandScope>,
+    commandAction: typeof DEAL_ACCESS_ACTION[keyof typeof DEAL_ACCESS_ACTION],
+  ): Promise<void> {
+    const decision = await this.authorization.authorize({
+      context: { actor, request, now: this.clock.now() },
+      scope,
+      resource: { kind: DEAL_ACCESS_RESOURCE, id: scope.dealId },
+      action: commandAction,
+      requestedFields: [],
+      humanOnly: true,
     });
+    if (decision.outcome === "allow") return;
+    throw new DealAccessAuthorizationError(decision.reasonCode);
   }
 }

@@ -28,6 +28,10 @@ import type {
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
 import type { PortalObjectLoader } from "../../src/deal_access/portal.ts";
 import type { PortalObjectSnapshot } from "../../src/deal_access/model.ts";
+import {
+  AllowingDealAccessAuthorization,
+  INVITATION_TOKEN,
+} from "./support.ts";
 
 const scope = {
   tenantId: "tenant_acme" as TenantId,
@@ -124,6 +128,7 @@ function inviteCommand(key: string) {
     actor: human,
     idempotencyKey: `idem_invite-${key}` as IdempotencyKey,
     participantId: "participant_flow-1",
+    invitationToken: INVITATION_TOKEN,
     purpose: "submission_review",
     sponsor: { actorId: human.id, kind: "human" as const },
     expiresAt: "2026-08-08T12:00:00.000Z",
@@ -143,6 +148,7 @@ async function prepared() {
   const sessions = new RecordingSessions();
   const service = new DealAccessService({
     repository,
+    authorization: new AllowingDealAccessAuthorization(),
     ids: new SequentialIds(),
     clock: { now: () => current },
     sessions,
@@ -159,7 +165,7 @@ async function prepared() {
     actor: external,
     idempotencyKey: "idem_accept-prepared" as IdempotencyKey,
     participationId: invitation.participation.id,
-    participantId: invitation.participation.participantId,
+    invitationToken: INVITATION_TOKEN,
     expectedVersion: 1,
   });
   return {

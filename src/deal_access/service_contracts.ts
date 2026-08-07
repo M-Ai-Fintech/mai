@@ -1,6 +1,10 @@
 import type {
+  Action,
   ActorReference,
   ApprovedScopeToken,
+  AuthorizationDecision,
+  FieldClassification,
+  ResourceKind,
 } from "../platform/authz/v1.ts";
 import type {
   ActorId,
@@ -8,6 +12,7 @@ import type {
 } from "../shared/contracts/identifiers.ts";
 import type { RequestContext } from "../shared/contracts/request_context.ts";
 import type {
+  DealAccessScope,
   DealParticipation,
   ExternalGrant,
   HumanSponsor,
@@ -44,12 +49,37 @@ export interface ExternalSessionInvalidator {
   invalidateParticipation(participationId: ParticipationId): Promise<void>;
 }
 
+export interface DealAccessCommandContext {
+  readonly actor: ActorReference;
+  readonly request: RequestContext;
+  readonly now: string;
+}
+
+export interface DealAccessAuthorizationInput {
+  readonly context: DealAccessCommandContext;
+  readonly scope: DealAccessScope;
+  readonly resource: { readonly kind: ResourceKind; readonly id: string };
+  readonly action: Action;
+  readonly requestedFields: readonly {
+    readonly name: string;
+    readonly classification: FieldClassification;
+  }[];
+  readonly humanOnly?: boolean;
+}
+
+export interface DealAccessAuthorizationPort {
+  authorize(
+    input: DealAccessAuthorizationInput,
+  ): Promise<AuthorizationDecision> | AuthorizationDecision;
+}
+
 export interface InviteParticipantCommand {
   readonly type: "invite_participant";
   readonly context: RequestContext;
   readonly actor: ActorReference;
   readonly idempotencyKey: IdempotencyKey;
   readonly participantId: string;
+  readonly invitationToken: string;
   readonly purpose: string;
   readonly sponsor: HumanSponsor;
   readonly expiresAt: string;
@@ -69,7 +99,7 @@ export interface AcceptInvitationCommand {
   readonly actor: ActorReference;
   readonly idempotencyKey: IdempotencyKey;
   readonly participationId: ParticipationId;
-  readonly participantId: string;
+  readonly invitationToken: string;
   readonly expectedVersion: number;
 }
 
@@ -112,6 +142,16 @@ export interface OffboardParticipantCommand {
 
 export interface ExpireGrantsInput {
   readonly context: RequestContext;
+}
+
+export interface RetrySessionInvalidationsInput {
+  readonly context: RequestContext;
+}
+
+export interface SessionInvalidationRetryResult {
+  readonly attempted: number;
+  readonly completed: number;
+  readonly failed: number;
 }
 
 export interface QueuedSubmissionInput {

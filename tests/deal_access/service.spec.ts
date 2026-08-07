@@ -26,6 +26,10 @@ import type {
 } from "../../src/shared/contracts/identifiers.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
 import type { ActorReference } from "../../src/platform/authz/v1.ts";
+import {
+  AllowingDealAccessAuthorization,
+  INVITATION_TOKEN,
+} from "./support.ts";
 
 const scope = {
   tenantId: "tenant_acme" as TenantId,
@@ -69,6 +73,7 @@ class SequentialDealAccessIds implements DealAccessIdFactory {
 function service() {
   return new DealAccessService({
     repository: new InMemoryDealAccessRepository(),
+    authorization: new AllowingDealAccessAuthorization(),
     ids: new SequentialDealAccessIds(),
     clock: { now: () => now },
     sessions: {
@@ -85,6 +90,7 @@ function command(key: string) {
     actor,
     idempotencyKey: `idem_${key}` as IdempotencyKey,
     participantId: "participant_external-1",
+    invitationToken: INVITATION_TOKEN,
     purpose: "document_review",
     sponsor: { actorId: actor.id, kind: "human" as const },
     expiresAt: "2026-08-08T12:00:00.000Z",
