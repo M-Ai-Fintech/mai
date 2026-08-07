@@ -15,7 +15,7 @@ This directory contains the front-end Next.js Web application for MAI.
 ## Runtime Environment & Node Workspace
 
 - **Runtime**: Node.js (v20+) with `npm` package manager.
-- **Framework & Libraries**: Next.js 16.2.10 (App Router), React 19.2.4, TailwindCSS v4, Vitest 4.1.10, Storybook 10.5.0.
+- **Framework & Libraries**: Next.js 16.3.0 (App Router), React 19.2.4, TailwindCSS v4, Vitest 4.1.10, Storybook 10.5.0.
 - **IMPORTANT**: The GUI subsystem uses Node.js and `npm`. Do **NOT** use Deno commands inside the `gui/` directory.
 
 ## Frontend Foundation Boundary
