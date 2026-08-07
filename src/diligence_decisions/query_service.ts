@@ -9,6 +9,8 @@ import type {
 } from "./model.ts";
 import type { CommandDependencies } from "./contracts.ts";
 import { authorize, protectedNotFound } from "./command_support.ts";
+import { assertDecisionReferencesConsistent } from "./decision_references.ts";
+import { DiligenceDecisionError } from "./errors.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 import type {
   DecisionRecordId,
@@ -60,12 +62,7 @@ export class DiligenceDecisionQueries {
       scope,
       "decision_request",
       id,
-      (transaction) =>
-        this.dependencies.config.repository.findDecisionRequest(
-          transaction,
-          scope,
-          id,
-        ),
+      (transaction) => this.loadRequestWithProjection(transaction, scope, id),
     );
   }
 
@@ -98,13 +95,56 @@ export class DiligenceDecisionQueries {
       scope,
       "decision_request",
       id,
-      (transaction) =>
-        this.dependencies.config.repository.findProjection(
-          transaction,
-          scope,
-          id,
-        ),
+      (transaction) => this.loadProjectionWithRequest(transaction, scope, id),
     );
+  }
+
+  private async loadRequestWithProjection(
+    transaction: TransactionHandle,
+    scope: DiligenceScope,
+    id: DecisionRequestId,
+  ): Promise<DecisionRequest | undefined> {
+    const request = await this.dependencies.config.repository
+      .findDecisionRequest(
+        transaction,
+        scope,
+        id,
+      );
+    if (request === undefined) return undefined;
+    const projection = await this.dependencies.config.repository.findProjection(
+      transaction,
+      scope,
+      id,
+    );
+    assertDecisionReferencesConsistent(request, projection);
+    return request;
+  }
+
+  private async loadProjectionWithRequest(
+    transaction: TransactionHandle,
+    scope: DiligenceScope,
+    id: DecisionRequestId,
+  ): Promise<DecisionProjection | undefined> {
+    const projection = await this.dependencies.config.repository.findProjection(
+      transaction,
+      scope,
+      id,
+    );
+    if (projection === undefined) return undefined;
+    const request = await this.dependencies.config.repository
+      .findDecisionRequest(
+        transaction,
+        scope,
+        id,
+      );
+    if (request === undefined) {
+      throw new DiligenceDecisionError(
+        "REFERENCE_MISMATCH",
+        `Decision projection "${id}" has no matching request; expected one current decision aggregate reference.`,
+      );
+    }
+    assertDecisionReferencesConsistent(request, projection);
+    return projection;
   }
 
   private async read<T>(

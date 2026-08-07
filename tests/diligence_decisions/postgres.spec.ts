@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "@std/assert";
 import pg from "pg";
 import {
   createDecisionHistoryEntry,
@@ -8,6 +8,11 @@ import {
   createExactEvidenceBasis,
   createFinding,
   type DecisionAuthoritySnapshot,
+  type DecisionProjection,
+  type DecisionRecordId,
+  type DecisionRequest,
+  decisionRequestToDecided,
+  decisionRequestToRequested,
   DiligenceDecisionError,
   diligenceDecisionsMigrations,
   type DiligenceScope,
@@ -163,6 +168,139 @@ Deno.test({
   },
 });
 
+Deno.test({
+  name:
+    "PostgreSQL competing supersessions leave one consistent current record",
+  ignore: databaseUrl === undefined,
+  async fn() {
+    const pool = createPostgresIntegrationTestPool(databaseUrl!);
+    await migrate(pool);
+    const transactions = new PostgresTransactionRunner(pool);
+    const repository = new PostgresDiligenceDecisionsRepository();
+    const suffix = `competing-${Date.now()}`;
+    const draft = fixtureRequest(suffix);
+    const requested = decisionRequestToRequested(draft, now());
+    const previous = fixtureRecord(suffix, draft.id, requested.version);
+    const request = decisionRequestToDecided(requested, previous.id, now());
+    const projection = createDecisionProjection({
+      requestId: request.id,
+      currentRecordId: previous.id,
+      state: "active",
+      version: version(1),
+      updatedAt: now(),
+    });
+    await transactions.run(async (transaction) => {
+      await repository.insertDecisionRequest(transaction, request);
+      await repository.insertDecisionRecord(transaction, previous);
+      await repository.insertProjection(transaction, projection, scope);
+    });
+
+    const attempts = await Promise.allSettled([
+      supersedeInPostgres(
+        transactions,
+        repository,
+        request,
+        projection,
+        suffix,
+        "left",
+      ),
+      supersedeInPostgres(
+        transactions,
+        repository,
+        request,
+        projection,
+        suffix,
+        "right",
+      ),
+    ]);
+    const winners = attempts.filter((result) => result.status === "fulfilled");
+    const loser = attempts.find((result) => result.status === "rejected");
+    assertEquals(winners.length, 1);
+    assert(loser?.status === "rejected");
+    assert(loser.reason instanceof DiligenceDecisionError);
+    assertEquals(loser.reason.code, "VERSION_CONFLICT");
+
+    await transactions.run(async (transaction) => {
+      const currentRequest = await repository.findDecisionRequest(
+        transaction,
+        scope,
+        request.id,
+      );
+      const currentProjection = await repository.findProjection(
+        transaction,
+        scope,
+        request.id,
+      );
+      assert(currentRequest !== undefined && currentProjection !== undefined);
+      assertEquals(
+        currentRequest.decisionRecordId,
+        currentProjection.currentRecordId,
+      );
+      assertEquals(currentRequest.version, version(4));
+      assertEquals(currentProjection.version, version(2));
+    });
+    await pool.end();
+  },
+});
+
+async function supersedeInPostgres(
+  transactions: PostgresTransactionRunner,
+  repository: PostgresDiligenceDecisionsRepository,
+  request: DecisionRequest,
+  projection: DecisionProjection,
+  suffix: string,
+  side: string,
+): Promise<void> {
+  await transactions.run(async (transaction) => {
+    const lockedRequest = await repository.findDecisionRequest(
+      transaction,
+      scope,
+      request.id,
+      true,
+    );
+    const lockedProjection = await repository.findProjection(
+      transaction,
+      scope,
+      request.id,
+      true,
+    );
+    if (lockedRequest === undefined || lockedProjection === undefined) {
+      throw new Error(`Missing competing supersession fixture "${side}".`);
+    }
+    const replacement = fixtureRecord(
+      `${suffix}-${side}`,
+      request.id,
+      lockedRequest.version,
+      lockedProjection.currentRecordId,
+    );
+    const nextRequest = {
+      ...lockedRequest,
+      decisionRecordId: replacement.id,
+      version: version(Number(lockedRequest.version) + 1),
+      updatedAt: now(),
+    };
+    const nextProjection = {
+      ...lockedProjection,
+      currentRecordId: replacement.id,
+      state: "superseded" as const,
+      version: version(Number(lockedProjection.version) + 1),
+      updatedAt: now(),
+    };
+    await repository.insertDecisionRecord(transaction, replacement);
+    await repository.updateDecisionRequest(
+      transaction,
+      nextRequest,
+      request.version,
+    );
+    await repository.updateProjection(
+      transaction,
+      nextProjection,
+      scope,
+      projection.version,
+    );
+  });
+}
+
 const scope: DiligenceScope = {
   tenantId: required("tenant_pg", parseTenantId),
   workspaceId: required("workspace_pg", parseWorkspaceId),
@@ -218,16 +356,22 @@ function fixtureRequest(suffix: string) {
   });
 }
 
-function fixtureRecord(suffix: string, requestId: string) {
+function fixtureRecord(
+  suffix: string,
+  requestId: string,
+  requestVersion: AggregateVersion = version(1),
+  supersedesRecordId?: DecisionRecordId,
+) {
   return createDecisionRecord({
     id: `decision_record_${suffix}` as never,
     requestId: requestId as never,
     scope,
     outcome: "approved",
     actor: human,
-    requestVersion: version(1),
+    requestVersion,
     basis: basis(suffix),
     authority,
+    ...(supersedesRecordId === undefined ? {} : { supersedesRecordId }),
     recordedAt: now(),
   });
 }

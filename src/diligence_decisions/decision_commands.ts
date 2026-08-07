@@ -35,6 +35,10 @@ import {
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
 import type { DecisionAuthoritySnapshot } from "./model.ts";
 import {
+  advanceDecisionRequestReference,
+  assertDecisionReferencesConsistent,
+} from "./decision_references.ts";
+import {
   assertDecisionRequestReady,
   createInitialProjection,
   historyEntry,
@@ -276,6 +280,7 @@ export class DiligenceDecisionCommands {
       input.expectedProjectionVersion,
       input.requestId,
     );
+    assertDecisionReferencesConsistent(request, projection);
     if (projection.currentRecordId !== input.recordId) {
       throw referenceMismatch(input.recordId, projection.currentRecordId);
     }
@@ -371,6 +376,7 @@ export class DiligenceDecisionCommands {
       input.expectedProjectionVersion,
       input.requestId,
     );
+    assertDecisionReferencesConsistent(request, projection);
     if (projection.currentRecordId !== input.recordId) {
       throw referenceMismatch(input.recordId, projection.currentRecordId);
     }
@@ -405,9 +411,20 @@ export class DiligenceDecisionCommands {
       entry,
       this.dependencies.clock.now(),
     );
+    const updatedRequest = advanceDecisionRequestReference(
+      request,
+      input.recordId,
+      replacement.id,
+      this.dependencies.clock.now(),
+    );
     await this.dependencies.config.repository.insertDecisionRecord(
       transaction,
       replacement,
+    );
+    await this.dependencies.config.repository.updateDecisionRequest(
+      transaction,
+      updatedRequest,
+      input.expectedRequestVersion,
     );
     await this.dependencies.config.repository.insertHistory(transaction, entry);
     await this.dependencies.config.repository.updateProjection(
@@ -415,6 +432,16 @@ export class DiligenceDecisionCommands {
       updated,
       input.scope,
       input.expectedProjectionVersion,
+    );
+    await appendEffect(
+      this.dependencies,
+      transaction,
+      input,
+      updatedRequest,
+      "decision_request_current_record_updated",
+      input.basis,
+      authority,
+      input.actor,
     );
     await appendEffect(
       this.dependencies,

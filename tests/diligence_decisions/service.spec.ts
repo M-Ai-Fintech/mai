@@ -184,6 +184,14 @@ Deno.test("recording then superseding preserves the old immutable record", async
     repository.records.get(recordId("new"))?.supersedesRecordId,
     oldRecord.id,
   );
+  assertEquals(
+    repository.requests.get(request.id)?.decisionRecordId,
+    recordId("new"),
+  );
+  assertEquals(
+    repository.projections.get(request.id)?.currentRecordId,
+    recordId("new"),
+  );
 });
 
 Deno.test("invalidation changes the request projection without rewriting the record", async () => {

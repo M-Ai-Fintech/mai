@@ -17,7 +17,7 @@ export const PROPOSAL_TRANSITIONS: readonly ProposalTransitionRule[] = Object
     makeProposalRule("proposed", "approved", true),
     makeProposalRule("proposed", "superseded", false),
     makeProposalRule("proposed", "invalidated", true),
-    makeProposalRule("approved", "superseded", false),
+    makeProposalRule("approved", "superseded", true),
     makeProposalRule("approved", "invalidated", true),
   ]);
 

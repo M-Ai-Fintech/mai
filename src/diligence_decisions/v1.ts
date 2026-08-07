@@ -3,6 +3,7 @@ export * from "./errors.ts";
 export * from "./basis.ts";
 export * from "./model.ts";
 export * from "./transition_tables.ts";
+export * from "./decision_references.ts";
 export * from "./ports.ts";
 export * from "./authority.ts";
 export * from "./migrations/index.ts";
