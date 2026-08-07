@@ -1,4 +1,0 @@
-interface:
-  display_name: "Backlog MCP"
-  short_description: "Manage MAI work through Backlog MCP"
-  default_prompt: "Use $backlog-mcp for this MAI task operation."
