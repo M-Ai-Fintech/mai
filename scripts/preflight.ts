@@ -6,6 +6,12 @@ import {
   prepareBrowserDependencies,
   prepareNodeDependencies,
 } from "./preflight_dependencies.ts";
+import {
+  approvedTargetsReachable,
+  assertApprovedDatabaseUrl,
+  DATABASE_TARGETS,
+  fallbackToApprovedTargets,
+} from "./preflight_postgres.ts";
 
 export type PreflightStatus =
   | "passed"
@@ -44,25 +50,8 @@ export interface PreflightOptions {
   readonly checkPush?: boolean;
 }
 
-const TEST_DATABASE_NAME = "mai_test_postgres_integration";
-const NOTIFICATIONS_DATABASE_NAME = "mai_test_notifications_integration";
-const DEFAULT_TEST_DATABASE_PORT = "55432";
 const COMMAND_TIMEOUT_MS = 15_000;
 const PREPARE_COMMAND_TIMEOUT_MS = 300_000;
-const DATABASE_TARGETS = [
-  {
-    environmentKey: "POSTGRES_INTEGRATION_TEST_DATABASE_URL",
-    expectedName: TEST_DATABASE_NAME,
-    id: "postgres-target",
-    label: "Approved PostgreSQL target",
-  },
-  {
-    environmentKey: "NOTIFICATIONS_INTEGRATION_TEST_DATABASE_URL",
-    expectedName: NOTIFICATIONS_DATABASE_NAME,
-    id: "notifications-target",
-    label: "Approved Notifications PostgreSQL target",
-  },
-] as const;
 
 export async function runPreflight(
   options: PreflightOptions = {},
@@ -74,7 +63,9 @@ export async function runPreflight(
   const filePresenceProbe = options.filePresenceProbe ?? fileExists;
   const results: PreflightResult[] = [];
   if (options.prepare) {
-    results.push(await prepareEnvironment(commandRunner));
+    results.push(
+      await prepareEnvironment(environment, commandRunner, databaseProbe),
+    );
     results.push(
       await prepareNodeDependencies(commandRunner, filePresenceProbe),
     );
@@ -89,7 +80,7 @@ export async function runPreflight(
       await prepareDatabaseTargets(environment, databaseProvisioner),
     );
   }
-  results.push(await checkDocker(commandRunner));
+  results.push(await checkDocker(commandRunner, environment, databaseProbe));
   for (const target of DATABASE_TARGETS) {
     results.push(await checkDatabaseTarget(environment, databaseProbe, target));
   }
@@ -128,9 +119,18 @@ export function formatPreflight(
   return lines.join("\n");
 }
 
-function prepareEnvironment(
+async function prepareEnvironment(
+  environment: Record<string, string | undefined>,
   commandRunner: PreflightCommandRunner,
+  databaseProbe: DatabaseProbe,
 ): Promise<PreflightResult> {
+  if (await approvedTargetsReachable(environment, databaseProbe)) {
+    return passedResult(
+      "prepare-postgres-service",
+      "Prepare approved PostgreSQL service",
+      "Existing local PostgreSQL service already serves both approved targets; compose startup skipped.",
+    );
+  }
   return commandResult(
     "prepare-postgres-service",
     "Prepare approved PostgreSQL service",
@@ -169,6 +169,8 @@ async function prepareDatabaseTargets(
 
 async function checkDocker(
   commandRunner: PreflightCommandRunner,
+  environment: Record<string, string | undefined>,
+  databaseProbe: DatabaseProbe,
 ): Promise<PreflightResult> {
   const info = await commandRunner("docker", ["info"]);
   if (!info.success) {
@@ -188,11 +190,7 @@ async function checkDocker(
   if (
     !service.success || !service.output.includes("postgres-integration-test")
   ) {
-    return failedResult(
-      "postgres-service",
-      "PostgreSQL service",
-      "postgres-integration-test is not running; run deno task prepare.",
-    );
+    return await fallbackToApprovedTargets(environment, databaseProbe);
   }
   const health = await commandRunner("docker", [
     "compose",
@@ -204,11 +202,7 @@ async function checkDocker(
     "postgres-integration-test",
   ]);
   if (!health.success || !health.output.includes("healthy")) {
-    return failedResult(
-      "postgres-health",
-      "PostgreSQL health",
-      "postgres-integration-test is running but not healthy.",
-    );
+    return await fallbackToApprovedTargets(environment, databaseProbe);
   }
   return passedResult(
     "docker",
@@ -226,6 +220,11 @@ async function checkDatabaseTarget(
   try {
     assertApprovedDatabaseUrl(databaseUrl, environment, target.expectedName);
     const database = await databaseProbe(databaseUrl);
+    if (database !== target.expectedName) {
+      throw new Error(
+        `Connected database '${database}' does not match expected '${target.expectedName}'.`,
+      );
+    }
     return passedResult(
       target.id,
       target.label,
@@ -291,41 +290,6 @@ function papermarkHookResult(
       status: "skipped",
       detail: "Future-provider hook is disabled by configuration.",
     };
-}
-
-function assertApprovedDatabaseUrl(
-  value: string | undefined,
-  environment: Record<string, string | undefined>,
-  expectedDatabaseName: string,
-): asserts value is string {
-  if (value === undefined) {
-    throw new Error(
-      `Approved database target is missing; expected '/${expectedDatabaseName}'.`,
-    );
-  }
-  const parsed = new URL(value);
-  const expectedPort = environment.POSTGRES_INTEGRATION_TEST_PORT ??
-    DEFAULT_TEST_DATABASE_PORT;
-  if (!/^postgres(?:ql)?$/.test(parsed.protocol.slice(0, -1))) {
-    throw new Error(
-      `PostgreSQL target protocol '${parsed.protocol}' is unsafe; expected postgres or postgresql.`,
-    );
-  }
-  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(parsed.hostname)) {
-    throw new Error(
-      `PostgreSQL target host '${parsed.hostname}' is unsafe; expected a local approved test host.`,
-    );
-  }
-  if (parsed.port !== expectedPort) {
-    throw new Error(
-      `PostgreSQL target port '${parsed.port}' is unsafe; expected '${expectedPort}'.`,
-    );
-  }
-  if (parsed.pathname !== `/${expectedDatabaseName}`) {
-    throw new Error(
-      `PostgreSQL target database '${parsed.pathname}' is unsafe; expected '/${expectedDatabaseName}'.`,
-    );
-  }
 }
 
 async function ensureDatabase(databaseUrl: string): Promise<void> {

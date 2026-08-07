@@ -44,11 +44,15 @@ const healthyEnvironment = {
     "postgres://postgres:postgres@localhost:55432/mai_test_notifications_integration",
 };
 
+function approvedDatabaseProbe(databaseUrl: string): Promise<string> {
+  return Promise.resolve(new URL(databaseUrl).pathname.slice(1));
+}
+
 Deno.test("preflight accepts the approved local target and warm dependencies", async () => {
   const results = await runPreflight({
     environment: healthyEnvironment,
     commandRunner: fakeCommandRunner(healthyCommands),
-    databaseProbe: () => Promise.resolve("mai_test_postgres_integration"),
+    databaseProbe: approvedDatabaseProbe,
     filePresenceProbe: () => Promise.resolve(true),
   });
 
@@ -64,7 +68,7 @@ Deno.test("preflight prepare reuses warm dependencies without reinstalling them"
     environment: healthyEnvironment,
     prepare: true,
     commandRunner: fakeCommandRunner(healthyCommands),
-    databaseProbe: () => Promise.resolve("mai_test_postgres_integration"),
+    databaseProbe: approvedDatabaseProbe,
     databaseProvisioner: () => Promise.resolve(),
     filePresenceProbe: () => Promise.resolve(true),
   });
@@ -79,6 +83,58 @@ Deno.test("preflight prepare reuses warm dependencies without reinstalling them"
       ?.detail,
     "Playwright browsers are already warm.",
   );
+});
+
+Deno.test("preflight reuses reachable approved targets without compose service", async () => {
+  const results = await runPreflight({
+    environment: healthyEnvironment,
+    commandRunner: fakeCommandRunner({
+      ...healthyCommands,
+      "docker compose ps --status running --services": {
+        success: true,
+        output: "",
+      },
+    }),
+    databaseProbe: approvedDatabaseProbe,
+    filePresenceProbe: () => Promise.resolve(true),
+  });
+  const service = results.find((result) => result.id === "docker");
+
+  assertEquals(service?.status, "passed");
+  assertStringIncludes(service?.detail ?? "", "both approved local");
+  assertEquals(hasPreflightFailures(results), false);
+});
+
+Deno.test("preflight prepare skips compose when both targets are already reachable", async () => {
+  let composeStartupRequested = false;
+  const commandRunner = (command: string, args: readonly string[]) => {
+    if (command === "docker" && args.includes("up")) {
+      composeStartupRequested = true;
+    }
+    return fakeCommandRunner({
+      ...healthyCommands,
+      "docker compose ps --status running --services": {
+        success: true,
+        output: "",
+      },
+    })(command, args);
+  };
+  const results = await runPreflight({
+    environment: healthyEnvironment,
+    prepare: true,
+    commandRunner,
+    databaseProbe: approvedDatabaseProbe,
+    databaseProvisioner: () => Promise.resolve(),
+    filePresenceProbe: () => Promise.resolve(true),
+  });
+  const preparation = results.find((result) =>
+    result.id === "prepare-postgres-service"
+  );
+
+  assertEquals(composeStartupRequested, false);
+  assertEquals(preparation?.status, "passed");
+  assertStringIncludes(preparation?.detail ?? "", "compose startup skipped");
+  assertEquals(hasPreflightFailures(results), false);
 });
 
 Deno.test("preflight rejects a development database target before probing it", async () => {
@@ -104,7 +160,7 @@ Deno.test("preflight reports a missing Docker daemon as unavailable", async () =
       ...healthyCommands,
       "docker info": { success: false, output: "Cannot connect to Docker" },
     }),
-    databaseProbe: () => Promise.resolve("mai_test_postgres_integration"),
+    databaseProbe: approvedDatabaseProbe,
     filePresenceProbe: () => Promise.resolve(true),
   });
 
