@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave M contains Linear issue MAI-71 — End-to-end, security and operational release gate. Run only after its owner-approved release-gate PR is merged and every declared dependency is Done. Linear state, exact-head verification, release dossier, merged source, and executed environment evidence are authoritative.
 
 Objective

@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave K contains Linear issues MAI-68 — legacy banker CLI retirement, and MAI-69 — governed Brazilian M&A model-adaptation strategy. Linear native relations and `prompts/manifest.json` are authoritative.
 
 Objective

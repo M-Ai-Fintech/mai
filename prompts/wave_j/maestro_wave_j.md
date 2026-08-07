@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave J contains Linear issues MAI-64, MAI-65, MAI-66, and MAI-67. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issues, and `plan_MAI-64.md` before planning.
 
 Objective

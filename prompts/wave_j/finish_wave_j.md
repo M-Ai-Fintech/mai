@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave J contains Linear issues MAI-64, MAI-65, MAI-66, and MAI-67. Run only after all four owner-approved PRs are merged. Linear state, merged source, frontend/model/evidence artifacts, and governed documents are authoritative.
 
 Objective

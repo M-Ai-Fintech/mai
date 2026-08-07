@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave M contains Linear issue MAI-71 — End-to-end, security and operational release gate. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issue, and all dependency evidence before planning.
 
 Objective

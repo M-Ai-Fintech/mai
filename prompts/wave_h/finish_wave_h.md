@@ -1,5 +1,7 @@
 Context
 
+The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
+
 Wave H contains Linear issue MAI-48 — Negotiation. Run only after its owner-approved PR is merged. Linear issue state, MAI-20/MAI-21 dependency evidence, and merged source are authoritative.
 
 Objective
