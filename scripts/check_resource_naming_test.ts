@@ -44,7 +44,9 @@ Deno.test("resource naming guard rejects task-derived file paths", () => {
     assertEquals(findForbiddenResourcePathNames(path).length, 1);
   }
   assertEquals(
-    findForbiddenResourcePathNames("backlog/tasks/MAI-114.md"),
+    findForbiddenResourcePathNames(
+      "docs/migrations/backlog-to-linear-map.json",
+    ),
     [],
   );
 });

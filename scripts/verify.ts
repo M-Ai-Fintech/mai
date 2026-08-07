@@ -41,6 +41,12 @@ export const verificationChecks: VerificationCheck[] = [
     args: ["run", "--allow-read", "scripts/check_docs.ts"],
   },
   {
+    id: "linear-policy",
+    label: "Linear system-of-record policy",
+    command: "deno",
+    args: ["run", "--allow-read", "scripts/check_linear_policy.ts"],
+  },
+  {
     id: "resource-naming",
     label: "Semantic resource naming",
     command: "deno",

@@ -1,7 +1,6 @@
 const TASK_DERIVED_TOKEN = /(?:MAI|mai|Mai)\d+[A-Za-z0-9_-]*/g;
 const EXCLUDED_DIRECTORIES = new Set([
   ".git",
-  "backlog",
   "data",
   "graphify-out",
   "node_modules",
@@ -12,6 +11,10 @@ const BINARY_EXTENSIONS = new Set([".onnx", ".pack", ".png", ".jpg", ".jpeg"]);
 function isHistoricalMigrationDefinition(path: string): boolean {
   return path.startsWith("src/work_management/migrations/") &&
     path.includes("_historical_");
+}
+
+function isTraceabilityMap(path: string): boolean {
+  return path === "docs/migrations/backlog-to-linear-map.json";
 }
 
 export interface ResourceNamingViolation {
@@ -58,7 +61,9 @@ if (import.meta.main) {
     if (BINARY_EXTENSIONS.has(extension)) continue;
     const content = await Deno.readTextFile(path);
     violations.push(...findForbiddenResourcePathNames(relative));
-    if (!isHistoricalMigrationDefinition(relative)) {
+    if (
+      !isHistoricalMigrationDefinition(relative) && !isTraceabilityMap(relative)
+    ) {
       violations.push(...findForbiddenResourceNames(content, relative));
     }
   }

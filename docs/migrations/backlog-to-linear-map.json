@@ -1,0 +1,5414 @@
+{
+  "schemaVersion": 1,
+  "migrationMarker": "2026-08-07T03:25:53.748Z",
+  "legacySystem": "Backlog.md",
+  "activeSystemOfRecord": "Linear",
+  "workspaceUrl": "https://linear.app/mergesai/",
+  "linearTeam": {
+    "name": "M&Ai",
+    "key": "MAI",
+    "id": "71d33cad-861b-4603-897b-bb55b33f626e"
+  },
+  "repository": {
+    "historicalFullName": "luisfelipeluis49/mai",
+    "finalFullName": "M-Ai-Fintech/mai",
+    "defaultBranch": "master",
+    "headAtMigrationStart": "ef14b90085cd186d33a4bd5869f9a569a155b67e"
+  },
+  "orderingRule": "Non-archived Backlog tasks sorted by ordinal ascending; first four reuse MAI-1 through MAI-4.",
+  "counts": {
+    "tasks": 73,
+    "documents": 42,
+    "doneTasks": 48,
+    "inProgressTasks": 6,
+    "toDoTasks": 19
+  },
+  "projects": {
+    "documentation": {
+      "id": "d459b206-c203-4fea-a151-d10fbadf6e02",
+      "name": "MA&I — Governed Documentation"
+    },
+    "m-10": {
+      "id": "6b68de50-0a7c-4c2c-9c75-3cc13bd53c5c",
+      "name": "MA&I — Legacy m-10 — Papermark Vdr & Due Diligence",
+      "path": "backlog/milestones/m-10 - papermark-vdr-&-due-diligence.md"
+    },
+    "m-11": {
+      "id": "8df98629-4fa6-4603-8833-6a7184e6f0b5",
+      "name": "MA&I — Legacy m-11 — Decision Grade Engines",
+      "path": "backlog/milestones/m-11 - decision-grade-engines.md"
+    },
+    "m-12": {
+      "id": "8208efb0-f3aa-4fe4-85c6-ba952716f7c0",
+      "name": "MA&I — Legacy m-12 — Banker Workspace",
+      "path": "backlog/milestones/m-12 - banker-workspace.md"
+    },
+    "m-13": {
+      "id": "b1f26a5b-77e1-4f86-b545-e3586bbf6ce0",
+      "name": "MA&I — Legacy m-13 — Agentic Deal Lifecycle",
+      "path": "backlog/milestones/m-13 - agentic-deal-lifecycle.md"
+    },
+    "m-14": {
+      "id": "9ec8d3bd-3d1b-412c-8dd1-4a24992500d8",
+      "name": "MA&I — Legacy m-14 — Repository & Knowledge Integrity",
+      "path": "backlog/milestones/m-14 - repository-&-knowledge-integrity.md"
+    },
+    "m-15": {
+      "id": "68577d9d-6256-4a46-93c1-f460d36518ab",
+      "name": "MA&I — Legacy m-15 — Enterprise Platform & Integrations",
+      "path": "backlog/milestones/m-15 - enterprise-platform-&-integrations.md"
+    },
+    "m-9": {
+      "id": "0d826d93-408f-4c00-bd18-df0c2062f0b9",
+      "name": "MA&I — Legacy m-9 — Local Runtime Reliability",
+      "path": "backlog/milestones/m-9 - local-runtime-reliability.md"
+    }
+  },
+  "tasks": [
+    {
+      "legacyId": "MAI-67",
+      "linearIssueId": "MAI-1",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-1/implement-backend-contracts-required-by-gui-prototype",
+      "ordinal": 5,
+      "originalRepositoryPath": "backlog/completed/mai-67 - Implement-backend-contracts-required-by-GUI-prototype.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "api",
+        "GUI",
+        "revalidated"
+      ],
+      "linearLabels": [
+        "backend",
+        "api",
+        "GUI",
+        "revalidated"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-68",
+        "MAI-70"
+      ],
+      "blockLinearIds": [
+        "MAI-2",
+        "MAI-3"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-68",
+      "linearIssueId": "MAI-2",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-2/implement-shared-gui-shell-and-stateful-screen-families",
+      "ordinal": 6,
+      "originalRepositoryPath": "backlog/completed/mai-68 - Implement-shared-GUI-shell-and-stateful-screen-families.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "GUI",
+        "components",
+        "prototype",
+        "revalidated"
+      ],
+      "linearLabels": [
+        "frontend",
+        "GUI",
+        "components",
+        "prototype",
+        "revalidated"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-67"
+      ],
+      "dependencyLinearIds": [
+        "MAI-1"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-70",
+      "linearIssueId": "MAI-3",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-3/modularize-mvp-api-contracts-routes-and-store",
+      "ordinal": 8,
+      "originalRepositoryPath": "backlog/completed/mai-70 - Modularize-MVP-API-contracts-routes-and-store.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "refactor",
+        "api",
+        "tests",
+        "revalidated"
+      ],
+      "linearLabels": [
+        "backend",
+        "refactor",
+        "api",
+        "tests",
+        "revalidated"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-67"
+      ],
+      "dependencyLinearIds": [
+        "MAI-1"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-71",
+      "linearIssueId": "MAI-4",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-4/restore-storybook-build-and-component-preview",
+      "ordinal": 9,
+      "originalRepositoryPath": "backlog/completed/mai-71 - Restore-Storybook-build-and-component-preview.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "storybook",
+        "frontend",
+        "bug",
+        "qa",
+        "revalidated"
+      ],
+      "linearLabels": [
+        "storybook",
+        "frontend",
+        "Bug",
+        "qa",
+        "revalidated"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-89",
+      "linearIssueId": "MAI-5",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-5/define-and-approve-the-mai-figma-design-system",
+      "ordinal": 200,
+      "originalRepositoryPath": "backlog/completed/mai-89 - Define-and-approve-the-MAI-Figma-design-system.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "design-system",
+        "figma",
+        "design",
+        "foundation",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "design-system",
+        "figma",
+        "design",
+        "foundation",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-90"
+      ],
+      "blockLinearIds": [
+        "MAI-6"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-90",
+      "linearIssueId": "MAI-6",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-6/complete-and-govern-the-25-banker-workspace-design-definitions",
+      "ordinal": 300,
+      "originalRepositoryPath": "backlog/completed/mai-90 - Complete-and-govern-the-25-banker-workspace-design-definitions.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "design",
+        "product-definition",
+        "documentation",
+        "figma",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "design",
+        "product-definition",
+        "documentation",
+        "figma",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-89"
+      ],
+      "dependencyLinearIds": [
+        "MAI-5"
+      ],
+      "blockLegacyIds": [
+        "MAI-91"
+      ],
+      "blockLinearIds": [
+        "MAI-7"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9",
+        "doc-12"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-91",
+      "linearIssueId": "MAI-7",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-7/design-global-administration-and-external-screen-families-in-figma",
+      "ordinal": 400,
+      "originalRepositoryPath": "backlog/completed/mai-91 - Design-global-administration-and-external-screen-families-in-Figma.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "figma",
+        "screen-design",
+        "global-ui",
+        "admin-ui",
+        "external-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "figma",
+        "screen-design",
+        "global-ui",
+        "admin-ui",
+        "external-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-90"
+      ],
+      "dependencyLinearIds": [
+        "MAI-6"
+      ],
+      "blockLegacyIds": [
+        "MAI-92"
+      ],
+      "blockLinearIds": [
+        "MAI-8"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-92",
+      "linearIssueId": "MAI-8",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-8/design-deal-intelligence-and-decision-screen-families-in-figma",
+      "ordinal": 500,
+      "originalRepositoryPath": "backlog/completed/mai-92 - Design-deal-intelligence-and-decision-screen-families-in-Figma.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "figma",
+        "screen-design",
+        "deal-intelligence",
+        "decision-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "figma",
+        "screen-design",
+        "deal-intelligence",
+        "decision-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-91"
+      ],
+      "dependencyLinearIds": [
+        "MAI-7"
+      ],
+      "blockLegacyIds": [
+        "MAI-93"
+      ],
+      "blockLinearIds": [
+        "MAI-9"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-93",
+      "linearIssueId": "MAI-9",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-9/design-deal-execution-and-agentic-screen-families-in-figma",
+      "ordinal": 600,
+      "originalRepositoryPath": "backlog/completed/mai-93 - Design-deal-execution-and-agentic-screen-families-in-Figma.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "figma",
+        "screen-design",
+        "deal-execution",
+        "agentic-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "figma",
+        "screen-design",
+        "deal-execution",
+        "agentic-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-92"
+      ],
+      "dependencyLinearIds": [
+        "MAI-8"
+      ],
+      "blockLegacyIds": [
+        "MAI-94"
+      ],
+      "blockLinearIds": [
+        "MAI-10"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-94",
+      "linearIssueId": "MAI-10",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-10/prototype-and-approve-end-to-end-banker-workflows-in-figma",
+      "ordinal": 700,
+      "originalRepositoryPath": "backlog/completed/mai-94 - Prototype-and-approve-end-to-end-banker-workflows-in-Figma.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "figma",
+        "prototype",
+        "workflow",
+        "approval-gate",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "figma",
+        "prototype",
+        "workflow",
+        "approval-gate",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-93"
+      ],
+      "dependencyLinearIds": [
+        "MAI-9"
+      ],
+      "blockLegacyIds": [
+        "MAI-95"
+      ],
+      "blockLinearIds": [
+        "MAI-51"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-85",
+      "linearIssueId": "MAI-11",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-11/establish-the-figma-design-system-and-rebuild-the-mai-banker-workspace",
+      "ordinal": 1000,
+      "originalRepositoryPath": "backlog/completed/mai-85 - Create-the-final-MAI-design-system-and-banker-screens-in-Figma.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "design-system",
+        "figma",
+        "frontend",
+        "product",
+        "initiative"
+      ],
+      "linearLabels": [
+        "design-system",
+        "figma",
+        "frontend",
+        "product",
+        "initiative"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-98",
+      "linearIssueId": "MAI-12",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-12/implement-application-shell-navigation-and-route-architecture",
+      "ordinal": 1100,
+      "originalRepositoryPath": "backlog/completed/mai-98 - Implement-application-shell-navigation-and-route-architecture.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "app-shell",
+        "navigation",
+        "routing",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "app-shell",
+        "navigation",
+        "routing",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-97"
+      ],
+      "dependencyLinearIds": [
+        "MAI-54"
+      ],
+      "blockLegacyIds": [
+        "MAI-99"
+      ],
+      "blockLinearIds": [
+        "MAI-55"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9",
+        "doc-18"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-18",
+          "linearDocumentId": "2712fc74-66f1-40cf-99a6-2cc3a993e549",
+          "linearUrl": "https://linear.app/mergesai/document/mai-98-application-shell-and-route-architecture-6c7e8a45cb40"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-103",
+      "linearIssueId": "MAI-13",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-13/redesign-mai-backend-domain-and-apis-around-the-approved-frontend",
+      "ordinal": 1600,
+      "originalRepositoryPath": "backlog/tasks/mai-103 - Redesign-MAI-backend-domain-and-APIs-around-the-approved-frontend-workflow.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "domain-model",
+        "api-design",
+        "planning",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "domain-model",
+        "api-design",
+        "planning",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@chatgpt",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-102"
+      ],
+      "dependencyLinearIds": [
+        "MAI-58"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-2",
+        "doc-3",
+        "doc-4",
+        "doc-5",
+        "doc-6",
+        "doc-7",
+        "doc-9",
+        "doc-10",
+        "doc-12",
+        "doc-22",
+        "doc-23",
+        "doc-20",
+        "doc-19",
+        "doc-24",
+        "doc-21",
+        "doc-34",
+        "doc-33",
+        "doc-32",
+        "doc-26",
+        "doc-30",
+        "doc-35",
+        "doc-31",
+        "doc-25",
+        "doc-36",
+        "doc-29",
+        "doc-28",
+        "doc-27"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-2",
+          "linearDocumentId": "ef709b3c-e1fe-49a7-9349-5de07087f348",
+          "linearUrl": "https://linear.app/mergesai/document/system-and-core-architecture-4a57aeede3db"
+        },
+        {
+          "legacyId": "doc-3",
+          "linearDocumentId": "78eeff18-931b-42b7-af87-199f4740ff9d",
+          "linearUrl": "https://linear.app/mergesai/document/agent-architecture-and-workflows-63b3e527b203"
+        },
+        {
+          "legacyId": "doc-4",
+          "linearDocumentId": "c53ffe2f-fbb6-4500-9e09-75714faa52f7",
+          "linearUrl": "https://linear.app/mergesai/document/data-and-memory-architecture-9f9adfb224c6"
+        },
+        {
+          "legacyId": "doc-5",
+          "linearDocumentId": "66268e40-744c-41a5-a6d8-49a40494389f",
+          "linearUrl": "https://linear.app/mergesai/document/engine-architecture-2e00684e7a61"
+        },
+        {
+          "legacyId": "doc-6",
+          "linearDocumentId": "5654f4c9-34da-4bf2-b8dd-866af1f7defe",
+          "linearUrl": "https://linear.app/mergesai/document/vdr-and-integration-architecture-f9fdee77688e"
+        },
+        {
+          "legacyId": "doc-7",
+          "linearDocumentId": "43c8c47e-3b62-4f74-a7db-2d3f8bb91a51",
+          "linearUrl": "https://linear.app/mergesai/document/manda-domain-model-259ba512b0b3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        },
+        {
+          "legacyId": "doc-22",
+          "linearDocumentId": "da3a8a6d-5476-43e8-b27e-acd9230aa8fd",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-api-jobs-events-agent-execution-and-integration-catalog-f2152516e70f"
+        },
+        {
+          "legacyId": "doc-23",
+          "linearDocumentId": "7da9bf9c-157a-47e9-bc3a-f5258a56783f",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-current-backend-disposition-912f2821ddcd"
+        },
+        {
+          "legacyId": "doc-20",
+          "linearDocumentId": "8f012f11-34fb-4a34-b360-4f8a48617c81",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-bounded-contexts-aggregates-and-workflow-state-machines-0504b8e746a8"
+        },
+        {
+          "legacyId": "doc-19",
+          "linearDocumentId": "a9837b8e-c0f1-4ff0-91ab-f1a94f953504",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-frontend-to-backend-gap-matrix-74b5a46a0c72"
+        },
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-21",
+          "linearDocumentId": "71b15ade-2666-46ea-9c7a-7d810c3bd8b0",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-tenancy-authorization-persistence-audit-and-provenance-6a693ecd36f7"
+        },
+        {
+          "legacyId": "doc-34",
+          "linearDocumentId": "9c9959f6-f77d-4007-b9fe-8fb8e591038c",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-agent-execution-and-human-authority-2d6317cba605"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-35",
+          "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-25",
+          "linearDocumentId": "bb19d242-4d44-49fa-91c6-369828ab8e03",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-target-modular-monolith-and-service-boundaries-e762b7def657"
+        },
+        {
+          "legacyId": "doc-36",
+          "linearDocumentId": "a46760f9-ad1b-431e-9399-ec94e2297243",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-migration-and-retirement-of-the-mock-backed-mvp-api-e2cff4ca9cc5"
+        },
+        {
+          "legacyId": "doc-29",
+          "linearDocumentId": "47c44cdc-564f-4bff-a65c-6e91ddd369b1",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-row-level-security-7a2336e2e5b5"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-107",
+      "linearIssueId": "MAI-14",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-14/identity-institution-workspace-and-access-lifecycle",
+      "ordinal": 10000,
+      "originalRepositoryPath": "backlog/tasks/mai-107 - Identity-institution-workspace-and-access-lifecycle.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "security",
+        "identity",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "security",
+        "identity",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-105",
+        "MAI-106"
+      ],
+      "dependencyLinearIds": [
+        "MAI-62",
+        "MAI-63"
+      ],
+      "blockLegacyIds": [
+        "MAI-110",
+        "MAI-112",
+        "MAI-120",
+        "MAI-123",
+        "MAI-124",
+        "MAI-127",
+        "MAI-149"
+      ],
+      "blockLinearIds": [
+        "MAI-24",
+        "MAI-26",
+        "MAI-27",
+        "MAI-32",
+        "MAI-33",
+        "MAI-61",
+        "MAI-66"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-27",
+        "doc-31",
+        "doc-28",
+        "doc-30"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-108",
+      "linearIssueId": "MAI-15",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-15/organization-registry",
+      "ordinal": 10100,
+      "originalRepositoryPath": "backlog/tasks/mai-108 - Organization-registry.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "organization",
+        "security",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "organization",
+        "security",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-105",
+        "MAI-106"
+      ],
+      "dependencyLinearIds": [
+        "MAI-62",
+        "MAI-63"
+      ],
+      "blockLegacyIds": [
+        "MAI-110"
+      ],
+      "blockLinearIds": [
+        "MAI-24"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-27",
+        "doc-28",
+        "doc-30",
+        "doc-33",
+        "doc-10"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-109",
+      "linearIssueId": "MAI-16",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-16/immutable-audit-and-activity-foundation",
+      "ordinal": 10200,
+      "originalRepositoryPath": "backlog/tasks/mai-109 - Immutable-audit-and-activity-foundation.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "audit",
+        "security",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "audit",
+        "security",
+        "persistence",
+        "api",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-105",
+        "MAI-106"
+      ],
+      "dependencyLinearIds": [
+        "MAI-62",
+        "MAI-63"
+      ],
+      "blockLegacyIds": [
+        "MAI-111",
+        "MAI-112",
+        "MAI-120",
+        "MAI-122",
+        "MAI-123",
+        "MAI-125",
+        "MAI-126",
+        "MAI-129",
+        "MAI-149",
+        "MAI-152"
+      ],
+      "blockLinearIds": [
+        "MAI-25",
+        "MAI-26",
+        "MAI-27",
+        "MAI-32",
+        "MAI-43",
+        "MAI-44",
+        "MAI-64",
+        "MAI-66",
+        "MAI-67",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-28",
+        "doc-30",
+        "doc-31",
+        "doc-32"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-142",
+      "linearIssueId": "MAI-17",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-17/rebuild-and-validate-the-onnx-financial-risk-model-artifact-and-local",
+      "ordinal": 10300,
+      "originalRepositoryPath": "backlog/tasks/mai-142 - Rebuild-and-validate-the-ONNX-financial-risk-model-artifact-and-local-inference-runtime.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "prediction",
+        "inference",
+        "model-governance",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "prediction",
+        "inference",
+        "model-governance",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-143"
+      ],
+      "blockLinearIds": [
+        "MAI-65"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-5"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-5",
+          "linearDocumentId": "66268e40-744c-41a5-a6d8-49a40494389f",
+          "linearUrl": "https://linear.app/mergesai/document/engine-architecture-2e00684e7a61"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-144",
+      "linearIssueId": "MAI-18",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-18/harden-deterministic-valuation-and-synergy-calculation-algorithms",
+      "ordinal": 10400,
+      "originalRepositoryPath": "backlog/tasks/mai-144 - Harden-deterministic-valuation-and-synergy-calculation-algorithms.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "valuation",
+        "calculations",
+        "finance",
+        "optimization",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "valuation",
+        "calculations",
+        "finance",
+        "optimization",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-116",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-39",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-5"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-5",
+          "linearDocumentId": "66268e40-744c-41a5-a6d8-49a40494389f",
+          "linearUrl": "https://linear.app/mergesai/document/engine-architecture-2e00684e7a61"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-145",
+      "linearIssueId": "MAI-19",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-19/harden-matching-and-portfolio-selection-optimization-algorithms",
+      "ordinal": 10500,
+      "originalRepositoryPath": "backlog/tasks/mai-145 - Harden-matching-and-portfolio-selection-optimization-algorithms.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "matching",
+        "optimization",
+        "calculations",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "matching",
+        "optimization",
+        "calculations",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-117",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-41",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-146",
+      "linearIssueId": "MAI-20",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-20/harden-negotiation-term-sheet-proposal-optimization",
+      "ordinal": 10600,
+      "originalRepositoryPath": "backlog/tasks/mai-146 - Harden-negotiation-term-sheet-proposal-optimization.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "negotiation",
+        "optimization",
+        "calculations",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "negotiation",
+        "optimization",
+        "calculations",
+        "testing",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-118",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-48",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-147",
+      "linearIssueId": "MAI-21",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-21/define-the-canonical-dispute-resolution-mechanism-contract-and-legacy",
+      "ordinal": 10700,
+      "originalRepositoryPath": "backlog/tasks/mai-147 - Define-the-canonical-dispute-resolution-mechanism-contract-and-legacy-adapters.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "legal",
+        "contracts",
+        "negotiation",
+        "closing",
+        "migration",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "legal",
+        "contracts",
+        "negotiation",
+        "closing",
+        "migration",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-118",
+        "MAI-119",
+        "MAI-121",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-42",
+        "MAI-48",
+        "MAI-60",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-33",
+        "doc-30",
+        "doc-7"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-7",
+          "linearDocumentId": "43c8c47e-3b62-4f74-a7db-2d3f8bb91a51",
+          "linearUrl": "https://linear.app/mergesai/document/manda-domain-model-259ba512b0b3"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-148",
+      "linearIssueId": "MAI-22",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-22/provision-and-validate-the-mai-modular-monolith-deployment-and",
+      "ordinal": 10800,
+      "originalRepositoryPath": "backlog/tasks/mai-148 - Provision-and-validate-the-MAI-modular-monolith-deployment-and-operations-foundation.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "infrastructure",
+        "cloud",
+        "deployment",
+        "operations",
+        "security",
+        "observability",
+        "persistence",
+        "testing",
+        "mai-85-initiative",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "infrastructure",
+        "cloud",
+        "deployment",
+        "operations",
+        "security",
+        "observability",
+        "persistence",
+        "testing",
+        "mai-85-initiative",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-106"
+      ],
+      "dependencyLinearIds": [
+        "MAI-63"
+      ],
+      "blockLegacyIds": [
+        "MAI-127",
+        "MAI-129",
+        "MAI-131",
+        "MAI-149"
+      ],
+      "blockLinearIds": [
+        "MAI-61",
+        "MAI-66",
+        "MAI-70",
+        "MAI-71"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-37",
+        "doc-12"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-37",
+          "linearDocumentId": "22d8fb9f-0974-4163-8a76-fe496d65a7d4",
+          "linearUrl": "https://linear.app/mergesai/document/mai-148-deployment-and-operations-foundation-065418bf93ef"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-151",
+      "linearIssueId": "MAI-23",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-23/establish-a-fast-deterministic-developer-preflight-for-the-modular",
+      "ordinal": 10900,
+      "originalRepositoryPath": "backlog/tasks/mai-151 - Establish-a-fast-deterministic-developer-preflight-for-the-modular-monolith.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "testing",
+        "developer-experience",
+        "reliability",
+        "preflight",
+        "mvp",
+        "delivery-wave-a"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "testing",
+        "developer-experience",
+        "reliability",
+        "preflight",
+        "mvp",
+        "delivery-wave-a"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-79",
+        "MAI-106"
+      ],
+      "dependencyLinearIds": [
+        "MAI-45",
+        "MAI-63"
+      ],
+      "blockLegacyIds": [
+        "MAI-131"
+      ],
+      "blockLinearIds": [
+        "MAI-71"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-8"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-8",
+          "linearDocumentId": "eed14731-a93a-4ea0-8fab-7fd7cb289acd",
+          "linearUrl": "https://linear.app/mergesai/document/local-setup-and-runtime-operations-8fd2fbfba9f7"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-110",
+      "linearIssueId": "MAI-24",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-24/deal-management-parties-and-mandate",
+      "ordinal": 20000,
+      "originalRepositoryPath": "backlog/tasks/mai-110 - Deal-management-parties-and-mandate.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deal-domain",
+        "persistence",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-b"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deal-domain",
+        "persistence",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-b"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-107",
+        "MAI-108"
+      ],
+      "dependencyLinearIds": [
+        "MAI-14",
+        "MAI-15"
+      ],
+      "blockLegacyIds": [
+        "MAI-111",
+        "MAI-112",
+        "MAI-114",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-123",
+        "MAI-124",
+        "MAI-125",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-25",
+        "MAI-26",
+        "MAI-27",
+        "MAI-29",
+        "MAI-33",
+        "MAI-41",
+        "MAI-42",
+        "MAI-44",
+        "MAI-48",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-25",
+        "doc-33",
+        "doc-12",
+        "doc-38"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-25",
+          "linearDocumentId": "bb19d242-4d44-49fa-91c6-369828ab8e03",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-target-modular-monolith-and-service-boundaries-e762b7def657"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        },
+        {
+          "legacyId": "doc-38",
+          "linearDocumentId": "b01ee404-cc77-4edd-af6f-ced741c11876",
+          "linearUrl": "https://linear.app/mergesai/document/mai-110-deal-reconciliation-operator-procedure-bbcd92d950fe"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-111",
+      "linearIssueId": "MAI-25",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-25/deal-lifecycle-phases-and-milestones",
+      "ordinal": 30000,
+      "originalRepositoryPath": "backlog/tasks/mai-111 - Deal-lifecycle-phases-and-milestones.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deal-domain",
+        "workflow",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-c"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deal-domain",
+        "workflow",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-c"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-109"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-16"
+      ],
+      "blockLegacyIds": [
+        "MAI-114",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-29",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-27",
+        "doc-30",
+        "doc-32",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-112",
+      "linearIssueId": "MAI-26",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-26/documents-sources-and-processing",
+      "ordinal": 30100,
+      "originalRepositoryPath": "backlog/tasks/mai-112 - Documents-sources-and-processing.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "documents",
+        "persistence",
+        "migration",
+        "integration",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-c"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "documents",
+        "persistence",
+        "migration",
+        "integration",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-c"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-106",
+        "MAI-107",
+        "MAI-110",
+        "MAI-109"
+      ],
+      "dependencyLinearIds": [
+        "MAI-63",
+        "MAI-14",
+        "MAI-24",
+        "MAI-16"
+      ],
+      "blockLegacyIds": [
+        "MAI-113",
+        "MAI-124",
+        "MAI-126",
+        "MAI-127",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-28",
+        "MAI-33",
+        "MAI-61",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-28",
+        "doc-30",
+        "doc-32",
+        "doc-35",
+        "doc-31"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-35",
+          "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-123",
+      "linearIssueId": "MAI-27",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-27/notifications-and-subscriptions",
+      "ordinal": 30200,
+      "originalRepositoryPath": "backlog/tasks/mai-123 - Notifications-and-subscriptions.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "notifications",
+        "jobs",
+        "integration",
+        "security",
+        "delivery-wave-c"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "notifications",
+        "jobs",
+        "integration",
+        "security",
+        "delivery-wave-c"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-106",
+        "MAI-107",
+        "MAI-110",
+        "MAI-109"
+      ],
+      "dependencyLinearIds": [
+        "MAI-63",
+        "MAI-14",
+        "MAI-24",
+        "MAI-16"
+      ],
+      "blockLegacyIds": [
+        "MAI-126",
+        "MAI-127",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-61",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-27",
+        "doc-31",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-113",
+      "linearIssueId": "MAI-28",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-28/evidence-citations-facts-interpretations-assumptions-and-calculations",
+      "ordinal": 40000,
+      "originalRepositoryPath": "backlog/tasks/mai-113 - Evidence-citations-facts-interpretations-assumptions-and-calculations.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "evidence",
+        "provenance",
+        "security",
+        "persistence",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-d"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "evidence",
+        "provenance",
+        "security",
+        "persistence",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-d"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-112"
+      ],
+      "dependencyLinearIds": [
+        "MAI-26"
+      ],
+      "blockLegacyIds": [
+        "MAI-114",
+        "MAI-115",
+        "MAI-116",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-120",
+        "MAI-122",
+        "MAI-126",
+        "MAI-129",
+        "MAI-143",
+        "MAI-152"
+      ],
+      "blockLinearIds": [
+        "MAI-29",
+        "MAI-31",
+        "MAI-32",
+        "MAI-39",
+        "MAI-41",
+        "MAI-42",
+        "MAI-43",
+        "MAI-48",
+        "MAI-64",
+        "MAI-65",
+        "MAI-67",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-30",
+        "doc-32",
+        "doc-35",
+        "doc-31"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-35",
+          "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-114",
+      "linearIssueId": "MAI-29",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-29/workstreams-tasks-and-approval-requests",
+      "ordinal": 50000,
+      "originalRepositoryPath": "backlog/tasks/mai-114 - Workstreams-tasks-and-approval-requests.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "workflow",
+        "approvals",
+        "security",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-e"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "workflow",
+        "approvals",
+        "security",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-e"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-111",
+        "MAI-113"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-25",
+        "MAI-28"
+      ],
+      "blockLegacyIds": [
+        "MAI-115",
+        "MAI-119",
+        "MAI-120",
+        "MAI-122",
+        "MAI-124",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-31",
+        "MAI-32",
+        "MAI-33",
+        "MAI-42",
+        "MAI-43",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-27",
+        "doc-30",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-54",
+      "linearIssueId": "MAI-30",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-30/setup-e-configuracao-do-storybook-com-suporte-a-nextjs-e-tailwind",
+      "ordinal": 55000,
+      "originalRepositoryPath": "backlog/completed/mai-54 - Storybook.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "GUI",
+        "storybook",
+        "infrastructure",
+        "documentation",
+        "revalidated"
+      ],
+      "linearLabels": [
+        "GUI",
+        "storybook",
+        "infrastructure",
+        "documentation",
+        "revalidated"
+      ],
+      "legacyAssignee": "@Luís Silva",
+      "linearAssignee": "luisfelipeluis49",
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-115",
+      "linearIssueId": "MAI-31",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-31/findings-impacts-and-decisions",
+      "ordinal": 60000,
+      "originalRepositoryPath": "backlog/tasks/mai-115 - Findings-impacts-and-decisions.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "diligence",
+        "decisions",
+        "provenance",
+        "api",
+        "delivery-wave-f"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "diligence",
+        "decisions",
+        "provenance",
+        "api",
+        "delivery-wave-f"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-113",
+        "MAI-114"
+      ],
+      "dependencyLinearIds": [
+        "MAI-28",
+        "MAI-29"
+      ],
+      "blockLegacyIds": [
+        "MAI-116",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-126",
+        "MAI-129",
+        "MAI-143"
+      ],
+      "blockLinearIds": [
+        "MAI-39",
+        "MAI-41",
+        "MAI-42",
+        "MAI-48",
+        "MAI-64",
+        "MAI-65",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-30",
+        "doc-32",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-120",
+      "linearIssueId": "MAI-32",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-32/agent-mission-and-run-platform",
+      "ordinal": 60100,
+      "originalRepositoryPath": "backlog/tasks/mai-120 - Agent-mission-and-run-platform.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "agent-architecture",
+        "security",
+        "persistence",
+        "jobs",
+        "api",
+        "delivery-wave-f"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "agent-architecture",
+        "security",
+        "persistence",
+        "jobs",
+        "api",
+        "delivery-wave-f"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-106",
+        "MAI-107",
+        "MAI-109",
+        "MAI-113",
+        "MAI-114"
+      ],
+      "dependencyLinearIds": [
+        "MAI-63",
+        "MAI-14",
+        "MAI-16",
+        "MAI-28",
+        "MAI-29"
+      ],
+      "blockLegacyIds": [
+        "MAI-121",
+        "MAI-122",
+        "MAI-126",
+        "MAI-127",
+        "MAI-129",
+        "MAI-143",
+        "MAI-152"
+      ],
+      "blockLinearIds": [
+        "MAI-43",
+        "MAI-60",
+        "MAI-61",
+        "MAI-64",
+        "MAI-65",
+        "MAI-67",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-31",
+        "doc-32",
+        "doc-34"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        },
+        {
+          "legacyId": "doc-34",
+          "linearDocumentId": "9c9959f6-f77d-4007-b9fe-8fb8e591038c",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-agent-execution-and-human-authority-2d6317cba605"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-124",
+      "linearIssueId": "MAI-33",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-33/deal-team-and-external-participant-access",
+      "ordinal": 60200,
+      "originalRepositoryPath": "backlog/tasks/mai-124 - Deal-team-and-external-participant-access.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "external-access",
+        "security",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-f"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "external-access",
+        "security",
+        "api",
+        "frontend-coordination",
+        "delivery-wave-f"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-107",
+        "MAI-110",
+        "MAI-112",
+        "MAI-114"
+      ],
+      "dependencyLinearIds": [
+        "MAI-14",
+        "MAI-24",
+        "MAI-26",
+        "MAI-29"
+      ],
+      "blockLegacyIds": [
+        "MAI-125",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-44",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-27",
+        "doc-29",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-29",
+          "linearDocumentId": "47c44cdc-564f-4bff-a65c-6e91ddd369b1",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-row-level-security-7a2336e2e5b5"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-72",
+      "linearIssueId": "MAI-34",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-34/canonicalize-deal-terminology-across-business-domain-identifiers-while",
+      "ordinal": 64000,
+      "originalRepositoryPath": "backlog/completed/mai-72 - Canonicalize-Deal-as-the-central-domain-entity-and-rename-transaction-references.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@antigravity",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-73",
+      "linearIssueId": "MAI-35",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-35/standardize-risk-severity-to-lowercase-string-union-across-all-schemas",
+      "ordinal": 65000,
+      "originalRepositoryPath": "backlog/completed/mai-73 - Standardize-Risk-Severity-to-lowercase-string-union-across-all-schemas.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@antigravity",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-74",
+      "linearIssueId": "MAI-36",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-36/split-dual-termsheetschema-into-negotiationproposal-and",
+      "ordinal": 66000,
+      "originalRepositoryPath": "backlog/completed/mai-74 - Split-dual-termsheetSchema-into-NegotiationProposal-and-BindingTermSheet.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@luisfelipeluis49",
+      "linearAssignee": "luisfelipeluis49",
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-75",
+      "linearIssueId": "MAI-37",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-37/introduce-target-dossier-as-a-first-class-domain-artifact-and-remove",
+      "ordinal": 67000,
+      "originalRepositoryPath": "backlog/completed/mai-75 - Introduce-Target-Dossier-as-a-first-class-domain-artifact-and-remove-company_culture-from-agent-Memory.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@antigravity",
+      "linearAssignee": null,
+      "legacyMilestone": "m-10",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-77",
+      "linearIssueId": "MAI-38",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-38/unify-risk-contingency-and-conditions-precedent-categories-under-a",
+      "ordinal": 69000,
+      "originalRepositoryPath": "backlog/completed/mai-77 - Unify-Risk-Contingency-and-Conditions-Precedent-categories-under-a-single-Domain-Area-taxonomy.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@luis",
+      "linearAssignee": "luisfelipeluis49",
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-116",
+      "linearIssueId": "MAI-39",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-39/valuation-scenarios-and-approval",
+      "ordinal": 70000,
+      "originalRepositoryPath": "backlog/tasks/mai-116 - Valuation-scenarios-and-approval.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "valuation",
+        "calculations",
+        "api",
+        "finance",
+        "delivery-wave-g"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "valuation",
+        "calculations",
+        "api",
+        "finance",
+        "delivery-wave-g"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-113",
+        "MAI-115",
+        "MAI-144"
+      ],
+      "dependencyLinearIds": [
+        "MAI-28",
+        "MAI-31",
+        "MAI-18"
+      ],
+      "blockLegacyIds": [
+        "MAI-121",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-60",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-30",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-78",
+      "linearIssueId": "MAI-40",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-40/enforce-english-only-internal-identifiers-and-introduce-i18n-for-all",
+      "ordinal": 70000,
+      "originalRepositoryPath": "backlog/completed/mai-78 - Enforce-English-only-internal-identifiers-and-introduce-i18n-for-all-presentation-strings.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "revalidation"
+      ],
+      "linearLabels": [
+        "revalidation"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [
+        "MAI-84"
+      ],
+      "dependencyLinearIds": [
+        "MAI-52"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-14"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-14",
+          "linearDocumentId": "ccea745b-7267-49ea-836d-79dd4c4d4435",
+          "linearUrl": "https://linear.app/mergesai/document/adr-0001-english-internal-identifiers-and-i18n-bb6d5cfde5ee"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-117",
+      "linearIssueId": "MAI-41",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-41/matching-conflicts-and-shortlist",
+      "ordinal": 70100,
+      "originalRepositoryPath": "backlog/tasks/mai-117 - Matching-conflicts-and-shortlist.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "matching",
+        "security",
+        "api",
+        "workflow",
+        "delivery-wave-g"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "matching",
+        "security",
+        "api",
+        "workflow",
+        "delivery-wave-g"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-113",
+        "MAI-115",
+        "MAI-145"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-28",
+        "MAI-31",
+        "MAI-19"
+      ],
+      "blockLegacyIds": [
+        "MAI-118",
+        "MAI-121",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-48",
+        "MAI-60",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-27",
+        "doc-30",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-119",
+      "linearIssueId": "MAI-42",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-42/closing-control",
+      "ordinal": 70200,
+      "originalRepositoryPath": "backlog/tasks/mai-119 - Closing-control.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "closing",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-g"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "closing",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-g"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-113",
+        "MAI-114",
+        "MAI-115",
+        "MAI-147"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-28",
+        "MAI-29",
+        "MAI-31",
+        "MAI-21"
+      ],
+      "blockLegacyIds": [
+        "MAI-121",
+        "MAI-126",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-60",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-122",
+      "linearIssueId": "MAI-43",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-43/deliverables-redaction-release-and-exports",
+      "ordinal": 70300,
+      "originalRepositoryPath": "backlog/tasks/mai-122 - Deliverables-redaction-release-and-exports.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deliverables",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-g"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "deliverables",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-g"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-109",
+        "MAI-113",
+        "MAI-114",
+        "MAI-120"
+      ],
+      "dependencyLinearIds": [
+        "MAI-16",
+        "MAI-28",
+        "MAI-29",
+        "MAI-32"
+      ],
+      "blockLegacyIds": [
+        "MAI-126",
+        "MAI-127",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-61",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-31",
+        "doc-35"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-35",
+          "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-125",
+      "linearIssueId": "MAI-44",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-44/pause-archive-restore-termination-retention-and-deletion",
+      "ordinal": 70400,
+      "originalRepositoryPath": "backlog/tasks/mai-125 - Pause-archive-restore-termination-retention-and-deletion.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "governance",
+        "security",
+        "persistence",
+        "migration",
+        "api",
+        "delivery-wave-g"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "governance",
+        "security",
+        "persistence",
+        "migration",
+        "api",
+        "delivery-wave-g"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-109",
+        "MAI-124"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-16",
+        "MAI-33"
+      ],
+      "blockLegacyIds": [
+        "MAI-126",
+        "MAI-129",
+        "MAI-149",
+        "MAI-152",
+        "MAI-153"
+      ],
+      "blockLinearIds": [
+        "MAI-64",
+        "MAI-66",
+        "MAI-67",
+        "MAI-69",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-28",
+        "doc-31",
+        "doc-32"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-32",
+          "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-79",
+      "linearIssueId": "MAI-45",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-45/establish-a-repository-wide-verification-gate",
+      "ordinal": 71000,
+      "originalRepositoryPath": "backlog/tasks/mai-79 - Establish-a-repository-wide-verification-gate.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "testing",
+        "reliability"
+      ],
+      "linearLabels": [
+        "testing",
+        "reliability"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-9",
+      "dependencyLegacyIds": [
+        "MAI-87"
+      ],
+      "dependencyLinearIds": [
+        "MAI-49"
+      ],
+      "blockLegacyIds": [
+        "MAI-151"
+      ],
+      "blockLinearIds": [
+        "MAI-23"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-83",
+      "linearIssueId": "MAI-46",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-46/audit-and-remove-code-rot-and-obsolete-repository-artifacts",
+      "ordinal": 75000,
+      "originalRepositoryPath": "backlog/completed/mai-83 - Audit-and-remove-code-rot-and-obsolete-repository-artifacts.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "cleanup",
+        "architecture",
+        "code-rot"
+      ],
+      "linearLabels": [
+        "cleanup",
+        "architecture",
+        "code-rot"
+      ],
+      "legacyAssignee": "@antigravity",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-86",
+      "linearIssueId": "MAI-47",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-47/rebuild-local-mai-agent-skills-for-an-mcp-first-solo-workflow",
+      "ordinal": 78000,
+      "originalRepositoryPath": "backlog/completed/mai-86 - Rebuild-local-MAI-agent-skills-for-an-MCP-first-solo-workflow.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "skills",
+        "agent-workflow",
+        "developer-experience"
+      ],
+      "linearLabels": [
+        "skills",
+        "agent-workflow",
+        "developer-experience"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-118",
+      "linearIssueId": "MAI-48",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-48/negotiation",
+      "ordinal": 80000,
+      "originalRepositoryPath": "backlog/tasks/mai-118 - Negotiation.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "negotiation",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-h"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "negotiation",
+        "security",
+        "api",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-h"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-113",
+        "MAI-115",
+        "MAI-117",
+        "MAI-146",
+        "MAI-147"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-28",
+        "MAI-31",
+        "MAI-41",
+        "MAI-20",
+        "MAI-21"
+      ],
+      "blockLegacyIds": [
+        "MAI-121",
+        "MAI-126",
+        "MAI-127",
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-60",
+        "MAI-61",
+        "MAI-64",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-26",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-87",
+      "linearIssueId": "MAI-49",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-49/restore-the-canonical-deno-verification-gate-to-green",
+      "ordinal": 80000,
+      "originalRepositoryPath": "backlog/completed/mai-87 - Restore-the-canonical-Deno-verification-gate-to-green.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "testing",
+        "reliability",
+        "bug"
+      ],
+      "linearLabels": [
+        "testing",
+        "reliability",
+        "Bug"
+      ],
+      "legacyAssignee": "@luisfelipeluis49",
+      "linearAssignee": "luisfelipeluis49",
+      "legacyMilestone": "m-9",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-79"
+      ],
+      "blockLinearIds": [
+        "MAI-45"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-88",
+      "linearIssueId": "MAI-50",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-50/apply-clean-code-rules-across-the-project",
+      "ordinal": 81000,
+      "originalRepositoryPath": "backlog/completed/mai-88 - Create-clean-code-skill-for-search-change-review-PR-workflow.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "skills",
+        "clean-code"
+      ],
+      "linearLabels": [
+        "skills",
+        "clean-code"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": null,
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-10"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-95",
+      "linearIssueId": "MAI-51",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-51/retire-stitch-and-legacy-gui-visuals-and-establish-a-clean-frontend",
+      "ordinal": 82000,
+      "originalRepositoryPath": "backlog/completed/mai-95 - Retire-Stitch-and-legacy-GUI-visuals-and-establish-a-clean-frontend-foundation.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "foundation",
+        "stitch-retirement",
+        "gui-rebuild",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "foundation",
+        "stitch-retirement",
+        "gui-rebuild",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-94"
+      ],
+      "dependencyLinearIds": [
+        "MAI-10"
+      ],
+      "blockLegacyIds": [
+        "MAI-96"
+      ],
+      "blockLinearIds": [
+        "MAI-53"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9",
+        "doc-15",
+        "doc-12"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-15",
+          "linearDocumentId": "858d4dbe-6f92-4d8f-ae11-fe72bd9441df",
+          "linearUrl": "https://linear.app/mergesai/document/mai-95-frontend-foundation-inventory-903eec38cc51"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-84",
+      "linearIssueId": "MAI-52",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-52/consolidate-all-project-documentation-into-one-governed-source-of",
+      "ordinal": 83000,
+      "originalRepositoryPath": "backlog/completed/mai-84 - Consolidate-all-project-documentation-into-one-governed-source-of-truth.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "documentation",
+        "architecture",
+        "governance"
+      ],
+      "linearLabels": [
+        "documentation",
+        "architecture",
+        "governance"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-14",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-78"
+      ],
+      "blockLinearIds": [
+        "MAI-40"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-3",
+        "doc-4",
+        "doc-5",
+        "doc-2",
+        "doc-6",
+        "doc-14",
+        "doc-7",
+        "doc-12",
+        "doc-11",
+        "doc-13",
+        "doc-10",
+        "doc-1",
+        "doc-8",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-3",
+          "linearDocumentId": "78eeff18-931b-42b7-af87-199f4740ff9d",
+          "linearUrl": "https://linear.app/mergesai/document/agent-architecture-and-workflows-63b3e527b203"
+        },
+        {
+          "legacyId": "doc-4",
+          "linearDocumentId": "c53ffe2f-fbb6-4500-9e09-75714faa52f7",
+          "linearUrl": "https://linear.app/mergesai/document/data-and-memory-architecture-9f9adfb224c6"
+        },
+        {
+          "legacyId": "doc-5",
+          "linearDocumentId": "66268e40-744c-41a5-a6d8-49a40494389f",
+          "linearUrl": "https://linear.app/mergesai/document/engine-architecture-2e00684e7a61"
+        },
+        {
+          "legacyId": "doc-2",
+          "linearDocumentId": "ef709b3c-e1fe-49a7-9349-5de07087f348",
+          "linearUrl": "https://linear.app/mergesai/document/system-and-core-architecture-4a57aeede3db"
+        },
+        {
+          "legacyId": "doc-6",
+          "linearDocumentId": "5654f4c9-34da-4bf2-b8dd-866af1f7defe",
+          "linearUrl": "https://linear.app/mergesai/document/vdr-and-integration-architecture-f9fdee77688e"
+        },
+        {
+          "legacyId": "doc-14",
+          "linearDocumentId": "ccea745b-7267-49ea-836d-79dd4c4d4435",
+          "linearUrl": "https://linear.app/mergesai/document/adr-0001-english-internal-identifiers-and-i18n-bb6d5cfde5ee"
+        },
+        {
+          "legacyId": "doc-7",
+          "linearDocumentId": "43c8c47e-3b62-4f74-a7db-2d3f8bb91a51",
+          "linearUrl": "https://linear.app/mergesai/document/manda-domain-model-259ba512b0b3"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        },
+        {
+          "legacyId": "doc-11",
+          "linearDocumentId": "0d96ff15-653d-45bb-bbc7-dd688739ee0b",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-governance-and-ownership-49df071626b8"
+        },
+        {
+          "legacyId": "doc-13",
+          "linearDocumentId": "c4182fea-7bcc-4e97-9361-6257c010fb51",
+          "linearUrl": "https://linear.app/mergesai/document/generated-artifacts-and-agent-knowledge-classification-9b1b4230210f"
+        },
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-1",
+          "linearDocumentId": "f461cc35-396b-4c00-beb3-a4398a7305cf",
+          "linearUrl": "https://linear.app/mergesai/document/deprecated-mvp-mock-architecture-342452e01259"
+        },
+        {
+          "legacyId": "doc-8",
+          "linearDocumentId": "eed14731-a93a-4ea0-8fab-7fd7cb289acd",
+          "linearUrl": "https://linear.app/mergesai/document/local-setup-and-runtime-operations-8fd2fbfba9f7"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-96",
+      "linearIssueId": "MAI-53",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-53/implement-figma-variables-and-tokens-in-the-frontend",
+      "ordinal": 84000,
+      "originalRepositoryPath": "backlog/completed/mai-96 - Implement-Figma-variables-and-tokens-in-the-frontend.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "design-tokens",
+        "figma",
+        "foundation",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "design-tokens",
+        "figma",
+        "foundation",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-95"
+      ],
+      "dependencyLinearIds": [
+        "MAI-51"
+      ],
+      "blockLegacyIds": [
+        "MAI-97"
+      ],
+      "blockLinearIds": [
+        "MAI-54"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9",
+        "doc-16",
+        "doc-12"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-16",
+          "linearDocumentId": "fc5eb928-9c5b-4a76-9641-1223451feae3",
+          "linearUrl": "https://linear.app/mergesai/document/mai-96-figma-to-code-semantic-token-architecture-f608c1a7680c"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-97",
+      "linearIssueId": "MAI-54",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-54/implement-the-figma-component-library-in-code-and-storybook",
+      "ordinal": 85000,
+      "originalRepositoryPath": "backlog/completed/mai-97 - Implement-the-Figma-component-library-in-code-and-Storybook.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "component-library",
+        "storybook",
+        "figma",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "component-library",
+        "storybook",
+        "figma",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-96"
+      ],
+      "dependencyLinearIds": [
+        "MAI-53"
+      ],
+      "blockLegacyIds": [
+        "MAI-98"
+      ],
+      "blockLinearIds": [
+        "MAI-12"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9",
+        "doc-17",
+        "doc-12"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        },
+        {
+          "legacyId": "doc-17",
+          "linearDocumentId": "df07699e-02c6-4ee1-8557-9211e3a87be2",
+          "linearUrl": "https://linear.app/mergesai/document/mai-97-figma-component-library-architecture-and-conformance-558e78088713"
+        },
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-99",
+      "linearIssueId": "MAI-55",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-55/implement-global-administration-and-external-screen-families",
+      "ordinal": 86000,
+      "originalRepositoryPath": "backlog/completed/mai-99 - Implement-global-administration-and-external-screen-families.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "screen-implementation",
+        "global-ui",
+        "admin-ui",
+        "external-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "screen-implementation",
+        "global-ui",
+        "admin-ui",
+        "external-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-98"
+      ],
+      "dependencyLinearIds": [
+        "MAI-12"
+      ],
+      "blockLegacyIds": [
+        "MAI-100"
+      ],
+      "blockLinearIds": [
+        "MAI-56"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-100",
+      "linearIssueId": "MAI-56",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-56/implement-deal-intelligence-and-decision-screen-families",
+      "ordinal": 87000,
+      "originalRepositoryPath": "backlog/completed/mai-100 - Implement-deal-intelligence-and-decision-screen-families.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "screen-implementation",
+        "deal-intelligence",
+        "decision-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "screen-implementation",
+        "deal-intelligence",
+        "decision-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-99"
+      ],
+      "dependencyLinearIds": [
+        "MAI-55"
+      ],
+      "blockLegacyIds": [
+        "MAI-101"
+      ],
+      "blockLinearIds": [
+        "MAI-57"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-101",
+      "linearIssueId": "MAI-57",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-57/implement-deal-execution-and-agentic-screen-families",
+      "ordinal": 88000,
+      "originalRepositoryPath": "backlog/completed/mai-101 - Implement-deal-execution-and-agentic-screen-families.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "screen-implementation",
+        "deal-execution",
+        "agentic-ui",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "screen-implementation",
+        "deal-execution",
+        "agentic-ui",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-100"
+      ],
+      "dependencyLinearIds": [
+        "MAI-56"
+      ],
+      "blockLegacyIds": [
+        "MAI-102"
+      ],
+      "blockLinearIds": [
+        "MAI-58"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-102",
+      "linearIssueId": "MAI-58",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-58/verify-figma-to-code-conformance-and-complete-the-frontend",
+      "ordinal": 89000,
+      "originalRepositoryPath": "backlog/completed/mai-102 - Verify-Figma-to-code-conformance-and-complete-the-frontend.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "frontend",
+        "figma-conformance",
+        "verification",
+        "approval-gate",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "frontend",
+        "figma-conformance",
+        "verification",
+        "approval-gate",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": "@chatgpt",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-101"
+      ],
+      "dependencyLinearIds": [
+        "MAI-57"
+      ],
+      "blockLegacyIds": [
+        "MAI-103"
+      ],
+      "blockLinearIds": [
+        "MAI-13"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-10",
+        "doc-9"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-9",
+          "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+          "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-104",
+      "linearIssueId": "MAI-59",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-59/shared-architecture-contracts-and-api-primitives",
+      "ordinal": 90000,
+      "originalRepositoryPath": "backlog/tasks/mai-104 - Shared-architecture-contracts-and-API-primitives.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "wave-1",
+        "api",
+        "mai-85-initiative"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "wave-1",
+        "api",
+        "mai-85-initiative"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [
+        "MAI-105",
+        "MAI-106"
+      ],
+      "blockLinearIds": [
+        "MAI-62",
+        "MAI-63"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-25",
+        "doc-26",
+        "doc-33"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-25",
+          "linearDocumentId": "bb19d242-4d44-49fa-91c6-369828ab8e03",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-target-modular-monolith-and-service-boundaries-e762b7def657"
+        },
+        {
+          "legacyId": "doc-26",
+          "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-121",
+      "linearIssueId": "MAI-60",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-60/governed-agent-definitions-and-tools",
+      "ordinal": 90000,
+      "originalRepositoryPath": "backlog/tasks/mai-121 - Governed-agent-definitions-and-tools.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "agent-architecture",
+        "security",
+        "integration",
+        "delivery-wave-i"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "agent-architecture",
+        "security",
+        "integration",
+        "delivery-wave-i"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-116",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-120",
+        "MAI-147"
+      ],
+      "dependencyLinearIds": [
+        "MAI-39",
+        "MAI-41",
+        "MAI-48",
+        "MAI-42",
+        "MAI-32",
+        "MAI-21"
+      ],
+      "blockLegacyIds": [
+        "MAI-126",
+        "MAI-129",
+        "MAI-143",
+        "MAI-152",
+        "MAI-153"
+      ],
+      "blockLinearIds": [
+        "MAI-64",
+        "MAI-65",
+        "MAI-67",
+        "MAI-69",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-34"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-34",
+          "linearDocumentId": "9c9959f6-f77d-4007-b9fe-8fb8e591038c",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-agent-execution-and-human-authority-2d6317cba605"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-127",
+      "linearIssueId": "MAI-61",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-61/integration-adapters-and-certification",
+      "ordinal": 90100,
+      "originalRepositoryPath": "backlog/tasks/mai-127 - Integration-adapters-and-certification.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "integration",
+        "security",
+        "infrastructure",
+        "api",
+        "delivery-wave-i"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "integration",
+        "security",
+        "infrastructure",
+        "api",
+        "delivery-wave-i"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-107",
+        "MAI-112",
+        "MAI-118",
+        "MAI-120",
+        "MAI-122",
+        "MAI-123",
+        "MAI-148"
+      ],
+      "dependencyLinearIds": [
+        "MAI-14",
+        "MAI-26",
+        "MAI-48",
+        "MAI-32",
+        "MAI-43",
+        "MAI-27",
+        "MAI-22"
+      ],
+      "blockLegacyIds": [
+        "MAI-129",
+        "MAI-131",
+        "MAI-143",
+        "MAI-149",
+        "MAI-153"
+      ],
+      "blockLinearIds": [
+        "MAI-65",
+        "MAI-66",
+        "MAI-69",
+        "MAI-70",
+        "MAI-71"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-27",
+        "doc-31",
+        "doc-34",
+        "doc-35"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        },
+        {
+          "legacyId": "doc-34",
+          "linearDocumentId": "9c9959f6-f77d-4007-b9fe-8fb8e591038c",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-agent-execution-and-human-authority-2d6317cba605"
+        },
+        {
+          "legacyId": "doc-35",
+          "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-105",
+      "linearIssueId": "MAI-62",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-62/authorization-policy-model-and-evaluator",
+      "ordinal": 91000,
+      "originalRepositoryPath": "backlog/tasks/mai-105 - Authorization-policy-model-and-evaluator.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "wave-2",
+        "mai-85-initiative",
+        "security",
+        "policy"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "wave-2",
+        "mai-85-initiative",
+        "security",
+        "policy"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-104"
+      ],
+      "dependencyLinearIds": [
+        "MAI-59"
+      ],
+      "blockLegacyIds": [
+        "MAI-107",
+        "MAI-108",
+        "MAI-109",
+        "MAI-149"
+      ],
+      "blockLinearIds": [
+        "MAI-14",
+        "MAI-15",
+        "MAI-16",
+        "MAI-66"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-27",
+        "doc-29"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-27",
+          "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704"
+        },
+        {
+          "legacyId": "doc-29",
+          "linearDocumentId": "47c44cdc-564f-4bff-a65c-6e91ddd369b1",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-row-level-security-7a2336e2e5b5"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-106",
+      "linearIssueId": "MAI-63",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-63/persistence-concurrency-outbox-inbox-and-jobs",
+      "ordinal": 92000,
+      "originalRepositoryPath": "backlog/tasks/mai-106 - Persistence-concurrency-outbox-inbox-and-jobs.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "wave-2",
+        "mai-85-initiative",
+        "persistence",
+        "migration",
+        "security",
+        "jobs"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "wave-2",
+        "mai-85-initiative",
+        "persistence",
+        "migration",
+        "security",
+        "jobs"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-104"
+      ],
+      "dependencyLinearIds": [
+        "MAI-59"
+      ],
+      "blockLegacyIds": [
+        "MAI-107",
+        "MAI-108",
+        "MAI-109",
+        "MAI-112",
+        "MAI-120",
+        "MAI-123",
+        "MAI-129",
+        "MAI-148",
+        "MAI-151"
+      ],
+      "blockLinearIds": [
+        "MAI-14",
+        "MAI-15",
+        "MAI-16",
+        "MAI-22",
+        "MAI-23",
+        "MAI-26",
+        "MAI-27",
+        "MAI-32",
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-28",
+        "doc-30",
+        "doc-31"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-31",
+          "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-126",
+      "linearIssueId": "MAI-64",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-64/frontend-adapter-migration",
+      "ordinal": 100000,
+      "originalRepositoryPath": "backlog/tasks/mai-126 - Frontend-adapter-migration.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "frontend-coordination",
+        "api",
+        "migration",
+        "delivery-wave-j"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "frontend-coordination",
+        "api",
+        "migration",
+        "delivery-wave-j"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-110",
+        "MAI-111",
+        "MAI-109",
+        "MAI-112",
+        "MAI-113",
+        "MAI-114",
+        "MAI-115",
+        "MAI-116",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-120",
+        "MAI-121",
+        "MAI-122",
+        "MAI-123",
+        "MAI-124",
+        "MAI-125"
+      ],
+      "dependencyLinearIds": [
+        "MAI-24",
+        "MAI-25",
+        "MAI-16",
+        "MAI-26",
+        "MAI-28",
+        "MAI-29",
+        "MAI-31",
+        "MAI-39",
+        "MAI-41",
+        "MAI-48",
+        "MAI-42",
+        "MAI-32",
+        "MAI-60",
+        "MAI-43",
+        "MAI-27",
+        "MAI-33",
+        "MAI-44"
+      ],
+      "blockLegacyIds": [
+        "MAI-129",
+        "MAI-131",
+        "MAI-150"
+      ],
+      "blockLinearIds": [
+        "MAI-68",
+        "MAI-70",
+        "MAI-71"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-33",
+        "doc-36"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-36",
+          "linearDocumentId": "a46760f9-ad1b-431e-9399-ec94e2297243",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-migration-and-retirement-of-the-mock-backed-mvp-api-e2cff4ca9cc5"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-143",
+      "linearIssueId": "MAI-65",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-65/integrate-governed-model-backed-financial-risk-calculations-into-the",
+      "ordinal": 100100,
+      "originalRepositoryPath": "backlog/tasks/mai-143 - Integrate-governed-model-backed-financial-risk-calculations-into-the-target-architecture.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "prediction",
+        "diligence",
+        "calculations",
+        "evidence",
+        "model-governance",
+        "api",
+        "security",
+        "delivery-wave-j"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "prediction",
+        "diligence",
+        "calculations",
+        "evidence",
+        "model-governance",
+        "api",
+        "security",
+        "delivery-wave-j"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-142",
+        "MAI-113",
+        "MAI-115",
+        "MAI-120",
+        "MAI-121",
+        "MAI-127"
+      ],
+      "dependencyLinearIds": [
+        "MAI-17",
+        "MAI-28",
+        "MAI-31",
+        "MAI-32",
+        "MAI-60",
+        "MAI-61"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-149",
+      "linearIssueId": "MAI-66",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-66/establish-enterprise-security-privacy-and-compliance-readiness",
+      "ordinal": 100200,
+      "originalRepositoryPath": "backlog/tasks/mai-149 - Establish-enterprise-security-privacy-and-compliance-readiness-evidence.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "enterprise",
+        "security",
+        "privacy",
+        "compliance",
+        "governance",
+        "audit",
+        "legal",
+        "operations",
+        "evidence",
+        "post-mvp",
+        "delivery-wave-j"
+      ],
+      "linearLabels": [
+        "enterprise",
+        "security",
+        "privacy",
+        "compliance",
+        "governance",
+        "audit",
+        "legal",
+        "operations",
+        "evidence",
+        "post-mvp",
+        "delivery-wave-j"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-15",
+      "dependencyLegacyIds": [
+        "MAI-105",
+        "MAI-107",
+        "MAI-109",
+        "MAI-125",
+        "MAI-127",
+        "MAI-148"
+      ],
+      "dependencyLinearIds": [
+        "MAI-62",
+        "MAI-14",
+        "MAI-16",
+        "MAI-44",
+        "MAI-61",
+        "MAI-22"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-152",
+      "linearIssueId": "MAI-67",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-67/establish-audited-agent-feedback-evaluation-and-offline-improvement",
+      "ordinal": 100300,
+      "originalRepositoryPath": "backlog/tasks/mai-152 - Establish-audited-agent-feedback-evaluation-and-offline-improvement-workflow.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "agent",
+        "model-governance",
+        "feedback",
+        "evaluation",
+        "audit",
+        "evidence",
+        "privacy",
+        "post-mvp",
+        "delivery-wave-j"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "agent",
+        "model-governance",
+        "feedback",
+        "evaluation",
+        "audit",
+        "evidence",
+        "privacy",
+        "post-mvp",
+        "delivery-wave-j"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-13",
+      "dependencyLegacyIds": [
+        "MAI-109",
+        "MAI-113",
+        "MAI-120",
+        "MAI-121",
+        "MAI-125"
+      ],
+      "dependencyLinearIds": [
+        "MAI-16",
+        "MAI-28",
+        "MAI-32",
+        "MAI-60",
+        "MAI-44"
+      ],
+      "blockLegacyIds": [
+        "MAI-153"
+      ],
+      "blockLinearIds": [
+        "MAI-69"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-150",
+      "linearIssueId": "MAI-68",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-68/retire-the-legacy-banker-facing-cli-and-preserve-bounded-operator",
+      "ordinal": 110000,
+      "originalRepositoryPath": "backlog/tasks/mai-150 - Retire-the-legacy-banker-facing-CLI-and-preserve-bounded-operator-tooling.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "cli",
+        "retirement",
+        "migration",
+        "security",
+        "operations",
+        "cleanup",
+        "mvp",
+        "delivery-wave-k"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "cli",
+        "retirement",
+        "migration",
+        "security",
+        "operations",
+        "cleanup",
+        "mvp",
+        "delivery-wave-k"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-126"
+      ],
+      "dependencyLinearIds": [
+        "MAI-64"
+      ],
+      "blockLegacyIds": [
+        "MAI-129"
+      ],
+      "blockLinearIds": [
+        "MAI-70"
+      ],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-153",
+      "linearIssueId": "MAI-69",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-69/evaluate-and-approve-a-governed-brazilian-manda-model-adaptation",
+      "ordinal": 110100,
+      "originalRepositoryPath": "backlog/tasks/mai-153 - Evaluate-and-approve-a-governed-Brazilian-MA-model-adaptation-strategy.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "medium",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "ai",
+        "model-governance",
+        "evaluation",
+        "fine-tuning",
+        "legal",
+        "finance",
+        "privacy",
+        "post-mvp",
+        "delivery-wave-k"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "ai",
+        "model-governance",
+        "evaluation",
+        "fine-tuning",
+        "legal",
+        "finance",
+        "privacy",
+        "post-mvp",
+        "delivery-wave-k"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-13",
+      "dependencyLegacyIds": [
+        "MAI-121",
+        "MAI-125",
+        "MAI-127",
+        "MAI-152"
+      ],
+      "dependencyLinearIds": [
+        "MAI-60",
+        "MAI-44",
+        "MAI-61",
+        "MAI-67"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-129",
+      "linearIssueId": "MAI-70",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-70/data-migration-and-mvp-retirement",
+      "ordinal": 120000,
+      "originalRepositoryPath": "backlog/tasks/mai-129 - Data-migration-and-MVP-retirement.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "migration",
+        "persistence",
+        "security",
+        "frontend-coordination",
+        "delivery-wave-l"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "migration",
+        "persistence",
+        "security",
+        "frontend-coordination",
+        "delivery-wave-l"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-106",
+        "MAI-109",
+        "MAI-110",
+        "MAI-111",
+        "MAI-112",
+        "MAI-113",
+        "MAI-114",
+        "MAI-115",
+        "MAI-116",
+        "MAI-117",
+        "MAI-118",
+        "MAI-119",
+        "MAI-120",
+        "MAI-121",
+        "MAI-122",
+        "MAI-123",
+        "MAI-124",
+        "MAI-125",
+        "MAI-126",
+        "MAI-127",
+        "MAI-144",
+        "MAI-145",
+        "MAI-146",
+        "MAI-147",
+        "MAI-148",
+        "MAI-150"
+      ],
+      "dependencyLinearIds": [
+        "MAI-63",
+        "MAI-16",
+        "MAI-24",
+        "MAI-25",
+        "MAI-26",
+        "MAI-28",
+        "MAI-29",
+        "MAI-31",
+        "MAI-39",
+        "MAI-41",
+        "MAI-48",
+        "MAI-42",
+        "MAI-32",
+        "MAI-60",
+        "MAI-43",
+        "MAI-27",
+        "MAI-33",
+        "MAI-44",
+        "MAI-64",
+        "MAI-61",
+        "MAI-18",
+        "MAI-19",
+        "MAI-20",
+        "MAI-21",
+        "MAI-22",
+        "MAI-68"
+      ],
+      "blockLegacyIds": [
+        "MAI-131"
+      ],
+      "blockLinearIds": [
+        "MAI-71"
+      ],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-28",
+        "doc-30",
+        "doc-33",
+        "doc-36"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-28",
+          "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d"
+        },
+        {
+          "legacyId": "doc-30",
+          "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97"
+        },
+        {
+          "legacyId": "doc-33",
+          "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d"
+        },
+        {
+          "legacyId": "doc-36",
+          "linearDocumentId": "a46760f9-ad1b-431e-9399-ec94e2297243",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-migration-and-retirement-of-the-mock-backed-mvp-api-e2cff4ca9cc5"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-131",
+      "linearIssueId": "MAI-71",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-71/end-to-end-security-and-operational-release-gate",
+      "ordinal": 130000,
+      "originalRepositoryPath": "backlog/tasks/mai-131 - End-to-end-security-and-operational-release-gate.md",
+      "legacyStatus": "To Do",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "release-verification",
+        "security",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-m"
+      ],
+      "linearLabels": [
+        "backend",
+        "architecture",
+        "mai-85-initiative",
+        "release-verification",
+        "security",
+        "integration",
+        "frontend-coordination",
+        "delivery-wave-m"
+      ],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": "m-12",
+      "dependencyLegacyIds": [
+        "MAI-126",
+        "MAI-127",
+        "MAI-129",
+        "MAI-148",
+        "MAI-151"
+      ],
+      "dependencyLinearIds": [
+        "MAI-64",
+        "MAI-61",
+        "MAI-70",
+        "MAI-22",
+        "MAI-23"
+      ],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-24",
+        "doc-25",
+        "doc-36"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-24",
+          "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+          "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db"
+        },
+        {
+          "legacyId": "doc-25",
+          "linearDocumentId": "bb19d242-4d44-49fa-91c6-369828ab8e03",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-target-modular-monolith-and-service-boundaries-e762b7def657"
+        },
+        {
+          "legacyId": "doc-36",
+          "linearDocumentId": "a46760f9-ad1b-431e-9399-ec94e2297243",
+          "linearUrl": "https://linear.app/mergesai/document/proposed-adr-migration-and-retirement-of-the-mock-backed-mvp-api-e2cff4ca9cc5"
+        }
+      ]
+    },
+    {
+      "legacyId": "MAI-154",
+      "linearIssueId": "MAI-72",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-72/canonicalize-postgresql-integration-test-resource-naming",
+      "ordinal": 131000,
+      "originalRepositoryPath": "backlog/tasks/mai-154 - Canonicalize-PostgreSQL-integration-test-resource-naming.md",
+      "legacyStatus": "In Progress",
+      "legacyPriority": "medium",
+      "legacyLabels": [],
+      "linearLabels": [],
+      "legacyAssignee": null,
+      "linearAssignee": null,
+      "legacyMilestone": null,
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [],
+      "linkedLinearDocuments": []
+    },
+    {
+      "legacyId": "MAI-155",
+      "linearIssueId": "MAI-73",
+      "linearUrl": "https://linear.app/mergesai/issue/MAI-73/adapt-repository-execution-and-verification-policy-after-wave-e",
+      "ordinal": 132000,
+      "originalRepositoryPath": "backlog/tasks/mai-155 - Adapt-repository-execution-and-verification-policy-after-Wave-E.md",
+      "legacyStatus": "Done",
+      "legacyPriority": "high",
+      "legacyLabels": [
+        "maintenance",
+        "governance",
+        "testing",
+        "developer-experience",
+        "prompt-framework"
+      ],
+      "linearLabels": [
+        "maintenance",
+        "governance",
+        "testing",
+        "developer-experience",
+        "prompt-framework"
+      ],
+      "legacyAssignee": "@codex",
+      "linearAssignee": null,
+      "legacyMilestone": null,
+      "dependencyLegacyIds": [],
+      "dependencyLinearIds": [],
+      "blockLegacyIds": [],
+      "blockLinearIds": [],
+      "linkedLegacyDocuments": [
+        "doc-12",
+        "doc-10",
+        "doc-8"
+      ],
+      "linkedLinearDocuments": [
+        {
+          "legacyId": "doc-12",
+          "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff"
+        },
+        {
+          "legacyId": "doc-10",
+          "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+          "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3"
+        },
+        {
+          "legacyId": "doc-8",
+          "linearDocumentId": "eed14731-a93a-4ea0-8fab-7fd7cb289acd",
+          "linearUrl": "https://linear.app/mergesai/document/local-setup-and-runtime-operations-8fd2fbfba9f7"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "legacyId": "doc-1",
+      "legacyDocumentKey": "doc-1",
+      "linearDocumentId": "f461cc35-396b-4c00-beb3-a4398a7305cf",
+      "linearUrl": "https://linear.app/mergesai/document/deprecated-mvp-mock-architecture-342452e01259",
+      "title": "Deprecated: MVP Mock Architecture",
+      "type": "other",
+      "tags": [
+        "deprecated",
+        "legacy",
+        "reference"
+      ],
+      "originalRepositoryPath": "backlog/docs/mocks_architecture/doc-1 - Deprecated-MVP-Mock-Architecture.md",
+      "legacyCreated": "2026-07-09 14:59",
+      "legacyUpdated": "2026-07-24 15:42"
+    },
+    {
+      "legacyId": "doc-2",
+      "legacyDocumentKey": "doc-2",
+      "linearDocumentId": "ef709b3c-e1fe-49a7-9349-5de07087f348",
+      "linearUrl": "https://linear.app/mergesai/document/system-and-core-architecture-4a57aeede3db",
+      "title": "System and Core Architecture",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "core",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/system-core/doc-2 - System-and-Core-Architecture.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-07-30 06:37"
+    },
+    {
+      "legacyId": "doc-3",
+      "legacyDocumentKey": "doc-3",
+      "linearDocumentId": "78eeff18-931b-42b7-af87-199f4740ff9d",
+      "linearUrl": "https://linear.app/mergesai/document/agent-architecture-and-workflows-63b3e527b203",
+      "title": "Agent Architecture and Workflows",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "agents",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/agent-workflows/doc-3 - Agent-Architecture-and-Workflows.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-07-30 06:37"
+    },
+    {
+      "legacyId": "doc-4",
+      "legacyDocumentKey": "doc-4",
+      "linearDocumentId": "c53ffe2f-fbb6-4500-9e09-75714faa52f7",
+      "linearUrl": "https://linear.app/mergesai/document/data-and-memory-architecture-9f9adfb224c6",
+      "title": "Data and Memory Architecture",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "data",
+        "memory",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/data-and-memory/doc-4 - Data-and-Memory-Architecture.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-07-30 06:37"
+    },
+    {
+      "legacyId": "doc-5",
+      "legacyDocumentKey": "doc-5",
+      "linearDocumentId": "66268e40-744c-41a5-a6d8-49a40494389f",
+      "linearUrl": "https://linear.app/mergesai/document/engine-architecture-2e00684e7a61",
+      "title": "Engine Architecture",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "engines",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/engines/doc-5 - Engine-Architecture.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-08-01 11:55"
+    },
+    {
+      "legacyId": "doc-6",
+      "legacyDocumentKey": "doc-6",
+      "linearDocumentId": "5654f4c9-34da-4bf2-b8dd-866af1f7defe",
+      "linearUrl": "https://linear.app/mergesai/document/vdr-and-integration-architecture-f9fdee77688e",
+      "title": "VDR and Integration Architecture",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "vdr",
+        "integrations",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/vdr-and-integrations/doc-6 - VDR-and-Integration-Architecture.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-07-30 06:37"
+    },
+    {
+      "legacyId": "doc-7",
+      "legacyDocumentKey": "doc-7",
+      "linearDocumentId": "43c8c47e-3b62-4f74-a7db-2d3f8bb91a51",
+      "linearUrl": "https://linear.app/mergesai/document/manda-domain-model-259ba512b0b3",
+      "title": "M&A Domain Model",
+      "type": "specification",
+      "tags": [
+        "domain",
+        "ma",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/domain/domain-model/doc-7 - MA-Domain-Model.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-08-01 11:45"
+    },
+    {
+      "legacyId": "doc-8",
+      "legacyDocumentKey": "doc-8",
+      "linearDocumentId": "eed14731-a93a-4ea0-8fab-7fd7cb289acd",
+      "linearUrl": "https://linear.app/mergesai/document/local-setup-and-runtime-operations-8fd2fbfba9f7",
+      "title": "Local Setup and Runtime Operations",
+      "type": "guide",
+      "tags": [
+        "operations",
+        "setup",
+        "google-ai",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/operations/local-setup/doc-8 - Local-Setup-and-Runtime-Operations.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-08-07 02:16"
+    },
+    {
+      "legacyId": "doc-9",
+      "legacyDocumentKey": "doc-9",
+      "linearDocumentId": "41c0a7fe-60fd-4488-bb8d-ee61faaf1373",
+      "linearUrl": "https://linear.app/mergesai/document/mvp-gui-and-api-behavior-1b432ee81db9",
+      "title": "MVP GUI and API Behavior",
+      "type": "specification",
+      "tags": [
+        "product",
+        "gui",
+        "api",
+        "mvp",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/product/mvp-gui-and-api/doc-9 - MVP-GUI-and-API-Behavior.md",
+      "legacyCreated": "2026-07-24 15:35",
+      "legacyUpdated": "2026-07-30 06:37"
+    },
+    {
+      "legacyId": "doc-10",
+      "legacyDocumentKey": "doc-10",
+      "linearDocumentId": "dbe04449-4b68-4240-8394-412fb305ca62",
+      "linearUrl": "https://linear.app/mergesai/document/documentation-index-and-information-architecture-bdc4ea9490d3",
+      "title": "Documentation Index and Information Architecture",
+      "type": "readme",
+      "tags": [
+        "documentation",
+        "governance",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/index/doc-10 - Documentation-Index-and-Information-Architecture.md",
+      "legacyCreated": "2026-07-24 15:37",
+      "legacyUpdated": "2026-08-07 02:15"
+    },
+    {
+      "legacyId": "doc-11",
+      "legacyDocumentKey": "doc-11",
+      "linearDocumentId": "0d96ff15-653d-45bb-bbc7-dd688739ee0b",
+      "linearUrl": "https://linear.app/mergesai/document/documentation-governance-and-ownership-49df071626b8",
+      "title": "Documentation Governance and Ownership",
+      "type": "guide",
+      "tags": [
+        "documentation",
+        "governance",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/governance/documentation-governance/doc-11 - Documentation-Governance-and-Ownership.md",
+      "legacyCreated": "2026-07-24 15:37",
+      "legacyUpdated": "2026-07-24 15:50"
+    },
+    {
+      "legacyId": "doc-12",
+      "legacyDocumentKey": "doc-12",
+      "linearDocumentId": "54c6a017-3b3f-4074-8da5-1d80bdee36d1",
+      "linearUrl": "https://linear.app/mergesai/document/documentation-inventory-and-classification-d24a7d764cff",
+      "title": "Documentation Inventory and Classification",
+      "type": "specification",
+      "tags": [
+        "documentation",
+        "inventory",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/governance/document-inventory/doc-12 - Documentation-Inventory-and-Classification.md",
+      "legacyCreated": "2026-07-24 15:37",
+      "legacyUpdated": "2026-08-07 02:15"
+    },
+    {
+      "legacyId": "doc-13",
+      "legacyDocumentKey": "doc-13",
+      "linearDocumentId": "c4182fea-7bcc-4e97-9361-6257c010fb51",
+      "linearUrl": "https://linear.app/mergesai/document/generated-artifacts-and-agent-knowledge-classification-9b1b4230210f",
+      "title": "Generated Artifacts and Agent Knowledge Classification",
+      "type": "guide",
+      "tags": [
+        "documentation",
+        "agents",
+        "generated",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/governance/generated-artifacts-and-agent-knowledge/doc-13 - Generated-Artifacts-and-Agent-Knowledge-Classification.md",
+      "legacyCreated": "2026-07-24 15:38",
+      "legacyUpdated": null
+    },
+    {
+      "legacyId": "doc-14",
+      "legacyDocumentKey": "doc-14",
+      "linearDocumentId": "ccea745b-7267-49ea-836d-79dd4c4d4435",
+      "linearUrl": "https://linear.app/mergesai/document/adr-0001-english-internal-identifiers-and-i18n-bb6d5cfde5ee",
+      "title": "ADR-0001: English Internal Identifiers and i18n",
+      "type": "specification",
+      "tags": [
+        "decision",
+        "adr",
+        "i18n",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/decisions/adr-0001-english-internal-identifiers-i18n/doc-14 - ADR-0001-English-Internal-Identifiers-and-i18n.md",
+      "legacyCreated": "2026-07-24 15:38",
+      "legacyUpdated": "2026-07-24 15:51"
+    },
+    {
+      "legacyId": "doc-15",
+      "legacyDocumentKey": "doc-15",
+      "linearDocumentId": "858d4dbe-6f92-4d8f-ae11-fe72bd9441df",
+      "linearUrl": "https://linear.app/mergesai/document/mai-95-frontend-foundation-inventory-903eec38cc51",
+      "title": "MAI-95 Frontend Foundation Inventory",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "frontend",
+        "foundation",
+        "inventory",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/frontend-foundation/doc-15 - MAI-95-Frontend-Foundation-Inventory.md",
+      "legacyCreated": "2026-07-29 13:14",
+      "legacyUpdated": "2026-07-29 13:37"
+    },
+    {
+      "legacyId": "doc-16",
+      "legacyDocumentKey": "doc-16",
+      "linearDocumentId": "fc5eb928-9c5b-4a76-9641-1223451feae3",
+      "linearUrl": "https://linear.app/mergesai/document/mai-96-figma-to-code-semantic-token-architecture-f608c1a7680c",
+      "title": "MAI-96 Figma-to-Code Semantic Token Architecture",
+      "type": "specification",
+      "tags": [
+        "architecture",
+        "frontend",
+        "design-tokens",
+        "figma",
+        "canonical"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/frontend-tokens/doc-16 - MAI-96-Figma-to-Code-Semantic-Token-Architecture.md",
+      "legacyCreated": "2026-07-29 16:13",
+      "legacyUpdated": "2026-07-29 16:15"
+    },
+    {
+      "legacyId": "doc-17",
+      "legacyDocumentKey": "doc-17",
+      "linearDocumentId": "df07699e-02c6-4ee1-8557-9211e3a87be2",
+      "linearUrl": "https://linear.app/mergesai/document/mai-97-figma-component-library-architecture-and-conformance-558e78088713",
+      "title": "MAI-97 Figma Component Library Architecture and Conformance",
+      "type": "specification",
+      "tags": [
+        "frontend",
+        "components",
+        "storybook",
+        "figma",
+        "accessibility"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/frontend-components/doc-17 - MAI-97-Figma-Component-Library-Architecture-and-Conformance.md",
+      "legacyCreated": "2026-07-29 17:44",
+      "legacyUpdated": "2026-07-29 17:45"
+    },
+    {
+      "legacyId": "doc-18",
+      "legacyDocumentKey": "doc-18",
+      "linearDocumentId": "2712fc74-66f1-40cf-99a6-2cc3a993e549",
+      "linearUrl": "https://linear.app/mergesai/document/mai-98-application-shell-and-route-architecture-6c7e8a45cb40",
+      "title": "MAI-98 Application Shell and Route Architecture",
+      "type": "specification",
+      "tags": [
+        "MAI-98",
+        "frontend",
+        "shell",
+        "routing"
+      ],
+      "originalRepositoryPath": "backlog/docs/architecture/frontend-shell/doc-18 - MAI-98-Application-Shell-and-Route-Architecture.md",
+      "legacyCreated": "2026-07-29 19:22",
+      "legacyUpdated": "2026-07-29 19:48"
+    },
+    {
+      "legacyId": "doc-19",
+      "legacyDocumentKey": "doc-19",
+      "linearDocumentId": "a9837b8e-c0f1-4ff0-91ab-f1a94f953504",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-frontend-to-backend-gap-matrix-74b5a46a0c72",
+      "title": "MAI-103 Frontend-to-Backend Gap Matrix",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/gap-matrix/doc-19 - MAI-103-Frontend-to-Backend-Gap-Matrix.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 06:52"
+    },
+    {
+      "legacyId": "doc-20",
+      "legacyDocumentKey": "doc-20",
+      "linearDocumentId": "8f012f11-34fb-4a34-b360-4f8a48617c81",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-bounded-contexts-aggregates-and-workflow-state-machines-0504b8e746a8",
+      "title": "MAI-103 Bounded Contexts, Aggregates, and Workflow State Machines",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/domain-workflows/doc-20 - MAI-103-Bounded-Contexts-Aggregates-and-Workflow-State-Machines.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 06:51"
+    },
+    {
+      "legacyId": "doc-21",
+      "legacyDocumentKey": "doc-21",
+      "linearDocumentId": "71b15ade-2666-46ea-9c7a-7d810c3bd8b0",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-tenancy-authorization-persistence-audit-and-provenance-6a693ecd36f7",
+      "title": "MAI-103 Tenancy, Authorization, Persistence, Audit, and Provenance Architecture",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/security-persistence/doc-21 - MAI-103-Tenancy-Authorization-Persistence-Audit-and-Provenance-Architecture.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 06:51"
+    },
+    {
+      "legacyId": "doc-22",
+      "legacyDocumentKey": "doc-22",
+      "linearDocumentId": "da3a8a6d-5476-43e8-b27e-acd9230aa8fd",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-api-jobs-events-agent-execution-and-integration-catalog-f2152516e70f",
+      "title": "MAI-103 API, Jobs, Events, Agent Execution, and Integration Catalog",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/api-async-agent-integrations/doc-22 - MAI-103-API-Jobs-Events-Agent-Execution-and-Integration-Catalog.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 06:51"
+    },
+    {
+      "legacyId": "doc-23",
+      "legacyDocumentKey": "doc-23",
+      "linearDocumentId": "7da9bf9c-157a-47e9-bc3a-f5258a56783f",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-current-backend-disposition-912f2821ddcd",
+      "title": "MAI-103 Current Backend Disposition",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/current-state-disposition/doc-23 - MAI-103-Current-Backend-Disposition.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 06:51"
+    },
+    {
+      "legacyId": "doc-24",
+      "legacyDocumentKey": "doc-24",
+      "linearDocumentId": "2bf46ebb-e58f-46e4-bd6f-03d928731902",
+      "linearUrl": "https://linear.app/mergesai/document/mai-103-backend-implementation-plan-489cf9f019db",
+      "title": "MAI-103 Backend Implementation Plan",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/architecture/backend-redesign/implementation-plan/doc-24 - MAI-103-Backend-Implementation-Plan.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-25",
+      "legacyDocumentKey": "doc-25",
+      "linearDocumentId": "bb19d242-4d44-49fa-91c6-369828ab8e03",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-target-modular-monolith-and-service-boundaries-e762b7def657",
+      "title": "Proposed ADR: Target Modular Monolith and Service Boundaries",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-modular-monolith-boundaries/doc-25 - Proposed-ADR-Target-Modular-Monolith-and-Service-Boundaries.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-26",
+      "legacyDocumentKey": "doc-26",
+      "linearDocumentId": "625f6c5a-7f25-4466-b5e9-78ca820d61f6",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-bounded-contexts-and-aggregate-ownership-c03a8feba251",
+      "title": "Proposed ADR: Bounded Contexts and Aggregate Ownership",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-bounded-contexts-aggregate-ownership/doc-26 - Proposed-ADR-Bounded-Contexts-and-Aggregate-Ownership.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-27",
+      "legacyDocumentKey": "doc-27",
+      "linearDocumentId": "2289c3ee-cde8-4c81-b3cc-487cb2af2b8a",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-tenancy-and-authorization-model-e3eedf528704",
+      "title": "Proposed ADR: Tenancy and Authorization Model",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-tenancy-authorization/doc-27 - Proposed-ADR-Tenancy-and-Authorization-Model.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-28",
+      "legacyDocumentKey": "doc-28",
+      "linearDocumentId": "80e0c27b-bdf5-4293-a859-0ed91d573d37",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-schema-and-transaction-strategy-aa375df0cf2d",
+      "title": "Proposed ADR: PostgreSQL Schema and Transaction Strategy",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-postgresql-schema-transactions/doc-28 - Proposed-ADR-PostgreSQL-Schema-and-Transaction-Strategy.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-29",
+      "legacyDocumentKey": "doc-29",
+      "linearDocumentId": "47c44cdc-564f-4bff-a65c-6e91ddd369b1",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-postgresql-row-level-security-7a2336e2e5b5",
+      "title": "Proposed ADR: PostgreSQL Row-Level Security",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-postgresql-row-level-security/doc-29 - Proposed-ADR-PostgreSQL-Row-Level-Security.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-30",
+      "legacyDocumentKey": "doc-30",
+      "linearDocumentId": "5a182fe8-59c6-4d5b-9311-e5a28c82c25a",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-concurrency-and-aggregate-versioning-96cde8d9db97",
+      "title": "Proposed ADR: Concurrency and Aggregate Versioning",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-concurrency-versioning/doc-30 - Proposed-ADR-Concurrency-and-Aggregate-Versioning.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-08-01 11:45"
+    },
+    {
+      "legacyId": "doc-31",
+      "legacyDocumentKey": "doc-31",
+      "linearDocumentId": "c11716c6-9ec7-460a-b665-532a69fbdc60",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-events-outbox-inbox-and-jobs-92bf14eadd21",
+      "title": "Proposed ADR: Events, Outbox, Inbox, and Jobs",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-events-outbox-inbox-jobs/doc-31 - Proposed-ADR-Events-Outbox-Inbox-and-Jobs.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:32"
+    },
+    {
+      "legacyId": "doc-32",
+      "legacyDocumentKey": "doc-32",
+      "linearDocumentId": "6d9690a6-cc68-4c25-9bb5-92e8ee3aaf3d",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-audit-evidence-versioning-and-provenance-9134b5172ad8",
+      "title": "Proposed ADR: Audit, Evidence, Versioning, and Provenance",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-audit-evidence-provenance/doc-32 - Proposed-ADR-Audit-Evidence-Versioning-and-Provenance.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:33"
+    },
+    {
+      "legacyId": "doc-33",
+      "legacyDocumentKey": "doc-33",
+      "linearDocumentId": "b8717558-6847-48bb-9a5a-773c8685f1cb",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-api-style-errors-idempotency-and-concurrency-a78f29f7ef0d",
+      "title": "Proposed ADR: API Style, Errors, Idempotency, and Concurrency",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-api-contracts/doc-33 - Proposed-ADR-API-Style-Errors-Idempotency-and-Concurrency.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-08-01 11:45"
+    },
+    {
+      "legacyId": "doc-34",
+      "legacyDocumentKey": "doc-34",
+      "linearDocumentId": "9c9959f6-f77d-4007-b9fe-8fb8e591038c",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-agent-execution-and-human-authority-2d6317cba605",
+      "title": "Proposed ADR: Agent Execution and Human Authority",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-agent-human-authority/doc-34 - Proposed-ADR-Agent-Execution-and-Human-Authority.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:33"
+    },
+    {
+      "legacyId": "doc-35",
+      "legacyDocumentKey": "doc-35",
+      "linearDocumentId": "fb3757ad-d32a-4735-8792-1ec763f36990",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-documents-vdr-and-object-storage-d6fe83ac0ac4",
+      "title": "Proposed ADR: Documents, VDR, and Object Storage",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-documents-vdr-object-storage/doc-35 - Proposed-ADR-Documents-VDR-and-Object-Storage.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:33"
+    },
+    {
+      "legacyId": "doc-36",
+      "legacyDocumentKey": "doc-36",
+      "linearDocumentId": "a46760f9-ad1b-431e-9399-ec94e2297243",
+      "linearUrl": "https://linear.app/mergesai/document/proposed-adr-migration-and-retirement-of-the-mock-backed-mvp-api-e2cff4ca9cc5",
+      "title": "Proposed ADR: Migration and Retirement of the Mock-backed MVP API",
+      "type": "specification",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/decisions/proposed-mvp-api-retirement/doc-36 - Proposed-ADR-Migration-and-Retirement-of-the-Mock-backed-MVP-API.md",
+      "legacyCreated": "2026-07-30 06:03",
+      "legacyUpdated": "2026-07-30 09:33"
+    },
+    {
+      "legacyId": "doc-37",
+      "legacyDocumentKey": "doc-37",
+      "linearDocumentId": "22d8fb9f-0974-4163-8a76-fe496d65a7d4",
+      "linearUrl": "https://linear.app/mergesai/document/mai-148-deployment-and-operations-foundation-065418bf93ef",
+      "title": "MAI-148 Deployment and Operations Foundation",
+      "type": "guide",
+      "tags": [
+        "operations",
+        "infrastructure",
+        "deployment",
+        "canonical",
+        "mai-148"
+      ],
+      "originalRepositoryPath": "backlog/docs/operations/deployment/doc-37 - MAI-148-Deployment-and-Operations-Foundation.md",
+      "legacyCreated": "2026-08-01 11:53",
+      "legacyUpdated": "2026-08-01 12:04"
+    },
+    {
+      "legacyId": "doc-38",
+      "legacyDocumentKey": "doc-38",
+      "linearDocumentId": "b01ee404-cc77-4edd-af6f-ced741c11876",
+      "linearUrl": "https://linear.app/mergesai/document/mai-110-deal-reconciliation-operator-procedure-bbcd92d950fe",
+      "title": "MAI-110 Deal Reconciliation Operator Procedure",
+      "type": "guide",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/operations/deal-management/doc-38 - MAI-110-Deal-Reconciliation-Operator-Procedure.md",
+      "legacyCreated": "2026-08-03 02:14",
+      "legacyUpdated": "2026-08-06 19:45"
+    },
+    {
+      "legacyId": null,
+      "legacyDocumentKey": "path:backlog/docs/core_architecture.md",
+      "linearDocumentId": "0f688fd5-b1e5-4651-95cd-6e01e03576f2",
+      "linearUrl": "https://linear.app/mergesai/document/core-architecture-488fdc2ec03a",
+      "title": "Core Architecture",
+      "type": "other",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/core_architecture.md",
+      "legacyCreated": null,
+      "legacyUpdated": null
+    },
+    {
+      "legacyId": null,
+      "legacyDocumentKey": "path:backlog/docs/google_ai_studio_setup.md",
+      "linearDocumentId": "23e9f02d-d0fc-4e3c-82aa-3fb3f59e8da2",
+      "linearUrl": "https://linear.app/mergesai/document/configuracao-do-google-ai-studio-gemini-ba82b5d5d20b",
+      "title": "Configuração do Google AI Studio (Gemini)",
+      "type": "other",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/google_ai_studio_setup.md",
+      "legacyCreated": null,
+      "legacyUpdated": null
+    },
+    {
+      "legacyId": null,
+      "legacyDocumentKey": "path:backlog/docs/gui-wireframes-routes.md",
+      "linearDocumentId": "addfbf3a-5a0b-4727-9e0b-b9e028e0d9e3",
+      "linearUrl": "https://linear.app/mergesai/document/manda-middleware-gui-wireframes-and-routes-specification-51bcb151433c",
+      "title": "M&A Middleware GUI - Wireframes & Routes Specification",
+      "type": "other",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/gui-wireframes-routes.md",
+      "legacyCreated": null,
+      "legacyUpdated": null
+    },
+    {
+      "legacyId": null,
+      "legacyDocumentKey": "path:backlog/docs/refactoring_technical_debt.md",
+      "linearDocumentId": "acf69e3f-880b-4a5e-84dd-4850c52b8ec2",
+      "linearUrl": "https://linear.app/mergesai/document/saneamento-de-divida-tecnica-e-refatoracao-estrutural-milestone-mvp-1-d386b1c3908e",
+      "title": "Saneamento de Dívida Técnica e Refatoração Estrutural (Milestone MVP_1)",
+      "type": "other",
+      "tags": [],
+      "originalRepositoryPath": "backlog/docs/refactoring_technical_debt.md",
+      "legacyCreated": null,
+      "legacyUpdated": null
+    }
+  ],
+  "efWork": {
+    "project": {
+      "id": "379879cb-0c4b-4efc-bbe2-fb8a31de58d8",
+      "name": "MA&I — E→F Engineering Foundation"
+    },
+    "issues": [
+      {
+        "id": "MAI-74",
+        "url": "https://linear.app/mergesai/issue/MAI-74/engineering-capacity-and-repository-headroom",
+        "title": "Engineering Capacity & Repository Headroom"
+      },
+      {
+        "id": "MAI-75",
+        "url": "https://linear.app/mergesai/issue/MAI-75/nextjs-163-evaluation-and-upgrade",
+        "title": "Next.js 16.3 Evaluation & Upgrade"
+      },
+      {
+        "id": "MAI-76",
+        "url": "https://linear.app/mergesai/issue/MAI-76/final-ef-engineering-re-baseline",
+        "title": "Final E→F Engineering Re-baseline"
+      }
+    ],
+    "implementationStarted": false,
+    "waveFStarted": false
+  },
+  "preservationNotes": [
+    "Full task records, acceptance criteria, Definition of Done, notes, comments, references, and evidence are embedded in each migrated Linear issue description.",
+    "Full document bodies and legacy metadata are embedded in each migrated Linear Document.",
+    "Legacy assignees without a matching Linear member remain in issue metadata and were not assigned to an incorrect member.",
+    "Four path-only Backlog documents had no document ID; their legacyDocumentKey is their original repository path.",
+    "Historical GitHub references remain in migrated records as historical evidence."
+  ],
+  "relationMetadata": {
+    "nativeLinearRelations": true,
+    "dependencyEdgeCount": 164,
+    "inverseBlockListsDerivedFromDependencies": true
+  },
+  "documentRelationMetadata": {
+    "issueDocumentLinkCount": 205,
+    "linkType": "Linear issue attachment URLs pointing to migrated Linear Documents"
+  }
+}

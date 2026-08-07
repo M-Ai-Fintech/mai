@@ -10,8 +10,6 @@ const EXCLUDED_PATHS = [
   "gui/lib/i18n/locales/",
   "scripts/check_i18n_test.ts",
 ] as const;
-const BACKLOG_COMMENTS_BEGIN = "<!-- COMMENTS:BEGIN -->";
-const BACKLOG_COMMENTS_END = "<!-- COMMENTS:END -->";
 
 export interface I18nViolation {
   readonly line: number;
@@ -34,31 +32,6 @@ export function findPortugueseText(source: string): I18nViolation[] {
     });
   }
 
-  return violations;
-}
-
-export function findPortugueseBacklogComments(
-  source: string,
-): I18nViolation[] {
-  const start = source.indexOf(BACKLOG_COMMENTS_BEGIN);
-  const finish = source.indexOf(BACKLOG_COMMENTS_END);
-  if (start === -1 || finish === -1 || finish <= start) return [];
-
-  const commentsStart = start + BACKLOG_COMMENTS_BEGIN.length;
-  const comments = source.slice(commentsStart, finish);
-  const firstLine = source.slice(0, commentsStart).split("\n").length - 1;
-  return portugueseLineViolations(comments, firstLine);
-}
-
-function portugueseLineViolations(
-  source: string,
-  lineOffset: number,
-): I18nViolation[] {
-  const violations: I18nViolation[] = [];
-  for (const [index, text] of source.split("\n").entries()) {
-    if (!PORTUGUESE_MARKERS.some((marker) => marker.test(text))) continue;
-    violations.push({ line: lineOffset + index + 1, text: text.slice(0, 120) });
-  }
   return violations;
 }
 
@@ -89,9 +62,7 @@ async function collectSourceFiles(
 }
 
 export async function checkRepository(): Promise<I18nViolation[]> {
-  const sourceViolations = await collectRepositorySourceViolations();
-  const backlogViolations = await collectBacklogCommentViolations();
-  return [...sourceViolations, ...backlogViolations];
+  return await collectRepositorySourceViolations();
 }
 
 async function collectRepositorySourceViolations(): Promise<I18nViolation[]> {
@@ -112,23 +83,6 @@ async function sourceFileViolations(path: string): Promise<I18nViolation[]> {
   const source = await Deno.readTextFile(path);
   const violations = findPortugueseText(source);
   reportViolations(path, "non-English source text", violations);
-  return violations;
-}
-
-async function collectBacklogCommentViolations(): Promise<I18nViolation[]> {
-  const violations: I18nViolation[] = [];
-  try {
-    for await (const entry of Deno.readDir("backlog/tasks")) {
-      if (!entry.isFile || !entry.name.endsWith(".md")) continue;
-      const path = `backlog/tasks/${entry.name}`;
-      const source = await Deno.readTextFile(path);
-      const found = findPortugueseBacklogComments(source);
-      reportViolations(path, "non-English Backlog comment", found);
-      violations.push(...found);
-    }
-  } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
-  }
   return violations;
 }
 
