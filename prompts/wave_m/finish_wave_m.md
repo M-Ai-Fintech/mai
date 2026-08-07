@@ -1,26 +1,27 @@
-# Finish — Wave M: Release gate
+Context
 
-Read `prompts/OPERATING_RULES.md` and Linear completion context.
+Wave M contains Linear issue MAI-71 — End-to-end, security and operational release gate. Run only after its owner-approved release-gate PR is merged and every declared dependency is Done. Linear state, exact-head verification, release dossier, merged source, and executed environment evidence are authoritative.
 
-merged.
+Objective
 
-Require clean synchronized master and merged PR evidence. Inspect the merged
-release dossier and final repository. Re-run or validate all critical workflow,
-isolation, authority, concurrency, recovery, provider-failure, backup/restore,
-and operational checks. Confirm zero open P0/P1 defects and no automatic
-production promotion.
+Perform final repository closure and issue completion only if the complete release dossier proves workflow, isolation, authority, concurrency, recovery, provider-failure, backup/restore, migration, frontend, security/privacy, and operational gates with zero unresolved P0/P1 defects.
 
-## Execution policy
+Relevant scope / architecture
 
-Use one accountable finisher. Parallel read-only review is exceptional and
-must be genuinely separable and materially faster; use
-`prompts/SUBAGENT_RULES.md` only when justified.
+Reconcile all MAI-71 verification streams on exact current master. Parallel read-only verification may be used when separable and materially faster, each with a concrete `/goal`; one finisher owns evidence integration, Linear state, Graphify, closure commit, and the final production-candidate recommendation.
 
-Run `deno task verify`. Do not repair feature code. When green, run exactly one
-`graphify update .` and `git diff --check`.
+Known risks or constraints
 
-Using Linear issue/document tools, mark MAI-71 Done only when every AC/DoD and release gate
-is proven. Do not move it to completed. Remove only merged worktree/branch.
-Commit Linear/Graphify changes as `docs: close delivery wave M`, push master,
-and return the production-candidate decision with evidence. Confirm no feature
-implementation occurred.
+Do not implement features, waive P0/P1 defects, reinterpret missing/failed/timeout/ignored required evidence as pass, automatically deploy/promote production, or mark release-ready without executed proof and owner authority.
+
+Expected verification
+
+Run or validate all critical MAI-71 streams and exact-head canonical `DENO_ENV=test deno task verify`. Confirm dependency state, migration/cutover completion, provider/readiness evidence, backup/restore proof, frontend workflows, audit reconstruction, security/privacy evidence, and zero open P0/P1 defects.
+
+If green, run exactly one `graphify update .`, `git diff --check`, mark MAI-71 Done in Linear, remove only its merged branch/worktree, commit `docs: close delivery wave M`, push master, verify clean synchronized master, and return the evidence-backed production-candidate decision. On failure, record the blocker and leave MAI-71 non-Done.
+
+Allowed state transitions
+
+The finisher may mark MAI-71 Done and push the final Wave M closure commit only after every release gate passes. Production deployment or promotion remains a separate owner-authorized action.
+
+/goal

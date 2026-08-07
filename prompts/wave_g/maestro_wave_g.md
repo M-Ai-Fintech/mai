@@ -1,43 +1,31 @@
-# Maestro — Wave G: Core business slices
+Context
 
-**Role:** create worktrees, plan, and hand off. Do not implement, merge, or run
-Graphify.
+Wave G contains Linear issues MAI-39, MAI-41, MAI-42, MAI-43, and MAI-44. Linear native relations and `prompts/manifest.json` are authoritative. Read `prompts/OPERATING_RULES.md` and `prompts/README.md` before planning.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Tasks
+Prepare Wave G execution without implementing: verify entry gates, create one isolated branch/worktree per task from the same synchronized master SHA, produce Linear-backed execution plans, eliminate file collisions, and hand off safe parallel groups and merge order.
 
-- `MAI-39` — Valuation scenarios and approval
-- `MAI-41` — Matching, conflicts and shortlist
-- `MAI-42` — Closing control
-- `MAI-43` — Deliverables, redaction, release and exports
-- `MAI-44` — Pause, archive, restore, termination, retention and deletion
+Relevant scope / architecture
 
-## Entry gate
+Entry requires Wave F closed and every task-specific dependency Done. Use branches/worktrees already registered in the manifest conventions: MAI-39 valuation, MAI-41 matching, MAI-42 closing, MAI-43 deliverables, and MAI-44 deal governance.
 
-Wave F is closed and the relevant Wave A algorithm contracts are Done. Every
-declared dependency must be Done.
+For each task, inspect only enough source and governed context to define outcome, ownership, exclusive paths, coordinator-owned shared paths, risks, focused checks, and integration order. Persist `## Wave G execution plan — <TASK-ID>` in the Linear issue plan metadata and local task `AGENTS.md` as repository convention requires.
 
-Run Linear workspace and issue/project context, require clean synchronized master, verify active
-To Do tasks with `delivery-wave-g`, and rule out duplicate
-branches/worktrees/PRs.
+Known risks or constraints
 
-| Task    | Branch                                                                      | Worktree                          | Prompt       |
-| ------- | --------------------------------------------------------------------------- | --------------------------------- | ------------ |
-| MAI-39 | `delivery/MAI-39-valuation-scenarios-and-approval`                         | `../mai-worktrees/wave_g/MAI-39` | `MAI-39.md` |
-| MAI-41 | `delivery/MAI-41-matching-conflicts-and-shortlist`                         | `../mai-worktrees/wave_g/MAI-41` | `MAI-41.md` |
-| MAI-42 | `delivery/MAI-42-closing-control`                                          | `../mai-worktrees/wave_g/MAI-42` | `MAI-42.md` |
-| MAI-43 | `delivery/MAI-43-deliverables-redaction-release-and-exports`               | `../mai-worktrees/wave_g/MAI-43` | `MAI-43.md` |
-| MAI-44 | `delivery/MAI-44-pause-archive-restore-termination-retention-and-deletion` | `../mai-worktrees/wave_g/MAI-44` | `MAI-44.md` |
+Do not implement, set tasks In Progress, open implementation PRs, merge, run Graphify, or bypass a Linear dependency gate. All task worktrees must start from one verified master SHA. Shared-file collisions must have one explicit owner before handoff.
 
-Create all from one verified master commit. Plan with focused `rg`; eliminate
-collisions; write `## Wave G execution plan — <TASK-ID>` into local root
-`AGENTS.md`; persist with the Linear issue description or plan metadata; keep uncommitted/`skip-worktree`;
-leave To Do until implementation starts. Use `prompts/OPERATING_RULES.md` for the model route and record a written deep architecture, security, or planning justification if Sol is selected.
+Do not spawn implementation workers from the maestro. If future task delegation is justified, plan it under `SUBAGENT_RULES.md`; execution belongs to the task coordinator.
 
-Return base, gates, matrix, plans, collision analysis, parallel groups, merge
-order, blockers, and confirmation no implementation or Graphify ran.
+Expected verification
 
-## Execution policy
+Confirm clean synchronized master, all five issues Todo with correct wave labels/relations, no duplicate branches/worktrees/PRs, exact worktree base SHA, plan persistence in Linear, collision analysis, safe parallel groups, and merge order.
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+Return the base SHA, gate results, branch/worktree matrix, task-plan summaries, collision/ownership matrix, parallel launch groups, merge order, blockers, and confirmation that no implementation or Graphify ran.
+
+Allowed state transitions
+
+Planning only. Leave MAI-39, MAI-41, MAI-42, MAI-43, and MAI-44 Todo. Do not change dependency relations or wave status. Do not commit feature or Graphify changes.
+
+/goal

@@ -1,23 +1,29 @@
-# Finish — Wave I: Governed agents and providers
+Context
 
-Read `prompts/OPERATING_RULES.md` and Linear completion context.
+Wave I contains Linear issues MAI-60 and MAI-61. Run only after both owner-approved PRs are merged. Linear issue state, merged source, provider evidence, and governed documentation are authoritative.
 
-**Run only after:** MAI-60 and MAI-61 PRs are owner-approved and merged.
+Objective
 
-Require clean synchronized master and merged PR evidence. Inspect merged source
-and full records; verify agent versioning, ToolGateway authority, prohibited
-effects, no self-learning/fake inference, provider capability/health/failure
-evidence, no silent fixtures, ACs, DoD, and meaningful tests.
+Close Wave I only after proving governed agent definition/tool authority and provider adapter/certification behavior are complete, explicit, secure, and evidence-backed on merged master.
 
-## Execution policy
+Relevant scope / architecture
 
-Use one accountable finisher. Parallel read-only review is exceptional and must be genuinely separable and materially faster; use `prompts/SUBAGENT_RULES.md` only when justified.
+Verify agent definition versioning, ToolGateway permissions, prohibited effects, removal/fencing of self-learning/fake inference, and MAI-61 capability/configuration/health/failure/readiness evidence with no silent fixture fallback.
 
-Run focused security/provider/integration checks and `deno task verify`. Do not
-repair feature code. When green, run one `graphify update .` and
-`git diff --check`.
+Use parallel read-only security/provider/integration reviewers only when justified and give each a concrete `/goal`. Only the finisher writes Linear closure evidence, Graphify, and master metadata.
 
-Use Linear issue/document tools to mark issues Done only when every gate passes. Do not move
-to completed. Remove only merged worktrees/branches. Commit Linear/Graphify
-changes as `docs: close delivery wave I`, push master, and confirm no feature
-implementation occurred.
+Known risks or constraints
+
+Do not certify providers without environment evidence, hide unavailable dependencies, repair feature code, or waive human-authority/security failures.
+
+Expected verification
+
+Run focused agent/security/provider/integration checks and canonical `DENO_ENV=test deno task verify`. Reconcile provider-by-provider readiness, task ACs, migration/configuration integrity, merged PR evidence, and open P0/P1 findings.
+
+If green, run one `graphify update .`, `git diff --check`, mark MAI-60/61 Done in Linear, remove only merged branches/worktrees, commit `docs: close delivery wave I`, push master, and confirm clean synchronized master. Otherwise record blockers and leave Wave I open.
+
+Allowed state transitions
+
+The finisher may mark MAI-60 and MAI-61 Done and push the Wave I closure commit only after all gates pass. It may not implement provider/agent fixes or start Wave J implementation.
+
+/goal

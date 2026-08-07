@@ -1,21 +1,27 @@
-# Plan MAI-60 — Governed agent definitions and tools
+Context
 
-**Purpose:** planning only; implementation follows the route in `prompts/OPERATING_RULES.md`.
+This is the planning-only handoff for Linear MAI-60 — Governed agent definitions and tools. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, the full Linear issue, applicable agent/human-authority documents, current agent definitions/schemas/tools/runtime ports/tests, and legacy learning/fine-tuning paths.
 
-Inside the MAI-60 worktree, Read `prompts/OPERATING_RULES.md`, the full task,
-agent/human-authority docs, agent definitions, schemas, tools, runtime ports,
-tests, and legacy learning/fine-tuning/VDR paths. Do not implement, commit, open
-a PR, branch, or run Graphify. Use focused `rg`.
+Objective
 
-Plan definition versioning, capability-specific ToolGateway contracts,
-authorization-before-load, provenance, output schemas, migration of eight
-agents, prohibited effects, removal/fencing of self-learning and fake
-model-adaptation tools, tests, compatibility, rollback, and file ownership.
+Produce the executable MAI-60 implementation plan for versioned agent definitions, capability-specific ToolGateway contracts, authorization-before-load, provenance, structured outputs, migration of the specialist agents, prohibited effects, and removal/fencing of obsolete self-learning and fake adaptation behavior.
 
-## Execution policy
+Relevant scope / architecture
 
-Plan for one accountable implementation agent by default. Propose delegation only when genuinely separable and materially faster; if justified, include exclusive paths, forbidden shared paths, checks, integration order, and stop conditions under `prompts/SUBAGENT_RULES.md`.
+Plan only; use focused repository inspection. Define bounded slices, exclusive paths, coordinator-owned shared files, public contracts, migration/compatibility consequences, tests, rollback, and integration order.
 
-Write `## Wave I execution plan — MAI-60` in local `AGENTS.md`, persist with
-the Linear issue description or plan metadata, keep uncommitted/`skip-worktree`, and return the
-implementation handoff.
+If delegation is materially faster and safely separable, include a concrete worker matrix with one `/goal` draft per worker, read-only/writer classification, exclusive paths, forbidden shared paths, dependencies, checks, return artifact, and stop conditions. No overlapping writers.
+
+Known risks or constraints
+
+Do not implement, edit production code, commit, push, open a PR, run Graphify, or change MAI-60 state. Do not grant agents human authority or design fake fine-tuning/self-learning paths.
+
+Expected verification
+
+Validate the plan against Linear dependencies, current public contracts, migration immutability, human-authority constraints, file ownership, and executable tests. Write `## Wave I execution plan — MAI-60` to local `AGENTS.md` and persist the plan in Linear according to repository convention.
+
+Allowed state transitions
+
+Planning only. Keep MAI-60 Todo. No branch state, PR state, Graphify, implementation, or wave transition.
+
+/goal

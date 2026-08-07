@@ -1,26 +1,41 @@
-# MAI-43 — Deliverables, redaction, release and exports
+Context
 
-**Skill:** `$solve-mai`\
-**Wave:** G
+MAI-43 is a Wave G delivery task for **Deliverables, redaction, release and exports**. Linear issue MAI-43 and its native relations are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, the applicable local `AGENTS.md` execution plan, and the full Linear issue before changing code.
 
-Read `prompts/OPERATING_RULES.md` and `## Wave G execution plan — MAI-43` in local
-`AGENTS.md`; never commit the plan. Invoke `$solve-mai MAI-43`.
+Use `$solve-mai` as the task workflow. Begin with the repair-or-restart assessment required by the operating policy. If no implementation exists yet, execute from the maestro-created task worktree and approved Linear plan; if a partial implementation or Draft PR exists, preserve it when repair is safer than restart.
 
-## Execution policy
+Objective
 
-Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+Deliver deliverable drafts and versions, stale marking, redaction, approval, release, export/distribution jobs, immutable manifests, recipient scope, and retry receipts.
 
-## Focus
+Relevant scope / architecture
 
-Deliver deliverable drafts/versions, stale marking, redaction, approval,
-release, export/distribution jobs, immutable manifests, recipient scope, and
-retry receipts.
+The Deliverables & Distribution bounded context owns draft/version lifecycle, stale state, redaction records, approval/release state, export jobs, immutable manifests, recipient scope, and retryable delivery receipts.
 
-## Boundary
+Release and external distribution are human-authorized side effects; generated content remains a draft until the authorized release transition.
 
-Do not autonomously release artifacts or certify external
-rendering/communication providers.
+If delegation is justified, safe slices are draft/version lifecycle, redaction/release authority, export jobs/receipts, persistence/API, and security/retry tests.
 
-Use focused`rg`, TDD/release
-tests, task checks, and `deno task verify`. Set In Progress, record evidence,
-open a PR containing MAI-43, never self-merge, and do not mark Done.
+Known risks or constraints
+
+Do not autonomously release or distribute artifacts, expose unredacted restricted fields, or certify external rendering/communication providers without evidence.
+
+Stale source changes must invalidate affected deliverables without rewriting historical released versions. Recipient and purpose scope must be explicit and auditable.
+
+Do not broaden into provider certification, generic notification ownership, frontend redesign, or unrelated document processing.
+
+Expected verification
+
+Run focused deliverable lifecycle, redaction, approval/release, stale invalidation, export/distribution job, recipient-scope, retry/idempotency, persistence, and API tests.
+
+Before handoff, run affected PostgreSQL/security/rollback tests plus changed-file type/lint/format checks and `git diff --check`.
+
+Run canonical `DENO_ENV=test deno task verify` once when ready and record exact evidence in Linear and the Draft PR. Do not include Graphify output in the implementation PR.
+
+Allowed state transitions
+
+Move Linear MAI-43 from Todo to In Progress only when implementation starts. Keep it In Progress through implementation and owner review. Create or update one Draft PR for MAI-43; do not self-approve, self-merge, mark the issue Done, perform wave closure, or change downstream issue state.
+
+Only the authorized wave finisher may make the final Done transition after the merged-source and wave-level gates pass. Use Linear for task evidence and governed documentation.
+
+/goal

@@ -1,39 +1,29 @@
-# Maestro — Wave J: Cutover consumers and governance evidence
+Context
 
+Wave J contains Linear issues MAI-64, MAI-65, MAI-66, and MAI-67. Linear native relations and `prompts/manifest.json` are authoritative. Read the operating policy, README, full issues, and `plan_MAI-64.md` before planning.
 
-Read `prompts/OPERATING_RULES.md`.
+Objective
 
-## Tasks
+Prepare the Wave J consumer/governance wave without implementing: verify Wave I and task dependencies, create four isolated worktrees from one master SHA, plan collision-free ownership, and hand off safe parallel implementation and merge order.
 
-- `MAI-64` — Frontend adapter migration
-- `MAI-65` — Governed model-backed financial-risk integration
-- `MAI-66` — Enterprise security, privacy, and compliance readiness evidence
-- `MAI-67` — Audited agent feedback, evaluation, and offline improvement
+Relevant scope / architecture
 
-## Entry gate
+MAI-64 owns frontend adapter cutover, MAI-65 governed model-backed risk integration, MAI-66 enterprise readiness evidence, and MAI-67 audited feedback/offline evaluation. Create their registered `delivery/MAI-*` branches under `../mai-worktrees/wave_j/`.
 
-Wave I is closed and every declared dependency is Done.
+Run the MAI-64 deep-plan prompt where justified. Persist `## Wave J execution plan — <TASK-ID>` in Linear and local `AGENTS.md` according to repository convention. Reserve shared frontend registries and cross-task integration to exactly one owner.
 
-Require clean synchronized master, active To Do tasks with `delivery-wave-j`,
-and no duplicate branch/worktree/PR.
+Known risks or constraints
 
-| Task    | Branch                                                              | Worktree                          | Prompt       |
-| ------- | ------------------------------------------------------------------- | --------------------------------- | ------------ |
-| MAI-64 | `delivery/MAI-64-frontend-adapter-migration`                       | `../mai-worktrees/wave_j/MAI-64` | `MAI-64.md` |
-| MAI-65 | `delivery/MAI-65-governed-model-backed-financial-risk-integration` | `../mai-worktrees/wave_j/MAI-65` | `MAI-65.md` |
-| MAI-66 | `delivery/MAI-66-enterprise-readiness-evidence`                    | `../mai-worktrees/wave_j/MAI-66` | `MAI-66.md` |
-| MAI-67 | `delivery/MAI-67-audited-agent-feedback-and-offline-improvement`   | `../mai-worktrees/wave_j/MAI-67` | `MAI-67.md` |
+Do not implement, set issues In Progress, open implementation PRs, merge, or run Graphify. Do not make MAI-66 or MAI-67 artificial release dependencies. Prevent MAI-64 frontend shared-file races.
 
-Create all from one verified master commit. Plan with focused `rg`, eliminate
-collisions, write `## Wave J execution plan — <TASK-ID>` in local `AGENTS.md`,
-persist with the Linear issue description or plan metadata, keep uncommitted/`skip-worktree`, and leave To
-Do until implementation starts. Use `prompts/OPERATING_RULES.md` for every
-plan's model route; record a written deep architecture, security, or planning
-justification if Sol is selected.
+Expected verification
 
-Return base, gates, matrix, plans, collision analysis, parallel groups, merge
-order, blockers, and confirmation no implementation or Graphify ran.
+Confirm clean synchronized master, all four issues Todo with valid dependencies, no duplicate work, exact shared base SHA, plan persistence, collision/ownership matrix, safe parallel groups, and merge order.
 
-## Execution policy
+Return base SHA, gates, worktree matrix, plan summaries, collisions, parallel groups, merge order, blockers, and confirmation no implementation or Graphify ran.
 
-Use one coordinator and do not spawn implementation workers from a planning prompt. Delegation is exceptional; apply `prompts/OPERATING_RULES.md` and record a concrete reason before proposing it.
+Allowed state transitions
+
+Planning only. Leave MAI-64, MAI-65, MAI-66, and MAI-67 Todo and downstream state unchanged.
+
+/goal

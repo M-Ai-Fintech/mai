@@ -1,22 +1,27 @@
-# Finish — Wave H: Negotiation
+Context
 
-Read `prompts/OPERATING_RULES.md` and Linear completion context.
+Wave H contains Linear issue MAI-48 — Negotiation. Run only after its owner-approved PR is merged. Linear issue state, MAI-20/MAI-21 dependency evidence, and merged source are authoritative.
 
-**Run only after:** the MAI-48 PR is owner-approved and merged.
+Objective
 
-Require clean synchronized master and merged PR evidence. Inspect merged source
-and the full task; verify internal/external DTO separation, mandate comparison,
-human approval, delivery authorization/idempotency, MAI-20/147 integration,
-ACs, DoD, and tests.
+Close Wave H only after proving negotiation proposals/terms/internal-position semantics, human approval, internal/external separation, delivery authorization/idempotency, deterministic optimization/dispute integration, and audit behavior on merged master.
 
-## Execution policy
+Relevant scope / architecture
 
-Use one accountable finisher. Parallel read-only review is exceptional and must be genuinely separable and materially faster; use `prompts/SUBAGENT_RULES.md` only when justified.
+Inspect MAI-48 merged source and Linear evidence, including MAI-20 negotiation optimization and MAI-21 dispute-resolution integration. Read-only parallel verification may be used when justified, with a concrete `/goal`; only the finisher writes closure evidence.
 
-Run focused checks and `deno task verify`. Do not repair feature code. When
-green, run one `graphify update .` and `git diff --check`.
+Known risks or constraints
 
-Use Linear issue/document tools to mark MAI-48 Done only when every gate passes. Do not
-move to completed. Remove only merged worktree/branch. Commit Linear/Graphify
-changes as `docs: close delivery wave H`, push master, and confirm no feature
-implementation occurred.
+Do not repair feature code, permit autonomous approval/send/release, ignore internal-strategy leakage, or treat failed/ignored required tests as pass.
+
+Expected verification
+
+Run focused negotiation/security/concurrency/delivery checks and canonical `DENO_ENV=test deno task verify`. Confirm ACs, migration integrity, exact approval/delivery evidence, and zero unresolved P0/P1 blockers.
+
+If green, run one `graphify update .`, `git diff --check`, mark MAI-48 Done in Linear, remove only the merged branch/worktree, commit `docs: close delivery wave H`, push master, and verify clean synchronized master. Otherwise record the exact blocker and leave Wave H open.
+
+Allowed state transitions
+
+The finisher may mark MAI-48 Done and push the Wave H closure commit only after every gate passes. It may not implement feature fixes or start Wave I implementation.
+
+/goal

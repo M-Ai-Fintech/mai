@@ -1,40 +1,35 @@
-# MAI-64 — Frontend adapter migration
+Context
 
-**Skill:** `$solve-mai`
+MAI-64 is the Wave J task for **Frontend adapter migration**. Linear issue MAI-64 and its native relations are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, `plan_MAI-64.md`, approved frontend/Figma contracts, the applicable local `AGENTS.md` execution plan, and the full Linear issue before changing code.
 
-Read `plan_MAI-64.md` first and use the central model route. Read `prompts/OPERATING_RULES.md` and
-`## Wave J execution plan — MAI-64` in local `AGENTS.md`; never commit it.
-Invoke `$solve-mai MAI-64`.
+Use `$solve-mai` as the task workflow. Begin with the repair-or-restart assessment. Execute from the maestro-created worktree and approved Linear plan, or preserve a partial cutover when repair is safer than restart.
 
-## Execution policy
+Objective
 
-Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+Replace fixture-backed banker-workspace data behind typed adapters family by family while preserving approved routes, screen states, permissions, stale/error behavior, accessibility, Storybook fixtures, and Figma-authorized interaction semantics.
 
-## Suggested safe slice categories
+Relevant scope / architecture
 
-- Global screen adapters
-- Deal-intelligence adapters
-- Deal-execution adapters
-- Administration/external adapters
-- API-client integration
-- Shared route/adapter integration
-- Parity/accessibility/workflow verification
+Cut over global, deal-intelligence, deal-execution, administration/external screen families and API clients to authoritative backend v1 contracts without visual redesign.
 
-Keep shared frontend registries and API-client foundations coordinator-owned
-unless the plan assigns one explicit single owner.
+If delegation is justified, screen-family adapters may be disjoint writing slices. Shared frontend registries, API-client foundations, route integration, cross-family parity, and final workflow verification remain coordinator-owned unless the plan assigns exactly one safer owner.
 
-## Focus
+Known risks or constraints
 
-Replace fixture-backed GUI data behind typed adapters family by family while
-preserving all approved routes, screen states, Figma behavior, errors, stale
-states, and permissions.
+Do not redesign visuals/workflows, remove fixture-backed Storybook evidence that remains useful, bypass backend v1 contracts, or hide stale/permission/error states.
 
-## Boundary
+Preserve approved Figma behavior and route ownership. Do not broaden into backend domain changes or provider certification.
 
-Do not redesign visuals/workflows, delete Storybook fixtures, or bypass backend
-v1 contracts.
+Expected verification
 
-Use focused`rg`, GUI
-contract/parity/accessibility tests and `deno task verify`. Set In Progress,
-record evidence, open a PR containing MAI-64, never self-merge, and do not mark
-Done.
+Run family-specific adapter/contract tests continuously, then complete parity, permission, stale/error, accessibility, route, workflow, Storybook, and production-build checks for affected families.
+
+Run changed-file lint/format/type checks, `git diff --check`, and canonical `DENO_ENV=test deno task verify` once when the full cutover state is ready. Record exact family-by-family evidence and remaining fixture boundaries in Linear and the Draft PR.
+
+Allowed state transitions
+
+Move Linear MAI-64 from Todo to In Progress only when implementation starts. Keep it In Progress and its PR Draft through owner/frontend review. Do not self-approve, self-merge, mark Done, perform Wave J closure, or alter downstream state.
+
+Only the authorized Wave J finisher may make the final Done transition after merged-source verification. Use Linear for task evidence and governed documentation.
+
+/goal

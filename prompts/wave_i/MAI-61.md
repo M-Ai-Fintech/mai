@@ -1,41 +1,39 @@
-# MAI-61 — Integration adapters and certification
+Context
 
-**Skill:** `$solve-mai`\
-**Wave:** I
+MAI-61 is the Wave I task for **Integration adapters and certification**. Linear issue MAI-61 and its native relations are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, `plan_MAI-61.md`, the applicable local `AGENTS.md` execution plan, and the full Linear issue before changing code.
 
-Read `prompts/OPERATING_RULES.md`. Read `plan_MAI-61.md` first and use the central model route. Work only in the
-maestro-created worktree and read `## Wave I execution plan — MAI-61` from
-local `AGENTS.md`; never commit the plan. Invoke `$solve-mai MAI-61`.
+Use `$solve-mai` as the task workflow. Begin with the repair-or-restart assessment. Execute from the maestro-created worktree and approved Linear plan, or preserve a partial implementation when repair is safer than restart.
 
-## Execution policy
+Objective
 
-Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+Implement or configure approved identity, object-storage, VDR/document, AI, embedding, inference, conversion/OCR, communication, and webhook adapters with explicit capabilities, configuration, health, sandbox/failure behavior, residency/retention, secrets handling, and evidence-backed readiness certification.
 
-## Suggested safe slice categories
+Relevant scope / architecture
 
-- Identity provider
-- VDR/document provider
-- Object storage
-- Model provider
-- Observability
-- Deployment environment
-- Certification/readiness register
+Provider adapters sit behind project-owned ports. Certification is environment-specific and must distinguish interface-only, fixture, sandbox, partially implemented, production-candidate, and production-verified states.
 
-Provider lanes may run in parallel, but one coordinator owns final certification
-status.
+Provider lanes may run in parallel when ownership is disjoint, but one coordinator owns the readiness register, shared configuration semantics, final certification status, and integration-wide verification.
 
-## Focus
+Known risks or constraints
 
-Implement/configure approved IdP, object store, Papermark VDR, AI, embedding,
-inference, conversion/OCR, communications, and webhook adapters with capability,
-health, sandbox, failure, residency, and readiness evidence.
+Do not claim production verification without executed environment evidence, silently fall back to fixtures, expose secrets, or enable unapproved providers.
 
-## Boundary
+Keep adapter implementation separate from MAI-22 infrastructure ownership. Capability absence and dependency unavailability must fail explicitly and safely.
 
-Do not claim production verification without environment-specific evidence,
-silently fall back to fixtures, or enable unapproved providers.
+Do not broaden into domain authority, frontend redesign, or provider selection beyond approved Linear/architecture decisions.
 
-Use focused`rg`,
-contract/sandbox/failure tests, provider evidence, and `deno task verify`. Set
-In Progress, record exact readiness and rollback evidence, open a PR containing
-MAI-61, never self-merge, and do not mark Done.
+Expected verification
+
+Run provider contract, authentication/configuration, capability-denial, sandbox, failure-normalization, timeout/retry/rate-limit, secret-redaction, health, residency/retention, and consumer compatibility tests.
+
+Record provider-by-provider evidence and explicit unavailable semantics. Run affected integration tests, changed-file type/lint/format checks, `git diff --check`, and canonical `DENO_ENV=test deno task verify` once when ready.
+
+No required provider gate may be represented as passing when credentials, sandbox access, or environment evidence are absent. Do not include Graphify output in the implementation PR.
+
+Allowed state transitions
+
+Move Linear MAI-61 from Todo to In Progress only when implementation starts. Keep it In Progress and its PR Draft through owner/security review. Do not self-approve, self-merge, mark Done, perform Wave I closure, or alter downstream state.
+
+Only the authorized Wave I finisher may make the final Done transition after merged-source verification. Use Linear for task evidence and governed documentation.
+
+/goal

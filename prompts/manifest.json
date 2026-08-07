@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "repository": "M-Ai-Fintech/mai",
   "system_of_record": {
     "active": "Linear",
@@ -9,6 +9,23 @@
     "legacy_system": "Backlog.md"
   },
   "policy": "prompts/OPERATING_RULES.md",
+  "prompt_format": {
+    "terminal": "/goal",
+    "terminal_must_be_last_nonblank_line": true,
+    "task_sections": [
+      "Context",
+      "Objective",
+      "Relevant scope / architecture",
+      "Known risks or constraints",
+      "Expected verification",
+      "Allowed state transitions",
+      "/goal"
+    ],
+    "role_prompts_use_same_lean_order": true,
+    "stable_policy_must_not_be_duplicated": true,
+    "current_identifiers": "Linear",
+    "legacy_identifiers": "historical-traceability-only"
+  },
   "models": {
     "substantial_implementation": "5.6 Luna Max",
     "small_or_mechanical": "5.6 Luna Medium",

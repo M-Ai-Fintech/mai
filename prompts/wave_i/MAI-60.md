@@ -1,36 +1,39 @@
-# MAI-60 — Governed agent definitions and tools
+Context
 
-**Skill:** `$solve-mai`\
-**Wave:** I
+MAI-60 is the Wave I task for **Governed agent definitions and tools**. Linear issue MAI-60 and its native relations are authoritative. Read `prompts/OPERATING_RULES.md`, `prompts/README.md`, `plan_MAI-60.md`, the applicable local `AGENTS.md` execution plan, and the full Linear issue before changing code.
 
-Read `prompts/OPERATING_RULES.md`. Read `plan_MAI-60.md` first and use the central model route. Work only in the
-maestro-created worktree and read `## Wave I execution plan — MAI-60` from
-local `AGENTS.md`; never commit the plan. Invoke `$solve-mai MAI-60`.
+Use `$solve-mai` as the task workflow. Begin with the repair-or-restart assessment. Execute from the maestro-created worktree and approved Linear plan, or preserve a partial implementation when repair is safer than restart.
 
-## Execution policy
+Objective
 
-Apply `prompts/OPERATING_RULES.md`. Default to one accountable agent. Delegate only when the work is genuinely separable and materially faster; if delegated, follow `prompts/SUBAGENT_RULES.md`.
+Migrate governed agent definitions and eight specialist agents to versioned schemas and capability-specific ToolGateway read/proposal contracts with exact provenance, authorization-before-load, structured outputs, human-boundary regressions, and removal or fencing of obsolete self-learning and fake adaptation behavior.
 
-## Suggested safe slice categories
+Relevant scope / architecture
 
-- Governed agent definitions
-- Tool permissions
-- Domain tool adapters
-- Mission/run integration
-- Evaluation
-- Audit and security review
+Agent definitions and tools remain governed adapters over domain application services; they do not become transaction authority. Preserve versioned definitions, capability-specific permissions, exact source/result provenance, mission/run integration, evaluation hooks, and explicit prohibited effects.
 
-## Focus
+Read-only and proposal capabilities may be delegated when safely separable; shared registries, public exports, runtime composition, Linear evidence, and cross-agent integration stay coordinator-owned.
 
-Migrate governed agent definitions and eight specialist agents to versioned
-schemas and ToolGateway read/proposal capabilities with provenance and
-human-boundary regression tests.
+Known risks or constraints
 
-## Boundary
+Do not grant approval, send, invite, permission, release, archive, delete, waiver, signature, runtime self-learning, automatic prompt/tool/model mutation, or fake fine-tuned inference capabilities.
 
-Do not grant approval, send, invite, permission, release, archive, delete,
-waiver, signature, self-learning, or fake fine-tuning capabilities.
+Do not bypass domain authorization or load protected evidence before authorization. Do not broaden into MAI-61 provider certification, frontend redesign, or Agent Runtime ownership.
 
-Use focused`rg`, TDD/security
-tests, task checks, and `deno task verify`. Set In Progress, record evidence,
-open a PR containing MAI-60, never self-merge, and do not mark Done.
+Applied migrations and historical agent evidence are immutable; use additive changes or explicit retirement evidence.
+
+Expected verification
+
+Run focused definition/versioning, ToolGateway authorization, schema/output, provenance, mission/run integration, prohibited-effect, legacy-learning/fine-tuning fence, and security tests.
+
+Before handoff, run directly affected PostgreSQL/integration tests where persistence changed, changed-file type/lint/format checks, and `git diff --check`.
+
+Run canonical `DENO_ENV=test deno task verify` once when ready. Record exact evidence and unresolved provider boundaries in Linear and the Draft PR. Do not include Graphify output in the implementation PR.
+
+Allowed state transitions
+
+Move Linear MAI-60 from Todo to In Progress only when implementation starts. Keep it In Progress and its PR Draft through owner/security review. Do not self-approve, self-merge, mark Done, perform Wave I closure, or alter downstream state.
+
+Only the authorized Wave I finisher may make the final Done transition after merged-source verification. Use Linear for task evidence and governed documentation.
+
+/goal
