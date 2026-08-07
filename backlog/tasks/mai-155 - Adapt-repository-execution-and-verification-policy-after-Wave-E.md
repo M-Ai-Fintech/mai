@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@codex'
 created_date: '2026-08-07 01:27'
-updated_date: '2026-08-07 02:23'
+updated_date: '2026-08-07 02:25'
 labels:
   - maintenance
   - governance
@@ -79,4 +79,6 @@ Governed documentation evidence 2026-08-07: Backlog MCP updated doc-8 local setu
 Final canonical evidence 2026-08-07: POSTGRES_INTEGRATION_TEST_PORT=55435 with both approved database URLs; deno task verify passed all 21 required categories. Deno category passed in 238344 ms; preflight, docs, resource naming, migration integrity, repository standards, GUI unit, Next build, workflows, Storybook documentation/build/interactions all passed. No optional failure was reported.
 
 The task remains In Progress pending owner-controlled closure; no Wave transition or E-to-F feature task was created.
+
+Delivery evidence 2026-08-07: committed as c85ee049e85c51869ea3b44f4334ae8801afce29 (chore: adopt post-wave-e execution policy) directly on master and pushed to origin/master. Generated Graphify outputs from the commit hook were restored because this task did not authorize a graph refresh; final worktree and master/origin-master are clean and equal.
 <!-- SECTION:NOTES:END -->
