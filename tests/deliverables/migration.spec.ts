@@ -1,4 +1,5 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { assertEquals, assertMatch, assertThrows } from "@std/assert";
+import { assertExportAuthorized } from "../../src/deliverables/authorization.ts";
 import {
   approveContent,
   authorizeRelease,
@@ -7,6 +8,7 @@ import {
   createDeliveryReceipt,
   createManifest,
   createSourceSnapshot,
+  markSourceStale,
   PostgresDeliverablesRepository,
   submitForReview,
 } from "../../src/deliverables/v1.ts";
@@ -169,6 +171,17 @@ async function assertRepositoryRoundTrip(pool: IntegrationPool): Promise<void> {
     await repository.insertDeliverable(transaction, deliverable);
     await repository.insertSourceSnapshot(transaction, snapshot);
     await repository.insertVersion(transaction, approved.version);
+    await repository.appendStaleMark(
+      transaction,
+      markSourceStale(approved.version, {
+        staleMarkId: "stale_postgres-v1-source",
+        actorId: deliverable.ownerId,
+        reason: "source_version_superseded",
+        changedSourceIds: ["docver_postgres-v4"],
+        markedAt: fixtureDate("2026-08-07T12:30:00.000Z"),
+      }),
+      deliverable.scope,
+    );
     await repository.appendApproval(
       transaction,
       approved.approval,
@@ -209,6 +222,18 @@ async function assertRepositoryRoundTrip(pool: IntegrationPool): Promise<void> {
     "docver_postgres-v3",
   );
   assertEquals(loaded?.reviewSubmittedBy, deliverable.ownerId);
+  assertEquals(loaded?.freshnessState, "stale");
+  assertThrows(
+    () =>
+      assertExportAuthorized(
+        loaded!,
+        authorization,
+        "pdf",
+        fixtureDate("2026-08-07T13:00:00.000Z"),
+      ),
+    Error,
+    "stale",
+  );
   const loadedAuthorization = await transactionRunner.run((transaction) =>
     repository.findReleaseAuthorization(
       transaction,

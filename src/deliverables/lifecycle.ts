@@ -6,6 +6,7 @@ import {
   type ReleaseAuthorization,
   type StaleMark,
 } from "./model.ts";
+import { isSameDeliverableScope } from "./model.ts";
 
 export function submitForReview(
   version: DeliverableVersion,
@@ -60,7 +61,7 @@ export function approveContent(
 
 export function authorizeRelease(
   version: DeliverableVersion,
-  input: Omit<ReleaseAuthorization, "versionId">,
+  input: Omit<ReleaseAuthorization, "versionId" | "scope">,
 ): ReleaseAuthorization {
   assertHuman(input.actorKind, "release authorization");
   if (version.contentApprovalState !== "approved") {
@@ -80,16 +81,26 @@ export function authorizeRelease(
       `Release authorization "${input.authorizationId}" expires before authorization; expected a later timestamp.`,
     );
   }
-  return Object.freeze({ ...input, versionId: version.versionId });
+  return Object.freeze({
+    ...input,
+    versionId: version.versionId,
+    scope: version.scope,
+  });
 }
 
 export function recordReleaseAuthorization(
   version: DeliverableVersion,
   authorization: ReleaseAuthorization,
 ): DeliverableVersion {
+  assertHuman(authorization.actorKind, "release authorization");
   if (authorization.versionId !== version.versionId) {
     throw new Error(
       `Release authorization "${authorization.authorizationId}" covers version "${authorization.versionId}" instead of "${version.versionId}".`,
+    );
+  }
+  if (!isSameDeliverableScope(authorization.scope, version.scope)) {
+    throw new Error(
+      `Release authorization "${authorization.authorizationId}" is outside version "${version.versionId}" scope; expected the same tenant, workspace, and deal.`,
     );
   }
   assertFreshVersion(version);

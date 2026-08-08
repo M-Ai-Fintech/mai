@@ -123,6 +123,7 @@ export function rowToReleaseAuthorization(
   return {
     authorizationId: text(row, "authorizationId"),
     versionId: identifier(row, "versionId", parseDeliverableVersionId),
+    scope: rowScope(row),
     actorId: identifier(row, "actorId", parseActorId),
     actorKind: text(row, "actorKind") as ReleaseAuthorization["actorKind"],
     audience,

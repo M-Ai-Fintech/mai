@@ -171,6 +171,7 @@ export interface RecipientScope {
 export interface ReleaseAuthorization {
   readonly authorizationId: string;
   readonly versionId: DeliverableVersionId;
+  readonly scope: DeliverableScope;
   readonly actorId: ActorId;
   readonly actorKind: "human" | "agent" | "system";
   readonly audience: RecipientScope;
@@ -338,6 +339,14 @@ export function isExportFormat(
     value === "csv" || value === "zip";
 }
 
+export function isSameDeliverableScope(
+  left: DeliverableScope,
+  right: DeliverableScope,
+): boolean {
+  return left.tenantId === right.tenantId &&
+    left.workspaceId === right.workspaceId && left.dealId === right.dealId;
+}
+
 function assertSourceReference(reference: SourceReference): void {
   assertText(reference.sourceObjectType, "source object type", 128);
   assertText(reference.sourceObjectId, "source object ID", 128);
@@ -383,10 +392,7 @@ function assertScopeMatch(
   left: DeliverableScope,
   right: DeliverableScope,
 ): void {
-  if (
-    left.tenantId === right.tenantId &&
-    left.workspaceId === right.workspaceId && left.dealId === right.dealId
-  ) return;
+  if (isSameDeliverableScope(left, right)) return;
   throw new Error(
     `Deliverable scope "${
       scopeKey(left)

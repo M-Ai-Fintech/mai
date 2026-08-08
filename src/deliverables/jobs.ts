@@ -30,18 +30,32 @@ export function createDeliverableJob(
     );
   }
   assertJobDefinition(input);
-  const reference = input.inputVersionReferences.find((item) =>
+  const references = input.inputVersionReferences.filter((item) =>
     item.aggregateType === "DeliverableVersion"
   );
-  if (reference === undefined) {
+  if (references.length !== 1) {
     throw new Error(
-      `Deliverable job "${input.jobId}" has no DeliverableVersion input; expected an exact version reference.`,
+      `Deliverable job "${input.jobId}" has ${references.length} DeliverableVersion inputs; expected exactly one immutable version reference.`,
     );
   }
+  assertReleasePayload(input);
   return Object.freeze({
     ...input,
     inputVersionReferences: Object.freeze([...input.inputVersionReferences]),
   });
+}
+
+function assertReleasePayload(input: DeliverableJobInput): void {
+  const fields = input.jobType === "deliverables.distribute"
+    ? ["releaseAuthorizationId", "format", "recipientId", "purpose"]
+    : ["releaseAuthorizationId", "format"];
+  for (const field of fields) {
+    const value = input.payload[field];
+    if (typeof value === "string" && value.trim()) continue;
+    throw new Error(
+      `Deliverable job "${input.jobId}" payload field "${field}" is invalid; expected a non-empty release-bound value.`,
+    );
+  }
 }
 
 export async function deriveDeliverableIdempotencyKey(input: {

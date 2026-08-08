@@ -26,8 +26,20 @@ Deno.test("deliverable jobs bind export work to an exact immutable version", () 
   assertEquals(job.payload, {
     exportId: "export_diligence-v2-pdf",
     format: "pdf",
+    releaseAuthorizationId: "release_diligence-v2",
   });
   assert(Object.isFrozen(job));
+
+  const distribution = createDeliverableJob(
+    fixtureJob("deliverables.distribute"),
+  );
+  assertEquals(distribution.payload, {
+    exportId: "export_diligence-v2-pdf",
+    format: "pdf",
+    releaseAuthorizationId: "release_diligence-v2",
+    recipientId: "actor_reviewer",
+    purpose: "committee_review",
+  });
 });
 
 Deno.test("deliverable idempotency keys are deterministic and target-specific", async () => {
@@ -67,7 +79,19 @@ function fixtureJob(
       aggregateId: "delivver_diligence-v2",
       version: required(2, parseAggregateVersion),
     }],
-    payload: { exportId: "export_diligence-v2-pdf", format: "pdf" },
+    payload: jobType === "deliverables.distribute"
+      ? {
+        exportId: "export_diligence-v2-pdf",
+        format: "pdf",
+        releaseAuthorizationId: "release_diligence-v2",
+        recipientId: "actor_reviewer",
+        purpose: "committee_review",
+      }
+      : {
+        exportId: "export_diligence-v2-pdf",
+        format: "pdf",
+        releaseAuthorizationId: "release_diligence-v2",
+      },
     timeoutAt: new Date("2026-08-07T15:00:00.000Z"),
     createdAt: new Date("2026-08-07T14:00:00.000Z"),
   };

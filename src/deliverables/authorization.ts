@@ -3,6 +3,7 @@ import type {
   ReleaseAuthorization,
   ReleasePurpose,
 } from "./model.ts";
+import { isSameDeliverableScope } from "./model.ts";
 import { scopeContainsRecipient } from "./recipients.ts";
 
 export function assertExportAuthorized(
@@ -43,6 +44,11 @@ function assertAuthorization(
   if (authorization.versionId !== version.versionId) {
     throw new Error(
       `Release authorization "${authorization.authorizationId}" covers version "${authorization.versionId}" instead of "${version.versionId}".`,
+    );
+  }
+  if (!isSameDeliverableScope(authorization.scope, version.scope)) {
+    throw new Error(
+      `Release authorization "${authorization.authorizationId}" is outside version "${version.versionId}" scope; expected the same tenant, workspace, and deal.`,
     );
   }
   if (authorization.actorKind !== "human") {

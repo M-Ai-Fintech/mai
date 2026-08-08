@@ -13,6 +13,7 @@ import {
   type OpaqueCursor,
   parseAggregateVersion,
 } from "../../platform/api/v1.ts";
+import type { Clock } from "../../platform/persistence/idempotency.ts";
 import type { JobInputVersionReference } from "../../platform/jobs/v1.ts";
 import type {
   Deliverable,
@@ -20,10 +21,12 @@ import type {
   DeliverableVersion,
   ReleaseAuthorization,
 } from "../../deliverables/model.ts";
-import { isExportFormat, isReleasePurpose } from "../../deliverables/model.ts";
 import { deriveDeliverableIdempotencyKey } from "../../deliverables/jobs.ts";
-import { scopeContainsRecipient } from "../../deliverables/recipients.ts";
-import { IdempotencyConflictError } from "../../platform/persistence/v1.ts";
+import { validateDeliverableRelease } from "../../deliverables/preflight.ts";
+import {
+  IdempotencyConflictError,
+  payloadDigest,
+} from "../../platform/persistence/v1.ts";
 import type {
   DeliverableId,
   DeliverableVersionId,
@@ -121,11 +124,14 @@ export interface DeliverableCommandInput {
   readonly payload: Readonly<Record<string, unknown>>;
 }
 
+const SYSTEM_CLOCK: Clock = { now: () => new Date() };
+
 export class DeliverablesV1Application {
   constructor(
     private readonly authorization: DeliverablesAuthorizationPort,
     private readonly reads: DeliverablesReadPort,
     private readonly scheduler: DeliverableCommandScheduler,
+    private readonly clock: Clock = SYSTEM_CLOCK,
   ) {}
 
   async read(
@@ -175,7 +181,11 @@ export class DeliverablesV1Application {
       value: {
         deliverables,
         ...(deliverables.length === limit
-          ? { nextCursor: encodeCursor(deliverables.at(-1)!.deliverableId) }
+          ? {
+            nextCursor: encodeDeliverableCursor(
+              deliverables.at(-1)!.deliverableId,
+            ),
+          }
           : {}),
       },
     };
@@ -242,7 +252,7 @@ export class DeliverablesV1Application {
         ...input,
         context,
         scope,
-        payloadDigest: await digest(input.payload),
+        payloadDigest: await payloadDigest(input.payload),
         inputVersionReferences: [{
           aggregateType: "DeliverableVersion",
           aggregateId: input.targetId,
@@ -280,59 +290,29 @@ export class DeliverablesV1Application {
     version: DeliverableVersion,
     input: DeliverableCommandInput,
   ): Promise<DeliverablesApiResult<never> | undefined> {
-    const releaseId = payloadText(input.payload, "releaseAuthorizationId");
-    if (releaseId === undefined) {
-      return invalidTransition(
-        context,
-        "A version-specific release authorization is required before export or distribution.",
-      );
-    }
-    const authorization = await this.reads.findReleaseAuthorization(
-      scope,
-      version.versionId,
-      releaseId,
-    );
-    if (authorization === undefined) {
-      return invalidTransition(
-        context,
-        "The release authorization is missing or does not cover this version.",
-      );
-    }
-    if (
-      authorization.expiresAt !== undefined &&
-      authorization.expiresAt <= new Date()
-    ) {
-      return invalidTransition(
-        context,
-        "The release authorization has expired.",
-      );
-    }
-    if (input.action === "export") {
-      const format = payloadText(input.payload, "format");
-      if (
-        format === undefined || !isExportFormat(format) ||
-        !authorization.approvedFormats.includes(format)
-      ) {
-        return invalidTransition(
-          context,
-          "The requested export format is not release-authorized.",
-        );
-      }
+    if (input.action !== "export" && input.action !== "distribute") {
       return undefined;
     }
-    const recipientId = payloadText(input.payload, "recipientId");
-    const purpose = payloadText(input.payload, "purpose");
-    if (
-      recipientId === undefined || purpose === undefined ||
-      !isReleasePurpose(purpose) ||
-      !scopeContainsRecipient(authorization.audience, recipientId, purpose)
-    ) {
-      return invalidTransition(
-        context,
-        "The recipient and purpose are outside the release authorization scope.",
-      );
-    }
-    return undefined;
+    const failure = await validateDeliverableRelease({
+      action: input.action,
+      scope,
+      version,
+      payload: input.payload,
+      findAuthorization: (lookupScope, versionId, authorizationId) =>
+        this.reads.findReleaseAuthorization(
+          lookupScope,
+          versionId,
+          authorizationId,
+        ),
+      now: () => this.clock.now(),
+    });
+    if (failure === undefined) return undefined;
+    const message = failure === "missing_authorization"
+      ? "The release authorization is missing or does not cover this version."
+      : failure === "format"
+      ? "The requested export format is not release-authorized."
+      : "The recipient and purpose are outside the release authorization scope.";
+    return invalidTransition(context, message);
   }
 }
 
@@ -341,10 +321,6 @@ export function encodeDeliverableCursor(
 ): OpaqueCursor {
   return btoa(deliverableId).replaceAll("=", "").replaceAll("+", "-")
     .replaceAll("/", "_") as OpaqueCursor;
-}
-
-function encodeCursor(deliverableId: DeliverableId): OpaqueCursor {
-  return encodeDeliverableCursor(deliverableId);
 }
 
 function scopeFromContext(
@@ -358,17 +334,6 @@ function scopeFromContext(
     workspaceId: context.workspaceId,
     dealId: context.dealId,
   };
-}
-
-async function digest(
-  payload: Readonly<Record<string, unknown>>,
-): Promise<string> {
-  const bytes = new TextEncoder().encode(JSON.stringify(payload));
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(
-    new Uint8Array(hash),
-    (item) => item.toString(16).padStart(2, "0"),
-  ).join("");
 }
 
 function validationScopeError(
@@ -479,12 +444,4 @@ function idempotencyConflict(
       retryable: true,
     }),
   };
-}
-
-function payloadText(
-  payload: Readonly<Record<string, unknown>>,
-  field: string,
-): string | undefined {
-  const value = payload[field];
-  return typeof value === "string" && value.trim() ? value : undefined;
 }

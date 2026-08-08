@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import {
   assertDistributionAuthorized,
   assertExportAuthorized,
@@ -85,17 +85,126 @@ Deno.test("distribution authorization is version, purpose, and recipient scoped"
   );
 });
 
+Deno.test("release authorization cannot cross scope, version, format, or expiry", () => {
+  const version = approvedVersion();
+  const authorization = releaseAuthorization(version, "actor_owner");
+  assertThrows(
+    () =>
+      assertExportAuthorized(
+        { ...version, scope: otherScope() },
+        authorization,
+        "pdf",
+        now(),
+      ),
+    Error,
+    "scope",
+  );
+  assertThrows(
+    () =>
+      assertExportAuthorized(
+        {
+          ...version,
+          versionId: required(
+            "delivver_diligence-v2",
+            parseDeliverableVersionId,
+          ),
+        },
+        authorization,
+        "pdf",
+        now(),
+      ),
+    Error,
+    "covers version",
+  );
+  assertThrows(
+    () => assertExportAuthorized(version, authorization, "docx", now()),
+    Error,
+    "format",
+  );
+  assertThrows(
+    () =>
+      assertDistributionAuthorized(
+        version,
+        authorization,
+        "actor_reviewer",
+        "client_review",
+        "pdf",
+        now(),
+      ),
+    Error,
+    "purpose",
+  );
+  assertThrows(
+    () =>
+      assertExportAuthorized(
+        {
+          ...version,
+          releaseState: "authorized" as const,
+        },
+        { ...authorization, expiresAt: now("2026-08-07T13:00:00.000Z") },
+        "pdf",
+        now(),
+      ),
+    Error,
+    "not current",
+  );
+});
+
+Deno.test("recording a release authorization requires human authority", () => {
+  const version = approvedVersion();
+  const authorization = releaseAuthorization(version, "actor_owner");
+  assertThrows(
+    () =>
+      recordReleaseAuthorization(
+        { ...version, releaseState: "pending" as const },
+        { ...authorization, actorKind: "agent" as const },
+      ),
+    Error,
+    "human",
+  );
+});
+
+Deno.test("content approval rejects non-human authority", () => {
+  const version = approvedVersion();
+  assertThrows(
+    () =>
+      approveContent(
+        {
+          ...version,
+          preparationState: "in_review" as const,
+          contentApprovalState: "pending" as const,
+        },
+        {
+          approvalId: "approval_agent-attempt",
+          actorId: version.createdBy,
+          actorKind: "agent",
+          decision: "approved",
+          decidedAt: now(),
+        },
+      ),
+    Error,
+    "human",
+  );
+});
+
 Deno.test("distribution receipts retry a retryable failure and preserve idempotency", async () => {
   const store = new MemoryReceiptStore();
   const transport = new RetryOnceTransport();
-  const service = new DistributionReceiptService(store, transport);
+  const version = approvedVersion();
+  const authorization = releaseAuthorization(version, "actor_owner");
+  const service = new DistributionReceiptService(store, transport, {
+    now: () => now(),
+  });
   const request = {
     receiptId: "receipt_diligence-v1",
     exportId: "export_diligence-v1-pdf",
     recipientId: "actor_reviewer",
     purpose: "committee_review" as const,
+    format: "pdf" as const,
     idempotencyKey: "idem_diligence-receipt",
     nextAttemptAt: now("2026-08-07T14:05:00.000Z"),
+    version,
+    authorization,
   };
 
   const first = await service.attempt(request);
@@ -106,6 +215,11 @@ Deno.test("distribution receipts retry a retryable failure and preserve idempote
   assertEquals(transport.calls, 2);
   assertEquals((await service.attempt(request)).state, "sent");
   assertEquals(transport.calls, 2);
+  await assertRejects(
+    () => service.attempt({ ...request, idempotencyKey: "idem_other-receipt" }),
+    Error,
+    "different idempotency key",
+  );
 });
 
 class MemoryReceiptStore implements ReceiptStore {
@@ -233,4 +347,12 @@ function required<T>(
 
 function now(value = "2026-08-07T14:00:00.000Z"): Date {
   return new Date(value);
+}
+
+function otherScope(): DeliverableVersion["scope"] {
+  return {
+    tenantId: required("tenant_other", parseTenantId),
+    workspaceId: required("workspace_other", parseWorkspaceId),
+    dealId: required("deal_other", parseDealId),
+  };
 }

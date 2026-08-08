@@ -4,7 +4,15 @@ import {
   type ReceiptOutcome,
   transitionReceipt,
 } from "./receipts.ts";
-import type { DeliveryReceipt, ReleasePurpose } from "./model.ts";
+import { assertDistributionAuthorized } from "./authorization.ts";
+import type {
+  DeliverableVersion,
+  DeliveryReceipt,
+  ExportFormat,
+  ReleaseAuthorization,
+  ReleasePurpose,
+} from "./model.ts";
+import type { Clock } from "../platform/persistence/idempotency.ts";
 
 export interface DistributionTransport {
   deliver(input: {
@@ -29,6 +37,7 @@ export class DistributionReceiptService {
   constructor(
     private readonly receipts: ReceiptStore,
     private readonly transport: DistributionTransport,
+    private readonly clock: Clock,
   ) {}
 
   async attempt(input: {
@@ -36,8 +45,11 @@ export class DistributionReceiptService {
     readonly exportId: string;
     readonly recipientId: string;
     readonly purpose: ReleasePurpose;
+    readonly format: ExportFormat;
     readonly idempotencyKey: string;
     readonly nextAttemptAt: Date;
+    readonly version: DeliverableVersion;
+    readonly authorization: ReleaseAuthorization;
   }): Promise<DeliveryReceipt> {
     const existing = await this.receipts.find(
       input.exportId,
@@ -53,6 +65,14 @@ export class DistributionReceiptService {
     if (existing !== undefined && existing.state !== "retry_scheduled") {
       return existing;
     }
+    assertDistributionAuthorized(
+      input.version,
+      input.authorization,
+      input.recipientId,
+      input.purpose,
+      input.format,
+      this.clock.now(),
+    );
     const receipt = existing ?? createDeliveryReceipt(input);
     if (existing === undefined) await this.receipts.insert(receipt);
     try {

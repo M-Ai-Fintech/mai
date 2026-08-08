@@ -38,6 +38,7 @@ import type {
   SourceSnapshot,
   StaleMark,
 } from "./model.ts";
+import { isSameDeliverableScope } from "./model.ts";
 
 export interface DeliverableExportInput {
   readonly exportId: string;
@@ -195,6 +196,11 @@ export class PostgresDeliverablesRepository implements DeliverablesRepository {
     authorization: ReleaseAuthorization,
     scope: DeliverableScope,
   ): Promise<void> {
+    if (!isSameDeliverableScope(authorization.scope, scope)) {
+      throw new Error(
+        `Release authorization "${authorization.authorizationId}" scope does not match the append scope; expected the same tenant, workspace, and deal.`,
+      );
+    }
     await transaction.query(releaseAuthorizationInsertSql(), [
       authorization.authorizationId,
       authorization.versionId,

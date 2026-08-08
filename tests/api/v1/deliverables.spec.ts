@@ -39,6 +39,7 @@ import {
   parseDeliverableId,
   parseDeliverableVersionId,
 } from "../../../src/deliverables/ids.ts";
+import { IdempotencyConflictError } from "../../../src/platform/persistence/v1.ts";
 
 Deno.test("deliverables v1 reads are scoped, authorized, etagged, and paginated", async () => {
   const first = fixtureVersion("delivver_diligence-v1", 1);
@@ -127,6 +128,67 @@ Deno.test("deliverables v1 export commands require approved current versions and
   );
   assertEquals(missingHeaders.status, 422);
   assertEquals((await missingHeaders.json()).error.code, "VALIDATION_FAILED");
+});
+
+Deno.test("deliverables v1 retries replay one job and changed payloads conflict", async () => {
+  const version = fixtureVersion("delivver_diligence-v1", 1);
+  const scheduler = new IdempotentDeliverableScheduler();
+  const application = new DeliverablesV1Application(
+    new RecordingAuthorizationPort(true),
+    new FakeDeliverablesReadPort([], [version]),
+    scheduler,
+  );
+  const key = await deriveDeliverableIdempotencyKey({
+    actorId: context().actorId,
+    commandType: "deliverables.export",
+    targetType: "DeliverableVersion",
+    targetId: version.versionId,
+  });
+  const headers = { "If-Match": '"v4"', "Idempotency-Key": key };
+  const path = "/api/v1/deliverables/" + version.versionId + "/exports";
+  const first = await route(
+    application,
+    path,
+    "POST",
+    {
+      format: "pdf",
+      releaseAuthorizationId: "release_diligence-v1",
+      requestNote: "same-command",
+    },
+    headers,
+  );
+  const replay = await route(
+    application,
+    path,
+    "POST",
+    {
+      requestNote: "same-command",
+      releaseAuthorizationId: "release_diligence-v1",
+      format: "pdf",
+    },
+    headers,
+  );
+  assertEquals(first.status, 202);
+  assertEquals(replay.status, 202);
+  assertEquals(
+    (await first.json()).data.jobId,
+    (await replay.json()).data.jobId,
+  );
+  assertEquals(scheduler.logicalJobs, 1);
+
+  const changed = await route(
+    application,
+    path,
+    "POST",
+    {
+      format: "pdf",
+      releaseAuthorizationId: "release_diligence-v1",
+      requestNote: "changed-command",
+    },
+    headers,
+  );
+  assertEquals(changed.status, 409);
+  assertEquals((await changed.json()).error.code, "IDEMPOTENCY_CONFLICT");
 });
 
 async function route(
@@ -246,6 +308,42 @@ class RecordingDeliverableScheduler {
         operationId: required("op_diligence-export", parseOperationId),
       },
     });
+  }
+}
+
+class IdempotentDeliverableScheduler {
+  private first: DeliverableScheduleInput | undefined;
+  calls = 0;
+
+  get logicalJobs(): number {
+    return this.first === undefined ? 0 : 1;
+  }
+
+  schedule(input: DeliverableScheduleInput) {
+    this.calls += 1;
+    if (this.first !== undefined) {
+      if (this.first.payloadDigest !== input.payloadDigest) {
+        return Promise.reject(
+          new IdempotencyConflictError(input.idempotencyKey),
+        );
+      }
+      return Promise.resolve({
+        status: "replayed" as const,
+        job: this.firstJob(),
+      });
+    }
+    this.first = input;
+    return Promise.resolve({
+      status: "accepted" as const,
+      job: this.firstJob(),
+    });
+  }
+
+  private firstJob() {
+    return {
+      jobId: required("job_diligence-export", parseJobId),
+      operationId: required("op_diligence-export", parseOperationId),
+    };
   }
 }
 

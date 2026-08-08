@@ -190,7 +190,14 @@ export function versionSelectSql(): string {
     version.content, version.classifications,
     version.preparation_state AS "preparationState",
     version.content_approval_state AS "contentApprovalState",
-    version.release_state AS "releaseState", version.freshness_state AS "freshnessState",
+    version.release_state AS "releaseState",
+    CASE WHEN EXISTS (
+      SELECT 1 FROM deliverables.stale_marks AS stale
+      WHERE stale.tenant_id = version.tenant_id
+        AND stale.workspace_id = version.workspace_id
+        AND stale.deal_id = version.deal_id
+        AND stale.version_id = version.version_id
+    ) THEN 'stale' ELSE version.freshness_state END AS "freshnessState",
     version.aggregate_version AS "aggregateVersion", version.review_submitted_by AS "reviewSubmittedBy",
     version.created_by AS "createdBy",
     version.created_at AS "createdAt", version.approved_at AS "approvedAt",
