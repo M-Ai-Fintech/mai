@@ -23,6 +23,10 @@ import {
 import { type ClosingV1RouteDependencies } from "./v1/closing.ts";
 import { handleClosingV1Route } from "./v1/closing_routes.ts";
 import {
+  handleNegotiationV1Route,
+  type NegotiationV1RouteDependencies,
+} from "./v1/negotiation_routes.ts";
+import {
   type DealGovernanceV1RouteDependencies,
   handleDealGovernanceV1Route,
 } from "./v1/deal_governance_routes.ts";
@@ -33,6 +37,10 @@ import {
   RuntimeReadiness,
 } from "../platform/operations/health.ts";
 import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
+import {
+  createExecutableNegotiationComposition,
+  type ExecutableNegotiationConfig,
+} from "./negotiation_executable_composition.ts";
 
 const PORT = 8000;
 
@@ -44,6 +52,10 @@ export interface WaveGRouteDependencies {
   readonly governance?: DealGovernanceV1RouteDependencies;
 }
 
+export interface WaveHRouteDependencies {
+  readonly negotiation?: NegotiationV1RouteDependencies;
+}
+
 export interface ApiServerOptions {
   readonly dealManagement?:
     | DealManagementComposition
@@ -51,6 +63,7 @@ export interface ApiServerOptions {
     | DealManagementCompositionResult;
   readonly repository?: DealRepository;
   readonly waveG?: WaveGRouteDependencies;
+  readonly waveH?: WaveHRouteDependencies;
 }
 
 export interface ApiServerRouter {
@@ -58,6 +71,7 @@ export interface ApiServerRouter {
   readonly repository: DealRepository;
   readonly readiness: RuntimeReadiness;
   readonly waveG: WaveGRouteDependencies;
+  readonly waveH: WaveHRouteDependencies;
   handle(request: Request): Promise<Response>;
 }
 
@@ -66,7 +80,7 @@ function corsHeaders(): Headers {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id",
+      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id, X-Deal-Id",
     "Access-Control-Expose-Headers": "ETag, X-Correlation-Id",
   });
 }
@@ -91,6 +105,7 @@ async function routeRequest(
   repository: DealRepository,
   dealManagement: DealManagementCompositionResult,
   waveG: WaveGRouteDependencies,
+  waveH: WaveHRouteDependencies,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
@@ -103,6 +118,7 @@ async function routeRequest(
       repository,
       dealManagement,
       waveG,
+      waveH,
       headers,
     );
   } catch (error: unknown) {
@@ -115,6 +131,7 @@ async function routedResponse(
   repository: DealRepository,
   dealManagement: DealManagementCompositionResult,
   waveG: WaveGRouteDependencies,
+  waveH: WaveHRouteDependencies,
   headers: Headers,
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
@@ -125,9 +142,26 @@ async function routedResponse(
     headers,
   );
   if (dealManagementResponse) return dealManagementResponse;
+  const waveHResponse = await routeWaveHRequest(request, waveH, headers);
+  if (waveHResponse !== undefined) return waveHResponse;
   const waveGResponse = await routeWaveGRequest(request, waveG, headers);
   if (waveGResponse !== undefined) return waveGResponse;
   return await nonDealResponse(request, repository, headers);
+}
+
+async function routeWaveHRequest(
+  request: Request,
+  dependencies: WaveHRouteDependencies,
+  headers: Headers,
+): Promise<Response | undefined> {
+  const path = new URL(request.url).pathname;
+  if (!hasRoutePrefix(path, "/api/v1/negotiation")) return undefined;
+  if (dependencies.negotiation === undefined) return waveHUnavailable(headers);
+  return withCorsHeaders(
+    await handleNegotiationV1Route(request, dependencies.negotiation) ??
+      notFoundResponse(),
+    headers,
+  );
 }
 
 async function routeWaveGRequest(
@@ -202,6 +236,14 @@ function hasRoutePrefix(path: string, prefix: string): boolean {
 function waveGUnavailable(headers: Headers): Response {
   return jsonResponse(
     { error: "Wave G route is not configured." },
+    headers,
+    503,
+  );
+}
+
+function waveHUnavailable(headers: Headers): Response {
+  return jsonResponse(
+    { error: "Wave H route is not configured." },
     headers,
     503,
   );
@@ -287,12 +329,14 @@ export function createApiServer(
     repository,
     readiness,
     waveG: options.waveG ?? {},
+    waveH: options.waveH ?? {},
     handle: (request) =>
       routeRequest(
         request,
         repository,
         dealManagement,
         options.waveG ?? {},
+        options.waveH ?? {},
         readiness,
       ),
   };
@@ -318,10 +362,39 @@ export function startServer(options?: ApiServerOptions): Deno.HttpServer {
 /** Creates the exact production router used by the executable entry point. */
 export function createExecutableApiServer(
   environment?: Readonly<Record<string, string | undefined>>,
+  options: {
+    readonly dealManagement?: ApiServerOptions["dealManagement"];
+    readonly waveH?: WaveHRouteDependencies;
+    readonly negotiation?: ExecutableNegotiationConfig;
+  } = {},
 ): ApiServerRouter {
-  return createApiServer({
-    dealManagement: loadExecutableDealManagement(environment),
-  });
+  let dealManagement: ApiServerOptions["dealManagement"];
+  try {
+    dealManagement = options.dealManagement ??
+      loadExecutableDealManagement(environment);
+  } catch (error) {
+    throw error;
+  }
+  if (options.waveH !== undefined) {
+    return createApiServer({ dealManagement, waveH: options.waveH });
+  }
+  const resolved = resolveDealManagement(dealManagement);
+  if (resolved.kind !== "configured") {
+    return createApiServer({ dealManagement, waveH: {} });
+  }
+  try {
+    const negotiation = createExecutableNegotiationComposition({
+      deal: resolved.composition,
+      config: options.negotiation,
+    });
+    return createApiServer({
+      dealManagement,
+      waveH: { negotiation },
+    });
+  } catch (error) {
+    console.error("[API Server] Negotiation composition unavailable", error);
+    return createApiServer({ dealManagement, waveH: {} });
+  }
 }
 
 if (import.meta.main) startServer();

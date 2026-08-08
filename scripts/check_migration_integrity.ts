@@ -14,6 +14,7 @@ import { identityAccessMigrations } from "../src/identity_access/migrations/inde
 import { notificationMigrations } from "../src/notifications/migrations/index.ts";
 import { organizationRegistryMigrations } from "../src/organization_registry/migrations/index.ts";
 import { workManagementMigrations } from "../src/work_management/migrations/index.ts";
+import { negotiationMigrations } from "../src/negotiation/migrations/index.ts";
 
 export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
   "platform-0001-idempotency":
@@ -84,6 +85,10 @@ export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
     "f2f7a4358a192818e0d6edc54e29f33657b8f485b05cf4d18d76293b6b8b3178",
   "work_management-0010-authority-denials":
     "70bcce621d07a304d1a5d5776a59608d106dd9b4c297cad03da1b0f5cd03f8f4",
+  "negotiation-0001-control":
+    "f86562c3ecab3e6b05fda6f2b8a8c410d201a06e8fc511e307ea36c5ae12632e",
+  "negotiation-0002-evidence":
+    "2762879186e229bd585ef968fe354ab44c2578f17086964a48d55a06eed28ec2",
 };
 
 export function currentMigrationCatalog(): readonly ContextMigration[] {
@@ -102,6 +107,7 @@ export function currentMigrationCatalog(): readonly ContextMigration[] {
     ...notificationMigrations,
     ...organizationRegistryMigrations,
     ...workManagementMigrations,
+    ...negotiationMigrations,
   ];
 }
 
