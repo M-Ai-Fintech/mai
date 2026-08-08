@@ -8,6 +8,10 @@ import type {
 } from "../../src/platform/api/v1.ts";
 import { InMemoryClosingUnitOfWork } from "../../src/closing/repository.ts";
 import { ClosingService } from "../../src/closing/service.ts";
+import {
+  AllowingClosingAuthorization,
+  closingContext,
+} from "./authorization_support.ts";
 
 const scope = {
   tenantId: "tenant_alpha" as TenantId,
@@ -19,6 +23,7 @@ const actor: ActorReference = {
   kind: "human",
   state: "active",
 };
+const context = closingContext(scope, actor);
 
 Deno.test("completion records irreversible evidence and blocks later mutation", async () => {
   const service = new ClosingService({
@@ -40,8 +45,10 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
             "tenant_alpha|workspace_main|deal_solar|actor_alice|approve_approval_request|approval_test|idem_test",
         }),
     },
+    authorization: new AllowingClosingAuthorization(),
   });
   const created = await service.createWorkspace({
+    context,
     scope,
     closingWorkspaceId: "closing_solar",
     confirmationEnabled: true,
@@ -58,6 +65,7 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
   let version = Number(created.workspace.version);
   for (const [index, to] of transitions.entries()) {
     await service.transition({
+      context,
       scope,
       workspaceId: "closing_solar",
       actor,
@@ -68,6 +76,7 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
     version += 1;
   }
   const approved = await service.approveReadiness({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -79,6 +88,7 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
     },
   });
   const begun = await service.beginClosing({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -90,6 +100,7 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
     },
   });
   const completed = await service.confirmCompletion({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -110,6 +121,7 @@ Deno.test("completion records irreversible evidence and blocks later mutation", 
   await assertRejects(
     () =>
       service.addBlocker({
+        context,
         scope,
         workspaceId: "closing_solar",
         actor,

@@ -68,7 +68,8 @@ export class ClosingV1Application {
     if (authenticated.actor.id === authenticated.context.actorId) {
       return authenticated.actor;
     }
-    throw new ClosingRequestError(
+    throw new ClosingError(
+      "SCOPE_MISMATCH",
       `Authenticated actor "${authenticated.context.actorId}" does not match the supplied actor reference; expected one identity.`,
     );
   }
@@ -80,6 +81,7 @@ export class ClosingV1Application {
     idempotencyKey: IdempotencyKey,
   ): ClosingCommandInput {
     return {
+      context: authenticated.context,
       scope: this.scopeFor(authenticated.context),
       workspaceId,
       actor: this.validateActor(authenticated),
@@ -150,8 +152,12 @@ export class ClosingV1Application {
     workspaceId: string,
   ): Promise<ClosingWorkspace | undefined> {
     return this.service.getWorkspace(
-      this.scopeFor(authenticated.context),
-      workspaceId,
+      {
+        context: authenticated.context,
+        scope: this.scopeFor(authenticated.context),
+        workspaceId,
+        actor: this.validateActor(authenticated),
+      },
     );
   }
 
@@ -162,6 +168,7 @@ export class ClosingV1Application {
     confirmationEnabled?: boolean,
   ): Promise<ClosingCommandResult> {
     return this.service.createWorkspace({
+      context: authenticated.context,
       scope: this.scopeFor(authenticated.context),
       closingWorkspaceId,
       actor: this.validateActor(authenticated),
@@ -256,6 +263,7 @@ function apiErrorCode(
   ) return "INVALID_TRANSITION";
   if (
     error.code === "SCOPE_MISMATCH" ||
+    error.code === "AUTHORIZATION_DENIED" ||
     error.code === "HUMAN_AUTHORITY_REQUIRED" ||
     error.code === "SEPARATION_OF_DUTIES" ||
     error.code === "IRREVERSIBLE_CONFIRMATION"

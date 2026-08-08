@@ -25,6 +25,10 @@ import type {
   TenantId,
   WorkspaceId,
 } from "../../src/platform/api/v1.ts";
+import {
+  AllowingClosingAuthorization,
+  closingContext,
+} from "./authorization_support.ts";
 
 const databaseUrl = postgresIntegrationTestDatabaseUrl();
 const scope = {
@@ -37,6 +41,7 @@ const actor: ActorReference = {
   kind: "human",
   state: "active",
 };
+const context = closingContext(scope, actor);
 
 Deno.test({
   name: "PostgreSQL Closing repository persists and replays an exact command",
@@ -61,14 +66,17 @@ Deno.test({
         unitOfWork,
         effects: new PostgresClosingEffects(),
         clock: { now: () => "2026-08-07T12:00:00.000Z" },
+        authorization: new AllowingClosingAuthorization(),
       });
       const first = await service.createWorkspace({
+        context,
         scope,
         closingWorkspaceId: "closing_postgres",
         actor,
         idempotencyKey: "idem_closing-postgres-create" as IdempotencyKey,
       });
       const replay = await service.createWorkspace({
+        context,
         scope,
         closingWorkspaceId: "closing_postgres",
         actor,

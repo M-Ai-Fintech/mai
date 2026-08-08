@@ -15,6 +15,10 @@ import type {
   ClosingEffect,
   ClosingEffects,
 } from "../../src/closing/effects.ts";
+import {
+  AllowingClosingAuthorization,
+  closingContext,
+} from "./authorization_support.ts";
 
 const scope = {
   tenantId: "tenant_alpha" as TenantId,
@@ -26,6 +30,7 @@ const actor: ActorReference = {
   kind: "human",
   state: "active",
 };
+const context = closingContext(scope, actor);
 
 class RecordingEffects implements ClosingEffects {
   readonly values: ClosingEffect[] = [];
@@ -67,12 +72,14 @@ function service(
     unitOfWork,
     effects,
     authority: fakeAuthority,
+    authorization: new AllowingClosingAuthorization(),
     clock: { now: () => "2026-08-07T12:00:00.000Z" },
   });
 }
 
 function create(serviceValue: ClosingService, key = "idem_create-1") {
   return serviceValue.createWorkspace({
+    context,
     scope,
     closingWorkspaceId: "closing_solar",
     actor,
@@ -85,6 +92,7 @@ Deno.test("closing service persists a human command and replays its exact result
   const closing = service(new InMemoryClosingUnitOfWork(), effects);
   const created = await create(closing);
   const first = await closing.transition({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -93,6 +101,7 @@ Deno.test("closing service persists a human command and replays its exact result
     to: "preparing_signing",
   });
   const replay = await closing.transition({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -119,7 +128,15 @@ Deno.test("closing service rolls back an in-memory command when effects fail", a
     new FailingEffects(),
   );
   await assertRejects(() => create(closing), Error, "effect unavailable");
-  assertEquals(await closing.getWorkspace(scope, "closing_solar"), undefined);
+  assertEquals(
+    await closing.getWorkspace({
+      context,
+      scope,
+      workspaceId: "closing_solar",
+      actor,
+    }),
+    undefined,
+  );
 });
 
 Deno.test("confirmation is feature-gated before irreversible completion", async () => {
@@ -135,6 +152,7 @@ Deno.test("confirmation is feature-gated before irreversible completion", async 
   let version = 1;
   for (const to of transitions) {
     await closing.transition({
+      context,
       scope,
       workspaceId: "closing_solar",
       actor,
@@ -145,6 +163,7 @@ Deno.test("confirmation is feature-gated before irreversible completion", async 
     version += 1;
   }
   const readiness = await closing.approveReadiness({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -156,6 +175,7 @@ Deno.test("confirmation is feature-gated before irreversible completion", async 
     },
   });
   const begun = await closing.beginClosing({
+    context,
     scope,
     workspaceId: "closing_solar",
     actor,
@@ -169,6 +189,7 @@ Deno.test("confirmation is feature-gated before irreversible completion", async 
   await assertRejects(
     () =>
       closing.confirmCompletion({
+        context,
         scope,
         workspaceId: "closing_solar",
         actor,

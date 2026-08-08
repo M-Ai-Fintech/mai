@@ -10,6 +10,12 @@ import {
 } from "./conditions.ts";
 import { completionRecordId, type ConditionId } from "./ids.ts";
 import {
+  CLOSING_ACTION,
+  CLOSING_RESOURCE,
+  closingResource,
+  closingWorkspaceResource,
+} from "./authorization.ts";
+import {
   type ChecklistRequirement,
   ClosingError,
   type ClosingScope,
@@ -19,12 +25,6 @@ import {
 } from "./model.ts";
 import { approveClosingReadiness } from "./readiness.ts";
 import type { ClosingCommandResult } from "./repository.ts";
-import {
-  acceptSignatureEvidence,
-  completeSignaturePackage,
-  createSignatureEvidence,
-  createSignaturePackage,
-} from "./signatures.ts";
 import {
   assertClosingTransition,
   type ClosingStatus,
@@ -44,18 +44,18 @@ import {
   replaceBlocker,
   replaceCondition,
   replaceConditionByWaiver,
-  replaceSignatureEvidence,
-  replaceSignaturePackage,
   replaceWaiver,
 } from "./service_support.ts";
 import type {
   ClosingAuthorityCommandInput,
   ClosingCommandInput,
+  ClosingReadInput,
 } from "./service.ts";
-import { ClosingServiceRuntime } from "./service_runtime.ts";
+import { ClosingSignatureOperations } from "./service_signature_operations.ts";
 
-export class ClosingServiceOperations extends ClosingServiceRuntime {
+export class ClosingServiceOperations extends ClosingSignatureOperations {
   async createWorkspace(input: {
+    readonly context: ClosingCommandInput["context"];
     readonly scope: ClosingScope;
     readonly closingWorkspaceId: string;
     readonly actor: ActorReference;
@@ -64,6 +64,15 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
   }): Promise<ClosingCommandResult> {
     assertHumanActor(input.actor, "create a closing workspace");
     const now = this.dependencies.clock.now();
+    await this.authorize({
+      context: input.context,
+      actor: input.actor,
+      scope: input.scope,
+      resource: closingWorkspaceResource(input.closingWorkspaceId),
+      action: CLOSING_ACTION.createWorkspace,
+      humanOnly: true,
+      now,
+    });
     const workspace = createClosingWorkspace({
       closingWorkspaceId: input.closingWorkspaceId,
       scope: input.scope,
@@ -93,12 +102,19 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
     });
   }
 
-  getWorkspace(
-    scope: ClosingScope,
-    workspaceId: string,
+  async getWorkspace(
+    input: ClosingReadInput,
   ): Promise<ClosingWorkspace | undefined> {
+    await this.authorize({
+      context: input.context,
+      actor: input.actor,
+      scope: input.scope,
+      resource: closingWorkspaceResource(input.workspaceId),
+      action: CLOSING_ACTION.readWorkspace,
+      now: this.dependencies.clock.now(),
+    });
     return this.dependencies.unitOfWork.read((transaction) =>
-      transaction.find(scope, workspaceId)
+      transaction.find(input.scope, input.workspaceId)
     );
   }
 
@@ -121,11 +137,19 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
     requirement: ChecklistRequirement,
   ): Promise<ClosingCommandResult> {
     const normalized = createChecklistRequirement(requirement);
-    return this.mutate(input, "closing_add_requirement", {
-      requirement: normalized,
-    }, (workspace) => ({
-      requirements: [...workspace.requirements, normalized],
-    }));
+    return this.mutate(
+      input,
+      "closing_add_requirement",
+      {
+        requirement: normalized,
+      },
+      (workspace) => ({
+        requirements: [...workspace.requirements, normalized],
+      }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.requirement, normalized.requirementId),
+    );
   }
 
   addCondition(
@@ -140,6 +164,9 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
       (workspace) => ({
         conditions: [...workspace.conditions, condition],
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.condition, condition.conditionId),
     );
   }
 
@@ -150,16 +177,24 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
       readonly evidenceId: string;
     },
   ): Promise<ClosingCommandResult> {
-    return this.mutate(input, "closing_submit_evidence", {
-      conditionId,
-      evidence,
-    }, (workspace) => ({
-      conditions: replaceCondition(
-        workspace,
+    return this.mutate(
+      input,
+      "closing_submit_evidence",
+      {
         conditionId,
-        (condition) => submitConditionEvidence(condition, evidence),
-      ),
-    }));
+        evidence,
+      },
+      (workspace) => ({
+        conditions: replaceCondition(
+          workspace,
+          conditionId,
+          (condition) => submitConditionEvidence(condition, evidence),
+        ),
+      }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.conditionEvidence, evidence.evidenceId),
+    );
   }
 
   acceptConditionEvidence(
@@ -167,22 +202,30 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
     conditionId: ConditionId,
     evidenceId: string,
   ): Promise<ClosingCommandResult> {
-    return this.mutate(input, "closing_accept_evidence", {
-      conditionId,
-      evidenceId,
-    }, (workspace) => ({
-      conditions: replaceCondition(
-        workspace,
+    return this.mutate(
+      input,
+      "closing_accept_evidence",
+      {
         conditionId,
-        (condition) =>
-          acceptConditionEvidence(
-            condition,
-            evidenceId,
-            input.actor.id,
-            this.dependencies.clock.now(),
-          ),
-      ),
-    }));
+        evidenceId,
+      },
+      (workspace) => ({
+        conditions: replaceCondition(
+          workspace,
+          conditionId,
+          (condition) =>
+            acceptConditionEvidence(
+              condition,
+              evidenceId,
+              input.actor.id,
+              this.dependencies.clock.now(),
+            ),
+        ),
+      }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.conditionEvidence, evidenceId),
+    );
   }
 
   satisfyCondition(
@@ -205,6 +248,9 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
             ),
         ),
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.condition, conditionId),
     );
   }
 
@@ -225,6 +271,9 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
           (condition) => ({ ...condition, state: "waiver_proposed" }),
         ),
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.waiver, waiver.waiverId),
     );
   }
 
@@ -239,6 +288,9 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
       (workspace) => ({
         waivers: replaceWaiver(workspace, waiverId, confirmWaiverLegalReview),
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.waiver, waiverId),
     );
   }
 
@@ -246,17 +298,25 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
     input: ClosingAuthorityCommandInput,
     waiverId: string,
   ): Promise<ClosingCommandResult> {
-    return this.authorizedMutation(input, "closing_approve_waiver", {
-      waiverId,
-    }, (workspace, authority) => ({
-      waivers: replaceWaiver(workspace, waiverId, (waiver) =>
-        approveWaiver(
-          waiver,
-          authority.actor.id,
-          this.dependencies.clock.now(),
-        )),
-      conditions: replaceConditionByWaiver(workspace, waiverId, "waived"),
-    }));
+    return this.authorizedMutation(
+      input,
+      "closing_approve_waiver",
+      {
+        waiverId,
+      },
+      (workspace, authority) => ({
+        waivers: replaceWaiver(workspace, waiverId, (waiver) =>
+          approveWaiver(
+            waiver,
+            authority.actor.id,
+            this.dependencies.clock.now(),
+          )),
+        conditions: replaceConditionByWaiver(workspace, waiverId, "waived"),
+      }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.waiver, waiverId),
+    );
   }
 
   addBlocker(
@@ -271,6 +331,9 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
       (workspace) => ({
         blockers: [...workspace.blockers, blocker],
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.blocker, blocker.blockerId),
     );
   }
 
@@ -279,95 +342,44 @@ export class ClosingServiceOperations extends ClosingServiceRuntime {
     blockerId: string,
     resolution: string,
   ): Promise<ClosingCommandResult> {
-    return this.mutate(input, "closing_resolve_blocker", {
-      blockerId,
-      resolution,
-    }, (workspace) => ({
-      blockers: replaceBlocker(
-        workspace,
-        blockerId,
-        (blocker) =>
-          resolveBlocker(
-            blocker,
-            input.actor.id,
-            resolution,
-            this.dependencies.clock.now(),
-          ),
-      ),
-    }));
-  }
-
-  recordSignatureEvidence(
-    input: ClosingCommandInput,
-    evidenceInput: Parameters<typeof createSignatureEvidence>[0],
-  ): Promise<ClosingCommandResult> {
-    const evidence = createSignatureEvidence(evidenceInput);
     return this.mutate(
       input,
-      "closing_record_signature_evidence",
-      { evidence },
+      "closing_resolve_blocker",
+      {
+        blockerId,
+        resolution,
+      },
       (workspace) => ({
-        signatures: [...workspace.signatures, evidence],
+        blockers: replaceBlocker(
+          workspace,
+          blockerId,
+          (blocker) =>
+            resolveBlocker(
+              blocker,
+              input.actor.id,
+              resolution,
+              this.dependencies.clock.now(),
+            ),
+        ),
       }),
+      false,
+      true,
+      closingResource(CLOSING_RESOURCE.blocker, blockerId),
     );
-  }
-
-  acceptSignatureEvidence(
-    input: ClosingCommandInput,
-    evidenceId: string,
-  ): Promise<ClosingCommandResult> {
-    return this.mutate(input, "closing_accept_signature_evidence", {
-      evidenceId,
-    }, (workspace) => ({
-      signatures: replaceSignatureEvidence(
-        workspace,
-        evidenceId,
-        (evidence) =>
-          acceptSignatureEvidence(
-            evidence,
-            input.actor.id,
-            this.dependencies.clock.now(),
-          ),
-      ),
-    }));
-  }
-
-  createSignaturePackage(
-    input: ClosingCommandInput,
-    packageInput: Parameters<typeof createSignaturePackage>[0],
-  ): Promise<ClosingCommandResult> {
-    const signaturePackage = createSignaturePackage(packageInput);
-    return this.mutate(input, "closing_create_signature_package", {
-      signaturePackage,
-    }, (workspace) => ({
-      signaturePackages: [...workspace.signaturePackages, signaturePackage],
-    }), true);
-  }
-
-  completeSignaturePackage(
-    input: ClosingCommandInput,
-    packageId: string,
-  ): Promise<ClosingCommandResult> {
-    return this.mutate(input, "closing_complete_signature_package", {
-      packageId,
-    }, (workspace) => ({
-      signaturePackages: replaceSignaturePackage(
-        workspace,
-        packageId,
-        (signaturePackage) =>
-          completeSignaturePackage(
-            signaturePackage,
-            workspace.signatures,
-            this.dependencies.clock.now(),
-          ),
-      ),
-    }), true);
   }
 
   startReadinessReview(
     input: ClosingCommandInput,
   ): Promise<ClosingCommandResult> {
-    return this.transition({ ...input, to: "closing_review" });
+    return this.mutate(
+      input,
+      "closing_start_readiness_review",
+      { to: "closing_review" },
+      (workspace) => {
+        assertClosingTransition(workspace.status, "closing_review");
+        return { status: "closing_review" };
+      },
+    );
   }
 
   approveReadiness(

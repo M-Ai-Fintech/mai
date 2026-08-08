@@ -138,3 +138,43 @@ Deno.test("Closing consumes only an exact human authority proof binding", async 
     "does not match the exact scope",
   );
 });
+
+Deno.test("Closing rejects a valid proof when actor, scope, version, or target changes", async () => {
+  const protectedValue = await protectedCommand();
+  const resolver = {
+    resolve: () => Promise.resolve(protectedValue.evaluation),
+  };
+  const idempotency = parseIdempotencyKey("idem_closing-proof");
+  if (!idempotency.ok) throw new Error("test idempotency key should parse");
+  const base = {
+    protectedCommand: protectedValue.command,
+    resolver,
+    scope,
+    targetId: "closing_solar",
+    expectedVersion: 1,
+    commandType,
+    actorId: approver,
+    idempotencyKey: idempotency.value,
+    consumedAt: "2026-08-07T12:00:00.000Z",
+  };
+  await assertRejects(
+    () => consumeClosingAuthority({ ...base, actorId: actor("actor_other") }),
+    Error,
+  );
+  await assertRejects(
+    () =>
+      consumeClosingAuthority({
+        ...base,
+        scope: { ...scope, dealId: deal("deal_other") },
+      }),
+    Error,
+  );
+  await assertRejects(
+    () => consumeClosingAuthority({ ...base, expectedVersion: 2 }),
+    Error,
+  );
+  await assertRejects(
+    () => consumeClosingAuthority({ ...base, targetId: "closing_other" }),
+    Error,
+  );
+});

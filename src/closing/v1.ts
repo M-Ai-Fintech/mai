@@ -6,6 +6,7 @@
  * reaching into implementation modules.
  */
 export * from "./authority.ts";
+export * from "./authorization.ts";
 export * from "./blockers.ts";
 export * from "./conditions.ts";
 export * from "./effects.ts";

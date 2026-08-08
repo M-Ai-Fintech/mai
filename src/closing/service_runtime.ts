@@ -2,6 +2,17 @@ import {
   consumeClosingAuthority,
   type ConsumedClosingAuthority,
 } from "./authority.ts";
+import {
+  action,
+  type AllowedAuthorizationDecision,
+} from "../platform/authz/v1.ts";
+import {
+  authorizeClosingAction,
+  type ClosingAuthorizationInput,
+  type ClosingAuthorizationPort,
+  closingWorkspaceResource,
+  denyClosingAuthorization,
+} from "./authorization.ts";
 import { type ClosingEffects, NoopClosingEffects } from "./effects.ts";
 import { ClosingError, type ClosingWorkspace } from "./model.ts";
 import type { ClosingCommandResult, ClosingTransaction } from "./repository.ts";
@@ -26,6 +37,7 @@ export class ClosingServiceRuntime {
   protected readonly dependencies: ClosingServiceDependencies;
   protected readonly effects: ClosingEffects;
   protected readonly authority: ClosingAuthorityPort;
+  protected readonly authorization: ClosingAuthorizationPort;
 
   constructor(dependencies: ClosingServiceDependencies) {
     this.dependencies = dependencies;
@@ -33,6 +45,13 @@ export class ClosingServiceRuntime {
     this.authority = dependencies.authority ?? {
       consume: consumeClosingAuthority,
     };
+    this.authorization = dependencies.authorization ?? denyClosingAuthorization;
+  }
+
+  protected authorize(
+    input: ClosingAuthorizationInput,
+  ): Promise<AllowedAuthorizationDecision> {
+    return authorizeClosingAction(this.authorization, input);
   }
 
   protected mutate(
@@ -42,11 +61,13 @@ export class ClosingServiceRuntime {
     callback: (workspace: ClosingWorkspace) => WorkspaceChanges,
     withJob = false,
     invalidate = true,
+    resource = closingWorkspaceResource(input.workspaceId),
   ): Promise<ClosingCommandResult> {
     return this.runCommand(
       input,
       commandType,
       payload,
+      resource,
       async (transaction, workspace) => {
         const base = invalidate
           ? this.invalidateReadiness(workspace, commandType)
@@ -85,11 +106,13 @@ export class ClosingServiceRuntime {
     ) => WorkspaceChanges,
     withJob = false,
     invalidate = true,
+    resource = closingWorkspaceResource(input.workspaceId),
   ): Promise<ClosingCommandResult> {
     return this.runCommand(
       input,
       commandType,
       payload,
+      resource,
       async (transaction, workspace) => {
         const authority = await this.authority.consume({
           ...input.authority,
@@ -154,6 +177,7 @@ export class ClosingServiceRuntime {
     input: ClosingCommandInput,
     commandType: string,
     payload: Readonly<Record<string, unknown>>,
+    resource: ReturnType<typeof closingWorkspaceResource>,
     operation: (
       transaction: ClosingTransaction,
       workspace: ClosingWorkspace,
@@ -161,6 +185,15 @@ export class ClosingServiceRuntime {
   ): Promise<ClosingCommandResult> {
     assertHumanActor(input.actor, commandType);
     const now = this.dependencies.clock.now();
+    await this.authorize({
+      context: input.context,
+      actor: input.actor,
+      scope: input.scope,
+      resource,
+      action: action(commandType),
+      humanOnly: true,
+      now,
+    });
     const identity = await commandIdentity(
       input.scope,
       input.actor,
