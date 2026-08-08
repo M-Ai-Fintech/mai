@@ -49,3 +49,18 @@ Deno.test("health handler ignores unsupported routes and methods", () => {
     null,
   );
 });
+
+Deno.test("readiness enters a fail-closed draining state", async () => {
+  const readiness = new RuntimeReadiness("api");
+  readiness.setDatabaseState(true);
+  readiness.beginDrain();
+
+  const ready = handleHealthRequest(
+    new Request("http://localhost/health/ready"),
+    readiness,
+  );
+  assertEquals(ready?.status, 503);
+  assertEquals((await ready?.json()).state, "draining");
+  assertEquals(readiness.isAcceptingTraffic(), false);
+  assertEquals(readiness.live().state, "healthy");
+});

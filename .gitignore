@@ -4,6 +4,8 @@ node_modules/
 # Local cache
 .deno/
 .env
+infra/local/.env
+.local/
 
 # Generated outputs
 term_sheets/

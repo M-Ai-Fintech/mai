@@ -3,7 +3,10 @@ import {
   platformMigrations,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import {
   createPostgresIntegrationTestPool,
   ensureWorkManagementTestRoles,
@@ -24,7 +27,7 @@ Deno.test({
       await new PostgresMigrationRunner(pool).apply([
         ...platformMigrations,
         ...workManagementMigrations,
-      ]);
+      ], workManagementMigrationOptions());
       await resetPerformanceContext(pool);
       await seedRepresentativeData(pool, tenant, suffix);
       await pool.query("ANALYZE work_management.workstreams_current");
@@ -97,7 +100,11 @@ async function resetPerformanceContext(pool: import("pg").Pool): Promise<void> {
     RESTART IDENTITY CASCADE
   `);
   await pool.query(
-    `INSERT INTO work_management.membership_reconciliation_activation
+    `SELECT set_config(
+        'work_management.activation_writer',
+        md5(current_user || txid_current()::text ||
+          'work-management-activation-writer-v1'), true);
+      INSERT INTO work_management.membership_reconciliation_activation
       (activation_id, mode, unresolved_blocking_count, recorded_at)
       VALUES (TRUE, 'read_only', 0, now())`,
   );

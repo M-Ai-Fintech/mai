@@ -11,11 +11,19 @@ export class AIProvider {
    * returns a flag informing that it is operating in fallback/dry-run.
    */
   public static getApiKey(): { key: string | null; isFallback: boolean } {
-    if (Deno.env.get("DENO_ENV") === "test") {
+    if (Deno.env.get("MAI_AI_PROVIDER") === "disabled") {
       return { key: null, isFallback: true };
     }
     const key = firstConfiguredKey();
     if (key) return { key, isFallback: false };
+    if (Deno.env.get("MAI_AI_PROVIDER") === "gemini") {
+      throw new Error(
+        "Gemini provider is configured but unavailable; expected a non-empty GEMINI_API_KEY.",
+      );
+    }
+    if (Deno.env.get("DENO_ENV") === "test") {
+      return { key: null, isFallback: true };
+    }
     if (Deno.args[0] !== "completions") warnAboutMissingApiKey();
     return { key: null, isFallback: true };
   }

@@ -27,6 +27,7 @@ export const verificationChecks: VerificationCheck[] = [
       "run",
       "--env",
       "--allow-read",
+      "--allow-write=.local",
       "--allow-env",
       "--allow-net",
       "--allow-run",
@@ -82,6 +83,7 @@ export const verificationChecks: VerificationCheck[] = [
     args: [
       "run",
       "--allow-read",
+      "--allow-write=.local",
       "--allow-run",
       "--allow-env",
       "--allow-net",

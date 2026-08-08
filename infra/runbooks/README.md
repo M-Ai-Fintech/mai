@@ -1,9 +1,8 @@
-# MAI-148 operator runbooks
+# MVP local operator runbooks
 
-These runbooks are executable checklists for the modular-monolith deployment
-contract. They do not select a cloud provider, region, account, topology
-capacity, RPO/RTO, or security exception. Those decisions must be approved in
-the environment manifest before a provider adapter is added.
+These runbooks describe executable local/containerized procedures only. They
+must not be used as GCP, staging, production, provider-certification, or
+Papermark evidence.
 
 - [Deployment](deployment.md)
 - [Migration coordination](migration-coordination.md)
@@ -14,12 +13,8 @@ the environment manifest before a provider adapter is added.
 - [Failed-job recovery](failed-job-recovery.md)
 - [Capacity escalation](capacity-escalation.md)
 
-Run local contract evidence with:
+Run the contract and executable smoke checks with `deno task infra:validate`
+and `deno task infra:smoke` after starting the local Compose topology.
 
-```bash
-deno task infra:validate
-deno task infra:smoke
-```
-
-Those commands validate the contract and named local fakes. They are not
-staging deployment, provider certification, or production-readiness evidence.
+Future GCP migration is MAI-81. Adapter behavior and certification remain
+MAI-61 ownership; neither may be inferred from local evidence.

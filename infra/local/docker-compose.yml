@@ -1,60 +1,197 @@
 services:
   postgres-local:
-    image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg15@sha256:18d16372b8406bb38a9f94cbff15d125c463d71fde2770aa8b5c64bfcc1578ee
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${LOCAL_POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${LOCAL_POSTGRES_DATABASE:-mai_local}
+      POSTGRES_USER: ${LOCAL_POSTGRES_USER:?run deno task local:prepare first}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?run deno task local:prepare first}
+      POSTGRES_DB: ${LOCAL_POSTGRES_DATABASE:?run deno task local:prepare first}
     ports:
-      - "${LOCAL_POSTGRES_PORT:-55438}:5432"
+      - "127.0.0.1:${LOCAL_POSTGRES_PORT:-55438}:5432"
     volumes:
       - mai-postgres-local-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     networks:
       - private
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${LOCAL_POSTGRES_USER:-postgres} -d $${LOCAL_POSTGRES_DATABASE:-mai_local}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  api:
+  storage-local:
+    image: minio/minio:RELEASE.2024-06-29T01-20-47Z@sha256:fce0a90a37bb2887c850b68b61a0ac8ac02ea218b58eaea96bb7ca69eb503e20
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_STORAGE_ACCESS_KEY:?run deno task local:prepare first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_STORAGE_SECRET_KEY:?run deno task local:prepare first}
+    ports:
+      - "127.0.0.1:${LOCAL_STORAGE_PORT:-19000}:9000"
+    volumes:
+      - ${LOCAL_STORAGE_COMPOSE_DATA_DIR:-../../.local/storage}:/data
+    networks:
+      - private
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "curl -fsS http://127.0.0.1:9000/minio/health/ready >/dev/null",
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  storage-init-local:
+    image: minio/mc:RELEASE.2024-06-24T19-40-33Z@sha256:7889b67cfda61b8f8be0b92d0a1852a932f0bdf9b5ab490a5143c946b1f82aa5
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_STORAGE_ACCESS_KEY:?run deno task local:prepare first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_STORAGE_SECRET_KEY:?run deno task local:prepare first}
+      LOCAL_STORAGE_BUCKET: ${LOCAL_STORAGE_BUCKET:?run deno task local:prepare first}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+          mc alias set local http://storage-local:9000 "$${MINIO_ROOT_USER}"
+          "$${MINIO_ROOT_PASSWORD}" &&
+          mc mb --ignore-existing "local/$${LOCAL_STORAGE_BUCKET}"
+    depends_on:
+      storage-local:
+        condition: service_healthy
+    networks:
+      - private
+
+  storage-check-local:
+    image: minio/mc:RELEASE.2024-06-24T19-40-33Z@sha256:7889b67cfda61b8f8be0b92d0a1852a932f0bdf9b5ab490a5143c946b1f82aa5
+    profiles: ["check"]
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_STORAGE_ACCESS_KEY:?run deno task local:prepare first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_STORAGE_SECRET_KEY:?run deno task local:prepare first}
+      LOCAL_STORAGE_BUCKET: ${LOCAL_STORAGE_BUCKET:?run deno task local:prepare first}
+      LOCAL_STORAGE_CHECK_READ_ONLY: ${LOCAL_STORAGE_CHECK_READ_ONLY:-false}
+      MC_CONFIG_DIR: /tmp/mc
+    volumes:
+      - ${LOCAL_STORAGE_COMPOSE_CHECK_DIR:-../../.local/storage-check}:/check
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+          mc alias set local http://storage-local:9000 "$${MINIO_ROOT_USER}"
+          "$${MINIO_ROOT_PASSWORD}" &&
+          mc stat "local/$${LOCAL_STORAGE_BUCKET}" &&
+          if [ "$${LOCAL_STORAGE_CHECK_READ_ONLY}" = "true" ]; then
+            mc cp "local/$${LOCAL_STORAGE_BUCKET}/operations/local-check" /check/readback
+          else
+            test -f /check/payload &&
+            mc cp /check/payload "local/$${LOCAL_STORAGE_BUCKET}/operations/local-check" &&
+            mc cp "local/$${LOCAL_STORAGE_BUCKET}/operations/local-check" /check/readback
+          fi
+    depends_on:
+      storage-init-local:
+        condition: service_completed_successfully
+    networks:
+      - private
+
+  storage-export-local:
+    image: minio/mc:RELEASE.2024-06-24T19-40-33Z@sha256:7889b67cfda61b8f8be0b92d0a1852a932f0bdf9b5ab490a5143c946b1f82aa5
+    profiles: ["backup"]
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_STORAGE_ACCESS_KEY:?run deno task local:prepare first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_STORAGE_SECRET_KEY:?run deno task local:prepare first}
+      LOCAL_STORAGE_BUCKET: ${LOCAL_STORAGE_BUCKET:?run deno task local:prepare first}
+      LOCAL_STORAGE_BACKUP_SUBPATH: ${LOCAL_STORAGE_BACKUP_SUBPATH:-storage-export}
+    volumes:
+      - ../../.local:/local
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+          mc alias set local http://storage-local:9000 "$${MINIO_ROOT_USER}"
+          "$${MINIO_ROOT_PASSWORD}" &&
+          mc mirror --overwrite "local/$${LOCAL_STORAGE_BUCKET}"
+          "/local/$${LOCAL_STORAGE_BACKUP_SUBPATH}"
+    depends_on:
+      storage-init-local:
+        condition: service_completed_successfully
+    networks:
+      - private
+
+  api-local:
+    image: ${LOCAL_APP_IMAGE:-mai-local:current}
     build:
       context: ../..
       dockerfile: Dockerfile
     command: ["task", "api:start"]
     environment:
-      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:-postgres}:${LOCAL_POSTGRES_PASSWORD:-postgres}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:-mai_local}
-      DENO_ENV: test
+      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:?}:${LOCAL_POSTGRES_PASSWORD:?}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:?}
+      DENO_ENV: ${LOCAL_RUNTIME_PROFILE:-local}
+      MAI_AI_PROVIDER: ${MAI_AI_PROVIDER:-disabled}
+      MAI_PAPERMARK_ENABLED: ${MAI_PAPERMARK_ENABLED:-false}
+      MAI_STORAGE_PROVIDER: ${MAI_STORAGE_PROVIDER:-local-minio}
+      MAI_API_PORT: 8000
+      MAI_STORAGE_ENDPOINT: http://storage-local:9000
+      MAI_STORAGE_ACCESS_KEY: ${LOCAL_STORAGE_ACCESS_KEY:?run deno task local:prepare first}
+      MAI_STORAGE_SECRET_KEY: ${LOCAL_STORAGE_SECRET_KEY:?run deno task local:prepare first}
+      MAI_STORAGE_BUCKET: ${LOCAL_STORAGE_BUCKET:?run deno task local:prepare first}
     ports:
-      - "${LOCAL_API_PORT:-18000}:8000"
+      - "127.0.0.1:${LOCAL_API_PORT:-18000}:8000"
     depends_on:
       postgres-local:
         condition: service_healthy
+      storage-local:
+        condition: service_healthy
+      storage-init-local:
+        condition: service_completed_successfully
     networks:
       - private
     init: true
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "deno eval 'const r = await fetch(\"http://127.0.0.1:8000/health/ready\"); Deno.exit(r.ok ? 0 : 1)' ",
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-  worker:
+  worker-local:
     profiles: ["worker"]
+    image: ${LOCAL_APP_IMAGE:-mai-local:current}
     build:
       context: ../..
       dockerfile: Dockerfile
     command: ["task", "worker:start"]
     environment:
-      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:-postgres}:${LOCAL_POSTGRES_PASSWORD:-postgres}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:-mai_local}
+      DATABASE_URL: postgresql://${LOCAL_POSTGRES_USER:?}:${LOCAL_POSTGRES_PASSWORD:?}@postgres-local:5432/${LOCAL_POSTGRES_DATABASE:?}
+      DENO_ENV: ${LOCAL_RUNTIME_PROFILE:-local}
       MAI_WORKER_ID: ${LOCAL_WORKER_ID:-worker_local}
-      MAI_WORKER_MODULE: ${LOCAL_WORKER_MODULE:-}
+      MAI_WORKER_MODULE: ${LOCAL_WORKER_MODULE:-./src/platform/jobs/local_worker.ts}
+      MAI_WORKER_HEALTH_PORT: 8001
+      MAI_WORKER_LEASE_MS: ${LOCAL_WORKER_LEASE_MS:-60000}
+      MAI_WORKER_POLL_MS: ${LOCAL_WORKER_POLL_MS:-1000}
+    ports:
+      - "127.0.0.1:${LOCAL_WORKER_HEALTH_PORT:-18001}:8001"
     depends_on:
       postgres-local:
         condition: service_healthy
+      storage-init-local:
+        condition: service_completed_successfully
     networks:
       - private
     init: true
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "deno eval 'const r = await fetch(\"http://127.0.0.1:8001/health/ready\"); Deno.exit(r.ok ? 0 : 1)' ",
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
 networks:
   private:
-    internal: true
+    # Published local ports require a project-scoped bridge. Masquerading is
+    # disabled so local containers have no internet egress.
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
 
 volumes:
   mai-postgres-local-data:

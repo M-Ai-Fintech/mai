@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const nonEmptyText = z.string().trim().min(1);
-const environmentNames = ["development", "staging", "production"] as const;
+const environmentNames = ["local"] as const;
 
 const approvalSchema = z.object({
   state: z.enum(["approved", "pending", "not-required"]),
@@ -41,11 +41,11 @@ const topologySchema = z.object({
 
 const databaseSchema = z.object({
   engine: z.literal("postgresql"),
-  management: z.literal("managed-postgresql"),
+  management: z.literal("local-postgresql"),
   environmentDatabase: nonEmptyText,
   connectivity: z.enum(["private", "approved-private", "local-only"]),
-  automatedBackups: z.literal(true),
-  pointInTimeRecovery: z.literal(true),
+  automatedBackups: z.literal(false),
+  pointInTimeRecovery: z.literal(false),
   migrationStrategy: z.enum(["pre-traffic", "compatibility-safe"]),
   runtimeOwnsMigrations: z.literal(false),
   authoritativeData: z.array(nonEmptyText),
@@ -56,11 +56,11 @@ const objectStorageSchema = z.object({
   keyTemplate: nonEmptyText,
   environmentBoundary: z.literal(true),
   tenantBoundary: z.literal(true),
-  versioning: z.literal(true),
+  versioning: z.literal(false),
   lifecyclePolicy: nonEmptyText,
   retentionPolicy: nonEmptyText,
-  legalHoldCompatible: z.literal(true),
-  deletionBehavior: z.literal("approval-controlled"),
+  legalHoldCompatible: z.literal(false),
+  deletionBehavior: z.literal("not-configured-in-local-mvp"),
   encryptionControl: z.enum(["approved-key-management", "local-only"]),
   classifications: z.array(nonEmptyText),
 }).strict();
@@ -68,7 +68,7 @@ const objectStorageSchema = z.object({
 const secretsSchema = z.object({
   manager: nonEmptyText,
   longLivedCredentialsAllowed: z.literal(false),
-  ciCredentialMode: z.literal("workload-identity-federation"),
+  ciCredentialMode: z.literal("none-local"),
   outputRedaction: z.literal(true),
 }).strict();
 
@@ -82,8 +82,8 @@ const networkSchema = z.object({
 
 const observabilitySchema = z.object({
   structuredLogs: z.literal(true),
-  metrics: z.literal(true),
-  traces: z.literal(true),
+  metrics: z.literal(false),
+  traces: z.literal(false),
   correlationIds: z.literal(true),
   dashboards: z.array(nonEmptyText),
   alerts: z.array(nonEmptyText),
@@ -93,11 +93,11 @@ const observabilitySchema = z.object({
 }).strict();
 
 const costControlsSchema = z.object({
-  budgetControl: z.literal(true),
+  budgetControl: z.literal(false),
   costAttribution: nonEmptyText,
   alertThresholdPercent: z.number().int().min(1).max(100),
   capacityThresholds: z.array(nonEmptyText),
-  unexpectedSpendAlerts: z.literal(true),
+  unexpectedSpendAlerts: z.literal(false),
 }).strict();
 
 const stateBackendSchema = z.object({
@@ -110,9 +110,9 @@ const stateBackendSchema = z.object({
 }).strict();
 
 const iamSchema = z.object({
-  workloadIdentity: z.literal(true),
+  workloadIdentity: z.literal(false),
   runtimeRoles: z.array(nonEmptyText),
-  separateMigrationRole: z.literal(true),
+  separateMigrationRole: z.literal(false),
   broadProductionGrant: z.literal(false),
 }).strict();
 
@@ -142,7 +142,7 @@ const cloudTransportSchema = z.object({
 
 export const infrastructurePlanSchema = z.object({
   $schema: nonEmptyText.optional(),
-  task: z.literal("MAI-148"),
+  contract: z.literal("mvp-local-v1"),
   environment: z.enum(environmentNames),
   approval: approvalSchema,
   providerAdapter: nonEmptyText.nullable(),
@@ -158,7 +158,7 @@ export const infrastructurePlanSchema = z.object({
   migration: migrationSchema,
   cloudTransport: cloudTransportSchema,
   recovery: recoverySchema,
-  readinessClaim: z.enum(["not-ready", "candidate", "production-ready"]),
+  readinessClaim: z.literal("local-only"),
 }).strict();
 
 export type InfrastructurePlan = z.infer<typeof infrastructurePlanSchema>;
@@ -171,6 +171,7 @@ const REQUIRED_AUTHORITATIVE_RECORDS = [
   "platform.jobs",
   "audit",
   "evidence",
+  "domain",
   "object-storage",
 ] as const;
 
@@ -204,14 +205,14 @@ export function assertEnvironmentSet(
     throw new Error(
       `Infrastructure environments "${
         names.join(",")
-      }" are invalid; expected exactly development, staging, and production once each.`,
+      }" are invalid; expected exactly local once.`,
     );
   }
   if (expected.some((name) => !names.includes(name))) {
     throw new Error(
       `Infrastructure environments "${
         names.join(",")
-      }" are incomplete; expected development, staging, and production.`,
+      }" are incomplete; expected local.`,
     );
   }
   assertDistinctEnvironmentBoundaries(plans);
@@ -219,22 +220,14 @@ export function assertEnvironmentSet(
 
 export function assertProvisionable(plan: InfrastructurePlan): void {
   assertInfrastructurePlan(plan);
-  if (plan.approval.state === "pending") {
+  if (plan.providerAdapter !== "local-compose") {
     throw new Error(
-      `Infrastructure environment "${plan.environment}" lacks owner approval; expected provider, region, account, availability, RPO/RTO, and security approval.`,
+      `Infrastructure environment "${plan.environment}" has provider adapter "${plan.providerAdapter}"; expected local-compose only.`,
     );
   }
-  if (plan.providerAdapter === null) {
+  if (plan.stateBackend.type !== "local-only") {
     throw new Error(
-      `Infrastructure environment "${plan.environment}" has no provider adapter; expected an approved adapter before provisioning.`,
-    );
-  }
-  if (
-    plan.environment !== "development" &&
-    plan.stateBackend.type !== "approved-remote"
-  ) {
-    throw new Error(
-      `Infrastructure environment "${plan.environment}" uses "${plan.stateBackend.type}" state; expected an approved remote backend before provisioning.`,
+      `Infrastructure environment "${plan.environment}" uses "${plan.stateBackend.type}" state; expected local-only state.`,
     );
   }
 }
@@ -286,38 +279,18 @@ function assertTopology(plan: InfrastructurePlan): void {
 }
 
 function assertApproval(plan: InfrastructurePlan): void {
-  if (plan.approval.state === "pending") {
-    if (plan.providerAdapter !== null) {
-      throw new Error(
-        `Infrastructure environment "${plan.environment}" has provider adapter "${plan.providerAdapter}" before approval; expected null.`,
-      );
-    }
-    return;
-  }
-  if (
-    plan.approval.state === "not-required" && plan.environment !== "development"
-  ) {
+  if (plan.approval.state !== "not-required") {
     throw new Error(
-      `Infrastructure environment "${plan.environment}" uses not-required approval; expected owner approval outside local development.`,
-    );
-  }
-  if (plan.approval.provider === null || plan.approval.regions.length === 0) {
-    throw new Error(
-      `Infrastructure environment "${plan.environment}" has approval state "${plan.approval.state}" with missing provider or region; expected complete approval fields.`,
+      `Infrastructure environment "${plan.environment}" uses approval state "${plan.approval.state}"; expected not-required local approval.`,
     );
   }
   if (
-    plan.approval.accountProject === null ||
-    plan.approval.availability === null ||
-    plan.approval.rpoMinutes === null ||
-    plan.approval.rtoMinutes === null ||
-    plan.approval.securityControls.length === 0 ||
-    (plan.approval.state === "approved" &&
-      (plan.approval.approvers.length === 0 ||
-        plan.approval.approvedAt === null))
+    plan.approval.provider !== "docker-local" ||
+    plan.approval.regions.length !== 1 ||
+    plan.approval.regions[0] !== "local"
   ) {
     throw new Error(
-      `Infrastructure environment "${plan.environment}" has incomplete approval state "${plan.approval.state}"; expected account, availability, RPO, RTO, and security controls.`,
+      `Infrastructure environment "${plan.environment}" has local approval fields that are invalid; expected docker-local and local.`,
     );
   }
 }
@@ -355,23 +328,10 @@ function assertRecoveryBoundary(plan: InfrastructurePlan): void {
 }
 
 function assertReadinessClaim(plan: InfrastructurePlan): void {
-  if (plan.readinessClaim !== "production-ready") return;
-  if (plan.approval.state !== "approved" || plan.providerAdapter === null) {
-    throw new Error(
-      `Infrastructure environment "${plan.environment}" claims production-ready without approved provider configuration; expected approval and adapter.`,
-    );
-  }
-  const statuses = [
-    plan.recovery.smokeStatus,
-    plan.recovery.restartRecoveryStatus,
-    plan.recovery.backupRestoreStatus,
-    plan.recovery.rollbackStatus,
-  ];
-  if (statuses.some((status) => status !== "passed")) {
-    throw new Error(
-      `Infrastructure environment "${plan.environment}" claims production-ready without passed recovery evidence; expected all four statuses to be passed.`,
-    );
-  }
+  if (plan.readinessClaim === "local-only") return;
+  throw new Error(
+    `Infrastructure environment "${plan.environment}" claims "${plan.readinessClaim}"; expected local-only and no cloud readiness claim.`,
+  );
 }
 
 function assertDistinctEnvironmentBoundaries(
@@ -401,6 +361,6 @@ function invalidPlanError(error: z.ZodError): Error {
     ? String(issue.received)
     : "invalid";
   return new Error(
-    `Infrastructure plan field "${path}" has value "${received}"; expected the MAI-148 contract shape.`,
+    `Infrastructure plan field "${path}" has value "${received}"; expected the MVP-local operations contract shape.`,
   );
 }

@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mai.invalid/schemas/mai-148-infrastructure-plan.schema.json",
-  "title": "MAI-148 infrastructure plan",
-  "description": "Provider-neutral deployment contract validated by src/platform/operations/contract.ts.",
+  "$id": "https://mai.invalid/schemas/mvp-local-operations.schema.json",
+  "title": "MVP local operations contract",
+  "description": "Local/containerized deployment contract. It is not cloud, staging, production, or provider-certification evidence.",
   "type": "object",
   "required": [
-    "task",
+    "contract",
     "environment",
     "approval",
     "providerAdapter",
@@ -24,12 +24,10 @@
     "readinessClaim"
   ],
   "properties": {
-    "task": { "const": "MAI-148" },
-    "environment": {
-      "enum": ["development", "staging", "production"]
-    },
+    "contract": { "const": "mvp-local-v1" },
+    "environment": { "const": "local" },
     "approval": { "type": "object" },
-    "providerAdapter": { "type": ["string", "null"] },
+    "providerAdapter": { "const": "local-compose" },
     "stateBackend": { "type": "object" },
     "topology": { "type": "object" },
     "database": { "type": "object" },
@@ -42,9 +40,7 @@
     "migration": { "type": "object" },
     "cloudTransport": { "type": "object" },
     "recovery": { "type": "object" },
-    "readinessClaim": {
-      "enum": ["not-ready", "candidate", "production-ready"]
-    }
+    "readinessClaim": { "const": "local-only" }
   },
   "additionalProperties": false
 }

@@ -36,13 +36,21 @@ import {
   handleHealthRequest,
   RuntimeReadiness,
 } from "../platform/operations/health.ts";
+import {
+  logOperationalEvent,
+  safeErrorCode,
+} from "../platform/operations/diagnostics.ts";
+import {
+  configuredPort,
+  installApiShutdown,
+  withCorrelationId,
+  withCorsHeaders,
+} from "./server_runtime.ts";
 import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
 import {
   createExecutableNegotiationComposition,
   type ExecutableNegotiationConfig,
 } from "./negotiation_executable_composition.ts";
-
-const PORT = 8000;
 
 export interface WaveGRouteDependencies {
   readonly valuation?: ValuationV1RouteDependencies;
@@ -109,20 +117,31 @@ async function routeRequest(
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
+  const correlationId = request.headers.get("X-Correlation-Id") ??
+    crypto.randomUUID();
   if (request.method === "OPTIONS") return new Response(null, { headers });
   const healthResponse = handleHealthRequest(request, readiness);
-  if (healthResponse) return healthResponse;
+  if (healthResponse) return withCorrelationId(healthResponse, correlationId);
+  if (!readiness.isAcceptingTraffic()) {
+    return withCorrelationId(
+      jsonResponse({ error: "api_draining" }, headers, 503),
+      correlationId,
+    );
+  }
   try {
-    return await routedResponse(
-      request,
-      repository,
-      dealManagement,
-      waveG,
-      waveH,
-      headers,
+    return withCorrelationId(
+      await routedResponse(
+        request,
+        repository,
+        dealManagement,
+        waveG,
+        waveH,
+        headers,
+      ),
+      correlationId,
     );
   } catch (error: unknown) {
-    return unexpectedResponse(error, headers);
+    return unexpectedResponse(error, headers, correlationId);
   }
 }
 
@@ -275,12 +294,20 @@ async function nonDealResponse(
     new Response("Not Found", { status: 404, headers });
 }
 
-function unexpectedResponse(error: unknown, headers: Headers): Response {
-  console.error("[API Error]", error);
-  const message = error instanceof Error
-    ? error.message
-    : "Unexpected server error";
-  return jsonResponse({ error: message }, headers, 500);
+function unexpectedResponse(
+  error: unknown,
+  headers: Headers,
+  correlationId: string,
+): Response {
+  logOperationalEvent("api.error", {
+    correlationId,
+    errorCode: safeErrorCode(error),
+  });
+  return jsonResponse(
+    { error: "Unexpected server error", correlationId },
+    headers,
+    500,
+  );
 }
 
 function jsonResponse(
@@ -299,12 +326,9 @@ async function connectRepository(
 ): Promise<void> {
   const connected = await repository.connect();
   readiness.setDatabaseState(connected);
-  const message = connected
-    ? "Database connected successfully."
-    : "Database not connected. Running in fallback mode.";
-  connected
-    ? console.log(`[API Server] ${message}`)
-    : console.warn(`[API Server] ${message}`);
+  logOperationalEvent("api.database", {
+    state: connected ? "connected" : "not-ready",
+  });
 }
 
 /**
@@ -352,11 +376,11 @@ export function startServer(options?: ApiServerOptions): Deno.HttpServer {
     ? createExecutableApiServer()
     : createApiServer(options);
   void connectRepository(router.repository, router.readiness);
-  console.log(`[API Server] Starting on http://localhost:${PORT}`);
-  return Deno.serve(
-    { port: PORT },
-    router.handle,
-  );
+  const port = configuredPort(Deno.env.toObject());
+  logOperationalEvent("api.starting", { port });
+  const server = Deno.serve({ port }, router.handle);
+  installApiShutdown(server, router.readiness);
+  return server;
 }
 
 /** Creates the exact production router used by the executable entry point. */
@@ -400,16 +424,6 @@ export function createExecutableApiServer(
 if (import.meta.main) startServer();
 
 export { jsonResponse };
-
-function withCorsHeaders(response: Response, cors: Headers): Response {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of cors.entries()) headers.set(name, value);
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-}
 
 function resolveDealManagement(
   value: ApiServerOptions["dealManagement"],

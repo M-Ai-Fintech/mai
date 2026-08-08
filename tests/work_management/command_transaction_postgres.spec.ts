@@ -28,7 +28,10 @@ import {
   workspace,
   workstreamId,
 } from "../../src/work_management/ids.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import type { WorkManagementAuditPort } from "../../src/work_management/transactional_effects.ts";
 import {
   createPostgresIntegrationTestPool,
@@ -363,7 +366,7 @@ async function migrate(
     ...platformMigrations,
     ...auditActivityMigrations,
     ...workManagementMigrations,
-  ]);
+  ], workManagementMigrationOptions());
   await resetCommandContext(pool);
   await activateCommands(pool, `command-${Date.now()}`);
 }
@@ -397,7 +400,11 @@ async function resetCommandContext(
     RESTART IDENTITY CASCADE
   `);
   await pool.query(
-    `INSERT INTO work_management.membership_reconciliation_activation
+    `SELECT set_config(
+        'work_management.activation_writer',
+        md5(current_user || txid_current()::text ||
+          'work-management-activation-writer-v1'), true);
+      INSERT INTO work_management.membership_reconciliation_activation
       (activation_id, mode, unresolved_blocking_count, recorded_at)
       VALUES (TRUE, 'read_only', 0, now())`,
   );

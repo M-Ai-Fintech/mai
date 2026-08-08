@@ -6,7 +6,10 @@ import {
 } from "../../src/platform/persistence/v1.ts";
 import { evaluateApprovalAuthority } from "../../src/work_management/authority_evaluation.ts";
 import { PostgresAuthorityEvaluationStore } from "../../src/work_management/authority_evaluation_store.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import {
   createPostgresIntegrationTestPool,
   ensureWorkManagementTestRoles,
@@ -30,7 +33,7 @@ Deno.test({
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     const runner = new PostgresTransactionRunner(pool);
     const packageValue = await authorityPackage(completeLimits);
     const evaluation = await evaluateApprovalAuthority({

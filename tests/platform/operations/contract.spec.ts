@@ -1,4 +1,4 @@
-import { assertEquals, assertFalse, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import {
   assertProvisionable,
   isProvisionable,
@@ -7,31 +7,27 @@ import {
   requiredAuthoritativeRecords,
 } from "../../../src/platform/operations/contract.ts";
 
-Deno.test("MAI-148 manifests validate all environment boundaries", async () => {
-  const values = await Promise.all([
-    readManifest("development"),
-    readManifest("staging"),
-    readManifest("production"),
-  ]);
+Deno.test("MVP local manifest validates the single local boundary", async () => {
+  const values = [await readManifest()];
   const plans = parseInfrastructureSet(values);
 
-  assertEquals(plans.map((plan) => plan.environment), [
-    "development",
-    "staging",
-    "production",
-  ]);
+  assertEquals(plans.map((plan) => plan.environment), ["local"]);
   assertEquals(isProvisionable(plans[0]), true);
-  assertFalse(isProvisionable(plans[1]));
-  assertFalse(isProvisionable(plans[2]));
-  assertThrows(
-    () => assertProvisionable(plans[1]),
-    Error,
-    "lacks owner approval",
+  assertProvisionable(plans[0]);
+});
+
+Deno.test("local object storage contract does not claim unconfigured retention features", async () => {
+  const plan = parseInfrastructurePlan(await readManifest());
+  assertEquals(plan.objectStorage.versioning, false);
+  assertEquals(plan.objectStorage.legalHoldCompatible, false);
+  assertEquals(
+    plan.objectStorage.deletionBehavior,
+    "not-configured-in-local-mvp",
   );
 });
 
 Deno.test("topology rejects prototype microservice names", async () => {
-  const manifest = await readManifest("development") as Record<string, unknown>;
+  const manifest = await readManifest() as Record<string, unknown>;
   const topology = manifest.topology as Record<string, unknown>;
   const processes = topology.processes as Array<Record<string, unknown>>;
   processes[0].name = "core";
@@ -39,18 +35,18 @@ Deno.test("topology rejects prototype microservice names", async () => {
   assertThrows(
     () => parseInfrastructurePlan(manifest),
     Error,
-    "expected the MAI-148 contract shape",
+    "expected the MVP-local operations contract shape",
   );
 });
 
-Deno.test("production readiness requires approval and recovery evidence", async () => {
-  const manifest = await readManifest("production") as Record<string, unknown>;
+Deno.test("cloud readiness claims are rejected by the local contract", async () => {
+  const manifest = await readManifest() as Record<string, unknown>;
   manifest.readinessClaim = "production-ready";
 
   assertThrows(
     () => parseInfrastructurePlan(manifest),
     Error,
-    "claims production-ready",
+    "expected the MVP-local operations contract shape",
   );
 });
 
@@ -62,15 +58,14 @@ Deno.test("authoritative recovery set includes MAI-106 records", () => {
     "platform.jobs",
     "audit",
     "evidence",
+    "domain",
     "object-storage",
   ]);
 });
 
-async function readManifest(
-  environment: "development" | "staging" | "production",
-): Promise<unknown> {
+async function readManifest(): Promise<unknown> {
   const path = new URL(
-    `../../../infra/environments/${environment}.json`,
+    "../../../infra/environments/development.json",
     import.meta.url,
   );
   return JSON.parse(await Deno.readTextFile(path));

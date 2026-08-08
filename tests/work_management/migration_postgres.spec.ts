@@ -13,7 +13,10 @@ import {
   workspace,
   workstreamId,
 } from "../../src/work_management/ids.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import {
   workManagementCorrectiveMigration,
   workManagementMigration,
@@ -38,11 +41,11 @@ Deno.test({
     await migrations.apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     await migrations.apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     const ledger = await pool.query(
       "SELECT count(*)::int AS count FROM platform.migration_ledger WHERE context_owner = 'work_management'",
     );
@@ -151,7 +154,7 @@ Deno.test({
     const upgrade = runner.apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     assertEquals(await waitForMigrationTableLock(pool), true);
     await writer.query("COMMIT");
     writer.release();

@@ -13,7 +13,10 @@ import {
   workspace,
 } from "../../src/work_management/ids.ts";
 import { PostgresWorkManagementRepository } from "../../src/work_management/repository_sql.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import {
   createPostgresIntegrationTestPool,
   ensureWorkManagementTestRoles,
@@ -33,7 +36,7 @@ Deno.test({
     await migrations.apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
     const denial = await createAuthorityDenial({

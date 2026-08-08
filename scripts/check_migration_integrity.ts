@@ -1,20 +1,6 @@
 import type { ContextMigration } from "../src/platform/persistence/migration.ts";
 import { migrationChecksum } from "../src/platform/persistence/migration_runner.ts";
-import { platformMigrations } from "../src/platform/persistence/v1.ts";
-import { auditActivityMigrations } from "../src/audit_activity/migrations/index.ts";
-import { valuationMigrations } from "../src/valuation/migrations/index.ts";
-import { matchingMigrations } from "../src/matching/migrations/index.ts";
-import { deliverablesMigrations } from "../src/deliverables/migrations/index.ts";
-import { closingMigrations } from "../src/closing/migrations/index.ts";
-import { dealGovernanceMigrations } from "../src/deal_governance/migrations/index.ts";
-import { dealManagementMigrations } from "../src/deal_management/migrations/index.ts";
-import { documentsMigrations } from "../src/documents/migrations/index.ts";
-import { evidenceKnowledgeMigrations } from "../src/evidence_knowledge/migrations/index.ts";
-import { identityAccessMigrations } from "../src/identity_access/migrations/index.ts";
-import { notificationMigrations } from "../src/notifications/migrations/index.ts";
-import { organizationRegistryMigrations } from "../src/organization_registry/migrations/index.ts";
-import { workManagementMigrations } from "../src/work_management/migrations/index.ts";
-import { negotiationMigrations } from "../src/negotiation/migrations/index.ts";
+import { registeredMigrations } from "../src/platform/persistence/registered_migrations.ts";
 
 export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
   "platform-0001-idempotency":
@@ -89,26 +75,24 @@ export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
     "f86562c3ecab3e6b05fda6f2b8a8c410d201a06e8fc511e307ea36c5ae12632e",
   "negotiation-0002-evidence":
     "2762879186e229bd585ef968fe354ab44c2578f17086964a48d55a06eed28ec2",
+  "diligence_decisions-0001":
+    "28d102e63b409981012e289112eb52acdbf4b7fb9907ebc89bb68d4a87bfa3d4",
+  "diligence_decisions-0002":
+    "8db72c1c03642f0bf664092332f7c99fd14a51e70344049162ef8545a8daa05e",
+  "agent_runtime-0001-mission-run":
+    "eaf972740b8568414e4296af42cda575db7a3e48e3a038d1801a84921eef2558",
+  "agent_runtime-0002-deal-scope":
+    "a296dbcc681f8fbb1b9fd1421156c37b2899b6afa4f67611aeb113576e0cc69f",
+  "deal_access-0001":
+    "3a17b2fafd0f08c73a5ddecb57ff5e94f8131a354a6da75d3796c4e3778554f0",
+  "deal_access-0002":
+    "e9f362f2cb78b2a3424a52561c2c297d38f4224fb78bb5404f3f193fec237f52",
+  "deal_access-0003-delivery-identity":
+    "1fb2e52737bbcd9c2d6905bfb7e2eecadef10cc144a9841ad995391373ae6e3d",
 };
 
 export function currentMigrationCatalog(): readonly ContextMigration[] {
-  return [
-    ...platformMigrations,
-    ...auditActivityMigrations,
-    ...valuationMigrations,
-    ...matchingMigrations,
-    ...deliverablesMigrations,
-    ...closingMigrations,
-    ...dealGovernanceMigrations,
-    ...dealManagementMigrations,
-    ...documentsMigrations,
-    ...evidenceKnowledgeMigrations,
-    ...identityAccessMigrations,
-    ...notificationMigrations,
-    ...organizationRegistryMigrations,
-    ...workManagementMigrations,
-    ...negotiationMigrations,
-  ];
+  return registeredMigrations();
 }
 
 export async function migrationIntegrityDiagnostics(

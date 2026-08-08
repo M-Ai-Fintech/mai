@@ -1,50 +1,78 @@
-# MAI-148 infrastructure contract
+# MVP local operations foundation
 
-This directory is the version-controlled, provider-neutral deployment contract
-for the MAI modular monolith. The executable validator is
-`src/platform/operations/contract.ts`; the JSON environment manifests are its
-inputs.
+This directory is the executable local/containerized contract for the MAI
+modular monolith. It is not GCP, staging, production, or provider-certification
+evidence. The active manifest is the local-only compatibility manifest at
+`infra/environments/development.json`; its `environment` value is `local`.
 
-## Topology
+The deployable topology is intentionally small:
 
-The deployable unit contains one application image with two justified process
-roles:
+- `api-local`: the modular-monolith HTTP process;
+- `worker-local`: the durable-job worker, restricted to the explicit
+  `operations.healthcheck` local job type;
+- `postgres-local`: PostgreSQL truth for transactions, outbox, inbox, jobs, and
+  the migration ledger;
+- `storage-local`: the explicitly configured MinIO local storage boundary.
 
-- `api`: synchronous HTTP and liveness/readiness endpoints.
-- `worker`: durable database-backed jobs using the MAI-106 lease and attempt
-  protocol.
+No external broker or Core/Agent/Engine microservice is required.
 
-The transactional outbox, inbox, and jobs remain PostgreSQL-backed truth. A
-cloud broker is disabled in every manifest and cannot be required for
-transaction correctness. There are no Core, Agent, or Engine microservices.
-
-## Environment gate
-
-Development uses the local Compose adapter. Staging and production contain the
-same complete control contract but remain `pending` until an owner records the
-provider, regions, account/project, availability, RPO/RTO, security controls,
-and provider adapter. `assertProvisionable` fails closed while any of those
-inputs are absent.
-
-The manifests define private connectivity, managed PostgreSQL with automated
-backup/PITR requirements, versioned tenant/environment-scoped object keys,
-secret-manager references, workload identity federation, least-privilege
-network/IAM requirements, observability, cost controls, migration ownership,
-and retention-safe rollback.
-
-## Local execution
+## Reproduce the local environment
 
 ```bash
+deno task local:prepare
+set -a; . infra/local/.env; set +a
+docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml \
+  up -d --wait postgres-local storage-local
 deno task infra:validate
+deno task db:migrate
+docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml \
+  --profile worker up -d --build --wait api-local worker-local
 deno task infra:smoke
-docker compose -f infra/local/docker-compose.yml up --build database api
 ```
 
-The smoke command uses named local probes and is contract evidence only. The
-Compose worker is an opt-in profile because application-specific worker factory
-registration remains a downstream domain/runtime integration. No local command
-is presented as staging or production evidence.
+`local:prepare` creates an ignored environment file with local-only random
+credentials for PostgreSQL and MinIO independently, writes it as `0600` where
+supported, and includes `DATABASE_URL` plus the local API, worker, and storage
+boundaries. Do not print or commit it. `storage-init-local` is a completed
+dependency of API and worker startup and creates the authenticated bucket before
+readiness. Migration is a separate pre-traffic command and is never run by API
+or worker startup.
 
-Operational procedures are in [runbooks](runbooks/README.md). The provider
-adapter, real staging smoke, backup restoration, and production promotion are
-explicitly deferred until their approval and environment evidence gates pass.
+For a clean checkout with no generated local files, run the exact executable
+proof (it fails rather than consuming an existing local environment):
+
+```bash
+deno task infra:bootstrap
+```
+
+The local object-storage contract proves authenticated bucket existence, a
+bounded write/read and SHA-256 equality, persistence across a storage restart,
+and explicit failure when the configured dependency is unavailable. MinIO
+versioning, lifecycle, retention, legal hold, and approval-controlled deletion
+are not configured or claimed by this MVP; those capabilities remain deferred.
+
+## Recovery evidence
+
+```bash
+deno task infra:backup
+# Set RESTORE_DATABASE_URL and RESTORE_STORAGE_DIR to isolated targets.
+deno task infra:restore
+# Set LOCAL_PRIOR_IMAGE to a previously built compatible image.
+deno task infra:rollback
+```
+
+The backup command writes only under `.local/`, which is ignored. It uses an
+authenticated object-level MinIO mirror rather than copying a live storage
+engine directory, records artifact checksums and a sanitized authoritative
+manifest, and restores only into isolated database and storage targets. Restore
+refuses active targets and compares migration IDs/checksums, job/outbox/inbox,
+audit/evidence sentinels, and object keys/content hashes. Rollback retains
+database and storage records, compares the same manifest, restores the current
+image after the exercise, and never reverses applied migrations.
+
+## Deferred boundary
+
+The future provider is fixed to GCP, but all GCP architecture, accounts,
+networking, IAM, budgets, cloud RPO/RTO, staging, and production evidence belong
+to MAI-81. Provider adapters and certification, including Papermark, belong to
+MAI-61 and are not implemented here.

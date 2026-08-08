@@ -3,6 +3,7 @@ import {
   dropIsolatedPostgresDatabase,
   isolatedPostgresDatabaseName,
 } from "./postgres_test_state.ts";
+import { loadCanonicalPostgresEnvironment } from "./preflight_postgres.ts";
 
 const TEST_ROOTS = ["tests", "src", "scripts"] as const;
 const POSTGRES_MARKERS = [
@@ -258,6 +259,10 @@ function roundedMilliseconds(durationMs: number): number {
 }
 
 async function main(): Promise<void> {
+  const environment = await loadCanonicalPostgresEnvironment();
+  for (const [key, value] of Object.entries(environment)) {
+    if (value !== undefined) Deno.env.set(key, value);
+  }
   const files = (await Promise.all(TEST_ROOTS.map(collectTestFiles))).flat();
   const contents = new Map<string, string>();
   for (const file of files) contents.set(file, await Deno.readTextFile(file));

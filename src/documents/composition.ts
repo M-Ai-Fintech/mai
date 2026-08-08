@@ -76,6 +76,11 @@ export class DocumentsComposition {
       this.transactions,
       config.clock,
     );
+    if (config.adaptersEnabled === true && config.objectStore === undefined) {
+      throw new Error(
+        "Documents object storage is configured as real; expected an explicit ObjectStore adapter and refusing fixture fallback.",
+      );
+    }
     this.objectStore = config.objectStore ?? new FakeObjectStore();
     this.sourceProvider = config.sourceProvider ?? defaultSourceProvider();
     this.adaptersEnabled = config.adaptersEnabled ?? false;

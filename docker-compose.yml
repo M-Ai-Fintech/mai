@@ -1,19 +1,20 @@
 services:
   postgres-integration-test:
-    image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg15@sha256:18d16372b8406bb38a9f94cbff15d125c463d71fde2770aa8b5c64bfcc1578ee
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_INTEGRATION_TEST_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_INTEGRATION_TEST_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_INTEGRATION_TEST_DATABASE:-mai_test_postgres_integration}
+      POSTGRES_USER: ${POSTGRES_INTEGRATION_TEST_USER:?set the local test database user}
+      POSTGRES_PASSWORD: ${POSTGRES_INTEGRATION_TEST_PASSWORD:?set the local test database password}
+      POSTGRES_DB: ${POSTGRES_INTEGRATION_TEST_DATABASE:?set the local test database name}
     ports:
-      - "${POSTGRES_INTEGRATION_TEST_PORT:-55432}:5432"
+      - "127.0.0.1:${POSTGRES_INTEGRATION_TEST_PORT:-55432}:5432"
     volumes:
       - mai-postgres-integration-test-data:/var/lib/postgresql/data
+      - ./infra/local/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [
         "CMD-SHELL",
-        "pg_isready -U $${POSTGRES_INTEGRATION_TEST_USER:-postgres} -d $${POSTGRES_INTEGRATION_TEST_DATABASE:-mai_test_postgres_integration}",
+        "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB",
       ]
       interval: 5s
       timeout: 5s
