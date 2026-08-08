@@ -5,7 +5,7 @@ import type {
 } from "../platform/persistence/v1.ts";
 import { PostgresTransactionRunner } from "../platform/persistence/v1.ts";
 import type { DeterministicValuationPort } from "./compute.ts";
-import { Mai18DeterministicValuationAdapter } from "./compute.ts";
+import { DeterministicValuationAdapter } from "./compute.ts";
 import {
   ValuationCommandService,
   type ValuationCommandServiceConfig,
@@ -59,7 +59,7 @@ export class PostgresValuationContext implements ValuationReadPort {
       transactions: this.transactions,
       repository: this.repository,
       calculations: config.calculations ??
-        new Mai18DeterministicValuationAdapter(),
+        new DeterministicValuationAdapter(),
       ...(config.clock === undefined ? {} : { clock: config.clock }),
     });
   }

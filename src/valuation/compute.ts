@@ -21,8 +21,8 @@ export interface DeterministicValuationPort {
     | CalculationOutcome<ValuationCalculation>;
 }
 
-/** Adapter boundary for MAI-18's pure deterministic calculation contracts. */
-export class Mai18DeterministicValuationAdapter
+/** Adapter boundary for the pure deterministic valuation calculation contract. */
+export class DeterministicValuationAdapter
   implements DeterministicValuationPort {
   compute(
     request: DeterministicValuationRequest,
@@ -33,7 +33,7 @@ export class Mai18DeterministicValuationAdapter
     ) {
       throw new ValuationError(
         "DEPENDENCY_UNAVAILABLE",
-        `Valuation model algorithm "${request.model.algorithm}" is unsupported; expected the MAI-18 deterministic contract.`,
+        `Valuation model algorithm "${request.model.algorithm}" is unsupported; expected the deterministic valuation contract.`,
       );
     }
     const outcome = calculateValuation(request.request);
@@ -59,7 +59,7 @@ export function ensureSuccessfulCalculation(
     outcome.error.code === "UNSUPPORTED_METHOD"
       ? "METHOD_UNSUPPORTED"
       : "JOB_FAILED",
-    `Deterministic valuation method "${method}" failed with ${outcome.error.code} at field "${outcome.error.field}"; expected valid MAI-18 calculation inputs.`,
+    `Deterministic valuation method "${method}" failed with ${outcome.error.code} at field "${outcome.error.field}"; expected valid deterministic valuation inputs.`,
   );
 }
 

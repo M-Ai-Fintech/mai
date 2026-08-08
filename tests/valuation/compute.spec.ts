@@ -1,14 +1,14 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { calculateValuation } from "../../src/engines/valuation/index.ts";
 import {
+  DeterministicValuationAdapter,
   ensureSuccessfulCalculation,
-  Mai18DeterministicValuationAdapter,
 } from "../../src/valuation/compute.ts";
 import { modelDefinition } from "./fixtures.ts";
 
-Deno.test("MAI-18 adapter preserves deterministic provenance and model rounding", () => {
+Deno.test("deterministic adapter preserves provenance and model rounding", () => {
   const model = modelDefinition();
-  const outcome = new Mai18DeterministicValuationAdapter().compute({
+  const outcome = new DeterministicValuationAdapter().compute({
     model,
     request: {
       method: "book-value",
@@ -35,7 +35,7 @@ Deno.test("MAI-18 adapter preserves deterministic provenance and model rounding"
 Deno.test("adapter rejects a model algorithm version it cannot execute", () => {
   assertThrows(
     () =>
-      new Mai18DeterministicValuationAdapter().compute({
+      new DeterministicValuationAdapter().compute({
         model: { ...modelDefinition(), algorithmVersion: "2.0.0" },
         request: { method: "book-value", input: {} },
       }),
