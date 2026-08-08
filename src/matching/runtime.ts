@@ -13,6 +13,7 @@ import type { MatchingTransactionRunner } from "./transaction.ts";
 import {
   type CandidateProjection,
   candidateReadiness,
+  type MatchingRun,
   type MatchingScope,
 } from "./model.ts";
 import type {
@@ -21,6 +22,7 @@ import type {
 } from "./service_contracts.ts";
 import type { MatchingComputePort } from "./compute.ts";
 import type { MatchingRunScheduler } from "./jobs.ts";
+import type { MatchingIdempotency } from "./idempotency.ts";
 
 export const ACTIONS = Object.freeze({
   criteriaWrite: action("matching_criteria_write"),
@@ -51,6 +53,7 @@ export interface MatchingRuntime {
   readonly compute: MatchingComputePort;
   readonly scheduler: MatchingRunScheduler;
   readonly effects: MatchingEffects;
+  readonly idempotency: MatchingIdempotency;
   readonly clock: MatchingClock;
 }
 
@@ -200,6 +203,25 @@ export function assertCandidateReady(candidate: CandidateProjection): void {
       candidate.id,
     );
   }
+}
+
+export function assertValidShortlistSource(
+  candidate: CandidateProjection,
+  run: MatchingRun,
+): void {
+  if (candidate.runId !== run.id) {
+    throw new MatchingError(
+      "ACTION_FORBIDDEN",
+      `Candidate "${candidate.id}" was produced by run "${candidate.runId}"; expected supplied run "${run.id}".`,
+      candidate.id,
+    );
+  }
+  if (run.state === "succeeded" || run.state === "infeasible") return;
+  throw new MatchingError(
+    "INVALID_TRANSITION",
+    `Matching run "${run.id}" is "${run.state}"; expected succeeded or infeasible before shortlist or outreach.`,
+    run.id,
+  );
 }
 
 export function metadata(

@@ -37,6 +37,11 @@ import {
 import { MatchingService } from "./service.ts";
 import { InMemoryMatchingTransactionRunner } from "./transaction.ts";
 import { matchingMigrations } from "./migrations/index.ts";
+import {
+  type MatchingIdempotency,
+  PostgresMatchingIdempotency,
+  RecordingMatchingIdempotency,
+} from "./idempotency.ts";
 
 export interface InMemoryMatchingCompositionOptions {
   readonly authorization: MatchingAuthorizationPort;
@@ -44,6 +49,7 @@ export interface InMemoryMatchingCompositionOptions {
   readonly compute?: MatchingComputePort;
   readonly effects?: MatchingEffects;
   readonly scheduler?: MatchingRunScheduler;
+  readonly idempotency?: MatchingIdempotency;
 }
 
 export interface InMemoryMatchingComposition {
@@ -51,6 +57,7 @@ export interface InMemoryMatchingComposition {
   readonly repository: InMemoryMatchingRepository;
   readonly effects: MatchingEffects;
   readonly scheduler: MatchingRunScheduler;
+  readonly idempotency: MatchingIdempotency;
   readonly service: MatchingService;
 }
 
@@ -60,10 +67,12 @@ export function createInMemoryMatchingTestComposition(
   const repository = new InMemoryMatchingRepository();
   const effects = options.effects ?? new RecordingMatchingEffects();
   const scheduler = options.scheduler ?? new RecordingMatchingRunScheduler();
+  const idempotency = options.idempotency ?? new RecordingMatchingIdempotency();
   return {
     adapter: "in_memory_test",
     repository,
     effects,
+    idempotency,
     scheduler,
     service: new MatchingService({
       transactions: new InMemoryMatchingTransactionRunner(),
@@ -73,6 +82,7 @@ export function createInMemoryMatchingTestComposition(
       scheduler,
       effects,
       clock: options.clock ?? { now: () => new Date() },
+      idempotency,
     }),
   };
 }
@@ -84,6 +94,7 @@ export interface PostgresMatchingCompositionConfig {
   readonly compute?: MatchingComputePort;
   readonly effects?: MatchingEffects;
   readonly scheduler?: MatchingRunScheduler;
+  readonly idempotency?: MatchingIdempotency;
   readonly audit?: AuditEventRepository;
   readonly poolOwnership?: "owned" | "borrowed";
 }
@@ -93,6 +104,7 @@ export class PostgresMatchingComposition {
   readonly repository: MatchingRepository;
   readonly effects: MatchingEffects;
   readonly scheduler: MatchingRunScheduler;
+  readonly idempotency: MatchingIdempotency;
   readonly service: MatchingService;
   readonly migrations = Object.freeze([
     ...platformMigrations,
@@ -115,6 +127,8 @@ export class PostgresMatchingComposition {
     const clock = config.clock ?? { now: () => new Date() };
     this.scheduler = config.scheduler ?? new PostgresMatchingRunScheduler(
       new JobRepository(),
+    );
+    this.idempotency = config.idempotency ?? new PostgresMatchingIdempotency(
       new IdempotencyRepository(clock),
     );
     this.service = new MatchingService({
@@ -124,6 +138,7 @@ export class PostgresMatchingComposition {
       compute: config.compute ?? new LegacyMatchingComputeAdapter(),
       scheduler: this.scheduler,
       effects: this.effects,
+      idempotency: this.idempotency,
       clock,
     });
     this.poolOwnership = config.poolOwnership ?? "borrowed";

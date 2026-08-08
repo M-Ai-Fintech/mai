@@ -47,6 +47,7 @@ export interface CreateCriteriaInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: CriteriaId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly selection: MatchingCriteria["selection"];
   readonly optimizerContractVersion: string;
 }
@@ -66,6 +67,7 @@ export interface ActivateCriteriaInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: CriteriaId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly expectedVersion: number;
 }
 
@@ -82,6 +84,7 @@ export interface RunExecutionInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: RunId;
+  readonly idempotencyKey: IdempotencyKey;
 }
 
 export interface CandidateReadInput {
@@ -103,6 +106,7 @@ export interface ConflictCommandInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: ConflictId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly expectedVersion: number;
 }
 
@@ -111,6 +115,7 @@ export interface CreateConflictInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: ConflictId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly candidateId: CandidateId;
   readonly kind: MatchingConflict["kind"];
   readonly rationale?: string;
@@ -121,6 +126,7 @@ export interface RestrictionCommandInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: RestrictionId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly candidateId: CandidateId;
   readonly category: string;
   readonly expectedVersion?: number;
@@ -136,6 +142,7 @@ export interface ShortlistCommandInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: ShortlistDecisionId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly runId: RunId;
   readonly candidateId: CandidateId;
   readonly state: ShortlistDecisionState;
@@ -148,6 +155,7 @@ export interface OutreachCommandInput {
   readonly actor: ActorReference;
   readonly scope: MatchingScope;
   readonly id: import("./ids.ts").OutreachAuthorizationId;
+  readonly idempotencyKey: IdempotencyKey;
   readonly shortlistDecisionId: ShortlistDecisionId;
   readonly candidateId: CandidateId;
   readonly authoritySnapshotReference: string;
@@ -190,5 +198,6 @@ export interface MatchingServiceConfig {
   readonly compute: MatchingComputePort;
   readonly scheduler: MatchingRunScheduler;
   readonly effects: MatchingEffects;
+  readonly idempotency: import("./idempotency.ts").MatchingIdempotency;
   readonly clock: MatchingClock;
 }

@@ -9,17 +9,11 @@ import type {
   WorkspaceId,
 } from "../shared/contracts/identifiers.ts";
 import type { TransactionHandle } from "../platform/persistence/v1.ts";
-import {
-  type IdempotencyClaim,
-  IdempotencyRepository,
-  payloadDigest,
-} from "../platform/persistence/v1.ts";
 import { JobRepository } from "../platform/jobs/v1.ts";
 import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts";
 import type { MatchingScope } from "./model.ts";
 import type { RunId } from "./ids.ts";
 import type { CriteriaId } from "./ids.ts";
-import { MatchingError } from "./errors.ts";
 
 export interface MatchingJobReceipt {
   readonly jobId: JobId;
@@ -45,73 +39,27 @@ export interface MatchingRunScheduler {
 
 export class RecordingMatchingRunScheduler implements MatchingRunScheduler {
   readonly jobs: MatchingJobReceipt[] = [];
-  private readonly claims = new Map<
-    string,
-    { digest: string; receipt: MatchingJobReceipt }
-  >();
 
-  async enqueue(
+  enqueue(
     _transaction: TransactionHandle,
     input: Parameters<MatchingRunScheduler["enqueue"]>[1],
   ): Promise<MatchingJobReceipt> {
-    const digest = await payloadDigest(input.payload);
-    const key =
-      `${input.scope.tenantId}:${input.actorId}:${input.idempotencyKey}:${input.runId}`;
-    const previous = this.claims.get(key);
-    if (previous !== undefined) {
-      if (previous.digest !== digest) {
-        throw new MatchingError(
-          "IDEMPOTENCY_CONFLICT",
-          `Matching run "${input.runId}" idempotency payload changed; expected the original command payload.`,
-          input.runId,
-        );
-      }
-      return previous.receipt;
-    }
-    const suffix = input.runId.replace(/^run_/, "");
-    const receipt = {
-      jobId: `job_matching-${suffix}` as JobId,
-      operationId: `op_matching-${suffix}` as OperationId,
-    };
-    this.claims.set(key, { digest, receipt });
+    const receipt = matchingJobReceiptForRun(input.runId);
     this.jobs.push(receipt);
-    return receipt;
+    return Promise.resolve(receipt);
   }
 }
 
 export class PostgresMatchingRunScheduler implements MatchingRunScheduler {
   constructor(
     private readonly jobs: JobRepository,
-    private readonly idempotency: IdempotencyRepository,
   ) {}
 
   async enqueue(
     transaction: TransactionHandle,
     input: Parameters<MatchingRunScheduler["enqueue"]>[1],
   ): Promise<MatchingJobReceipt> {
-    const receipt = idsForRun(input.runId);
-    const digest = await payloadDigest(input.payload);
-    const claim: IdempotencyClaim = {
-      tenantId: input.scope.tenantId,
-      actorId: input.actorId,
-      commandType: "matching.run.start",
-      targetType: "matching_run",
-      targetId: input.runId,
-      idempotencyKey: input.idempotencyKey,
-      payloadDigest: digest,
-      expiresAt: new Date(input.now.getTime() + 86_400_000),
-    };
-    const result = await this.idempotency.claim(transaction, claim);
-    if (result.status === "replay") {
-      return receipt;
-    }
-    if (result.status !== "claimed") {
-      throw new MatchingError(
-        "IDEMPOTENCY_CONFLICT",
-        `Matching run "${input.runId}" already has an in-progress idempotency claim; expected one durable command owner.`,
-        input.runId,
-      );
-    }
+    const receipt = matchingJobReceiptForRun(input.runId);
     await this.jobs.enqueue(transaction, {
       jobId: receipt.jobId,
       operationId: receipt.operationId,
@@ -137,12 +85,11 @@ export class PostgresMatchingRunScheduler implements MatchingRunScheduler {
       timeoutAt: new Date(input.now.getTime() + 300_000),
       createdAt: input.now,
     });
-    await this.idempotency.complete(transaction, claim, receipt.operationId);
     return receipt;
   }
 }
 
-function idsForRun(runId: RunId): MatchingJobReceipt {
+export function matchingJobReceiptForRun(runId: RunId): MatchingJobReceipt {
   const suffix = runId.replace(/^run_/, "");
   return {
     jobId: `job_matching-${suffix}` as JobId,

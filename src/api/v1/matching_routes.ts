@@ -171,29 +171,30 @@ async function dispatchMatchingRoute(
     );
   }
   if (request.method !== "POST") return methodNotAllowed();
+  const idempotencyKey = idempotency(request);
   if (route.kind === "criteria" && route.command === "activate") {
-    requireIdempotency(request);
     const result = await application.activateCriteria({
       ...base,
       id: criteriaId(route.id!),
+      idempotencyKey,
       expectedVersion: expectedVersion(request),
     });
     return matchingResponse(result, 200, authenticated.context.correlationId);
   }
   if (route.kind === "run" && route.command === "execute") {
-    requireIdempotency(request);
     const result = await application.executeRun({
       ...base,
       id: runId(route.id!),
+      idempotencyKey,
     });
     return matchingResponse(result, 200, authenticated.context.correlationId);
   }
   const body = await requestBody(request);
-  requireIdempotency(request);
   if (route.kind === "criteria" && route.id === undefined) {
     const result = await application.createCriteria({
       ...base,
       id: criteriaId(text(body, "id")),
+      idempotencyKey,
       selection: body.selection as never,
       optimizerContractVersion: textOr(
         body,
@@ -208,7 +209,7 @@ async function dispatchMatchingRoute(
       ...base,
       id: runId(text(body, "id")),
       criteriaId: criteriaId(text(body, "criteriaId")),
-      idempotencyKey: idempotency(request),
+      idempotencyKey,
       candidateInputs: candidateInputs(body),
     });
     return matchingAcceptedResponse(
@@ -222,6 +223,7 @@ async function dispatchMatchingRoute(
     body,
     base,
     application,
+    idempotencyKey,
     authenticated.context.correlationId,
   );
 }
@@ -236,13 +238,14 @@ async function dispatchMatchingCommand(
     readonly scope: MatchingScope;
   },
   application: MatchingV1Application,
+  idempotencyKey: IdempotencyKey,
   correlationId: import("../../shared/contracts/identifiers.ts").CorrelationId,
 ): Promise<Response> {
-  requireIdempotency(request);
   if (route.kind === "conflicts" && route.id === undefined) {
     const result = await application.openConflict({
       ...base,
       id: conflictId(text(body, "id")),
+      idempotencyKey,
       candidateId: candidateId(text(body, "candidateId")),
       kind: text(body, "kind") as never,
       rationale: optionalText(body, "rationale"),
@@ -253,6 +256,7 @@ async function dispatchMatchingCommand(
     const result = await application.resolveConflict({
       ...base,
       id: conflictId(route.id!),
+      idempotencyKey,
       expectedVersion: expectedVersion(request),
     });
     return matchingResponse(result, 200, correlationId);
@@ -261,6 +265,7 @@ async function dispatchMatchingCommand(
     const result = await application.openRestriction({
       ...base,
       id: restrictionId(text(body, "id")),
+      idempotencyKey,
       candidateId: candidateId(text(body, "candidateId")),
       category: text(body, "category"),
     });
@@ -270,6 +275,7 @@ async function dispatchMatchingCommand(
     const result = await application.clearRestriction({
       ...base,
       id: restrictionId(route.id!),
+      idempotencyKey,
       candidateId: candidateId(text(body, "candidateId")),
       expectedVersion: expectedVersion(request),
     });
@@ -279,6 +285,7 @@ async function dispatchMatchingCommand(
     const result = await application.decideShortlist({
       ...base,
       id: shortlistDecisionId(text(body, "id")),
+      idempotencyKey,
       runId: runId(text(body, "runId")),
       candidateId: candidateId(text(body, "candidateId")),
       state: text(body, "state") as never,
@@ -290,6 +297,7 @@ async function dispatchMatchingCommand(
     const result = await application.authorizeOutreach({
       ...base,
       id: outreachAuthorizationId(text(body, "id")),
+      idempotencyKey,
       shortlistDecisionId: shortlistDecisionId(
         text(body, "shortlistDecisionId"),
       ),
@@ -302,6 +310,7 @@ async function dispatchMatchingCommand(
     const result = await application.revokeOutreach({
       ...base,
       id: outreachAuthorizationId(route.id!),
+      idempotencyKey,
       shortlistDecisionId: shortlistDecisionId(
         text(body, "shortlistDecisionId"),
       ),
@@ -385,10 +394,6 @@ function idempotency(request: Request): IdempotencyKey {
   const value = parseIdempotencyHeader(request.headers.get("Idempotency-Key"));
   if (value.ok) return value.value;
   throw new Error("Idempotency-Key is required; expected an idem_ identifier.");
-}
-
-function requireIdempotency(request: Request): void {
-  idempotency(request);
 }
 
 function expectedVersion(request: Request): number {

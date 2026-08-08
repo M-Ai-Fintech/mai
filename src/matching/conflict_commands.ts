@@ -1,36 +1,26 @@
-import { MatchingError, protectedNotFound } from "./errors.ts";
-import {
-  revokeOutreachAuthorization,
-  transitionConflict,
-  transitionRestriction,
-} from "./transitions.ts";
-import type {
-  CandidateRestriction,
-  MatchingConflict,
-  OutreachAuthorization,
-  ShortlistDecision,
-} from "./model.ts";
+import { protectedNotFound } from "./errors.ts";
+import { transitionConflict, transitionRestriction } from "./transitions.ts";
+import type { CandidateRestriction, MatchingConflict } from "./model.ts";
 import {
   ACTIONS,
-  assertAuthority,
-  assertCandidateReady,
   assertExpectedVersion,
   assertScope,
   authorizeCommand,
-  authorizeHumanCommand,
   type MatchingRuntime,
   metadata,
   recordEffect,
   RESOURCES,
 } from "./runtime.ts";
+import {
+  claimMatchingMutation,
+  completeMatchingMutation,
+  replayReference,
+} from "./idempotency.ts";
 import type {
   ClearRestrictionInput,
   ConflictCommandInput,
   CreateConflictInput,
-  OutreachCommandInput,
   RestrictionCommandInput,
-  RevokeOutreachInput,
-  ShortlistCommandInput,
 } from "./service_contracts.ts";
 
 export async function openConflictCommand(
@@ -45,6 +35,29 @@ export async function openConflictCommand(
     ACTIONS.conflictWrite,
   );
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.conflict.open",
+      targetType: "matching_conflict",
+      targetId: input.id,
+      payload: {
+        candidateId: input.candidateId,
+        kind: input.kind,
+        rationale: input.rationale ?? null,
+      },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findConflict(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const candidate = await runtime.repository.findCandidate(
       transaction,
       input.scope,
@@ -80,6 +93,7 @@ export async function openConflictCommand(
       conflict,
       "conflict_opened",
     );
+    await completeMatchingMutation(runtime, transaction, claim, conflict.id);
     return conflict;
   }, metadata(input.context));
 }
@@ -96,6 +110,25 @@ export async function resolveConflictCommand(
     ACTIONS.conflictWrite,
   );
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.conflict.resolve",
+      targetType: "matching_conflict",
+      targetId: input.id,
+      payload: { expectedVersion: input.expectedVersion },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findConflict(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const conflict = await runtime.repository.findConflict(
       transaction,
       input.scope,
@@ -132,6 +165,7 @@ export async function resolveConflictCommand(
       updated,
       "conflict_resolved",
     );
+    await completeMatchingMutation(runtime, transaction, claim, updated.id);
     return updated;
   }, metadata(input.context));
 }
@@ -148,6 +182,28 @@ export async function openRestrictionCommand(
     ACTIONS.restrictionWrite,
   );
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.restriction.open",
+      targetType: "candidate_restriction",
+      targetId: input.id,
+      payload: {
+        candidateId: input.candidateId,
+        category: input.category,
+      },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findRestriction(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const candidate = await runtime.repository.findCandidate(
       transaction,
       input.scope,
@@ -182,6 +238,7 @@ export async function openRestrictionCommand(
       restriction,
       "restriction_opened",
     );
+    await completeMatchingMutation(runtime, transaction, claim, restriction.id);
     return restriction;
   }, metadata(input.context));
 }
@@ -198,6 +255,28 @@ export async function clearRestrictionCommand(
     ACTIONS.restrictionWrite,
   );
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.restriction.clear",
+      targetType: "candidate_restriction",
+      targetId: input.id,
+      payload: {
+        candidateId: input.candidateId,
+        expectedVersion: input.expectedVersion,
+      },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findRestriction(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const restriction = await runtime.repository.findRestriction(
       transaction,
       input.scope,
@@ -232,165 +311,13 @@ export async function clearRestrictionCommand(
       updated,
       "restriction_cleared",
     );
+    await completeMatchingMutation(runtime, transaction, claim, updated.id);
     return updated;
   }, metadata(input.context));
 }
 
-export async function decideShortlistCommand(
-  runtime: MatchingRuntime,
-  input: ShortlistCommandInput,
-): Promise<ShortlistDecision> {
-  assertScope(input.context, input.scope);
-  const decision = await authorizeHumanCommand(
-    runtime,
-    input,
-    RESOURCES.shortlist,
-    ACTIONS.shortlistWrite,
-  );
-  assertAuthority(input.authoritySnapshotReference, decision);
-  return await runtime.transactions.run(async (transaction) => {
-    const candidate = await runtime.repository.findCandidate(
-      transaction,
-      input.scope,
-      input.candidateId,
-    );
-    if (candidate === undefined) throw protectedNotFound(input.candidateId);
-    assertCandidateReady(candidate);
-    const run = await runtime.repository.findRun(
-      transaction,
-      input.scope,
-      input.runId,
-    );
-    if (run === undefined) throw protectedNotFound(input.runId);
-    const now = runtime.clock.now();
-    const shortlist: ShortlistDecision = {
-      aggregateType: "shortlist_decision",
-      id: input.id,
-      scope: input.scope,
-      version: 1,
-      schemaVersion: 1,
-      runId: run.id,
-      candidateId: candidate.id,
-      state: input.state,
-      decidedBy: input.actor.id,
-      authoritySnapshotReference: input.authoritySnapshotReference,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await runtime.repository.createShortlistDecision(transaction, shortlist);
-    await recordEffect(
-      runtime,
-      transaction,
-      input,
-      shortlist,
-      "shortlist_decided",
-      { state: input.state },
-    );
-    return shortlist;
-  }, metadata(input.context));
-}
-
-export async function authorizeOutreachCommand(
-  runtime: MatchingRuntime,
-  input: OutreachCommandInput,
-): Promise<OutreachAuthorization> {
-  assertScope(input.context, input.scope);
-  const decision = await authorizeHumanCommand(
-    runtime,
-    input,
-    RESOURCES.outreach,
-    ACTIONS.outreachWrite,
-  );
-  assertAuthority(input.authoritySnapshotReference, decision);
-  return await runtime.transactions.run(async (transaction) => {
-    const shortlist = await runtime.repository.findShortlistDecision(
-      transaction,
-      input.scope,
-      input.shortlistDecisionId,
-    );
-    if (shortlist === undefined) {
-      throw protectedNotFound(input.shortlistDecisionId);
-    }
-    if (
-      shortlist.state !== "shortlisted" ||
-      shortlist.candidateId !== input.candidateId
-    ) {
-      throw new MatchingError(
-        "ACTION_FORBIDDEN",
-        `Shortlist decision "${shortlist.id}" does not authorize candidate "${input.candidateId}" for outreach.`,
-        shortlist.id,
-      );
-    }
-    const candidate = await runtime.repository.findCandidate(
-      transaction,
-      input.scope,
-      input.candidateId,
-    );
-    if (candidate === undefined) throw protectedNotFound(input.candidateId);
-    assertCandidateReady(candidate);
-    const now = runtime.clock.now();
-    const authorization: OutreachAuthorization = {
-      aggregateType: "outreach_authorization",
-      id: input.id,
-      scope: input.scope,
-      version: 1,
-      schemaVersion: 1,
-      shortlistDecisionId: shortlist.id,
-      candidateId: candidate.id,
-      state: "authorized",
-      authorizedBy: input.actor.id,
-      authoritySnapshotReference: input.authoritySnapshotReference,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await runtime.repository.createOutreachAuthorization(
-      transaction,
-      authorization,
-    );
-    await recordEffect(
-      runtime,
-      transaction,
-      input,
-      authorization,
-      "outreach_authorized",
-    );
-    return authorization;
-  }, metadata(input.context));
-}
-
-export async function revokeOutreachCommand(
-  runtime: MatchingRuntime,
-  input: RevokeOutreachInput,
-): Promise<OutreachAuthorization> {
-  assertScope(input.context, input.scope);
-  const decision = await authorizeHumanCommand(
-    runtime,
-    input,
-    RESOURCES.outreach,
-    ACTIONS.outreachWrite,
-  );
-  assertAuthority(input.authoritySnapshotReference, decision);
-  return await runtime.transactions.run(async (transaction) => {
-    const current = await runtime.repository.findOutreachAuthorization(
-      transaction,
-      input.scope,
-      input.id,
-    );
-    if (current === undefined) throw protectedNotFound(input.id);
-    assertExpectedVersion(input.id, input.expectedVersion, current.version);
-    const updated = revokeOutreachAuthorization(current, runtime.clock.now());
-    await runtime.repository.updateOutreachAuthorization(
-      transaction,
-      updated,
-      input.expectedVersion,
-    );
-    await recordEffect(
-      runtime,
-      transaction,
-      input,
-      updated,
-      "outreach_revoked",
-    );
-    return updated;
-  }, metadata(input.context));
-}
+export {
+  authorizeOutreachCommand,
+  decideShortlistCommand,
+  revokeOutreachCommand,
+} from "./shortlist_outreach_commands.ts";

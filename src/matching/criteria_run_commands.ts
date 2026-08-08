@@ -17,6 +17,13 @@ import {
   recordEffect,
   RESOURCES,
 } from "./runtime.ts";
+import {
+  claimMatchingMutation,
+  completeMatchingMutation,
+  replayReference,
+} from "./idempotency.ts";
+import { matchingJobReceiptForRun } from "./jobs.ts";
+import { transitionRun } from "./transitions.ts";
 import type {
   ActivateCriteriaInput,
   CreateCriteriaInput,
@@ -42,6 +49,28 @@ export async function createCriteriaCommand(
     now: runtime.clock.now(),
   });
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.criteria.create",
+      targetType: "matching_criteria",
+      targetId: criteria.id,
+      payload: {
+        selection: input.selection,
+        optimizerContractVersion: input.optimizerContractVersion,
+      },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, criteria.id) !== undefined) {
+      const replay = await runtime.repository.findCriteria(
+        transaction,
+        input.scope,
+        criteria.id,
+      );
+      if (replay === undefined) throw protectedNotFound(criteria.id);
+      return replay;
+    }
     await runtime.repository.createCriteria(transaction, criteria);
     await recordEffect(
       runtime,
@@ -50,6 +79,7 @@ export async function createCriteriaCommand(
       criteria,
       "criteria_created",
     );
+    await completeMatchingMutation(runtime, transaction, claim, criteria.id);
     return criteria;
   }, metadata(input.context));
 }
@@ -66,6 +96,25 @@ export async function activateCriteriaCommand(
     ACTIONS.criteriaWrite,
   );
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.criteria.activate",
+      targetType: "matching_criteria",
+      targetId: input.id,
+      payload: { expectedVersion: input.expectedVersion },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findCriteria(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const current = await runtime.repository.findCriteria(
       transaction,
       input.scope,
@@ -91,6 +140,7 @@ export async function activateCriteriaCommand(
       updated,
       "criteria_activated",
     );
+    await completeMatchingMutation(runtime, transaction, claim, updated.id);
     return updated;
   }, metadata(input.context));
 }
@@ -102,6 +152,25 @@ export async function startRunCommand(
   assertScope(input.context, input.scope);
   await authorizeCommand(runtime, input, RESOURCES.run, ACTIONS.runCreate);
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.run.start",
+      targetType: "matching_run",
+      targetId: input.id,
+      payload: runPayload(input),
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findRun(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return { run: replay, job: matchingJobReceiptForRun(input.id) };
+    }
     const criteria = await runtime.repository.findCriteria(
       transaction,
       input.scope,
@@ -132,6 +201,19 @@ export async function startRunCommand(
         now,
       })
     );
+    const existing = await runtime.repository.findRun(
+      transaction,
+      input.scope,
+      input.id,
+    );
+    if (existing !== undefined) {
+      throw new MatchingError(
+        "IDEMPOTENCY_CONFLICT",
+        `Matching run "${input.id}" already exists; expected one stable start command target.`,
+        input.id,
+      );
+    }
+    await runtime.repository.createRun(transaction, run);
     const job = await runtime.scheduler.enqueue(transaction, {
       scope: input.scope,
       runId: run.id,
@@ -143,25 +225,6 @@ export async function startRunCommand(
       now,
       payload: runPayload(input),
     });
-    const existing = await runtime.repository.findRun(
-      transaction,
-      input.scope,
-      input.id,
-    );
-    if (existing !== undefined) {
-      if (
-        existing.criteriaId !== criteria.id ||
-        existing.criteriaVersion !== criteria.version
-      ) {
-        throw new MatchingError(
-          "IDEMPOTENCY_CONFLICT",
-          `Matching run "${input.id}" already exists for another criteria version; expected one stable run command target.`,
-          input.id,
-        );
-      }
-      return { run: existing, job };
-    }
-    await runtime.repository.createRun(transaction, run);
     await runtime.repository.replaceCandidates(
       transaction,
       input.scope,
@@ -173,6 +236,7 @@ export async function startRunCommand(
       operationId: job.operationId,
       criteriaVersion: criteria.version,
     });
+    await completeMatchingMutation(runtime, transaction, claim, run.id);
     return { run, job };
   }, metadata(input.context));
 }
@@ -193,24 +257,45 @@ export async function executeRunCommand(
   assertScope(input.context, input.scope);
   await authorizeCommand(runtime, input, RESOURCES.run, ACTIONS.runExecute);
   return await runtime.transactions.run(async (transaction) => {
+    const claim = await claimMatchingMutation(runtime, transaction, {
+      scope: input.scope,
+      actorId: input.actor.id,
+      idempotencyKey: input.idempotencyKey,
+      commandType: "matching.run.execute",
+      targetType: "matching_run",
+      targetId: input.id,
+      payload: { runId: input.id },
+      now: runtime.clock.now(),
+    });
+    if (replayReference(claim, input.id) !== undefined) {
+      const replay = await runtime.repository.findRun(
+        transaction,
+        input.scope,
+        input.id,
+      );
+      if (replay === undefined) throw protectedNotFound(input.id);
+      return replay;
+    }
     const run = await runtime.repository.findRun(
       transaction,
       input.scope,
       input.id,
     );
     if (run === undefined) throw protectedNotFound(input.id);
+    if (run.state !== "queued") {
+      throw new MatchingError(
+        "INVALID_TRANSITION",
+        `Matching run "${run.id}" is "${run.state}"; expected queued before execution.`,
+        run.id,
+      );
+    }
     const criteria = await runtime.repository.findCriteria(
       transaction,
       input.scope,
       run.criteriaId,
     );
     if (criteria === undefined) throw protectedNotFound(run.criteriaId);
-    const running = {
-      ...run,
-      state: "running" as const,
-      version: run.version + 1,
-      updatedAt: runtime.clock.now(),
-    };
+    const running = transitionRun(run, "running", runtime.clock.now());
     await runtime.repository.updateRun(transaction, running, run.version);
     const candidates = await runtime.repository.listCandidates(
       transaction,
@@ -229,13 +314,12 @@ export async function executeRunCommand(
     const terminalState = result.selection.status === "optimal"
       ? "succeeded"
       : "infeasible";
-    const completed = {
-      ...running,
-      state: terminalState,
-      result: result.selection,
-      version: running.version + 1,
-      updatedAt: runtime.clock.now(),
-    } as MatchingRun;
+    const completed = transitionRun(
+      running,
+      terminalState,
+      runtime.clock.now(),
+      result.selection,
+    );
     await runtime.repository.updateRun(transaction, completed, running.version);
     await recordEffect(
       runtime,
@@ -248,6 +332,7 @@ export async function executeRunCommand(
         consideredCandidateCount: result.selection.consideredCandidateCount,
       },
     );
+    await completeMatchingMutation(runtime, transaction, claim, completed.id);
     return completed;
   }, metadata(input.context));
 }

@@ -85,6 +85,7 @@ Deno.test("Matching lifecycle recomputes deterministic projections through MAI-1
     actor: human,
     scope,
     id: criteriaId("criteria_demo"),
+    idempotencyKey: "idem_create_demo" as never,
     optimizerContractVersion: "matching-portfolio/v1",
     selection: { budgetLimit: 10, riskThreshold: 1, taxDebtCap: 10 },
   });
@@ -93,6 +94,7 @@ Deno.test("Matching lifecycle recomputes deterministic projections through MAI-1
     actor: human,
     scope,
     id: criteria.id,
+    idempotencyKey: "idem_activate_demo" as never,
     expectedVersion: criteria.version,
   });
   const candidate = matchingCandidate("candidate_alpha", 9);
@@ -124,6 +126,7 @@ Deno.test("Matching lifecycle recomputes deterministic projections through MAI-1
     actor: human,
     scope,
     id: started.run.id,
+    idempotencyKey: "idem_execute_demo" as never,
   });
   assertEquals(completed.state, "succeeded");
   assertEquals(completed.result?.selectedCandidateIds, [candidate.id]);
@@ -150,6 +153,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: restrictionId("restriction_alpha"),
+    idempotencyKey: "idem_open_restriction_alpha" as never,
     candidateId: candidateId("candidate_alpha"),
     category: "restricted_identity",
   });
@@ -158,6 +162,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: conflictId("conflict_alpha"),
+    idempotencyKey: "idem_open_conflict_alpha" as never,
     candidateId: candidateId("candidate_alpha"),
     kind: "restricted_identity",
   });
@@ -168,6 +173,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
         actor: human,
         scope,
         id: shortlistDecisionId("shortlist_blocked"),
+        idempotencyKey: "idem_shortlist_blocked" as never,
         runId: run.id,
         candidateId: candidateId("candidate_alpha"),
         state: "shortlisted",
@@ -184,6 +190,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: restrictionId("restriction_alpha"),
+    idempotencyKey: "idem_clear_restriction_alpha" as never,
     candidateId: candidateId("candidate_alpha"),
     expectedVersion: 1,
   });
@@ -195,6 +202,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
         actor: human,
         scope,
         id: shortlistDecisionId("shortlist_conflicted"),
+        idempotencyKey: "idem_shortlist_conflicted" as never,
         runId: run.id,
         candidateId: candidateId("candidate_alpha"),
         state: "shortlisted",
@@ -208,6 +216,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: conflictId("conflict_alpha"),
+    idempotencyKey: "idem_resolve_conflict_alpha" as never,
     expectedVersion: 1,
   });
   assertEquals(resolved.state, "resolved");
@@ -216,6 +225,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: shortlistDecisionId("shortlist_alpha"),
+    idempotencyKey: "idem_shortlist_alpha" as never,
     runId: run.id,
     candidateId: candidateId("candidate_alpha"),
     state: "shortlisted",
@@ -226,6 +236,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: outreachAuthorizationId("outreach_alpha"),
+    idempotencyKey: "idem_authorize_outreach_alpha" as never,
     shortlistDecisionId: shortlist.id,
     candidateId: candidateId("candidate_alpha"),
     authoritySnapshotReference: authority,
@@ -236,6 +247,7 @@ Deno.test("Matching gives restrictions precedence over conflicts before shortlis
     actor: human,
     scope,
     id: outreach.id,
+    idempotencyKey: "idem_revoke_outreach_alpha" as never,
     shortlistDecisionId: shortlist.id,
     candidateId: candidateId("candidate_alpha"),
     authoritySnapshotReference: authority,
@@ -257,6 +269,7 @@ Deno.test("Matching rejects AI shortlist authority and isolates tenant scope", a
         actor: ai,
         scope,
         id: shortlistDecisionId("shortlist_ai"),
+        idempotencyKey: "idem_shortlist_ai" as never,
         runId: runId("run_missing"),
         candidateId: candidateId("candidate_missing"),
         state: "shortlisted",
@@ -291,6 +304,7 @@ Deno.test("Matching run start replays one idempotent job and rejects payload dri
     actor: human,
     scope,
     id: criteriaId("criteria_replay"),
+    idempotencyKey: "idem_create_replay" as never,
     optimizerContractVersion: "matching-portfolio/v1",
     selection: { budgetLimit: 10, riskThreshold: 1, taxDebtCap: 10 },
   });
@@ -299,6 +313,7 @@ Deno.test("Matching run start replays one idempotent job and rejects payload dri
     actor: human,
     scope,
     id: criteria.id,
+    idempotencyKey: "idem_activate_replay" as never,
     expectedVersion: 1,
   });
   const candidate = matchingCandidate("candidate_replay", 9);
@@ -363,6 +378,7 @@ async function readyRun(
     actor: human,
     scope,
     id: criteriaId("criteria_ready"),
+    idempotencyKey: "idem_create_ready" as never,
     optimizerContractVersion: "matching-portfolio/v1",
     selection: { budgetLimit: 10, riskThreshold: 1, taxDebtCap: 10 },
   });
@@ -371,6 +387,7 @@ async function readyRun(
     actor: human,
     scope,
     id: criteria.id,
+    idempotencyKey: "idem_activate_ready" as never,
     expectedVersion: 1,
   });
   const candidate = matchingCandidate("candidate_alpha", 9);
@@ -402,6 +419,7 @@ async function readyRun(
     actor: human,
     scope,
     id: started.run.id,
+    idempotencyKey: "idem_execute_ready" as never,
   });
 }
 

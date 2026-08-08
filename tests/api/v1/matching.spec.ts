@@ -152,6 +152,7 @@ function allow(): AuthorizationDecision {
     reasonCode: "ALLOWED",
     allowedActions: [],
     approvedScope: undefined as never,
+    authoritySnapshotReference: "authority_api" as never,
     fieldMask: {
       include: names.map(field),
       omit: [],
