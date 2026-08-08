@@ -1,23 +1,23 @@
 {
-  "$schema": "../schemas/mai-148-infrastructure-plan.schema.json",
-  "task": "MAI-148",
-  "environment": "development",
+  "$schema": "../schemas/mvp-local-operations.schema.json",
+  "contract": "mvp-local-v1",
+  "environment": "local",
   "approval": {
     "state": "not-required",
     "provider": "docker-local",
     "regions": ["local"],
-    "accountProject": "local",
-    "availability": "single-node-local-test",
-    "rpoMinutes": 1440,
-    "rtoMinutes": 240,
+    "accountProject": null,
+    "availability": null,
+    "rpoMinutes": null,
+    "rtoMinutes": null,
     "securityControls": ["local-network-isolation", "secret-redaction"],
-    "approvers": ["local-test-contract"],
+    "approvers": [],
     "approvedAt": null
   },
   "providerAdapter": "local-compose",
   "stateBackend": {
     "type": "local-only",
-    "stateNamespace": "mai-development-local",
+    "stateNamespace": "mai-local",
     "accessControl": true,
     "locking": true,
     "backup": true,
@@ -63,14 +63,15 @@
   },
   "database": {
     "engine": "postgresql",
-    "management": "managed-postgresql",
-    "environmentDatabase": "mai_development",
+    "management": "local-postgresql",
+    "environmentDatabase": "mai_local",
     "connectivity": "local-only",
-    "automatedBackups": true,
-    "pointInTimeRecovery": true,
+    "automatedBackups": false,
+    "pointInTimeRecovery": false,
     "migrationStrategy": "pre-traffic",
     "runtimeOwnsMigrations": false,
     "authoritativeData": [
+      "database",
       "platform.outbox",
       "platform.inbox",
       "platform.jobs",
@@ -92,9 +93,9 @@
     "classifications": ["source", "quarantine", "generated", "release", "audit"]
   },
   "secrets": {
-    "manager": "local-environment-secret-store",
+    "manager": "local-env-file",
     "longLivedCredentialsAllowed": false,
-    "ciCredentialMode": "workload-identity-federation",
+    "ciCredentialMode": "none-local",
     "outputRedaction": true
   },
   "network": {
@@ -105,15 +106,15 @@
     "serviceToService": "local-only"
   },
   "iam": {
-    "workloadIdentity": true,
-    "runtimeRoles": ["api-runtime-minimal", "worker-runtime-minimal"],
-    "separateMigrationRole": true,
+    "workloadIdentity": false,
+    "runtimeRoles": ["local-process"],
+    "separateMigrationRole": false,
     "broadProductionGrant": false
   },
   "observability": {
     "structuredLogs": true,
-    "metrics": true,
-    "traces": true,
+    "metrics": false,
+    "traces": false,
     "correlationIds": true,
     "dashboards": ["local-runtime"],
     "alerts": ["local-process-exit"],
@@ -122,11 +123,11 @@
     "secretRedaction": true
   },
   "costControls": {
-    "budgetControl": true,
+    "budgetControl": false,
     "costAttribution": "local-development",
     "alertThresholdPercent": 80,
     "capacityThresholds": ["cpu-80-percent", "memory-80-percent"],
-    "unexpectedSpendAlerts": true
+    "unexpectedSpendAlerts": false
   },
   "migration": {
     "owner": "migration-runner",
@@ -157,5 +158,5 @@
     "backupRestoreStatus": "not-executed",
     "rollbackStatus": "not-executed"
   },
-  "readinessClaim": "not-ready"
+  "readinessClaim": "local-only"
 }

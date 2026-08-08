@@ -6,7 +6,7 @@ import {
   runInfrastructureSmoke,
 } from "../../../src/platform/operations/smoke.ts";
 
-Deno.test("local smoke runs every staging evidence seam", async () => {
+Deno.test("local smoke runs every MVP evidence seam", async () => {
   const probe = new PassingInfrastructureProbe();
   const results = await runInfrastructureSmoke(probe);
 

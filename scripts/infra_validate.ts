@@ -4,7 +4,7 @@ import {
   parseInfrastructureSet,
 } from "../src/platform/operations/contract.ts";
 
-const environmentFiles = ["development", "staging", "production"] as const;
+const environmentFiles = ["development"] as const;
 
 export async function loadInfrastructurePlans(): Promise<InfrastructurePlan[]> {
   const values = await Promise.all(environmentFiles.map(readEnvironment));
@@ -15,10 +15,10 @@ export async function validateInfrastructureContracts(): Promise<void> {
   const plans = await loadInfrastructurePlans();
   for (const plan of plans) {
     const state = isProvisionable(plan) ? "provisionable" : "approval-gated";
-    console.log(`MAI-148 ${plan.environment}: ${state}`);
+    console.log(`MVP local ${plan.environment}: ${state}`);
   }
   console.log(
-    "MAI-148 infrastructure contracts validated; readiness remains explicit.",
+    "MVP local infrastructure contract validated; no cloud readiness is claimed.",
   );
 }
 

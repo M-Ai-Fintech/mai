@@ -1,20 +1,6 @@
 import type { ContextMigration } from "../src/platform/persistence/migration.ts";
 import { migrationChecksum } from "../src/platform/persistence/migration_runner.ts";
-import { platformMigrations } from "../src/platform/persistence/v1.ts";
-import { auditActivityMigrations } from "../src/audit_activity/migrations/index.ts";
-import { valuationMigrations } from "../src/valuation/migrations/index.ts";
-import { matchingMigrations } from "../src/matching/migrations/index.ts";
-import { deliverablesMigrations } from "../src/deliverables/migrations/index.ts";
-import { closingMigrations } from "../src/closing/migrations/index.ts";
-import { dealGovernanceMigrations } from "../src/deal_governance/migrations/index.ts";
-import { dealManagementMigrations } from "../src/deal_management/migrations/index.ts";
-import { documentsMigrations } from "../src/documents/migrations/index.ts";
-import { evidenceKnowledgeMigrations } from "../src/evidence_knowledge/migrations/index.ts";
-import { identityAccessMigrations } from "../src/identity_access/migrations/index.ts";
-import { notificationMigrations } from "../src/notifications/migrations/index.ts";
-import { organizationRegistryMigrations } from "../src/organization_registry/migrations/index.ts";
-import { workManagementMigrations } from "../src/work_management/migrations/index.ts";
-import { negotiationMigrations } from "../src/negotiation/migrations/index.ts";
+import { registeredMigrations } from "../src/platform/persistence/registered_migrations.ts";
 
 export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
   "platform-0001-idempotency":
@@ -92,23 +78,7 @@ export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
 };
 
 export function currentMigrationCatalog(): readonly ContextMigration[] {
-  return [
-    ...platformMigrations,
-    ...auditActivityMigrations,
-    ...valuationMigrations,
-    ...matchingMigrations,
-    ...deliverablesMigrations,
-    ...closingMigrations,
-    ...dealGovernanceMigrations,
-    ...dealManagementMigrations,
-    ...documentsMigrations,
-    ...evidenceKnowledgeMigrations,
-    ...identityAccessMigrations,
-    ...notificationMigrations,
-    ...organizationRegistryMigrations,
-    ...workManagementMigrations,
-    ...negotiationMigrations,
-  ];
+  return registeredMigrations();
 }
 
 export async function migrationIntegrityDiagnostics(

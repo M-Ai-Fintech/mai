@@ -1,15 +1,12 @@
-# Rollback
+# Local prior-image rollback
 
-1. Stop new ingress and drain API requests and workers. Keep the database and
-   object-storage services available.
-2. Select the last verified application image and deploy it through the same
-   approved provider adapter. Do not reverse authoritative schema or data as a
-   first rollback action.
-3. Preserve PostgreSQL, outbox, inbox, jobs, attempts, audit, evidence, and
-   object-storage versions. Requeue or fence work through the durable job
-   protocol; never delete records to hide a failed rollout.
-4. Check liveness, readiness, database connectivity, outbox dispatch, and job
-   recovery. Compare the restored record set with the pre-deployment ledger.
-5. Record the cause, image digests, retained data, operator, timestamp, and
-   follow-up owner. Any migration reversal requires a separately approved,
-   compatibility-safe procedure.
+1. Stop ingress and drain API requests and workers with Compose; keep
+   PostgreSQL and local storage running.
+2. Set `LOCAL_PRIOR_IMAGE` to the previously built compatible application
+   image and run `deno task infra:rollback`.
+3. The command verifies the image exists, recreates only API/worker containers,
+   waits for API readiness, and compares migration, job, outbox, and inbox
+   counts before and after. It never deletes or rewrites authoritative data.
+4. If the prior image cannot run against the current schema, record the exact
+   compatibility failure, restore the current image, and correct the deployment
+   compatibility procedure before claiming rollback evidence.

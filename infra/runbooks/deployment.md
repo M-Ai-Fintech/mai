@@ -1,15 +1,17 @@
-# Deployment
+# Local deployment and startup
 
-1. Confirm the target manifest is approved and has a provider adapter. Run
-   `deno task infra:validate`; do not provision an approval-gated environment.
-2. Confirm the image digest, change review, budget, alert routing, secret
-   references, private network path, and rollback image are recorded.
-3. Run the migration runner as a pre-traffic or compatibility-safe step. The
-   API and worker processes never apply schema migrations during startup.
-4. Deploy the API and the durable-job worker from the same modular-monolith
-   image. Do not create Core, Agent, or Engine services.
-5. Wait for `/health/live` and `/health/ready`, then run the environment smoke
-   suite: database, object storage, secret resolution, jobs, outbox dispatch,
-   and restart recovery.
-6. Record image digest, migration result, smoke output, operator, timestamp,
-   and remaining warnings. Production promotion remains separately authorized.
+1. Run `deno task local:prepare`, then load `infra/local/.env` into the current
+   shell without echoing it.
+2. Validate the local contract with `deno task infra:validate`.
+3. Start PostgreSQL and local object storage with the Compose command in
+   `infra/README.md`, waiting for health checks.
+4. Run `deno task db:migrate`. API and worker startup must not apply migrations.
+5. Start `api-local` and `worker-local` from the same built image with
+   `--profile worker --build --wait`.
+6. Confirm `/health/live` and `/health/ready` for both processes, then run
+   `deno task infra:smoke`.
+7. Record image identifier, migration JSON event, smoke JSON event, and the
+   operator timestamp. Do not record local secret values.
+
+There is no staging or production procedure in this runbook. GCP migration is
+deferred to MAI-81.

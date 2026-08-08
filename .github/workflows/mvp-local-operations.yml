@@ -1,0 +1,57 @@
+name: MVP local operations contract
+
+on:
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "infra/**"
+      - "scripts/infra_*.ts"
+      - "scripts/local_env.ts"
+      - "scripts/migrate.ts"
+      - "src/platform/operations/**"
+      - "src/platform/jobs/**"
+      - "src/platform/persistence/registered_migrations.ts"
+      - "tests/platform/operations/**"
+      - "tests/platform/jobs/worker_process.spec.ts"
+      - "deno.json"
+  push:
+    branches: [master]
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "infra/**"
+      - "scripts/infra_*.ts"
+      - "scripts/local_env.ts"
+      - "scripts/migrate.ts"
+      - "src/platform/operations/**"
+      - "src/platform/jobs/**"
+      - "src/platform/persistence/registered_migrations.ts"
+      - "tests/platform/operations/**"
+      - "tests/platform/jobs/worker_process.spec.ts"
+      - "deno.json"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.3
+      - run: deno task infra:validate
+      - run: deno test --allow-read --allow-env --allow-net --allow-ffi tests/platform/operations/*.spec.ts tests/platform/jobs/worker_process.spec.ts
+      - run: |
+          LOCAL_POSTGRES_USER=mai_local \
+          LOCAL_POSTGRES_PASSWORD=ci-${{ github.run_id }} \
+          LOCAL_POSTGRES_DATABASE=mai_local \
+          LOCAL_STORAGE_ACCESS_KEY=mai_local \
+          LOCAL_STORAGE_SECRET_KEY=ci-${{ github.run_id }} \
+          LOCAL_STORAGE_BUCKET=mai-local \
+          docker compose -f infra/local/docker-compose.yml --profile worker --profile init config --quiet
+
+# This workflow validates local contracts only. It does not provision GCP,
+# staging, production, Papermark, or provider-certification environments.

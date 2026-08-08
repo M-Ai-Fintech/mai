@@ -1,8 +1,16 @@
+import { handleHealthRequest, RuntimeReadiness } from "../operations/health.ts";
+import {
+  logOperationalEvent,
+  safeErrorCode,
+} from "../operations/diagnostics.ts";
+
 export interface WorkerProcess {
   executeOne(
     workerId: string,
     leaseMilliseconds: number,
+    signal?: AbortSignal,
   ): Promise<{ readonly status: string }>;
+  close?(): Promise<void>;
 }
 
 export interface WorkerLoopOptions {
@@ -25,7 +33,12 @@ export async function runWorkerLoop(
     const outcome = await worker.executeOne(
       options.workerId,
       options.leaseMilliseconds,
+      signal,
     );
+    logOperationalEvent("worker.iteration", {
+      workerId: options.workerId,
+      status: outcome.status,
+    });
     if (outcome.status === "idle") await sleep(options.pollMilliseconds);
   }
 }
@@ -62,18 +75,32 @@ export function workerProcessOptions(
 }
 
 export async function startConfiguredWorkerProcess(): Promise<void> {
-  const moduleSpecifier = requiredEnvironment(
-    Deno.env.toObject(),
-    "MAI_WORKER_MODULE",
-  );
+  const environment = Deno.env.toObject();
+  const moduleSpecifier = requiredEnvironment(environment, "MAI_WORKER_MODULE");
   const worker = await loadConfiguredWorker(moduleSpecifier);
   const controller = new AbortController();
-  installShutdownSignals(controller);
-  await runWorkerLoop(
-    worker,
-    workerProcessOptions(Deno.env.toObject()),
-    controller.signal,
+  const readiness = new RuntimeReadiness("worker");
+  readiness.setDatabaseState(true);
+  const healthServer = startWorkerHealthServer(
+    readiness,
+    positiveEnvironmentInteger(environment, "MAI_WORKER_HEALTH_PORT", 8001),
   );
+  const removeSignals = installShutdownSignals(controller, readiness);
+  try {
+    await runWorkerLoop(
+      worker,
+      workerProcessOptions(environment),
+      controller.signal,
+    );
+  } catch (error) {
+    logOperationalEvent("worker.failed", { errorCode: safeErrorCode(error) });
+    throw error;
+  } finally {
+    readiness.markStopped();
+    await worker.close?.();
+    removeSignals();
+    await healthServer.shutdown();
+  }
 }
 
 function assertWorkerOptions(options: WorkerLoopOptions): void {
@@ -131,14 +158,51 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function installShutdownSignals(controller: AbortController): void {
+function installShutdownSignals(
+  controller: AbortController,
+  readiness: RuntimeReadiness,
+): () => void {
+  const handlers = new Map<"SIGTERM" | "SIGINT", () => void>();
   for (const signal of ["SIGTERM", "SIGINT"] as const) {
-    Deno.addSignalListener(signal, () => controller.abort());
+    const handler = (): void => {
+      readiness.beginDrain();
+      controller.abort();
+      logOperationalEvent("worker.drain.started", { signal });
+    };
+    handlers.set(signal, handler);
+    Deno.addSignalListener(signal, handler);
   }
+  return () => {
+    for (const [signal, handler] of handlers) {
+      Deno.removeSignalListener(signal, handler);
+    }
+  };
+}
+
+function startWorkerHealthServer(
+  readiness: RuntimeReadiness,
+  port: number,
+): Deno.HttpServer {
+  return Deno.serve(
+    { port },
+    (request) =>
+      handleHealthRequest(request, readiness) ??
+        new Response("Not Found", { status: 404 }),
+  );
 }
 
 function dynamicImport(specifier: string): Promise<unknown> {
+  if (specifier.startsWith(".") || specifier.startsWith("/")) {
+    const path = specifier.startsWith("/")
+      ? specifier
+      : `${Deno.cwd()}/${specifier}`;
+    return import(pathToFileUrl(path));
+  }
   return import(specifier);
+}
+
+function pathToFileUrl(path: string): string {
+  return new URL(`file://${path}`).href;
 }
 
 function delay(milliseconds: number): Promise<void> {

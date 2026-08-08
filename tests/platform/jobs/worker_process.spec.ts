@@ -61,14 +61,37 @@ Deno.test("worker loader accepts a named factory and rejects invalid exports", a
   );
 });
 
+Deno.test("worker loop does not claim another job after drain begins", async () => {
+  const worker = new RecordingWorker();
+  const controller = new AbortController();
+  let release: (() => void) | undefined;
+  const firstJob = new Promise<void>((resolve) => release = resolve);
+  worker.next = async () => {
+    await firstJob;
+    controller.abort();
+    return { status: "succeeded" };
+  };
+
+  const loop = runWorkerLoop(
+    worker,
+    { workerId: "worker_drain", leaseMilliseconds: 10, pollMilliseconds: 1 },
+    controller.signal,
+  );
+  release?.();
+  await loop;
+  assertEquals(worker.calls.length, 1);
+});
+
 class RecordingWorker implements WorkerProcess {
   readonly calls: Array<{ workerId: string; leaseMilliseconds: number }> = [];
+  next: () => Promise<{ readonly status: string }> = () =>
+    Promise.resolve({ status: "idle" });
 
   executeOne(
     workerId: string,
     leaseMilliseconds: number,
   ): Promise<{ readonly status: string }> {
     this.calls.push({ workerId, leaseMilliseconds });
-    return Promise.resolve({ status: "idle" });
+    return this.next();
   }
 }

@@ -1,4 +1,4 @@
-export type HealthState = "healthy" | "not-ready";
+export type HealthState = "healthy" | "not-ready" | "draining" | "stopped";
 
 export interface HealthCheck {
   readonly name: string;
@@ -13,18 +13,49 @@ export interface HealthSnapshot {
 
 export class RuntimeReadiness {
   private databaseState: HealthState = "not-ready";
+  private lifecycleState: "running" | "draining" | "stopped" = "running";
 
   constructor(private readonly service: string) {}
 
   setDatabaseState(connected: boolean): void {
+    if (this.lifecycleState !== "running") return;
     this.databaseState = connected ? "healthy" : "not-ready";
   }
 
+  /** Stops new work from being accepted while allowing health probes to run. */
+  beginDrain(): void {
+    if (this.lifecycleState === "running") this.lifecycleState = "draining";
+  }
+
+  /** Marks the process stopped after its server/worker has closed. */
+  markStopped(): void {
+    this.lifecycleState = "stopped";
+  }
+
+  isAcceptingTraffic(): boolean {
+    return this.lifecycleState === "running";
+  }
+
   live(): HealthSnapshot {
-    return { service: this.service, state: "healthy", checks: [] };
+    const state = this.lifecycleState === "stopped" ? "stopped" : "healthy";
+    return { service: this.service, state, checks: [] };
   }
 
   ready(): HealthSnapshot {
+    if (this.lifecycleState === "draining") {
+      return {
+        service: this.service,
+        state: "draining",
+        checks: [{ name: "lifecycle", state: "draining" }],
+      };
+    }
+    if (this.lifecycleState === "stopped") {
+      return {
+        service: this.service,
+        state: "stopped",
+        checks: [{ name: "lifecycle", state: "stopped" }],
+      };
+    }
     return {
       service: this.service,
       state: this.databaseState,

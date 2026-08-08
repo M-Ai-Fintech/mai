@@ -11,6 +11,13 @@ interface LedgerRow {
   checksum: string;
 }
 
+export interface MigrationApplyOptions {
+  readonly beforeMigration?: (
+    client: pg.PoolClient,
+    migration: ContextMigration,
+  ) => Promise<void>;
+}
+
 export class PostgresMigrationRunner {
   constructor(private readonly pool: pg.Pool) {}
 
@@ -19,14 +26,17 @@ export class PostgresMigrationRunner {
    *
    * @example await runner.apply(platformMigrations)
    */
-  async apply(migrations: readonly ContextMigration[]): Promise<void> {
+  async apply(
+    migrations: readonly ContextMigration[],
+    options: MigrationApplyOptions = {},
+  ): Promise<void> {
     const validated = migrations.map(defineMigration);
     const client = await this.pool.connect();
     try {
       await lockMigrations(client);
       await ensureMigrationLedger(client);
       for (const migration of orderMigrations(validated)) {
-        await applyMigration(client, migration);
+        await applyMigration(client, migration, options.beforeMigration);
       }
     } finally {
       await unlockMigrations(client).catch(() => {});
@@ -67,6 +77,7 @@ function canonicalMigration(migration: ContextMigration): string {
 async function applyMigration(
   client: pg.PoolClient,
   migration: ContextMigration,
+  beforeMigration?: MigrationApplyOptions["beforeMigration"],
 ): Promise<void> {
   const checksum = await migrationChecksum(migration);
   const applied = await appliedMigration(client, migration);
@@ -74,7 +85,12 @@ async function applyMigration(
     assertMatchingChecksum(migration, applied.checksum, checksum);
     return;
   }
-  await executeMigrationTransaction(client, migration, checksum);
+  await executeMigrationTransaction(
+    client,
+    migration,
+    checksum,
+    beforeMigration,
+  );
 }
 
 async function appliedMigration(
@@ -104,12 +120,24 @@ async function executeMigrationTransaction(
   client: pg.PoolClient,
   migration: ContextMigration,
   checksum: string,
+  beforeMigration?: MigrationApplyOptions["beforeMigration"],
 ): Promise<void> {
   await client.query("BEGIN");
   try {
+    await preparePublishedCompatibility(client, migration);
+    await beforeMigration?.(client, migration);
     await installOwnedSearchPath(client, migration.schema);
-    for (const statement of migration.statements) {
-      await client.query(statement.sql);
+    for (const [index, statement] of migration.statements.entries()) {
+      try {
+        await client.query(statement.sql);
+      } catch (error) {
+        throw new Error(
+          `Migration "${migration.id}" statement ${index + 1} failed: ${
+            safeMigrationDiagnostic(error)
+          }`,
+          { cause: error },
+        );
+      }
     }
     await recordMigration(client, migration, checksum);
     await client.query("COMMIT");
@@ -141,6 +169,31 @@ async function rollbackMigration(
     );
   }
   throw original;
+}
+
+async function preparePublishedCompatibility(
+  client: pg.PoolClient,
+  migration: ContextMigration,
+): Promise<void> {
+  if (migration.id !== "work_management-0009-corrective-upgrade") return;
+  const result = await client.query<{ exists: boolean }>(
+    "SELECT to_regclass('work_management.membership_reconciliation_activation') IS NOT NULL AS exists",
+  );
+  if (result.rows[0]?.exists !== true) return;
+  await client.query(
+    "DROP TRIGGER IF EXISTS membership_activation_no_direct_mutation ON work_management.membership_reconciliation_activation",
+  );
+}
+
+function safeMigrationDiagnostic(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message
+    .replace(
+      /((?:password|passwd|secret|token|api[_-]?key|authorization|credential)\s*[:=]\s*)([^\s,;]+)/gi,
+      "$1[REDACTED]",
+    )
+    .replace(/(postgres(?:ql)?:\/\/)[^@\s]+@/gi, "$1[REDACTED]@")
+    .slice(0, 256);
 }
 
 function recordMigration(

@@ -1,17 +1,15 @@
-# Migration coordination
+# Local migration coordination
 
-1. Confirm the target manifest is approved and the migration owner, change
-   window, compatibility strategy, backup point, and rollback decision are
-   recorded. Runtime startup must not apply migrations.
-2. Review schema changes against PostgreSQL transaction truth, outbox, inbox,
-   jobs, audit, evidence, object metadata, and idempotency records. Prefer
-   additive and compatibility-safe changes before traffic moves.
-3. Take or verify the approved restore point, pause conflicting deployment
-   actions, and run the separate migration runner with its least-privilege
-   migration role. Do not reuse API or worker runtime credentials.
-4. Validate migration status, authoritative row counts, constraints, indexes,
-   tenant/workspace/deal boundaries, and rollback compatibility before opening
-   traffic. Record the exact migration identifier and output without secrets.
-5. If validation fails, stop traffic and use the approved application rollback
-   while retaining authoritative records. Reverse a schema change only through
-   a separately reviewed compatibility-safe procedure.
+1. Confirm `DATABASE_URL` points to the local PostgreSQL target and that the
+   API and worker are stopped or not receiving traffic.
+2. Run `deno task db:migrate`. The command applies the complete registered
+   catalog under the PostgreSQL advisory lock and records checksums in the
+   migration ledger.
+3. Rerun the command to prove already-applied migrations are idempotent. A
+   checksum mismatch or invalid dependency is a hard failure; never edit an
+   applied migration.
+4. Record the JSON event with registered count and ledger before/after counts.
+5. Start traffic only after the migration command succeeds and readiness is
+   healthy.
+
+The API and worker never own schema migration execution.

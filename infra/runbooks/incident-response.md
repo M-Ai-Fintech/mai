@@ -1,14 +1,13 @@
-# Incident response
+# Local incident diagnosis
 
-1. Open an incident record with correlation ID, environment, first observed
-   time, affected process, tenant-safe scope, and current deployment digest.
-2. Check health/readiness, database availability, job leases/backlog,
-   outbox/inbox failures, storage errors, secret resolution, network paths,
-   and recent deployment or migration evidence.
-3. Use the least disruptive mitigation: pause ingress, drain a worker, stop a
-   dispatcher, or roll back the application image. Do not disable audit,
-   retention, authorization, or tenant isolation to restore throughput.
-4. Redact secrets, access tokens, document contents, and sensitive fields from
-   logs and incident output. Preserve relevant audit and job-attempt evidence.
-5. Close with impact, timeline, recovery proof, data-integrity checks, root
-   cause, owner-approved follow-ups, and the exact commands that were run.
+1. Record a correlation ID, affected local process, image identifier, and first
+   observed time without copying secrets or payloads.
+2. Check API/worker liveness and readiness, PostgreSQL connectivity, storage
+   readiness, migration output, recent restart events, and sanitized job
+   attempts.
+3. Use the least disruptive reversible action: stop new traffic, drain a
+   worker, restart a process, or execute the prior-image rollback runbook.
+4. Preserve database, outbox, inbox, job, audit, evidence, and storage data.
+   Do not reset volumes to hide a failure.
+5. Close with commands, timestamps, redacted diagnostics, integrity checks, and
+   follow-up owner decisions.
