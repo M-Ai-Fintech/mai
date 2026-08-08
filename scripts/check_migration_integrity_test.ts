@@ -7,6 +7,15 @@ import {
   PUBLISHED_MIGRATION_CHECKSUMS,
 } from "./check_migration_integrity.ts";
 
+const WAVE_G_MIGRATION_IDS = [
+  "valuation-0001",
+  "matching-0001",
+  "deliverables-0001",
+  "closing-0001-control",
+  "deal_governance-0001",
+  "deal_governance-0002",
+] as const;
+
 Deno.test("migration catalog covers clean and historical integrity paths", async () => {
   assertEquals(
     await migrationIntegrityDiagnostics(
@@ -15,6 +24,17 @@ Deno.test("migration catalog covers clean and historical integrity paths", async
     ),
     [],
   );
+});
+
+Deno.test("migration catalog pins every Wave G migration stream", () => {
+  const catalogIds = new Set(
+    currentMigrationCatalog().map((migration) => migration.id),
+  );
+
+  for (const id of WAVE_G_MIGRATION_IDS) {
+    assertEquals(catalogIds.has(id), true);
+    assertEquals(typeof PUBLISHED_MIGRATION_CHECKSUMS[id], "string");
+  }
 });
 
 Deno.test("migration integrity rejects checksum mutation", async () => {

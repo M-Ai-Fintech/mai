@@ -8,6 +8,24 @@ import {
 } from "../deal_management/composition.ts";
 import { handleIdentityAccessRoute } from "../identity_access/http.ts";
 import { handleDealManagementRoute } from "../deal_management/http.ts";
+import {
+  handleValuationV1Route,
+  type ValuationV1RouteDependencies,
+} from "./v1/valuation_routes.ts";
+import {
+  handleMatchingV1Route,
+  type MatchingV1RouteDependencies,
+} from "./v1/matching_routes.ts";
+import {
+  type DeliverablesV1RouteDependencies,
+  handleDeliverablesV1Route,
+} from "./v1/deliverables_routes.ts";
+import { type ClosingV1RouteDependencies } from "./v1/closing.ts";
+import { handleClosingV1Route } from "./v1/closing_routes.ts";
+import {
+  type DealGovernanceV1RouteDependencies,
+  handleDealGovernanceV1Route,
+} from "./v1/deal_governance_routes.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
 import {
@@ -18,18 +36,28 @@ import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
 
 const PORT = 8000;
 
+export interface WaveGRouteDependencies {
+  readonly valuation?: ValuationV1RouteDependencies;
+  readonly matching?: MatchingV1RouteDependencies;
+  readonly deliverables?: DeliverablesV1RouteDependencies;
+  readonly closing?: ClosingV1RouteDependencies;
+  readonly governance?: DealGovernanceV1RouteDependencies;
+}
+
 export interface ApiServerOptions {
   readonly dealManagement?:
     | DealManagementComposition
     | DealManagementCompositionConfig
     | DealManagementCompositionResult;
   readonly repository?: DealRepository;
+  readonly waveG?: WaveGRouteDependencies;
 }
 
 export interface ApiServerRouter {
   readonly dealManagement: DealManagementCompositionResult;
   readonly repository: DealRepository;
   readonly readiness: RuntimeReadiness;
+  readonly waveG: WaveGRouteDependencies;
   handle(request: Request): Promise<Response>;
 }
 
@@ -62,6 +90,7 @@ async function routeRequest(
   request: Request,
   repository: DealRepository,
   dealManagement: DealManagementCompositionResult,
+  waveG: WaveGRouteDependencies,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
@@ -73,6 +102,7 @@ async function routeRequest(
       request,
       repository,
       dealManagement,
+      waveG,
       headers,
     );
   } catch (error: unknown) {
@@ -84,6 +114,7 @@ async function routedResponse(
   request: Request,
   repository: DealRepository,
   dealManagement: DealManagementCompositionResult,
+  waveG: WaveGRouteDependencies,
   headers: Headers,
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
@@ -94,7 +125,90 @@ async function routedResponse(
     headers,
   );
   if (dealManagementResponse) return dealManagementResponse;
+  const waveGResponse = await routeWaveGRequest(request, waveG, headers);
+  if (waveGResponse !== undefined) return waveGResponse;
   return await nonDealResponse(request, repository, headers);
+}
+
+async function routeWaveGRequest(
+  request: Request,
+  dependencies: WaveGRouteDependencies,
+  headers: Headers,
+): Promise<Response | undefined> {
+  const path = new URL(request.url).pathname;
+  if (hasRoutePrefix(path, "/api/v1/valuation")) {
+    return await routeConfiguredWaveGRequest(
+      request,
+      dependencies.valuation,
+      handleValuationV1Route,
+      headers,
+    );
+  }
+  if (hasRoutePrefix(path, "/api/v1/matching")) {
+    return await routeConfiguredWaveGRequest(
+      request,
+      dependencies.matching,
+      handleMatchingV1Route,
+      headers,
+    );
+  }
+  if (hasRoutePrefix(path, "/api/v1/deliverables")) {
+    return await routeConfiguredWaveGRequest(
+      request,
+      dependencies.deliverables,
+      handleDeliverablesV1Route,
+      headers,
+    );
+  }
+  if (hasRoutePrefix(path, "/api/v1/closing")) {
+    return await routeConfiguredWaveGRequest(
+      request,
+      dependencies.closing,
+      handleClosingV1Route,
+      headers,
+    );
+  }
+  if (hasRoutePrefix(path, "/api/v1/deal-governance")) {
+    return await routeConfiguredWaveGRequest(
+      request,
+      dependencies.governance,
+      handleDealGovernanceV1Route,
+      headers,
+    );
+  }
+  return undefined;
+}
+
+async function routeConfiguredWaveGRequest<TDependencies>(
+  request: Request,
+  dependencies: TDependencies | undefined,
+  handler: (
+    request: Request,
+    dependencies: TDependencies,
+  ) => Promise<Response | null>,
+  headers: Headers,
+): Promise<Response> {
+  if (dependencies === undefined) return waveGUnavailable(headers);
+  return withCorsHeaders(
+    await handler(request, dependencies) ?? notFoundResponse(),
+    headers,
+  );
+}
+
+function hasRoutePrefix(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
+function waveGUnavailable(headers: Headers): Response {
+  return jsonResponse(
+    { error: "Wave G route is not configured." },
+    headers,
+    503,
+  );
+}
+
+function notFoundResponse(): Response {
+  return new Response("Not Found", { status: 404 });
 }
 
 async function nonDealResponse(
@@ -172,8 +286,15 @@ export function createApiServer(
     dealManagement,
     repository,
     readiness,
+    waveG: options.waveG ?? {},
     handle: (request) =>
-      routeRequest(request, repository, dealManagement, readiness),
+      routeRequest(
+        request,
+        repository,
+        dealManagement,
+        options.waveG ?? {},
+        readiness,
+      ),
   };
 }
 
@@ -206,6 +327,16 @@ export function createExecutableApiServer(
 if (import.meta.main) startServer();
 
 export { jsonResponse };
+
+function withCorsHeaders(response: Response, cors: Headers): Response {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of cors.entries()) headers.set(name, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 function resolveDealManagement(
   value: ApiServerOptions["dealManagement"],
