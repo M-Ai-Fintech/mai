@@ -3,7 +3,10 @@ import type {
   TransactionHandle,
   TransactionQueryResult,
 } from "../../src/platform/persistence/v1.ts";
-import { createInitialGovernance } from "../../src/deal_governance/model.ts";
+import {
+  createInitialGovernance,
+  previewGovernanceTransition,
+} from "../../src/deal_governance/model.ts";
 import { PostgresDealGovernanceRepository } from "../../src/deal_governance/repository_postgres.ts";
 import {
   actor,
@@ -18,6 +21,7 @@ class FakeGovernanceTransactionRunner {
     readonly parameters: readonly unknown[];
   }[] = [];
   private document: unknown;
+  private previewDocument: unknown;
   version = 0;
 
   run<TResult>(
@@ -40,10 +44,27 @@ class FakeGovernanceTransactionRunner {
           } as TransactionQueryResult<TRow>);
         }
         if (
+          sql.includes(
+            "SELECT document FROM deal_governance.consequence_previews",
+          )
+        ) {
+          return Promise.resolve({
+            rows: this.previewDocument === undefined
+              ? []
+              : [{ document: this.previewDocument }],
+            rowCount: this.previewDocument === undefined ? 0 : 1,
+          } as TransactionQueryResult<TRow>);
+        }
+        if (
           sql.startsWith("INSERT INTO deal_governance.governance_aggregates")
         ) {
           this.document = parameters[6];
           this.version = Number(parameters[4]);
+        }
+        if (
+          sql.startsWith("INSERT INTO deal_governance.consequence_previews")
+        ) {
+          this.previewDocument = parameters[8];
         }
         if (sql.startsWith("UPDATE deal_governance.governance_aggregates")) {
           this.document = parameters[6];
@@ -106,6 +127,18 @@ Deno.test("PostgreSQL governance repository persists scoped documents and atomic
   );
   assertEquals(loaded?.id, created.id);
   assertEquals(loaded?.scope, scope);
+  const preview = previewGovernanceTransition({
+    aggregate: created,
+    action: "pause",
+    now: created.createdAt,
+  });
+  await repository.transaction(async (store) => {
+    await store.savePreview(preview);
+  });
+  const loadedPreview = await repository.transaction((store) =>
+    store.findPreview(scope, preview.previewId)
+  );
+  assertEquals(loadedPreview?.previewId, preview.previewId);
   assert(runner.queries.some((query) => query.sql.includes("tenant_id = $1")));
   assert(runner.queries.some((query) => query.sql.includes("platform.outbox")));
   assertEquals(runner.version, 1);

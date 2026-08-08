@@ -9,3 +9,5 @@ export * from "./repository_postgres.ts";
 export * from "./retention.ts";
 export * from "./service.ts";
 export * from "./service_contracts.ts";
+export * from "./trusted_evidence.ts";
+export * from "./migrations/index.ts";

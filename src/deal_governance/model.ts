@@ -275,6 +275,7 @@ export function assertPreviewCurrent(
   aggregate: DealGovernanceAggregate,
   preview: ConsequencePreview,
   now: string,
+  options: { readonly requireAllowed?: boolean } = {},
 ): void {
   if (!sameScope(preview.scope, aggregate.scope)) {
     throw new DealGovernanceError(
@@ -288,13 +289,18 @@ export function assertPreviewCurrent(
       `Consequence preview "${preview.previewId}" targets version "${preview.aggregateVersion}"; expected current version "${aggregate.version}".`,
     );
   }
-  if (Date.parse(preview.expiresAt) < Date.parse(now)) {
+  const expiresAt = Date.parse(preview.expiresAt);
+  const currentTime = Date.parse(now);
+  if (
+    !Number.isFinite(expiresAt) || !Number.isFinite(currentTime) ||
+    currentTime >= expiresAt
+  ) {
     throw new DealGovernanceError(
       "PREVIEW_STALE",
       `Consequence preview "${preview.previewId}" expired at "${preview.expiresAt}"; expected a current preview.`,
     );
   }
-  if (preview.outcome !== "allowed") {
+  if (options.requireAllowed !== false && preview.outcome !== "allowed") {
     throw new DealGovernanceError(
       "INVALID_STATE_TRANSITION",
       `Consequence preview "${preview.previewId}" is blocked; expected an allowed preview before transition.`,

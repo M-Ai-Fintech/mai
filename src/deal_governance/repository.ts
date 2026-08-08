@@ -6,6 +6,7 @@ import {
   GovernanceVersionConflictError,
 } from "./errors.ts";
 import type {
+  ConsequencePreview,
   DealGovernanceAggregate,
   GovernanceEvent,
   GovernanceScope,
@@ -28,6 +29,11 @@ export type CommandClaim =
   | { readonly state: "replay"; readonly result: unknown };
 
 export interface DealGovernanceStore {
+  findPreview(
+    scope: GovernanceScope,
+    id: string,
+  ): Promise<ConsequencePreview | undefined>;
+  savePreview(preview: ConsequencePreview): Promise<void>;
   findGovernance(
     scope: GovernanceScope,
   ): Promise<DealGovernanceAggregate | undefined>;
@@ -93,6 +99,7 @@ interface CommandRecord {
 }
 
 interface StoreState {
+  readonly previews: Map<string, ConsequencePreview>;
   readonly governance: Map<string, DealGovernanceAggregate>;
   readonly retention: Map<string, RetentionAssignment>;
   readonly holds: Map<string, LegalHold>;
@@ -141,6 +148,24 @@ export class InMemoryDealGovernanceRepository
 
 class InMemoryDealGovernanceStore implements DealGovernanceStore {
   constructor(private readonly state: StoreState) {}
+
+  findPreview(
+    scope: GovernanceScope,
+    id: string,
+  ): Promise<ConsequencePreview | undefined> {
+    return Promise.resolve(findPreviewById(this.state.previews, scope, id));
+  }
+
+  savePreview(preview: ConsequencePreview): Promise<void> {
+    const key = scopedKey(preview.scope, preview.previewId);
+    if (this.state.previews.has(key)) {
+      throw new GovernanceInvariantError(
+        `Consequence preview "${preview.previewId}" already exists; expected an immutable server-issued preview identity.`,
+      );
+    }
+    this.state.previews.set(key, cloneValue(preview));
+    return Promise.resolve();
+  }
 
   findGovernance(
     scope: GovernanceScope,
@@ -380,8 +405,18 @@ function findById<
     : cloneValue(map.get(scopedKey(scope, id))!);
 }
 
+function findPreviewById(
+  map: Map<string, ConsequencePreview>,
+  scope: GovernanceScope,
+  id: string,
+): ConsequencePreview | undefined {
+  const preview = map.get(scopedKey(scope, id));
+  return preview === undefined ? undefined : cloneValue(preview);
+}
+
 function emptyState(): StoreState {
   return {
+    previews: new Map(),
     governance: new Map(),
     retention: new Map(),
     holds: new Map(),
@@ -396,6 +431,7 @@ function emptyState(): StoreState {
 
 function cloneState(state: StoreState): StoreState {
   return {
+    previews: cloneMap(state.previews),
     governance: cloneMap(state.governance),
     retention: cloneMap(state.retention),
     holds: cloneMap(state.holds),

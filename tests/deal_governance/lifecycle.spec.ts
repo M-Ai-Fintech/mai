@@ -58,7 +58,7 @@ Deno.test("Deal Governance lifecycle previews are version-bound and start retent
     idempotencyKey: idempotency("pause-lifecycle"),
     action: "pause",
     expectedVersion: current.governance.version,
-    preview: pausePreview,
+    previewId: pausePreview.previewId,
   });
   const archivePreview = await composition.service.previewTransition(
     context,
@@ -70,7 +70,7 @@ Deno.test("Deal Governance lifecycle previews are version-bound and start retent
     idempotencyKey: idempotency("archive-lifecycle"),
     action: "archive",
     expectedVersion: paused.version,
-    preview: archivePreview,
+    previewId: archivePreview.previewId,
   });
   assertEquals(archived.state, "archived");
   const archivedRead = await composition.service.read(context);
@@ -84,7 +84,7 @@ Deno.test("Deal Governance lifecycle previews are version-bound and start retent
         idempotencyKey: idempotency("wrong-preview-action"),
         action: "restore",
         expectedVersion: archived.version,
-        preview: archivePreview,
+        previewId: archivePreview.previewId,
       }),
     DealGovernanceError,
     "expected action",
@@ -121,7 +121,7 @@ Deno.test("active legal holds dominate termination and require separate human re
         idempotencyKey: idempotency("blocked-termination"),
         action: "terminate",
         expectedVersion: created.version + 1,
-        preview: blockedPreview,
+        previewId: blockedPreview.previewId,
       }),
     DealGovernanceError,
     "active legal hold",
@@ -146,7 +146,7 @@ Deno.test("active legal holds dominate termination and require separate human re
     idempotencyKey: idempotency("terminate-after-release"),
     action: "terminate",
     expectedVersion: created.version + 2,
-    preview: allowed,
+    previewId: allowed.previewId,
   });
   assertEquals(terminated.state, "terminated");
   assertStringIncludes(

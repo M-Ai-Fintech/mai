@@ -31,6 +31,15 @@ export interface ErasureGate {
   readonly policyApproved: boolean;
   readonly infrastructureApproved: boolean;
   readonly physicalErasureEnabled: boolean;
+  readonly resolutionReason: string;
+  readonly evidence: {
+    readonly source: "trusted_server_evidence" | "default_denied";
+    readonly evidenceId?: string;
+    readonly policyReference?: string;
+    readonly infrastructureReference?: string;
+    readonly featureReference?: string;
+    readonly evaluatedAt: string;
+  };
 }
 
 export interface OrchestrationStep {
@@ -114,6 +123,7 @@ export function createErasureOrchestration(input: {
   }
   assertCategories(input.categories);
   assertInstant(input.now, "orchestration creation time");
+  assertGate(input.gate);
   const steps = input.categories.map((category) => ({
     category,
     state: "pending" as const,
@@ -125,9 +135,7 @@ export function createErasureOrchestration(input: {
       orchestrationId(`orchestration_${input.request.id.slice(9)}`),
     scope: Object.freeze({ ...input.request.scope }),
     requestId: input.request.id,
-    state: input.gate.policyApproved && input.gate.infrastructureApproved
-      ? "queued"
-      : "blocked",
+    state: "queued",
     gate: Object.freeze({ ...input.gate }),
     steps: Object.freeze(steps),
     nextStepIndex: 0,
@@ -149,15 +157,9 @@ export function startOrchestration(
   now: string,
 ): ErasureOrchestration {
   assertVersion(orchestration, expectedVersion);
-  if (orchestration.state === "blocked") {
-    throw new DealGovernanceError(
-      "ORCHESTRATION_BLOCKED",
-      `Orchestration "${orchestration.id}" is blocked by policy or infrastructure gates; expected explicit approvals before starting.`,
-    );
-  }
   if (
     orchestration.state !== "queued" && orchestration.state !== "failed" &&
-    orchestration.state !== "paused"
+    orchestration.state !== "paused" && orchestration.state !== "blocked"
   ) {
     throw new DealGovernanceError(
       "ORCHESTRATION_BLOCKED",
@@ -290,7 +292,7 @@ export function createErasureManifest(input: {
         ? "Downstream erasure proof recorded."
         : input.orchestration.gate.physicalErasureEnabled
         ? "Retained by downstream disposition."
-        : "Physical erasure is disabled by policy or infrastructure gate."),
+        : `Physical erasure was not executed: ${input.orchestration.gate.resolutionReason}.`),
     ...(step.proofReference === undefined
       ? {}
       : { proofReference: step.proofReference }),
@@ -318,7 +320,7 @@ export function createErasureManifest(input: {
       : {}),
     limitations: Object.freeze([
       ...(input.orchestration.gate.physicalErasureEnabled ? [] : [
-        "Physical erasure was disabled; retained entries require downstream policy execution.",
+        `Physical erasure was disabled; ${input.orchestration.gate.resolutionReason}.`,
       ]),
       "Manifest proof does not claim deletion of external files or records outside the governed scope.",
     ]),
@@ -330,6 +332,7 @@ function updateOrchestration(
   input: {
     readonly state: OrchestrationState;
     readonly now: string;
+    readonly gate?: ErasureGate;
     readonly steps?: readonly OrchestrationStep[];
     readonly nextStepIndex?: number;
     readonly checkpoint?: OrchestrationCheckpoint;
@@ -339,12 +342,61 @@ function updateOrchestration(
   return Object.freeze({
     ...orchestration,
     state: input.state,
+    gate: input.gate ?? orchestration.gate,
     steps: Object.freeze([...(input.steps ?? orchestration.steps)]),
     nextStepIndex: input.nextStepIndex ?? orchestration.nextStepIndex,
     checkpoint: input.checkpoint ?? orchestration.checkpoint,
     version: (orchestration.version + 1) as AggregateVersion,
     updatedAt: input.now,
   });
+}
+
+export function refreshErasureGate(
+  orchestration: ErasureOrchestration,
+  gate: ErasureGate,
+  now: string,
+): ErasureOrchestration {
+  assertGate(gate);
+  if (sameGate(orchestration.gate, gate)) return orchestration;
+  return updateOrchestration(orchestration, {
+    state: orchestration.state === "blocked" ? "queued" : orchestration.state,
+    gate,
+    now,
+  });
+}
+
+function assertGate(gate: ErasureGate): void {
+  if (!gate.physicalErasureEnabled) return;
+  if (
+    gate.evidence.source !== "trusted_server_evidence" ||
+    gate.evidence.evidenceId === undefined ||
+    gate.evidence.policyReference === undefined ||
+    gate.evidence.infrastructureReference === undefined ||
+    gate.evidence.featureReference === undefined ||
+    gate.evidence.evidenceId.trim().length === 0 ||
+    !Number.isFinite(Date.parse(gate.evidence.evaluatedAt)) ||
+    gate.resolutionReason !== "TRUSTED_ERASURE_GATES_APPROVED" ||
+    !gate.policyApproved || !gate.infrastructureApproved
+  ) {
+    throw new DealGovernanceError(
+      "ORCHESTRATION_BLOCKED",
+      "Physical erasure gate lacks trusted server evidence; expected approved policy, infrastructure, and feature evidence.",
+    );
+  }
+}
+
+function sameGate(left: ErasureGate, right: ErasureGate): boolean {
+  return left.policyApproved === right.policyApproved &&
+    left.infrastructureApproved === right.infrastructureApproved &&
+    left.physicalErasureEnabled === right.physicalErasureEnabled &&
+    left.resolutionReason === right.resolutionReason &&
+    left.evidence.source === right.evidence.source &&
+    left.evidence.evidenceId === right.evidence.evidenceId &&
+    left.evidence.policyReference === right.evidence.policyReference &&
+    left.evidence.infrastructureReference ===
+      right.evidence.infrastructureReference &&
+    left.evidence.featureReference === right.evidence.featureReference &&
+    left.evidence.evaluatedAt === right.evidence.evaluatedAt;
 }
 
 function assertVersion(

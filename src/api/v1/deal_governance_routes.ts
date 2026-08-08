@@ -12,10 +12,10 @@ import type {
   IdempotencyKey,
 } from "../../shared/contracts/identifiers.ts";
 import type { GovernanceAction } from "../../deal_governance/model.ts";
-import type { ConsequencePreview } from "../../deal_governance/model.ts";
 import type { DeletionImpact } from "../../deal_governance/deletion.ts";
-import type { ErasureGate } from "../../deal_governance/orchestration.ts";
 import {
+  type ConsequencePreviewId,
+  consequencePreviewId,
   type DeletionRequestId,
   deletionRequestId,
   type LegalHoldId,
@@ -229,10 +229,9 @@ function startOrchestrationCommand(
   if (requestId === undefined || categories === undefined) {
     return invalidPayload("requestId and categories are required.");
   }
-  const gate = optionalGate(body.gate);
-  if (body.gate !== undefined && gate === undefined) {
+  if (body.gate !== undefined) {
     return invalidPayload(
-      "gate must contain boolean policy and infrastructure approvals.",
+      "gate is server-controlled and must not be supplied by clients.",
     );
   }
   return {
@@ -242,7 +241,6 @@ function startOrchestrationCommand(
       idempotencyKey,
       requestId,
       categories,
-      ...(gate === undefined ? {} : { gate }),
     },
   };
 }
@@ -345,6 +343,12 @@ function transitionCommand(
       "preview must be the consequence preview returned for this action.",
     );
   }
+  const previewId = parseConsequencePreviewId(body.preview.previewId);
+  if (previewId === undefined) {
+    return invalidPayload(
+      "preview.previewId must be a server-issued opaque consequence preview ID.",
+    );
+  }
   return {
     kind: "ok",
     value: {
@@ -352,7 +356,7 @@ function transitionCommand(
       idempotencyKey,
       action,
       expectedVersion: version.value,
-      preview: body.preview as unknown as ConsequencePreview,
+      previewId,
     },
   };
 }
@@ -562,6 +566,15 @@ function parseDeletionRequestId(value: unknown): DeletionRequestId | undefined {
   );
 }
 
+function parseConsequencePreviewId(
+  value: unknown,
+): ConsequencePreviewId | undefined {
+  return parseScopedId(
+    typeof value === "string" ? value : undefined,
+    consequencePreviewId,
+  );
+}
+
 function parseOrchestrationId(
   value: string | undefined,
 ): OrchestrationId | undefined {
@@ -660,20 +673,6 @@ function retentionDispositionValue(
   return values.includes(value as typeof values[number])
     ? value as RetentionAssignment["disposition"]
     : undefined;
-}
-
-function optionalGate(value: unknown): ErasureGate | undefined {
-  if (!isRecord(value)) return undefined;
-  if (
-    typeof value.policyApproved !== "boolean" ||
-    typeof value.infrastructureApproved !== "boolean" ||
-    typeof value.physicalErasureEnabled !== "boolean"
-  ) return undefined;
-  return {
-    policyApproved: value.policyApproved,
-    infrastructureApproved: value.infrastructureApproved,
-    physicalErasureEnabled: value.physicalErasureEnabled,
-  };
 }
 
 function parseImpact(

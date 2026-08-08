@@ -11,7 +11,13 @@ import {
   createInMemoryDealGovernanceTestComposition,
   type DealGovernanceTestComposition,
 } from "../../src/deal_governance/composition.ts";
-import type { GovernanceCommandContext } from "../../src/deal_governance/service_contracts.ts";
+import type {
+  GovernanceCommandContext,
+} from "../../src/deal_governance/service_contracts.ts";
+import type {
+  ErasureGateEvidencePort,
+  TrustedErasureGateEvidence,
+} from "../../src/deal_governance/trusted_evidence.ts";
 
 export const TEST_TENANT = tenant("tenant_governance-test");
 export const TEST_WORKSPACE = workspace("workspace_governance-test");
@@ -37,12 +43,65 @@ export function testComposition(
   erasureExecutor?: Parameters<
     typeof createInMemoryDealGovernanceTestComposition
   >[0]["erasureExecutor"],
+  erasureGateEvidence?: ErasureGateEvidencePort,
 ): DealGovernanceTestComposition {
   return createInMemoryDealGovernanceTestComposition({
     authorization: { authorize: () => true },
     clock,
     ...(erasureExecutor === undefined ? {} : { erasureExecutor }),
+    ...(erasureGateEvidence === undefined ? {} : { erasureGateEvidence }),
   });
+}
+
+export function trustedErasureGateEvidence(
+  clock: MutableTestClock,
+  options: {
+    readonly policyApproved?: boolean;
+    readonly infrastructureApproved?: boolean;
+    readonly featureEnabled?: boolean;
+    readonly expiresAt?: string;
+  } = {},
+): ErasureGateEvidencePort {
+  return {
+    resolve: ({ context, scope, requestId, categories }) => {
+      const expiresAt = options.expiresAt ?? new Date(
+        Date.parse(clock.now()) + 60 * 60 * 1000,
+      ).toISOString();
+      const approval = (approved: boolean, reference: string) => ({
+        approved,
+        reference,
+        version: "test-2026.1",
+        issuedAt: clock.now(),
+        expiresAt,
+      });
+      const feature = {
+        enabled: options.featureEnabled ?? true,
+        reference: "feature:physical-erasure",
+        version: "test-2026.1",
+        issuedAt: clock.now(),
+        expiresAt,
+      };
+      return {
+        evidenceId: "evidence_test-erasure-gates",
+        scope,
+        requestId,
+        categories: [...categories],
+        execution: {
+          actorId: context.actor.id,
+          correlationId: context.request.correlationId,
+        },
+        policy: approval(
+          options.policyApproved ?? true,
+          "policy:test-2026.1",
+        ),
+        infrastructure: approval(
+          options.infrastructureApproved ?? true,
+          "infrastructure:test-2026.1",
+        ),
+        feature,
+      } satisfies TrustedErasureGateEvidence;
+    },
+  };
 }
 
 export function humanContext(

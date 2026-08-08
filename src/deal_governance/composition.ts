@@ -5,6 +5,7 @@ import type {
   GovernanceAuthorizationPort,
   GovernanceClock,
 } from "./service_contracts.ts";
+import type { ErasureGateEvidencePort } from "./trusted_evidence.ts";
 import {
   consequencePreviewId,
   deletionApprovalId,
@@ -27,6 +28,7 @@ export interface DealGovernanceTestCompositionOptions {
   readonly authorization: GovernanceAuthorizationPort;
   readonly clock: GovernanceClock;
   readonly erasureExecutor?: ErasureExecutor;
+  readonly erasureGateEvidence?: ErasureGateEvidencePort;
 }
 
 export interface DealGovernanceTestComposition {
@@ -77,6 +79,9 @@ function dependencies(
     authorization: options.authorization,
     ids: new SequentialDealGovernanceIds(),
     clock: options.clock,
+    erasureGateEvidence: options.erasureGateEvidence ?? {
+      resolve: () => undefined,
+    },
     ...(options.erasureExecutor === undefined
       ? {}
       : { erasureExecutor: options.erasureExecutor }),

@@ -4,6 +4,7 @@ import type { AggregateVersion } from "../shared/contracts/aggregate_version.ts"
 import type { RequestContext } from "../shared/contracts/request_context.ts";
 import {
   applyGovernanceTransition,
+  assertPreviewCurrent,
   attachDeletionRequest,
   attachLegalHold,
   attachRetentionAssignment,
@@ -41,10 +42,16 @@ import {
 import {
   createErasureManifest,
   createErasureOrchestration,
+  type ErasureGate,
   type ErasureOrchestration,
   recordOrchestrationStep,
+  refreshErasureGate,
   startOrchestration,
 } from "./orchestration.ts";
+import {
+  defaultDeniedErasureGate,
+  resolveTrustedErasureGate,
+} from "./trusted_evidence.ts";
 import {
   DealGovernanceError,
   GovernanceAuthorizationError,
@@ -72,6 +79,8 @@ import type {
   SubmitDeletionRequestCommand,
   TransitionGovernanceCommand,
 } from "./service_contracts.ts";
+import type { ErasureGateEvidencePort } from "./trusted_evidence.ts";
+import type { DeletionRequestId } from "./ids.ts";
 import type {
   CommandIdentity,
   DealGovernanceRepository,
@@ -101,6 +110,7 @@ export interface DealGovernanceDependencies {
   readonly ids: DealGovernanceIdFactory;
   readonly clock: GovernanceClock;
   readonly erasureExecutor?: ErasureExecutor;
+  readonly erasureGateEvidence: ErasureGateEvidencePort;
 }
 
 export class DealGovernanceService {
@@ -168,14 +178,20 @@ export class DealGovernanceService {
         holds,
         now: context.now,
       });
-      return previewGovernanceTransition({
+      const preview = previewGovernanceTransition({
         aggregate,
         action: actionName,
         previewId: this.dependencies.ids.nextPreviewId(),
         now: context.now,
         activeLegalHold: holds.some((hold) => hold.state === "active"),
-        retentionBlocked: assessment.code === "RETENTION_WINDOW_OPEN",
+        retentionBlocked: mandatoryRetentionBlocksArchive(
+          retention,
+          assessment.code,
+          actionName,
+        ),
       });
+      await store.savePreview(preview);
+      return preview;
     });
   }
 
@@ -200,18 +216,36 @@ export class DealGovernanceService {
         }
         const holds = await store.listHolds(scope);
         const retention = await store.findRetention(scope);
+        const preview = await store.findPreview(scope, command.previewId);
+        if (preview === undefined) {
+          throw new DealGovernanceError(
+            "PREVIEW_STALE",
+            `Consequence preview "${command.previewId}" was not found in the current governance scope; expected a server-issued preview.`,
+          );
+        }
+        if (preview.action !== command.action) {
+          throw new DealGovernanceError(
+            "INVALID_STATE_TRANSITION",
+            `Consequence preview "${preview.previewId}" is for action "${preview.action}"; expected action "${command.action}".`,
+          );
+        }
         const assessment = assessRetention({
           state: aggregate.state,
           assignment: retention,
           holds,
           now: command.context.now,
         });
-        const preview = command.preview;
-        if (preview.action !== command.action) {
-          throw new DealGovernanceError(
-            "INVALID_STATE_TRANSITION",
-            `Consequence preview "${preview.previewId}" is for action "${preview.action}"; expected action "${command.action}".`,
-          );
+        assertPreviewCurrent(aggregate, preview, command.context.now, {
+          requireAllowed: false,
+        });
+        if (
+          mandatoryRetentionBlocksArchive(
+            retention,
+            assessment.code,
+            command.action,
+          )
+        ) {
+          throw retentionError(assessment.code, assessment.message);
         }
         if (
           command.action === "terminate" &&
@@ -222,9 +256,27 @@ export class DealGovernanceService {
             `Governance deal "${scope.dealId}" has an active legal hold; expected legal-hold dominance over termination.`,
           );
         }
+        const authoritativePreview = previewGovernanceTransition({
+          aggregate,
+          action: command.action,
+          previewId: preview.previewId,
+          now: command.context.now,
+          activeLegalHold: holds.some((hold) => hold.state === "active"),
+          retentionBlocked: mandatoryRetentionBlocksArchive(
+            retention,
+            assessment.code,
+            command.action,
+          ),
+        });
+        if (authoritativePreview.outcome !== "allowed") {
+          throw authoritativePreviewError(authoritativePreview);
+        }
+        if (preview.outcome !== "allowed") {
+          throw authoritativePreviewError(preview);
+        }
         const transition = applyGovernanceTransition(
           aggregate,
-          preview,
+          authoritativePreview,
           command.context.now,
         );
         await store.saveGovernance(transition.aggregate, aggregate.version);
@@ -260,7 +312,7 @@ export class DealGovernanceService {
             previousState: transition.previousState,
             nextState: transition.nextState,
             previewId: preview.previewId,
-            effects: preview.effects,
+            effects: authoritativePreview.effects,
             retentionAssessment: assessment.code,
           },
         );
@@ -672,7 +724,12 @@ export class DealGovernanceService {
           command.context.now,
         );
         await store.saveDeletionRequest(executing, scheduled.version);
-        const gate = safeGate(command.gate);
+        const gate = await this.resolveErasureGate(
+          command.context,
+          scope,
+          executing.id,
+          command.categories,
+        );
         const orchestration = createErasureOrchestration({
           request: executing,
           categories: command.categories,
@@ -723,12 +780,26 @@ export class DealGovernanceService {
           command.expectedVersion,
           orchestration.id,
         );
-        const started = startOrchestration(
+        const gate = await this.resolveErasureGate(
+          command.context,
+          scope,
+          request.id,
+          orchestration.steps.map((step) => step.category),
+        );
+        const refreshed = refreshErasureGate(
           orchestration,
-          orchestration.version,
+          gate,
           command.context.now,
         );
-        await store.saveOrchestration(started, orchestration.version);
+        if (refreshed !== orchestration) {
+          await store.saveOrchestration(refreshed, orchestration.version);
+        }
+        const started = startOrchestration(
+          refreshed,
+          refreshed.version,
+          command.context.now,
+        );
+        await store.saveOrchestration(started, refreshed.version);
         return await this.runOrchestration(
           store,
           command.context,
@@ -754,6 +825,21 @@ export class DealGovernanceService {
     while (orchestration.state === "running") {
       const step = orchestration.steps[orchestration.nextStepIndex];
       if (step === undefined) break;
+      const currentGate = await this.resolveErasureGate(
+        context,
+        orchestration.scope,
+        request.id,
+        orchestration.steps.map((item) => item.category),
+      );
+      const refreshed = refreshErasureGate(
+        orchestration,
+        currentGate,
+        context.now,
+      );
+      if (refreshed !== orchestration) {
+        await store.saveOrchestration(refreshed, orchestration.version);
+        orchestration = refreshed;
+      }
       const holds = await store.listHolds(orchestration.scope);
       const previousVersion = orchestration.version;
       try {
@@ -824,7 +910,7 @@ export class DealGovernanceService {
     if (!orchestration.gate.physicalErasureEnabled) {
       return {
         disposition: "retained" as const,
-        reason: "PHYSICAL_ERASURE_DISABLED",
+        reason: orchestration.gate.resolutionReason,
       };
     }
     if (this.dependencies.erasureExecutor === undefined) {
@@ -858,6 +944,39 @@ export class DealGovernanceService {
         `Erasure executor failed for category "${category}" with "${
           error instanceof Error ? error.message : String(error)
         }"; expected resumable retry.`,
+      );
+    }
+  }
+
+  private async resolveErasureGate(
+    context: GovernanceCommandContext,
+    scope: GovernanceScope,
+    requestId: DeletionRequestId,
+    categories: readonly string[],
+  ): Promise<ErasureGate> {
+    try {
+      const evaluationContext = {
+        ...context,
+        now: this.dependencies.clock.now(),
+      };
+      const evidence = await this.dependencies.erasureGateEvidence.resolve({
+        context: evaluationContext,
+        scope,
+        requestId,
+        categories,
+      });
+      return resolveTrustedErasureGate({
+        evidence,
+        context: evaluationContext,
+        scope,
+        requestId,
+        categories,
+        now: evaluationContext.now,
+      });
+    } catch (_error) {
+      return defaultDeniedErasureGate(
+        this.dependencies.clock.now(),
+        "TRUSTED_ERASURE_GATE_RESOLUTION_FAILED_PHYSICAL_ERASURE_DISABLED",
       );
     }
   }
@@ -1058,25 +1177,30 @@ function retentionError(code: string, message: string): DealGovernanceError {
   );
 }
 
-function safeGate(
-  input: StartOrchestrationCommand["gate"],
-): NonNullable<StartOrchestrationCommand["gate"]> {
-  const gate = input ??
-    {
-      policyApproved: true,
-      infrastructureApproved: true,
-      physicalErasureEnabled: false,
-    };
-  if (
-    gate.physicalErasureEnabled &&
-    (!gate.policyApproved || !gate.infrastructureApproved)
-  ) {
-    throw new DealGovernanceError(
-      "ORCHESTRATION_BLOCKED",
-      "Physical erasure gate is enabled without policy and infrastructure approval; expected both explicit gates.",
-    );
+function mandatoryRetentionBlocksArchive(
+  retention: RetentionAssignment | undefined,
+  assessmentCode: string,
+  action: GovernanceAction,
+): boolean {
+  return action === "archive" && retention?.mandatory === true &&
+    assessmentCode === "RETENTION_WINDOW_OPEN";
+}
+
+function authoritativePreviewError(
+  preview: ConsequencePreview,
+): DealGovernanceError {
+  const blocker = preview.blockers[0];
+  if (blocker?.code === "ACTIVE_LEGAL_HOLD") {
+    return new DealGovernanceError("LEGAL_HOLD_ACTIVE", blocker.message);
   }
-  return gate;
+  if (blocker?.code === "MANDATORY_RETENTION") {
+    return new DealGovernanceError("RETENTION_BLOCKED", blocker.message);
+  }
+  return new DealGovernanceError(
+    "INVALID_STATE_TRANSITION",
+    blocker?.message ??
+      `Consequence preview "${preview.previewId}" is blocked; expected an allowed current transition.`,
+  );
 }
 
 function orchestrationToAggregate(

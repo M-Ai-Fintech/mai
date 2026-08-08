@@ -6,6 +6,7 @@ import {
   GovernanceVersionConflictError,
 } from "./errors.ts";
 import type {
+  ConsequencePreview,
   DealGovernanceAggregate,
   GovernanceEvent,
   GovernanceScope,
@@ -43,6 +44,46 @@ class PostgresDealGovernanceStore implements DealGovernanceStore {
   private readonly outbox = new OutboxRepository();
 
   constructor(private readonly transaction: TransactionHandle) {}
+
+  async findPreview(
+    scope: GovernanceScope,
+    id: string,
+  ): Promise<ConsequencePreview | undefined> {
+    const result = await this.transaction.query<JsonRow>(
+      `SELECT document FROM deal_governance.consequence_previews
+       WHERE tenant_id = $1 AND workspace_id = $2 AND deal_id = $3 AND preview_id = $4`,
+      [...scopeValues(scope), id],
+    );
+    const row = result.rows[0];
+    return row === undefined
+      ? undefined
+      : documentValue<ConsequencePreview>(row.document);
+  }
+
+  async savePreview(preview: ConsequencePreview): Promise<void> {
+    const result = await this.transaction.query(
+      `INSERT INTO deal_governance.consequence_previews (
+         preview_id, tenant_id, workspace_id, deal_id, aggregate_version,
+         action, outcome, expires_at, document, created_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        preview.previewId,
+        preview.scope.tenantId,
+        preview.scope.workspaceId,
+        preview.scope.dealId,
+        preview.aggregateVersion,
+        preview.action,
+        preview.outcome,
+        preview.expiresAt,
+        JSON.stringify(preview),
+        preview.createdAt,
+      ],
+    );
+    if (result.rowCount === 1) return;
+    throw new GovernanceInvariantError(
+      `Consequence preview "${preview.previewId}" was not inserted; expected one immutable preview row.`,
+    );
+  }
 
   async findGovernance(
     scope: GovernanceScope,

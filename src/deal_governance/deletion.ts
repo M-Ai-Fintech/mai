@@ -21,6 +21,13 @@ export type DeletionRequestState =
   | "rejected"
   | "cancelled";
 
+/**
+ * Requester-supplied assessment evidence for human review.
+ *
+ * The payload records what the requester believes will be affected; it is not
+ * authoritative scope or count truth. Retention, legal holds, approved
+ * orchestration categories, and downstream erasure proofs remain authoritative.
+ */
 export interface DeletionImpact {
   readonly categories: readonly string[];
   readonly recordCounts: Readonly<Record<string, number>>;

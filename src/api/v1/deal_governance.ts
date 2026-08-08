@@ -22,7 +22,6 @@ import type {
   DeletionImpact,
   DeletionRequest,
 } from "../../deal_governance/deletion.ts";
-import type { ErasureGate } from "../../deal_governance/orchestration.ts";
 import type {
   LegalHold,
   RetentionAssignment,
@@ -46,6 +45,7 @@ import type {
   TransitionGovernanceCommand,
 } from "../../deal_governance/service_contracts.ts";
 import type {
+  ConsequencePreviewId,
   DeletionRequestId,
   LegalHoldId,
   OrchestrationId,
@@ -70,7 +70,7 @@ export interface GovernanceTransitionApiCommand {
   readonly idempotencyKey: IdempotencyKey;
   readonly action: GovernanceAction;
   readonly expectedVersion: AggregateVersion;
-  readonly preview: ConsequencePreview;
+  readonly previewId: ConsequencePreviewId;
 }
 
 export interface GovernanceRetentionApiCommand {
@@ -148,7 +148,6 @@ export interface GovernanceStartOrchestrationApiCommand {
   readonly idempotencyKey: IdempotencyKey;
   readonly requestId: DeletionRequestId;
   readonly categories: readonly string[];
-  readonly gate?: ErasureGate;
 }
 
 export interface GovernanceResumeOrchestrationApiCommand {
@@ -430,7 +429,7 @@ function toTransitionCommand(
     idempotencyKey: input.idempotencyKey,
     action: input.action,
     expectedVersion: input.expectedVersion,
-    preview: input.preview,
+    previewId: input.previewId,
   };
 }
 
@@ -562,7 +561,6 @@ function toStartCommand(
     idempotencyKey: input.idempotencyKey,
     requestId: input.requestId,
     categories: input.categories,
-    gate: input.gate,
   };
 }
 

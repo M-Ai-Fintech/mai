@@ -5,19 +5,27 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import type { ErasureExecutor } from "../../src/deal_governance/service_contracts.ts";
+import type { ErasureGateEvidencePort } from "../../src/deal_governance/trusted_evidence.ts";
 import { DealGovernanceError } from "../../src/deal_governance/errors.ts";
 import {
   commandContext,
   idempotency,
   testClock,
   testComposition,
+  trustedErasureGateEvidence,
 } from "./helpers.ts";
 
 async function prepareDeletion(
   clock: ReturnType<typeof testClock>,
   requiredApprovalCount = 1,
+  erasureExecutor?: ErasureExecutor,
+  erasureGateEvidence?: ErasureGateEvidencePort,
 ) {
-  const composition = testComposition(clock);
+  const composition = testComposition(
+    clock,
+    erasureExecutor,
+    erasureGateEvidence,
+  );
   const context = commandContext(clock);
   const created = await composition.service.createGovernance({
     type: "create_governance",
@@ -46,7 +54,7 @@ async function prepareDeletion(
     idempotencyKey: idempotency("pause-deletion-flow"),
     action: "pause",
     expectedVersion: created.version + 1 as never,
-    preview: pausedPreview,
+    previewId: pausedPreview.previewId,
   });
   const archivedPreview = await composition.service.previewTransition(
     context,
@@ -58,7 +66,7 @@ async function prepareDeletion(
     idempotencyKey: idempotency("archive-deletion-flow"),
     action: "archive",
     expectedVersion: paused.version,
-    preview: archivedPreview,
+    previewId: archivedPreview.previewId,
   });
   clock.set("2026-08-09T12:00:00.000Z");
   const deletion = await composition.service.createDeletionRequest({
@@ -134,6 +142,178 @@ Deno.test("deletion requests require impact, separate human approval, and produc
   );
 });
 
+Deno.test("trusted erasure approvals fail closed for policy, infrastructure, and feature gates", async () => {
+  const cases = [
+    ["policy", { policyApproved: false }, "TRUSTED_POLICY_NOT_APPROVED"],
+    [
+      "infrastructure",
+      { infrastructureApproved: false },
+      "TRUSTED_INFRASTRUCTURE_NOT_APPROVED",
+    ],
+    ["feature", { featureEnabled: false }, "TRUSTED_ERASURE_FEATURE_DISABLED"],
+  ] as const;
+  for (const [name, options, reason] of cases) {
+    let eraseCalls = 0;
+    const executor: ErasureExecutor = {
+      erase: () => {
+        eraseCalls += 1;
+        return Promise.resolve({ proofReference: `proof_${name}` });
+      },
+    };
+    const clock = testClock();
+    const prepared = await prepareDeletion(
+      clock,
+      1,
+      executor,
+      trustedErasureGateEvidence(clock, options),
+    );
+    const result = await prepared.composition.service.startOrchestration({
+      type: "start_erasure_orchestration",
+      context: prepared.context,
+      idempotencyKey: idempotency(`start-fail-closed-${name}`),
+      requestId: prepared.request.id,
+      categories: ["documents"],
+    });
+    assertEquals(eraseCalls, 0);
+    assertEquals(result.orchestration.state, "completed");
+    assertStringIncludes(result.manifest.entries[0]?.reason ?? "", reason);
+  }
+});
+
+Deno.test("trusted gates still retain without an approved executor", async () => {
+  const clock = testClock();
+  const prepared = await prepareDeletion(
+    clock,
+    1,
+    undefined,
+    trustedErasureGateEvidence(clock),
+  );
+  const result = await prepared.composition.service.startOrchestration({
+    type: "start_erasure_orchestration",
+    context: prepared.context,
+    idempotencyKey: idempotency("start-no-executor"),
+    requestId: prepared.request.id,
+    categories: ["documents"],
+  });
+  assertEquals(result.orchestration.state, "completed");
+  assertEquals(result.manifest.entries[0]?.disposition, "retained");
+  assertEquals(
+    result.manifest.entries[0]?.reason,
+    "NO_APPROVED_ERASURE_EXECUTOR",
+  );
+});
+
+Deno.test("stale trusted gate evidence fails closed", async () => {
+  let eraseCalls = 0;
+  const executor: ErasureExecutor = {
+    erase: () => {
+      eraseCalls += 1;
+      return Promise.resolve({ proofReference: "proof_documents" });
+    },
+  };
+  const clock = testClock();
+  const prepared = await prepareDeletion(
+    clock,
+    1,
+    executor,
+    trustedErasureGateEvidence(clock, {
+      expiresAt: "2026-08-07T11:59:59.000Z",
+    }),
+  );
+  const result = await prepared.composition.service.startOrchestration({
+    type: "start_erasure_orchestration",
+    context: prepared.context,
+    idempotencyKey: idempotency("start-stale-gate"),
+    requestId: prepared.request.id,
+    categories: ["documents"],
+  });
+  assertEquals(eraseCalls, 0);
+  assertStringIncludes(
+    result.manifest.entries[0]?.reason ?? "",
+    "TRUSTED_ERASURE_GATE_STALE_OR_INVALID",
+  );
+});
+
+Deno.test("scope-mismatched trusted evidence fails closed", async () => {
+  let eraseCalls = 0;
+  const executor: ErasureExecutor = {
+    erase: () => {
+      eraseCalls += 1;
+      return Promise.resolve({ proofReference: "proof_documents" });
+    },
+  };
+  const clock = testClock();
+  const validEvidence = trustedErasureGateEvidence(clock);
+  const mismatchedEvidence: ErasureGateEvidencePort = {
+    resolve: async (input) => {
+      const evidence = await validEvidence.resolve(input);
+      if (evidence === undefined) return undefined;
+      return {
+        ...evidence,
+        scope: {
+          ...evidence.scope,
+          dealId: "deal_governance-other" as typeof evidence.scope.dealId,
+        },
+      };
+    },
+  };
+  const prepared = await prepareDeletion(
+    clock,
+    1,
+    executor,
+    mismatchedEvidence,
+  );
+  const result = await prepared.composition.service.startOrchestration({
+    type: "start_erasure_orchestration",
+    context: prepared.context,
+    idempotencyKey: idempotency("start-scope-mismatch"),
+    requestId: prepared.request.id,
+    categories: ["documents"],
+  });
+  assertEquals(eraseCalls, 0);
+  assertStringIncludes(
+    result.manifest.entries[0]?.reason ?? "",
+    "TRUSTED_ERASURE_GATE_SCOPE_MISMATCH",
+  );
+});
+
+Deno.test("an active legal hold prevents affected category erasure", async () => {
+  let eraseCalls = 0;
+  const executor: ErasureExecutor = {
+    erase: () => {
+      eraseCalls += 1;
+      return Promise.resolve({ proofReference: "proof_documents" });
+    },
+  };
+  const clock = testClock();
+  const prepared = await prepareDeletion(
+    clock,
+    1,
+    executor,
+    trustedErasureGateEvidence(clock),
+  );
+  await prepared.composition.service.placeLegalHold({
+    type: "place_legal_hold",
+    context: prepared.context,
+    idempotencyKey: idempotency("hold-before-erasure"),
+    categories: ["documents"],
+    reason: "Pending regulatory inquiry",
+  });
+  await assertRejects(
+    () =>
+      prepared.composition.service.startOrchestration({
+        type: "start_erasure_orchestration",
+        context: prepared.context,
+        idempotencyKey: idempotency("start-hold-erasure"),
+        requestId: prepared.request.id,
+        categories: ["documents"],
+      }),
+    DealGovernanceError,
+    "Legal hold",
+  );
+  assertEquals(eraseCalls, 0);
+});
+
 Deno.test("physical erasure executor failures checkpoint and resume without replaying completed work", async () => {
   let attempts = 0;
   const executor: ErasureExecutor = {
@@ -146,7 +326,11 @@ Deno.test("physical erasure executor failures checkpoint and resume without repl
     },
   };
   const clock = testClock();
-  const composition = testComposition(clock, executor);
+  const composition = testComposition(
+    clock,
+    executor,
+    trustedErasureGateEvidence(clock),
+  );
   const context = commandContext(clock);
   const created = await composition.service.createGovernance({
     type: "create_governance",
@@ -228,11 +412,6 @@ Deno.test("physical erasure executor failures checkpoint and resume without repl
     idempotencyKey: idempotency("start-retry-flow"),
     requestId: approved.id,
     categories: ["documents"],
-    gate: {
-      policyApproved: true,
-      infrastructureApproved: true,
-      physicalErasureEnabled: true,
-    },
   });
   assertEquals(first.orchestration.state, "failed");
   assertEquals(first.manifest.status, "draft");
@@ -287,6 +466,6 @@ async function transition(
     idempotencyKey: idempotency(key),
     action,
     expectedVersion: expectedVersion as never,
-    preview,
+    previewId: preview.previewId,
   });
 }

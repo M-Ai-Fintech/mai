@@ -16,11 +16,7 @@ import type {
 } from "./model.ts";
 import type { LegalHold, RetentionAssignment } from "./retention.ts";
 import type { DeletionImpact, DeletionRequest } from "./deletion.ts";
-import type {
-  ErasureGate,
-  ErasureManifest,
-  ErasureOrchestration,
-} from "./orchestration.ts";
+import type { ErasureManifest, ErasureOrchestration } from "./orchestration.ts";
 import type {
   ConsequencePreviewId,
   DeletionApprovalId,
@@ -100,7 +96,7 @@ export interface TransitionGovernanceCommand {
   readonly idempotencyKey: IdempotencyKey;
   readonly action: GovernanceAction;
   readonly expectedVersion: number;
-  readonly preview: ConsequencePreview;
+  readonly previewId: ConsequencePreviewId;
 }
 
 export interface AssignRetentionCommand {
@@ -145,6 +141,7 @@ export interface CreateDeletionRequestCommand {
   readonly requiredApprovalCount?: number;
 }
 
+/** The requester records review evidence; service-side policy and hold checks remain authoritative. */
 export interface AssessDeletionImpactCommand {
   readonly type: "assess_deletion_impact";
   readonly context: GovernanceCommandContext;
@@ -187,7 +184,6 @@ export interface StartOrchestrationCommand {
   readonly idempotencyKey: IdempotencyKey;
   readonly requestId: DeletionRequestId;
   readonly categories: readonly string[];
-  readonly gate?: ErasureGate;
 }
 
 export interface ResumeOrchestrationCommand {
