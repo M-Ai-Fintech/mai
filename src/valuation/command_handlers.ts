@@ -25,7 +25,6 @@ import {
   requiredScope,
 } from "./command_support.ts";
 import { createValuationComputeJob } from "./jobs.ts";
-import { ValuationError } from "./errors.ts";
 import type { ValuationCommandRuntime } from "./command_runtime.ts";
 import {
   accepted,
@@ -36,6 +35,7 @@ import {
   loadInput,
   loadModel,
   loadScenario,
+  resolveComputeReplay,
 } from "./command_runtime.ts";
 
 export async function createModel(
@@ -273,9 +273,14 @@ export async function enqueueCompute(
     commandPayload(command as unknown as Record<string, unknown>),
   );
   if (claimed.status === "replay") {
-    throw new ValuationError(
-      "IDEMPOTENCY_CONFLICT",
-      "Valuation compute replay requires the original job reference; expected a job query before retrying.",
+    return accepted(
+      await resolveComputeReplay(
+        runtime,
+        transaction,
+        scope,
+        command,
+        claimed.reference,
+      ),
     );
   }
   const scenario = await loadScenario(

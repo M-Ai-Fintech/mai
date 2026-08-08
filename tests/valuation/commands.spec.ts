@@ -1,11 +1,14 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import type { ActorReference } from "../../src/platform/authz/v1.ts";
 import {
+  type JobId,
   parseAggregateVersion,
   parseCorrelationId,
+  parseDealId,
   parseIdempotencyKey,
   parseJobId,
   parseOperationId,
+  type TenantId,
 } from "../../src/platform/api/v1.ts";
 import {
   type IdempotencyClaim,
@@ -18,8 +21,9 @@ import {
   type DurableJob,
   type JobFailure,
   JobRepository,
+  type StoredJob,
 } from "../../src/platform/jobs/v1.ts";
-import type { ValuationScope } from "../../src/valuation/basis.ts";
+import { sameScope, type ValuationScope } from "../../src/valuation/basis.ts";
 import type {
   ValuationEffectInput,
   ValuationEffects,
@@ -31,6 +35,7 @@ import {
 } from "../../src/valuation/commands.ts";
 import {
   activeModel,
+  computedScenario,
   humanActor,
   NOW,
   provenance,
@@ -48,19 +53,24 @@ import type {
   ValuationScenario,
 } from "../../src/valuation/model.ts";
 import type {
+  ValuationApprovalId,
   ValuationComparisonId,
   ValuationInputId,
+  ValuationInvalidationId,
   ValuationModelId,
   ValuationResultId,
   ValuationScenarioId,
 } from "../../src/valuation/ids.ts";
 import type { TransactionQueryResult } from "../../src/platform/persistence/transaction.ts";
 import {
+  parseValuationApprovalId,
   parseValuationInputId,
+  parseValuationInvalidationId,
   parseValuationModelId,
   parseValuationResultId,
   parseValuationScenarioId,
 } from "../../src/valuation/ids.ts";
+import { ValuationError } from "../../src/valuation/errors.ts";
 
 Deno.test("command service persists exact versions, durable job references, and idempotent replay", async () => {
   const repository = new MemoryValuationRepository();
@@ -126,7 +136,7 @@ Deno.test("command service persists exact versions, durable job references, and 
   };
   const input = await service.addInput(addInput);
   assertEquals(input.value.version, aggregateVersion(1));
-  const job = await service.enqueueCompute({
+  const enqueue = {
     context,
     actor,
     idempotencyKey: required("idem_enqueue-compute", parseIdempotencyKey),
@@ -135,7 +145,36 @@ Deno.test("command service persists exact versions, durable job references, and 
     operationId: required("op_valuation-command", parseOperationId),
     expectedScenarioVersion: aggregateVersion(2),
     timeoutMs: 60_000,
-  });
+  } as const;
+  const job = await service.enqueueCompute(enqueue);
+  const computeReplay = await service.enqueueCompute(enqueue);
+  assertEquals(computeReplay.value.jobId, job.value.jobId);
+  assertEquals(computeReplay.value.operationId, job.value.operationId);
+  assertEquals(jobs.jobs.length, 1);
+  assertEquals(
+    effects.events.filter((event) =>
+      event.eventType === "valuation_compute_queued"
+    )
+      .length,
+    1,
+  );
+  await assertRejects(
+    () => service.enqueueCompute({ ...enqueue, timeoutMs: 61_000 }),
+    Error,
+    "IDEMPOTENCY_CONFLICT",
+  );
+  const storedJob = jobs.jobs[0];
+  if (storedJob === undefined) throw new Error("Missing stored compute job.");
+  jobs.jobs[0] = {
+    ...storedJob,
+    dealId: required("deal_foreign", parseDealId),
+  };
+  const scopeError = await assertRejects(
+    () => service.enqueueCompute(enqueue),
+    ValuationError,
+    "terminal replay reference",
+  );
+  assertEquals(scopeError.code, "IDEMPOTENCY_CONFLICT");
   assertEquals(job.value.payload.modelVersion, active.value.version);
   assertEquals(job.value.inputVersionReferences.length, 3);
   assertEquals(effects.events.map((event) => event.eventType), [
@@ -161,6 +200,174 @@ Deno.test("command service persists exact versions, durable job references, and 
   assertEquals(computed.value.modelVersion, active.value.version);
   assertEquals(repository.scenarios.get(scenarioId)?.state, "computed");
   assertEquals(jobs.completions.length, 1);
+});
+
+Deno.test("approval terminal replay returns the original approval once", async () => {
+  const harness = commandHarness();
+  const current = computedScenario();
+  harness.repository.scenarios.set(current.scenario.id, current.scenario);
+  harness.repository.results.set(current.result.id, current.result);
+  const actor = humanActor();
+  const command = {
+    context: requestContext(actor),
+    actor,
+    authority: {
+      snapshotId: "authority_command",
+      actorId: actor.id,
+      policyVersion: "valuation-policy-v1",
+      scope: current.scenario.scope,
+      capturedAt: NOW,
+    },
+    scenarioId: current.scenario.id,
+    resultId: current.result.id,
+    approvalId: required(
+      "valuation_approval_command",
+      parseValuationApprovalId,
+    ),
+    idempotencyKey: required("idem_approve-command", parseIdempotencyKey),
+    expectedScenarioVersion: current.scenario.version,
+  } as const;
+
+  const first = await harness.service.approve(command);
+  const replay = await harness.service.approve(command);
+
+  assertEquals(replay.value.id, first.value.id);
+  assertEquals(harness.repository.approvals.size, 1);
+  assertEquals(
+    harness.effects.events.filter((event) =>
+      event.eventType === "valuation_approved"
+    )
+      .length,
+    1,
+  );
+  const storedApproval = harness.repository.approvals.get(first.value.id);
+  if (storedApproval === undefined) {
+    throw new Error("Missing stored valuation approval.");
+  }
+  harness.repository.approvals.set(first.value.id, {
+    ...storedApproval,
+    scope: {
+      ...storedApproval.scope,
+      dealId: required("deal_foreign", parseDealId),
+    },
+  });
+  const scopeError = await assertRejects(
+    () => harness.service.approve(command),
+    ValuationError,
+    "terminal replay reference",
+  );
+  assertEquals(scopeError.code, "IDEMPOTENCY_CONFLICT");
+  await assertRejects(
+    () =>
+      harness.service.approve({
+        ...command,
+        approvalId: required(
+          "valuation_approval_changed",
+          parseValuationApprovalId,
+        ),
+      }),
+    Error,
+    "IDEMPOTENCY_CONFLICT",
+  );
+});
+
+Deno.test(
+  "invalidation terminal replay returns the original invalidation once",
+  async () => {
+    const harness = commandHarness();
+    const current = computedScenario();
+    harness.repository.scenarios.set(current.scenario.id, current.scenario);
+    harness.repository.results.set(current.result.id, current.result);
+    const actor = humanActor();
+    const command = {
+      context: requestContext(actor),
+      actor,
+      scenarioId: current.scenario.id,
+      resultId: current.result.id,
+      invalidationId: required(
+        "valuation_invalidation_command",
+        parseValuationInvalidationId,
+      ),
+      idempotencyKey: required("idem_invalidate-command", parseIdempotencyKey),
+      expectedScenarioVersion: current.scenario.version,
+      kind: "stale" as const,
+      reason: "The reviewed input became stale.",
+      sourceReference: "evidence-command",
+    } as const;
+
+    const first = await harness.service.invalidate(command);
+    const replay = await harness.service.invalidate(command);
+
+    assertEquals(replay.value.id, first.value.id);
+    assertEquals(harness.repository.invalidations.size, 1);
+    assertEquals(
+      harness.effects.events.filter((event) =>
+        event.eventType === "valuation_invalidated"
+      )
+        .length,
+      1,
+    );
+    const storedInvalidation = harness.repository.invalidations.get(
+      first.value.id,
+    );
+    if (storedInvalidation === undefined) {
+      throw new Error("Missing stored valuation invalidation.");
+    }
+    harness.repository.invalidations.set(first.value.id, {
+      ...storedInvalidation,
+      scope: {
+        ...storedInvalidation.scope,
+        dealId: required("deal_foreign", parseDealId),
+      },
+    });
+    const scopeError = await assertRejects(
+      () => harness.service.invalidate(command),
+      ValuationError,
+      "terminal replay reference",
+    );
+    assertEquals(scopeError.code, "IDEMPOTENCY_CONFLICT");
+    await assertRejects(
+      () =>
+        harness.service.invalidate({
+          ...command,
+          reason: "A different stale reason.",
+        }),
+      Error,
+      "IDEMPOTENCY_CONFLICT",
+    );
+  },
+);
+
+Deno.test("in-progress Valuation claims retain platform retry semantics", async () => {
+  const actor = humanActor();
+  const service = new ValuationCommandService({
+    transactions: new ImmediateTransactionRunner(),
+    repository: new MemoryValuationRepository(),
+    calculations: { compute: () => successfulOutcome() },
+    idempotency: new InProgressIdempotencyRepository(),
+    jobs: new MemoryJobRepository(),
+    effects: new MemoryValuationEffects(),
+    clock: { now: () => NOW },
+  });
+
+  const error = await assertRejects(
+    () =>
+      service.enqueueCompute({
+        context: requestContext(actor),
+        actor,
+        idempotencyKey: required("idem_in-progress", parseIdempotencyKey),
+        scenarioId: required(
+          "valuation_scenario_inprogress",
+          parseValuationScenarioId,
+        ),
+        jobId: required("job_valuation-inprogress", parseJobId),
+        operationId: required("op_valuation-inprogress", parseOperationId),
+        expectedScenarioVersion: aggregateVersion(1),
+      }),
+    ValuationError,
+    "no replayable terminal result",
+  );
+  assertEquals(error.code, "IDEMPOTENCY_IN_PROGRESS");
 });
 
 Deno.test("compute command rejects an optimistic concurrency mismatch before queueing", async () => {
@@ -204,6 +411,23 @@ class ImmediateTransactionRunner implements ValuationTransactionRunner {
   ): Promise<TResult> {
     return Promise.resolve(callback(this.transaction));
   }
+}
+
+function commandHarness() {
+  const repository = new MemoryValuationRepository();
+  const idempotency = new MemoryIdempotencyRepository();
+  const jobs = new MemoryJobRepository();
+  const effects = new MemoryValuationEffects();
+  const service = new ValuationCommandService({
+    transactions: new ImmediateTransactionRunner(),
+    repository,
+    calculations: { compute: () => successfulOutcome() },
+    idempotency,
+    jobs,
+    effects,
+    clock: { now: () => NOW },
+  });
+  return { repository, idempotency, jobs, effects, service };
 }
 
 class EmptyTransaction implements TransactionHandle {
@@ -274,9 +498,42 @@ class MemoryIdempotencyRepository extends IdempotencyRepository {
   }
 }
 
+class InProgressIdempotencyRepository extends IdempotencyRepository {
+  constructor() {
+    super({ now: () => NOW });
+  }
+
+  override claim(
+    _transaction: TransactionHandle,
+    _claim: IdempotencyClaim,
+  ): Promise<IdempotencyClaimResult> {
+    return Promise.resolve({ status: "in_progress" });
+  }
+}
+
 class MemoryJobRepository extends JobRepository {
   readonly jobs: DurableJob[] = [];
   readonly completions: string[] = [];
+
+  override find(
+    _transaction: TransactionHandle,
+    tenantId: TenantId,
+    jobId: JobId,
+  ): Promise<StoredJob | undefined> {
+    const job = this.jobs.find((candidate) =>
+      candidate.tenantId === tenantId && candidate.jobId === jobId
+    );
+    if (job === undefined || job.operationId === undefined) {
+      return Promise.resolve(undefined);
+    }
+    return Promise.resolve({
+      ...job,
+      operationId: job.operationId,
+      state: "queued" as const,
+      progress: 0,
+      attemptCount: 0,
+    });
+  }
 
   override enqueue(
     _transaction: TransactionHandle,
@@ -322,6 +579,8 @@ class MemoryValuationRepository implements ValuationRepository {
   readonly scenarios = new Map<string, ValuationScenario>();
   readonly inputs = new Map<string, ValuationInput>();
   readonly results = new Map<string, ValuationResult>();
+  readonly approvals = new Map<string, ValuationApproval>();
+  readonly invalidations = new Map<string, ValuationInvalidation>();
 
   insertModel(
     _transaction: TransactionHandle,
@@ -403,22 +662,53 @@ class MemoryValuationRepository implements ValuationRepository {
   }
   insertApproval(
     _transaction: TransactionHandle,
-    _value: ValuationApproval,
+    value: ValuationApproval,
   ): Promise<void> {
+    this.approvals.set(value.id, value);
     return Promise.resolve();
+  }
+  findApproval(
+    _transaction: TransactionHandle,
+    lookupScope: ValuationScope,
+    id: ValuationApprovalId,
+  ): Promise<ValuationApproval | undefined> {
+    const approval = this.approvals.get(id);
+    return Promise.resolve(
+      approval !== undefined && sameScope(approval.scope, lookupScope)
+        ? approval
+        : undefined,
+    );
   }
   insertInvalidation(
     _transaction: TransactionHandle,
-    _value: ValuationInvalidation,
+    value: ValuationInvalidation,
   ): Promise<void> {
+    this.invalidations.set(value.id, value);
     return Promise.resolve();
+  }
+  findInvalidation(
+    _transaction: TransactionHandle,
+    lookupScope: ValuationScope,
+    id: ValuationInvalidationId,
+  ): Promise<ValuationInvalidation | undefined> {
+    const invalidation = this.invalidations.get(id);
+    return Promise.resolve(
+      invalidation !== undefined && sameScope(invalidation.scope, lookupScope)
+        ? invalidation
+        : undefined,
+    );
   }
   listInvalidations(
     _transaction: TransactionHandle,
-    _scope: ValuationScope,
-    _id: ValuationScenarioId,
+    lookupScope: ValuationScope,
+    scenarioId: ValuationScenarioId,
   ): Promise<ValuationInvalidation[]> {
-    return Promise.resolve([]);
+    return Promise.resolve(
+      [...this.invalidations.values()].filter((invalidation) =>
+        sameScope(invalidation.scope, lookupScope) &&
+        invalidation.scenarioId === scenarioId
+      ),
+    );
   }
   insertComparison(
     _transaction: TransactionHandle,

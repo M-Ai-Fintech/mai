@@ -4,6 +4,7 @@ import type {
   IdempotencyKey,
   RequestContext,
 } from "../platform/api/v1.ts";
+import { parseJobId } from "../platform/api/v1.ts";
 import {
   type Clock,
   IdempotencyRepository,
@@ -11,13 +12,21 @@ import {
 } from "../platform/persistence/v1.ts";
 import {
   type ClaimedJob,
+  type DurableJob,
   JobRepository,
   sanitizedJobFailure,
 } from "../platform/jobs/v1.ts";
-import type { ValuationCommandServiceConfig } from "./commands.ts";
+import type {
+  ApproveValuationCommand,
+  EnqueueValuationComputeCommand,
+  InvalidateValuationCommand,
+  ValuationCommandServiceConfig,
+} from "./commands.ts";
 import type { ValuationEffectInput, ValuationEffects } from "./effects.ts";
 import type {
+  ValuationApproval,
   ValuationInput,
+  ValuationInvalidation,
   ValuationModel,
   ValuationResult,
   ValuationScenario,
@@ -28,9 +37,14 @@ import type {
   ValuationResultId,
   ValuationScenarioId,
 } from "./ids.ts";
-import type { ValuationScope } from "./basis.ts";
+import { sameScope, type ValuationScope } from "./basis.ts";
 import { ValuationError } from "./errors.ts";
 import { claimValuationCommand } from "./command_support.ts";
+import {
+  parseValuationApprovalId,
+  parseValuationInvalidationId,
+} from "./ids.ts";
+import { VALUATION_COMPUTE_JOB_TYPE } from "./jobs.ts";
 
 export interface ValuationCommandRuntime {
   readonly config: ValuationCommandServiceConfig;
@@ -69,6 +83,170 @@ export function claim(
     payload,
     now: runtime.clock.now(),
   });
+}
+
+export async function resolveComputeReplay(
+  runtime: ValuationCommandRuntime,
+  transaction: TransactionHandle,
+  scope: ValuationScope,
+  command: EnqueueValuationComputeCommand,
+  reference: string,
+): Promise<DurableJob> {
+  const jobId = parseReplayId(reference, "job", parseJobId);
+  const job = await runtime.jobs.find(transaction, scope.tenantId, jobId);
+  if (job === undefined) {
+    invalidReplayReference(reference, "the original compute job");
+  }
+  assertComputeReplay(job, command, scope, reference);
+  return job;
+}
+
+export async function resolveApprovalReplay(
+  runtime: ValuationCommandRuntime,
+  transaction: TransactionHandle,
+  scope: ValuationScope,
+  command: ApproveValuationCommand,
+  reference: string,
+): Promise<ValuationApproval> {
+  const approvalId = parseReplayId(
+    reference,
+    "approval",
+    parseValuationApprovalId,
+  );
+  const approval = await runtime.config.repository.findApproval(
+    transaction,
+    scope,
+    approvalId,
+  );
+  if (approval === undefined) {
+    invalidReplayReference(reference, "the original approval");
+  }
+  assertApprovalReplay(approval, command, scope, reference);
+  return approval;
+}
+
+export async function resolveInvalidationReplay(
+  runtime: ValuationCommandRuntime,
+  transaction: TransactionHandle,
+  scope: ValuationScope,
+  command: InvalidateValuationCommand,
+  reference: string,
+): Promise<ValuationInvalidation> {
+  const invalidationId = parseReplayId(
+    reference,
+    "invalidation",
+    parseValuationInvalidationId,
+  );
+  const invalidation = await runtime.config.repository.findInvalidation(
+    transaction,
+    scope,
+    invalidationId,
+  );
+  if (invalidation === undefined) {
+    invalidReplayReference(reference, "the original invalidation");
+  }
+  assertInvalidationReplay(invalidation, command, scope, reference);
+  return invalidation;
+}
+
+function assertComputeReplay(
+  job: DurableJob,
+  command: EnqueueValuationComputeCommand,
+  scope: ValuationScope,
+  reference: string,
+): void {
+  if (
+    job.tenantId === scope.tenantId &&
+    job.workspaceId === scope.workspaceId &&
+    job.dealId === scope.dealId &&
+    job.initiatingActorId === command.actor.id &&
+    job.idempotencyKey === command.idempotencyKey &&
+    job.operationId === command.operationId &&
+    job.jobType === VALUATION_COMPUTE_JOB_TYPE &&
+    job.payload.scenarioId === command.scenarioId
+  ) return;
+  invalidReplayReference(
+    reference,
+    "the original compute job in the exact command scope",
+  );
+}
+
+function assertApprovalReplay(
+  approval: ValuationApproval,
+  command: ApproveValuationCommand,
+  scope: ValuationScope,
+  reference: string,
+): void {
+  if (
+    sameScope(approval.scope, scope) &&
+    approval.scenarioId === command.scenarioId &&
+    approval.scenarioVersion === command.expectedScenarioVersion &&
+    approval.resultId === command.resultId &&
+    sameActor(approval.actor, command.actor) &&
+    approval.authority.actorId === command.authority.actorId &&
+    sameScope(approval.authority.scope, command.authority.scope) &&
+    approval.authority.snapshotId === command.authority.snapshotId &&
+    approval.authority.policyVersion === command.authority.policyVersion &&
+    sameInstant(approval.authority.capturedAt, command.authority.capturedAt)
+  ) return;
+  invalidReplayReference(
+    reference,
+    "the original approval in the exact command scope",
+  );
+}
+
+function assertInvalidationReplay(
+  invalidation: ValuationInvalidation,
+  command: InvalidateValuationCommand,
+  scope: ValuationScope,
+  reference: string,
+): void {
+  if (
+    sameScope(invalidation.scope, scope) &&
+    invalidation.scenarioId === command.scenarioId &&
+    invalidation.scenarioVersion === command.expectedScenarioVersion &&
+    invalidation.resultId === command.resultId &&
+    invalidation.kind === command.kind &&
+    invalidation.reason === command.reason &&
+    invalidation.sourceReference === command.sourceReference &&
+    sameActor(invalidation.actor, command.actor)
+  ) return;
+  invalidReplayReference(
+    reference,
+    "the original invalidation in the exact command scope",
+  );
+}
+
+function parseReplayId<T>(
+  reference: string,
+  prefix: string,
+  parser: (
+    value: unknown,
+  ) => { readonly ok: true; readonly value: T } | { readonly ok: false },
+): T {
+  const marker = `${prefix}:`;
+  if (!reference.startsWith(marker)) {
+    return invalidReplayReference(reference, `${prefix}:<typed-id>`);
+  }
+  const parsed = parser(reference.slice(marker.length));
+  if (parsed.ok) return parsed.value;
+  return invalidReplayReference(reference, `${prefix}:<typed-id>`);
+}
+
+function invalidReplayReference(reference: string, expected: string): never {
+  throw new ValuationError(
+    "IDEMPOTENCY_CONFLICT",
+    `Valuation terminal replay reference "${reference}" is invalid; expected ${expected}.`,
+  );
+}
+
+function sameActor(left: ActorReference, right: ActorReference): boolean {
+  return left.id === right.id && left.kind === right.kind &&
+    left.state === right.state;
+}
+
+function sameInstant(left: Date, right: Date): boolean {
+  return left.getTime() === right.getTime();
 }
 
 export async function loadModel(

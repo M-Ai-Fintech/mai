@@ -9,14 +9,17 @@ import type {
   ValuationScenario,
 } from "./model.ts";
 import type {
+  ValuationApprovalId,
   ValuationComparisonId,
   ValuationInputId,
+  ValuationInvalidationId,
   ValuationModelId,
   ValuationResultId,
   ValuationScenarioId,
 } from "./ids.ts";
 import type { ValuationRepository } from "./repository_contract.ts";
 import {
+  rowApproval,
   rowComparison,
   rowInput,
   rowInvalidation,
@@ -239,6 +242,20 @@ export class PostgresValuationRepository implements ValuationRepository {
     );
   }
 
+  async findApproval(
+    transaction: TransactionHandle,
+    scope: ValuationScope,
+    id: ValuationApprovalId,
+  ): Promise<ValuationApproval | undefined> {
+    const result = await transaction.query<{ payload: unknown }>(
+      `SELECT payload FROM valuation.approvals WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND approval_id=$4`,
+      [...scopeValues(scope), id],
+    );
+    return result.rows[0] === undefined
+      ? undefined
+      : rowApproval(result.rows[0].payload);
+  }
+
   async insertInvalidation(
     transaction: TransactionHandle,
     invalidation: ValuationInvalidation,
@@ -258,6 +275,20 @@ export class PostgresValuationRepository implements ValuationRepository {
         invalidation.createdAt,
       ],
     );
+  }
+
+  async findInvalidation(
+    transaction: TransactionHandle,
+    scope: ValuationScope,
+    id: ValuationInvalidationId,
+  ): Promise<ValuationInvalidation | undefined> {
+    const result = await transaction.query<{ payload: unknown }>(
+      `SELECT payload FROM valuation.invalidations WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND invalidation_id=$4`,
+      [...scopeValues(scope), id],
+    );
+    return result.rows[0] === undefined
+      ? undefined
+      : rowInvalidation(result.rows[0].payload);
   }
 
   async listInvalidations(

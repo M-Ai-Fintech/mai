@@ -37,6 +37,8 @@ import {
   loadModel,
   loadResult,
   loadScenario,
+  resolveApprovalReplay,
+  resolveInvalidationReplay,
 } from "./command_runtime.ts";
 
 export async function executeCompute(
@@ -140,9 +142,14 @@ export async function approve(
     commandPayload(command as unknown as Record<string, unknown>),
   );
   if (claimed.status === "replay") {
-    throw new ValuationError(
-      "IDEMPOTENCY_CONFLICT",
-      "Valuation approval replay requires the original approval reference; expected an approval query before retrying.",
+    return accepted(
+      await resolveApprovalReplay(
+        runtime,
+        transaction,
+        scope,
+        command,
+        claimed.reference,
+      ),
     );
   }
   const scenario = await loadScenario(
@@ -213,9 +220,14 @@ export async function invalidate(
     commandPayload(command as unknown as Record<string, unknown>),
   );
   if (claimed.status === "replay") {
-    throw new ValuationError(
-      "IDEMPOTENCY_CONFLICT",
-      "Valuation invalidation replay requires the original invalidation reference; expected an invalidation query before retrying.",
+    return accepted(
+      await resolveInvalidationReplay(
+        runtime,
+        transaction,
+        scope,
+        command,
+        claimed.reference,
+      ),
     );
   }
   const scenario = await loadScenario(

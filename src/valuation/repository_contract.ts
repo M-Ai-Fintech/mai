@@ -9,7 +9,9 @@ import type {
   ValuationScenario,
 } from "./model.ts";
 import type {
+  ValuationApprovalId,
   ValuationInputId,
+  ValuationInvalidationId,
   ValuationModelId,
   ValuationResultId,
   ValuationScenarioId,
@@ -65,10 +67,20 @@ export interface ValuationRepository {
     transaction: TransactionHandle,
     approval: ValuationApproval,
   ): Promise<void>;
+  findApproval(
+    transaction: TransactionHandle,
+    scope: ValuationScope,
+    id: ValuationApprovalId,
+  ): Promise<ValuationApproval | undefined>;
   insertInvalidation(
     transaction: TransactionHandle,
     invalidation: ValuationInvalidation,
   ): Promise<void>;
+  findInvalidation(
+    transaction: TransactionHandle,
+    scope: ValuationScope,
+    id: ValuationInvalidationId,
+  ): Promise<ValuationInvalidation | undefined>;
   listInvalidations(
     transaction: TransactionHandle,
     scope: ValuationScope,
