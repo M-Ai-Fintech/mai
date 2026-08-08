@@ -20,6 +20,8 @@ import type {
 import { NegotiationServiceDeliveryOperations } from "./service_delivery_operations.ts";
 import {
   assertActiveActor,
+  assertCurrentProposal,
+  assertCurrentReleaseCandidate,
   assertHumanActor,
   findProposal,
   replaceProposal,
@@ -86,6 +88,10 @@ export class NegotiationServiceProposalOperations
           currentProposalId: proposal.proposalId,
         };
       },
+      undefined,
+      false,
+      false,
+      proposalInput,
     );
   }
 
@@ -100,18 +106,22 @@ export class NegotiationServiceProposalOperations
       { proposalId: proposalIdValue },
       NEGOTIATION_ACTION.mutateRound,
       negotiationResource(NEGOTIATION_RESOURCE.proposal, proposalIdValue),
-      (round) => ({
-        proposals: replaceProposal(
-          round,
-          proposalIdValue,
-          (proposal) =>
-            updateProposalStatus(
-              proposal,
-              "submitted",
-              this.dependencies.clock.now(),
-            ),
-        ),
-      }),
+      (round) => {
+        const proposal = findProposal(round, proposalIdValue);
+        assertCurrentProposal(round, proposal);
+        return {
+          proposals: replaceProposal(
+            round,
+            proposalIdValue,
+            (current) =>
+              updateProposalStatus(
+                current,
+                "submitted",
+                this.dependencies.clock.now(),
+              ),
+          ),
+        };
+      },
     );
   }
 
@@ -139,6 +149,7 @@ export class NegotiationServiceProposalOperations
           round,
           proposalInput.inReplyToProposalId,
         );
+        assertCurrentReleaseCandidate(round, repliedTo);
         if (repliedTo.fromParty === proposalInput.fromParty) {
           throw new NegotiationError(
             "INVALID_INPUT",
@@ -161,7 +172,7 @@ export class NegotiationServiceProposalOperations
         });
         const updatedRepliedTo = updateProposalStatus(
           repliedTo,
-          "countered",
+          "superseded",
           this.dependencies.clock.now(),
         );
         return {
@@ -173,6 +184,10 @@ export class NegotiationServiceProposalOperations
           currentProposalId: proposal.proposalId,
         };
       },
+      undefined,
+      false,
+      false,
+      proposalInput,
     );
   }
 
@@ -193,14 +208,7 @@ export class NegotiationServiceProposalOperations
       async (round) => {
         const proposal = findProposal(round, approvalInput.proposalId);
         const version = currentProposalVersion(proposal);
-        if (
-          proposal.status !== "submitted" && proposal.status !== "countered"
-        ) {
-          throw new NegotiationError(
-            "INVALID_TRANSITION",
-            `Proposal "${proposal.proposalId}" is "${proposal.status}"; expected a submitted or countered proposal for approval.`,
-          );
-        }
+        assertCurrentReleaseCandidate(round, proposal);
         const mandate = round.internal?.mandate;
         if (mandate === undefined || mandate.status !== "active") {
           throw new NegotiationError(
@@ -249,7 +257,14 @@ export class NegotiationServiceProposalOperations
             proposalVersionId: version.proposalVersionId,
             proposalAggregateVersion: proposal.version,
             mandateComparisonId: comparison.comparisonId,
+            mandateId: comparison.mandateId,
             mandateVersion: comparison.mandateVersion,
+            ...(round.internal?.positionVersion === undefined
+              ? {}
+              : { positionVersion: round.internal.positionVersion }),
+            ...(round.internal?.batnaVersion === undefined
+              ? {}
+              : { batnaVersion: round.internal.batnaVersion }),
             termsDigest,
           },
           requestedAt: this.dependencies.clock.now(),

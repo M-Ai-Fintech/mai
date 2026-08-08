@@ -37,6 +37,10 @@ import {
   RuntimeReadiness,
 } from "../platform/operations/health.ts";
 import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
+import {
+  createExecutableNegotiationComposition,
+  type ExecutableNegotiationConfig,
+} from "./negotiation_executable_composition.ts";
 
 const PORT = 8000;
 
@@ -76,7 +80,7 @@ function corsHeaders(): Headers {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id",
+      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id, X-Deal-Id",
     "Access-Control-Expose-Headers": "ETag, X-Correlation-Id",
   });
 }
@@ -358,10 +362,39 @@ export function startServer(options?: ApiServerOptions): Deno.HttpServer {
 /** Creates the exact production router used by the executable entry point. */
 export function createExecutableApiServer(
   environment?: Readonly<Record<string, string | undefined>>,
+  options: {
+    readonly dealManagement?: ApiServerOptions["dealManagement"];
+    readonly waveH?: WaveHRouteDependencies;
+    readonly negotiation?: ExecutableNegotiationConfig;
+  } = {},
 ): ApiServerRouter {
-  return createApiServer({
-    dealManagement: loadExecutableDealManagement(environment),
-  });
+  let dealManagement: ApiServerOptions["dealManagement"];
+  try {
+    dealManagement = options.dealManagement ??
+      loadExecutableDealManagement(environment);
+  } catch (error) {
+    throw error;
+  }
+  if (options.waveH !== undefined) {
+    return createApiServer({ dealManagement, waveH: options.waveH });
+  }
+  const resolved = resolveDealManagement(dealManagement);
+  if (resolved.kind !== "configured") {
+    return createApiServer({ dealManagement, waveH: {} });
+  }
+  try {
+    const negotiation = createExecutableNegotiationComposition({
+      deal: resolved.composition,
+      config: options.negotiation,
+    });
+    return createApiServer({
+      dealManagement,
+      waveH: { negotiation },
+    });
+  } catch (error) {
+    console.error("[API Server] Negotiation composition unavailable", error);
+    return createApiServer({ dealManagement, waveH: {} });
+  }
 }
 
 if (import.meta.main) startServer();

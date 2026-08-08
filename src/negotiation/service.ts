@@ -95,6 +95,8 @@ export interface NegotiationDeliveryInput {
   readonly proposalId: string;
   readonly approvalId: string;
   readonly deliveryRequestId?: string;
+  readonly recipientId: string;
+  readonly purpose: string;
 }
 
 export type NegotiationCommandResult = NegotiationUnitOfWorkResult;

@@ -39,6 +39,7 @@ Deno.test("in-memory negotiation repository replays exact commands and fences ve
   );
   assertEquals(first.replayed, false);
   assertEquals(replay.replayed, true);
+  assertEquals(unitOfWork.evidence.length, 1);
   await assertRejects(
     () =>
       unitOfWork.run({
@@ -50,5 +51,34 @@ Deno.test("in-memory negotiation repository replays exact commands and fences ve
       }),
     Error,
     "already exists",
+  );
+});
+
+Deno.test("in-memory idempotency keys conflict across commands and scopes", async () => {
+  const unitOfWork = new InMemoryNegotiationUnitOfWork();
+  await unitOfWork.run(
+    identity("idem_cross-command"),
+    () => Promise.resolve(round),
+  );
+  await assertRejects(
+    () =>
+      unitOfWork.run({
+        ...identity("idem_cross-command"),
+        commandType: "negotiation_other_command",
+        targetId: "round_other",
+        payloadDigest: "b".repeat(64),
+      }, () => Promise.resolve(round)),
+    Error,
+    "IDEMPOTENCY_CONFLICT",
+  );
+  await assertRejects(
+    () =>
+      unitOfWork.run({
+        ...identity("idem_cross-command"),
+        tenantId: "tenant_other" as never,
+        payloadDigest: "c".repeat(64),
+      }, () => Promise.resolve(round)),
+    Error,
+    "IDEMPOTENCY_CONFLICT",
   );
 });

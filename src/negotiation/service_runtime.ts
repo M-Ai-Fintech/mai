@@ -115,6 +115,8 @@ export class NegotiationServiceRuntime {
       | Promise<Partial<NegotiationRound>>,
     authorityPayload?: unknown,
     withJob = false,
+    humanOnly = false,
+    identityPayload: unknown = payload,
   ): Promise<NegotiationCommandResult> {
     return this.runMutation(
       input,
@@ -125,6 +127,8 @@ export class NegotiationServiceRuntime {
       callback,
       authorityPayload,
       withJob,
+      humanOnly,
+      identityPayload,
     );
   }
 
@@ -144,6 +148,8 @@ export class NegotiationServiceRuntime {
       | Promise<Partial<NegotiationRound>>,
     authorityPayload: unknown = undefined,
     withJob = false,
+    humanOnly = false,
+    identityPayload: unknown = payload,
   ): Promise<NegotiationCommandResult> {
     assertActiveActor(input.actor, commandType);
     const now = this.dependencies.clock.now();
@@ -153,7 +159,7 @@ export class NegotiationServiceRuntime {
       scope: input.scope,
       resource,
       action,
-      humanOnly: false,
+      humanOnly,
       now,
     });
     const identity = await commandIdentity(
@@ -163,13 +169,19 @@ export class NegotiationServiceRuntime {
       input.roundId,
       input.idempotencyKey,
       authorityPayload === undefined
-        ? { payload }
-        : { payload, authorityPayload },
+        ? { payload: identityPayload }
+        : { payload: identityPayload, authorityPayload },
       now,
     );
     return this.dependencies.unitOfWork.run(identity, async (transaction) => {
       const round = await transaction.findRound(input.scope, input.roundId);
       if (round === undefined) throw protectedRoundNotFound(input.roundId);
+      if (round.status === "closed" || round.status === "cancelled") {
+        throw new NegotiationError(
+          "INVALID_TRANSITION",
+          `Negotiation round "${round.roundId}" is terminal in status "${round.status}"; ordinary mutations are not permitted.`,
+        );
+      }
       const changes = await callback(round, transaction);
       const next = recordMutation(
         round,
@@ -178,7 +190,7 @@ export class NegotiationServiceRuntime {
         commandType,
         payload,
         this.dependencies.clock.now(),
-        authorityProofFromChanges(changes),
+        authorityProofFromChanges(round, changes),
       );
       await transaction.replaceRound(next, input.expectedVersion);
       await appendEffects(

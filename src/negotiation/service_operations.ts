@@ -12,6 +12,7 @@ import {
   type NegotiationRound,
 } from "./model.ts";
 import type {
+  NegotiationAuthorityCommandInput,
   NegotiationCommandInput,
   NegotiationCommandResult,
   NegotiationReadInput,
@@ -21,7 +22,10 @@ import { NegotiationServiceProposalOperations } from "./service_proposal_operati
 import {
   appendEffects,
   assertActiveActor,
+  assertHumanActor,
   commandIdentity,
+  invalidateApprovals,
+  nextVersion,
   recordCreation,
   withInternal,
 } from "./service_support.ts";
@@ -114,6 +118,40 @@ export class NegotiationServiceOperations
     );
   }
 
+  closeRound(
+    input: NegotiationCommandInput,
+  ): Promise<NegotiationCommandResult> {
+    assertHumanActor(input.actor, "close a negotiation round");
+    return this.mutate(
+      input,
+      "negotiation_close_round",
+      { to: "closed" },
+      NEGOTIATION_ACTION.mutateRound,
+      negotiationResource(NEGOTIATION_RESOURCE.round, input.roundId),
+      (round) => {
+        assertRoundTransition(round.status, "closed");
+        return { status: "closed" };
+      },
+    );
+  }
+
+  cancelRound(
+    input: NegotiationCommandInput,
+  ): Promise<NegotiationCommandResult> {
+    assertHumanActor(input.actor, "cancel a negotiation round");
+    return this.mutate(
+      input,
+      "negotiation_cancel_round",
+      { to: "cancelled" },
+      NEGOTIATION_ACTION.mutateRound,
+      negotiationResource(NEGOTIATION_RESOURCE.round, input.roundId),
+      (round) => {
+        assertRoundTransition(round.status, "cancelled");
+        return { status: "cancelled" };
+      },
+    );
+  }
+
   addInternalPosition(
     input: NegotiationCommandInput,
     positionInput: Omit<
@@ -136,8 +174,14 @@ export class NegotiationServiceOperations
       (round) => ({
         internal: withInternal(round.internal, {
           positions: [...(round.internal?.positions ?? []), position],
+          positionVersion: nextInternalVersion(round.internal?.positionVersion),
         }),
+        approvals: invalidateApprovals(round.approvals),
       }),
+      undefined,
+      false,
+      false,
+      positionInput,
     );
   }
 
@@ -156,14 +200,25 @@ export class NegotiationServiceOperations
       { side: batna.side, alternativeCount: batna.alternatives.length },
       NEGOTIATION_ACTION.mutateRound,
       negotiationResource(NEGOTIATION_RESOURCE.round, input.roundId),
-      (round) => ({ internal: withInternal(round.internal, { batna }) }),
+      (round) => ({
+        internal: withInternal(round.internal, {
+          batna,
+          batnaVersion: nextInternalVersion(round.internal?.batnaVersion),
+        }),
+        approvals: invalidateApprovals(round.approvals),
+      }),
+      undefined,
+      false,
+      false,
+      batnaInput,
     );
   }
 
   setMandate(
-    input: NegotiationCommandInput,
+    input: NegotiationAuthorityCommandInput,
     mandateInput: Parameters<typeof createMandate>[0],
   ): Promise<NegotiationCommandResult> {
+    assertHumanActor(input.actor, "set a negotiation mandate");
     assertScopeMatches(input.scope, mandateInput.scope);
     const mandate = createMandate(mandateInput);
     return this.mutate(
@@ -176,12 +231,38 @@ export class NegotiationServiceOperations
       },
       NEGOTIATION_ACTION.mutateRound,
       negotiationResource(NEGOTIATION_RESOURCE.round, input.roundId),
-      (round) => ({
-        internal: withInternal(round.internal, {
-          mandate,
-          mandateComparison: undefined,
-        }),
-      }),
+      async (round) => {
+        const authority = await this.consumeAuthority(
+          input,
+          "negotiation_set_mandate",
+          "negotiation_round",
+          round.roundId,
+          round.version,
+        );
+        const version = round.internal?.mandate === undefined
+          ? mandate.version
+          : nextVersion(round.internal.mandate.version);
+        const authoritativeMandate = Object.freeze({ ...mandate, version });
+        return {
+          internal: withInternal(round.internal, {
+            mandate: authoritativeMandate,
+            mandateComparison: undefined,
+            mandateAuthorityProofId: authority.proof.proofId,
+          }),
+          approvals: invalidateApprovals(round.approvals),
+        };
+      },
+      input.authority.protectedCommand,
+      false,
+      true,
+      mandateInput,
     );
   }
+}
+
+function nextInternalVersion(
+  current: import("../platform/api/v1.ts").AggregateVersion | undefined,
+): import("../platform/api/v1.ts").AggregateVersion {
+  return ((current === undefined ? 0 : Number(current)) +
+    1) as import("../platform/api/v1.ts").AggregateVersion;
 }

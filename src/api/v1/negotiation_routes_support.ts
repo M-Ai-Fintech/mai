@@ -212,6 +212,8 @@ async function runCommand(
       ...(body.deliveryRequestId === undefined
         ? {}
         : { deliveryRequestId: requiredString(body, "deliveryRequestId") }),
+      recipientId: requiredString(body, "recipientId"),
+      purpose: requiredString(body, "purpose"),
     });
   }
   return success(result, authenticated.context.correlationId, 200);

@@ -17,7 +17,6 @@ import {
   type NegotiationCommandInput,
   type NegotiationCommandResult,
   NegotiationError,
-  type NegotiationProposalDraftInput,
   type NegotiationScope,
   type NegotiationService,
 } from "../../negotiation/v1.ts";
@@ -25,6 +24,7 @@ import {
   assertExternalRoundSafe,
   toExternalRound,
 } from "../../negotiation/v1.ts";
+import { parseNormalizedTermsInput } from "../../negotiation/terms.ts";
 
 export interface NegotiationAuthenticatedContext {
   readonly context: RequestContext;
@@ -142,7 +142,7 @@ export function success(
     .round as import("../../negotiation/v1.ts").NegotiationRound;
   const external = toExternalRound(round);
   assertExternalRoundSafe(external);
-  const projected = { ...value, round: external };
+  const projected = { round: external, replayed: value.replayed };
   return Response.json(createSuccessEnvelope(projected, { correlationId }), {
     status,
     headers: responseHeaders(correlationId, formatEtag(round.version)),
@@ -294,12 +294,17 @@ export function requiredObject(
 
 export function requiredTerms(
   body: Record<string, unknown>,
-): NegotiationProposalDraftInput["terms"] {
+): Parameters<
+  typeof import("../../negotiation/terms.ts").createNormalizedTerms
+>[0] {
   const terms = requiredObject(body, "terms");
-  if (typeof terms.currency !== "string") {
-    throw new NegotiationRequestError("Negotiation terms require a currency.");
+  try {
+    return parseNormalizedTermsInput(terms);
+  } catch (error) {
+    throw new NegotiationRequestError(
+      error instanceof Error ? error.message : "Negotiation terms are invalid.",
+    );
   }
-  return terms as unknown as NegotiationProposalDraftInput["terms"];
 }
 
 export function protectedCommand(body: Record<string, unknown>): unknown {

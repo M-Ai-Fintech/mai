@@ -13,7 +13,9 @@ import {
 } from "./model.ts";
 import {
   commandKey,
+  evidenceFromRound,
   type NegotiationCommandIdentity,
+  type NegotiationEvidenceRecord,
   type NegotiationTransaction,
   type NegotiationUnitOfWork,
   type NegotiationUnitOfWorkResult,
@@ -56,6 +58,7 @@ export class PostgresNegotiationTransaction implements NegotiationTransaction {
         round.updatedAt,
       ],
     );
+    await this.appendEvidence(evidenceFromRound(round));
   }
 
   async replaceRound(
@@ -79,10 +82,35 @@ export class PostgresNegotiationTransaction implements NegotiationTransaction {
         expectedVersion,
       ],
     );
-    if (result.rowCount === 1) return;
+    if (result.rowCount === 1) {
+      await this.appendEvidence(evidenceFromRound(round));
+      return;
+    }
     throw new NegotiationError(
       "STALE_VERSION",
       `Negotiation round "${round.roundId}" version "${expectedVersion}" is stale; expected one exact PostgreSQL aggregate update.`,
+    );
+  }
+
+  async appendEvidence(record: NegotiationEvidenceRecord): Promise<void> {
+    await this.handle.query(
+      `INSERT INTO negotiation.evidence_events (
+         evidence_id, tenant_id, workspace_id, deal_id, round_id,
+         evidence_type, subject_id, subject_version, document, recorded_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT DO NOTHING`,
+      [
+        record.evidenceId,
+        record.scope.tenantId,
+        record.scope.workspaceId,
+        record.scope.dealId,
+        record.roundId,
+        record.evidenceType,
+        record.subjectId,
+        record.subjectVersion,
+        JSON.stringify(record.document),
+        record.recordedAt,
+      ],
     );
   }
 }
@@ -118,6 +146,16 @@ export class PostgresNegotiationUnitOfWork implements NegotiationUnitOfWork {
     return this.transactions.run(async (handle) => {
       const transaction = new PostgresNegotiationTransaction(handle);
       const claim = postgresClaim(identity);
+      const existing = await existingCommandResult(handle, identity);
+      if (existing !== undefined) {
+        if (existing.payloadDigest !== identity.payloadDigest) {
+          throw new NegotiationError(
+            "IDEMPOTENCY_CONFLICT",
+            `IDEMPOTENCY_CONFLICT: Negotiation idempotency key "${identity.idempotencyKey}" was reused across commands or scopes with a different payload.`,
+          );
+        }
+        return { round: freezeRound(existing.result), replayed: true };
+      }
       const status = await this.idempotency.claim(handle, claim);
       if (status.status === "replay") return this.replay(transaction, identity);
       if (status.status !== "claimed") {
@@ -153,16 +191,45 @@ export class PostgresNegotiationUnitOfWork implements NegotiationUnitOfWork {
 }
 
 interface NegotiationResultRow {
+  readonly commandKey: string;
+  readonly payloadDigest: string;
   readonly result: NegotiationRound;
+}
+
+async function existingCommandResult(
+  transaction: TransactionHandle,
+  identity: NegotiationCommandIdentity,
+): Promise<NegotiationResultRow | undefined> {
+  const result = await transaction.query<NegotiationResultRow>(
+    `SELECT command_key AS "commandKey",
+            payload_digest AS "payloadDigest",
+            result
+     FROM negotiation.command_results
+     WHERE command_key = $1
+        OR (actor_id = $2 AND idempotency_key = $3)
+     ORDER BY command_key`,
+    [
+      commandKey(identity),
+      identity.actorId,
+      identity.idempotencyKey,
+    ],
+  );
+  if (result.rows.length > 1) {
+    throw new NegotiationError(
+      "IDEMPOTENCY_CONFLICT",
+      `IDEMPOTENCY_CONFLICT: Negotiation idempotency key "${identity.idempotencyKey}" has multiple durable command results; expected one logical result.`,
+    );
+  }
+  return result.rows[0];
 }
 
 function postgresClaim(identity: NegotiationCommandIdentity): IdempotencyClaim {
   return {
     tenantId: identity.tenantId,
     actorId: identity.actorId,
-    commandType: identity.commandType,
-    targetType: "negotiation_round",
-    targetId: `${identity.workspaceId}|${identity.dealId}|${identity.targetId}`,
+    commandType: "negotiation_command",
+    targetType: "negotiation_idempotency",
+    targetId: identity.actorId,
     idempotencyKey: identity.idempotencyKey,
     payloadDigest: identity.payloadDigest,
     expiresAt: new Date(Date.parse(identity.recordedAt) + 86_400_000),

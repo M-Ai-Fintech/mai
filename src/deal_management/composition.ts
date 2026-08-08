@@ -99,6 +99,7 @@ export type DealManagementCompositionResult =
  */
 export class DealManagementComposition {
   readonly repository: PostgresDealRepository;
+  readonly authorization: DealAuthorizationPort;
   readonly service: DealManagementService;
   readonly http: DealManagementHttpDependencies;
   readonly compatibilityReader: CompatibilityDealReader;
@@ -114,6 +115,7 @@ export class DealManagementComposition {
     private readonly poolOwnership: PoolOwnership = "borrowed",
   ) {
     this.repository = dependencies.repository as PostgresDealRepository;
+    this.authorization = dependencies.authorization;
     this.service = new DealManagementService(dependencies);
     this.http = http;
     this.compatibilityReader = compatibilityReader;

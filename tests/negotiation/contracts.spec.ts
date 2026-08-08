@@ -2,6 +2,7 @@ import { assert, assertEquals, assertThrows } from "@std/assert";
 import {
   createNormalizedTerms,
   normalizedTermsFromOptimizerProposal,
+  parseNormalizedTermsInput,
 } from "../../src/negotiation/terms.ts";
 import {
   assertProposalTransition,
@@ -14,6 +15,7 @@ import {
 import {
   createNegotiationRound,
   createProposal,
+  freezeRound,
 } from "../../src/negotiation/model.ts";
 import {
   assertExternalRoundSafe,
@@ -42,6 +44,37 @@ Deno.test("normalized negotiation terms are finite, versioned, and deduplicated"
   );
 });
 
+Deno.test("normalized term hydration rejects nested caller fields", () => {
+  assertThrows(
+    () =>
+      parseNormalizedTermsInput({
+        currency: "USD",
+        valuation: {
+          minorUnits: 100_000,
+          currency: "USD",
+          internal: { batna: "secret" },
+        },
+      }),
+    Error,
+    "unknown field",
+  );
+  assertThrows(
+    () =>
+      createNormalizedTerms({
+        currency: "USD",
+        terms: [{
+          key: "valuation",
+          value: 100_000,
+          unit: "minor_units",
+          currency: "USD",
+          nested: { strategy: "private" },
+        }] as never,
+      }),
+    Error,
+    "unknown field",
+  );
+});
+
 Deno.test("optimizer recommendations cross the read-only normalized-term boundary", () => {
   const normalized = normalizedTermsFromOptimizerProposal({
     valuation: 100.4,
@@ -64,6 +97,44 @@ Deno.test("round and proposal state machines reject autonomous reopening", () =>
     () => assertProposalTransition("accepted", "submitted"),
     Error,
     "invalid",
+  );
+});
+
+Deno.test("proposal hydration rejects cross-proposal version lineage", () => {
+  const round = createNegotiationRound({
+    roundId: "round_lineage",
+    negotiationId: "negotiation_lineage",
+    scope,
+    number: 1,
+    openedBy: actor().id,
+    now,
+  });
+  const proposal = createProposal({
+    proposalId: "proposal_lineage",
+    negotiationId: round.negotiationId,
+    roundId: round.roundId,
+    scope,
+    fromParty: "buyer",
+    terms: createNormalizedTerms(terms),
+    submittedBy: actor().id,
+    submittedByKind: "human",
+    origin: "human",
+    now,
+  });
+  assertThrows(
+    () =>
+      freezeRound({
+        ...round,
+        proposals: [{
+          ...proposal,
+          versions: [{
+            ...proposal.versions[0],
+            supersedesVersionId: "proposal_version_other-1" as never,
+          }],
+        }],
+      }),
+    Error,
+    "outside its own immutable lineage",
   );
 });
 

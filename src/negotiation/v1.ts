@@ -5,6 +5,7 @@ export * from "./authorization.ts";
 export * from "./effects.ts";
 export * from "./ids.ts";
 export * from "./jobs.ts";
+export * from "./delivery_worker.ts";
 export * from "./mandate.ts";
 export * from "./model.ts";
 export * from "./projection.ts";

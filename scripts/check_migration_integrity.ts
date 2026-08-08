@@ -87,6 +87,8 @@ export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
     "70bcce621d07a304d1a5d5776a59608d106dd9b4c297cad03da1b0f5cd03f8f4",
   "negotiation-0001-control":
     "f86562c3ecab3e6b05fda6f2b8a8c410d201a06e8fc511e307ea36c5ae12632e",
+  "negotiation-0002-evidence":
+    "2762879186e229bd585ef968fe354ab44c2578f17086964a48d55a06eed28ec2",
 };
 
 export function currentMigrationCatalog(): readonly ContextMigration[] {

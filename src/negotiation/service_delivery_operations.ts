@@ -17,6 +17,8 @@ import type {
 } from "./service.ts";
 import { NegotiationServiceRuntime } from "./service_runtime.ts";
 import {
+  assertApprovalBasisCurrent,
+  assertCurrentReleaseCandidate,
   assertHumanActor,
   deliveryJob,
   deriveJobId,
@@ -26,6 +28,7 @@ import {
   replaceApproval,
 } from "./service_support.ts";
 import { deliveryReceiptId } from "./ids.ts";
+import { assertDeliveryRequestTransition } from "./transitions.ts";
 
 export class NegotiationServiceDeliveryOperations
   extends NegotiationServiceRuntime {
@@ -57,6 +60,7 @@ export class NegotiationServiceDeliveryOperations
             `Approval "${approval.approvalId}" is "${approval.status}"; expected pending approval.`,
           );
         }
+        await assertApprovalBasisCurrent(round, proposal, approval);
         if (
           approval.requestedBy === input.actor.id ||
           approval.namedApproverId !== input.actor.id
@@ -117,6 +121,7 @@ export class NegotiationServiceDeliveryOperations
         const proposal = findProposal(round, deliveryInput.proposalId);
         const approval = findApproval(round, deliveryInput.approvalId);
         const version = currentProposalVersion(proposal);
+        assertCurrentReleaseCandidate(round, proposal);
         if (
           approval.proposalId !== proposal.proposalId ||
           approval.proposalVersionId !== version.proposalVersionId
@@ -132,6 +137,7 @@ export class NegotiationServiceDeliveryOperations
             "Delivery requires a separate approved human approval record.",
           );
         }
+        await assertApprovalBasisCurrent(round, proposal, approval);
         const authority = await this.consumeAuthority(
           input,
           commandType,
@@ -147,7 +153,7 @@ export class NegotiationServiceDeliveryOperations
           input.idempotencyKey.slice("idem_".length)
         }`;
         const now = this.dependencies.clock.now();
-        const request = createDeliveryRequest({
+        const requested = createDeliveryRequest({
           deliveryRequestId: requestIdResult,
           proposalId: proposal.proposalId,
           proposalVersionId: version.proposalVersionId,
@@ -156,9 +162,23 @@ export class NegotiationServiceDeliveryOperations
           jobId,
           idempotencyKey: input.idempotencyKey,
           authorityProofId: authority.proof.proofId,
+          authorityProof: authority.proof,
           requestedBy: authority.actor.id,
           requestedAt: now,
           featureGate: "enabled",
+          recipientId: assertDeliveryText(
+            deliveryInput.recipientId,
+            "delivery recipient",
+          ),
+          purpose: assertDeliveryText(
+            deliveryInput.purpose,
+            "delivery purpose",
+          ),
+        });
+        assertDeliveryRequestTransition(requested.status, "queued");
+        const request = Object.freeze({
+          ...requested,
+          status: "queued" as const,
         });
         const receipt = createDeliveryReceipt({
           deliveryReceiptId: deliveryReceiptId(receiptId),
@@ -166,6 +186,8 @@ export class NegotiationServiceDeliveryOperations
           scope: round.scope,
           idempotencyKey: input.idempotencyKey,
           createdAt: now,
+          recipientId: request.recipientId,
+          purpose: request.purpose,
         });
         const job = createNegotiationDeliveryJob(deliveryJob({
           jobId,
@@ -189,4 +211,16 @@ export class NegotiationServiceDeliveryOperations
       true,
     );
   }
+}
+
+function assertDeliveryText(value: string, label: string): string {
+  if (
+    typeof value === "string" && value.trim().length > 0 && value.length <= 256
+  ) {
+    return value;
+  }
+  throw new NegotiationError(
+    "INVALID_INPUT",
+    `${label} must be bounded non-empty text.`,
+  );
 }

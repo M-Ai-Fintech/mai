@@ -14,6 +14,17 @@ export interface NegotiationCommandIdentity extends NegotiationScope {
   readonly recordedAt: string;
 }
 
+export interface NegotiationEvidenceRecord {
+  readonly evidenceId: string;
+  readonly scope: NegotiationScope;
+  readonly roundId: string;
+  readonly evidenceType: string;
+  readonly subjectId: string;
+  readonly subjectVersion: AggregateVersion;
+  readonly document: Readonly<Record<string, unknown>>;
+  readonly recordedAt: string;
+}
+
 export interface NegotiationTransaction {
   readonly kind: "in_memory" | "postgres";
   readonly handle?: TransactionHandle;
@@ -26,6 +37,7 @@ export interface NegotiationTransaction {
     round: NegotiationRound,
     expectedVersion: AggregateVersion,
   ): Promise<void>;
+  appendEvidence?(record: NegotiationEvidenceRecord): Promise<void>;
 }
 
 export interface NegotiationUnitOfWorkResult {
@@ -48,8 +60,10 @@ export interface NegotiationUnitOfWork {
 export class InMemoryNegotiationUnitOfWork implements NegotiationUnitOfWork {
   private readonly rounds = new Map<string, NegotiationRound>();
   private readonly claims = new Map<string, InMemoryClaim>();
+  readonly evidence: NegotiationEvidenceRecord[] = [];
   private readonly transaction = new InMemoryNegotiationTransaction(
     this.rounds,
+    this.evidence,
   );
 
   read<TResult>(
@@ -69,6 +83,7 @@ export class InMemoryNegotiationUnitOfWork implements NegotiationUnitOfWork {
     if (existing !== undefined) return replayClaim(existing, identity);
     this.claims.set(key, { payloadDigest: identity.payloadDigest });
     const snapshot = new Map(this.rounds);
+    const evidenceLength = this.evidence.length;
     try {
       const round = await operation(this.transaction);
       const frozen = freezeRound(round);
@@ -82,6 +97,7 @@ export class InMemoryNegotiationUnitOfWork implements NegotiationUnitOfWork {
       for (const [roundKey, round] of snapshot) {
         this.rounds.set(roundKey, round);
       }
+      this.evidence.splice(evidenceLength);
       this.claims.delete(key);
       throw error;
     }
@@ -96,7 +112,10 @@ interface InMemoryClaim {
 class InMemoryNegotiationTransaction implements NegotiationTransaction {
   readonly kind = "in_memory" as const;
 
-  constructor(private readonly rounds: Map<string, NegotiationRound>) {}
+  constructor(
+    private readonly rounds: Map<string, NegotiationRound>,
+    private readonly evidence: NegotiationEvidenceRecord[],
+  ) {}
 
   findRound(
     scope: NegotiationScope,
@@ -105,7 +124,7 @@ class InMemoryNegotiationTransaction implements NegotiationTransaction {
     return Promise.resolve(this.rounds.get(roundKey(scope, roundId)));
   }
 
-  insertRound(round: NegotiationRound): Promise<void> {
+  async insertRound(round: NegotiationRound): Promise<void> {
     const key = roundKey(round.scope, round.roundId);
     if (this.rounds.has(key)) {
       throw new NegotiationError(
@@ -114,10 +133,10 @@ class InMemoryNegotiationTransaction implements NegotiationTransaction {
       );
     }
     this.rounds.set(key, freezeRound(round));
-    return Promise.resolve();
+    await this.appendEvidence(evidenceFromRound(round));
   }
 
-  replaceRound(
+  async replaceRound(
     round: NegotiationRound,
     expectedVersion: AggregateVersion,
   ): Promise<void> {
@@ -131,6 +150,17 @@ class InMemoryNegotiationTransaction implements NegotiationTransaction {
       );
     }
     this.rounds.set(key, freezeRound(round));
+    await this.appendEvidence(evidenceFromRound(round));
+  }
+
+  appendEvidence(record: NegotiationEvidenceRecord): Promise<void> {
+    if (!this.evidence.some((item) => item.evidenceId === record.evidenceId)) {
+      this.evidence.push(Object.freeze({
+        ...record,
+        scope: Object.freeze({ ...record.scope }),
+        document: Object.freeze({ ...record.document }),
+      }));
+    }
     return Promise.resolve();
   }
 }
@@ -142,7 +172,7 @@ function replayClaim(
   if (claim.payloadDigest !== identity.payloadDigest) {
     throw new NegotiationError(
       "IDEMPOTENCY_CONFLICT",
-      `Negotiation idempotency key "${identity.idempotencyKey}" was reused with a different payload.`,
+      `IDEMPOTENCY_CONFLICT: Negotiation idempotency key "${identity.idempotencyKey}" was reused with a different payload.`,
     );
   }
   if (claim.round === undefined) {
@@ -155,19 +185,42 @@ function replayClaim(
 }
 
 export function commandKey(identity: NegotiationCommandIdentity): string {
-  return [
-    identity.tenantId,
-    identity.workspaceId,
-    identity.dealId,
-    identity.actorId,
-    identity.commandType,
-    identity.targetId,
-    identity.idempotencyKey,
-  ].join("|");
+  // An idempotency key is one caller command token, not one token per
+  // command-type/target tuple. The payload digest still binds the exact
+  // command and scope, so cross-command or cross-scope reuse conflicts.
+  return [identity.actorId, identity.idempotencyKey].join("|");
 }
 
 export function roundKey(scope: NegotiationScope, roundId: string): string {
   return `${scope.tenantId}|${scope.workspaceId}|${scope.dealId}|${roundId}`;
+}
+
+export function evidenceFromRound(
+  round: NegotiationRound,
+): NegotiationEvidenceRecord {
+  const event = round.history.at(-1);
+  if (event === undefined) {
+    return {
+      evidenceId: `negotiation_evidence_${round.roundId}_${round.version}`,
+      scope: round.scope,
+      roundId: round.roundId,
+      evidenceType: "negotiation_round_snapshot",
+      subjectId: round.roundId,
+      subjectVersion: round.version,
+      document: { round },
+      recordedAt: round.updatedAt,
+    };
+  }
+  return {
+    evidenceId: event.eventId,
+    scope: round.scope,
+    roundId: round.roundId,
+    evidenceType: event.eventType,
+    subjectId: event.aggregateId,
+    subjectVersion: round.version,
+    document: { round, event },
+    recordedAt: event.occurredAt,
+  };
 }
 
 export function protectedRoundNotFound(roundId: string): NegotiationError {

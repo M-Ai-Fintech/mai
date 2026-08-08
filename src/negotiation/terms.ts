@@ -59,6 +59,7 @@ export interface NormalizedTerms {
 }
 
 export interface NormalizedTermsInput {
+  readonly schemaVersion?: typeof NEGOTIATION_TERMS_SCHEMA_VERSION;
   readonly currency: string;
   readonly valuation?: NegotiationMoney;
   readonly cashPercentageBps?: number;
@@ -78,11 +79,49 @@ export interface NormalizedTermDifference {
   readonly actual: NormalizedTerm | undefined;
 }
 
+export {
+  parseNormalizedTerms,
+  parseNormalizedTermsInput,
+} from "./terms_parsing.ts";
+
 export function createNormalizedTerms(
   input: NormalizedTermsInput,
 ): NormalizedTerms {
+  assertExactKeys(
+    input,
+    [
+      "schemaVersion",
+      "currency",
+      "valuation",
+      "cashPercentageBps",
+      "equityPercentageBps",
+      "earnOutPercentageBps",
+      "escrowPercentageBps",
+      "earnOutTargetMonths",
+      "nonCompeteMonths",
+      "paymentTimingDays",
+      "disputeResolution",
+      "terms",
+    ],
+    "normalized negotiation term input",
+  );
+  if (
+    input.schemaVersion !== undefined &&
+    input.schemaVersion !== NEGOTIATION_TERMS_SCHEMA_VERSION
+  ) {
+    throw new Error(
+      `Negotiation terms schema version "${input.schemaVersion}" is unsupported; expected version 1.`,
+    );
+  }
   assertCurrency(input.currency);
-  if (input.valuation !== undefined) assertMoney(input.valuation);
+  if (input.valuation !== undefined) {
+    assertExactKeys(
+      input.valuation,
+      ["minorUnits", "currency"],
+      "negotiation money",
+    );
+    assertMoney(input.valuation);
+  }
   assertBasisPoints(input.cashPercentageBps, "cash percentage");
   assertBasisPoints(input.equityPercentageBps, "equity percentage");
   assertBasisPoints(input.earnOutPercentageBps, "earn-out percentage");
@@ -141,9 +180,12 @@ export function createNormalizedTerms(
   const result: NormalizedTerms = {
     schemaVersion: NEGOTIATION_TERMS_SCHEMA_VERSION,
     currency: input.currency,
-    ...(input.valuation === undefined
-      ? {}
-      : { valuation: Object.freeze({ ...input.valuation }) }),
+    ...(input.valuation === undefined ? {} : {
+      valuation: Object.freeze({
+        minorUnits: input.valuation.minorUnits,
+        currency: input.valuation.currency,
+      }),
+    }),
     ...(input.cashPercentageBps === undefined
       ? {}
       : { cashPercentageBps: input.cashPercentageBps }),
@@ -301,8 +343,15 @@ function normalizeTerm(
       `Normalized valuation currency "${value.currency}" does not match terms currency "${currency}".`,
     );
   }
+  assertExactKeys(
+    value,
+    ["key", "value", "unit", "currency"],
+    `normalized term "${value.key}"`,
+  );
   return Object.freeze({
-    ...value,
+    key: value.key,
+    value: value.value,
+    unit: value.unit,
     ...(value.currency === undefined ? {} : { currency: value.currency }),
   });
 }
@@ -386,4 +435,19 @@ function isVersionedDisputeResolution(
 ): value is VersionedDisputeResolution {
   return typeof value === "object" && value !== null &&
     "schemaVersion" in value && "mechanism" in value;
+}
+
+function assertExactKeys(
+  value: object,
+  allowed: readonly string[],
+  label: string,
+): void {
+  const keys = Object.keys(value);
+  if (keys.every((key) => allowed.includes(key))) return;
+  const unknown = keys.find((key) => !allowed.includes(key));
+  throw new Error(
+    `Invalid ${label}; unknown field "${
+      unknown ?? "<unknown>"
+    }" is not permitted.`,
+  );
 }

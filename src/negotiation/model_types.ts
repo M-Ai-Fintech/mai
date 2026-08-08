@@ -61,6 +61,12 @@ export interface InternalNegotiationState {
   readonly batna?: Batna;
   readonly mandateComparison?: MandateComparison;
   readonly mandate?: NegotiationMandate;
+  /** Version of the authoritative internal-position collection used by approvals. */
+  readonly positionVersion?: AggregateVersion;
+  /** Version of the authoritative BATNA record used by approvals. */
+  readonly batnaVersion?: AggregateVersion;
+  /** Proof attached to the latest human-authorized mandate mutation. */
+  readonly mandateAuthorityProofId?: string;
   readonly strategyNotes: readonly string[];
 }
 
@@ -96,8 +102,11 @@ export interface NegotiationProposal {
 export interface ApprovalBasis {
   readonly proposalVersionId: ProposalVersionId;
   readonly proposalAggregateVersion: AggregateVersion;
+  readonly mandateId: string;
   readonly mandateComparisonId: string;
   readonly mandateVersion: AggregateVersion;
+  readonly positionVersion?: AggregateVersion;
+  readonly batnaVersion?: AggregateVersion;
   readonly termsDigest: string;
 }
 
@@ -127,9 +136,12 @@ export interface DeliveryRequest {
   readonly jobId: string;
   readonly idempotencyKey: string;
   readonly authorityProofId: string;
+  readonly authorityProof: AuthorityProofReference;
   readonly requestedBy: string;
   readonly requestedAt: string;
   readonly featureGate: "disabled" | "enabled";
+  readonly recipientId: string;
+  readonly purpose: string;
 }
 
 export interface DeliveryReceipt {
@@ -144,6 +156,8 @@ export interface DeliveryReceipt {
   readonly nextAttemptAt?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly recipientId: string;
+  readonly purpose: string;
 }
 
 export interface NegotiationHistoryEvent {

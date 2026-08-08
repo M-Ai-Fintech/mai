@@ -140,6 +140,35 @@ Deno.test("Negotiation API rejects internal fields and weak concurrency", async 
   assertEquals(missing?.status, 422);
 });
 
+Deno.test("Negotiation API rejects nested internal fields inside normalized terms", async () => {
+  const deps = dependencies();
+  const response = await route(
+    new Request(
+      "http://localhost/api/v1/negotiation/rounds/round_nested/proposals",
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": "idem_nested-terms", "If-Match": '"v1"' },
+        body: JSON.stringify({
+          proposalId: "proposal_nested",
+          fromParty: "buyer",
+          origin: "human",
+          terms: {
+            currency: "USD",
+            valuation: {
+              minorUnits: 100_000,
+              currency: "USD",
+              strategy: { reservationUtility: 0.1 },
+            },
+          },
+        }),
+      },
+    ),
+    deps,
+  );
+  assertEquals(response?.status, 422);
+  assertStringIncludes((await response?.json()).error.message, "unknown field");
+});
+
 Deno.test("Negotiation API uses protected-not-found for unauthorized reads", async () => {
   const allowed = dependencies();
   const created = await route(

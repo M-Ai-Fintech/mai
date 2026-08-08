@@ -6,7 +6,11 @@ import type {
   NegotiationRound,
   ProposalVersion,
 } from "./model.ts";
-import type { NormalizedTerms } from "./terms.ts";
+import {
+  type NormalizedTerms,
+  parseNormalizedTerms,
+  serializeNormalizedTerms,
+} from "./terms.ts";
 
 /**
  * Public negotiation read models are assembled field-by-field.  In
@@ -81,7 +85,10 @@ export function toExternalProposalVersion(
   return Object.freeze({
     proposalVersionId: version.proposalVersionId,
     versionNumber: version.versionNumber,
-    terms: version.terms,
+    // Rebuild the public value from the canonical serialized vocabulary. This
+    // prevents a cast/spread or malformed hydrated JSON object from widening
+    // the external DTO with nested caller-supplied fields.
+    terms: parseNormalizedTerms(serializeNormalizedTerms(version.terms)),
     origin: version.origin,
     status: version.status,
     ...(version.inReplyToProposalId === undefined

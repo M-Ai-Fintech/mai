@@ -53,7 +53,14 @@ const PROPOSAL_TRANSITIONS: Readonly<
   Record<ProposalStatus, readonly ProposalStatus[]>
 > = {
   draft: ["submitted", "withdrawn", "superseded"],
-  submitted: ["countered", "accepted", "rejected", "withdrawn", "expired"],
+  submitted: [
+    "countered",
+    "accepted",
+    "rejected",
+    "withdrawn",
+    "superseded",
+    "expired",
+  ],
   countered: ["accepted", "rejected", "withdrawn", "superseded", "expired"],
   accepted: [],
   rejected: [],
@@ -90,8 +97,14 @@ const DELIVERY_RECEIPT_TRANSITIONS: Readonly<
   pending: ["sent", "retry_scheduled", "failed", "revoked", "expired"],
   sent: ["delivered", "revoked", "expired"],
   delivered: ["revoked", "expired"],
-  retry_scheduled: ["sent", "failed", "revoked", "expired"],
-  failed: ["retry_scheduled", "revoked", "expired"],
+  retry_scheduled: [
+    "retry_scheduled",
+    "sent",
+    "failed",
+    "revoked",
+    "expired",
+  ],
+  failed: ["retry_scheduled", "sent", "revoked", "expired"],
   revoked: [],
   expired: [],
 };

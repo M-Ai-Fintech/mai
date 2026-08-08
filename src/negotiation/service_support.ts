@@ -11,6 +11,7 @@ import type { NegotiationEffects } from "./effects.ts";
 import type { NegotiationDeliveryJobInput } from "./jobs.ts";
 import {
   appendHistory,
+  currentProposalVersion,
   type DeliveryRequest,
   freezeProposal,
   freezeRound,
@@ -29,6 +30,7 @@ import { protectedRoundNotFound } from "./repository.ts";
 import type { NegotiationAuthorityCommandInput } from "./service.ts";
 import { deliveryRequestId, type NegotiationScope } from "./ids.ts";
 import { assertProposalTransition } from "./transitions.ts";
+import { assertApprovalTransition } from "./transitions.ts";
 
 export function recordCreation(
   round: NegotiationRound,
@@ -177,6 +179,93 @@ export function findProposal(
   throw protectedRoundNotFound(proposalId);
 }
 
+export function assertCurrentReleaseCandidate(
+  round: NegotiationRound,
+  proposal: NegotiationProposal,
+): void {
+  assertCurrentProposal(round, proposal);
+  if (proposal.status !== "submitted") {
+    throw new NegotiationError(
+      "INVALID_TRANSITION",
+      `Proposal "${proposal.proposalId}" is "${proposal.status}"; only the submitted current release candidate may proceed.`,
+    );
+  }
+  const version = currentProposalVersion(proposal);
+  if (version.status !== "submitted") {
+    throw new NegotiationError(
+      "INVALID_TRANSITION",
+      `Proposal version "${version.proposalVersionId}" is "${version.status}"; only a submitted version may proceed.`,
+    );
+  }
+}
+
+export function assertCurrentProposal(
+  round: NegotiationRound,
+  proposal: NegotiationProposal,
+): void {
+  if (round.currentProposalId !== proposal.proposalId) {
+    throw new NegotiationError(
+      "STALE_VERSION",
+      `Proposal "${proposal.proposalId}" is superseded; current release candidate is "${
+        round.currentProposalId ?? "none"
+      }".`,
+    );
+  }
+}
+
+export async function assertApprovalBasisCurrent(
+  round: NegotiationRound,
+  proposal: NegotiationProposal,
+  approval: NegotiationApproval,
+): Promise<void> {
+  assertCurrentReleaseCandidate(round, proposal);
+  const version = currentProposalVersion(proposal);
+  const mandate = round.internal?.mandate;
+  const comparison = round.internal?.mandateComparison;
+  if (
+    approval.status === "approved" &&
+    (approval.authorityProof === undefined ||
+      approval.decidedBy === undefined ||
+      approval.decidedAt === undefined)
+  ) {
+    throw new NegotiationError(
+      "HUMAN_AUTHORITY_REQUIRED",
+      `Approval "${approval.approvalId}" is marked approved without a complete human decision proof.`,
+    );
+  }
+  if (
+    approval.proposalId !== proposal.proposalId ||
+    approval.scope.tenantId !== round.scope.tenantId ||
+    approval.scope.workspaceId !== round.scope.workspaceId ||
+    approval.scope.dealId !== round.scope.dealId ||
+    approval.basis.proposalVersionId !== version.proposalVersionId ||
+    approval.basis.proposalAggregateVersion !== proposal.version ||
+    mandate === undefined || mandate.status !== "active" ||
+    approval.basis.mandateId !== mandate.mandateId ||
+    approval.basis.mandateVersion !== mandate.version ||
+    comparison === undefined ||
+    approval.basis.mandateComparisonId !== comparison.comparisonId ||
+    comparison.mandateId !== mandate.mandateId ||
+    comparison.mandateVersion !== mandate.version ||
+    comparison.proposalVersionId !== version.proposalVersionId ||
+    (approval.basis.positionVersion !==
+      round.internal?.positionVersion) ||
+    (approval.basis.batnaVersion !== round.internal?.batnaVersion)
+  ) {
+    throw new NegotiationError(
+      "STALE_VERSION",
+      `Approval "${approval.approvalId}" is stale; its complete authority basis no longer matches the current negotiation inputs.`,
+    );
+  }
+  const termsDigest = await payloadDigest(version.terms);
+  if (approval.basis.termsDigest !== termsDigest) {
+    throw new NegotiationError(
+      "REFERENCE_MISMATCH",
+      `Approval "${approval.approvalId}" terms digest does not match the current proposal version.`,
+    );
+  }
+}
+
 export function replaceApproval(
   round: NegotiationRound,
   approvalId: string,
@@ -215,13 +304,48 @@ export function withInternal(
   });
 }
 
+export function invalidateApprovals(
+  approvals: readonly NegotiationApproval[],
+): readonly NegotiationApproval[] {
+  return approvals.map((approval) => {
+    if (approval.status === "invalidated") return approval;
+    assertApprovalTransition(approval.status, "invalidated");
+    return Object.freeze({
+      ...approval,
+      status: "invalidated" as const,
+      decisionReason: "authoritative negotiation input changed",
+    });
+  });
+}
+
 export function authorityProofFromChanges(
+  previous: NegotiationRound,
   changes: Partial<NegotiationRound>,
 ): string | undefined {
-  const approvals = changes.approvals;
-  const approval = approvals?.at(-1);
-  return approval?.authorityProof?.proofId ??
-    changes.deliveryRequests?.at(-1)?.authorityProofId;
+  if (
+    changes.internal?.mandateAuthorityProofId !== undefined &&
+    changes.internal.mandateAuthorityProofId !==
+      previous.internal?.mandateAuthorityProofId
+  ) {
+    return changes.internal.mandateAuthorityProofId;
+  }
+  const approval = changes.approvals?.find((candidate) => {
+    const existing = previous.approvals.find((item) =>
+      item.approvalId === candidate.approvalId
+    );
+    return candidate.authorityProof !== undefined &&
+      candidate.authorityProof.proofId !== existing?.authorityProof?.proofId;
+  });
+  if (approval?.authorityProof !== undefined) {
+    return approval.authorityProof.proofId;
+  }
+  const request = changes.deliveryRequests?.find((candidate) => {
+    const existing = previous.deliveryRequests.find((item) =>
+      item.deliveryRequestId === candidate.deliveryRequestId
+    );
+    return candidate.authorityProofId !== existing?.authorityProofId;
+  });
+  return request?.authorityProofId;
 }
 
 export function deliveryJob(input: {
@@ -253,11 +377,14 @@ export function deliveryJob(input: {
     }],
     payload: {
       deliveryRequestId: input.request.deliveryRequestId,
+      roundId: input.proposal.roundId,
       proposalId: input.proposal.proposalId,
       proposalVersionId: input.version.proposalVersionId,
       approvalId: input.approval.approvalId,
-      authorityProofId: input.authority.proof.proofId,
       featureGate: "enabled",
+      recipientId: input.request.recipientId,
+      purpose: input.request.purpose,
+      logicalDeliveryId: input.request.deliveryRequestId,
     },
     timeoutAt: new Date(Date.parse(input.now) + 86_400_000),
     createdAt: new Date(input.now),
@@ -265,15 +392,19 @@ export function deliveryJob(input: {
     proposalId: input.proposal.proposalId,
     proposalVersionId: input.version.proposalVersionId,
     approvalId: input.approval.approvalId,
-    authorityProofId: input.authority.proof.proofId,
     featureGate: "enabled",
+    roundId: input.proposal.roundId,
+    recipientId: input.request.recipientId,
+    purpose: input.request.purpose,
+    logicalDeliveryId: input.request.deliveryRequestId,
   };
 }
 
 export function deriveJobId(idempotencyKey: IdempotencyKey): JobId {
-  const candidate = `job_negotiation-${
-    idempotencyKey.slice("idem_".length, "idem_".length + 40)
-  }`;
+  // Shared identifiers permit a 59-character idempotency suffix. Keep the
+  // complete suffix within the 64-character JobId limit so distinct command
+  // keys cannot collapse onto one durable job identity.
+  const candidate = `job_n${idempotencyKey.slice("idem_".length)}`;
   const parsed = parseJobId(candidate);
   if (parsed.ok) return parsed.value;
   throw new NegotiationError(

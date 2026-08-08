@@ -32,7 +32,8 @@ import {
   type ProposalOrigin,
   type ProposalVersion,
 } from "./model_types.ts";
-import type { NormalizedTerms } from "./terms.ts";
+import { type NormalizedTerms, parseNormalizedTerms } from "./terms.ts";
+import { assertRoundReferences } from "./model_reference_integrity.ts";
 
 export * from "./model_types.ts";
 
@@ -206,7 +207,7 @@ export function currentProposalVersion(
 
 export function freezeRound(round: NegotiationRound): NegotiationRound {
   assertNegotiationScope(round.scope);
-  return Object.freeze({
+  const frozen = Object.freeze({
     ...round,
     scope: Object.freeze({ ...round.scope }),
     proposals: Object.freeze(round.proposals.map(freezeProposal)),
@@ -224,6 +225,7 @@ export function freezeRound(round: NegotiationRound): NegotiationRound {
         Object.freeze({
           ...request,
           scope: Object.freeze({ ...request.scope }),
+          authorityProof: Object.freeze({ ...request.authorityProof }),
         })
       ),
     ),
@@ -248,6 +250,8 @@ export function freezeRound(round: NegotiationRound): NegotiationRound {
       ),
     ),
   });
+  assertRoundReferences(frozen);
+  return frozen;
 }
 
 export function freezeProposal(
@@ -257,7 +261,14 @@ export function freezeProposal(
     ...proposal,
     scope: Object.freeze({ ...proposal.scope }),
     versions: Object.freeze(
-      proposal.versions.map((version) => Object.freeze({ ...version })),
+      proposal.versions.map((version) =>
+        Object.freeze({
+          ...version,
+          // Persisted JSON is untrusted at this boundary. Reconstruct terms
+          // through the closed negotiation vocabulary before freezing them.
+          terms: parseNormalizedTerms(version.terms),
+        })
+      ),
     ),
   });
 }
@@ -301,6 +312,12 @@ export function createDeliveryRequest(
   assertText(input.jobId, "delivery job ID");
   assertText(input.idempotencyKey, "delivery idempotency key");
   assertText(input.authorityProofId, "delivery authority proof");
+  if (input.authorityProof.proofId !== input.authorityProofId) {
+    throw new NegotiationError(
+      "REFERENCE_MISMATCH",
+      "Delivery authority proof reference does not match its durable proof ID.",
+    );
+  }
   assertInstant(input.requestedAt, "delivery request time");
   return Object.freeze({
     ...input,
