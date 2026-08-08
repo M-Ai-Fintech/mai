@@ -9,8 +9,10 @@ import {
 import {
   approvedTargetsReachable,
   assertApprovedDatabaseUrl,
+  canonicalEnvironmentPath,
   DATABASE_TARGETS,
   fallbackToApprovedTargets,
+  loadCanonicalPostgresEnvironment,
 } from "./preflight_postgres.ts";
 
 export type PreflightStatus =
@@ -56,7 +58,9 @@ const PREPARE_COMMAND_TIMEOUT_MS = 300_000;
 export async function runPreflight(
   options: PreflightOptions = {},
 ): Promise<PreflightResult[]> {
-  const environment = options.environment ?? Deno.env.toObject();
+  const environment = await loadCanonicalPostgresEnvironment(
+    options.environment ?? Deno.env.toObject(),
+  );
   const commandRunner = options.commandRunner ?? runCommand;
   const databaseProbe = options.databaseProbe ?? probeDatabase;
   const databaseProvisioner = options.databaseProvisioner ?? ensureDatabase;
@@ -131,13 +135,19 @@ async function prepareEnvironment(
       "Existing local PostgreSQL service already serves both approved targets; compose startup skipped.",
     );
   }
+  const composeArgs = await canonicalComposeArgs([
+    "up",
+    "-d",
+    "--wait",
+    "postgres-integration-test",
+  ]);
   return commandResult(
     "prepare-postgres-service",
     "Prepare approved PostgreSQL service",
     true,
     commandRunner,
     "docker",
-    ["compose", "up", "-d", "--wait", "postgres-integration-test"],
+    composeArgs,
     "Persistent service requested; healthy containers are reused.",
   );
 }
@@ -180,27 +190,31 @@ async function checkDocker(
       "Docker is unavailable; start Docker before canonical verification.",
     );
   }
-  const service = await commandRunner("docker", [
-    "compose",
-    "ps",
-    "--status",
-    "running",
-    "--services",
-  ]);
+  const service = await commandRunner(
+    "docker",
+    await canonicalComposeArgs([
+      "ps",
+      "--status",
+      "running",
+      "--services",
+    ]),
+  );
   if (
     !service.success || !service.output.includes("postgres-integration-test")
   ) {
     return await fallbackToApprovedTargets(environment, databaseProbe);
   }
-  const health = await commandRunner("docker", [
-    "compose",
-    "ps",
-    "--status",
-    "running",
-    "--format",
-    "{{.Service}} {{.Health}}",
-    "postgres-integration-test",
-  ]);
+  const health = await commandRunner(
+    "docker",
+    await canonicalComposeArgs([
+      "ps",
+      "--status",
+      "running",
+      "--format",
+      "{{.Service}} {{.Health}}",
+      "postgres-integration-test",
+    ]),
+  );
   if (!health.success || !health.output.includes("healthy")) {
     return await fallbackToApprovedTargets(environment, databaseProbe);
   }
@@ -421,6 +435,20 @@ function decodeOutput(stdout: Uint8Array, stderr: Uint8Array): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+async function canonicalComposeArgs(
+  command: readonly string[],
+): Promise<string[]> {
+  const args = ["compose"];
+  try {
+    const path = canonicalEnvironmentPath();
+    await Deno.stat(path);
+    args.push("--env-file", path);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  }
+  return [...args, "-f", "docker-compose.yml", ...command];
 }
 
 if (import.meta.main) {

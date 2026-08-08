@@ -22,7 +22,7 @@ No external broker or Core/Agent/Engine microservice is required.
 deno task local:prepare
 set -a; . infra/local/.env; set +a
 docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml \
-  --profile init up -d --wait postgres-local storage-local
+  up -d --wait postgres-local storage-local
 deno task infra:validate
 deno task db:migrate
 docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml \
@@ -31,8 +31,25 @@ deno task infra:smoke
 ```
 
 `local:prepare` creates an ignored environment file with local-only random
-credentials. Do not print or commit it. Migration is a separate pre-traffic
-command and is never run by API or worker startup.
+credentials for PostgreSQL and MinIO independently, writes it as `0600` where
+supported, and includes `DATABASE_URL` plus the local API, worker, and storage
+boundaries. Do not print or commit it. `storage-init-local` is a completed
+dependency of API and worker startup and creates the authenticated bucket before
+readiness. Migration is a separate pre-traffic command and is never run by API
+or worker startup.
+
+For a clean checkout with no generated local files, run the exact executable
+proof (it fails rather than consuming an existing local environment):
+
+```bash
+deno task infra:bootstrap
+```
+
+The local object-storage contract proves authenticated bucket existence, a
+bounded write/read and SHA-256 equality, persistence across a storage restart,
+and explicit failure when the configured dependency is unavailable. MinIO
+versioning, lifecycle, retention, legal hold, and approval-controlled deletion
+are not configured or claimed by this MVP; those capabilities remain deferred.
 
 ## Recovery evidence
 
@@ -44,10 +61,14 @@ deno task infra:restore
 deno task infra:rollback
 ```
 
-The backup command writes only under `.local/`, which is ignored. Restore
-refuses the active database or storage path and verifies checksums and the
-authoritative platform tables after restoration. Rollback retains database and
-storage records and never reverses applied migrations.
+The backup command writes only under `.local/`, which is ignored. It uses an
+authenticated object-level MinIO mirror rather than copying a live storage
+engine directory, records artifact checksums and a sanitized authoritative
+manifest, and restores only into isolated database and storage targets. Restore
+refuses active targets and compares migration IDs/checksums, job/outbox/inbox,
+audit/evidence sentinels, and object keys/content hashes. Rollback retains
+database and storage records, compares the same manifest, restores the current
+image after the exercise, and never reverses applied migrations.
 
 ## Deferred boundary
 

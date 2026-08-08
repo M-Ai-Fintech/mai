@@ -8,10 +8,18 @@ on:
       - "infra/**"
       - "scripts/infra_*.ts"
       - "scripts/local_env.ts"
+      - "scripts/local_storage_probe.ts"
       - "scripts/migrate.ts"
+      - "scripts/preflight*.ts"
+      - "scripts/recovery_manifest.ts"
+      - "scripts/local_compose_policy.ts"
+      - "src/platform/events/**"
+      - "src/**/migrations/**"
       - "src/platform/operations/**"
       - "src/platform/jobs/**"
       - "src/platform/persistence/registered_migrations.ts"
+      - "src/agent/ai_provider.ts"
+      - "src/agent/ai_provider_test.ts"
       - "tests/platform/operations/**"
       - "tests/platform/jobs/worker_process.spec.ts"
       - "deno.json"
@@ -23,10 +31,18 @@ on:
       - "infra/**"
       - "scripts/infra_*.ts"
       - "scripts/local_env.ts"
+      - "scripts/local_storage_probe.ts"
       - "scripts/migrate.ts"
+      - "scripts/preflight*.ts"
+      - "scripts/recovery_manifest.ts"
+      - "scripts/local_compose_policy.ts"
+      - "src/platform/events/**"
+      - "src/**/migrations/**"
       - "src/platform/operations/**"
       - "src/platform/jobs/**"
       - "src/platform/persistence/registered_migrations.ts"
+      - "src/agent/ai_provider.ts"
+      - "src/agent/ai_provider_test.ts"
       - "tests/platform/operations/**"
       - "tests/platform/jobs/worker_process.spec.ts"
       - "deno.json"
@@ -43,15 +59,38 @@ jobs:
         with:
           deno-version: v2.9.3
       - run: deno task infra:validate
-      - run: deno test --allow-read --allow-env --allow-net --allow-ffi tests/platform/operations/*.spec.ts tests/platform/jobs/worker_process.spec.ts
-      - run: |
-          LOCAL_POSTGRES_USER=mai_local \
-          LOCAL_POSTGRES_PASSWORD=ci-${{ github.run_id }} \
-          LOCAL_POSTGRES_DATABASE=mai_local \
-          LOCAL_STORAGE_ACCESS_KEY=mai_local \
-          LOCAL_STORAGE_SECRET_KEY=ci-${{ github.run_id }} \
-          LOCAL_STORAGE_BUCKET=mai-local \
-          docker compose -f infra/local/docker-compose.yml --profile worker --profile init config --quiet
+      - run: deno test --allow-read --allow-env --allow-net --allow-ffi tests/platform/operations/*.spec.ts tests/platform/jobs/worker_process.spec.ts scripts/infra_bootstrap_test.ts scripts/check_migration_integrity_test.ts
+      - run: deno task local:prepare
+      - run: docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml --profile worker --profile check config --quiet
+
+  live-local:
+    runs-on: ubuntu-latest
+    needs: contract
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.3
+      - name: Build the pinned application image
+        run: docker build --tag mai-local:ci --file Dockerfile .
+      - name: Execute clean local bootstrap, migration rerun, and smoke
+        run: |
+          export LOCAL_APP_IMAGE=mai-local:ci
+          deno task infra:bootstrap
+          set -a
+          . infra/local/.env
+          set +a
+          deno task db:migrate
+      - name: Tear down local services without deleting authoritative volumes
+        if: always()
+        run: |
+          if test -f infra/local/.env; then
+            docker compose --env-file infra/local/.env -f infra/local/docker-compose.yml --profile worker down
+          fi
 
 # This workflow validates local contracts only. It does not provision GCP,
 # staging, production, Papermark, or provider-certification environments.
+# The live-local job proves bootstrap, image build, migrations, readiness,
+# authenticated storage, real outbox smoke, and restart recovery. Backup/restore
+# and prior-image rollback remain manually retained local evidence and are not
+# claimed by this workflow.

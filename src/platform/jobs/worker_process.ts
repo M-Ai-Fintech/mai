@@ -10,6 +10,9 @@ export interface WorkerProcess {
     leaseMilliseconds: number,
     signal?: AbortSignal,
   ): Promise<{ readonly status: string }>;
+  /** Proves the worker dependencies and executor registration are usable. */
+  ready?(): Promise<void>;
+  readonly registeredJobTypes?: readonly string[];
   close?(): Promise<void>;
 }
 
@@ -17,6 +20,8 @@ export interface WorkerLoopOptions {
   readonly workerId: string;
   readonly leaseMilliseconds: number;
   readonly pollMilliseconds: number;
+  readonly readinessProbe?: () => Promise<void>;
+  readonly onReadinessChange?: (ready: boolean) => void;
 }
 
 export type Sleep = (milliseconds: number) => Promise<void>;
@@ -30,6 +35,20 @@ export async function runWorkerLoop(
 ): Promise<void> {
   assertWorkerOptions(options);
   while (!signal.aborted) {
+    if (options.readinessProbe !== undefined) {
+      try {
+        await options.readinessProbe();
+        options.onReadinessChange?.(true);
+      } catch (error) {
+        options.onReadinessChange?.(false);
+        logOperationalEvent("worker.readiness.failed", {
+          errorCode: safeErrorCode(error),
+        });
+        await sleep(options.pollMilliseconds);
+        continue;
+      }
+    }
+    if (signal.aborted) break;
     const outcome = await worker.executeOne(
       options.workerId,
       options.leaseMilliseconds,
@@ -56,6 +75,19 @@ export async function loadConfiguredWorker(
   );
 }
 
+export function assertWorkerReadinessContract(
+  moduleSpecifier: string,
+  worker: WorkerProcess,
+): void {
+  if (
+    worker.registeredJobTypes !== undefined &&
+    worker.registeredJobTypes.length > 0 && worker.ready !== undefined
+  ) return;
+  throw new Error(
+    `Worker module "${moduleSpecifier}" has no dependency-backed readiness and executor registration; expected ready() and registered job types.`,
+  );
+}
+
 export function workerProcessOptions(
   environment: Readonly<Record<string, string | undefined>>,
 ): WorkerLoopOptions {
@@ -78,18 +110,26 @@ export async function startConfiguredWorkerProcess(): Promise<void> {
   const environment = Deno.env.toObject();
   const moduleSpecifier = requiredEnvironment(environment, "MAI_WORKER_MODULE");
   const worker = await loadConfiguredWorker(moduleSpecifier);
+  assertWorkerReadinessContract(moduleSpecifier, worker);
   const controller = new AbortController();
   const readiness = new RuntimeReadiness("worker");
-  readiness.setDatabaseState(true);
+  readiness.setDatabaseState(false);
   const healthServer = startWorkerHealthServer(
     readiness,
     positiveEnvironmentInteger(environment, "MAI_WORKER_HEALTH_PORT", 8001),
   );
   const removeSignals = installShutdownSignals(controller, readiness);
   try {
+    const options = {
+      ...workerProcessOptions(environment),
+      readinessProbe: async () => {
+        await worker.ready?.();
+      },
+      onReadinessChange: (ready: boolean) => readiness.setDatabaseState(ready),
+    } satisfies WorkerLoopOptions;
     await runWorkerLoop(
       worker,
-      workerProcessOptions(environment),
+      options,
       controller.signal,
     );
   } catch (error) {

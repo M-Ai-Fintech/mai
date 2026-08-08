@@ -3,6 +3,11 @@ import { JobRepository } from "./repository.ts";
 import type { JobWorkerOutcome } from "./worker.ts";
 import { PostgresTransactionRunner } from "../persistence/transaction.ts";
 import type { WorkerProcess } from "./worker_process.ts";
+import { registeredMigrations } from "../persistence/registered_migrations.ts";
+import {
+  logOperationalEvent,
+  safeErrorCode,
+} from "../operations/diagnostics.ts";
 
 const LOCAL_HEALTHCHECK_JOB_TYPE = "operations.healthcheck";
 
@@ -11,11 +16,43 @@ const LOCAL_HEALTHCHECK_JOB_TYPE = "operations.healthcheck";
  * Domain-specific jobs remain owned by their bounded-context executors.
  */
 export class LocalHealthcheckWorker implements WorkerProcess {
+  readonly registeredJobTypes = [LOCAL_HEALTHCHECK_JOB_TYPE] as const;
   private readonly jobs = new JobRepository();
   private readonly transactions: PostgresTransactionRunner;
 
   constructor(private readonly pool: pg.Pool) {
     this.transactions = new PostgresTransactionRunner(pool);
+    this.pool.on("error", (error: unknown) => {
+      logOperationalEvent("worker.database.error", {
+        errorCode: safeErrorCode(error),
+      });
+    });
+  }
+
+  async ready(): Promise<void> {
+    const tables = await this.pool.query<{ jobs: string | null }>(
+      `SELECT to_regclass('platform.jobs') AS jobs`,
+    );
+    if (tables.rows[0]?.jobs === null || tables.rows[0]?.jobs === undefined) {
+      throw new Error(
+        "Worker readiness database probe could not find platform.jobs; run migrations before traffic.",
+      );
+    }
+    const migrationIds = registeredMigrations().map((migration) =>
+      migration.id
+    );
+    const ledger = await this.pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count
+       FROM platform.migration_ledger WHERE migration_id = ANY($1::text[])`,
+      [migrationIds],
+    );
+    if (Number(ledger.rows[0]?.count ?? "0") !== migrationIds.length) {
+      throw new Error(
+        `Worker readiness migration probe found ${
+          ledger.rows[0]?.count ?? "0"
+        }/${migrationIds.length} active migrations; expected a complete catalog.`,
+      );
+    }
   }
 
   async executeOne(

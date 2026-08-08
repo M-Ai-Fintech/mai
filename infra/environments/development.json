@@ -76,7 +76,8 @@
       "platform.inbox",
       "platform.jobs",
       "audit",
-      "evidence"
+      "evidence",
+      "domain"
     ],
     "restoreProcedure": "infra/runbooks/backup-restore.md"
   },
@@ -84,11 +85,11 @@
     "keyTemplate": "{environment}/{tenant}/{workspace}/{deal}/{object}/{version}",
     "environmentBoundary": true,
     "tenantBoundary": true,
-    "versioning": true,
-    "lifecyclePolicy": "class-specific lifecycle is required before deployment",
-    "retentionPolicy": "retention and legal hold are metadata-controlled",
-    "legalHoldCompatible": true,
-    "deletionBehavior": "approval-controlled",
+    "versioning": false,
+    "lifecyclePolicy": "not-configured-in-local-mvp; defer to MAI-81/GCP storage design",
+    "retentionPolicy": "not-configured-in-local-mvp; defer to the owning domain/provider certification",
+    "legalHoldCompatible": false,
+    "deletionBehavior": "not-configured-in-local-mvp",
     "encryptionControl": "local-only",
     "classifications": ["source", "quarantine", "generated", "release", "audit"]
   },
@@ -150,6 +151,7 @@
       "platform.jobs",
       "audit",
       "evidence",
+      "domain",
       "object-storage"
     ],
     "rollbackDeletesAuthoritativeData": false,

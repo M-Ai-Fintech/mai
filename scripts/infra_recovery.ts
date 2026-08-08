@@ -1,7 +1,11 @@
 import pg from "pg";
+import {
+  assertRecoveryManifestsEqual,
+  captureRecoveryManifest,
+  type RecoveryManifest,
+} from "./recovery_manifest.ts";
 
 const DEFAULT_BACKUP_ROOT = ".local/backups";
-const ACTIVE_STORAGE_ROOT = ".local/storage";
 const COMPOSE_FILE = "infra/local/docker-compose.yml";
 const ENV_FILE = "infra/local/.env";
 
@@ -16,18 +20,20 @@ interface BackupManifest {
   readonly createdAt: string;
   readonly database: Artifact;
   readonly objectStorage: Artifact;
+  readonly authoritative: RecoveryManifest;
 }
 
 export async function createLocalBackup(): Promise<void> {
+  assertLocalRuntimeProfile();
   const databaseUrl = requiredLocalUrl(Deno.env.get("DATABASE_URL"));
-  const storageRoot = Deno.env.get("LOCAL_STORAGE_DATA_DIR") ??
-    ACTIVE_STORAGE_ROOT;
   const backupDirectory = Deno.env.get("BACKUP_DIR") ??
     `${DEFAULT_BACKUP_ROOT}/${timestamp()}`;
   await Deno.mkdir(backupDirectory, { recursive: true });
   const databasePath = `${backupDirectory}/database.dump`;
   const storagePath = `${backupDirectory}/object-storage.tar`;
+  const exportPath = `${backupDirectory}/storage-export`;
   await dumpLocalDatabase(databaseUrl, databasePath);
+  await runStorageExport(backupDirectory);
   await runHostCommand("tar", [
     "--sort=name",
     "--mtime=UTC 1970-01-01",
@@ -37,14 +43,22 @@ export async function createLocalBackup(): Promise<void> {
     "-cf",
     storagePath,
     "-C",
-    storageRoot,
+    exportPath,
     ".",
   ]);
+  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  const authoritative = await captureRecoveryManifest(pool, exportPath);
+  await pool.end();
+  await Deno.remove(exportPath, { recursive: true }).catch(() => {
+    // The MinIO client container may own the mirror; ignored artifacts remain
+    // recoverable for the evidence record and are never committed.
+  });
   const manifest: BackupManifest = {
     format: "mai-local-backup-v1",
     createdAt: new Date().toISOString(),
     database: await artifact(databasePath),
     objectStorage: await artifact(storagePath),
+    authoritative,
   };
   await Deno.writeTextFile(
     `${backupDirectory}/manifest.json`,
@@ -59,6 +73,7 @@ export async function createLocalBackup(): Promise<void> {
 }
 
 export async function restoreLocalBackup(): Promise<void> {
+  assertLocalRuntimeProfile();
   const activeDatabase = requiredLocalUrl(Deno.env.get("DATABASE_URL"));
   const restoreDatabase = requiredLocalUrl(
     Deno.env.get("RESTORE_DATABASE_URL"),
@@ -93,7 +108,7 @@ export async function restoreLocalBackup(): Promise<void> {
     );
   }
   const activeStorage = await absolutePath(
-    Deno.env.get("LOCAL_STORAGE_DATA_DIR") ?? ACTIVE_STORAGE_ROOT,
+    Deno.env.get("LOCAL_STORAGE_DATA_DIR") ?? ".local/storage",
   );
   const restoredStorage = await absolutePath(targetStorage);
   if (activeStorage === restoredStorage) {
@@ -111,12 +126,22 @@ export async function restoreLocalBackup(): Promise<void> {
   const storagePath = `${backupDirectory}/object-storage.tar`;
   await restoreLocalDatabase(restoreDatabase, databasePath, activeDatabase);
   await runHostCommand("tar", ["-xf", storagePath, "-C", targetStorage]);
-  const evidence = await restoreEvidence(restoreDatabase);
+  const restoredPool = new pg.Pool({
+    connectionString: restoreDatabase,
+    max: 1,
+  });
+  const restoredManifest = await captureRecoveryManifest(
+    restoredPool,
+    targetStorage,
+  );
+  await restoredPool.end();
+  assertRecoveryManifestsEqual(manifest.authoritative, restoredManifest);
   console.log(JSON.stringify({
     event: "local.backup.restored",
     restoreDatabase: new URL(restoreDatabase).pathname,
     restoreStorage: restoredStorage,
-    ...evidence,
+    authoritative: summarizeManifest(manifest.authoritative),
+    restoredAuthoritative: summarizeManifest(restoredManifest),
   }));
 }
 
@@ -187,27 +212,25 @@ async function restoreLocalDatabase(
     target.database,
     "-U",
     target.user,
-    "-",
   ], dump);
 }
 
-async function restoreEvidence(
-  databaseUrl: string,
-): Promise<Record<string, number>> {
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
-  try {
-    const result: Record<string, number> = {};
-    for (const table of ["migration_ledger", "jobs", "outbox", "inbox"]) {
-      const schema = table === "migration_ledger" ? "platform" : "platform";
-      const rows = await pool.query<{ count: string }>(
-        `SELECT count(*)::text AS count FROM ${schema}.${table}`,
-      );
-      result[table] = Number(rows.rows[0]?.count ?? "0");
-    }
-    return result;
-  } finally {
-    await pool.end();
-  }
+async function runStorageExport(backupDirectory: string): Promise<void> {
+  const relative = backupDirectory.replace(/^\.local\//, "");
+  await runCommand([
+    "compose",
+    "--env-file",
+    ENV_FILE,
+    "-f",
+    COMPOSE_FILE,
+    "--profile",
+    "backup",
+    "run",
+    "--rm",
+    "-e",
+    `LOCAL_STORAGE_BACKUP_SUBPATH=${relative}/storage-export`,
+    "storage-export-local",
+  ]);
 }
 
 async function artifact(path: string): Promise<Artifact> {
@@ -332,9 +355,39 @@ function requiredLocalUrl(value: string | undefined): string {
   return value;
 }
 
+function assertLocalRuntimeProfile(): void {
+  if (Deno.env.get("LOCAL_RUNTIME_PROFILE") === "local") return;
+  throw new Error(
+    `Local recovery runtime profile is "${
+      String(Deno.env.get("LOCAL_RUNTIME_PROFILE"))
+    }"; expected explicit LOCAL_RUNTIME_PROFILE=local.`,
+  );
+}
+
 async function absolutePath(path: string): Promise<string> {
+  if (path.startsWith("/")) return path;
   const resolved = await Deno.realPath(path).catch(() => undefined);
   return resolved ?? `${Deno.cwd()}/${path}`;
+}
+
+function summarizeManifest(
+  manifest: RecoveryManifest,
+): Record<string, unknown> {
+  return {
+    format: manifest.format,
+    migrationLedger: manifest.migrationLedger.length,
+    jobs: manifest.jobs.length,
+    outbox: manifest.outbox.length,
+    inbox: manifest.inbox.length,
+    audit: manifest.audit.length,
+    evidence: manifest.evidence.length,
+    domain: manifest.domain.length,
+    objects: manifest.objects.map(({ key, bytes, sha256 }) => ({
+      key,
+      bytes,
+      sha256,
+    })),
+  };
 }
 
 function timestamp(): string {

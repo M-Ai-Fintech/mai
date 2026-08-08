@@ -16,6 +16,16 @@ Deno.test("MVP local manifest validates the single local boundary", async () => 
   assertProvisionable(plans[0]);
 });
 
+Deno.test("local object storage contract does not claim unconfigured retention features", async () => {
+  const plan = parseInfrastructurePlan(await readManifest());
+  assertEquals(plan.objectStorage.versioning, false);
+  assertEquals(plan.objectStorage.legalHoldCompatible, false);
+  assertEquals(
+    plan.objectStorage.deletionBehavior,
+    "not-configured-in-local-mvp",
+  );
+});
+
 Deno.test("topology rejects prototype microservice names", async () => {
   const manifest = await readManifest() as Record<string, unknown>;
   const topology = manifest.topology as Record<string, unknown>;
@@ -48,6 +58,7 @@ Deno.test("authoritative recovery set includes MAI-106 records", () => {
     "platform.jobs",
     "audit",
     "evidence",
+    "domain",
     "object-storage",
   ]);
 });

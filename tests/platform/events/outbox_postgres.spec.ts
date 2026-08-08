@@ -110,6 +110,18 @@ Deno.test({
         transactions.run((transaction) =>
           repository.markPublished(
             transaction,
+            { ...recovered[0], attemptCount: recovered[0].attemptCount + 1 },
+            new Date("2026-07-30T12:01:02.000Z"),
+          )
+        ),
+      Error,
+      "did not match",
+    );
+    await assertRejects(
+      () =>
+        transactions.run((transaction) =>
+          repository.markPublished(
+            transaction,
             first[0],
             new Date("2026-07-30T12:01:02.000Z"),
           )

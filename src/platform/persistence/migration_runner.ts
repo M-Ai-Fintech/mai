@@ -124,7 +124,6 @@ async function executeMigrationTransaction(
 ): Promise<void> {
   await client.query("BEGIN");
   try {
-    await preparePublishedCompatibility(client, migration);
     await beforeMigration?.(client, migration);
     await installOwnedSearchPath(client, migration.schema);
     for (const [index, statement] of migration.statements.entries()) {
@@ -169,20 +168,6 @@ async function rollbackMigration(
     );
   }
   throw original;
-}
-
-async function preparePublishedCompatibility(
-  client: pg.PoolClient,
-  migration: ContextMigration,
-): Promise<void> {
-  if (migration.id !== "work_management-0009-corrective-upgrade") return;
-  const result = await client.query<{ exists: boolean }>(
-    "SELECT to_regclass('work_management.membership_reconciliation_activation') IS NOT NULL AS exists",
-  );
-  if (result.rows[0]?.exists !== true) return;
-  await client.query(
-    "DROP TRIGGER IF EXISTS membership_activation_no_direct_mutation ON work_management.membership_reconciliation_activation",
-  );
 }
 
 function safeMigrationDiagnostic(error: unknown): string {

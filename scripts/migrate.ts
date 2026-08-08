@@ -1,12 +1,22 @@
 import pg from "pg";
 import { PostgresMigrationRunner } from "../src/platform/persistence/v1.ts";
-import { registeredMigrations } from "../src/platform/persistence/registered_migrations.ts";
+import {
+  registeredMigrationOptions,
+  registeredMigrations,
+} from "../src/platform/persistence/registered_migrations.ts";
 
 /** Applies every registered migration once, before local API traffic. */
 export async function runMigrations(
   environment: Readonly<Record<string, string | undefined>> = Deno.env
     .toObject(),
 ): Promise<void> {
+  if (environment.LOCAL_RUNTIME_PROFILE !== "local") {
+    throw new Error(
+      `Migration runtime profile is "${
+        String(environment.LOCAL_RUNTIME_PROFILE)
+      }"; expected explicit LOCAL_RUNTIME_PROFILE=local and must not inherit the repository root .env.`,
+    );
+  }
   const connectionString = requiredLocalDatabaseUrl(environment.DATABASE_URL);
   const pool = new pg.Pool({
     connectionString,
@@ -17,7 +27,10 @@ export async function runMigrations(
     await preProvisionLocalRoles(pool, environment);
     const before = await ledgerCount(pool);
     const migrations = registeredMigrations();
-    await new PostgresMigrationRunner(pool).apply(migrations);
+    await new PostgresMigrationRunner(pool).apply(
+      migrations,
+      registeredMigrationOptions(),
+    );
     const after = await ledgerCount(pool);
     console.log(JSON.stringify({
       event: "migrations.applied",

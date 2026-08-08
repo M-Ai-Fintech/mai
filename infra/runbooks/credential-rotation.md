@@ -2,8 +2,9 @@
 
 1. Identify the local `.env` key and its consumers without copying the value
    into logs, tickets, or command output.
-2. Generate a replacement local-only value, update the ignored environment file,
-   and recreate only the dependent containers.
+2. Run `deno task local:prepare --force` to rotate independent PostgreSQL and
+   MinIO values, update the ignored `0600` environment file, and recreate only
+   the dependent containers. Never reuse one value for both services.
 3. Verify API/worker readiness, database connectivity, and storage readiness.
 4. Confirm structured diagnostics contain only key names or `[REDACTED]` and
    then remove the old value from the local environment.

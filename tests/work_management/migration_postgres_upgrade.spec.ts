@@ -3,6 +3,7 @@ import {
   platformMigrations,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
+import { prepareWorkManagementMigration } from "../../src/work_management/migration_compatibility.ts";
 import {
   workManagementCorrectiveMigration,
   workManagementMembershipAuthorityMigration,
@@ -33,7 +34,7 @@ Deno.test({
       workManagementMigration,
       workManagementCorrectiveMigration,
       workManagementMembershipAuthorityMigration,
-    ]);
+    ], { beforeMigration: prepareWorkManagementMigration });
     await pool.query(
       `INSERT INTO work_management.workstreams_current
        (workstream_id, tenant_id, workspace_id, deal_id, version, document, created_at, updated_at)
@@ -52,7 +53,10 @@ Deno.test({
     );
     assertEquals(legacy.rows[0].count, 6);
     await assertRejects(
-      () => runner.apply([...platformMigrations, ...workManagementMigrations]),
+      () =>
+        runner.apply([...platformMigrations, ...workManagementMigrations], {
+          beforeMigration: prepareWorkManagementMigration,
+        }),
       Error,
       "checksum mismatch",
     );
@@ -306,7 +310,7 @@ async function cleanupMigrationFixture(
   await new PostgresMigrationRunner(pool).apply([
     ...platformMigrations,
     ...workManagementMigrations,
-  ]);
+  ], { beforeMigration: prepareWorkManagementMigration });
 }
 
 async function exportedTemplate(path: string, name: string): Promise<string> {

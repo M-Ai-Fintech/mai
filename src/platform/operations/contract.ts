@@ -56,11 +56,11 @@ const objectStorageSchema = z.object({
   keyTemplate: nonEmptyText,
   environmentBoundary: z.literal(true),
   tenantBoundary: z.literal(true),
-  versioning: z.literal(true),
+  versioning: z.literal(false),
   lifecyclePolicy: nonEmptyText,
   retentionPolicy: nonEmptyText,
-  legalHoldCompatible: z.literal(true),
-  deletionBehavior: z.literal("approval-controlled"),
+  legalHoldCompatible: z.literal(false),
+  deletionBehavior: z.literal("not-configured-in-local-mvp"),
   encryptionControl: z.enum(["approved-key-management", "local-only"]),
   classifications: z.array(nonEmptyText),
 }).strict();
@@ -171,6 +171,7 @@ const REQUIRED_AUTHORITATIVE_RECORDS = [
   "platform.jobs",
   "audit",
   "evidence",
+  "domain",
   "object-storage",
 ] as const;
 

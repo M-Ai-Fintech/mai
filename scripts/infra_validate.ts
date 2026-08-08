@@ -3,6 +3,7 @@ import {
   isProvisionable,
   parseInfrastructureSet,
 } from "../src/platform/operations/contract.ts";
+import { assertLocalComposeFiles } from "./local_compose_policy.ts";
 
 const environmentFiles = ["development"] as const;
 
@@ -12,6 +13,7 @@ export async function loadInfrastructurePlans(): Promise<InfrastructurePlan[]> {
 }
 
 export async function validateInfrastructureContracts(): Promise<void> {
+  await assertLocalComposeFiles();
   const plans = await loadInfrastructurePlans();
   for (const plan of plans) {
     const state = isProvisionable(plan) ? "provisionable" : "approval-gated";

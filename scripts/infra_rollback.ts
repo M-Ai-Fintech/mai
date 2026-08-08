@@ -1,24 +1,33 @@
 import pg from "pg";
+import {
+  assertRecoveryManifestsEqual,
+  captureRecoveryManifest,
+} from "./recovery_manifest.ts";
 
 const COMPOSE_FILE = "infra/local/docker-compose.yml";
 const ENV_FILE = "infra/local/.env";
 
-interface Counts {
-  readonly migrations: number;
-  readonly jobs: number;
-  readonly outbox: number;
-  readonly inbox: number;
-}
-
 /** Exercises a prior compatible local image without changing database/storage data. */
 export async function runPriorImageRollback(): Promise<void> {
+  if (Deno.env.get("LOCAL_RUNTIME_PROFILE") !== "local") {
+    throw new Error(
+      `Local rollback runtime profile is "${
+        String(Deno.env.get("LOCAL_RUNTIME_PROFILE"))
+      }"; expected explicit LOCAL_RUNTIME_PROFILE=local.`,
+    );
+  }
   const priorImage = required("LOCAL_PRIOR_IMAGE");
   const databaseUrl = required("DATABASE_URL");
   assertLocalDatabase(databaseUrl);
   await docker(["image", "inspect", priorImage]);
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
-  const before = await counts(pool);
+  const currentImage = Deno.env.get("LOCAL_APP_IMAGE") ?? "mai-local:current";
+  const beforeStorage = ".local/rollback-storage-before";
+  const afterStorage = ".local/rollback-storage-after";
+  await runStorageExport(beforeStorage);
+  const before = await captureRecoveryManifest(pool, beforeStorage);
   try {
+    await compose(["stop", "api-local", "worker-local"]);
     await composeWithImage(priorImage, [
       "up",
       "-d",
@@ -27,56 +36,43 @@ export async function runPriorImageRollback(): Promise<void> {
       "api-local",
       "worker-local",
     ]);
-    await pollHealth();
-    const after = await counts(pool);
-    assertNoLoss(before, after);
+    await pollReadiness("api", Deno.env.get("LOCAL_API_PORT") ?? "18000");
+    await pollReadiness(
+      "worker",
+      Deno.env.get("LOCAL_WORKER_PORT") ?? "18001",
+    );
+    await runStorageExport(afterStorage);
+    const after = await captureRecoveryManifest(pool, afterStorage);
+    assertRecoveryManifestsEqual(before, after);
     console.log(JSON.stringify({
       event: "local.rollback.passed",
       priorImage,
       databaseRetained: true,
-      authoritativeCountsBefore: before,
-      authoritativeCountsAfter: after,
+      authoritative: summarizeManifest(before),
+      restoredAuthoritative: summarizeManifest(after),
       migrationsReversed: false,
     }));
   } finally {
+    await composeWithImage(currentImage, [
+      "up",
+      "-d",
+      "--no-build",
+      "--wait",
+      "api-local",
+      "worker-local",
+    ]);
+    await Deno.remove(beforeStorage, { recursive: true }).catch(() => {});
+    await Deno.remove(afterStorage, { recursive: true }).catch(() => {});
     await pool.end();
   }
 }
 
-async function counts(pool: pg.Pool): Promise<Counts> {
-  const read = async (table: string): Promise<number> => {
-    const result = await pool.query<{ count: string }>(
-      `SELECT count(*)::text AS count FROM platform.${table}`,
-    );
-    return Number(result.rows[0]?.count ?? "0");
-  };
-  return {
-    migrations: await read("migration_ledger"),
-    jobs: await read("jobs"),
-    outbox: await read("outbox"),
-    inbox: await read("inbox"),
-  };
-}
-
-function assertNoLoss(before: Counts, after: Counts): void {
-  for (const key of Object.keys(before) as (keyof Counts)[]) {
-    if (after[key] >= before[key]) continue;
-    throw new Error(
-      `Rollback reduced authoritative ${key} from ${before[key]} to ${
-        after[key]
-      }; expected retained records.`,
-    );
-  }
-}
-
-async function pollHealth(): Promise<void> {
+async function pollReadiness(service: string, port: string): Promise<void> {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     try {
       const response = await fetch(
-        `http://localhost:${
-          Deno.env.get("LOCAL_API_PORT") ?? "18000"
-        }/health/ready`,
+        `http://127.0.0.1:${port}/health/ready`,
       );
       if (response.ok) return;
     } catch {
@@ -85,7 +81,7 @@ async function pollHealth(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error(
-    "Prior-image rollback did not restore API readiness within 30 seconds.",
+    `Prior-image rollback did not restore ${service} readiness within 30 seconds.`,
   );
 }
 
@@ -104,6 +100,57 @@ async function composeWithImage(
     "worker",
     ...args,
   ], environment);
+}
+
+async function compose(args: readonly string[]): Promise<void> {
+  await docker([
+    "compose",
+    "--env-file",
+    ENV_FILE,
+    "-f",
+    COMPOSE_FILE,
+    "--profile",
+    "worker",
+    ...args,
+  ]);
+}
+
+async function runStorageExport(directory: string): Promise<void> {
+  const relative = directory.replace(/^\.local\//, "");
+  await docker([
+    "compose",
+    "--env-file",
+    ENV_FILE,
+    "-f",
+    COMPOSE_FILE,
+    "--profile",
+    "backup",
+    "run",
+    "--rm",
+    "-e",
+    `LOCAL_STORAGE_BACKUP_SUBPATH=${relative}`,
+    "storage-export-local",
+  ]);
+}
+
+function summarizeManifest(
+  manifest: Awaited<ReturnType<typeof captureRecoveryManifest>>,
+): Record<string, unknown> {
+  return {
+    format: manifest.format,
+    migrationLedger: manifest.migrationLedger.length,
+    jobs: manifest.jobs.length,
+    outbox: manifest.outbox.length,
+    inbox: manifest.inbox.length,
+    audit: manifest.audit.length,
+    evidence: manifest.evidence.length,
+    domain: manifest.domain.length,
+    objects: manifest.objects.map(({ key, bytes, sha256 }) => ({
+      key,
+      bytes,
+      sha256,
+    })),
+  };
 }
 
 async function docker(
