@@ -22,6 +22,8 @@ import {
   workManagementCorrectiveUpgradeMigration,
 } from "./work_management_0009_corrective_upgrade.ts";
 import { workManagementAuthorityDenialsMigration } from "./work_management_0010_authority_denials.ts";
+import { prepareWorkManagementMigration } from "../migration_compatibility.ts";
+import type { MigrationApplyOptions } from "../../platform/persistence/migration_runner.ts";
 
 export const workManagementMigrations = Object.freeze([
   workManagementMigration,
@@ -35,6 +37,15 @@ export const workManagementMigrations = Object.freeze([
   workManagementCorrectiveUpgradeMigration,
   workManagementAuthorityDenialsMigration,
 ]);
+
+/**
+ * Returns the explicit composition hook required when applying this stream.
+ *
+ * @example runner.apply(workManagementMigrations, workManagementMigrationOptions())
+ */
+export function workManagementMigrationOptions(): MigrationApplyOptions {
+  return { beforeMigration: prepareWorkManagementMigration };
+}
 
 export {
   workManagementActorBindingMigration,

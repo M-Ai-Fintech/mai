@@ -2,7 +2,10 @@ import {
   platformMigrations,
   PostgresMigrationRunner,
 } from "../../src/platform/persistence/v1.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import {
   createPostgresIntegrationTestPool,
   ensureWorkManagementTestRoles,
@@ -27,8 +30,14 @@ Deno.test({
     ];
     try {
       const runner = new PostgresMigrationRunner(pool);
-      await runner.apply([...platformMigrations, ...workManagementMigrations]);
-      await runner.apply([...platformMigrations, ...workManagementMigrations]);
+      await runner.apply(
+        [...platformMigrations, ...workManagementMigrations],
+        workManagementMigrationOptions(),
+      );
+      await runner.apply(
+        [...platformMigrations, ...workManagementMigrations],
+        workManagementMigrationOptions(),
+      );
       await runMembershipReconciliationScenario(pool, scope, suffix);
     } finally {
       await pool.end();

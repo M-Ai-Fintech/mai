@@ -21,7 +21,10 @@ import {
   workspace,
   workstreamId,
 } from "../../src/work_management/ids.ts";
-import { workManagementMigrations } from "../../src/work_management/migrations/index.ts";
+import {
+  workManagementMigrationOptions,
+  workManagementMigrations,
+} from "../../src/work_management/migrations/index.ts";
 import { WorkManagementRecordConflictError } from "../../src/work_management/repository.ts";
 import { PostgresWorkManagementRepository } from "../../src/work_management/repository_sql.ts";
 import { createTask } from "../../src/work_management/tasks.ts";
@@ -58,7 +61,7 @@ Deno.test({
     await new PostgresMigrationRunner(pool).apply([
       ...platformMigrations,
       ...workManagementMigrations,
-    ]);
+    ], workManagementMigrationOptions());
     const runner = new PostgresTransactionRunner(pool);
     const suffix = Date.now().toString();
     const event = historyEvent(suffix, `task_original-${suffix}`, scope);

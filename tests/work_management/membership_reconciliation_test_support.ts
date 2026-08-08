@@ -1,6 +1,8 @@
 import { assert, assertEquals } from "@std/assert";
 
-export async function resetIsolatedContext(pool: import("pg").Pool): Promise<void> {
+export async function resetIsolatedContext(
+  pool: import("pg").Pool,
+): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
       work_management.tasks_current,
@@ -25,7 +27,11 @@ export async function resetIsolatedContext(pool: import("pg").Pool): Promise<voi
     RESTART IDENTITY CASCADE
   `);
   await pool.query(
-    `INSERT INTO work_management.membership_reconciliation_activation
+    `SELECT set_config(
+        'work_management.activation_writer',
+        md5(current_user || txid_current()::text ||
+          'work-management-activation-writer-v1'), true);
+      INSERT INTO work_management.membership_reconciliation_activation
       (activation_id, mode, unresolved_blocking_count, recorded_at)
       VALUES (TRUE, 'read_only', 0, now())`,
   );
@@ -298,7 +304,9 @@ export function setReadOnly(
   })();
 }
 
-export async function commandsAvailable(pool: import("pg").Pool): Promise<boolean> {
+export async function commandsAvailable(
+  pool: import("pg").Pool,
+): Promise<boolean> {
   const result = await pool.query(
     "SELECT work_management.membership_commands_available() AS available",
   );
