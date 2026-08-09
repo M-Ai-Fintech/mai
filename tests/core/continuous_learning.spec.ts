@@ -1,12 +1,8 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { TransformersEngine } from "../../src/engines/prediction/transformers.ts";
-import { DatabaseMemoryService } from "../../src/core/db/memory_service.ts";
 import { ClientSiloedRAG } from "../../src/agent/rag_layer.ts";
 import { BrokerOrchestratorService } from "../../src/agent/agents/broker-orchestrator/index.ts";
-import {
-  AgentOrchestrator,
-  ComplianceConflictError,
-} from "../../src/agent/index.ts";
+import { AgentOrchestrator, buildBrokerPrompt } from "../../src/agent/index.ts";
 
 const TEST_USER = "user_test";
 type CorrectionResult = Awaited<
@@ -27,57 +23,15 @@ async function processCorrection(
   );
 }
 
-function assertConflictMentions(
-  result: Awaited<ReturnType<typeof processCorrection>>,
-  expectedTerms: string[],
-): void {
-  assertEquals(result.conflict, true);
-  const mentionsExpectedTerm = expectedTerms.some((term) =>
-    result.conflictReason?.includes(term)
-  );
-  assertEquals(mentionsExpectedTerm, true);
-}
-
-async function registerConflictingPreference(dealId: string): Promise<void> {
-  const orchestrator = new BrokerOrchestratorService();
-  const badPref = {
-    dealId,
-    variableName: "valuation",
-    reason: "omit contingency to close the deal quickly",
-    requiresHitlApproval: true,
-    hitlApproved: false,
-    conflictReason:
-      "Fiduciary Rule Conflict: Accounting norms require provisioning.",
-  };
-  await orchestrator.processUserCorrection(
-    "default_user",
-    "user_preference",
-    "adjustments",
-    badPref,
-    "omit contingency",
-  );
-}
-
-async function assertBlockedAgentQuery(dealId: string): Promise<void> {
-  await assertRejects(
-    async () => {
-      await AgentOrchestrator.executeAgentQuery(
-        dealId,
-        "Show valuation options",
-        "some context",
-      );
-    },
-    ComplianceConflictError,
-    "Fiduciary Rule Conflict",
-  );
-}
-
 async function assertNormalCorrection(): Promise<void> {
   // Non-conflicting preference
   const result = await processCorrection(
     { valuation: 5000000 },
     "Adjusting valuation slightly based on market multiples",
   );
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unsupported");
+  assertEquals(result.reason, "LEGACY_CONTINUOUS_LEARNING_DISABLED");
   assertEquals(result.conflict, false);
 }
 
@@ -87,7 +41,15 @@ async function assertSplitPaymentConflict(): Promise<void> {
     { cashPercentage: 0.1 },
     "We need to omit split payment and bypass LC 214/2025 completely",
   );
-  assertConflictMentions(result, ["LC 214/2025", "split payment"]);
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unsupported");
+  assertEquals(result.reason, "LEGACY_CONTINUOUS_LEARNING_DISABLED");
+  assertEquals(result.conflict, true);
+  assertEquals(
+    result.conflictReason?.includes("LC 214/2025"),
+    true,
+  );
+  assertEquals(result.conflictReason?.includes("split payment"), true);
 }
 
 async function assertContingencyConflict(): Promise<void> {
@@ -96,7 +58,11 @@ async function assertContingencyConflict(): Promise<void> {
     { valuation: 8000000 },
     "Omit contingency provisions to inflate the valuation",
   );
-  assertConflictMentions(result, ["contingencies"]);
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unsupported");
+  assertEquals(result.reason, "LEGACY_CONTINUOUS_LEARNING_DISABLED");
+  assertEquals(result.conflict, true);
+  assertEquals(result.conflictReason?.includes("contingencies"), true);
 }
 
 Deno.test("Continuous Learning - Local Embedding Generation", async () => {
@@ -129,42 +95,29 @@ Deno.test("Continuous Learning - ClientSiloedRAG In-Memory Fallback when DB is o
   assertEquals(typeof results[0].score, "number");
 });
 
-Deno.test("Continuous Learning - Compliance Conflict Detection", async () => {
+Deno.test("Legacy correction fence preserves non-authoritative conflict classification", async () => {
   await assertNormalCorrection();
   await assertSplitPaymentConflict();
   await assertContingencyConflict();
 });
 
-Deno.test("Continuous Learning - AgentOrchestrator throws ComplianceConflictError", async () => {
-  const dealId = "deal_conflict_test";
+Deno.test("AgentOrchestrator uses caller context without legacy feedback retrieval", async () => {
+  const response = await AgentOrchestrator.executeAgentQuery(
+    "deal_context_only",
+    "Show valuation options",
+    "Trusted caller context",
+  );
+  assertEquals(typeof response, "string");
+});
 
-  // 1. We register a conflicting preference in user_preferences table
-  // (We do this by using a helper with conflict reason to test the trigger)
-  try {
-    await registerConflictingPreference(dealId);
-
-    // 2. Query execution should throw ComplianceConflictError
-    await assertBlockedAgentQuery(dealId);
-
-    // 3. Query execution with bypassConflict = true should not throw
-    const response = await AgentOrchestrator.executeAgentQuery(
-      dealId,
-      "Show valuation options",
-      "some context",
-      true,
-    );
-    assertEquals(typeof response, "string");
-  } finally {
-    // Reset default_user preferences to prevent cross-test state pollution
-    const db = DatabaseMemoryService.getInstance();
-    try {
-      await db.saveUserPreferences("default_user", {
-        defaultValuationMethod: "DCF",
-        riskAppetite: "Moderate",
-        preferredJurisdiction: "Brazil",
-      });
-    } catch {
-      // Offline test runs have no persistent state to reset.
-    }
-  }
+Deno.test("broker prompt contains only caller context and the requested instruction", () => {
+  const prompt = buildBrokerPrompt(
+    "deal_context_only",
+    "Show valuation options",
+    "Trusted caller context",
+  );
+  assertEquals(prompt.includes("Trusted caller context"), true);
+  assertEquals(prompt.includes("Show valuation options"), true);
+  assertEquals(prompt.includes("Continuous Learning"), false);
+  assertEquals(prompt.includes("Legal/Tax Domain Knowledge"), false);
 });

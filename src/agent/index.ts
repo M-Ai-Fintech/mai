@@ -40,6 +40,8 @@ import {
   BrokerOrchestratorAgent,
   BrokerOrchestratorService,
 } from "./agents/broker-orchestrator/index.ts";
+export * from "./definitions/index.ts";
+export * from "./governed_agent.ts";
 import { SourcingAndKYBAgent } from "./agents/sourcing-kyb/index.ts";
 import { GeneralDueDiligenceAgent } from "./agents/general-dd/index.ts";
 import { FinancialRiskAgent } from "./agents/financial-risk/index.ts";
@@ -73,8 +75,6 @@ export {
 // AgentOrchestrator
 // Class responsible for executing queries on the BrokerOrchestratorAgent.
 // ---------------------------------------------------------------------------
-import { TransformersEngine } from "../engines/prediction/transformers.ts";
-
 export class ComplianceConflictError extends Error {
   constructor(message: string, public preferenceData: JsonObject) {
     super(message);
@@ -87,10 +87,9 @@ export class AgentOrchestrator {
     dealId: string,
     query: string,
     context = "",
-    bypassConflict = false,
+    _bypassConflict = false,
   ): Promise<string> {
-    const dynamicContext = await loadPromptContext(query, bypassConflict);
-    const prompt = brokerPrompt(dealId, query, context, dynamicContext);
+    const prompt = buildBrokerPrompt(dealId, query, context);
     if (aiConfig.isFallback) {
       console.warn(
         "[MOCK] Operation intercepted: Broker Orchestrator response simulation.",
@@ -103,89 +102,14 @@ export class AgentOrchestrator {
   }
 }
 
-interface PromptContext {
-  preferences: string;
-  knowledge: string;
-}
-
-async function loadPromptContext(
-  query: string,
-  bypassConflict: boolean,
-): Promise<PromptContext> {
-  try {
-    const embedding = await TransformersEngine.generateEmbedding(query);
-    const context = await new BrokerOrchestratorService()
-      .getOrchestratorContext("default_user", "general", embedding);
-    if (!bypassConflict) assertCompliantPreferences(context.preferences);
-    return {
-      preferences: JSON.stringify(context.preferences, null, 2),
-      knowledge: JSON.stringify(context.domainKnowledge, null, 2),
-    };
-  } catch (error: unknown) {
-    if (error instanceof ComplianceConflictError) throw error;
-    console.warn("Failed to retrieve dynamic prompt context:", error);
-    return { preferences: "", knowledge: "" };
-  }
-}
-
-function assertCompliantPreferences(preferences: unknown): void {
-  const entries = Array.isArray(preferences) ? preferences : [preferences];
-  for (const entry of entries) {
-    if (!entry) continue;
-    const preference = preferencePayload(entry);
-    if (hasComplianceConflict(preference)) {
-      throw new ComplianceConflictError(conflictReason(preference), preference);
-    }
-  }
-}
-
-function preferencePayload(entry: unknown): JsonObject {
-  if (typeof entry !== "object" || entry === null) return {};
-  if ("preferences" in entry && isJsonObject(entry.preferences)) {
-    return entry.preferences;
-  }
-  return isJsonObject(entry) ? entry : {};
-}
-
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function hasComplianceConflict(preference: JsonObject): boolean {
-  const serialized = JSON.stringify(preference).toLowerCase();
-  return serialized.includes("omit split payment") ||
-    serialized.includes("omit provis") ||
-    serialized.includes("omit conting") ||
-    preference.requiresHitlApproval === true &&
-      preference.hitlApproved !== true;
-}
-
-function conflictReason(preference: JsonObject): string {
-  if (typeof preference.conflictReason === "string") {
-    return preference.conflictReason;
-  }
-  if (
-    typeof preference.reason === "string" &&
-    preference.reason.toLowerCase().includes("conflict")
-  ) return preference.reason;
-  return "Fiduciary Rule Conflict: Conflict with fiduciary compliance rule (LC 214/2025 or contingency provision).";
-}
-
-function brokerPrompt(
+export function buildBrokerPrompt(
   dealId: string,
   query: string,
-  ragContext: string,
-  dynamic: PromptContext,
+  trustedContext: string,
 ): string {
   return `
 ## Deal Context [${dealId}]
-${ragContext || "No RAG context available at the moment."}
-
-## User Preferences (Continuous Learning)
-${dynamic.preferences || "No recorded preferences."}
-
-## Legal/Tax Domain Knowledge
-${dynamic.knowledge || "No recorded domain knowledge."}
+${trustedContext || "No caller-supplied context available at the moment."}
 
 ## Broker Instruction
 ${query}

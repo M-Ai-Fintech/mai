@@ -25,7 +25,7 @@ const GeminiSearchResponseSchema = z.object({
 export const huggingFaceMcpTool = createTool({
   id: "hugging-face-mcp-tool",
   description:
-    "Loads local prediction weights, embeddings, and fine-tuned language-model inference.",
+    "Runs approved local prediction, weight-loading, and embedding tasks; legacy model adaptation is unsupported.",
   inputSchema: z.object({
     model: z.string().default("onnx-risk-predictor-q8"),
     task: z.enum([
@@ -58,10 +58,10 @@ type HuggingFaceInput = {
 
 async function executeHuggingFaceTask(input: HuggingFaceInput) {
   if (input.task === "load_weights") return loadedWeights(input.model);
-  if (input.task === "load_lora_adapter") return loadedAdapter(input);
-  if (input.task === "fine_tuned_inference" && input.text) {
-    return await runFineTunedInference(input.model, input.text);
-  }
+  if (
+    input.task === "load_lora_adapter" ||
+    input.task === "fine_tuned_inference"
+  ) return unsupportedAdaptation(input);
   if (input.task === "embedding" && input.text) {
     const embedding = await TransformersEngine.generateEmbedding(input.text);
     return { success: true, model: input.model, embedding };
@@ -77,49 +77,14 @@ function loadedWeights(model: string) {
   };
 }
 
-function loadedAdapter(input: HuggingFaceInput) {
+function unsupportedAdaptation(input: HuggingFaceInput) {
   return {
-    success: true,
+    success: false,
     model: input.model,
-    adapterPath: input.adapterPath,
-    status: "LoRA adapter loaded and merged successfully for inference.",
+    task: input.task,
+    status: "unsupported",
+    reason: "LEGACY_MODEL_ADAPTATION_UNSUPPORTED",
   };
-}
-
-async function runFineTunedInference(model: string, text: string) {
-  const aiConfig = AIProvider.getApiKey();
-  if (aiConfig.isFallback || !aiConfig.key) return inferenceFallback(model);
-  try {
-    return await realFineTunedInference(model, text);
-  } catch (error: unknown) {
-    console.warn(
-      "huggingFaceMcpTool - Real inference failed with Google model:",
-      describeError(error),
-    );
-    throw error;
-  }
-}
-
-function inferenceFallback(model: string) {
-  return {
-    success: true,
-    model,
-    output:
-      `[MOCK - Fine-Tuned Inference (${model})] Clause analysis (Brazilian M&A Legalese): The described clause imposes joint obligations on the Seller and Change of Control triggers typical of the Brazilian market, without termination penalty.`,
-  };
-}
-
-async function realFineTunedInference(model: string, text: string) {
-  // The repository's Google provider line uses the AI SDK v4 runtime package.
-  // deno-lint-ignore no-import-prefix
-  const { generateText } = await import("npm:ai@4.3.19");
-  const { google } = await import("@ai-sdk/google");
-  const response = await generateText({
-    model: google("gemini-3.5-flash"),
-    prompt:
-      `You specialize in Brazilian M&A legal and financial analysis. Respond technically and objectively:\n\n${text}`,
-  });
-  return { success: true, model, output: response.text };
 }
 
 async function predictInsolvency(

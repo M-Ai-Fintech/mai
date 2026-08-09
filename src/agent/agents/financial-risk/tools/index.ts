@@ -5,7 +5,6 @@ import {
   googleCloudPubSubTool,
   huggingFaceMcpTool,
   mcpDatabaseTool,
-  vdrStructuredAccessTool,
 } from "../../../actions.ts";
 
 export {
@@ -14,5 +13,4 @@ export {
   googleCloudPubSubTool,
   huggingFaceMcpTool,
   mcpDatabaseTool,
-  vdrStructuredAccessTool,
 };

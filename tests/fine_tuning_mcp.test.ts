@@ -3,7 +3,7 @@ import { huggingFaceMcpTool } from "../src/agent/actions.ts";
 import { testToolContext } from "./support/tool_context.ts";
 import { requireRecord } from "./support/value_guards.ts";
 
-Deno.test("Hugging Face MCP Tool - Load LoRA adapter", async () => {
+Deno.test("Hugging Face MCP Tool - Load LoRA adapter is unsupported", async () => {
   const output = await huggingFaceMcpTool.execute!({
     model: "meta-llama/Llama-3-8B-Instruct",
     task: "load_lora_adapter",
@@ -11,15 +11,12 @@ Deno.test("Hugging Face MCP Tool - Load LoRA adapter", async () => {
   }, testToolContext);
   const result = requireRecord(output);
 
-  assertEquals(result.success, true);
-  assertEquals(
-    result.status,
-    "LoRA adapter loaded and merged successfully for inference.",
-  );
-  assertEquals(result.adapterPath, "./lora_adapter_ma_br");
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unsupported");
+  assertEquals(result.reason, "LEGACY_MODEL_ADAPTATION_UNSUPPORTED");
 });
 
-Deno.test("Hugging Face MCP Tool - Fine Tuned Inference", async () => {
+Deno.test("Hugging Face MCP Tool - Fine Tuned Inference is unsupported", async () => {
   const output = await huggingFaceMcpTool.execute!({
     model: "meta-llama/Llama-3-8B-Instruct",
     task: "fine_tuned_inference",
@@ -28,11 +25,7 @@ Deno.test("Hugging Face MCP Tool - Fine Tuned Inference", async () => {
   }, testToolContext);
   const result = requireRecord(output);
 
-  assertEquals(result.success, true);
-  assertEquals(
-    String(result.output).includes(
-      "[MOCK - Fine-Tuned Inference (meta-llama/Llama-3-8B-Instruct)]",
-    ),
-    true,
-  );
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unsupported");
+  assertEquals(result.reason, "LEGACY_MODEL_ADAPTATION_UNSUPPORTED");
 });
