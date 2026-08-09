@@ -40,9 +40,11 @@ async function predictFinancialRisk(): Promise<void> {
     },
   }, testToolContext);
   const result = requireRecord(output);
-  const prediction = requireRecord(result.prediction);
-  assertEquals(result.success, true);
-  assertEquals(typeof prediction.insolvencyRiskScore, "number");
+  assertEquals(result.success, false);
+  assertEquals(result.status, "unavailable");
+  assertEquals(result.reason, "ONNX_INFERENCE_UNAVAILABLE");
+  assertEquals("prediction" in result, false);
+  assertEquals("fallback" in result, false);
 }
 
 async function auditVdrCompleteness(dealId: string): Promise<void> {

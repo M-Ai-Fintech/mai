@@ -69,6 +69,7 @@ const sourceVersion: SourceVersionReference = {
 };
 
 Deno.test("governed listing is authorized before protected loading", async () => {
+  const versions = new ToggleSourceVersionPort();
   const listing = new RecordingDocumentListingPort([
     {
       documentId: "doc_contract",
@@ -77,7 +78,7 @@ Deno.test("governed listing is authorized before protected loading", async () =>
       classification: "legal",
     },
   ]);
-  const tool = createGovernedDocumentListingTool(listing);
+  const tool = createGovernedDocumentListingTool(listing, versions);
   const events: string[] = [];
   const gateway = new ToolGateway([tool], {
     authorize: () => {
@@ -94,8 +95,9 @@ Deno.test("governed listing is authorized before protected loading", async () =>
 });
 
 Deno.test("gateway denial prevents every governed port from loading", async () => {
+  const versions = new ToggleSourceVersionPort();
   const listing = new RecordingDocumentListingPort([]);
-  const tool = createGovernedDocumentListingTool(listing);
+  const tool = createGovernedDocumentListingTool(listing, versions);
   const gateway = new ToolGateway([tool], {
     authorize: () => ({
       outcome: "deny",
@@ -131,8 +133,9 @@ Deno.test("gateway denial prevents every governed port from loading", async () =
 });
 
 Deno.test("input cannot select a scope different from the trusted invocation", async () => {
+  const versions = new ToggleSourceVersionPort();
   const listing = new RecordingDocumentListingPort([]);
-  const tool = createGovernedDocumentListingTool(listing);
+  const tool = createGovernedDocumentListingTool(listing, versions);
   const result = await tool.execute({
     ...authorizedInvocation(tool.name, "list_documents"),
     input: { scope: { ...scope, dealId: "deal_other" } },

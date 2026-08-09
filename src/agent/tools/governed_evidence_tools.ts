@@ -4,10 +4,12 @@ import type {
   ToolOutput,
 } from "../../agent_runtime/tool_gateway.ts";
 import {
-  type GovernedDocumentContent,
+  type DocumentListRequest,
+  type DocumentSummary,
+  type EvidenceSearchHit,
+  type ExactDocumentVersionReference,
   type GovernedDocumentContentPort,
   type GovernedDocumentListingPort,
-  type GovernedDocumentMetadata,
   type GovernedDocumentMetadataPort,
   type GovernedEvidenceSearchPort,
   type GovernedEvidenceToolDependencies,
@@ -27,6 +29,7 @@ import {
   proposalStatus,
   reason,
   result,
+  sanitizeContent,
   sanitizeDocumentSummary,
   sanitizeMetadata,
   sanitizeSearchHit,
@@ -50,7 +53,10 @@ export * from "./governed_evidence_tool_contracts.ts";
 export class GovernedDocumentListingTool implements ToolDefinition {
   readonly name = GOVERNED_EVIDENCE_TOOL_NAMES.listDocuments;
   readonly capability = "read" as const;
-  constructor(private readonly port: GovernedDocumentListingPort) {}
+  constructor(
+    private readonly port: GovernedDocumentListingPort,
+    private readonly sourceVersions: GovernedSourceVersionPort,
+  ) {}
   async execute(invocation: AuthorizedToolInvocation): Promise<ToolOutput> {
     const prepared = prepareInput(
       invocation,
@@ -59,24 +65,35 @@ export class GovernedDocumentListingTool implements ToolDefinition {
       this.name,
     );
     if (!prepared.ok) return prepared.output;
-    const limit = readLimit(prepared.input.limit);
-    const after = optionalText(prepared.input.afterDocumentId, 96);
-    if (
-      limit === undefined ||
-      (prepared.input.afterDocumentId !== undefined && after === undefined)
-    ) return denied(this.capability, "INVALID_INPUT");
+    const options = parseListingOptions(prepared.input);
+    if (options === undefined) return denied(this.capability, "INVALID_INPUT");
+    const before = await recheckSources(
+      invocation,
+      this.sourceVersions,
+      [],
+    );
+    if (before !== "current") return listingStatus(before);
     const response = await this.port.list({
       context: invocation.context,
       scope: invocation.scope,
-      limit,
-      ...(after === undefined ? {} : { afterDocumentId: after }),
+      ...options,
     });
     if (isUnavailable(response)) {
-      return unavailable(this.capability, response.reasonCode);
+      return listingStatus("unavailable", response.reasonCode);
     }
+    const documents = sanitizeListingDocuments(response);
+    if (documents === undefined) {
+      return listingStatus("unavailable", "INVALID_PROVIDER_RESPONSE");
+    }
+    const freshness = await recheckSources(
+      invocation,
+      this.sourceVersions,
+      documentVersions(documents),
+    );
+    if (freshness !== "current") return listingStatus(freshness);
     return result(this.capability, {
       status: "ok",
-      documents: response.map(sanitizeDocumentSummary),
+      documents,
     });
   }
 }
@@ -152,10 +169,18 @@ export class GovernedEvidenceSearchTool implements ToolDefinition {
     if (isUnavailable(response)) {
       return searchResult("unavailable", query, response.reasonCode);
     }
+    if (!Array.isArray(response)) {
+      return searchResult("unavailable", query, "INVALID_PROVIDER_RESPONSE");
+    }
+    const hits = response.map(sanitizeSearchHit);
+    const safeHits = hits.filter(isEvidenceSearchHit);
+    if (safeHits.length !== hits.length) {
+      return searchResult("unavailable", query, "INVALID_PROVIDER_RESPONSE");
+    }
     const freshness = await recheckSources(
       invocation,
       this.sourceVersions,
-      response.map((hit) => hit.source),
+      safeHits.map((hit) => hit.source),
     );
     if (freshness !== "current") {
       return searchResult(freshness, query, freshnessCode(freshness));
@@ -163,7 +188,7 @@ export class GovernedEvidenceSearchTool implements ToolDefinition {
     return result(this.capability, {
       status: "ok",
       query,
-      results: response.map(sanitizeSearchHit),
+      results: safeHits,
     });
   }
 }
@@ -268,8 +293,9 @@ export class GovernedMissingDocumentFindingTool implements ToolDefinition {
 
 export function createGovernedDocumentListingTool(
   port: GovernedDocumentListingPort,
+  sourceVersions: GovernedSourceVersionPort,
 ): GovernedDocumentListingTool {
-  return new GovernedDocumentListingTool(port);
+  return new GovernedDocumentListingTool(port, sourceVersions);
 }
 export function createGovernedDocumentMetadataTool(
   port: GovernedDocumentMetadataPort,
@@ -303,7 +329,10 @@ export function createGovernedEvidenceToolDefinitions(
   dependencies: GovernedEvidenceToolDependencies,
 ): readonly ToolDefinition[] {
   return Object.freeze([
-    createGovernedDocumentListingTool(dependencies.listing),
+    createGovernedDocumentListingTool(
+      dependencies.listing,
+      dependencies.sourceVersions,
+    ),
     createGovernedDocumentMetadataTool(
       dependencies.metadata,
       dependencies.sourceVersions,
@@ -360,19 +389,29 @@ async function executeExact(
       ? contentStatus("not_found")
       : result("read", { status: "not_found" });
   }
-  if (!sameDocumentReference(response.reference, reference)) {
-    return mode === "content" ? contentStatus("stale") : result("read", {
-      status: "stale",
-      reasonCode: "SOURCE_VERSION_INVALIDATED",
-    });
-  }
   if (mode === "metadata") {
+    const metadata = sanitizeMetadata(response);
+    if (metadata === undefined) {
+      return unavailable("read", "INVALID_PROVIDER_RESPONSE");
+    }
+    if (!sameDocumentReference(metadata.reference, reference)) {
+      return result("read", {
+        status: "stale",
+        reasonCode: "SOURCE_VERSION_INVALIDATED",
+      });
+    }
     return result("read", {
       status: "ok",
-      metadata: sanitizeMetadata(response as GovernedDocumentMetadata),
+      metadata,
     });
   }
-  const content = response as GovernedDocumentContent;
+  const content = sanitizeContent(response);
+  if (content === undefined) {
+    return contentUnavailable("INVALID_PROVIDER_RESPONSE");
+  }
+  if (!sameDocumentReference(content.reference, reference)) {
+    return contentStatus("stale");
+  }
   return result("read", {
     status: "ok",
     content: bytesToBase64(content.bytes),
@@ -380,4 +419,51 @@ async function executeExact(
     mediaType: content.mediaType,
     reference: content.reference,
   });
+}
+
+function parseListingOptions(
+  input: Record<string, unknown>,
+): Pick<DocumentListRequest, "limit" | "afterDocumentId"> | undefined {
+  const limit = readLimit(input.limit);
+  const afterDocumentId = optionalText(input.afterDocumentId, 96);
+  return limit === undefined ||
+      (input.afterDocumentId !== undefined && afterDocumentId === undefined)
+    ? undefined
+    : { limit, ...(afterDocumentId === undefined ? {} : { afterDocumentId }) };
+}
+
+function listingStatus(
+  status: "stale" | "unavailable",
+  reasonCode = freshnessCode(status),
+): ToolOutput {
+  return result("read", { status, documents: [], reasonCode });
+}
+
+function sanitizeListingDocuments(
+  response: unknown,
+): readonly DocumentSummary[] | undefined {
+  if (!Array.isArray(response)) return undefined;
+  const documents = response.map(sanitizeDocumentSummary);
+  const safeDocuments = documents.filter(isDocumentSummary);
+  return safeDocuments.length === documents.length ? safeDocuments : undefined;
+}
+
+function documentVersions(
+  documents: readonly DocumentSummary[],
+): readonly ExactDocumentVersionReference[] {
+  return documents.flatMap((document) =>
+    document.currentVersion === undefined ? [] : [document.currentVersion]
+  );
+}
+
+function isDocumentSummary(
+  value: DocumentSummary | undefined,
+): value is DocumentSummary {
+  return value !== undefined;
+}
+
+function isEvidenceSearchHit(
+  value: EvidenceSearchHit | undefined,
+): value is EvidenceSearchHit {
+  return value !== undefined;
 }

@@ -67,7 +67,7 @@ const digestSchema = z.string().regex(
   /^sha256:[0-9a-f]{64}$/,
   "expected a lowercase SHA-256 digest with the sha256: prefix",
 );
-const capabilitySchema = z.string().regex(
+export const capabilitySchema = z.string().regex(
   /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/,
   "expected a bounded lowercase capability name",
 );
@@ -209,6 +209,24 @@ export const resultLineageSchema = z.object({
   evidence: z.array(sourceVersionReferenceSchema),
 });
 
+export type AgentSourceVersionReference = z.infer<
+  typeof sourceVersionReferenceSchema
+>;
+export type AgentToolLineage = z.infer<typeof toolLineageSchema>;
+export type AgentModelLineage = z.infer<typeof resultLineageSchema>["model"];
+
+/**
+ * Lineage returned by a trusted runtime receipt verifier.
+ *
+ * Proposal/model output must never construct this value directly. The
+ * governed agent only accepts it from its separately injected verifier.
+ */
+export interface VerifiedAgentLineage {
+  readonly model: AgentModelLineage;
+  readonly tools: readonly AgentToolLineage[];
+  readonly evidence: readonly AgentSourceVersionReference[];
+}
+
 export const agentProposalResultSchema = z.object({
   status: z.enum(["proposed", "unavailable", "denied"]),
   artifact: z.object({
@@ -227,16 +245,13 @@ export type AgentProposalResult = z.infer<typeof agentProposalResultSchema>;
 export interface AgentProposalInput {
   readonly kind?: "proposal" | "reversible_draft";
   readonly value: Readonly<Record<string, unknown>>;
-  readonly tools?: readonly z.input<typeof toolLineageSchema>[];
-  readonly evidence?: readonly z.input<typeof sourceVersionReferenceSchema>[];
 }
 
 export function createAgentProposalResult(
   definition: AgentDefinition,
   input: AgentProposalInput,
+  lineage: VerifiedAgentLineage,
 ): AgentProposalResult {
-  const tools = input.tools ?? [];
-  const evidence = input.evidence ?? [];
   return agentProposalResultSchema.parse({
     status: "proposed",
     artifact: {
@@ -246,7 +261,7 @@ export function createAgentProposalResult(
       authoritative: false,
       providerReadiness: "not_claimed",
     },
-    lineage: lineageFor(definition, tools, evidence),
+    lineage: lineageFor(definition, lineage),
     providerReadinessClaimed: false,
   });
 }
@@ -266,15 +281,34 @@ export function createUnavailableAgentResult(
       authoritative: false,
       providerReadiness: "not_claimed",
     },
-    lineage: lineageFor(definition, [{ name: capability, status }], []),
+    lineage: lineageFor(
+      definition,
+      definitionLineage(definition, [{ name: capability, status }], []),
+    ),
     providerReadinessClaimed: false,
   });
 }
 
-function lineageFor(
+function definitionLineage(
   definition: AgentDefinition,
   tools: readonly z.input<typeof toolLineageSchema>[],
   evidence: readonly z.input<typeof sourceVersionReferenceSchema>[],
+): VerifiedAgentLineage {
+  return {
+    model: {
+      policyReference: definition.modelPolicy.policyReference,
+      provider: definition.modelPolicy.provider,
+      model: definition.modelPolicy.model,
+      modelVersion: definition.modelPolicy.modelVersion,
+    },
+    tools,
+    evidence,
+  };
+}
+
+function lineageFor(
+  definition: AgentDefinition,
+  lineage: VerifiedAgentLineage,
 ) {
   return {
     definition: { id: definition.id, version: definition.version },
@@ -282,18 +316,13 @@ function lineageFor(
     definitionVersion: definition.version,
     prompt: definition.prompt,
     promptDigest: definition.prompt.promptDigest,
-    model: {
-      policyReference: definition.modelPolicy.policyReference,
-      provider: definition.modelPolicy.provider,
-      model: definition.modelPolicy.model,
-      modelVersion: definition.modelPolicy.modelVersion,
-    },
+    model: lineage.model,
     modelPolicyReference: definition.modelPolicy.policyReference,
-    tools,
-    toolActivityIds: tools.flatMap((tool) =>
+    tools: lineage.tools,
+    toolActivityIds: lineage.tools.flatMap((tool) =>
       tool.activityId === undefined ? [] : [tool.activityId]
     ),
-    evidence,
+    evidence: lineage.evidence,
   };
 }
 

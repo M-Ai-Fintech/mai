@@ -25,7 +25,7 @@ const GeminiSearchResponseSchema = z.object({
 export const huggingFaceMcpTool = createTool({
   id: "hugging-face-mcp-tool",
   description:
-    "Runs approved local prediction, weight-loading, and embedding tasks; legacy model adaptation is unsupported.",
+    "Runs approved local prediction and embedding tasks; legacy model and weight adaptation is unsupported.",
   inputSchema: z.object({
     model: z.string().default("onnx-risk-predictor-q8"),
     task: z.enum([
@@ -57,24 +57,29 @@ type HuggingFaceInput = {
 };
 
 async function executeHuggingFaceTask(input: HuggingFaceInput) {
-  if (input.task === "load_weights") return loadedWeights(input.model);
+  if (input.task === "load_weights") {
+    return unsupportedLegacyTask(input, "LEGACY_WEIGHT_LOADING_UNSUPPORTED");
+  }
   if (
     input.task === "load_lora_adapter" ||
     input.task === "fine_tuned_inference"
   ) return unsupportedAdaptation(input);
-  if (input.task === "embedding" && input.text) {
-    const embedding = await TransformersEngine.generateEmbedding(input.text);
-    return { success: true, model: input.model, embedding };
+  if (input.task === "embedding") {
+    if (!input.text?.trim()) {
+      return unsupportedLegacyTask(input, "EMBEDDING_TEXT_REQUIRED");
+    }
+    try {
+      const embedding = await TransformersEngine.generateEmbedding(input.text);
+      return { success: true, model: input.model, embedding };
+    } catch (error: unknown) {
+      console.warn(
+        "huggingFaceMcpTool - embedding dependency is unavailable:",
+        describeError(error),
+      );
+      return unavailableLegacyTask(input, "EMBEDDING_UNAVAILABLE");
+    }
   }
   return await predictInsolvency(input.model, input.inputData ?? {});
-}
-
-function loadedWeights(model: string) {
-  return {
-    success: true,
-    model,
-    status: "Weights loaded successfully (q8/q4 quantized ONNX)",
-  };
 }
 
 function unsupportedAdaptation(input: HuggingFaceInput) {
@@ -84,6 +89,26 @@ function unsupportedAdaptation(input: HuggingFaceInput) {
     task: input.task,
     status: "unsupported",
     reason: "LEGACY_MODEL_ADAPTATION_UNSUPPORTED",
+  };
+}
+
+function unsupportedLegacyTask(input: HuggingFaceInput, reason: string) {
+  return {
+    success: false,
+    model: input.model,
+    task: input.task,
+    status: "unsupported" as const,
+    reason,
+  };
+}
+
+function unavailableLegacyTask(input: HuggingFaceInput, reason: string) {
+  return {
+    success: false,
+    model: input.model,
+    task: input.task,
+    status: "unavailable" as const,
+    reason,
   };
 }
 
@@ -98,26 +123,17 @@ async function predictInsolvency(
     return predictionResult(model, metrics);
   } catch (error: unknown) {
     console.warn(
-      "huggingFaceMcpTool - Real ONNX inference failed, using fallback:",
+      "huggingFaceMcpTool - ONNX inference dependency is unavailable:",
       describeError(error),
     );
-    return insolvencyFallback(model);
+    return {
+      success: false,
+      model,
+      task: "predict_insolvency" as const,
+      status: "unavailable" as const,
+      reason: "ONNX_INFERENCE_UNAVAILABLE",
+    };
   }
-}
-
-function insolvencyFallback(model: string) {
-  return {
-    success: true,
-    model,
-    prediction: {
-      insolvencyRiskScore: 0.14,
-      riskLevel: "low",
-      confidence: 0.96,
-      details:
-        "Inference executed via Hugging Face MCP with ONNX model (Fallback).",
-    },
-    fallback: true,
-  };
 }
 
 function insolvencyMetrics(input: Record<string, unknown>) {
@@ -178,17 +194,26 @@ type SearchInput = {
 };
 
 async function executeGroundedSearch(input: SearchInput) {
-  const apiKey = AIProvider.getApiKey().key;
-  if (!apiKey) return searchFallback(input, "Mock");
+  let apiKey: string | null;
+  try {
+    apiKey = AIProvider.getApiKey().key;
+  } catch (error: unknown) {
+    console.warn(
+      "geminiGoogleSearchTool - provider configuration is unavailable:",
+      describeError(error),
+    );
+    return unavailableSearch(input, "GEMINI_PROVIDER_UNAVAILABLE");
+  }
+  if (!apiKey) return unavailableSearch(input, "GEMINI_PROVIDER_UNAVAILABLE");
   try {
     const response = await requestGroundedSearch(input, apiKey);
     return parseGroundedSearch(input, await response.json());
   } catch (error: unknown) {
     console.warn(
-      "geminiGoogleSearchTool - API call failed, using mocked fallback:",
+      "geminiGoogleSearchTool - grounded search dependency is unavailable:",
       describeError(error),
     );
-    return searchFallback(input, "Fallback");
+    return unavailableSearch(input, "GEMINI_SEARCH_UNAVAILABLE");
   }
 }
 
@@ -225,14 +250,17 @@ function parseGroundedSearch(input: SearchInput, rawResponse: unknown) {
   const parsed = GeminiSearchResponseSchema.parse(rawResponse);
   const candidate = parsed.candidates?.[0];
   const sources = groundedSources(candidate);
+  const summary = candidate?.content?.parts?.[0]?.text?.trim();
+  if (!sources.length || !summary) {
+    return unavailableSearch(input, "GEMINI_GROUNDING_EVIDENCE_UNAVAILABLE");
+  }
   return {
     success: true,
     ...input,
     groundingMetadata: {
-      sources: sources.length ? sources : [searchSource(input)],
+      sources,
     },
-    summary: candidate?.content?.parts?.[0]?.text ??
-      `Grounding results via Gemini API for '${input.query}'.`,
+    summary,
   };
 }
 
@@ -251,19 +279,12 @@ function groundedSources(
   );
 }
 
-function searchSource(input: SearchInput) {
+function unavailableSearch(input: SearchInput, reason: string) {
   return {
-    title: `${input.targetCompany ?? "Target Company"} - News and References`,
-    url: `https://www.google.com/search?q=${encodeURIComponent(input.query)}`,
-  };
-}
-
-function searchFallback(input: SearchInput, mode: "Mock" | "Fallback") {
-  return {
-    success: true,
+    success: false,
     ...input,
-    groundingMetadata: { sources: [searchSource(input)] },
-    summary:
-      `Grounding results (${mode.toLowerCase()}) for '${input.query}'. The company demonstrates strong governance and solid industry reputation.`,
+    status: "unavailable" as const,
+    reason,
+    groundingMetadata: { sources: [] },
   };
 }

@@ -17,6 +17,7 @@ import {
   GOVERNED_TOOL_NAMES,
   HUMAN_ONLY_EFFECTS,
   SPECIALIST_DEFINITIONS,
+  type VerifiedAgentLineage,
 } from "../../src/agent/definitions/index.ts";
 
 const input = { dealId: "deal_definition_test", query: "review" };
@@ -113,17 +114,22 @@ Deno.test("active definition tools are governed and legacy direct tools remain m
 
 Deno.test("proposal results are non-authoritative and carry stable complete lineage", () => {
   const definition = SPECIALIST_DEFINITIONS[0];
-  const result = createAgentProposalResult(definition, {
-    kind: "proposal",
-    value: { summary: "review proposed" },
-    tools: [{ name: "evidence.search", activityId: "activity_1" }],
-    evidence: [{
-      sourceType: "document_version",
-      sourceId: "document_1",
-      version: 3,
-      checksum: "a".repeat(64),
-    }],
-  });
+  const result = createAgentProposalResult(
+    definition,
+    {
+      kind: "proposal",
+      value: { summary: "review proposed" },
+    },
+    trustedLineage(definition, {
+      tools: [{ name: "evidence.search", activityId: "activity_1" }],
+      evidence: [{
+        sourceType: "document_version",
+        sourceId: "document_1",
+        version: 3,
+        checksum: "a".repeat(64),
+      }],
+    }),
+  );
 
   assertEquals(agentProposalResultSchema.safeParse(result).success, true);
   assertEquals(result.artifact.reversible, true);
@@ -168,6 +174,7 @@ Deno.test("catalog rejects duplicate definition versions and selects historical 
       kind: "proposal",
       value: { historical: true },
     },
+    trustedLineage(catalog.select(current.id, "0.9.0")),
   );
   assertEquals(result.lineage.definition.version, "0.9.0");
   assertEquals(result.lineage.prompt.templateVersion, "0.9.0");
@@ -188,6 +195,42 @@ Deno.test("catalog reports missing pinned versions instead of silently choosing 
   );
 });
 
+Deno.test("catalog selections are immutable snapshots", () => {
+  const catalog = createDefinitionCatalog(SPECIALIST_DEFINITIONS);
+  const selected = catalog.current("broker-orchestrator-agent");
+  const allowed = [...selected.allowedCapabilities];
+
+  assertEquals(Object.isFrozen(selected), true);
+  assertEquals(Object.isFrozen(selected.allowedCapabilities), true);
+  assertEquals(Object.isFrozen(selected.modelPolicy), true);
+  assertThrows(
+    () => (selected.allowedCapabilities as string[]).push("forged.capability"),
+    TypeError,
+  );
+  assertThrows(
+    () => ((selected.modelPolicy as { provider: string }).provider = "forged"),
+    TypeError,
+  );
+  assertEquals(catalog.current(selected.id).allowedCapabilities, allowed);
+});
+
 type KnownAgentDefinitionId = AgentDefinitionId;
 const _typeCheck: KnownAgentDefinitionId = "broker-orchestrator-agent";
 assertEquals(_typeCheck, "broker-orchestrator-agent");
+
+function trustedLineage(
+  definition: AgentDefinition,
+  overrides: Partial<VerifiedAgentLineage> = {},
+): VerifiedAgentLineage {
+  return {
+    model: {
+      policyReference: definition.modelPolicy.policyReference,
+      provider: definition.modelPolicy.provider,
+      model: definition.modelPolicy.model,
+      modelVersion: definition.modelPolicy.modelVersion,
+    },
+    tools: [],
+    evidence: [],
+    ...overrides,
+  };
+}

@@ -6,10 +6,18 @@ import {
 } from "../../src/agent/governed.ts";
 import {
   createGovernedSpecialist,
+  type GovernedExecutionBinding,
+  type GovernedExecutionContext,
   type GovernedProposalPort,
   type GovernedProposalRequest,
   type GovernedProposalResponse,
+  GovernedProvenanceError,
+  type GovernedProvenanceVerificationRequest,
+  type GovernedProvenanceVerifier,
 } from "../../src/agent/governed.ts";
+import type { VerifiedAgentLineage } from "../../src/agent/definitions/index.ts";
+import type { RuntimeScope } from "../../src/agent_runtime/model.ts";
+import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
 
 class RecordingProposalPort implements GovernedProposalPort {
   readonly requests: GovernedProposalRequest[] = [];
@@ -21,6 +29,58 @@ class RecordingProposalPort implements GovernedProposalPort {
   ): Promise<GovernedProposalResponse> {
     this.requests.push(request);
     return Promise.resolve(this.response);
+  }
+}
+
+class NamedFakeRuntimeReceiptVerifier implements GovernedProvenanceVerifier {
+  readonly requests: GovernedProvenanceVerificationRequest[] = [];
+
+  constructor(
+    private readonly returnExecution?: GovernedExecutionBinding,
+    private readonly stale = false,
+  ) {}
+
+  verify(
+    request: GovernedProvenanceVerificationRequest,
+  ): Promise<{
+    execution: GovernedExecutionBinding;
+    lineage: VerifiedAgentLineage;
+  }> {
+    this.requests.push(request);
+    if (this.stale) {
+      return Promise.reject(
+        new GovernedProvenanceError("receipt source version is stale"),
+      );
+    }
+    const claims = request.claims;
+    if (
+      claims.tools?.some((tool) =>
+        tool.activityId !== "activity_exact_evidence"
+      )
+    ) {
+      return Promise.reject(
+        new GovernedProvenanceError("tool activity receipt was invented"),
+      );
+    }
+    if (
+      claims.evidence?.some((source) => source.sourceId !== "docv_contract_v2")
+    ) {
+      return Promise.reject(
+        new GovernedProvenanceError("evidence receipt was invented"),
+      );
+    }
+    return Promise.resolve({
+      execution: this.returnExecution ?? request.execution,
+      lineage: trustedLineage(request.definition, {
+        tools: claims.tools?.map((tool) => ({
+          name: "governed.evidence.search",
+          activityId: tool.activityId,
+          capability: "read",
+          status: "succeeded",
+        })) ?? [],
+        evidence: claims.evidence ?? [],
+      }),
+    });
   }
 }
 
@@ -47,20 +107,24 @@ Deno.test("all pinned specialists emit schema-valid non-authoritative proposals"
     const port = new RecordingProposalPort({
       status: "proposed",
       value: proposedOutput,
-      tools: [{
-        name: "governed.evidence.search",
-        activityId: "activity_exact_evidence",
-        capability: "read",
-        status: "succeeded",
-      }],
-      evidence: [{
-        sourceType: "document_version",
-        sourceId: "docv_contract_v2",
-        version: 2,
-        checksum: "a".repeat(64),
-      }],
+      provenanceClaims: {
+        tools: [{ activityId: "activity_exact_evidence" }],
+        evidence: [{
+          sourceType: "document_version",
+          sourceId: "docv_contract_v2",
+          version: 2,
+          checksum: "a".repeat(64),
+        }],
+      },
     });
-    const agent = createGovernedSpecialist(catalog, id, port);
+    const verifier = new NamedFakeRuntimeReceiptVerifier();
+    const agent = createGovernedSpecialist(
+      catalog,
+      id,
+      port,
+      verifier,
+      executionContext(),
+    );
     const result = await agent.propose({
       input: { dealId: "deal_horizon", query: "Prepare a proposal." },
       capability: "evidence.search",
@@ -79,6 +143,7 @@ Deno.test("all pinned specialists emit schema-valid non-authoritative proposals"
       "activity_exact_evidence",
     ]);
     assertEquals(port.requests.length, 1);
+    assertEquals(verifier.requests[0].execution.definition.id, id);
   }
 });
 
@@ -88,10 +153,13 @@ Deno.test("unavailable and prohibited capabilities never reach a proposal port",
     status: "proposed",
     value: proposedOutput,
   });
+  const verifier = new NamedFakeRuntimeReceiptVerifier();
   const agent = createGovernedSpecialist(
     catalog,
     "sourcing-kyb-agent",
     port,
+    verifier,
+    executionContext(),
   );
 
   const unavailable = await agent.propose({
@@ -114,10 +182,13 @@ Deno.test("proposal output must satisfy the selected specialist schema", async (
     status: "proposed",
     value: { success: true, response: "Missing timestamp." },
   });
+  const verifier = new NamedFakeRuntimeReceiptVerifier();
   const agent = createGovernedSpecialist(
     catalog,
     "legal-dd-agent",
     port,
+    verifier,
+    executionContext(),
   );
 
   await assertRejects(
@@ -143,10 +214,13 @@ Deno.test("historical selection preserves the selected definition in lineage", a
     status: "proposed",
     value: proposedOutput,
   });
+  const verifier = new NamedFakeRuntimeReceiptVerifier();
   const agent = createGovernedSpecialist(
     catalog,
     "broker-orchestrator-agent",
     port,
+    verifier,
+    executionContext(),
     "0.9.0",
   );
 
@@ -158,6 +232,187 @@ Deno.test("historical selection preserves the selected definition in lineage", a
   assertEquals(result.lineage.definition.version, "0.9.0");
   assertEquals(catalog.current("broker-orchestrator-agent").version, "1.0.0");
 });
+
+Deno.test("proposal output cannot assert lineage outside verified runtime receipts", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const port = new RecordingProposalPort({
+    status: "proposed",
+    value: proposedOutput,
+    model: {
+      provider: "attacker",
+      model: "forged-model",
+      modelVersion: "99",
+    },
+    tools: [{ name: "attacker.tool", activityId: "activity_invented" }],
+    evidence: [{
+      sourceType: "document_version",
+      sourceId: "docv_invented",
+      version: 99,
+    }],
+  } as unknown as GovernedProposalResponse);
+  const verifier = new NamedFakeRuntimeReceiptVerifier();
+  const result = await createGovernedSpecialist(
+    catalog,
+    "broker-orchestrator-agent",
+    port,
+    verifier,
+    executionContext(),
+  ).propose({
+    input: { dealId: "deal_horizon", query: "Route this request." },
+    capability: "evidence.search",
+  });
+
+  assertEquals(result.lineage.tools, []);
+  assertEquals(result.lineage.evidence, []);
+  assertEquals(result.lineage.model.model, "gemini-3.5-flash");
+  assertEquals(verifier.requests[0].claims, {});
+});
+
+Deno.test("invented, stale, cross-run, and definition-mismatched receipts are rejected", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const response = {
+    status: "proposed" as const,
+    value: proposedOutput,
+    provenanceClaims: {
+      tools: [{ activityId: "activity_exact_evidence" }],
+      evidence: [{
+        sourceType: "document_version",
+        sourceId: "docv_contract_v2",
+        version: 2,
+      }],
+    },
+  };
+  await assertRejects(
+    () =>
+      createAgentWithResponse(catalog, response, {
+        stale: true,
+      }).propose({
+        input: { dealId: "deal_horizon", query: "Review." },
+        capability: "evidence.search",
+      }),
+    GovernedProvenanceError,
+    "stale",
+  );
+
+  const crossRun = executionContext("run_other");
+  await assertRejects(
+    () =>
+      createAgentWithResponse(catalog, response, {
+        returnExecution: {
+          ...crossRun,
+          definition: {
+            id: "broker-orchestrator-agent",
+            version: "1.0.0",
+          },
+        },
+      }).propose({
+        input: { dealId: "deal_horizon", query: "Review." },
+        capability: "evidence.search",
+      }),
+    GovernedProvenanceError,
+    "cross-scope, cross-run",
+  );
+
+  const mismatchedDefinition = executionContext();
+  await assertRejects(
+    () =>
+      createAgentWithResponse(catalog, response, {
+        returnExecution: {
+          ...mismatchedDefinition,
+          definition: {
+            id: "legal-dd-agent",
+            version: "1.0.0",
+          },
+        },
+      }).propose({
+        input: { dealId: "deal_horizon", query: "Review." },
+        capability: "evidence.search",
+      }),
+    GovernedProvenanceError,
+    "definition-mismatched",
+  );
+});
+
+Deno.test("malformed unknown capabilities become explicit denied results", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const agent = createAgentWithResponse(catalog, {
+    status: "proposed",
+    value: proposedOutput,
+  });
+  const result = await agent.propose({
+    input: { dealId: "deal_horizon", query: "Malformed capability." },
+    capability: { forged: true },
+  });
+
+  assertEquals(result.status, "denied");
+  assertEquals(result.artifact.value, {
+    capability: "unknown.capability",
+    reason:
+      "Capability object is malformed; expected a lowercase capability name.",
+    status: "denied",
+  });
+});
+
+function createAgentWithResponse(
+  catalog: ReturnType<typeof createSpecialistDefinitionCatalog>,
+  response: GovernedProposalResponse,
+  options: {
+    readonly returnExecution?: GovernedExecutionBinding;
+    readonly stale?: boolean;
+  } = {},
+) {
+  return createGovernedSpecialist(
+    catalog,
+    "broker-orchestrator-agent",
+    new RecordingProposalPort(response),
+    new NamedFakeRuntimeReceiptVerifier(
+      options.returnExecution,
+      options.stale,
+    ),
+    executionContext(),
+  );
+}
+
+function executionContext(
+  runId: string = "run_governed",
+): GovernedExecutionContext {
+  const scope: RuntimeScope = {
+    tenantId: "tenant_horizon" as never,
+    workspaceId: "workspace_horizon" as never,
+    dealId: "deal_horizon" as never,
+  };
+  const context: RequestContext = {
+    actorId: "actor_governed" as never,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+    correlationId: "cor_governed" as never,
+    origin: "internal",
+  };
+  return {
+    context,
+    actor: { actorId: context.actorId, kind: "ai", state: "active" },
+    scope,
+    runId: runId as never,
+  };
+}
+
+function trustedLineage(
+  definition: Pick<AgentDefinition, "modelPolicy">,
+  overrides: Partial<VerifiedAgentLineage> = {},
+): VerifiedAgentLineage {
+  return {
+    model: {
+      policyReference: definition.modelPolicy.policyReference,
+      provider: definition.modelPolicy.provider,
+      model: definition.modelPolicy.model,
+      modelVersion: definition.modelPolicy.modelVersion,
+    },
+    tools: [],
+    evidence: [],
+    ...overrides,
+  };
+}
 
 function createSpecialistDefinitionCatalogWith(
   historical: AgentDefinition,

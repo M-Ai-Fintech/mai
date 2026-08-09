@@ -8,8 +8,6 @@ import type {
 } from "../../agent_runtime/model.ts";
 import type {
   CapabilityUnavailable,
-  CitationLocation,
-  DocumentClassification,
   DocumentVersionReadRequest,
   ExactDocumentVersionReference,
   ExactEvidenceReference,
@@ -21,6 +19,8 @@ import {
   denied,
   isRecord,
   isUnavailable,
+  parseExactDocumentReference,
+  parseExactEvidenceReference,
 } from "./governed_evidence_tool_values.ts";
 
 export type PreparedInput =
@@ -96,33 +96,20 @@ export function parseDocumentReference(
   input: Record<string, unknown>,
 ): ExactDocumentVersionReference | undefined {
   const source = isRecord(input.source) ? input.source : input;
-  const documentVersionId = optionalText(source.documentVersionId, 96);
-  const versionValue = source.version ?? source.versionNumber ??
-    source.expectedVersion;
-  const version =
-    typeof versionValue === "number" && Number.isSafeInteger(versionValue) &&
-      versionValue > 0
-      ? versionValue
-      : undefined;
-  const checksum = readChecksum(source.checksum);
-  return documentVersionId === undefined || version === undefined ||
-      checksum === undefined
-    ? undefined
-    : { documentVersionId, version, checksum };
+  return parseExactDocumentReference(source, true);
 }
 
 export function parseEvidenceReference(
   value: unknown,
 ): ExactEvidenceReference | undefined {
   if (!isRecord(value)) return undefined;
-  const reference = parseDocumentReference(value);
-  const classification = value.classification;
-  const processingVersion = optionalText(value.processingVersion, 128);
-  const location = parseLocation(value.location);
-  return reference !== undefined && isClassification(classification) &&
-      processingVersion !== undefined && location !== undefined
-    ? { ...reference, classification, processingVersion, location }
-    : undefined;
+  const source = isRecord(value.source) ? value.source : value;
+  return parseExactEvidenceReference({
+    ...source,
+    classification: value.classification,
+    processingVersion: value.processingVersion,
+    location: value.location,
+  }, true);
 }
 
 export function parseBasis(
@@ -170,50 +157,6 @@ export function sourceVersionKey(reference: SourceVersionReference): string {
   }`;
 }
 
-function readChecksum(
-  value: unknown,
-): { readonly algorithm: "sha256"; readonly value: string } | undefined {
-  if (typeof value === "string") {
-    return /^[0-9a-f]{64}$/.test(value)
-      ? { algorithm: "sha256", value }
-      : undefined;
-  }
-  if (
-    !isRecord(value) || value.algorithm !== "sha256" ||
-    typeof value.value !== "string" || !/^[0-9a-f]{64}$/.test(value.value)
-  ) return undefined;
-  return { algorithm: "sha256", value: value.value };
-}
-
-function parseLocation(value: unknown): CitationLocation | undefined {
-  if (!isRecord(value) || typeof value.kind !== "string") return undefined;
-  if (value.kind === "page" && positive(value.page)) {
-    return { kind: "page", page: value.page };
-  }
-  if (
-    value.kind === "line" && positive(value.startLine) &&
-    positive(value.endLine) && value.endLine >= value.startLine
-  ) return { kind: "line", startLine: value.startLine, endLine: value.endLine };
-  if (
-    value.kind === "character" && nonNegative(value.start) &&
-    positive(value.end) && value.end > value.start
-  ) return { kind: "character", start: value.start, end: value.end };
-  const artifact = optionalText(value.artifactId, 256);
-  return value.kind === "artifact" && artifact !== undefined
-    ? { kind: "artifact", artifactId: artifact }
-    : undefined;
-}
-
-function isClassification(value: unknown): value is DocumentClassification {
-  return value === "legal" || value === "financial" || value === "tax" ||
-    value === "operational" || value === "other";
-}
-function positive(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
-}
-function nonNegative(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-}
 function sameInputScope(value: unknown, scope: RuntimeScope): boolean {
   return isRecord(value) && value.tenantId === scope.tenantId &&
     value.workspaceId === scope.workspaceId && value.dealId === scope.dealId;

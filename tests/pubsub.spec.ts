@@ -163,36 +163,51 @@ Deno.test("mcpDatabaseTool lists tables and inspects schema", async () => {
   await assertTransactionSchema();
 });
 
-Deno.test("huggingFaceMcpTool loads weights and predicts insolvency", async () => {
+Deno.test("huggingFaceMcpTool reports unavailable legacy model capabilities", async () => {
   const loadOutput = await huggingFaceMcpTool.execute!({
     task: "load_weights",
   }, testToolContext);
   const loadResult = requireRecord(loadOutput);
-  assertEquals(loadResult.success, true);
-  assertEquals(String(loadResult.status).includes("loaded"), true);
+  assertEquals(loadResult.success, false);
+  assertEquals(loadResult.status, "unsupported");
+  assertEquals(loadResult.reason, "LEGACY_WEIGHT_LOADING_UNSUPPORTED");
+  assertEquals("prediction" in loadResult, false);
 
   const predictionOutput = await huggingFaceMcpTool.execute!(
     { task: "predict_insolvency", inputData: INSOLVENCY_INPUT },
     testToolContext,
   );
   const predictionResult = requireRecord(predictionOutput);
-  const prediction = requireRecord(predictionResult.prediction);
 
-  assertEquals(predictionResult.success, true);
-  assertEquals(typeof prediction.insolvencyRiskScore, "number");
-  assertEquals(typeof prediction.riskLevel, "string");
+  assertEquals(predictionResult.success, false);
+  assertEquals(predictionResult.status, "unavailable");
+  assertEquals(predictionResult.reason, "ONNX_INFERENCE_UNAVAILABLE");
+  assertEquals("prediction" in predictionResult, false);
+  assertEquals("fallback" in predictionResult, false);
 });
 
-Deno.test("geminiGoogleSearchTool returns sources and a summary", async () => {
-  const output = await geminiGoogleSearchTool.execute!({
-    query: "SaaS valuation multiples Brazil 2026",
-    targetCompany: "SaaS Dev Corp",
-    aspect: "general",
-  }, testToolContext);
-  const result = requireRecord(output);
-  const groundingMetadata = requireRecord(result.groundingMetadata);
+Deno.test("geminiGoogleSearchTool reports unavailable without provider evidence", async () => {
+  const previousProvider = Deno.env.get("MAI_AI_PROVIDER");
+  Deno.env.set("MAI_AI_PROVIDER", "disabled");
+  try {
+    const output = await geminiGoogleSearchTool.execute!({
+      query: "SaaS valuation multiples Brazil 2026",
+      targetCompany: "SaaS Dev Corp",
+      aspect: "general",
+    }, testToolContext);
+    const result = requireRecord(output);
+    const groundingMetadata = requireRecord(result.groundingMetadata);
 
-  assertEquals(result.success, true);
-  requireArray(groundingMetadata.sources, "groundingMetadata.sources");
-  assertEquals(typeof result.summary, "string");
+    assertEquals(result.success, false);
+    assertEquals(result.status, "unavailable");
+    assertEquals(result.reason, "GEMINI_PROVIDER_UNAVAILABLE");
+    assertEquals(groundingMetadata.sources, []);
+    assertEquals("summary" in result, false);
+  } finally {
+    if (previousProvider === undefined) {
+      Deno.env.delete("MAI_AI_PROVIDER");
+    } else {
+      Deno.env.set("MAI_AI_PROVIDER", previousProvider);
+    }
+  }
 });

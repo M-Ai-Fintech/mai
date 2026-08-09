@@ -1,10 +1,50 @@
 import type { ToolOutput } from "../../agent_runtime/tool_gateway.ts";
 import type {
   CapabilityUnavailable,
+  Checksum,
+  CitationLocation,
+  DocumentClassification,
   DocumentSummary,
   EvidenceSearchHit,
+  ExactDocumentVersionReference,
+  ExactEvidenceReference,
+  GovernedDocumentContent,
   GovernedDocumentMetadata,
 } from "./governed_evidence_tool_contracts.ts";
+
+export function parseExactDocumentReference(
+  value: unknown,
+  allowVersionAliases = false,
+): ExactDocumentVersionReference | undefined {
+  if (!isRecord(value)) return undefined;
+  const documentVersionId = referenceText(value.documentVersionId, 96);
+  const versionValue = allowVersionAliases
+    ? value.version ?? value.versionNumber ?? value.expectedVersion
+    : value.version;
+  const version = positiveReferenceVersion(versionValue);
+  const checksum = parseChecksum(value.checksum);
+  return documentVersionId === undefined || version === undefined ||
+      checksum === undefined
+    ? undefined
+    : { documentVersionId, version, checksum };
+}
+
+export function parseExactEvidenceReference(
+  value: unknown,
+  allowVersionAliases = false,
+): ExactEvidenceReference | undefined {
+  if (!isRecord(value)) return undefined;
+  const reference = parseExactDocumentReference(value, allowVersionAliases);
+  const classification = isClassification(value.classification)
+    ? value.classification
+    : undefined;
+  const processingVersion = referenceText(value.processingVersion, 128);
+  const location = parseCitationLocation(value.location);
+  return reference === undefined || classification === undefined ||
+      processingVersion === undefined || location === undefined
+    ? undefined
+    : { ...reference, classification, processingVersion, location };
+}
 
 export function result(
   kind: "read" | "proposal",
@@ -89,38 +129,90 @@ export function reason(output: ToolOutput): string {
 }
 
 export function sanitizeDocumentSummary(
-  summary: DocumentSummary,
-): DocumentSummary {
+  value: unknown,
+): DocumentSummary | undefined {
+  if (!isRecord(value)) return undefined;
+  const documentId = safeText(value.documentId, 96);
+  const name = safeText(value.name, 512);
+  const mimeType = safeText(value.mimeType, 256);
+  const classification = isClassification(value.classification)
+    ? value.classification
+    : undefined;
+  const currentVersion = value.currentVersion === undefined
+    ? undefined
+    : parseExactDocumentReference(value.currentVersion);
+  if (
+    documentId === undefined || name === undefined || mimeType === undefined ||
+    classification === undefined ||
+    (value.currentVersion !== undefined && currentVersion === undefined)
+  ) return undefined;
   return {
-    documentId: summary.documentId,
-    name: summary.name,
-    mimeType: summary.mimeType,
-    classification: summary.classification,
-    ...(summary.currentVersion === undefined
-      ? {}
-      : { currentVersion: summary.currentVersion }),
+    documentId,
+    name,
+    mimeType,
+    classification,
+    ...(currentVersion === undefined ? {} : { currentVersion }),
   };
 }
 
 export function sanitizeMetadata(
-  metadata: GovernedDocumentMetadata,
-): GovernedDocumentMetadata {
+  value: unknown,
+): GovernedDocumentMetadata | undefined {
+  if (!isRecord(value)) return undefined;
+  const reference = parseExactDocumentReference(value.reference);
+  const documentId = safeText(value.documentId, 96);
+  const name = safeText(value.name, 512);
+  const mimeType = safeText(value.mimeType, 256);
+  const classification = isClassification(value.classification)
+    ? value.classification
+    : undefined;
+  if (
+    reference === undefined || documentId === undefined || name === undefined ||
+    mimeType === undefined || classification === undefined
+  ) return undefined;
   return {
-    reference: metadata.reference,
-    documentId: metadata.documentId,
-    name: metadata.name,
-    mimeType: metadata.mimeType,
-    classification: metadata.classification,
+    reference,
+    documentId,
+    name,
+    mimeType,
+    classification,
   };
 }
 
-export function sanitizeSearchHit(hit: EvidenceSearchHit): EvidenceSearchHit {
+export function sanitizeContent(
+  value: unknown,
+): GovernedDocumentContent | undefined {
+  if (!isRecord(value)) return undefined;
+  const reference = parseExactDocumentReference(value.reference);
+  const mediaType = safeText(value.mediaType, 256);
+  if (reference === undefined || mediaType === undefined) return undefined;
+  return value.bytes instanceof Uint8Array
+    ? { reference, mediaType, bytes: value.bytes }
+    : undefined;
+}
+
+export function sanitizeSearchHit(
+  value: unknown,
+): EvidenceSearchHit | undefined {
+  if (!isRecord(value)) return undefined;
+  const evidenceId = safeText(value.evidenceId, 96);
+  const citationId = safeText(value.citationId, 96);
+  const source = parseExactEvidenceReference(value.source);
+  const excerpt = optionalOutputText(value.excerpt, 16_384);
+  const score = value.score;
+  if (
+    evidenceId === undefined || citationId === undefined ||
+    source === undefined ||
+    (value.excerpt !== undefined && excerpt === undefined) ||
+    (score !== undefined &&
+      (typeof score !== "number" || !Number.isFinite(score)))
+  ) return undefined;
   return {
-    evidenceId: hit.evidenceId,
-    citationId: hit.citationId,
-    source: hit.source,
-    ...(hit.excerpt === undefined ? {} : { excerpt: hit.excerpt }),
-    ...(hit.score === undefined ? {} : { score: hit.score }),
+    evidenceId,
+    citationId,
+    source,
+    ...(excerpt === undefined ? {} : { excerpt }),
+    ...(score === undefined ? {} : { score }),
   };
 }
 
@@ -137,4 +229,81 @@ export function isUnavailable(value: unknown): value is CapabilityUnavailable {
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseChecksum(value: unknown): Checksum | undefined {
+  if (typeof value === "string") {
+    return /^[0-9a-f]{64}$/.test(value)
+      ? { algorithm: "sha256", value }
+      : undefined;
+  }
+  if (
+    !isRecord(value) || value.algorithm !== "sha256" ||
+    typeof value.value !== "string" || !/^[0-9a-f]{64}$/.test(value.value)
+  ) return undefined;
+  return { algorithm: "sha256", value: value.value };
+}
+
+function parseCitationLocation(value: unknown): CitationLocation | undefined {
+  if (!isRecord(value) || typeof value.kind !== "string") return undefined;
+  const page = positiveReferenceVersion(value.page);
+  if (value.kind === "page" && page !== undefined) {
+    return { kind: "page", page };
+  }
+  const startLine = positiveReferenceVersion(value.startLine);
+  const endLine = positiveReferenceVersion(value.endLine);
+  if (
+    value.kind === "line" && startLine !== undefined &&
+    endLine !== undefined && endLine >= startLine
+  ) {
+    return { kind: "line", startLine, endLine };
+  }
+  const start = nonNegativeReferencePosition(value.start);
+  const end = positiveReferenceVersion(value.end);
+  if (
+    value.kind === "character" && start !== undefined && end !== undefined &&
+    end > start
+  ) {
+    return { kind: "character", start, end };
+  }
+  const artifactId = referenceText(value.artifactId, 256);
+  return value.kind === "artifact" && artifactId !== undefined
+    ? { kind: "artifact", artifactId }
+    : undefined;
+}
+
+function isClassification(value: unknown): value is DocumentClassification {
+  return value === "legal" || value === "financial" || value === "tax" ||
+    value === "operational" || value === "other";
+}
+
+function positiveReferenceVersion(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+    ? value
+    : undefined;
+}
+
+function nonNegativeReferencePosition(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : undefined;
+}
+
+function referenceText(value: unknown, maximum: number): string | undefined {
+  return typeof value === "string" && value.trim() && value.length <= maximum
+    ? value.trim()
+    : undefined;
+}
+
+function safeText(value: unknown, maximum: number): string | undefined {
+  return typeof value === "string" && value.length <= maximum
+    ? value
+    : undefined;
+}
+
+function optionalOutputText(
+  value: unknown,
+  maximum: number,
+): string | undefined {
+  return value === undefined ? undefined : safeText(value, maximum);
 }

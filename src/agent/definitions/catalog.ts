@@ -34,8 +34,9 @@ export function createDefinitionCatalog(
     validateEnvelope(definition);
     addDefinition(byId, definition);
   }
-  validatePins(byId, currentVersions);
-  return new ImmutableDefinitionCatalog(byId, currentVersions);
+  const pinnedVersions = Object.freeze({ ...currentVersions });
+  validatePins(byId, pinnedVersions);
+  return new ImmutableDefinitionCatalog(byId, pinnedVersions);
 }
 
 class ImmutableDefinitionCatalog implements DefinitionCatalog {
@@ -89,13 +90,14 @@ function addDefinition(
   byId: Map<AgentDefinitionId, Map<string, AgentDefinition>>,
   definition: AgentDefinition,
 ): void {
+  const snapshot = immutableDefinition(definition);
   const versions = byId.get(definition.id) ?? new Map();
-  if (versions.has(definition.version)) {
+  if (versions.has(snapshot.version)) {
     throw new Error(
-      `Agent definition "${definition.id}@${definition.version}" is duplicated; expected one immutable version entry.`,
+      `Agent definition "${snapshot.id}@${snapshot.version}" is duplicated; expected one immutable version entry.`,
     );
   }
-  versions.set(definition.version, definition);
+  versions.set(snapshot.version, snapshot);
   byId.set(definition.id, versions);
 }
 
@@ -119,4 +121,45 @@ function validatePins(
 
 function compareVersions(left: string, right: string): number {
   return left.localeCompare(right, undefined, { numeric: true });
+}
+
+function immutableDefinition(definition: AgentDefinition): AgentDefinition {
+  return Object.freeze({
+    ...definition,
+    inputSchemaReference: Object.freeze({ ...definition.inputSchemaReference }),
+    outputSchemaReference: Object.freeze({
+      ...definition.outputSchemaReference,
+    }),
+    allowedCapabilities: Object.freeze([...definition.allowedCapabilities]),
+    unavailableCapabilities: freezeCapabilities(
+      definition.unavailableCapabilities,
+    ),
+    deniedCapabilities: freezeCapabilities(definition.deniedCapabilities),
+    capabilities: Object.freeze({
+      allowed: Object.freeze([...definition.capabilities.allowed]),
+      unavailable: freezeCapabilities(definition.capabilities.unavailable),
+      denied: freezeCapabilities(definition.capabilities.denied),
+    }),
+    prohibitedEffects: Object.freeze([...definition.prohibitedEffects]),
+    prompt: Object.freeze({ ...definition.prompt }),
+    modelPolicy: Object.freeze({ ...definition.modelPolicy }),
+    knowledgeAssets: Object.freeze(
+      definition.knowledgeAssets.map((asset) => Object.freeze({ ...asset })),
+    ),
+    toolReferences: Object.freeze([...definition.toolReferences]),
+    purePorts: Object.freeze(
+      definition.purePorts.map((port) => Object.freeze({ ...port })),
+    ),
+    legacyToolReferences: Object.freeze([...definition.legacyToolReferences]),
+    artifactPolicy: Object.freeze({ ...definition.artifactPolicy }),
+    lifecycle: Object.freeze({ ...definition.lifecycle }),
+  }) as unknown as AgentDefinition;
+}
+
+function freezeCapabilities(
+  entries: readonly { capability: string; reason: string }[],
+): readonly { capability: string; reason: string }[] {
+  return Object.freeze(
+    entries.map((entry) => Object.freeze({ ...entry })),
+  );
 }
