@@ -68,13 +68,16 @@ export function createNormalizedIntegrationFailure(
   assertDate(input.occurredAt);
   assertProviderStatus(input.providerStatus);
   const code = assertFailureCode(input.code);
+  const occurredAtEpoch = (input.occurredAt ?? new Date()).getTime();
   const result: NormalizedIntegrationFailure = {
     code,
     provider: input.provider,
     operation: input.operation,
     message: integrationFailureMessage(code),
     retryable: RETRYABLE_CODES.has(code),
-    occurredAt: new Date(input.occurredAt ?? Date.now()),
+    get occurredAt(): Date {
+      return new Date(occurredAtEpoch);
+    },
     ...(input.providerRequestId === undefined ? {} : {
       providerRequestId: assertProviderRequestId(input.providerRequestId),
     }),

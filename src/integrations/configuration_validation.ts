@@ -50,9 +50,7 @@ export function assertRecord(
 ): asserts value is Record<string, unknown> {
   if (isRecord(value)) return;
   throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected an object with explicit fields.`,
+    `${label} is invalid; expected an object with explicit fields.`,
   );
 }
 

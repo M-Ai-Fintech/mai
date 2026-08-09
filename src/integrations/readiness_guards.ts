@@ -27,6 +27,37 @@ export function hasCoordinatorAuthorization(value: unknown): boolean {
 }
 
 /**
+ * Copies coordinator authority while preserving its private runtime brand.
+ *
+ * @example canonicalizeCoordinatorAuthorization(undefined)
+ */
+export function canonicalizeCoordinatorAuthorization(
+  value: unknown,
+): CoordinatorAuthorization | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    throw new Error(
+      "Readiness coordinator authorization is invalid; expected coordinator-owned authorization metadata.",
+    );
+  }
+  const candidate = value as Partial<CoordinatorAuthorization>;
+  const authorizationReference = candidate.authorizationReference;
+  if (
+    candidate[coordinatorAuthorizationBrand] !== "coordinator" ||
+    typeof authorizationReference !== "string" ||
+    !/^[A-Za-z0-9._-]{1,128}$/.test(authorizationReference)
+  ) {
+    throw new Error(
+      "Readiness coordinator authorization is invalid; expected coordinator-owned authorization metadata.",
+    );
+  }
+  return Object.freeze({
+    authorizationReference,
+    [coordinatorAuthorizationBrand]: "coordinator" as const,
+  });
+}
+
+/**
  * Rejects readiness targets that contradict provider lifecycle ownership.
  *
  * @example assertReadinessProviderTarget("fixture", "fixture", "enabled")

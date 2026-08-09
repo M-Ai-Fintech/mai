@@ -79,7 +79,7 @@ Deno.test("local-development evidence is scoped to provider version and environm
     request("local-development", "commit-local-001", "papermark-other"),
   );
 
-  assertEquals(local.state, "local-development");
+  assertEquals(local.state, "gated");
   assertEquals(wrongVersion.state, "gated");
   assertEquals(wrongEnvironment.state, "gated");
   assert(wrongVersion.missingGates.length > 0);
@@ -233,14 +233,20 @@ Deno.test("readiness evidence timestamps are defensive and cannot promote stale 
 
   assertEquals(
     register.evaluate(
-      request("local-development", "commit-001", "papermark-local"),
+      {
+        ...request("local-development", "commit-001", "papermark-local"),
+        evaluatedAt: new Date("2026-08-08T14:00:00.000Z"),
+      },
     ).state,
     "gated",
   );
   register.evidence[oldPassIndex].capturedAt.setFullYear(2099);
   assertEquals(
     register.evaluate(
-      request("local-development", "commit-001", "papermark-local"),
+      {
+        ...request("local-development", "commit-001", "papermark-local"),
+        evaluatedAt: new Date("2026-08-08T14:00:00.000Z"),
+      },
     ).state,
     "gated",
   );
@@ -249,6 +255,103 @@ Deno.test("readiness evidence timestamps are defensive and cannot promote stale 
     "2026-08-08T12:00:00.000Z",
   );
   assertEquals(Object.isFrozen(register.evidence[oldPassIndex]), true);
+});
+
+Deno.test("direct readiness evaluation rejects duplicate evidence IDs across gates", () => {
+  const evidence = evidenceFor(
+    "local-development",
+    "commit-duplicate-001",
+    "papermark-local",
+  );
+  const duplicate = createReadinessEvidence({
+    ...evidence[0],
+    gate: "credentials",
+  });
+  assertThrows(
+    () =>
+      evaluateReadiness({
+        ...request(
+          "local-development",
+          "commit-duplicate-001",
+          "papermark-local",
+        ),
+        evidence: [evidence[0], duplicate],
+      }),
+    Error,
+    "evidence ID",
+  );
+});
+
+Deno.test("readiness evaluation rejects evidence captured after its injected clock", () => {
+  const future = createReadinessEvidence({
+    evidenceId: "evidence_future",
+    provider: "fixture",
+    environment: "fixture",
+    providerVersion: "fixture-v1",
+    environmentId: "fixture",
+    gate: "interface-contract",
+    outcome: "passed",
+    source: "fixture-test",
+    capturedAt: new Date("2026-08-08T13:00:00.000Z"),
+    artifactDigest: digest("future"),
+  });
+  assertThrows(
+    () =>
+      evaluateReadiness({
+        ...request("fixture", "fixture-v1", "fixture"),
+        evidence: [future],
+      }),
+    Error,
+    "newer than",
+  );
+});
+
+Deno.test("equal-timestamp readiness failures dominate passes independent of input order", () => {
+  const pass = createReadinessEvidence({
+    evidenceId: "evidence_equal_pass",
+    provider: "fixture",
+    environment: "fixture",
+    providerVersion: "fixture-v1",
+    environmentId: "fixture",
+    gate: "interface-contract",
+    outcome: "passed",
+    source: "fixture-test",
+    capturedAt: timestamp(),
+    artifactDigest: digest("equal-pass"),
+  });
+  const failure = createReadinessEvidence({
+    ...pass,
+    evidenceId: "evidence_equal_failure",
+    outcome: "failed",
+    artifactDigest: digest("equal-failure"),
+  });
+  for (const evidence of [[pass, failure], [failure, pass]]) {
+    const result = evaluateReadiness({
+      ...request("fixture", "fixture-v1", "fixture"),
+      evidence,
+    });
+    assertEquals(result.state, "gated");
+    assert(result.missingGates.includes("interface-contract"));
+  }
+});
+
+Deno.test("readiness request runtime flags and lifecycle are validated", () => {
+  const input = request("fixture", "fixture-v1", "fixture");
+  assertThrows(
+    () => evaluateReadiness({ ...input, lifecycle: "unknown" } as never),
+    Error,
+    "lifecycle",
+  );
+  assertThrows(
+    () => evaluateReadiness({ ...input, configured: "true" } as never),
+    Error,
+    "configured",
+  );
+  assertThrows(
+    () => evaluateReadiness({ ...input, implementation: "unknown" } as never),
+    Error,
+    "implementation",
+  );
 });
 
 function request(
@@ -270,6 +373,7 @@ function request(
     configured: true,
     implementation: "complete" as const,
     evidence: [],
+    evaluatedAt: timestamp(),
   };
 }
 

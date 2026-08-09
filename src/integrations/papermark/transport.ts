@@ -74,7 +74,12 @@ export class PapermarkTransport {
     private readonly secretResolver: SecretResolver,
     private readonly dependencies: PapermarkTransportDependencies,
   ) {
-    assertPapermarkCallAuthorization(dependencies.authorization, config);
+    assertPapermarkCallAuthorization(
+      dependencies.authorization,
+      config,
+      secretResolver,
+      dependencies.fetch,
+    );
     this.timer = dependencies.timer ?? systemTimer();
   }
 
@@ -109,6 +114,8 @@ export class PapermarkTransport {
     assertPapermarkCallAuthorization(
       this.dependencies.authorization,
       this.config,
+      this.secretResolver,
+      this.dependencies.fetch,
     );
     try {
       const secret = await this.secretResolver.resolve(reference, signal);
@@ -158,6 +165,8 @@ export class PapermarkTransport {
     assertPapermarkCallAuthorization(
       this.dependencies.authorization,
       this.config,
+      this.secretResolver,
+      this.dependencies.fetch,
     );
     return this.dependencies.fetch(url.toString(), {
       method: "GET",

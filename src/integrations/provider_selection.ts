@@ -1,4 +1,5 @@
 import {
+  INTEGRATION_PROVIDERS,
   type IntegrationAdapter,
   type IntegrationEnvironment,
   type IntegrationProvider,
@@ -109,15 +110,9 @@ export type ProviderSelectionResult =
 export async function selectProvider(
   input: ProviderSelectionRequest,
 ): Promise<ProviderSelectionResult> {
-  const canonical = canonicalizeConfiguration(input);
+  const canonical = canonicalizeRequest(input);
   if (!canonical.ok) return canonical.result;
-  const request = canonical.configuration === undefined
-    ? input
-    : canonicalRequest(input, canonical.configuration);
-  const bindingFailure = validateBinding(request);
-  if (bindingFailure !== undefined) {
-    return blocked(request, "invalid", bindingFailure);
-  }
+  const request = canonical.request;
   if (request.mode === "fixture") return await selectFixture(request);
   return await selectConfigured(request);
 }
@@ -222,40 +217,51 @@ function selectConfigured(
   return blocked(input, "unauthorized", failure(input, "AUTHORIZATION_DENIED"));
 }
 
-function canonicalizeConfiguration(
+function canonicalizeRequest(
   input: ProviderSelectionRequest,
 ):
-  | { readonly ok: true; readonly configuration?: ProviderConfiguration }
+  | { readonly ok: true; readonly request: ProviderSelectionRequest }
   | { readonly ok: false; readonly result: BlockedProviderSelection } {
-  if (input.configuration === undefined) {
-    return { ok: true };
-  }
   try {
+    const raw = asRecord(input);
+    const mode = parseMode(raw.mode);
+    const provider = parseProvider(raw.provider);
+    const scope = freezeScope(parseIntegrationScope(raw.scope));
+    const connectorAccountId = parseBinding(
+      raw.connectorAccountId,
+      "connector account",
+    );
+    const providerWorkspaceId = parseBinding(
+      raw.providerWorkspaceId,
+      "provider workspace",
+    );
+    const configuration = raw.configuration === undefined
+      ? undefined
+      : parseProviderConfiguration(raw.configuration);
+    const factories = freezeFactories(raw.factories);
     return {
       ok: true,
-      configuration: parseProviderConfiguration(input.configuration),
+      request: Object.freeze({
+        mode,
+        provider,
+        scope,
+        connectorAccountId,
+        providerWorkspaceId,
+        ...(configuration === undefined ? {} : { configuration }),
+        factories,
+      }),
     };
   } catch {
+    const fallback = fallbackRequest(input);
     return {
       ok: false,
-      result: blocked(input, "invalid", failure(input, "INVALID_REQUEST")),
+      result: blocked(
+        fallback,
+        "invalid",
+        failure(fallback, "INVALID_REQUEST"),
+      ),
     };
   }
-}
-
-function canonicalRequest(
-  input: ProviderSelectionRequest,
-  configuration: ProviderConfiguration,
-): ProviderSelectionRequest {
-  return {
-    mode: input.mode,
-    provider: input.provider,
-    scope: input.scope,
-    connectorAccountId: input.connectorAccountId,
-    providerWorkspaceId: input.providerWorkspaceId,
-    configuration,
-    factories: input.factories,
-  };
 }
 
 async function constructAdapter(
@@ -270,13 +276,14 @@ async function constructAdapter(
   }
 > {
   try {
-    const value = await factory({
+    const context = Object.freeze({
       provider: input.provider,
       ...(configuration === undefined ? {} : { configuration }),
       scope: input.scope,
       connectorAccountId: input.connectorAccountId,
       providerWorkspaceId: input.providerWorkspaceId,
     });
+    const value = await factory(context);
     return { ok: true, value };
   } catch (error: unknown) {
     return {
@@ -288,23 +295,6 @@ async function constructAdapter(
       }),
     };
   }
-}
-
-function validateBinding(
-  input: ProviderSelectionRequest,
-): ReturnType<typeof createNormalizedIntegrationFailure> | undefined {
-  try {
-    parseIntegrationScope(input.scope);
-  } catch {
-    return failure(input, "INVALID_REQUEST");
-  }
-  if (!safeBindingText(input.connectorAccountId)) {
-    return failure(input, "INVALID_REQUEST");
-  }
-  if (!safeBindingText(input.providerWorkspaceId)) {
-    return failure(input, "INVALID_REQUEST");
-  }
-  return undefined;
 }
 
 function validateAdapter(
@@ -361,8 +351,119 @@ function failure(
 }
 
 function safeBindingText(value: string): boolean {
-  return typeof value === "string" && value.length > 0 && value.length <= 255 &&
-    value.trim() === value && !/[\r\n]/.test(value);
+  return typeof value === "string" &&
+    /^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(value) &&
+    !/^(?:sk|pk|rk|ghp|gho|ghs|glpat|xox[abp]|AIza|AKIA|ya29|eyJ)/i.test(
+      value,
+    ) && !(value.length >= 32 && /[A-Z]/.test(value) && /[a-z]/.test(value) &&
+      /[0-9]/.test(value));
+}
+
+function parseMode(value: unknown): ProviderSelectionMode {
+  if (value === "configured" || value === "fixture") return value;
+  throw new Error(
+    "Provider selection mode is invalid; expected configured or fixture.",
+  );
+}
+
+function parseProvider(value: unknown): IntegrationProvider {
+  if (INTEGRATION_PROVIDERS.includes(value as IntegrationProvider)) {
+    return value as IntegrationProvider;
+  }
+  throw new Error(
+    "Provider selection provider is invalid; expected a registered provider.",
+  );
+}
+
+function parseBinding(value: unknown, label: string): string {
+  if (typeof value === "string" && safeBindingText(value)) return value;
+  throw new Error(
+    `${label} binding is invalid; expected a bounded safe identifier.`,
+  );
+}
+
+function freezeScope(scope: IntegrationScope): IntegrationScope {
+  return Object.freeze({
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+  });
+}
+
+function freezeFactories(value: unknown): ProviderSelectionFactories {
+  if (!isRecord(value)) {
+    throw new Error(
+      "Provider selection factories are invalid; expected factory functions.",
+    );
+  }
+  const factories: Record<string, ProviderSelectionFactory> = {};
+  for (const key of ["papermark", "ideals", "intralinks", "fixture"]) {
+    const factory = value[key];
+    if (factory === undefined) continue;
+    if (typeof factory !== "function") {
+      throw new Error(
+        "Provider selection factory is invalid; expected a function.",
+      );
+    }
+    factories[key] = factory as ProviderSelectionFactory;
+  }
+  return Object.freeze(factories) as ProviderSelectionFactories;
+}
+
+function fallbackRequest(value: unknown): ProviderSelectionRequest {
+  const source = isRecord(value) ? value : {};
+  const rawProvider = readField(source, "provider");
+  const provider = INTEGRATION_PROVIDERS.includes(
+      rawProvider as IntegrationProvider,
+    )
+    ? rawProvider as IntegrationProvider
+    : "papermark";
+  const scope = fallbackScope(readField(source, "scope"));
+  const rawConnector = readField(source, "connectorAccountId");
+  const connectorAccountId = safeBindingText(rawConnector as string)
+    ? rawConnector as string
+    : "invalid-connector";
+  const rawWorkspace = readField(source, "providerWorkspaceId");
+  const providerWorkspaceId = safeBindingText(rawWorkspace as string)
+    ? rawWorkspace as string
+    : "invalid-workspace";
+  const rawMode = readField(source, "mode");
+  return Object.freeze({
+    mode: rawMode === "fixture" ? "fixture" : "configured",
+    provider,
+    scope,
+    connectorAccountId,
+    providerWorkspaceId,
+    factories: Object.freeze({}),
+  });
+}
+
+function fallbackScope(value: unknown): IntegrationScope {
+  try {
+    return freezeScope(parseIntegrationScope(value));
+  } catch {
+    return Object.freeze({
+      tenantId: "tenant_invalid" as IntegrationScope["tenantId"],
+      workspaceId: "workspace_invalid" as IntegrationScope["workspaceId"],
+      dealId: "deal_invalid" as IntegrationScope["dealId"],
+    });
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (isRecord(value)) return value;
+  throw new Error("Provider selection request is invalid; expected an object.");
+}
+
+function readField(
+  source: Record<string, unknown>,
+  key: string,
+): unknown {
+  try {
+    return source[key];
+  } catch {
+    return undefined;
+  }
 }
 
 function validPapermarkEnvironment(

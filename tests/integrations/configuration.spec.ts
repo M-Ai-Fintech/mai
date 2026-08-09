@@ -230,6 +230,39 @@ Deno.test("secret references enforce manager-specific locator shapes", () => {
   );
 });
 
+Deno.test("secret-boundary validation never echoes invalid manager or locator values", () => {
+  const secret = "sk_live_secret-shaped-invalid-locator_123456789";
+  const cases: unknown[] = [
+    { manager: secret, name: "PAPER_MARK_SECRET" },
+    { manager: "environment", name: secret },
+    { manager: "environment", name: "PAPER_MARK_SECRET", version: secret },
+    { manager: "environment", name: "PAPER_MARK_SECRET", version: "v999" },
+  ];
+  for (const input of cases) {
+    try {
+      parseSecretReference(input);
+      throw new Error("Expected secret reference input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes(secret), false);
+      assertEquals(String(error).includes("invalid"), true);
+    }
+  }
+  try {
+    parseProviderConfiguration({
+      provider: "papermark",
+      lifecycle: "enabled",
+      environment: "local-development",
+      endpoint: "http://localhost:3000/api",
+      secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+      activation: { ...activation(), providerVersion: secret },
+    });
+    throw new Error("Expected activation input to be rejected.");
+  } catch (error) {
+    assertEquals(String(error).includes(secret), false);
+    assertEquals(String(error).includes("activation"), true);
+  }
+});
+
 Deno.test("nested credential values are rejected before canonical configuration output", () => {
   const secret = "nested-secret-must-not-be-retained";
   for (

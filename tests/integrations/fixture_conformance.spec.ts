@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import {
   type CapabilitySnapshot,
   createCapabilitySnapshot,
@@ -116,6 +116,24 @@ Deno.test("fixture conformance records safe normalized missing-document failure"
   assertEquals(failure?.code, "NOT_FOUND");
   assertEquals(failure?.message.includes("raw-secret"), false);
   assertEquals(JSON.stringify(evidence).includes("raw-secret"), false);
+});
+
+Deno.test("fixture conformance evidence deeply freezes checks and observedAt", async () => {
+  const evidence = await runFixtureConformance(
+    new DeterministicFixtureAdapter(),
+    conformancePlan(),
+  );
+  assertEquals(Object.isFrozen(evidence.checks), true);
+  assertEquals(Object.isFrozen(evidence.checks[0]), true);
+  assertThrows(
+    () => ((evidence.checks[0] as { detail: string }).detail = "changed"),
+    TypeError,
+  );
+  evidence.observedAt.setFullYear(2099);
+  assertEquals(
+    evidence.observedAt.toISOString(),
+    "2026-08-08T12:00:00.000Z",
+  );
 });
 
 function conformancePlan(): FixtureConformancePlan {

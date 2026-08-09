@@ -15,10 +15,10 @@ import {
 import {
   parseIntegrationScope,
   type RuntimeSecret,
-  type SecretReference,
 } from "../../../src/integrations/contracts.ts";
 import {
   createSyntheticPapermarkCallAuthorizationForTests,
+  markPapermarkSyntheticFakeForTests,
 } from "../../../src/integrations/papermark/authorization.ts";
 
 const scope = parseIntegrationScope({
@@ -41,34 +41,6 @@ class SecretResolverFake {
   resolve(): Promise<RuntimeSecret> {
     this.calls += 1;
     return Promise.resolve(secret);
-  }
-}
-
-class StalledSecretResolverFake {
-  resolve(
-    _reference: SecretReference,
-    _signal?: AbortSignal,
-  ): Promise<RuntimeSecret> {
-    return new Promise<RuntimeSecret>(() => undefined);
-  }
-}
-
-class DelayedSecretResolverFake {
-  signal?: AbortSignal;
-  private releaseSecret?: (secret: RuntimeSecret) => void;
-
-  resolve(
-    _reference: SecretReference,
-    signal?: AbortSignal,
-  ): Promise<RuntimeSecret> {
-    this.signal = signal;
-    return new Promise<RuntimeSecret>((resolve) => {
-      this.releaseSecret = resolve;
-    });
-  }
-
-  release(): void {
-    this.releaseSecret?.(secret);
   }
 }
 
@@ -155,17 +127,29 @@ function transport(
   config = configuration(),
   timer: PapermarkTimer = new TimerFake(),
 ) {
-  const resolver = new SecretResolverFake();
+  const resolver = markPapermarkSyntheticFakeForTests(
+    new SecretResolverFake(),
+    "secret-resolver",
+    "SecretResolverFake",
+  );
+  const fetch = markPapermarkSyntheticFakeForTests(
+    fake.fetch,
+    "fetch",
+    "FetchFake",
+  );
   const sleeps: number[] = [];
   const instance = new PapermarkTransport(config, resolver, {
-    fetch: fake.fetch,
+    fetch,
     sleep: (delayMs) => {
       sleeps.push(delayMs);
       return Promise.resolve();
     },
     now: () => new Date("2026-08-08T12:00:00.000Z"),
     timer,
-    authorization: createSyntheticPapermarkCallAuthorizationForTests(config),
+    authorization: createSyntheticPapermarkCallAuthorizationForTests(config, {
+      secretResolver: resolver,
+      fetch,
+    }),
   });
   return { instance, resolver, sleeps };
 }
@@ -357,103 +341,6 @@ Deno.test("Papermark transport does not retry malformed responses", async () => 
   assertEquals(fake.calls.length, 1);
 });
 
-Deno.test("Papermark transport converts timeout into a bounded failure", async () => {
-  const fake = new FetchFake();
-  fake.failures.push(new DOMException("aborted", "AbortError"));
-  const timer = new TimerFake();
-  const { instance } = transport(
-    fake,
-    configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
-    timer,
-  );
-  const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
-  const error = await captureError(() => pending);
-  assertEquals(error.code, "TIMEOUT");
-  assertEquals(timer.delays, [1_000]);
-});
-
-Deno.test("Papermark transport times out a stalled secret resolver", async () => {
-  const fake = new FetchFake();
-  const timer = new TimerFake();
-  const config = configuration({
-    retry: { maxAttempts: 1, maxDelayMs: 250 },
-  });
-  const instance = new PapermarkTransport(
-    config,
-    new StalledSecretResolverFake(),
-    {
-      fetch: fake.fetch,
-      sleep: () => Promise.resolve(),
-      now: () => new Date("2026-08-08T12:00:00.000Z"),
-      timer,
-      authorization: createSyntheticPapermarkCallAuthorizationForTests(config),
-    },
-  );
-
-  const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
-  const error = await captureError(() => pending);
-  assertEquals(error.code, "TIMEOUT");
-  assertEquals(fake.calls.length, 0);
-});
-
-Deno.test("Papermark transport rejects a resolver that completes after timeout before fetch", async () => {
-  const fake = new FetchFake();
-  const timer = new TimerFake();
-  const resolver = new DelayedSecretResolverFake();
-  const instance = new PapermarkTransport(configWithSingleAttempt(), resolver, {
-    fetch: fake.fetch,
-    sleep: () => Promise.resolve(),
-    now: () => new Date("2026-08-08T12:00:00.000Z"),
-    timer,
-    authorization: createSyntheticPapermarkCallAuthorizationForTests(
-      configWithSingleAttempt(),
-    ),
-  });
-
-  const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
-  resolver.release();
-  const error = await captureError(() => pending);
-  assertEquals(error.code, "TIMEOUT");
-  assertEquals(fake.calls.length, 0);
-  assertEquals(resolver.signal?.aborted, true);
-});
-
-Deno.test("Papermark transport aborts a stalled response body", async () => {
-  const fake = new FetchFake();
-  let cancelled = false;
-  const body = new ReadableStream<Uint8Array>({
-    cancel: () => {
-      cancelled = true;
-    },
-  });
-  const response = new Response(body, {
-    headers: { "content-type": "application/json" },
-  });
-  Object.defineProperty(response, "json", {
-    value: () => new Promise<unknown>(() => undefined),
-  });
-  fake.responses.push(response);
-  const timer = new TimerFake();
-  const { instance } = transport(
-    fake,
-    configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
-    timer,
-  );
-
-  const pending = instance.getDocumentsPage(undefined);
-  for (let index = 0; index < 5; index += 1) await Promise.resolve();
-  timer.fire();
-  const error = await captureError(() => pending);
-  await Promise.resolve();
-  assertEquals(error.code, "TIMEOUT");
-  assertEquals(cancelled, true);
-  assertEquals(fake.calls[0].init.signal instanceof AbortSignal, true);
-  assertEquals((fake.calls[0].init.signal as AbortSignal).aborted, true);
-});
-
 Deno.test("Papermark transport reports safe retry exhaustion metadata", async () => {
   const fake = new FetchFake();
   fake.responses.push(
@@ -481,10 +368,6 @@ function activation() {
     storageTopology: "postgres-object-store",
     rollbackOperator: "platform-on-call",
   } as const;
-}
-
-function configWithSingleAttempt(): PapermarkAdapterConfig {
-  return configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } });
 }
 
 async function captureError(

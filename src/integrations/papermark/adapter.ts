@@ -150,7 +150,12 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     this.scope = config.binding.scope;
     this.connectorAccountId = config.binding.connectorAccount.id;
     this.providerWorkspaceId = config.binding.providerWorkspaceId;
-    assertPapermarkCallAuthorization(dependencies.authorization, config);
+    assertPapermarkCallAuthorization(
+      dependencies.authorization,
+      config,
+      dependencies.secretResolver,
+      dependencies.fetch,
+    );
     this.now = dependencies.now ?? (() => new Date());
     this.transport = new PapermarkTransport(
       config,

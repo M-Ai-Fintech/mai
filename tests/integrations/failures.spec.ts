@@ -113,3 +113,17 @@ Deno.test("invalid normalized failure metadata is rejected", () => {
     "request ID",
   );
 });
+
+Deno.test("normalized failure timestamps are defensive copies", () => {
+  const failure = createNormalizedIntegrationFailure({
+    provider: "fixture",
+    operation: "list_documents",
+    code: "UNKNOWN",
+    occurredAt: new Date("2026-08-08T12:00:00.000Z"),
+  });
+  failure.occurredAt.setFullYear(2099);
+  assertEquals(
+    failure.occurredAt.toISOString(),
+    "2026-08-08T12:00:00.000Z",
+  );
+});

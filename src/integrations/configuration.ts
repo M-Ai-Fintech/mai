@@ -31,6 +31,8 @@ const CONFIGURATION_KEYS = new Set([
 ]);
 
 const SECRET_REFERENCE_KEYS = new Set(["manager", "name", "version"]);
+const CREDENTIAL_PREFIX =
+  /^(?:sk|pk|rk|ghp|gho|ghs|glpat|xox[abp]|AIza|AKIA|ya29|eyJ)[A-Za-z0-9_./+=-]{12,}$/i;
 
 export interface ProviderConfiguration {
   readonly provider: RealIntegrationProvider;
@@ -96,7 +98,7 @@ export function parseSecretReference(value: unknown): SecretReference {
   const name = parseSecretLocator(manager, value.name);
   const version = value.version === undefined
     ? undefined
-    : parseLocatorText(value.version, "secret reference version");
+    : parseSecretVersion(manager, value.version);
   return Object.freeze({
     manager,
     name,
@@ -254,9 +256,7 @@ function parseSecretManager(value: unknown): SecretManager {
     return value;
   }
   throw new Error(
-    `Secret manager "${
-      String(value)
-    }" is invalid; expected environment, local-secret-store, or vault.`,
+    "Secret manager is invalid; expected environment, local-secret-store, or vault.",
   );
 }
 
@@ -266,14 +266,13 @@ function parseLocatorText(value: unknown, label: string): string {
     value.length > 0 &&
     value.length <= 255 &&
     value.trim() === value &&
-    !/\s/.test(value)
+    !/\s/.test(value) &&
+    !looksCredentialLike(value)
   ) {
     return value;
   }
   throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected 1-255 non-whitespace locator characters.`,
+    `${label} is invalid; expected a bounded non-credential locator.`,
   );
 }
 
@@ -288,13 +287,31 @@ function parseSecretLocator(manager: SecretManager, value: unknown): string {
   if (
     /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)+$/.test(
       locator,
-    ) && !/^(?:sk|pk|rk|ghp|glpat|xox[abp]|AIza)[A-Za-z0-9_-]{16,}$/.test(
-      locator,
     )
   ) return locator;
   throw new Error(
     `Secret manager "${manager}" reference name is invalid; expected a bounded path locator without credential material.`,
   );
+}
+
+function parseSecretVersion(manager: SecretManager, value: unknown): string {
+  const version = parseLocatorText(value, "secret reference version");
+  const valid = manager === "environment"
+    ? version === "current"
+    : manager === "local-secret-store"
+    ? /^(?:current|v[0-9]{1,9}|version-[0-9]{1,9})$/.test(version)
+    : /^(?:current|latest|v[0-9]{1,9}|version-[0-9]{1,9})$/.test(version);
+  if (valid) return version;
+  throw new Error(
+    `Secret manager "${manager}" version is invalid; expected its bounded version locator syntax.`,
+  );
+}
+
+function looksCredentialLike(value: string): boolean {
+  if (CREDENTIAL_PREFIX.test(value)) return true;
+  const mixedClasses = /[A-Z]/.test(value) && /[a-z]/.test(value) &&
+    /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value);
+  return value.length >= 32 && (mixedClasses || new Set(value).size >= 20);
 }
 
 function freezeConfiguration(

@@ -14,6 +14,16 @@ const ACTIVATION_KEYS = new Set([
   "rollbackOperator",
 ]);
 const LINEAR_ISSUE_ID = /(?:^|[^A-Za-z0-9])MAI-\d+(?:$|[^A-Za-z0-9])/i;
+const APPROVED_LICENSES = new Set([
+  "AGPLv3",
+  "commercial",
+  "commercial-license",
+]);
+const APPROVED_DEPLOYMENTS = new Set([
+  "self-hosted",
+  "managed",
+  "managed-service",
+]);
 
 export interface OwnerApprovedActivation {
   readonly approvalReference: string;
@@ -48,7 +58,11 @@ function parseActivationField(
   key: string,
   label: string,
 ): string {
-  return parseActivationText(value[key], label);
+  const text = parseActivationText(value[key], label);
+  if (activationFieldMatches(key, text)) return text;
+  throw new Error(
+    `Provider activation ${label} is invalid; expected an approved semantic value.`,
+  );
 }
 
 function parseActivationApproval(
@@ -109,9 +123,44 @@ function parseActivationText(value: unknown, label: string): string {
   if (
     typeof value === "string" && value.length > 0 && value.length <= 255 &&
     value.trim() === value && !/[\r\n]/.test(value) &&
-    !LINEAR_ISSUE_ID.test(value)
+    !LINEAR_ISSUE_ID.test(value) && !looksCredentialLike(value)
   ) return value;
   throw new Error(
     `Provider activation ${label} is invalid; expected credential-free approved metadata without project issue IDs.`,
   );
+}
+
+function activationFieldMatches(key: string, value: string): boolean {
+  if (key === "approvalReference") {
+    return /^approval_[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(value);
+  }
+  if (key === "providerVersion") {
+    return /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?-?v?[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-z0-9.-]+)?$/i
+      .test(value) ||
+      /^commit-[a-z0-9][a-z0-9._-]{0,127}$/i.test(value);
+  }
+  if (key === "license") return APPROVED_LICENSES.has(value);
+  if (key === "deploymentModel") return APPROVED_DEPLOYMENTS.has(value);
+  if (key === "region") {
+    return value === "local" ||
+      /^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(value);
+  }
+  if (key === "storageTopology") {
+    return /^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(value);
+  }
+  if (key === "rollbackOperator") {
+    return /^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(value);
+  }
+  return false;
+}
+
+function looksCredentialLike(value: string): boolean {
+  if (
+    /^(?:sk|pk|rk|ghp|gho|ghs|glpat|xox[abp]|AIza|AKIA|ya29|eyJ)/i.test(
+      value,
+    )
+  ) return true;
+  const mixedClasses = /[A-Z]/.test(value) && /[a-z]/.test(value) &&
+    /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value);
+  return value.length >= 32 && (mixedClasses || new Set(value).size >= 20);
 }

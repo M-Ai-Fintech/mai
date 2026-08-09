@@ -1,14 +1,19 @@
 import {
-  INTEGRATION_PROVIDERS,
   type IntegrationEnvironment,
   type IntegrationProvider,
   type ProviderLifecycle,
 } from "./contracts.ts";
 import {
-  assertReadinessProviderTarget,
   type CoordinatorAuthorization,
   hasCoordinatorAuthorization,
 } from "./readiness_guards.ts";
+import { canonicalizeReadinessRequest } from "./readiness_inputs.ts";
+import {
+  assertReadinessDate,
+  assertReadinessIdentifier,
+  assertReadinessProvider,
+  assertReadinessTarget,
+} from "./readiness_assertions.ts";
 import { assertReadinessEvidenceShape } from "./readiness_validation.ts";
 
 export type { CoordinatorAuthorization } from "./readiness_guards.ts";
@@ -95,6 +100,7 @@ export interface ReadinessEvaluationRequest {
   readonly configured: boolean;
   readonly implementation: "complete" | "partial";
   readonly evidence: readonly ReadinessEvidence[];
+  readonly evaluatedAt: Date;
   readonly coordinatorAuthorization?: CoordinatorAuthorization;
 }
 
@@ -120,13 +126,19 @@ const REQUIRED_GATES: Readonly<
   fixture: ["interface-contract", "fixture-conformance"],
   "local-development": [
     "interface-contract",
+    "coordinator-authorization",
     "configuration",
     "credentials",
+    "provider-version",
+    "license",
     "endpoint",
+    "connector-account",
     "health",
     "capabilities",
     "failure-normalization",
+    "authorization",
     "scope-isolation",
+    "rollback",
     "secret-redaction",
   ],
   "sandbox-certification": [
@@ -218,24 +230,7 @@ export function createReadinessEvidence(
   input: ReadinessEvidenceInput,
 ): ReadinessEvidence {
   assertReadinessEvidenceShape(input);
-  assertProvider(input.provider);
-  assertTarget(input.environment);
-  assertIdentifier(input.evidenceId, "evidence ID");
-  assertIdentifier(input.providerVersion, "provider version");
-  assertIdentifier(input.environmentId, "environment ID");
-  assertGate(input.gate);
-  assertDate(input.capturedAt);
-  assertDigest(input.artifactDigest);
-  assertSource(input.environment, input.source);
-  if (input.outcome !== "passed" && input.outcome !== "failed") {
-    throw new Error(
-      `Readiness evidence outcome "${
-        String(input.outcome)
-      }" is invalid; expected passed or failed.`,
-    );
-  }
-  const capturedAtEpoch = input.capturedAt.getTime();
-  const evidence: ReadinessEvidence = {
+  const snapshot = {
     evidenceId: input.evidenceId,
     provider: input.provider,
     environment: input.environment,
@@ -244,10 +239,39 @@ export function createReadinessEvidence(
     gate: input.gate,
     outcome: input.outcome,
     source: input.source,
+    capturedAt: input.capturedAt,
+    artifactDigest: input.artifactDigest,
+  };
+  assertReadinessProvider(snapshot.provider);
+  assertReadinessTarget(snapshot.environment);
+  assertReadinessIdentifier(snapshot.evidenceId, "evidence ID");
+  assertReadinessIdentifier(snapshot.providerVersion, "provider version");
+  assertReadinessIdentifier(snapshot.environmentId, "environment ID");
+  assertGate(snapshot.gate);
+  assertReadinessDate(snapshot.capturedAt, "evidence timestamp");
+  assertDigest(snapshot.artifactDigest);
+  assertSource(snapshot.environment, snapshot.source);
+  if (snapshot.outcome !== "passed" && snapshot.outcome !== "failed") {
+    throw new Error(
+      `Readiness evidence outcome "${
+        String(snapshot.outcome)
+      }" is invalid; expected passed or failed.`,
+    );
+  }
+  const capturedAtEpoch = snapshot.capturedAt.getTime();
+  const evidence: ReadinessEvidence = {
+    evidenceId: snapshot.evidenceId,
+    provider: snapshot.provider,
+    environment: snapshot.environment,
+    providerVersion: snapshot.providerVersion,
+    environmentId: snapshot.environmentId,
+    gate: snapshot.gate,
+    outcome: snapshot.outcome,
+    source: snapshot.source,
     get capturedAt(): Date {
       return new Date(capturedAtEpoch);
     },
-    artifactDigest: input.artifactDigest,
+    artifactDigest: snapshot.artifactDigest,
   };
   return Object.freeze(evidence);
 }
@@ -260,7 +284,7 @@ export function createReadinessEvidence(
 export function requiredReadinessGates(
   target: ReadinessTarget,
 ): readonly ReadinessGate[] {
-  assertTarget(target);
+  assertReadinessTarget(target);
   return Object.freeze([...REQUIRED_GATES[target]]);
 }
 
@@ -272,15 +296,15 @@ export function requiredReadinessGates(
 export function evaluateReadiness(
   input: ReadinessEvaluationRequest,
 ): ReadinessEvaluation {
-  assertReadinessRequest(input);
-  const missingGates = missingReadinessGates(input);
-  const state = readinessState(input, missingGates);
-  const matchedEvidenceIds = matchingEvidence(input).map(({ evidenceId }) =>
+  const request = canonicalizeReadinessRequest(input, freezeEvidence);
+  const missingGates = missingReadinessGates(request);
+  const state = readinessState(request, missingGates);
+  const matchedEvidenceIds = matchingEvidence(request).map(({ evidenceId }) =>
     evidenceId
   );
   return Object.freeze({
     state,
-    target: input.target,
+    target: request.target,
     matchedEvidenceIds: Object.freeze(matchedEvidenceIds),
     missingGates: Object.freeze(missingGates),
   });
@@ -315,6 +339,11 @@ export function createReadinessRegister(
 function freezeEvidence(
   evidence: readonly ReadinessEvidence[],
 ): readonly ReadinessEvidence[] {
+  if (!Array.isArray(evidence)) {
+    throw new Error(
+      "Readiness evidence is invalid; expected an array of records.",
+    );
+  }
   const ids = new Set<string>();
   const values = evidence.map((entry) => {
     const checked = createReadinessEvidence(entry);
@@ -358,7 +387,12 @@ function latestMatchingEvidence(
   const latest = new Map<ReadinessGate, ReadinessEvidence>();
   for (const evidence of matchingEvidence(input)) {
     const current = latest.get(evidence.gate);
-    if (current === undefined || evidence.capturedAt >= current.capturedAt) {
+    if (
+      current === undefined ||
+      evidence.capturedAt > current.capturedAt ||
+      (evidence.capturedAt.getTime() === current.capturedAt.getTime() &&
+        evidence.outcome === "failed" && current.outcome === "passed")
+    ) {
       latest.set(evidence.gate, evidence);
     }
   }
@@ -376,48 +410,6 @@ function readinessState(
     return "unavailable";
   }
   return missingGates.length === 0 ? input.target : "gated";
-}
-
-function assertReadinessRequest(input: ReadinessEvaluationRequest): void {
-  assertProvider(input.provider);
-  assertTarget(input.target);
-  assertIdentifier(input.providerVersion, "provider version");
-  assertIdentifier(input.environmentId, "environment ID");
-  assertReadinessProviderTarget(input.provider, input.target, input.lifecycle);
-  if (
-    input.coordinatorAuthorization !== undefined &&
-    !hasCoordinatorAuthorization(input.coordinatorAuthorization)
-  ) {
-    throw new Error(
-      "Readiness coordinator authorization is invalid; expected coordinator-owned authorization metadata.",
-    );
-  }
-  for (const evidence of input.evidence) createReadinessEvidence(evidence);
-}
-
-function assertProvider(provider: IntegrationProvider): void {
-  if (INTEGRATION_PROVIDERS.includes(provider)) return;
-  throw new Error(
-    `Readiness provider "${
-      String(provider)
-    }" is invalid; expected a registered provider marker.`,
-  );
-}
-
-function assertTarget(target: ReadinessTarget): void {
-  if (
-    target === "interface-only" ||
-    target === "fixture" ||
-    target === "local-development" ||
-    target === "sandbox-certification" ||
-    target === "production-candidate" ||
-    target === "production-verified"
-  ) return;
-  throw new Error(
-    `Readiness target "${
-      String(target)
-    }" is invalid; expected an evidence-backed environment target.`,
-  );
 }
 
 function assertGate(gate: ReadinessGate): void {
@@ -444,30 +436,6 @@ function assertSource(
   if (source === expected) return;
   throw new Error(
     `Readiness evidence source "${source}" does not match environment "${environment}"; expected "${expected}".`,
-  );
-}
-
-function assertIdentifier(value: string, label: string): void {
-  if (
-    typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 128 &&
-    value.trim() === value &&
-    /^[A-Za-z0-9._-]+$/.test(value)
-  ) return;
-  throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected 1-128 safe identifier characters.`,
-  );
-}
-
-function assertDate(value: Date): void {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return;
-  throw new Error(
-    `Readiness evidence timestamp "${
-      String(value)
-    }" is invalid; expected a valid Date.`,
   );
 }
 

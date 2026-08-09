@@ -377,6 +377,10 @@ function evidence(
   scope: IntegrationScope,
   checks: readonly FixtureConformanceCheck[],
 ): FixtureConformanceEvidence {
+  const frozenChecks = Object.freeze(
+    checks.map((check) => Object.freeze({ ...check })),
+  );
+  const observedAtEpoch = new Date("2026-08-08T12:00:00.000Z").getTime();
   return Object.freeze({
     provider: "fixture",
     environment: "fixture",
@@ -384,8 +388,10 @@ function evidence(
     synthetic: true,
     readiness: "fixture-only",
     scope: Object.freeze({ ...scope }),
-    checks: Object.freeze([...checks]),
-    passed: checks.every(({ status }) => status === "passed"),
-    observedAt: new Date("2026-08-08T12:00:00.000Z"),
+    checks: frozenChecks,
+    passed: frozenChecks.every(({ status }) => status === "passed"),
+    get observedAt(): Date {
+      return new Date(observedAtEpoch);
+    },
   });
 }
