@@ -6,8 +6,12 @@ import {
   validateCalculationBindings,
 } from "./calculation_contract.ts";
 import type { AgentProposalInput } from "./proposal_contract.ts";
+import { sourceVersionReferenceSchema } from "./source_version_reference.ts";
+import type { AgentSourceVersionReference } from "./source_version_reference.ts";
 import { validatorSchema } from "./validator_schema.ts";
 export type { AgentProposalInput } from "./proposal_contract.ts";
+export { sourceVersionReferenceSchema } from "./source_version_reference.ts";
+export type { AgentSourceVersionReference } from "./source_version_reference.ts";
 
 export const DEFINITION_ENVELOPE_SCHEMA_VERSION = 1 as const;
 export const AGENT_DEFINITION_VERSION = "1.0.0" as const;
@@ -196,24 +200,6 @@ export function parseAgentDefinitionEnvelope(
   return agentDefinitionEnvelopeSchema.parse(value);
 }
 
-export const sourceVersionReferenceSchema = z.object({
-  sourceType: textSchema,
-  sourceId: textSchema,
-  version: z.union([z.string().trim().min(1), z.number().int().positive()]),
-  checksum: z.string().regex(/^[0-9a-f]{64}$/).optional(),
-}).superRefine((reference, context) => {
-  if (
-    reference.sourceType !== "document_version" ||
-    reference.checksum !== undefined
-  ) return;
-  context.addIssue({
-    code: z.ZodIssueCode.custom,
-    path: ["checksum"],
-    message:
-      `Source version receipt "${reference.sourceType}:${reference.sourceId}@${reference.version}" is missing a checksum; expected a lowercase 64-hex SHA-256 checksum for document_version.`,
-  });
-});
-
 export const toolLineageSchema = z.object({
   name: capabilitySchema,
   activityId: textSchema.optional(),
@@ -243,9 +229,6 @@ export const resultLineageSchema = z.object({
   evidence: z.array(sourceVersionReferenceSchema),
 });
 
-export type AgentSourceVersionReference = z.infer<
-  typeof sourceVersionReferenceSchema
->;
 export type AgentToolLineage = z.infer<typeof toolLineageSchema>;
 export type AgentModelLineage = z.infer<typeof resultLineageSchema>["model"];
 
