@@ -1,7 +1,5 @@
 import { assert, assertEquals } from "@std/assert";
 import {
-  type PapermarkFetch,
-  type PapermarkTimer,
   PapermarkTransport,
 } from "../../../src/integrations/papermark/transport.ts";
 import {
@@ -17,9 +15,8 @@ import {
   type RuntimeSecret,
 } from "../../../src/integrations/contracts.ts";
 import {
-  createSyntheticPapermarkCallAuthorizationForTests,
-  markPapermarkSyntheticFakeForTests,
-} from "../../../src/integrations/papermark/authorization.ts";
+  createPapermarkSyntheticTestBundle,
+} from "../../../src/integrations/papermark/synthetic_test_bundle.ts";
 
 const scope = parseIntegrationScope({
   tenantId: "tenant_acme",
@@ -35,52 +32,10 @@ type TransportFailure = Error & {
   readonly providerRequestId?: string;
 };
 
-class SecretResolverFake {
-  calls = 0;
-
-  resolve(): Promise<RuntimeSecret> {
-    this.calls += 1;
-    return Promise.resolve(secret);
-  }
-}
-
 class FetchFake {
   readonly calls: { url: string; init: RequestInit }[] = [];
   responses: Response[] = [];
   failures: unknown[] = [];
-
-  fetch: PapermarkFetch = (url, init) => {
-    this.calls.push({ url, init });
-    const failure = this.failures.shift();
-    if (failure !== undefined) return Promise.reject(failure);
-    const response = this.responses.shift();
-    if (response === undefined) {
-      return Promise.reject(new Error("fetch fake has no response"));
-    }
-    return Promise.resolve(response);
-  };
-}
-
-class TimerFake implements PapermarkTimer {
-  readonly delays: number[] = [];
-  private nextHandle = 1;
-  private readonly callbacks = new Map<number, () => void>();
-
-  setTimeout(callback: () => void, delayMs: number): number {
-    this.delays.push(delayMs);
-    const handle = this.nextHandle++;
-    this.callbacks.set(handle, callback);
-    return handle;
-  }
-
-  clearTimeout(handle: unknown): void {
-    this.callbacks.delete(handle as number);
-  }
-
-  fire(): void {
-    const next = this.callbacks.values().next();
-    if (!next.done) next.value();
-  }
 }
 
 function configuration(overrides: Partial<PapermarkAdapterConfig> = {}) {
@@ -125,33 +80,29 @@ function jsonResponse(
 function transport(
   fake: FetchFake,
   config = configuration(),
-  timer: PapermarkTimer = new TimerFake(),
 ) {
-  const resolver = markPapermarkSyntheticFakeForTests(
-    new SecretResolverFake(),
-    "secret-resolver",
-    "SecretResolverFake",
-  );
-  const fetch = markPapermarkSyntheticFakeForTests(
-    fake.fetch,
-    "fetch",
-    "FetchFake",
-  );
-  const sleeps: number[] = [];
-  const instance = new PapermarkTransport(config, resolver, {
-    fetch,
-    sleep: (delayMs) => {
-      sleeps.push(delayMs);
-      return Promise.resolve();
-    },
-    now: () => new Date("2026-08-08T12:00:00.000Z"),
-    timer,
-    authorization: createSyntheticPapermarkCallAuthorizationForTests(config, {
-      secretResolver: resolver,
-      fetch,
-    }),
+  const queue = [
+    ...fake.failures.map((failure) => failure as Error),
+    ...fake.responses,
+  ];
+  const bundle = createPapermarkSyntheticTestBundle(config, {
+    secret,
+    responses: queue,
   });
-  return { instance, resolver, sleeps };
+  Object.defineProperty(fake, "calls", {
+    configurable: true,
+    get: () => bundle.controls.fetch.calls,
+  });
+  return {
+    instance: new PapermarkTransport(config, bundle.dependencies),
+    resolver: {
+      get calls(): number {
+        return bundle.controls.secret.calls.length;
+      },
+    },
+    sleeps: bundle.controls.sleep.delays,
+    bundle,
+  };
 }
 
 Deno.test("Papermark transport requests the scoped official v1 list", async () => {
@@ -341,6 +292,68 @@ Deno.test("Papermark transport does not retry malformed responses", async () => 
   assertEquals(fake.calls.length, 1);
 });
 
+Deno.test("Papermark transport cancels non-OK bodies without reading or masking failure", async () => {
+  let cancelled = false;
+  let read = false;
+  const body = new ReadableStream<Uint8Array>({
+    cancel: () => {
+      cancelled = true;
+    },
+  });
+  const response = new Response(body, { status: 503 });
+  Object.defineProperty(response, "json", {
+    value: () => {
+      read = true;
+      return Promise.resolve({ secret: "provider-body" });
+    },
+  });
+  const fake = new FetchFake();
+  fake.responses.push(response);
+  const { instance } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
+  );
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "UNAVAILABLE");
+  assertEquals(cancelled, true);
+  assertEquals(read, false);
+
+  let retryCancelled = false;
+  const retryBody = new ReadableStream<Uint8Array>({
+    cancel: async () => {
+      await Promise.resolve();
+      retryCancelled = true;
+    },
+  });
+  const retryFake = new FetchFake();
+  retryFake.responses.push(
+    new Response(retryBody, { status: 503 }),
+    jsonResponse({ data: [], next_cursor: null }),
+  );
+  const { instance: retryInstance } = transport(
+    retryFake,
+    configuration({ retry: { maxAttempts: 2, maxDelayMs: 250 } }),
+  );
+  await retryInstance.getDocumentsPage(undefined);
+  assertEquals(retryCancelled, true);
+  assertEquals(retryFake.calls.length, 2);
+
+  const failingBody = new ReadableStream<Uint8Array>({
+    cancel: () => Promise.reject(new Error("cancel failed")),
+  });
+  const failingResponse = new Response(failingBody, { status: 503 });
+  const failingFake = new FetchFake();
+  failingFake.responses.push(failingResponse);
+  const { instance: failingInstance } = transport(
+    failingFake,
+    configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
+  );
+  const failingError = await captureError(() =>
+    failingInstance.getDocumentsPage(undefined)
+  );
+  assertEquals(failingError.code, "UNAVAILABLE");
+});
+
 Deno.test("Papermark transport reports safe retry exhaustion metadata", async () => {
   const fake = new FetchFake();
   fake.responses.push(
@@ -361,7 +374,7 @@ Deno.test("Papermark transport reports safe retry exhaustion metadata", async ()
 function activation() {
   return {
     approvalReference: "approval_papermark_local",
-    providerVersion: "papermark-1.0.0",
+    providerVersion: "papermark-v1.0.0",
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

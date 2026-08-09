@@ -266,9 +266,7 @@ export interface HealthSnapshot extends Omit<HealthSnapshotInput, "checks"> {
 export function parseIntegrationScope(value: unknown): IntegrationScope {
   if (!isRecord(value)) {
     throw new Error(
-      `Integration scope "${
-        String(value)
-      }" is invalid; expected tenant, workspace, and deal identifiers.`,
+      "Integration scope is invalid; expected tenant, workspace, and deal identifiers; value=<redacted>.",
     );
   }
   return {
@@ -311,9 +309,7 @@ function requiredIdentifier<T>(
   const parsed = parser(value);
   if (parsed.ok) return parsed.value;
   throw new Error(
-    `Integration ${label} ID "${
-      String(value)
-    }" is invalid; expected a canonical ${label}_ identifier.`,
+    `Integration ${label} ID is invalid; expected a canonical ${label}_ identifier; value=<redacted>.`,
   );
 }
 

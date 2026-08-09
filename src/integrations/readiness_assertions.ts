@@ -51,7 +51,7 @@ export function assertReadinessIdentifier(value: string, label: string): void {
     /^[A-Za-z0-9._-]+$/.test(value)
   ) return;
   throw new Error(
-    `${label} is invalid; expected 1-128 safe identifier characters.`,
+    `${label} is invalid; expected 1-128 safe identifier characters; value=<redacted>.`,
   );
 }
 

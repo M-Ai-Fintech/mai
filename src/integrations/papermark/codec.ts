@@ -55,7 +55,7 @@ function decodePapermarkDocument(
   requiredString(value.updated_at, "updated_at");
   if (folderId !== expectedFolderId) {
     throw new Error(
-      `Papermark document response is malformed; document folder "${folderId}" does not match bound folder "${expectedFolderId}"; expected exact scope isolation.`,
+      "Papermark document response is malformed; document folder does not match the bound folder; expected exact scope isolation; value=<redacted>.",
     );
   }
   return Object.freeze({

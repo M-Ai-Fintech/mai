@@ -122,7 +122,7 @@ function assertProviderConfiguration(
   }
   if (configuration.environment !== "interface-only") {
     throw new Error(
-      `Papermark lifecycle "${configuration.lifecycle}" uses environment "${configuration.environment}"; expected interface-only while not enabled.`,
+      "Papermark lifecycle/environment combination is invalid; expected interface-only while not enabled; value=<redacted>.",
     );
   }
   if (
@@ -131,7 +131,7 @@ function assertProviderConfiguration(
     configuration.activation !== undefined
   ) {
     throw new Error(
-      `Papermark lifecycle "${configuration.lifecycle}" carries endpoint or credential metadata; expected no provider credentials while disabled or deferred.`,
+      "Papermark disabled/deferred configuration is invalid; expected no endpoint or credential metadata; value=<redacted>.",
     );
   }
 }
@@ -139,12 +139,12 @@ function assertProviderConfiguration(
 function assertDeferredProvider(configuration: ProviderConfiguration): void {
   if (configuration.lifecycle !== "deferred") {
     throw new Error(
-      `Provider "${configuration.provider}" is deferred; expected lifecycle deferred and no enabled adapter.`,
+      "Provider deferred configuration is invalid; expected lifecycle deferred and no enabled adapter; value=<redacted>.",
     );
   }
   if (configuration.environment !== "interface-only") {
     throw new Error(
-      `Provider "${configuration.provider}" uses environment "${configuration.environment}"; expected interface-only while deferred.`,
+      "Provider deferred environment is invalid; expected interface-only while deferred; value=<redacted>.",
     );
   }
   if (
@@ -153,7 +153,7 @@ function assertDeferredProvider(configuration: ProviderConfiguration): void {
     configuration.activation !== undefined
   ) {
     throw new Error(
-      `Provider "${configuration.provider}" is deferred; expected no endpoint or credential metadata.`,
+      "Provider deferred configuration is invalid; expected no endpoint or credential metadata; value=<redacted>.",
     );
   }
 }
@@ -164,7 +164,7 @@ function assertEnabledPapermark(configuration: ProviderConfiguration): void {
     configuration.environment !== "sandbox-certification"
   ) {
     throw new Error(
-      `Papermark enabled environment "${configuration.environment}" is not permitted; expected local-development or sandbox-certification.`,
+      "Papermark enabled environment is not permitted; expected local-development or sandbox-certification; value=<redacted>.",
     );
   }
   if (configuration.endpoint === undefined) {
@@ -194,9 +194,7 @@ function parseRealProvider(value: unknown): RealIntegrationProvider {
     return value;
   }
   throw new Error(
-    `Integration provider "${
-      String(value)
-    }" is invalid; expected papermark, ideals, or intralinks.`,
+    "Integration provider is invalid; expected papermark, ideals, or intralinks; value=<redacted>.",
   );
 }
 
@@ -205,9 +203,7 @@ function parseLifecycle(value: unknown): ProviderLifecycle {
     return value;
   }
   throw new Error(
-    `Provider lifecycle "${
-      String(value)
-    }" is invalid; expected enabled, disabled, or deferred.`,
+    "Provider lifecycle is invalid; expected enabled, disabled, or deferred; value=<redacted>.",
   );
 }
 
@@ -219,16 +215,14 @@ function parseEnvironment(value: unknown): IntegrationEnvironment {
     return value as IntegrationEnvironment;
   }
   throw new Error(
-    `Provider environment "${
-      String(value)
-    }" is invalid; expected an approved integration environment.`,
+    "Provider environment is invalid; expected an approved integration environment; value=<redacted>.",
   );
 }
 
 function parseEndpoint(value: unknown): string {
   if (typeof value !== "string" || value.trim() !== value || !value) {
     throw new Error(
-      "Provider endpoint is invalid; expected an absolute HTTP(S) URL without credentials.",
+      "Provider endpoint is invalid; expected an absolute HTTP(S) URL without credentials; value=<redacted>.",
     );
   }
   const parsed = parseEndpointUrl(value);
@@ -241,7 +235,7 @@ function parseEndpoint(value: unknown): string {
     parsed.hash
   ) {
     throw new Error(
-      "Provider endpoint is invalid; expected an HTTP(S) URL without userinfo, query, or fragment credentials.",
+      "Provider endpoint is invalid; expected an HTTP(S) URL without userinfo, query, or fragment credentials; value=<redacted>.",
     );
   }
   return value;
@@ -256,7 +250,7 @@ function parseSecretManager(value: unknown): SecretManager {
     return value;
   }
   throw new Error(
-    "Secret manager is invalid; expected environment, local-secret-store, or vault.",
+    "Secret manager is invalid; expected environment, local-secret-store, or vault; value=<redacted>.",
   );
 }
 
@@ -272,7 +266,7 @@ function parseLocatorText(value: unknown, label: string): string {
     return value;
   }
   throw new Error(
-    `${label} is invalid; expected a bounded non-credential locator.`,
+    `${label} is invalid; expected a bounded non-credential locator; value=<redacted>.`,
   );
 }
 
@@ -290,7 +284,7 @@ function parseSecretLocator(manager: SecretManager, value: unknown): string {
     )
   ) return locator;
   throw new Error(
-    `Secret manager "${manager}" reference name is invalid; expected a bounded path locator without credential material.`,
+    "Secret reference name is invalid; expected a bounded path locator without credential material; value=<redacted>.",
   );
 }
 
@@ -303,7 +297,7 @@ function parseSecretVersion(manager: SecretManager, value: unknown): string {
     : /^(?:current|latest|v[0-9]{1,9}|version-[0-9]{1,9})$/.test(version);
   if (valid) return version;
   throw new Error(
-    `Secret manager "${manager}" version is invalid; expected its bounded version locator syntax.`,
+    "Secret reference version is invalid; expected its bounded version locator syntax; value=<redacted>.",
   );
 }
 

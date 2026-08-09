@@ -18,6 +18,7 @@ import {
   createNormalizedIntegrationFailure,
   normalizeIntegrationFailure,
 } from "./failures.ts";
+import { freezeSelectedAdapter } from "./selected_adapter.ts";
 
 export type ProviderSelectionMode = "configured" | "fixture";
 
@@ -172,6 +173,7 @@ async function selectFixture(
   if (!adapter.ok) return blocked(input, "unavailable", adapter.failure);
   const identity = validateAdapter(adapter.value, input, "fixture");
   if (identity !== undefined) return blocked(input, "invalid", identity);
+  const selectedAdapter = freezeSelectedAdapter(adapter.value);
   return Object.freeze({
     kind: "fixture",
     status: "selected",
@@ -183,7 +185,7 @@ async function selectFixture(
     scope: input.scope,
     connectorAccountId: input.connectorAccountId,
     providerWorkspaceId: input.providerWorkspaceId,
-    adapter: adapter.value,
+    adapter: selectedAdapter,
   });
 }
 
@@ -378,7 +380,7 @@ function parseProvider(value: unknown): IntegrationProvider {
 function parseBinding(value: unknown, label: string): string {
   if (typeof value === "string" && safeBindingText(value)) return value;
   throw new Error(
-    `${label} binding is invalid; expected a bounded safe identifier.`,
+    `${label} binding is invalid; expected a bounded safe identifier; value=<redacted>.`,
   );
 }
 

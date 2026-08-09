@@ -358,7 +358,7 @@ function papermarkConfiguration(
 function activation() {
   return {
     approvalReference: "approval_papermark_local",
-    providerVersion: "papermark-1.0.0",
+    providerVersion: "papermark-v1.0.0",
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

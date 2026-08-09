@@ -2,12 +2,12 @@ import {
   type IntegrationFailureCode,
   type RuntimeSecret,
   type SecretReference,
-  type SecretResolver,
 } from "../contracts.ts";
 import { integrationFailureMessage } from "../failures.ts";
 import {
   assertPapermarkCallAuthorization,
   type PapermarkCallAuthorization,
+  type PapermarkCallDependencies,
 } from "./authorization.ts";
 import type { PapermarkAdapterConfig } from "./config.ts";
 
@@ -29,11 +29,8 @@ export interface PapermarkTimer {
   clearTimeout(handle: unknown): void;
 }
 
-export interface PapermarkTransportDependencies {
-  readonly fetch: PapermarkFetch;
-  readonly sleep: (delayMs: number) => Promise<void>;
-  readonly now: () => Date;
-  readonly timer?: PapermarkTimer;
+export interface PapermarkTransportDependencies
+  extends PapermarkCallDependencies {
   readonly authorization: PapermarkCallAuthorization;
 }
 
@@ -67,20 +64,15 @@ export class PapermarkTransportFailure extends Error {
  * @example transport.getDocumentsPage("opaque-next-cursor")
  */
 export class PapermarkTransport {
-  private readonly timer: PapermarkTimer;
-
   constructor(
     private readonly config: PapermarkAdapterConfig,
-    private readonly secretResolver: SecretResolver,
     private readonly dependencies: PapermarkTransportDependencies,
   ) {
     assertPapermarkCallAuthorization(
       dependencies.authorization,
       config,
-      secretResolver,
-      dependencies.fetch,
+      dependencies,
     );
-    this.timer = dependencies.timer ?? systemTimer();
   }
 
   /**
@@ -103,6 +95,7 @@ export class PapermarkTransport {
         }
         const delay = this.retryDelay(attempt, failure);
         if (delay === undefined) throw failure;
+        this.assertAuthorization();
         await this.dependencies.sleep(delay);
       }
     }
@@ -114,11 +107,13 @@ export class PapermarkTransport {
     assertPapermarkCallAuthorization(
       this.dependencies.authorization,
       this.config,
-      this.secretResolver,
-      this.dependencies.fetch,
+      this.dependencies,
     );
     try {
-      const secret = await this.secretResolver.resolve(reference, signal);
+      const secret = await this.dependencies.secretResolver.resolve(
+        reference,
+        signal,
+      );
       if (signal.aborted) throw timeoutFailure();
       if (typeof secret === "string" && secret.trim()) return secret;
     } catch {
@@ -136,7 +131,10 @@ export class PapermarkTransport {
         const token = await this.resolveSecret(controller.signal);
         response = await this.fetchPage(token, cursor, controller.signal);
         if (!response.ok) {
-          throw responseFailure(response, this.dependencies.now());
+          this.assertAuthorization();
+          const failure = responseFailure(response, this.dependencies.now());
+          await abortResponseBody(response);
+          throw failure;
         }
         return await this.parseJson(response, controller.signal);
       },
@@ -162,12 +160,7 @@ export class PapermarkTransport {
       Authorization: `Bearer ${token}`,
     });
     if (signal.aborted) throw timeoutFailure();
-    assertPapermarkCallAuthorization(
-      this.dependencies.authorization,
-      this.config,
-      this.secretResolver,
-      this.dependencies.fetch,
-    );
+    this.assertAuthorization();
     return this.dependencies.fetch(url.toString(), {
       method: "GET",
       headers,
@@ -178,20 +171,50 @@ export class PapermarkTransport {
   private withTimeout<TResult>(
     operation: () => Promise<TResult>,
     controller: AbortController,
-    onTimeout: () => void,
+    onTimeout: () => void | Promise<void>,
   ): Promise<TResult> {
     let handle: unknown;
     const response = operation();
     const timeout = new Promise<never>((_resolve, reject) => {
+      try {
+        this.assertAuthorization();
+      } catch (error) {
+        reject(error);
+        return;
+      }
       handle = this.timer.setTimeout(() => {
+        try {
+          this.assertAuthorization();
+        } catch (error) {
+          controller.abort();
+          Promise.resolve(onTimeout()).then(
+            () => reject(error),
+            () => reject(error),
+          );
+          return;
+        }
         controller.abort();
-        onTimeout();
-        reject(new PapermarkTransportFailure({ code: "TIMEOUT" }));
+        Promise.resolve(onTimeout()).then(
+          () => reject(new PapermarkTransportFailure({ code: "TIMEOUT" })),
+          () => reject(new PapermarkTransportFailure({ code: "TIMEOUT" })),
+        );
       }, this.config.timeoutMs);
     });
     return Promise.race([response, timeout]).finally(() => {
       if (handle !== undefined) this.timer.clearTimeout(handle);
     });
+  }
+
+  private get timer(): PapermarkTimer {
+    return this.dependencies.timer;
+  }
+
+  private assertAuthorization(): void {
+    assertPapermarkCallAuthorization(
+      this.dependencies.authorization,
+      this.config,
+      this.dependencies,
+    );
   }
 
   private async parseJson(
@@ -370,11 +393,13 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-function abortResponseBody(response: Response | undefined): void {
+async function abortResponseBody(
+  response: Response | undefined,
+): Promise<void> {
   const body = response?.body;
   if (body === null || body === undefined) return;
   try {
-    void body.cancel().catch(() => undefined);
+    await body.cancel();
   } catch {
     // A body cancellation failure must not mask the timeout result.
   }
@@ -382,11 +407,4 @@ function abortResponseBody(response: Response | undefined): void {
 
 function trimTrailingSlash(endpoint: string): string {
   return endpoint.endsWith("/") ? endpoint.slice(0, -1) : endpoint;
-}
-
-function systemTimer(): PapermarkTimer {
-  return {
-    setTimeout: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
-    clearTimeout: (handle) => globalThis.clearTimeout(handle as number),
-  };
 }

@@ -14,7 +14,6 @@ import {
   type ProviderDocumentPage,
   sameIntegrationScope,
   type ScopedDocumentPort,
-  type SecretResolver,
 } from "../contracts.ts";
 import {
   createNormalizedIntegrationFailure,
@@ -24,13 +23,10 @@ import type { PapermarkAdapterConfig } from "./config.ts";
 import {
   assertPapermarkCallAuthorization,
   type PapermarkCallAuthorization,
+  type PapermarkCallDependencies,
 } from "./authorization.ts";
 import { decodePapermarkPage } from "./codec.ts";
-import {
-  type PapermarkFetch,
-  type PapermarkTimer,
-  PapermarkTransport,
-} from "./transport.ts";
+import { PapermarkTransport } from "./transport.ts";
 import {
   createProviderCapabilities,
   createProviderMarker,
@@ -46,12 +42,8 @@ import {
 } from "../../documents/source_provider.ts";
 import type { ByteSource } from "../../documents/checksum.ts";
 
-export interface PapermarkAdapterDependencies {
-  readonly secretResolver: SecretResolver;
-  readonly fetch: PapermarkFetch;
-  readonly sleep: (delayMs: number) => Promise<void>;
-  readonly now?: () => Date;
-  readonly timer?: PapermarkTimer;
+export interface PapermarkAdapterDependencies
+  extends PapermarkCallDependencies {
   readonly authorization: PapermarkCallAuthorization;
 }
 
@@ -153,14 +145,13 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     assertPapermarkCallAuthorization(
       dependencies.authorization,
       config,
-      dependencies.secretResolver,
-      dependencies.fetch,
+      dependencies,
     );
-    this.now = dependencies.now ?? (() => new Date());
+    this.now = dependencies.now;
     this.transport = new PapermarkTransport(
       config,
-      dependencies.secretResolver,
       {
+        secretResolver: dependencies.secretResolver,
         fetch: dependencies.fetch,
         sleep: dependencies.sleep,
         now: this.now,

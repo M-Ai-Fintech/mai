@@ -186,9 +186,7 @@ function readStringField(
 function assertProvider(provider: IntegrationProvider): void {
   if (INTEGRATION_PROVIDERS.includes(provider)) return;
   throw new Error(
-    `Integration provider "${
-      String(provider)
-    }" is invalid; expected a registered provider marker.`,
+    "Integration provider is invalid; expected a registered provider marker; value=<redacted>.",
   );
 }
 
@@ -199,9 +197,7 @@ function assertOperation(operation: string): void {
     return;
   }
   throw new Error(
-    `Provider operation "${
-      String(operation)
-    }" is invalid; expected 1-128 non-whitespace characters.`,
+    "Provider operation is invalid; expected 1-128 non-whitespace characters; value=<redacted>.",
   );
 }
 
@@ -211,9 +207,7 @@ function assertDate(value: Date | undefined): void {
     (value instanceof Date && !Number.isNaN(value.getTime()))
   ) return;
   throw new Error(
-    `Provider failure timestamp "${
-      String(value)
-    }" is invalid; expected a valid Date.`,
+    "Provider failure timestamp is invalid; expected a valid Date; value=<redacted>.",
   );
 }
 
@@ -223,16 +217,14 @@ function assertProviderStatus(status: number | undefined): void {
     (Number.isInteger(status) && status >= 100 && status <= 599)
   ) return;
   throw new Error(
-    `Provider status "${
-      String(status)
-    }" is invalid; expected an integer HTTP status from 100 to 599.`,
+    "Provider status is invalid; expected an integer HTTP status from 100 to 599; value=<redacted>.",
   );
 }
 
 function assertProviderRequestId(value: string): string {
   if (/^[A-Za-z0-9._-]{1,128}$/.test(value)) return value;
   throw new Error(
-    `Provider request ID "${value}" is invalid; expected 1-128 safe identifier characters.`,
+    "Provider request ID is invalid; expected 1-128 safe identifier characters; value=<redacted>.",
   );
 }
 
@@ -241,9 +233,7 @@ function assertFailureCode(
 ): IntegrationFailureCode {
   if (isFailureCode(value)) return value;
   throw new Error(
-    `Provider failure code "${
-      String(value)
-    }" is invalid; expected a normalized integration failure code.`,
+    "Provider failure code is invalid; expected a normalized integration failure code; value=<redacted>.",
   );
 }
 

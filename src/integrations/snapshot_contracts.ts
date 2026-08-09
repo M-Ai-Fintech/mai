@@ -82,7 +82,7 @@ export function createCapabilitySnapshot(
     observations.some(({ status }) => status === "supported")
   ) {
     throw new Error(
-      `Provider "${input.provider}" capability snapshot must not claim supported capabilities while disabled or unconfigured.`,
+      "Capability snapshot must not claim supported capabilities while disabled or unconfigured; value=<redacted>.",
     );
   }
   const observedAtEpoch = input.observedAt.getTime();
@@ -160,34 +160,28 @@ function parseSnapshotScope(value: unknown): IntegrationScope {
 function assertProvider(provider: IntegrationProvider): void {
   if (INTEGRATION_PROVIDERS.includes(provider)) return;
   throw new Error(
-    `Integration provider "${
-      String(provider)
-    }" is invalid; expected a registered provider marker.`,
+    "Integration provider is invalid; expected a registered provider marker; value=<redacted>.",
   );
 }
 
 function assertEnvironment(environment: IntegrationEnvironment): void {
   if (INTEGRATION_ENVIRONMENTS.includes(environment)) return;
   throw new Error(
-    `Integration environment "${
-      String(environment)
-    }" is invalid; expected an approved environment state.`,
+    "Integration environment is invalid; expected an approved environment state; value=<redacted>.",
   );
 }
 
 function assertLifecycle(lifecycle: ProviderLifecycle): void {
   if ((PROVIDER_LIFECYCLES as readonly unknown[]).includes(lifecycle)) return;
   throw new Error(
-    `Provider lifecycle "${
-      String(lifecycle)
-    }" is invalid; expected enabled, disabled, or deferred.`,
+    "Provider lifecycle is invalid; expected enabled, disabled, or deferred; value=<redacted>.",
   );
 }
 
 function assertBoolean(value: boolean, label: string): void {
   if (typeof value === "boolean") return;
   throw new Error(
-    `${label} "${String(value)}" is invalid; expected a boolean value.`,
+    `${label} is invalid; expected a boolean value; value=<redacted>.`,
   );
 }
 
@@ -200,19 +194,17 @@ function assertCapabilitySource(
     source !== "fixture"
   ) {
     throw new Error(
-      `Capability evidence source "${
-        String(source)
-      }" is invalid; expected provider, implementation, or fixture.`,
+      "Capability evidence source is invalid; expected provider, implementation, or fixture; value=<redacted>.",
     );
   }
   if (source === "fixture" && environment !== "fixture") {
     throw new Error(
-      `Fixture capability evidence uses environment "${environment}"; expected fixture environment.`,
+      "Fixture capability evidence uses an invalid environment; expected fixture environment; value=<redacted>.",
     );
   }
   if (source !== "fixture" && environment === "fixture") {
     throw new Error(
-      `Capability evidence source "${source}" uses fixture environment; expected a real provider environment.`,
+      "Capability evidence source uses fixture environment; expected a real provider environment; value=<redacted>.",
     );
   }
 }
@@ -223,18 +215,14 @@ function assertCapabilityList(
 ): void {
   if (Array.isArray(value)) return;
   throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected an array of explicit values.`,
+    `${label} is invalid; expected an array of explicit values; value=<redacted>.`,
   );
 }
 
 function assertHealthCheckList(value: readonly unknown[]): void {
   if (Array.isArray(value)) return;
   throw new Error(
-    `Provider health checks "${
-      String(value)
-    }" are invalid; expected an array of explicit checks.`,
+    "Provider health checks are invalid; expected an array of explicit checks; value=<redacted>.",
   );
 }
 
@@ -251,7 +239,7 @@ function uniqueCapabilities(
     assertCapability(capability);
     if (unique.has(capability)) {
       throw new Error(
-        `Capability "${capability}" is duplicated; expected one observation per requested capability.`,
+        "Capability is duplicated; expected one observation per requested capability; value=<redacted>.",
       );
     }
     unique.add(capability);
@@ -272,7 +260,7 @@ function validateObservations(
     assertCapabilityStatus(observation.status);
     if (observed.has(observation.capability)) {
       throw new Error(
-        `Capability "${observation.capability}" is observed more than once; expected one status.`,
+        "Capability is observed more than once; expected one status; value=<redacted>.",
       );
     }
     observed.add(observation.capability);
@@ -284,7 +272,7 @@ function validateObservations(
       observation.reasonCode !== undefined
     ) {
       throw new Error(
-        `Capability "${observation.capability}" has reason "${observation.reasonCode}"; supported capabilities must not carry a failure reason.`,
+        "Supported capabilities must not carry a failure reason; value=<redacted>.",
       );
     }
     if (
@@ -292,16 +280,14 @@ function validateObservations(
       observation.reasonCode === undefined
     ) {
       throw new Error(
-        `Capability "${observation.capability}" is ${observation.status}; expected an explicit normalized failure reason.`,
+        "Unsupported capability status must carry an explicit normalized failure reason; value=<redacted>.",
       );
     }
   }
   const missing = requested.filter((capability) => !observed.has(capability));
   if (missing.length > 0) {
     throw new Error(
-      `Capability observations omit "${
-        missing.join(",")
-      }"; expected every requested capability explicitly.`,
+      "Capability observations are incomplete; expected every requested capability explicitly; value=<redacted>.",
     );
   }
   const extra = [...observed].filter((capability) =>
@@ -309,9 +295,7 @@ function validateObservations(
   );
   if (extra.length > 0) {
     throw new Error(
-      `Capability observations include "${
-        extra.join(",")
-      }" that were not requested; expected exact requested and observed capability sets.`,
+      "Capability observations include values that were not requested; expected exact requested and observed capability sets; value=<redacted>.",
     );
   }
   return values;
@@ -338,27 +322,21 @@ function parseCapabilityObservation(value: unknown): CapabilityObservation {
 function assertCapabilityStatus(status: CapabilityStatus): void {
   if ((CAPABILITY_STATUSES as readonly unknown[]).includes(status)) return;
   throw new Error(
-    `Capability status "${
-      String(status)
-    }" is invalid; expected supported, denied, or unavailable.`,
+    "Capability status is invalid; expected supported, denied, or unavailable; value=<redacted>.",
   );
 }
 
 function assertFailureCode(code: IntegrationFailureCode): void {
   if ((INTEGRATION_FAILURE_CODES as readonly unknown[]).includes(code)) return;
   throw new Error(
-    `Capability failure reason "${
-      String(code)
-    }" is invalid; expected a normalized integration failure code.`,
+    "Capability failure reason is invalid; expected a normalized integration failure code; value=<redacted>.",
   );
 }
 
 function assertCapability(capability: IntegrationCapability): void {
   if (INTEGRATION_CAPABILITIES.includes(capability)) return;
   throw new Error(
-    `Integration capability "${
-      String(capability)
-    }" is invalid; expected a registered capability.`,
+    "Integration capability is invalid; expected a registered capability; value=<redacted>.",
   );
 }
 
@@ -378,15 +356,13 @@ function validateHealthChecks(checks: readonly unknown[]): HealthCheck[] {
       value.name.length > 128
     ) {
       throw new Error(
-        `Provider health check name "${
-          String(value.name)
-        }" is invalid; expected 1-128 non-whitespace characters.`,
+        "Provider health check name is invalid; expected 1-128 non-whitespace characters; value=<redacted>.",
       );
     }
     assertHealthCheckState(value.state as HealthCheckState);
     if (names.has(value.name)) {
       throw new Error(
-        `Provider health check "${value.name}" is duplicated; expected one result per check.`,
+        "Provider health check is duplicated; expected one result per check; value=<redacted>.",
       );
     }
     names.add(value.name);
@@ -400,9 +376,7 @@ function validateHealthChecks(checks: readonly unknown[]): HealthCheck[] {
 function assertHealthCheckState(state: HealthCheckState): void {
   if ((HEALTH_CHECK_STATES as readonly unknown[]).includes(state)) return;
   throw new Error(
-    `Provider health check state "${
-      String(state)
-    }" is invalid; expected passed, failed, unavailable, or skipped.`,
+    "Provider health check state is invalid; expected passed, failed, unavailable, or skipped; value=<redacted>.",
   );
 }
 
@@ -426,8 +400,6 @@ function deriveHealthState(
 function assertDate(value: Date, label: string): void {
   if (value instanceof Date && !Number.isNaN(value.getTime())) return;
   throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected a valid Date supplied by the caller.`,
+    `${label} is invalid; expected a valid Date supplied by the caller; value=<redacted>.`,
   );
 }

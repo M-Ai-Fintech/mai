@@ -38,7 +38,7 @@ export interface OwnerApprovedActivation {
 /**
  * Parses credential-free owner approval metadata for an enabled provider.
  *
- * @example parseOwnerApprovedActivation({ approvalReference: "approval_papermark_local", providerVersion: "papermark-1.0.0", license: "AGPLv3", deploymentModel: "self-hosted", region: "local", storageTopology: "postgres-object-store", rollbackOperator: "platform-on-call" })
+ * @example parseOwnerApprovedActivation({ approvalReference: "approval_papermark_local", providerVersion: "papermark-v1.0.0", license: "AGPLv3", deploymentModel: "self-hosted", region: "local", storageTopology: "postgres-object-store", rollbackOperator: "platform-on-call" })
  */
 export function parseOwnerApprovedActivation(
   value: unknown,
@@ -58,10 +58,10 @@ function parseActivationField(
   key: string,
   label: string,
 ): string {
-  const text = parseActivationText(value[key], label);
+  const text = parseActivationText(value[key], label, key);
   if (activationFieldMatches(key, text)) return text;
   throw new Error(
-    `Provider activation ${label} is invalid; expected an approved semantic value.`,
+    `Provider activation ${label} is invalid; expected an approved semantic value; value=<redacted>.`,
   );
 }
 
@@ -119,14 +119,21 @@ function parseActivationRollback(
   };
 }
 
-function parseActivationText(value: unknown, label: string): string {
+function parseActivationText(
+  value: unknown,
+  label: string,
+  key: string,
+): string {
   if (
     typeof value === "string" && value.length > 0 && value.length <= 255 &&
     value.trim() === value && !/[\r\n]/.test(value) &&
-    !LINEAR_ISSUE_ID.test(value) && !looksCredentialLike(value)
+    !LINEAR_ISSUE_ID.test(value) &&
+    (key === "providerVersion"
+      ? papermarkVersion(value) || commitVersion(value)
+      : !looksCredentialLike(value))
   ) return value;
   throw new Error(
-    `Provider activation ${label} is invalid; expected credential-free approved metadata without project issue IDs.`,
+    `Provider activation ${label} is invalid; expected credential-free approved metadata without project issue IDs; value=<redacted>.`,
   );
 }
 
@@ -135,9 +142,7 @@ function activationFieldMatches(key: string, value: string): boolean {
     return /^approval_[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(value);
   }
   if (key === "providerVersion") {
-    return /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?-?v?[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-z0-9.-]+)?$/i
-      .test(value) ||
-      /^commit-[a-z0-9][a-z0-9._-]{0,127}$/i.test(value);
+    return papermarkVersion(value) || commitVersion(value);
   }
   if (key === "license") return APPROVED_LICENSES.has(value);
   if (key === "deploymentModel") return APPROVED_DEPLOYMENTS.has(value);
@@ -152,6 +157,34 @@ function activationFieldMatches(key: string, value: string): boolean {
     return /^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(value);
   }
   return false;
+}
+
+function papermarkVersion(value: string): boolean {
+  const match = /^papermark-v(\d+\.\d+\.\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(
+    value,
+  );
+  if (match === null || !boundedSemverCore(match[1])) return false;
+  const prerelease = match[2];
+  if (prerelease === undefined) return true;
+  if (prerelease.length > 64) return false;
+  const identifiers = prerelease.split(".");
+  return identifiers.length <= 8 &&
+    identifiers.every(validPrereleaseIdentifier);
+}
+
+function commitVersion(value: string): boolean {
+  return /^commit-[0-9a-f]{7,40}$/.test(value);
+}
+
+function boundedSemverCore(value: string): boolean {
+  const parts = value.split(".");
+  return parts.length === 3 &&
+    parts.every((part) => part === "0" || /^[1-9][0-9]{0,8}$/.test(part));
+}
+
+function validPrereleaseIdentifier(value: string): boolean {
+  if (!/^[0-9A-Za-z-]{1,16}$/.test(value)) return false;
+  return !/^0[0-9]+$/.test(value);
 }
 
 function looksCredentialLike(value: string): boolean {

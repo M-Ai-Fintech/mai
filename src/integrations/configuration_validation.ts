@@ -15,7 +15,7 @@ export function rejectInlineCredentialKeys(value: unknown): void {
   for (const [key, child] of Object.entries(value)) {
     if (INLINE_CREDENTIAL_KEY.test(key) && key !== "secretRef") {
       throw new Error(
-        `Provider configuration key "${key}" is an inline credential; expected a secret reference locator.`,
+        "Provider configuration contains an inline credential field; expected a secret reference locator; field=<redacted>.",
       );
     }
     rejectInlineCredentialKeys(child);
@@ -35,7 +35,7 @@ export function assertKnownKeys(
   const unknown = Object.keys(value).find((key) => !allowed.has(key));
   if (unknown === undefined) return;
   throw new Error(
-    `${label} key "${unknown}" is not recognized; expected the strict ${label} shape.`,
+    `${label} field is not recognized; expected the strict ${label} shape; field=<redacted>.`,
   );
 }
 

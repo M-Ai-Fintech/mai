@@ -77,12 +77,12 @@ function assertFixtureTarget(
 ): void {
   if (provider === "fixture" && target !== "fixture") {
     throw new Error(
-      `Fixture readiness provider cannot evaluate target "${target}"; expected fixture target.`,
+      "Fixture readiness provider cannot evaluate the target; expected fixture target; value=<redacted>.",
     );
   }
   if (target === "fixture" && provider !== "fixture") {
     throw new Error(
-      `Readiness target "fixture" requires the fixture provider; received "${provider}".`,
+      "Readiness target fixture requires the fixture provider; value=<redacted>.",
     );
   }
 }
@@ -95,7 +95,7 @@ function assertDeferredTarget(
   if (provider === "ideals" || provider === "intralinks") {
     if (target !== "interface-only" || lifecycle !== "deferred") {
       throw new Error(
-        `Deferred provider "${provider}" cannot claim readiness target "${target}" or lifecycle "${lifecycle}".`,
+        "Deferred provider cannot claim this readiness target or lifecycle; expected interface-only/deferred; value=<redacted>.",
       );
     }
   }

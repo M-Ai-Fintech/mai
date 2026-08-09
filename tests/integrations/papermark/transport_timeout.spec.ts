@@ -1,9 +1,5 @@
-import { assert, assertEquals } from "@std/assert";
-import {
-  type PapermarkFetch,
-  type PapermarkTimer,
-  PapermarkTransport,
-} from "../../../src/integrations/papermark/transport.ts";
+import { assert, assertEquals, assertThrows } from "@std/assert";
+import { PapermarkTransport } from "../../../src/integrations/papermark/transport.ts";
 import {
   type PapermarkAdapterConfig,
   parsePapermarkAdapterConfig,
@@ -15,12 +11,10 @@ import {
 import {
   parseIntegrationScope,
   type RuntimeSecret,
-  type SecretReference,
 } from "../../../src/integrations/contracts.ts";
 import {
-  createSyntheticPapermarkCallAuthorizationForTests,
-  markPapermarkSyntheticFakeForTests,
-} from "../../../src/integrations/papermark/authorization.ts";
+  createPapermarkSyntheticTestBundle,
+} from "../../../src/integrations/papermark/synthetic_test_bundle.ts";
 
 const scope = parseIntegrationScope({
   tenantId: "tenant_acme",
@@ -29,123 +23,34 @@ const scope = parseIntegrationScope({
 });
 const secret = "synthetic-secret-never-log-this" as RuntimeSecret;
 
-class SecretResolverFake {
-  resolve(): Promise<RuntimeSecret> {
-    return Promise.resolve(secret);
-  }
-}
-
-class StalledSecretResolverFake {
-  resolve(
-    _reference: SecretReference,
-    _signal?: AbortSignal,
-  ): Promise<RuntimeSecret> {
-    return new Promise<RuntimeSecret>(() => undefined);
-  }
-}
-
-class DelayedSecretResolverFake {
-  signal?: AbortSignal;
-  private releaseSecret?: (value: RuntimeSecret) => void;
-
-  resolve(
-    _reference: SecretReference,
-    signal?: AbortSignal,
-  ): Promise<RuntimeSecret> {
-    this.signal = signal;
-    return new Promise<RuntimeSecret>((resolve) => {
-      this.releaseSecret = resolve;
-    });
-  }
-
-  release(): void {
-    this.releaseSecret?.(secret);
-  }
-}
-
 class FetchFake {
   readonly calls: { url: string; init: RequestInit }[] = [];
   responses: Response[] = [];
   failures: unknown[] = [];
-
-  fetch: PapermarkFetch = (url, init) => {
-    this.calls.push({ url, init });
-    const failure = this.failures.shift();
-    if (failure !== undefined) return Promise.reject(failure);
-    const response = this.responses.shift();
-    if (response === undefined) {
-      return Promise.reject(new Error("fetch fake has no response"));
-    }
-    return Promise.resolve(response);
-  };
-}
-
-class TimerFake implements PapermarkTimer {
-  readonly delays: number[] = [];
-  private nextHandle = 1;
-  private readonly callbacks = new Map<number, () => void>();
-
-  setTimeout(callback: () => void, delayMs: number): number {
-    this.delays.push(delayMs);
-    const handle = this.nextHandle++;
-    this.callbacks.set(handle, callback);
-    return handle;
-  }
-
-  clearTimeout(handle: unknown): void {
-    this.callbacks.delete(handle as number);
-  }
-
-  fire(): void {
-    const next = this.callbacks.values().next();
-    if (!next.done) next.value();
-  }
 }
 
 Deno.test("Papermark transport converts timeout into a bounded failure", async () => {
   const fake = new FetchFake();
   fake.failures.push(new DOMException("aborted", "AbortError"));
-  const timer = new TimerFake();
-  const { instance } = transport(
+  const { instance, bundle } = transport(
     fake,
     configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
-    timer,
   );
   const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
+  bundle.controls.timer.fire();
   const error = await captureError(() => pending);
   assertEquals(error.code, "TIMEOUT");
-  assertEquals(timer.delays, [1_000]);
+  assertEquals(bundle.controls.timer.delays, [1_000]);
 });
 
 Deno.test("Papermark transport times out a stalled secret resolver", async () => {
   const fake = new FetchFake();
-  const timer = new TimerFake();
   const config = configuration({
     retry: { maxAttempts: 1, maxDelayMs: 250 },
   });
-  const resolver = markPapermarkSyntheticFakeForTests(
-    new StalledSecretResolverFake(),
-    "secret-resolver",
-    "StalledSecretResolverFake",
-  );
-  const fetch = markPapermarkSyntheticFakeForTests(
-    fake.fetch,
-    "fetch",
-    "FetchFake",
-  );
-  const instance = new PapermarkTransport(config, resolver, {
-    fetch,
-    sleep: () => Promise.resolve(),
-    now: () => new Date("2026-08-08T12:00:00.000Z"),
-    timer,
-    authorization: createSyntheticPapermarkCallAuthorizationForTests(config, {
-      secretResolver: resolver,
-      fetch,
-    }),
-  });
+  const { instance, bundle } = transport(fake, config, { mode: "stalled" });
   const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
+  bundle.controls.timer.fire();
   const error = await captureError(() => pending);
   assertEquals(error.code, "TIMEOUT");
   assertEquals(fake.calls.length, 0);
@@ -153,35 +58,15 @@ Deno.test("Papermark transport times out a stalled secret resolver", async () =>
 
 Deno.test("Papermark transport rejects a resolver that completes after timeout", async () => {
   const fake = new FetchFake();
-  const timer = new TimerFake();
-  const resolver = markPapermarkSyntheticFakeForTests(
-    new DelayedSecretResolverFake(),
-    "secret-resolver",
-    "DelayedSecretResolverFake",
-  );
-  const fetch = markPapermarkSyntheticFakeForTests(
-    fake.fetch,
-    "fetch",
-    "FetchFake",
-  );
   const config = configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } });
-  const instance = new PapermarkTransport(config, resolver, {
-    fetch,
-    sleep: () => Promise.resolve(),
-    now: () => new Date("2026-08-08T12:00:00.000Z"),
-    timer,
-    authorization: createSyntheticPapermarkCallAuthorizationForTests(config, {
-      secretResolver: resolver,
-      fetch,
-    }),
-  });
+  const { instance, bundle } = transport(fake, config, { mode: "delayed" });
   const pending = instance.getDocumentsPage(undefined);
-  timer.fire();
-  resolver.release();
+  bundle.controls.timer.fire();
+  bundle.controls.secret.release();
   const error = await captureError(() => pending);
   assertEquals(error.code, "TIMEOUT");
   assertEquals(fake.calls.length, 0);
-  assertEquals(resolver.signal?.aborted, true);
+  assertEquals(bundle.controls.secret.calls[0].signal?.aborted, true);
 });
 
 Deno.test("Papermark transport aborts a stalled response body", async () => {
@@ -199,21 +84,47 @@ Deno.test("Papermark transport aborts a stalled response body", async () => {
     value: () => new Promise<unknown>(() => undefined),
   });
   fake.responses.push(response);
-  const timer = new TimerFake();
-  const { instance } = transport(
+  const { instance, bundle } = transport(
     fake,
     configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
-    timer,
   );
   const pending = instance.getDocumentsPage(undefined);
   for (let index = 0; index < 5; index += 1) await Promise.resolve();
-  timer.fire();
+  bundle.controls.timer.fire();
   const error = await captureError(() => pending);
   await Promise.resolve();
   assertEquals(error.code, "TIMEOUT");
   assertEquals(cancelled, true);
   assert(fake.calls[0].init.signal instanceof AbortSignal);
   assertEquals((fake.calls[0].init.signal as AbortSignal).aborted, true);
+});
+
+Deno.test("synthetic Papermark bundles reject caller-owned functions", () => {
+  const config = configuration();
+  assertThrows(
+    () =>
+      createPapermarkSyntheticTestBundle(config, {
+        secret: (() => "caller-secret") as never,
+      }),
+    Error,
+    "never a function",
+  );
+  assertThrows(
+    () =>
+      createPapermarkSyntheticTestBundle(config, {
+        responses: [(() => new Response("{}")) as never],
+      }),
+    Error,
+    "Response or Error",
+  );
+  assertThrows(
+    () =>
+      createPapermarkSyntheticTestBundle(config, {
+        fetch: (() => Promise.resolve(new Response("{}"))) as never,
+      } as never),
+    Error,
+    "unsupported field",
+  );
 });
 
 function configuration(
@@ -231,7 +142,7 @@ function configuration(
       }),
       activation: {
         approvalReference: "approval_papermark_local",
-        providerVersion: "papermark-1.0.0",
+        providerVersion: "papermark-v1.0.0",
         license: "AGPLv3",
         deploymentModel: "self-hosted",
         region: "local",
@@ -257,29 +168,25 @@ function configuration(
 function transport(
   fake: FetchFake,
   config = configuration(),
-  timer: PapermarkTimer = new TimerFake(),
+  secretScript: { readonly mode: "immediate" | "stalled" | "delayed" } = {
+    mode: "immediate",
+  },
 ) {
-  const resolver = markPapermarkSyntheticFakeForTests(
-    new SecretResolverFake(),
-    "secret-resolver",
-    "SecretResolverFake",
-  );
-  const fetch = markPapermarkSyntheticFakeForTests(
-    fake.fetch,
-    "fetch",
-    "FetchFake",
-  );
+  const queue = [
+    ...fake.failures.map((failure) => failure as Error),
+    ...fake.responses,
+  ];
+  const bundle = createPapermarkSyntheticTestBundle(config, {
+    secret: { ...secretScript, value: secret },
+    responses: queue,
+  });
+  Object.defineProperty(fake, "calls", {
+    configurable: true,
+    get: () => bundle.controls.fetch.calls,
+  });
   return {
-    instance: new PapermarkTransport(config, resolver, {
-      fetch,
-      sleep: () => Promise.resolve(),
-      now: () => new Date("2026-08-08T12:00:00.000Z"),
-      timer,
-      authorization: createSyntheticPapermarkCallAuthorizationForTests(config, {
-        secretResolver: resolver,
-        fetch,
-      }),
-    }),
+    instance: new PapermarkTransport(config, bundle.dependencies),
+    bundle,
   };
 }
 

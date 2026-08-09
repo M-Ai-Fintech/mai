@@ -23,6 +23,8 @@ const ADAPTER_CONFIG_KEYS = new Set([
 const CONNECTOR_ACCOUNT_KEYS = new Set(["id", "provider", "tenantId"]);
 const SCOPE_KEYS = new Set(["tenantId", "workspaceId", "dealId"]);
 const RETRY_POLICY_KEYS = new Set(["maxAttempts", "maxDelayMs"]);
+const CREDENTIAL_PREFIX =
+  /^(?:sk|pk|rk|ghp|gho|ghs|glpat|xox[abp]|AIza|AKIA|ya29|eyJ)/i;
 
 export interface PapermarkConnectorBinding {
   readonly id: string;
@@ -155,14 +157,12 @@ function assertEnabledConfiguration(
 ): void {
   if (configuration.provider !== PAPERMARK_PROVIDER) {
     throw new Error(
-      `Papermark configuration provider "${
-        String(configuration.provider)
-      }" is invalid; expected "papermark".`,
+      "Papermark configuration provider is invalid; expected papermark; value=<redacted>.",
     );
   }
   if (configuration.lifecycle !== "enabled") {
     throw new Error(
-      `Papermark lifecycle "${configuration.lifecycle}" is invalid; expected enabled for an adapter instance.`,
+      "Papermark lifecycle is invalid; expected enabled for an adapter instance; value=<redacted>.",
     );
   }
   assertPapermarkEnvironment(configuration.environment);
@@ -176,7 +176,7 @@ function assertPapermarkEnvironment(environment: string): void {
     return;
   }
   throw new Error(
-    `Papermark environment "${environment}" is invalid; expected local-development or sandbox-certification.`,
+    "Papermark environment is invalid; expected local-development or sandbox-certification; value=<redacted>.",
   );
 }
 
@@ -201,22 +201,18 @@ function parseConnectorAccount(
   assertKnownKeys(value, CONNECTOR_ACCOUNT_KEYS, "Papermark connector account");
   if (value.provider !== PAPERMARK_PROVIDER) {
     throw new Error(
-      `Papermark connector account provider "${
-        String(value.provider)
-      }" is invalid; expected "papermark".`,
+      "Papermark connector account provider is invalid; expected papermark; value=<redacted>.",
     );
   }
   const connectorId = parseLocator(value.id, "connector account ID");
   if (!/^connector_[a-z0-9]+(?:-[a-z0-9]+)*$/.test(connectorId)) {
     throw new Error(
-      `Papermark connector account ID "${connectorId}" is invalid; expected a connector_ identifier.`,
+      "Papermark connector account ID is invalid; expected a connector_ identifier; value=<redacted>.",
     );
   }
   if (value.tenantId !== scope.tenantId) {
     throw new Error(
-      `Papermark connector account tenant "${
-        String(value.tenantId)
-      }" does not match scope tenant "${scope.tenantId}"; expected the same tenant binding.`,
+      "Papermark connector account tenant does not match scope tenant; expected the same tenant binding; value=<redacted>.",
     );
   }
   return Object.freeze({
@@ -245,13 +241,22 @@ function parseLocator(value: unknown, label: string): string {
     value.length > 0 &&
     value.length <= 255 &&
     value.trim() === value &&
-    !/\s/.test(value)
+    !/\s/.test(value) &&
+    !looksCredentialLike(value)
   ) return value;
   throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected 1-255 non-whitespace locator characters.`,
+    `${label} is invalid; expected 1-255 non-whitespace locator characters; value=<redacted>.`,
   );
+}
+
+function looksCredentialLike(value: string): boolean {
+  if (CREDENTIAL_PREFIX.test(value)) return true;
+  if (/(?:secret|token|credential|password|bearer|api[-_]?key)/i.test(value)) {
+    return true;
+  }
+  const mixedClasses = /[A-Z]/.test(value) && /[a-z]/.test(value) &&
+    /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value);
+  return value.length >= 32 && (mixedClasses || new Set(value).size >= 20);
 }
 
 function parseBoundedInteger(
@@ -267,8 +272,6 @@ function parseBoundedInteger(
     value <= maximum
   ) return value;
   throw new Error(
-    `Papermark ${label} "${
-      String(value)
-    }" is invalid; expected an integer from ${minimum} to ${maximum}.`,
+    `Papermark ${label} is invalid; expected an integer from ${minimum} to ${maximum}; value=<redacted>.`,
   );
 }

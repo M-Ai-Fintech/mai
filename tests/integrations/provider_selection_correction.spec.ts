@@ -3,6 +3,7 @@ import {
   createCapabilitySnapshot,
   createHealthSnapshot,
   type IntegrationAdapter,
+  type IntegrationResult,
   type IntegrationScope,
   parseIntegrationScope,
   type ProviderDocumentPage,
@@ -70,6 +71,65 @@ Deno.test("provider selection snapshots scope, bindings, and factory before awai
   assertEquals(Object.isFrozen(context), true);
 });
 
+Deno.test("fixture selection owns a frozen adapter facade after original mutation", async () => {
+  let original: CanonicalFixtureAdapter | undefined;
+  const result = await selectProvider({
+    mode: "fixture",
+    provider: "fixture",
+    scope: parseIntegrationScope({
+      tenantId: "tenant_original",
+      workspaceId: "workspace_original",
+      dealId: "deal_original",
+    }),
+    connectorAccountId: "connector_original",
+    providerWorkspaceId: "workspace-provider-original",
+    factories: {
+      fixture: (context) => {
+        const adapter = new CanonicalFixtureAdapter(context);
+        original = adapter;
+        return adapter;
+      },
+    },
+  });
+  assertEquals(result.kind, "fixture");
+  assert(original !== undefined);
+  if (result.kind !== "fixture" || original === undefined) return;
+
+  const mutable = original as unknown as Record<string, unknown>;
+  mutable.provider = "papermark";
+  mutable.environment = "local-development";
+  mutable.lifecycle = "disabled";
+  mutable.scope = parseIntegrationScope({
+    tenantId: "tenant_mutated",
+    workspaceId: "workspace_mutated",
+    dealId: "deal_mutated",
+  });
+  mutable.connectorAccountId = "connector_mutated";
+  mutable.providerWorkspaceId = "workspace-provider-mutated";
+  mutable.documents = new ThrowingDocumentPort();
+  mutable.discoverCapabilities = () => Promise.reject(new Error("replaced"));
+  mutable.checkHealth = () => Promise.reject(new Error("replaced"));
+
+  assertEquals(result.adapter.provider, "fixture");
+  assertEquals(result.adapter.environment, "fixture");
+  assertEquals(result.adapter.lifecycle, "enabled");
+  assertEquals(result.adapter.scope.tenantId, "tenant_original");
+  assertEquals(result.adapter.connectorAccountId, "connector_original");
+  assertEquals(
+    result.adapter.providerWorkspaceId,
+    "workspace-provider-original",
+  );
+  const capabilities = await result.adapter.discoverCapabilities();
+  assertEquals(capabilities.provider, "fixture");
+  const health = await result.adapter.checkHealth();
+  assertEquals(health.provider, "fixture");
+  const documents = await result.adapter.documents.listDocuments({
+    scope: result.adapter.scope,
+    providerWorkspaceId: "workspace-provider-original",
+  });
+  assertEquals(documents.ok, true);
+});
+
 class CanonicalFixtureAdapter implements IntegrationAdapter {
   readonly provider = "fixture" as const;
   readonly environment = "fixture" as const;
@@ -123,5 +183,15 @@ class EmptyDocumentPort implements ScopedDocumentPort {
     _request: never,
   ): Promise<{ ok: true; value: Uint8Array }> {
     return Promise.resolve({ ok: true, value: new Uint8Array() });
+  }
+}
+
+class ThrowingDocumentPort implements ScopedDocumentPort {
+  listDocuments(): Promise<IntegrationResult<ProviderDocumentPage>> {
+    return Promise.reject(new Error("replaced"));
+  }
+
+  downloadDocument(): Promise<IntegrationResult<Uint8Array>> {
+    return Promise.reject(new Error("replaced"));
   }
 }

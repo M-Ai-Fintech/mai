@@ -221,6 +221,33 @@ Deno.test("Papermark configuration canonicalizes nested secret and activation in
   }
 });
 
+Deno.test("Papermark binding locators reject credential-shaped values safely", () => {
+  const secret = "sk_live_papermark_binding_secret_123456789";
+  const cases = [
+    { ...validInput(), providerWorkspaceId: secret },
+    { ...validInput(), folderId: secret },
+    { ...validInput(), providerWorkspaceId: "workspace-secret-value" },
+    {
+      ...validInput(),
+      connectorAccount: {
+        ...validInput().connectorAccount,
+        id: secret,
+      },
+    },
+  ];
+  for (const input of cases) {
+    try {
+      parsePapermarkAdapterConfig(input);
+      throw new Error("Expected credential-shaped binding locator rejection.");
+    } catch (error) {
+      assertEquals(String(error).includes(secret), false);
+      assertEquals(String(error).includes("<redacted>"), true);
+    }
+  }
+  const serialized = JSON.stringify(parsePapermarkAdapterConfig(validInput()));
+  assertEquals(serialized.includes(secret), false);
+});
+
 Deno.test("Papermark configuration enforces bounded request policy", () => {
   const input = { ...validInput(), timeoutMs: 0 };
   assertThrows(
@@ -247,7 +274,7 @@ Deno.test("Papermark configuration enforces bounded request policy", () => {
 function activation() {
   return {
     approvalReference: "approval_papermark_local",
-    providerVersion: "papermark-1.0.0",
+    providerVersion: "papermark-v1.0.0",
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

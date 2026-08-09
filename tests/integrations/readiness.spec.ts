@@ -149,6 +149,64 @@ Deno.test("production candidate and verified claims require exact environment ev
   assert(verified.missingGates.includes("coordinator-authorization"));
 });
 
+Deno.test("Papermark readiness keeps each lifecycle gate independent", () => {
+  const lifecycleGates = [
+    "authenticated-room-lifecycle",
+    "folder-lifecycle",
+    "document-lifecycle",
+    "permissions",
+    "invalid-credentials",
+    "expired-credentials",
+    "provider-unavailable",
+    "malformed-response",
+    "timeout-retry",
+    "rate-limit",
+    "cleanup",
+    "health",
+    "capabilities",
+    "pagination",
+    "scope-isolation",
+    "classification",
+    "residency",
+    "retention",
+    "deletion",
+    "legal-hold",
+    "recovery",
+    "rollback",
+    "secret-redaction",
+  ] as const;
+  const targets = [
+    "local-development",
+    "sandbox-certification",
+    "production-candidate",
+    "production-verified",
+  ] as const;
+  for (const target of targets) {
+    for (const gate of lifecycleGates) {
+      assert(requiredReadinessGates(target).includes(gate));
+    }
+    const evidence = createReadinessEvidence({
+      evidenceId: `evidence_${target}_failure_normalization`,
+      provider: "papermark",
+      environment: target,
+      providerVersion: "commit-profile-001",
+      environmentId: `papermark-${target}`,
+      gate: "failure-normalization",
+      outcome: "passed",
+      source: evidenceSource(target),
+      capturedAt: timestamp(),
+      artifactDigest: digest(`${target}-failure-normalization`),
+    });
+    const evaluation = evaluateReadiness({
+      ...request(target, "commit-profile-001", `papermark-${target}`),
+      evidence: [evidence],
+    });
+    for (const gate of lifecycleGates) {
+      assert(evaluation.missingGates.includes(gate));
+    }
+  }
+});
+
 Deno.test("forged coordinator authorization fails closed without a runtime symbol error", () => {
   assertThrows(
     () =>

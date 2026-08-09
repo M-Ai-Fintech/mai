@@ -49,6 +49,17 @@ export const READINESS_GATES = [
   "health",
   "capabilities",
   "failure-normalization",
+  "authenticated-room-lifecycle",
+  "folder-lifecycle",
+  "document-lifecycle",
+  "permissions",
+  "invalid-credentials",
+  "expired-credentials",
+  "provider-unavailable",
+  "malformed-response",
+  "timeout-retry",
+  "rate-limit",
+  "cleanup",
   "authorization",
   "pagination",
   "scope-isolation",
@@ -119,101 +130,56 @@ export interface ReadinessRegister {
   ): ReadinessEvaluation;
 }
 
+const PAPERMARK_PROFILE_GATES: readonly ReadinessGate[] = [
+  "interface-contract",
+  "coordinator-authorization",
+  "configuration",
+  "credentials",
+  "provider-version",
+  "license",
+  "endpoint",
+  "connector-account",
+  "health",
+  "capabilities",
+  "failure-normalization",
+  "authenticated-room-lifecycle",
+  "folder-lifecycle",
+  "document-lifecycle",
+  "permissions",
+  "invalid-credentials",
+  "expired-credentials",
+  "provider-unavailable",
+  "malformed-response",
+  "timeout-retry",
+  "rate-limit",
+  "cleanup",
+  "authorization",
+  "pagination",
+  "scope-isolation",
+  "classification",
+  "residency",
+  "retention",
+  "deletion",
+  "legal-hold",
+  "recovery",
+  "rollback",
+  "secret-redaction",
+];
+
 const REQUIRED_GATES: Readonly<
   Record<ReadinessTarget, readonly ReadinessGate[]>
 > = {
   "interface-only": ["interface-contract"],
   fixture: ["interface-contract", "fixture-conformance"],
-  "local-development": [
-    "interface-contract",
-    "coordinator-authorization",
-    "configuration",
-    "credentials",
-    "provider-version",
-    "license",
-    "endpoint",
-    "connector-account",
-    "health",
-    "capabilities",
-    "failure-normalization",
-    "authorization",
-    "scope-isolation",
-    "rollback",
-    "secret-redaction",
-  ],
-  "sandbox-certification": [
-    "interface-contract",
-    "coordinator-authorization",
-    "configuration",
-    "credentials",
-    "provider-version",
-    "license",
-    "endpoint",
-    "connector-account",
-    "health",
-    "capabilities",
-    "failure-normalization",
-    "authorization",
-    "pagination",
-    "scope-isolation",
-    "classification",
-    "residency",
-    "retention",
-    "deletion",
-    "legal-hold",
-    "recovery",
-    "rollback",
-    "secret-redaction",
-  ],
+  "local-development": PAPERMARK_PROFILE_GATES,
+  "sandbox-certification": PAPERMARK_PROFILE_GATES,
   "production-candidate": [
-    "interface-contract",
-    "coordinator-authorization",
-    "configuration",
-    "credentials",
-    "provider-version",
-    "license",
-    "endpoint",
-    "connector-account",
-    "health",
-    "capabilities",
-    "failure-normalization",
-    "authorization",
-    "pagination",
-    "scope-isolation",
-    "classification",
-    "residency",
-    "retention",
-    "deletion",
-    "legal-hold",
-    "recovery",
-    "rollback",
-    "secret-redaction",
+    ...PAPERMARK_PROFILE_GATES,
     "production-environment",
     "production-security",
   ],
   "production-verified": [
-    "interface-contract",
-    "coordinator-authorization",
-    "configuration",
-    "credentials",
-    "provider-version",
-    "license",
-    "endpoint",
-    "connector-account",
-    "health",
-    "capabilities",
-    "failure-normalization",
-    "authorization",
-    "pagination",
-    "scope-isolation",
-    "classification",
-    "residency",
-    "retention",
-    "deletion",
-    "legal-hold",
-    "recovery",
-    "rollback",
-    "secret-redaction",
+    ...PAPERMARK_PROFILE_GATES,
     "production-environment",
     "production-security",
     "production-observation",
@@ -253,9 +219,7 @@ export function createReadinessEvidence(
   assertSource(snapshot.environment, snapshot.source);
   if (snapshot.outcome !== "passed" && snapshot.outcome !== "failed") {
     throw new Error(
-      `Readiness evidence outcome "${
-        String(snapshot.outcome)
-      }" is invalid; expected passed or failed.`,
+      "Readiness evidence outcome is invalid; expected passed or failed; value=<redacted>.",
     );
   }
   const capturedAtEpoch = snapshot.capturedAt.getTime();
@@ -325,7 +289,7 @@ export function createReadinessRegister(
       const checked = createReadinessEvidence(next);
       if (evidence.some((entry) => entry.evidenceId === checked.evidenceId)) {
         throw new Error(
-          `Readiness evidence ID "${checked.evidenceId}" is duplicated; expected immutable unique evidence records.`,
+          "Readiness evidence ID is duplicated; expected immutable unique evidence records; value=<redacted>.",
         );
       }
       return createReadinessRegister([...evidence, checked]);
@@ -349,7 +313,7 @@ function freezeEvidence(
     const checked = createReadinessEvidence(entry);
     if (ids.has(checked.evidenceId)) {
       throw new Error(
-        `Readiness evidence ID "${checked.evidenceId}" is duplicated; expected immutable unique evidence records.`,
+        "Readiness evidence ID is duplicated; expected immutable unique evidence records; value=<redacted>.",
       );
     }
     ids.add(checked.evidenceId);
@@ -415,9 +379,7 @@ function readinessState(
 function assertGate(gate: ReadinessGate): void {
   if (READINESS_GATES.includes(gate)) return;
   throw new Error(
-    `Readiness gate "${
-      String(gate)
-    }" is invalid; expected a registered evidence gate.`,
+    "Readiness gate is invalid; expected a registered evidence gate; value=<redacted>.",
   );
 }
 
@@ -435,15 +397,13 @@ function assertSource(
   }[environment];
   if (source === expected) return;
   throw new Error(
-    `Readiness evidence source "${source}" does not match environment "${environment}"; expected "${expected}".`,
+    "Readiness evidence source does not match environment; expected the environment-specific evidence source; value=<redacted>.",
   );
 }
 
 function assertDigest(value: string): void {
   if (/^[0-9a-f]{64}$/.test(value)) return;
   throw new Error(
-    `Readiness artifact digest "${
-      String(value)
-    }" is invalid; expected a lowercase SHA-256 digest.`,
+    "Readiness artifact digest is invalid; expected a lowercase SHA-256 digest; value=<redacted>.",
   );
 }
