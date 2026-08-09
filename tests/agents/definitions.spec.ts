@@ -247,6 +247,45 @@ Deno.test("definition envelopes reject unknown sensitive fields before registrat
   );
 });
 
+Deno.test("catalog rejects fake sensitive validators at every validator field", () => {
+  const current = SPECIALIST_DEFINITIONS[0];
+  const validatorFields = [
+    "inputValidator",
+    "outputValidator",
+    "inputSchema",
+    "outputSchema",
+  ] as const;
+
+  for (const field of validatorFields) {
+    const adversarial = {
+      ...current,
+      [field]: {
+        parse: () => undefined,
+        apiKey: "secret",
+        providerClient: { token: "secret" },
+      },
+    };
+
+    assertEquals(
+      agentDefinitionEnvelopeSchema.safeParse(adversarial).success,
+      false,
+    );
+    assertThrows(
+      () => createDefinitionCatalog([adversarial as AgentDefinition]),
+      Error,
+    );
+  }
+
+  const registered = createDefinitionCatalog(SPECIALIST_DEFINITIONS).current(
+    current.id,
+  );
+  for (const field of validatorFields) {
+    assert(registered[field] === current[field]);
+    assertEquals(Object.hasOwn(registered[field], "apiKey"), false);
+    assertEquals(Object.hasOwn(registered[field], "providerClient"), false);
+  }
+});
+
 type KnownAgentDefinitionId = AgentDefinitionId;
 const _typeCheck: KnownAgentDefinitionId = "broker-orchestrator-agent";
 assertEquals(_typeCheck, "broker-orchestrator-agent");

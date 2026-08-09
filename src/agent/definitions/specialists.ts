@@ -55,6 +55,11 @@ import {
   PROVIDER_UNAVAILABLE,
   purePort,
 } from "./factory.ts";
+import {
+  FINANCIAL_RISK_CALCULATION_BINDINGS,
+  MATCHING_CALCULATION_BINDINGS,
+  TERM_SHEET_CALCULATION_BINDINGS,
+} from "./specialist_calculations.ts";
 
 export const brokerOrchestratorDefinition = defineSpecialist({
   id: "broker-orchestrator-agent",
@@ -133,7 +138,12 @@ export const dealMatchingDefinition = defineSpecialist({
       "valuation-calculations",
       "src/engines/valuation/value_calculations.ts",
     ),
+    purePort(
+      "synergy-pricing",
+      "src/engines/valuation/synergy_calculation.ts",
+    ),
   ],
+  calculationBindings: MATCHING_CALCULATION_BINDINGS,
   legacyToolReferences: [
     "databaseMemoryServiceTool",
     "googleCloudPubSubTool",
@@ -184,6 +194,7 @@ export const financialRiskDefinition = defineSpecialist({
       "src/engines/valuation/value_calculations.ts",
     ),
   ],
+  calculationBindings: FINANCIAL_RISK_CALCULATION_BINDINGS,
   legacyToolReferences: [
     "analyzeCompanyRisksTool",
     "databaseMemoryServiceTool",
@@ -286,6 +297,7 @@ export const legalClosingDefinition = defineSpecialist({
       "src/engines/optimization/negotiation/optimizer.ts",
     ),
   ],
+  calculationBindings: TERM_SHEET_CALCULATION_BINDINGS,
   legacyToolReferences: [
     "databaseMemoryServiceTool",
     "generatePdfTermSheetTool",
@@ -381,6 +393,7 @@ export const negotiationDefinition = defineSpecialist({
       "src/engines/optimization/negotiation/optimizer.ts",
     ),
   ],
+  calculationBindings: TERM_SHEET_CALCULATION_BINDINGS,
   legacyToolReferences: [
     "databaseMemoryServiceTool",
     "googleCloudPubSubTool",

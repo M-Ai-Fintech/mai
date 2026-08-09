@@ -10,7 +10,7 @@ import type {
   RuntimeScope,
   SourceVersionReference,
 } from "./model.ts";
-import { sourceVersionKey } from "./model.ts";
+import { deduplicateSourceVersions, sourceVersionKey } from "./model.ts";
 import type { ToolActivityId } from "./ids.ts";
 import {
   actorReference,
@@ -119,10 +119,10 @@ export class ToolGateway {
         authority,
       });
       assertOutputCapability(definition, output);
-      assertDiscoveredEvidence(output);
+      const normalizedOutput = normalizeToolOutput(output);
       return {
         status: "succeeded",
-        output,
+        output: normalizedOutput,
         authority,
       };
     } catch {
@@ -172,18 +172,31 @@ function assertOutputCapability(
   );
 }
 
-function assertDiscoveredEvidence(output: ToolOutput): void {
-  const discovered = output.discoveredSourceVersions ?? [];
+function normalizeToolOutput(output: ToolOutput): ToolOutput {
+  const discovered = deduplicateSourceVersions(
+    output.discoveredSourceVersions ?? [],
+  );
+  assertDiscoveredEvidence(output.value, discovered);
+  if (discovered.length === (output.discoveredSourceVersions ?? []).length) {
+    return output;
+  }
+  return {
+    ...output,
+    discoveredSourceVersions: Object.freeze([...discovered]),
+  };
+}
+
+function assertDiscoveredEvidence(
+  value: Readonly<Record<string, unknown>>,
+  discovered: readonly SourceVersionReference[],
+): void {
   const recorded = new Map(
     discovered.map((reference) => [sourceVersionKey(reference), reference]),
   );
-  if (recorded.size !== discovered.length) {
-    throw new Error(
-      "Tool output discovered evidence contains duplicates; expected one exact source version per reference.",
-    );
-  }
   for (const reference of discovered) assertSourceVersion(reference);
-  for (const reference of extractSourceVersions(output.value)) {
+  for (
+    const reference of deduplicateSourceVersions(extractSourceVersions(value))
+  ) {
     if (recorded.has(sourceVersionKey(reference))) continue;
     throw new Error(
       `Tool output returned source "${reference.sourceType}:${reference.sourceId}@${reference.version}" without a discovered evidence receipt; expected every returned exact reference in durable lineage.`,

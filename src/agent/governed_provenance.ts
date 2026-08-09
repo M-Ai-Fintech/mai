@@ -1,13 +1,9 @@
 import type {
   AgentModelLineage,
   AgentSourceVersionReference,
-  AgentToolLineage,
   VerifiedAgentLineage,
 } from "./definitions/index.ts";
-import {
-  capabilitySchema,
-  sourceVersionReferenceSchema,
-} from "./definitions/index.ts";
+import { sourceVersionReferenceSchema } from "./definitions/index.ts";
 import type {
   GovernedExecutionBinding,
   GovernedProvenanceVerificationRequest,
@@ -27,33 +23,26 @@ import type {
 } from "../agent_runtime/reads.ts";
 import type { SourceVersionChecker } from "../agent_runtime/runner.ts";
 import {
-  capabilityBindingForTool,
-  capabilityForTool,
-  requestedCapabilityMismatch,
-  type RuntimeToolReceipt,
-} from "./governed_capability_binding.ts";
-import {
   sameDefinitionModel,
   samePrompt,
   sameRuntimeModel,
 } from "./governed_provenance_values.ts";
+import {
+  assertStepClaims,
+  calculationLineage,
+  type DurableStepReceipt,
+  readDurableStep,
+} from "./governed_calculation_receipts.ts";
+import { runtimeToolLineage } from "./governed_tool_receipts.ts";
+import { GovernedProvenanceError } from "./governed_provenance_error.ts";
+
+export { GovernedProvenanceError } from "./governed_provenance_error.ts";
 
 /** Public AgentRuntimeReadService methods used by the production adapter. */
 export type GovernedRuntimeReceiptReader = Pick<
   AgentRuntimeReadService,
-  "getRun" | "getResult" | "getToolActivity"
+  "getRun" | "getResult" | "getToolActivity" | "getStep"
 >;
-
-export class GovernedProvenanceError extends Error {
-  readonly code = "INVALID_GOVERNED_PROVENANCE";
-
-  constructor(reason: string) {
-    super(
-      `Governed proposal provenance was rejected: ${reason}; expected trusted receipts for the bound actor, scope, run, and definition.`,
-    );
-    this.name = "GovernedProvenanceError";
-  }
-}
 
 /** Adapts authorized AgentRuntimeReadService receipts into trusted lineage. */
 export class AgentRuntimeProvenanceVerifier
@@ -70,9 +59,12 @@ export class AgentRuntimeProvenanceVerifier
     const run = await readRun(this.reads, execution);
     const result = await readResult(this.reads, execution, request.resultId);
     assertRuntimeResult(result, request.resultId, execution);
+    const step = await readStep(this.reads, execution, result);
+    assertDurableStepClaims(step, request);
     const identity = runtimeIdentityLineage(result, request.definition);
     const model = runtimeModelLineage(run, result, request.definition);
     const tools = await runtimeToolLineage(this.reads, request, result);
+    const calculation = durableCalculationLineage(step, request, result);
     const evidence = runtimeEvidenceLineage(result);
     await assertEvidenceCurrent(this.sources, evidence);
     const currentRun = await readRun(this.reads, execution);
@@ -80,8 +72,61 @@ export class AgentRuntimeProvenanceVerifier
     return {
       execution,
       result,
-      lineage: { ...identity, model, tools, evidence },
+      lineage: {
+        ...identity,
+        model,
+        tools,
+        ...(calculation === undefined ? {} : { calculation }),
+        evidence,
+      },
     };
+  }
+}
+
+function assertDurableStepClaims(
+  step: DurableStepReceipt,
+  request: GovernedProvenanceVerificationRequest,
+): void {
+  try {
+    assertStepClaims(step, request);
+  } catch (error) {
+    throw new GovernedProvenanceError(
+      error instanceof Error
+        ? error.message
+        : "durable step claims are malformed",
+    );
+  }
+}
+
+function durableCalculationLineage(
+  step: DurableStepReceipt,
+  request: GovernedProvenanceVerificationRequest,
+  result: ResultRecord,
+) {
+  try {
+    return calculationLineage(step, request, result);
+  } catch (error) {
+    throw new GovernedProvenanceError(
+      error instanceof Error
+        ? error.message
+        : "durable calculation receipt is malformed",
+    );
+  }
+}
+
+async function readStep(
+  reads: GovernedRuntimeReceiptReader,
+  execution: GovernedExecutionBinding,
+  result: ResultRecord,
+): Promise<DurableStepReceipt> {
+  try {
+    return await readDurableStep(reads, execution, result);
+  } catch (error) {
+    throw new GovernedProvenanceError(
+      error instanceof Error
+        ? error.message
+        : "durable step receipt is malformed",
+    );
   }
 }
 
@@ -282,6 +327,13 @@ function runtimeModelLineage(
       "runtime run has no model receipt; expected durable model metadata",
     );
   }
+  if (
+    run.model.policyReference !== definition.modelPolicy.policyReference
+  ) {
+    throw new GovernedProvenanceError(
+      "runtime run model policy receipt does not match the selected definition",
+    );
+  }
   const model = result.lineage.model;
   const prompt = result.lineage.prompt;
   if (model === undefined || prompt === undefined) {
@@ -310,92 +362,6 @@ function runtimeModelLineage(
     provider: run.model.provider,
     model: run.model.model,
     modelVersion: run.model.modelVersion,
-  };
-}
-
-async function runtimeToolLineage(
-  reads: GovernedRuntimeReceiptReader,
-  request: GovernedProvenanceVerificationRequest,
-  result: ResultRecord,
-): Promise<AgentToolLineage[]> {
-  const activityIds = result.lineage.toolActivityIds;
-  assertUnique(activityIds, "durable result tool activity");
-  const receipts = await Promise.all(
-    activityIds.map((activityId) =>
-      runtimeTool(reads, request, result, activityId)
-    ),
-  );
-  const mismatch = requestedCapabilityMismatch(
-    request.capability,
-    result,
-    receipts,
-  );
-  if (mismatch !== undefined) {
-    throw new GovernedProvenanceError(mismatch);
-  }
-  return receipts.map(({ action: _action, ...tool }) => tool);
-}
-
-async function runtimeTool(
-  reads: GovernedRuntimeReceiptReader,
-  request: GovernedProvenanceVerificationRequest,
-  result: ResultRecord,
-  activityId: unknown,
-): Promise<RuntimeToolReceipt> {
-  if (typeof activityId !== "string" || !activityId.trim()) {
-    throw new GovernedProvenanceError(
-      "durable result tool lineage is malformed; expected durable activity IDs",
-    );
-  }
-  const activity = await readReceipt(
-    reads.getToolActivity(
-      request.execution.context,
-      request.execution.actor,
-      activityId,
-    ),
-    `tool activity "${activityId}"`,
-  );
-  if (!isRecord(activity)) {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" is malformed; expected a durable activity record`,
-    );
-  }
-  if (
-    activity.activityId !== activityId ||
-    activity.runId !== request.execution.runId ||
-    activity.runId !== result.runId
-  ) {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" belongs to another run or result binding`,
-    );
-  }
-  if (activity.state !== "succeeded") {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" is not succeeded`,
-    );
-  }
-  if (
-    !request.definition.toolReferences.includes(
-      activity.toolName as (typeof request.definition.toolReferences)[number],
-    ) || !capabilitySchema.safeParse(activity.toolName).success
-  ) {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" has an invalid tool name`,
-    );
-  }
-  const binding = capabilityBindingForTool(activity.toolName);
-  if (binding !== undefined && activity.action !== binding.action) {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" action "${activity.action}" does not match tool "${activity.toolName}"`,
-    );
-  }
-  const capability = capabilityForTool(activity.toolName, activity.action);
-  return {
-    name: activity.toolName,
-    activityId: activity.activityId,
-    action: activity.action,
-    ...capability,
-    status: "succeeded",
   };
 }
 

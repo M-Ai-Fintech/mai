@@ -1,5 +1,8 @@
-import { capabilitySchema } from "./definitions/index.ts";
-import type { AgentToolLineage } from "./definitions/index.ts";
+import { type AgentDefinition, capabilitySchema } from "./definitions/index.ts";
+import type {
+  AgentToolLineage,
+  CalculationBinding,
+} from "./definitions/index.ts";
 import type { ResultRecord } from "../agent_runtime/model.ts";
 
 export interface DurableCapabilityBinding {
@@ -8,6 +11,15 @@ export interface DurableCapabilityBinding {
 }
 
 export type RuntimeToolReceipt = AgentToolLineage & { readonly action: string };
+
+export function calculationBindingFor(
+  definition: Pick<AgentDefinition, "calculationBindings">,
+  capability: string,
+): CalculationBinding | undefined {
+  return definition.calculationBindings.find((binding) =>
+    binding.capability === capability
+  );
+}
 
 export const DURABLE_CAPABILITY_BINDINGS: Readonly<
   Record<string, DurableCapabilityBinding>
@@ -70,9 +82,7 @@ export function requestedCapabilityMismatch(
 ): string | undefined {
   const binding = DURABLE_CAPABILITY_BINDINGS[capability];
   if (binding === undefined) {
-    return result.lineage.capability === capability
-      ? undefined
-      : `durable result "${result.resultId}" lacks a receipt for requested capability "${capability}"`;
+    return `durable result "${result.resultId}" lacks a durable receipt for requested capability "${capability}"`;
   }
   return tools.some((tool) =>
       tool.name === binding.toolName && tool.action === binding.action

@@ -14,6 +14,7 @@ import type {
   RuntimeActor,
   RuntimeScope,
   SourceVersionReference,
+  StepRecord,
   ToolActivityRecord,
 } from "../../src/agent_runtime/model.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
@@ -61,6 +62,10 @@ class NamedCapabilityReceiptReader implements GovernedRuntimeReceiptReader {
     return Promise.resolve(loaded(this.result));
   }
 
+  getStep(): Promise<RuntimeReadResult<StepRecord>> {
+    return Promise.resolve(loaded(governedStep(this.result)));
+  }
+
   getToolActivity(): Promise<RuntimeReadResult<ToolActivityRecord>> {
     return Promise.resolve(loaded(this.activity));
   }
@@ -79,7 +84,11 @@ function loaded<T>(value: T): RuntimeReadResult<T> {
 function fixtureReceipts(
   definition: AgentDefinition,
   execution: ReturnType<typeof fixtureExecution>,
-): { run: RunRecord; result: ResultRecord; activity: ToolActivityRecord } {
+): {
+  run: RunRecord;
+  result: ResultRecord;
+  activity: ToolActivityRecord;
+} {
   const now = new Date("2026-08-08T12:00:00.000Z");
   const activity = {
     activityId: "activity_capability_binding" as never,
@@ -134,9 +143,35 @@ function fixtureReceipts(
       provider: definition.modelPolicy.provider,
       model: definition.modelPolicy.model,
       modelVersion: definition.modelPolicy.modelVersion,
+      policyReference: definition.modelPolicy.policyReference,
     },
   } as unknown as RunRecord;
   return { run, result, activity };
+}
+
+function governedStep(result: ResultRecord): StepRecord {
+  const now = result.createdAt;
+  return {
+    stepId: result.stepId,
+    runId: result.runId,
+    ordinal: 1,
+    name: "governed-proposal",
+    kind: "model",
+    input: {
+      governed: {
+        definition: result.lineage.definition,
+        prompt: result.lineage.prompt,
+        modelPolicyReference: result.lineage.modelPolicyReference,
+        capability: "document.metadata.read",
+      },
+    },
+    sourceVersions: [],
+    state: "succeeded",
+    attemptCount: 1,
+    resultId: result.resultId,
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 function fixtureExecution(definition: AgentDefinition) {

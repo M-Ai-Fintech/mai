@@ -60,6 +60,11 @@ export interface PromptLineage {
   readonly promptDigest: string;
 }
 
+export type RuntimeCalculationLineage = Record<
+  "capability" | "purePort" | "operation" | "action" | "stepId",
+  string
+>;
+
 export interface ModelMetadata {
   readonly provider: string;
   readonly model: string;
@@ -92,6 +97,7 @@ export interface RuntimeLineage {
   readonly capability?: string;
   readonly prompt?: PromptLineage;
   readonly model?: ModelMetadata;
+  readonly calculation?: RuntimeCalculationLineage;
   readonly toolActivityIds: readonly ToolActivityId[];
   readonly evidence: readonly SourceVersionReference[];
 }
@@ -348,6 +354,58 @@ export function sourceVersionKey(reference: SourceVersionReference): string {
     reference.version,
     reference.checksum ?? "",
   ].join(":");
+}
+
+export function sourceVersionIdentityKey(
+  reference: SourceVersionReference,
+): string {
+  return JSON.stringify([
+    reference.sourceType,
+    reference.sourceId,
+    reference.version,
+  ]);
+}
+
+export function deduplicateSourceVersions(
+  references: readonly SourceVersionReference[],
+): readonly SourceVersionReference[] {
+  const unique = new Map<string, SourceVersionReference>();
+  for (const reference of references) {
+    const identity = sourceVersionIdentityKey(reference);
+    const existing = unique.get(identity);
+    if (existing === undefined) {
+      unique.set(identity, reference);
+      continue;
+    }
+    if (sameSourceVersionReceipt(existing, reference)) continue;
+    throw new Error(
+      `Source version receipt "${identity}" conflicts: "${
+        sourceVersionKey(existing)
+      }" and "${sourceVersionKey(reference)}"; expected one exact checksum.`,
+    );
+  }
+  return [...unique.values()];
+}
+
+function sameSourceVersionReceipt(
+  left: SourceVersionReference,
+  right: SourceVersionReference,
+): boolean {
+  return sameSourceVersion(left, right) &&
+    JSON.stringify(receiptMetadata(left)) ===
+      JSON.stringify(receiptMetadata(right));
+}
+
+function receiptMetadata(reference: SourceVersionReference): unknown {
+  const value = reference as unknown as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) =>
+        key !== "sourceType" && key !== "sourceId" && key !== "version" &&
+        key !== "checksum"
+      )
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
 }
 
 export function sameSourceVersion(

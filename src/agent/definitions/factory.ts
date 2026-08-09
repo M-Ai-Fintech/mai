@@ -6,6 +6,7 @@ import {
   type GovernedToolName,
   HUMAN_ONLY_EFFECTS,
 } from "./contract.ts";
+import type { CalculationBinding } from "./calculation_contract.ts";
 
 const MODEL_POLICY = {
   policyReference: "agent-model-policy/v1",
@@ -101,6 +102,7 @@ export interface SpecialistOptions {
     contractVersion: string;
     deterministic: true;
   }[];
+  readonly calculationBindings?: readonly CalculationBinding[];
   readonly legacyToolReferences: readonly string[];
   readonly defaultArtifactKind?: "proposal" | "reversible_draft";
 }
@@ -148,6 +150,7 @@ export function defineSpecialist(options: SpecialistOptions): AgentDefinition {
     knowledgeAssets: [...options.knowledgeAssets],
     toolReferences: [...options.toolReferences],
     purePorts: [...options.purePorts],
+    calculationBindings: [...(options.calculationBindings ?? [])],
     legacyToolReferences: [
       ...new Set([...options.legacyToolReferences, ...LEGACY_TOOL_NAMES]),
     ],
@@ -191,4 +194,13 @@ export function purePort(name: string, reference: string) {
     contractVersion: AGENT_DEFINITION_VERSION,
     deterministic: true as const,
   };
+}
+
+export function calculationBinding(
+  capability: string,
+  purePort: string,
+  operation: string,
+  action: string,
+) {
+  return { capability, purePort, operation, action };
 }

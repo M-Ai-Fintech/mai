@@ -74,7 +74,12 @@ export interface GovernedProvenanceVerificationRequest {
   readonly capability: string;
   readonly definition: Pick<
     AgentDefinition,
-    "id" | "version" | "prompt" | "modelPolicy" | "toolReferences"
+    | "id"
+    | "version"
+    | "prompt"
+    | "modelPolicy"
+    | "toolReferences"
+    | "calculationBindings"
   >;
   readonly resultId: string;
 }
@@ -228,6 +233,7 @@ async function resultFromResponse(
       prompt: definition.prompt,
       modelPolicy: definition.modelPolicy,
       toolReferences: definition.toolReferences,
+      calculationBindings: definition.calculationBindings,
     },
     resultId,
   });

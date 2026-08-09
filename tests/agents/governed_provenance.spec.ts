@@ -11,7 +11,6 @@ import {
   type GovernedRuntimeReceiptReader,
 } from "../../src/agent/governed.ts";
 import type { AgentDefinition } from "../../src/agent/definitions/index.ts";
-import type { RuntimeReadResult } from "../../src/agent_runtime/reads.ts";
 import type { SourceVersionChecker } from "../../src/agent_runtime/runner.ts";
 import type {
   ResultRecord,
@@ -21,6 +20,10 @@ import type {
   ToolActivityRecord,
 } from "../../src/agent_runtime/model.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
+import {
+  governedStep,
+  NamedFakeAgentRuntimeReadService,
+} from "./governed_provenance_fakes.ts";
 
 class NamedRecordingProposalPort implements GovernedProposalPort {
   constructor(private readonly response: GovernedProposalResponse) {}
@@ -29,81 +32,6 @@ class NamedRecordingProposalPort implements GovernedProposalPort {
     _request: GovernedProposalRequest,
   ): Promise<GovernedProposalResponse> {
     return Promise.resolve(this.response);
-  }
-}
-
-class NamedFakeAgentRuntimeReadService implements GovernedRuntimeReceiptReader {
-  readonly calls: string[] = [];
-  private runReadCount = 0;
-
-  constructor(
-    private readonly runs: readonly RunRecord[],
-    private readonly activities: readonly ToolActivityRecord[],
-    private readonly result: ResultRecord | undefined,
-    private readonly afterActivity?: () => void,
-  ) {}
-
-  getRun(
-    context: RequestContext,
-    actor: RunRecord["actor"],
-    runId: RunRecord["runId"],
-  ): Promise<RuntimeReadResult<RunRecord>> {
-    this.calls.push(`run:${runId}`);
-    const run = this.runs[Math.min(this.runReadCount++, this.runs.length - 1)];
-    return Promise.resolve(
-      run !== undefined && this.authorized(context, actor, runId)
-        ? { kind: "loaded", value: run, decision: {} as never }
-        : this.notFound(),
-    );
-  }
-
-  getResult(
-    context: RequestContext,
-    actor: RunRecord["actor"],
-    resultId: string,
-  ): Promise<RuntimeReadResult<ResultRecord>> {
-    this.calls.push(`result:${resultId}`);
-    return Promise.resolve(
-      this.result !== undefined && this.result.resultId === resultId &&
-        this.authorized(context, actor, this.result.runId)
-        ? { kind: "loaded", value: this.result, decision: {} as never }
-        : this.notFound(),
-    );
-  }
-
-  getToolActivity(
-    context: RequestContext,
-    actor: RunRecord["actor"],
-    activityId: string,
-  ): Promise<RuntimeReadResult<ToolActivityRecord>> {
-    this.calls.push(`activity:${activityId}`);
-    const activity = this.activities.find((item) =>
-      item.activityId === activityId
-    );
-    const receipt = activity !== undefined &&
-        this.authorized(context, actor, this.runs[0]?.runId)
-      ? { kind: "loaded" as const, value: activity, decision: {} as never }
-      : this.notFound<ToolActivityRecord>();
-    if (receipt.kind === "loaded") this.afterActivity?.();
-    return Promise.resolve(receipt);
-  }
-
-  private authorized(
-    context: RequestContext,
-    actor: RunRecord["actor"],
-    runId: RunRecord["runId"],
-  ): boolean {
-    const firstRun = this.runs[0];
-    return firstRun !== undefined && runId === firstRun.runId &&
-      actor.actorId === firstRun.actor.actorId &&
-      context.actorId === actor.actorId &&
-      context.tenantId === firstRun.scope.tenantId &&
-      context.workspaceId === firstRun.scope.workspaceId &&
-      context.dealId === firstRun.scope.dealId;
-  }
-
-  private notFound<T>(): RuntimeReadResult<T> {
-    return { kind: "protected_not_found", response: {} as never };
   }
 }
 
@@ -169,6 +97,7 @@ Deno.test("runtime provenance reads the exact result and derives complete lineag
   assertEquals(reads.calls, [
     "run:run_governed",
     "result:result_receipt",
+    "step:step_receipt",
     "activity:activity_exact_evidence",
     "run:run_governed",
   ]);
@@ -258,6 +187,8 @@ Deno.test("runtime provenance rejects missing, cross-run, stale, wrong-kind, and
     [base.run],
     [base.activity],
     mismatchedResult,
+    undefined,
+    governedStep(base.result),
   );
   await assertRejects(
     () =>
@@ -339,6 +270,7 @@ Deno.test("runtime provenance rejects receipts that become stale after loading",
   assertEquals(reads.calls, [
     "run:run_governed",
     "result:result_receipt",
+    "step:step_receipt",
     "activity:activity_exact_evidence",
   ]);
 });
@@ -370,6 +302,7 @@ Deno.test("runtime provenance rejects concurrent run invalidation after freshnes
   assertEquals(reads.calls, [
     "run:run_governed",
     "result:result_receipt",
+    "step:step_receipt",
     "activity:activity_exact_evidence",
     "run:run_governed",
   ]);
@@ -465,6 +398,7 @@ function runtimeReceiptFixture(
       provider: definition.modelPolicy.provider,
       model: definition.modelPolicy.model,
       modelVersion: definition.modelPolicy.modelVersion,
+      policyReference: definition.modelPolicy.policyReference,
     },
   } as unknown as RunRecord;
   return { run, activity, result };

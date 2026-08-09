@@ -1,5 +1,8 @@
 import type { ToolOutput } from "../../agent_runtime/tool_gateway.ts";
-import type { SourceVersionReference } from "../../agent_runtime/model.ts";
+import {
+  deduplicateSourceVersions,
+  type SourceVersionReference,
+} from "../../agent_runtime/model.ts";
 import type {
   CapabilityUnavailable,
   Checksum,
@@ -52,11 +55,12 @@ export function result(
   value: Record<string, unknown>,
   discoveredSourceVersions: readonly SourceVersionReference[] = [],
 ): ToolOutput {
+  const uniqueSources = deduplicateSourceVersions(discoveredSourceVersions);
   return {
     kind,
     value: Object.freeze(value),
-    ...(discoveredSourceVersions.length === 0 ? {} : {
-      discoveredSourceVersions: Object.freeze([...discoveredSourceVersions]),
+    ...(uniqueSources.length === 0 ? {} : {
+      discoveredSourceVersions: Object.freeze([...uniqueSources]),
     }),
   };
 }

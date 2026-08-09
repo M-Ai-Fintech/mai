@@ -1,4 +1,13 @@
 import { z, type ZodTypeAny } from "zod";
+import {
+  calculationBindingSchema,
+  type CalculationLineage,
+  calculationLineageSchema,
+  validateCalculationBindings,
+} from "./calculation_contract.ts";
+import type { AgentProposalInput } from "./proposal_contract.ts";
+import { validatorSchema } from "./validator_schema.ts";
+export type { AgentProposalInput } from "./proposal_contract.ts";
 
 export const DEFINITION_ENVELOPE_SCHEMA_VERSION = 1 as const;
 export const AGENT_DEFINITION_VERSION = "1.0.0" as const;
@@ -73,7 +82,6 @@ export const capabilitySchema = z.string().regex(
 );
 const governedToolNameSchema = z.enum(GOVERNED_TOOL_NAMES);
 const effectSchema = z.enum(HUMAN_ONLY_EFFECTS);
-const validatorSchema = z.custom<ZodTypeAny>(isZodValidator);
 
 export const schemaReferenceSchema = z.object({
   reference: textSchema,
@@ -150,6 +158,7 @@ const agentDefinitionEnvelopeBaseSchema = z.object({
   knowledgeAssets: z.array(knowledgeAssetSchema).min(1),
   toolReferences: z.array(governedToolNameSchema),
   purePorts: z.array(purePortSchema),
+  calculationBindings: z.array(calculationBindingSchema),
   legacyToolReferences: z.array(textSchema),
   artifactPolicy: artifactPolicySchema,
   lifecycle: z.object({
@@ -219,6 +228,7 @@ export const resultLineageSchema = z.object({
   modelPolicyReference: textSchema,
   tools: z.array(toolLineageSchema),
   toolActivityIds: z.array(textSchema),
+  calculation: calculationLineageSchema.optional(),
   evidence: z.array(sourceVersionReferenceSchema),
 });
 
@@ -243,6 +253,7 @@ export interface VerifiedAgentLineage {
   readonly modelPolicyReference: string;
   readonly model: AgentModelLineage;
   readonly tools: readonly AgentToolLineage[];
+  readonly calculation?: CalculationLineage;
   readonly evidence: readonly AgentSourceVersionReference[];
 }
 
@@ -260,11 +271,6 @@ export const agentProposalResultSchema = z.object({
 });
 
 export type AgentProposalResult = z.infer<typeof agentProposalResultSchema>;
-
-export interface AgentProposalInput {
-  readonly kind?: "proposal" | "reversible_draft";
-  readonly value: Readonly<Record<string, unknown>>;
-}
 
 export function createAgentProposalResult(
   definition: AgentDefinition,
@@ -337,6 +343,9 @@ function lineageFor(lineage: VerifiedAgentLineage) {
     model: lineage.model,
     modelPolicyReference: lineage.modelPolicyReference,
     tools: lineage.tools,
+    ...(lineage.calculation === undefined
+      ? {}
+      : { calculation: lineage.calculation }),
     toolActivityIds: lineage.tools.flatMap((tool) =>
       tool.activityId === undefined ? [] : [tool.activityId]
     ),
@@ -437,6 +446,12 @@ function validateDefinitionLists(
   ) {
     addAliasIssue(context, "capabilities.denied", "deniedCapabilities");
   }
+  validateCalculationBindings(
+    definition.calculationBindings,
+    definition.allowedCapabilities,
+    definition.purePorts,
+    context,
+  );
 }
 
 function assertUnique(
@@ -449,11 +464,6 @@ function assertUnique(
     code: z.ZodIssueCode.custom,
     message: `${label} list contains a duplicate; expected each entry once.`,
   });
-}
-
-function isZodValidator(value: unknown): value is ZodTypeAny {
-  return typeof value === "object" && value !== null &&
-    typeof (value as { parse?: unknown }).parse === "function";
 }
 
 function sameEntries(

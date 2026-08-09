@@ -145,6 +145,11 @@ function immutableDefinition(definition: AgentDefinition): AgentDefinition {
     purePorts: Object.freeze(
       definition.purePorts.map((port) => Object.freeze({ ...port })),
     ),
+    calculationBindings: Object.freeze(
+      definition.calculationBindings.map((binding) =>
+        Object.freeze({ ...binding })
+      ),
+    ),
     legacyToolReferences: Object.freeze([...definition.legacyToolReferences]),
     artifactPolicy: Object.freeze({ ...definition.artifactPolicy }),
     lifecycle: Object.freeze({ ...definition.lifecycle }),
