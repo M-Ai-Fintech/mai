@@ -2,28 +2,28 @@ Context
 
 The authoritative execution policy is `prompts/OPERATING_RULES.md`; read it before execution.
 
-Wave L contains Linear issue MAI-70 — Data migration and MVP retirement. Run only after its owner-approved PR is merged. Linear state, migration manifests, reconciliation/rollback evidence, operator records, and merged source are authoritative.
+Wave L contains Linear issue MAI-71 — Pre-seed MVP end-to-end demo readiness gate. Run only after its owner-approved PR is merged and all current-MVP dependencies are complete. MAI-70 and other post-MVP tasks are not Wave L closure gates.
 
 Objective
 
-Close Wave L only after proving exclusive migration ownership, clean and historical upgrade paths, import/reconciliation/cutover/rollback, complete consumer cutover, safe retirement, preserved history/manifests, and operator readiness on merged master.
+Close Wave L and the pre-seed MVP only after proving the principal investor-demo workflow is repeatable, evidence-grounded, permission-safe, human-governed, and free of unresolved P0/P1 defects at the exact merged-source SHA.
 
 Relevant scope / architecture
 
-Review the entire MAI-70 migration/cutover result and all declared replacement dependencies. Read-only migration/recovery reviewers may run in parallel only when justified and each receives a concrete `/goal`; only the finisher writes closure state and Graphify.
+Reconcile MAI-71 evidence for the supported banker-facing frontend/API path, M&Ai-managed document ingestion, exact source/version/checksum provenance, evidence/citations, findings/calculations, human-authority boundaries, safe failure behavior, deterministic demo setup/reset, and final demo artifact. Only the finisher writes Linear closure state, Graphify, and repository closure metadata.
 
 Known risks or constraints
 
-Do not repair feature/migration code, rewrite applied migrations, accept unexplained reconciliation mismatches, delete historical evidence, or close while legacy writers/consumers remain authoritative without explicit approved retention.
+Do not implement features, waive P0/P1 defects, reinterpret missing required MVP evidence as pass, start post-MVP work, require live Papermark certification, require GCP, or convert this gate into production-candidate approval. MAI-70, MAI-66, MAI-67, MAI-69, MAI-81, MAI-82, and MAI-83 remain deferred.
 
 Expected verification
 
-Run focused migration/reconciliation/cutover/rollback/recovery checks and canonical `DENO_ENV=test deno task verify`. Confirm manifests, reconciliation thresholds, rollback proof, migration-ledger integrity, operator evidence, consumer inventory, and zero unresolved P0/P1 blockers.
+Run or validate the focused MAI-71 demo E2E/integration/security checks and exact-head canonical `DENO_ENV=test deno task verify`. Confirm deterministic reset/setup, synthetic data only, supported workflow completion, provenance, isolation, authority, truthful runtime-state labeling, demo dossier, and zero open P0/P1 findings.
 
-If green, run one `graphify update .`, `git diff --check`, mark MAI-70 Done in Linear, remove only the merged branch/worktree, commit `docs: close delivery wave L`, push master, and verify clean synchronized master. Otherwise record the exact blocker and leave MAI-70 non-Done.
+If green, run exactly one `graphify update .`, `git diff --check`, mark MAI-71 Done in Linear, remove only its merged branch/worktree, commit `docs: close delivery wave L`, push master, and verify clean synchronized master. Otherwise record the exact blocker and leave MAI-71 non-Done.
 
 Allowed state transitions
 
-The finisher may mark MAI-70 Done and push the Wave L closure commit only after all migration gates pass. It may not implement repairs or start MAI-71 before closure is complete.
+The finisher may mark MAI-71 Done and push the Wave L closure commit only after every current-MVP demo-readiness gate passes. It may not start MAI-83 or any other post-MVP task.
 
 /goal
