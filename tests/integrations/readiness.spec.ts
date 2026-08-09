@@ -209,6 +209,48 @@ Deno.test("readiness register append is immutable and rejects duplicate evidence
   assertThrows(() => next.appendEvidence(evidence), Error, "evidence ID");
 });
 
+Deno.test("readiness evidence timestamps are defensive and cannot promote stale passes", () => {
+  const evidence = evidenceFor(
+    "local-development",
+    "commit-001",
+    "papermark-local",
+  );
+  const oldPass = evidence.find(({ gate }) => gate === "configuration");
+  if (oldPass === undefined) {
+    throw new Error("Expected configuration evidence.");
+  }
+  const oldPassIndex = evidence.findIndex(({ gate }) =>
+    gate === "configuration"
+  );
+  const laterFail = createReadinessEvidence({
+    ...oldPass,
+    evidenceId: "evidence_local_configuration_failure",
+    outcome: "failed",
+    capturedAt: new Date("2026-08-08T13:00:00.000Z"),
+    artifactDigest: digest("configuration-failure"),
+  });
+  const register = createReadinessRegister([...evidence, laterFail]);
+
+  assertEquals(
+    register.evaluate(
+      request("local-development", "commit-001", "papermark-local"),
+    ).state,
+    "gated",
+  );
+  register.evidence[oldPassIndex].capturedAt.setFullYear(2099);
+  assertEquals(
+    register.evaluate(
+      request("local-development", "commit-001", "papermark-local"),
+    ).state,
+    "gated",
+  );
+  assertEquals(
+    register.evidence[oldPassIndex].capturedAt.toISOString(),
+    "2026-08-08T12:00:00.000Z",
+  );
+  assertEquals(Object.isFrozen(register.evidence[oldPassIndex]), true);
+});
+
 function request(
   target:
     | "fixture"

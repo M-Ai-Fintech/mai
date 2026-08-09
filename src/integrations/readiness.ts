@@ -9,6 +9,7 @@ import {
   type CoordinatorAuthorization,
   hasCoordinatorAuthorization,
 } from "./readiness_guards.ts";
+import { assertReadinessEvidenceShape } from "./readiness_validation.ts";
 
 export type { CoordinatorAuthorization } from "./readiness_guards.ts";
 
@@ -208,19 +209,6 @@ const REQUIRED_GATES: Readonly<
   ],
 };
 
-const EVIDENCE_KEYS = new Set([
-  "evidenceId",
-  "provider",
-  "environment",
-  "providerVersion",
-  "environmentId",
-  "gate",
-  "outcome",
-  "source",
-  "capturedAt",
-  "artifactDigest",
-]);
-
 /**
  * Validates and freezes one credential-free readiness evidence record.
  *
@@ -229,7 +217,7 @@ const EVIDENCE_KEYS = new Set([
 export function createReadinessEvidence(
   input: ReadinessEvidenceInput,
 ): ReadinessEvidence {
-  assertEvidenceShape(input);
+  assertReadinessEvidenceShape(input);
   assertProvider(input.provider);
   assertTarget(input.environment);
   assertIdentifier(input.evidenceId, "evidence ID");
@@ -246,10 +234,22 @@ export function createReadinessEvidence(
       }" is invalid; expected passed or failed.`,
     );
   }
-  return Object.freeze({
-    ...input,
-    capturedAt: new Date(input.capturedAt),
-  });
+  const capturedAtEpoch = input.capturedAt.getTime();
+  const evidence: ReadinessEvidence = {
+    evidenceId: input.evidenceId,
+    provider: input.provider,
+    environment: input.environment,
+    providerVersion: input.providerVersion,
+    environmentId: input.environmentId,
+    gate: input.gate,
+    outcome: input.outcome,
+    source: input.source,
+    get capturedAt(): Date {
+      return new Date(capturedAtEpoch);
+    },
+    artifactDigest: input.artifactDigest,
+  };
+  return Object.freeze(evidence);
 }
 
 /**
@@ -393,23 +393,6 @@ function assertReadinessRequest(input: ReadinessEvaluationRequest): void {
     );
   }
   for (const evidence of input.evidence) createReadinessEvidence(evidence);
-}
-
-function assertEvidenceShape(input: ReadinessEvidenceInput): void {
-  if (typeof input !== "object" || input === null) {
-    throw new Error(
-      `Readiness evidence "${
-        String(input)
-      }" is invalid; expected credential-free evidence metadata.`,
-    );
-  }
-  const unknown = Object.keys(input as unknown as Record<string, unknown>).find(
-    (key) => !EVIDENCE_KEYS.has(key),
-  );
-  if (unknown === undefined) return;
-  throw new Error(
-    `Readiness evidence key "${unknown}" is invalid; expected credential-free metadata and no credential material.`,
-  );
 }
 
 function assertProvider(provider: IntegrationProvider): void {

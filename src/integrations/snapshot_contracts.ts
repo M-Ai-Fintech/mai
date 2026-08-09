@@ -23,6 +23,35 @@ import {
   PROVIDER_LIFECYCLES,
   type ProviderLifecycle,
 } from "./contracts.ts";
+import {
+  assertKnownKeys,
+  assertRecord,
+  rejectInlineCredentialKeys,
+} from "./configuration_validation.ts";
+
+const CAPABILITY_SNAPSHOT_KEYS = new Set([
+  "provider",
+  "environment",
+  "lifecycle",
+  "configured",
+  "source",
+  "scope",
+  "requested",
+  "observations",
+  "observedAt",
+]);
+const HEALTH_SNAPSHOT_KEYS = new Set([
+  "provider",
+  "environment",
+  "lifecycle",
+  "configured",
+  "scope",
+  "checks",
+  "observedAt",
+]);
+const SCOPE_KEYS = new Set(["tenantId", "workspaceId", "dealId"]);
+const OBSERVATION_KEYS = new Set(["capability", "status", "reasonCode"]);
+const HEALTH_CHECK_KEYS = new Set(["name", "state"]);
 
 /**
  * Validates and freezes an explicit capability observation set.
@@ -32,11 +61,16 @@ import {
 export function createCapabilitySnapshot(
   input: CapabilitySnapshotInput,
 ): CapabilitySnapshot {
+  assertSnapshotShape(
+    input,
+    CAPABILITY_SNAPSHOT_KEYS,
+    "capability snapshot",
+  );
   assertProvider(input.provider);
   assertEnvironment(input.environment);
   assertLifecycle(input.lifecycle);
   assertBoolean(input.configured, "Capability configured flag");
-  assertScope(input.scope);
+  const scope = parseSnapshotScope(input.scope);
   assertDate(input.observedAt, "Capability observation timestamp");
   assertCapabilitySource(input.source, input.environment);
   assertCapabilityList(input.requested, "Capability request");
@@ -51,13 +85,21 @@ export function createCapabilitySnapshot(
       `Provider "${input.provider}" capability snapshot must not claim supported capabilities while disabled or unconfigured.`,
     );
   }
-  return Object.freeze({
-    ...input,
-    scope: Object.freeze({ ...input.scope }),
+  const observedAtEpoch = input.observedAt.getTime();
+  const snapshot: CapabilitySnapshot = {
+    provider: input.provider,
+    environment: input.environment,
+    lifecycle: input.lifecycle,
+    configured: input.configured,
+    source: input.source,
+    scope,
     requested: Object.freeze(requested),
     observations: Object.freeze(observations),
-    observedAt: new Date(input.observedAt),
-  });
+    get observedAt(): Date {
+      return new Date(observedAtEpoch);
+    },
+  };
+  return Object.freeze(snapshot);
 }
 
 /**
@@ -68,25 +110,51 @@ export function createCapabilitySnapshot(
 export function createHealthSnapshot(
   input: HealthSnapshotInput,
 ): HealthSnapshot {
+  assertSnapshotShape(input, HEALTH_SNAPSHOT_KEYS, "health snapshot");
   assertProvider(input.provider);
   assertEnvironment(input.environment);
   assertLifecycle(input.lifecycle);
   assertBoolean(input.configured, "Health configured flag");
-  assertScope(input.scope);
+  const scope = parseSnapshotScope(input.scope);
   assertDate(input.observedAt, "Health observation timestamp");
   assertHealthCheckList(input.checks);
   const checks = validateHealthChecks(input.checks);
-  return Object.freeze({
-    ...input,
-    scope: Object.freeze({ ...input.scope }),
+  const observedAtEpoch = input.observedAt.getTime();
+  const snapshot: HealthSnapshot = {
+    provider: input.provider,
+    environment: input.environment,
+    lifecycle: input.lifecycle,
+    configured: input.configured,
+    scope,
     checks: Object.freeze(checks),
-    observedAt: new Date(input.observedAt),
     state: deriveHealthState(input.lifecycle, input.configured, checks),
-  });
+    get observedAt(): Date {
+      return new Date(observedAtEpoch);
+    },
+  };
+  return Object.freeze(snapshot);
 }
 
-function assertScope(scope: IntegrationScope): void {
-  parseIntegrationScope(scope);
+function assertSnapshotShape(
+  value: unknown,
+  keys: ReadonlySet<string>,
+  label: string,
+): asserts value is Record<string, unknown> {
+  assertRecord(value, label);
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, keys, label);
+}
+
+function parseSnapshotScope(value: unknown): IntegrationScope {
+  assertRecord(value, "integration scope");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, SCOPE_KEYS, "integration scope");
+  const parsed = parseIntegrationScope(value);
+  return Object.freeze({
+    tenantId: parsed.tenantId,
+    workspaceId: parsed.workspaceId,
+    dealId: parsed.dealId,
+  });
 }
 
 function assertProvider(provider: IntegrationProvider): void {
@@ -192,10 +260,12 @@ function uniqueCapabilities(
 }
 
 function validateObservations(
-  observations: readonly CapabilityObservation[],
+  observations: readonly unknown[],
   requested: readonly IntegrationCapability[],
 ): CapabilityObservation[] {
-  const values = observations.map((observation) => ({ ...observation }));
+  const values = observations.map((observation) =>
+    parseCapabilityObservation(observation)
+  );
   const observed = new Set<IntegrationCapability>();
   for (const observation of values) {
     assertCapability(observation.capability);
@@ -247,6 +317,24 @@ function validateObservations(
   return values;
 }
 
+function parseCapabilityObservation(value: unknown): CapabilityObservation {
+  assertRecord(value, "capability observation");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, OBSERVATION_KEYS, "capability observation");
+  assertCapability(value.capability as IntegrationCapability);
+  assertCapabilityStatus(value.status as CapabilityStatus);
+  const reasonCode = value.reasonCode === undefined
+    ? undefined
+    : value.reasonCode as IntegrationFailureCode;
+  if (reasonCode !== undefined) assertFailureCode(reasonCode);
+  const capability = value.capability as IntegrationCapability;
+  const status = value.status as CapabilityStatus;
+  if (reasonCode === undefined) {
+    return Object.freeze({ capability, status });
+  }
+  return Object.freeze({ capability, status, reasonCode });
+}
+
 function assertCapabilityStatus(status: CapabilityStatus): void {
   if ((CAPABILITY_STATUSES as readonly unknown[]).includes(status)) return;
   throw new Error(
@@ -274,39 +362,38 @@ function assertCapability(capability: IntegrationCapability): void {
   );
 }
 
-function validateHealthChecks(checks: readonly HealthCheck[]): HealthCheck[] {
+function validateHealthChecks(checks: readonly unknown[]): HealthCheck[] {
   if (checks.length === 0) {
     throw new Error(
       "Provider health checks are empty; expected explicit dependency checks.",
     );
   }
   const names = new Set<string>();
-  return checks.map((check) => {
-    if (!isRecord(check)) {
-      throw new Error(
-        `Provider health check "${
-          String(check)
-        }" is invalid; expected a named state record.`,
-      );
-    }
+  return checks.map((value) => {
+    assertRecord(value, "provider health check");
+    rejectInlineCredentialKeys(value);
+    assertKnownKeys(value, HEALTH_CHECK_KEYS, "provider health check");
     if (
-      typeof check.name !== "string" || !check.name.trim() ||
-      check.name.length > 128
+      typeof value.name !== "string" || !value.name.trim() ||
+      value.name.length > 128
     ) {
       throw new Error(
         `Provider health check name "${
-          String(check.name)
+          String(value.name)
         }" is invalid; expected 1-128 non-whitespace characters.`,
       );
     }
-    assertHealthCheckState(check.state);
-    if (names.has(check.name)) {
+    assertHealthCheckState(value.state as HealthCheckState);
+    if (names.has(value.name)) {
       throw new Error(
-        `Provider health check "${check.name}" is duplicated; expected one result per check.`,
+        `Provider health check "${value.name}" is duplicated; expected one result per check.`,
       );
     }
-    names.add(check.name);
-    return Object.freeze({ ...check });
+    names.add(value.name);
+    return Object.freeze({
+      name: value.name,
+      state: value.state as HealthCheckState,
+    });
   });
 }
 
@@ -343,8 +430,4 @@ function assertDate(value: Date, label: string): void {
       String(value)
     }" is invalid; expected a valid Date supplied by the caller.`,
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

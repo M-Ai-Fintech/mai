@@ -78,6 +78,72 @@ Deno.test("capability snapshots preserve explicit supported denied and unavailab
   ]);
   assertEquals(Object.isFrozen(snapshot), true);
   assertEquals(Object.isFrozen(snapshot.observations), true);
+  assertEquals(Object.isFrozen(snapshot.observations[0]), true);
+});
+
+Deno.test("capability snapshots reject unknown credential-shaped fields at every input level", () => {
+  const cases = [
+    {
+      input: { ...capabilityInput(), token: "snapshot-secret" },
+      message: "credential",
+    },
+    {
+      input: {
+        ...capabilityInput(),
+        scope: { ...integrationScope(), password: "scope-secret" },
+      },
+      message: "credential",
+    },
+    {
+      input: {
+        ...capabilityInput(),
+        observations: [{
+          capability: "list_documents",
+          status: "supported",
+          token: "observation-secret",
+        }],
+      },
+      message: "credential",
+    },
+    {
+      input: { ...capabilityInput(), metadata: "unknown" },
+      message: "not recognized",
+    },
+  ];
+
+  for (const { input, message } of cases) {
+    try {
+      createCapabilitySnapshot(input as never);
+      throw new Error("Expected strict capability input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes("snapshot-secret"), false);
+      assertEquals(String(error).includes("scope-secret"), false);
+      assertEquals(String(error).includes("observation-secret"), false);
+      assertEquals(String(error).includes(message), true);
+    }
+  }
+});
+
+Deno.test("capability observations and timestamps resist caller mutation", () => {
+  const snapshot = createCapabilitySnapshot({
+    ...capabilityInput(),
+    observations: [{
+      capability: "list_documents",
+      status: "denied",
+      reasonCode: "AUTHORIZATION_DENIED",
+    }],
+  });
+
+  const observedAt = snapshot.observedAt;
+  observedAt.setFullYear(2099);
+  try {
+    (snapshot.observations[0] as { status: string }).status = "supported";
+  } catch {
+    // Frozen records may reject mutation in strict mode; either way status stays denied.
+  }
+
+  assertEquals(snapshot.observedAt.toISOString(), "2026-08-08T12:00:00.000Z");
+  assertEquals(snapshot.observations[0].status, "denied");
 });
 
 Deno.test("disabled or unconfigured capability snapshots cannot claim support", () => {
@@ -213,6 +279,54 @@ Deno.test("health snapshots derive fail-closed states from lifecycle and checks"
   assertEquals(disabled.state, "disabled");
   assertEquals(healthy.state, "healthy");
   assertEquals(unconfigured.state, "unavailable");
+  assertEquals(Object.isFrozen(healthy.checks[0]), true);
+});
+
+Deno.test("health snapshots reject unknown credential-shaped fields at every input level", () => {
+  const cases = [
+    {
+      input: { ...healthInput(), password: "health-secret" },
+      message: "credential",
+    },
+    {
+      input: {
+        ...healthInput(),
+        scope: { ...integrationScope(), token: "scope-secret" },
+      },
+      message: "credential",
+    },
+    {
+      input: {
+        ...healthInput(),
+        checks: [{ name: "endpoint", state: "passed", token: "check-secret" }],
+      },
+      message: "credential",
+    },
+    {
+      input: { ...healthInput(), metadata: "unknown" },
+      message: "not recognized",
+    },
+  ];
+
+  for (const { input, message } of cases) {
+    try {
+      createHealthSnapshot(input as never);
+      throw new Error("Expected strict health input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes("health-secret"), false);
+      assertEquals(String(error).includes("scope-secret"), false);
+      assertEquals(String(error).includes("check-secret"), false);
+      assertEquals(String(error).includes(message), true);
+    }
+  }
+});
+
+Deno.test("health snapshot timestamps resist caller mutation", () => {
+  const snapshot = createHealthSnapshot(healthInput());
+  snapshot.observedAt.setTime(Date.parse("2099-01-01T00:00:00.000Z"));
+
+  assertEquals(snapshot.observedAt.toISOString(), "2026-08-08T12:00:00.000Z");
+  assertEquals(Object.isFrozen(snapshot.checks[0]), true);
 });
 
 Deno.test("deferred provider health cannot become healthy", () => {
@@ -235,6 +349,35 @@ function integrationScope() {
     workspaceId: "workspace_primary",
     dealId: "deal_solar-2026",
   });
+}
+
+function capabilityInput() {
+  return {
+    provider: "papermark" as const,
+    environment: "local-development" as const,
+    lifecycle: "enabled" as const,
+    configured: true,
+    source: "provider" as const,
+    scope: integrationScope(),
+    requested: ["list_documents" as const],
+    observations: [{
+      capability: "list_documents" as const,
+      status: "supported" as const,
+    }],
+    observedAt: timestamp(),
+  };
+}
+
+function healthInput() {
+  return {
+    provider: "papermark" as const,
+    environment: "local-development" as const,
+    lifecycle: "enabled" as const,
+    configured: true,
+    scope: integrationScope(),
+    checks: [{ name: "endpoint", state: "passed" as const }],
+    observedAt: timestamp(),
+  };
 }
 
 function timestamp(): Date {

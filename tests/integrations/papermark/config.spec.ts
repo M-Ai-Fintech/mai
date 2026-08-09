@@ -122,6 +122,74 @@ Deno.test("Papermark configuration rejects inline bearer material", () => {
   );
 });
 
+Deno.test("Papermark configuration rejects unknown and credential-shaped nested keys", () => {
+  const cases = [
+    {
+      input: { ...validInput(), token: "adapter-secret" },
+      message: "inline credential",
+    },
+    {
+      input: {
+        ...validInput(),
+        scope: { ...scope, password: "scope-secret" },
+      },
+      message: "inline credential",
+    },
+    {
+      input: {
+        ...validInput(),
+        connectorAccount: {
+          ...validInput().connectorAccount,
+          password: "connector-secret",
+        },
+      },
+      message: "inline credential",
+    },
+    {
+      input: {
+        ...validInput(),
+        retry: { maxAttempts: 3, password: "retry-secret" },
+      },
+      message: "inline credential",
+    },
+    {
+      input: { ...validInput(), metadata: "not-an-adapter-field" },
+      message: "not recognized",
+    },
+  ];
+
+  for (const { input, message } of cases) {
+    try {
+      parsePapermarkAdapterConfig(input as never);
+      throw new Error("Expected strict Papermark input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes("adapter-secret"), false);
+      assertEquals(String(error).includes("scope-secret"), false);
+      assertEquals(String(error).includes("connector-secret"), false);
+      assertEquals(String(error).includes("retry-secret"), false);
+      assertEquals(String(error).includes(message), true);
+    }
+  }
+});
+
+Deno.test("Papermark configuration serializes only canonical binding fields", () => {
+  const input = validInput();
+  const parsed = parsePapermarkAdapterConfig(input);
+
+  assertEquals(JSON.stringify(parsed).includes("token"), false);
+  assertEquals(JSON.stringify(parsed).includes("password"), false);
+  assertEquals(Object.keys(parsed.binding.scope), [
+    "tenantId",
+    "workspaceId",
+    "dealId",
+  ]);
+  assertEquals(Object.keys(parsed.binding.connectorAccount), [
+    "id",
+    "provider",
+    "tenantId",
+  ]);
+});
+
 Deno.test("Papermark configuration canonicalizes nested secret and activation input", () => {
   const secret = "nested-secret-must-not-be-retained";
   const secretRefInput = {

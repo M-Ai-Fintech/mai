@@ -1,14 +1,28 @@
 import { type IntegrationScope, parseIntegrationScope } from "../contracts.ts";
 import {
-  assertPapermarkEndpointForEnvironment,
-  parseOwnerApprovedActivation,
   parseProviderConfiguration,
   type ProviderConfiguration,
 } from "../configuration.ts";
+import {
+  assertKnownKeys,
+  assertRecord,
+  rejectInlineCredentialKeys,
+} from "../configuration_validation.ts";
 
 const PAPERMARK_PROVIDER = "papermark" as const;
-const INLINE_CREDENTIAL_KEY =
-  /(api[-_]?key|authorization|credential|password|private[-_]?key|token|value)/i;
+const ADAPTER_CONFIG_KEYS = new Set([
+  "configuration",
+  "scope",
+  "connectorAccount",
+  "providerWorkspaceId",
+  "folderId",
+  "pageSize",
+  "timeoutMs",
+  "retry",
+]);
+const CONNECTOR_ACCOUNT_KEYS = new Set(["id", "provider", "tenantId"]);
+const SCOPE_KEYS = new Set(["tenantId", "workspaceId", "dealId"]);
+const RETRY_POLICY_KEYS = new Set(["maxAttempts", "maxDelayMs"]);
 
 export interface PapermarkConnectorBinding {
   readonly id: string;
@@ -56,51 +70,89 @@ export interface PapermarkAdapterConfigInput {
 export function parsePapermarkAdapterConfig(
   input: PapermarkAdapterConfigInput,
 ): PapermarkAdapterConfig {
-  const configuration = parseProviderConfiguration(input.configuration);
+  const value = parseAdapterConfigInput(input);
+  const configuration = parseProviderConfiguration(value.configuration);
   assertEnabledConfiguration(configuration);
-  assertScope(input.scope);
-  assertConnectorAccount(input.connectorAccount, input.scope);
-  const binding = Object.freeze({
-    scope: Object.freeze({ ...input.scope }),
-    connectorAccount: Object.freeze({ ...input.connectorAccount }),
-    providerWorkspaceId: parseLocator(
-      input.providerWorkspaceId,
-      "provider workspace ID",
-    ),
-    folderId: parseLocator(input.folderId, "Papermark folder ID"),
-  });
+  const policy = parseRequestPolicy(value);
   return Object.freeze({
     provider: PAPERMARK_PROVIDER,
     configuration,
-    binding,
-    pageSize: parseBoundedInteger(input.pageSize ?? 50, "page size", 1, 100),
+    binding: parsePapermarkBinding(value),
+    pageSize: policy.pageSize,
+    timeoutMs: policy.timeoutMs,
+    retry: policy.retry,
+  });
+}
+
+function parseAdapterConfigInput(
+  input: PapermarkAdapterConfigInput,
+): Record<string, unknown> {
+  const value = input as unknown;
+  assertRecord(value, "Papermark adapter configuration");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(
+    value,
+    ADAPTER_CONFIG_KEYS,
+    "Papermark adapter configuration",
+  );
+  return value;
+}
+
+function parsePapermarkBinding(
+  value: Record<string, unknown>,
+): PapermarkScopeBinding {
+  const scope = parsePapermarkScope(value.scope);
+  const connectorAccount = parseConnectorAccount(value.connectorAccount, scope);
+  const providerWorkspaceId = parseLocator(
+    value.providerWorkspaceId,
+    "provider workspace ID",
+  );
+  const folderId = parseLocator(value.folderId, "Papermark folder ID");
+  return Object.freeze({
+    scope,
+    connectorAccount,
+    providerWorkspaceId,
+    folderId,
+  });
+}
+
+function parseRequestPolicy(
+  value: Record<string, unknown>,
+): Pick<PapermarkAdapterConfig, "pageSize" | "timeoutMs" | "retry"> {
+  const retry = parseRetryPolicy(value.retry);
+  return {
+    pageSize: parseBoundedInteger(
+      value.pageSize === undefined ? 50 : value.pageSize,
+      "page size",
+      1,
+      100,
+    ),
     timeoutMs: parseBoundedInteger(
-      input.timeoutMs ?? 10_000,
+      value.timeoutMs === undefined ? 10_000 : value.timeoutMs,
       "timeout",
       1,
       120_000,
     ),
     retry: Object.freeze({
       maxAttempts: parseBoundedInteger(
-        input.retry?.maxAttempts ?? 3,
+        retry.maxAttempts === undefined ? 3 : retry.maxAttempts,
         "max attempts",
         1,
         4,
       ),
       maxDelayMs: parseBoundedInteger(
-        input.retry?.maxDelayMs ?? 2_000,
+        retry.maxDelayMs === undefined ? 2_000 : retry.maxDelayMs,
         "max retry delay",
         0,
         30_000,
       ),
     }),
-  });
+  };
 }
 
 function assertEnabledConfiguration(
   configuration: ProviderConfiguration,
 ): void {
-  assertNoInlineCredentialKeys(configuration);
   if (configuration.provider !== PAPERMARK_PROVIDER) {
     throw new Error(
       `Papermark configuration provider "${
@@ -113,82 +165,81 @@ function assertEnabledConfiguration(
       `Papermark lifecycle "${configuration.lifecycle}" is invalid; expected enabled for an adapter instance.`,
     );
   }
+  assertPapermarkEnvironment(configuration.environment);
+}
+
+function assertPapermarkEnvironment(environment: string): void {
   if (
-    configuration.environment !== "local-development" &&
-    configuration.environment !== "sandbox-certification"
+    environment === "local-development" ||
+    environment === "sandbox-certification"
   ) {
-    throw new Error(
-      `Papermark environment "${configuration.environment}" is invalid; expected local-development or sandbox-certification.`,
-    );
+    return;
   }
-  if (configuration.endpoint === undefined) {
-    throw new Error(
-      "Papermark endpoint is missing; expected an explicit official or approved local URL.",
-    );
-  }
-  if (configuration.secretRef === undefined) {
-    throw new Error(
-      "Papermark secret reference is missing; expected a resolver locator and never an inline credential.",
-    );
-  }
-  if (configuration.activation === undefined) {
-    throw new Error(
-      "Papermark activation is missing; expected owner-approved credential-free metadata.",
-    );
-  }
-  parseOwnerApprovedActivation(configuration.activation);
-  assertPapermarkEndpointForEnvironment(
-    configuration.endpoint,
-    configuration.environment,
+  throw new Error(
+    `Papermark environment "${environment}" is invalid; expected local-development or sandbox-certification.`,
   );
 }
 
-function assertNoInlineCredentialKeys(
-  configuration: ProviderConfiguration,
-): void {
-  for (
-    const key of Object.keys(
-      configuration as unknown as Record<string, unknown>,
-    )
-  ) {
-    if (key === "secretRef") continue;
-    if (INLINE_CREDENTIAL_KEY.test(key)) {
-      throw new Error(
-        `Papermark configuration key "${key}" is an inline credential; expected a secret reference locator.`,
-      );
-    }
-  }
+function parsePapermarkScope(value: unknown): IntegrationScope {
+  assertRecord(value, "Papermark integration scope");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, SCOPE_KEYS, "Papermark integration scope");
+  const scope = parseIntegrationScope(value);
+  return Object.freeze({
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+  });
 }
 
-function assertScope(scope: IntegrationScope): void {
-  parseIntegrationScope(scope);
-}
-
-function assertConnectorAccount(
-  connectorAccount: PapermarkConnectorBinding,
+function parseConnectorAccount(
+  value: unknown,
   scope: IntegrationScope,
-): void {
-  if (connectorAccount.provider !== PAPERMARK_PROVIDER) {
+): PapermarkConnectorBinding {
+  assertRecord(value, "Papermark connector account");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, CONNECTOR_ACCOUNT_KEYS, "Papermark connector account");
+  if (value.provider !== PAPERMARK_PROVIDER) {
     throw new Error(
       `Papermark connector account provider "${
-        String(connectorAccount.provider)
+        String(value.provider)
       }" is invalid; expected "papermark".`,
     );
   }
-  const connectorId = parseLocator(connectorAccount.id, "connector account ID");
+  const connectorId = parseLocator(value.id, "connector account ID");
   if (!/^connector_[a-z0-9]+(?:-[a-z0-9]+)*$/.test(connectorId)) {
     throw new Error(
       `Papermark connector account ID "${connectorId}" is invalid; expected a connector_ identifier.`,
     );
   }
-  if (connectorAccount.tenantId !== scope.tenantId) {
+  if (value.tenantId !== scope.tenantId) {
     throw new Error(
-      `Papermark connector account tenant "${connectorAccount.tenantId}" does not match scope tenant "${scope.tenantId}"; expected the same tenant binding.`,
+      `Papermark connector account tenant "${
+        String(value.tenantId)
+      }" does not match scope tenant "${scope.tenantId}"; expected the same tenant binding.`,
     );
   }
+  return Object.freeze({
+    id: connectorId,
+    provider: PAPERMARK_PROVIDER,
+    tenantId: scope.tenantId,
+  });
 }
 
-function parseLocator(value: string, label: string): string {
+function parseRetryPolicy(
+  value: unknown,
+): { readonly maxAttempts?: unknown; readonly maxDelayMs?: unknown } {
+  if (value === undefined) return {};
+  assertRecord(value, "Papermark retry policy");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, RETRY_POLICY_KEYS, "Papermark retry policy");
+  return {
+    maxAttempts: value.maxAttempts,
+    maxDelayMs: value.maxDelayMs,
+  };
+}
+
+function parseLocator(value: unknown, label: string): string {
   if (
     typeof value === "string" &&
     value.length > 0 &&
@@ -204,12 +255,13 @@ function parseLocator(value: string, label: string): string {
 }
 
 function parseBoundedInteger(
-  value: number,
+  value: unknown,
   label: string,
   minimum: number,
   maximum: number,
 ): number {
   if (
+    typeof value === "number" &&
     Number.isSafeInteger(value) &&
     value >= minimum &&
     value <= maximum
