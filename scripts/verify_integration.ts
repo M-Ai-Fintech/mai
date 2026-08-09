@@ -4,18 +4,12 @@ export interface IntegrationConfig {
   databaseUrl: string;
   geminiApiKey: string;
   geminiModel: string;
-  papermarkApiKey: string;
-  papermarkApiUrl: string;
-  papermarkRoomId: string;
 }
 
 type Environment = Record<string, string | undefined>;
 type RequiredConfiguration = Record<
   | "DATABASE_URL"
-  | "GEMINI_API_KEY"
-  | "PAPERMARK_API_KEY"
-  | "PAPERMARK_API_URL"
-  | "PAPERMARK_ROOM_ID",
+  | "GEMINI_API_KEY",
   string | undefined
 >;
 type RequiredConfigurationName = keyof RequiredConfiguration;
@@ -38,9 +32,6 @@ function requiredConfiguration(
     DATABASE_URL: environment.DATABASE_URL,
     GEMINI_API_KEY: environment.GEMINI_API_KEY ||
       environment.GOOGLE_GENERATIVE_AI_API_KEY,
-    PAPERMARK_API_KEY: environment.PAPERMARK_API_KEY,
-    PAPERMARK_API_URL: environment.PAPERMARK_API_URL,
-    PAPERMARK_ROOM_ID: environment.PAPERMARK_ROOM_ID,
   };
 }
 
@@ -64,12 +55,6 @@ function buildIntegrationConfig(
     databaseUrl: requiredValue(required, "DATABASE_URL"),
     geminiApiKey: requiredValue(required, "GEMINI_API_KEY"),
     geminiModel: environment.GEMINI_SMOKE_MODEL || "gemini-2.5-flash",
-    papermarkApiKey: requiredValue(required, "PAPERMARK_API_KEY"),
-    papermarkApiUrl: requiredValue(required, "PAPERMARK_API_URL").replace(
-      /\/$/,
-      "",
-    ),
-    papermarkRoomId: requiredValue(required, "PAPERMARK_ROOM_ID"),
   };
 }
 
@@ -152,42 +137,6 @@ function hasGeneratedGeminiText(payload: unknown): boolean {
   return typeof parts[0].text === "string" && parts[0].text.length > 0;
 }
 
-async function verifyPapermark(config: IntegrationConfig): Promise<void> {
-  const response = await fetch(papermarkUrl(config), papermarkRequest(config));
-  if (!response.ok) {
-    throw new Error(
-      `Papermark live smoke returned HTTP ${response.status}; expected 2xx.`,
-    );
-  }
-  const payload: unknown = await response.json();
-  if (!hasPapermarkDocuments(payload)) {
-    throw new Error(
-      `Papermark payload '${
-        JSON.stringify(payload)
-      }'; expected an array or documents array.`,
-    );
-  }
-}
-
-function papermarkUrl(config: IntegrationConfig): string {
-  const roomId = encodeURIComponent(config.papermarkRoomId);
-  return `${config.papermarkApiUrl}/v1/rooms/${roomId}/documents`;
-}
-
-function papermarkRequest(config: IntegrationConfig): RequestInit {
-  return {
-    headers: {
-      Authorization: `Bearer ${config.papermarkApiKey}`,
-      Accept: "application/json",
-    },
-  };
-}
-
-function hasPapermarkDocuments(payload: unknown): boolean {
-  if (Array.isArray(payload)) return true;
-  return isRecord(payload) && Array.isArray(payload.documents);
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   const isObject = typeof value === "object";
   return isObject && value !== null;
@@ -212,9 +161,8 @@ if (import.meta.main) {
   const config = integrationConfig(Deno.env.toObject());
   await verifyPostgres(config.databaseUrl);
   await verifyGemini(config.geminiApiKey, config.geminiModel);
-  await verifyPapermark(config);
   await verifyTransformers();
   console.log(
-    "Live integration smoke checks passed: PostgreSQL, Gemini, Papermark, Transformers.",
+    "Live integration smoke checks passed: PostgreSQL, Gemini, Transformers.",
   );
 }

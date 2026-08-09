@@ -126,6 +126,26 @@ Deno.test("Papermark transport requests the scoped official v1 list", async () =
   assertEquals(headers.get("accept"), "application/json");
 });
 
+Deno.test("Papermark transport removes all approved endpoint trailing slashes", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(jsonResponse({ data: [], next_cursor: null }));
+  const base = configuration();
+  const { instance } = transport(fake, {
+    ...base,
+    configuration: {
+      ...base.configuration,
+      endpoint: "http://localhost:3000/api///",
+    },
+  });
+
+  await instance.getDocumentsPage(undefined);
+
+  assertEquals(
+    fake.calls[0].url,
+    "http://localhost:3000/api/v1/datarooms/dataroom_horizon/documents?folder_id=folder_horizon&limit=50",
+  );
+});
+
 Deno.test("Papermark transport preserves opaque cursor and never leaks it in failures", async () => {
   const fake = new FetchFake();
   fake.failures.push(new Error("network opaque-cursor-secret"));

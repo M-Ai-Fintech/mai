@@ -408,5 +408,5 @@ async function abortResponseBody(
 }
 
 function trimTrailingSlash(endpoint: string): string {
-  return endpoint.endsWith("/") ? endpoint.slice(0, -1) : endpoint;
+  return endpoint.replace(/\/+$/, "");
 }
