@@ -99,6 +99,84 @@ Deno.test("disabled or unconfigured capability snapshots cannot claim support", 
   );
 });
 
+Deno.test("capability snapshots reject observations outside the requested set", () => {
+  assertThrows(
+    () =>
+      createCapabilitySnapshot({
+        provider: "papermark",
+        environment: "local-development",
+        lifecycle: "enabled",
+        configured: true,
+        source: "implementation",
+        scope: integrationScope(),
+        requested: ["list_documents"],
+        observations: [
+          { capability: "list_documents", status: "supported" },
+          {
+            capability: "download_document",
+            status: "supported",
+          },
+        ],
+        observedAt: timestamp(),
+      }),
+    Error,
+    "not requested",
+  );
+});
+
+Deno.test("capability and health snapshots validate runtime enum and primitive shapes", () => {
+  assertThrows(
+    () =>
+      createCapabilitySnapshot({
+        provider: "papermark",
+        environment: "local-development",
+        lifecycle: "enabled" as never,
+        configured: "true" as never,
+        source: "implementation",
+        scope: integrationScope(),
+        requested: ["list_documents"],
+        observations: [{ capability: "list_documents", status: "supported" }],
+        observedAt: timestamp(),
+      }),
+    Error,
+    "configured",
+  );
+  assertThrows(
+    () =>
+      createCapabilitySnapshot({
+        provider: "papermark",
+        environment: "local-development",
+        lifecycle: "enabled",
+        configured: true,
+        source: "implementation",
+        scope: integrationScope(),
+        requested: ["list_documents"],
+        observations: [{
+          capability: "list_documents",
+          status: "supported",
+          reasonCode: "NOT_A_FAILURE" as never,
+        }],
+        observedAt: timestamp(),
+      }),
+    Error,
+    "failure reason",
+  );
+  assertThrows(
+    () =>
+      createHealthSnapshot({
+        provider: "papermark",
+        environment: "local-development",
+        lifecycle: "enabled",
+        configured: true,
+        scope: integrationScope(),
+        checks: [{ name: "endpoint", state: "unknown" as never }],
+        observedAt: timestamp(),
+      }),
+    Error,
+    "health check state",
+  );
+});
+
 Deno.test("health snapshots derive fail-closed states from lifecycle and checks", () => {
   const disabled = createHealthSnapshot({
     provider: "ideals",

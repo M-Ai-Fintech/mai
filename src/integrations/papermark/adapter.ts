@@ -12,6 +12,7 @@ import {
   type ListDocumentsRequest,
   type NormalizedIntegrationFailure,
   type ProviderDocumentPage,
+  sameIntegrationScope,
   type ScopedDocumentPort,
   type SecretResolver,
 } from "../contracts.ts";
@@ -20,6 +21,10 @@ import {
   normalizeIntegrationFailure,
 } from "../failures.ts";
 import type { PapermarkAdapterConfig } from "./config.ts";
+import {
+  assertPapermarkCallAuthorization,
+  type PapermarkCallAuthorization,
+} from "./authorization.ts";
 import { decodePapermarkPage } from "./codec.ts";
 import {
   type PapermarkFetch,
@@ -30,6 +35,7 @@ import {
   createProviderCapabilities,
   createProviderMarker,
   type ProviderCapabilities,
+  type ProviderMarker,
 } from "../../documents/source.ts";
 import {
   DocumentProviderFailure,
@@ -46,6 +52,7 @@ export interface PapermarkAdapterDependencies {
   readonly sleep: (delayMs: number) => Promise<void>;
   readonly now?: () => Date;
   readonly timer?: PapermarkTimer;
+  readonly authorization: PapermarkCallAuthorization;
 }
 
 /**
@@ -143,6 +150,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     this.scope = config.binding.scope;
     this.connectorAccountId = config.binding.connectorAccount.id;
     this.providerWorkspaceId = config.binding.providerWorkspaceId;
+    assertPapermarkCallAuthorization(dependencies.authorization, config);
     this.now = dependencies.now ?? (() => new Date());
     this.transport = new PapermarkTransport(
       config,
@@ -152,6 +160,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
         sleep: dependencies.sleep,
         now: this.now,
         timer: dependencies.timer,
+        authorization: dependencies.authorization,
       },
     );
     this.documents = {
@@ -168,10 +177,10 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   discoverCapabilities(): Promise<CapabilitySnapshot> {
     const observations = INTEGRATION_CAPABILITIES.map((capability) => ({
       capability,
-      status: capability === "list_documents"
+      status: capability === "list_documents" || capability === "pagination"
         ? "supported" as const
         : "unavailable" as const,
-      ...(capability === "list_documents"
+      ...(capability === "list_documents" || capability === "pagination"
         ? {}
         : { reasonCode: "UNAVAILABLE" as const }),
     }));
@@ -264,7 +273,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     providerWorkspaceId: string,
     operation: string,
   ): NormalizedIntegrationFailure | undefined {
-    if (!sameScope(scope, this.scope)) {
+    if (!sameIntegrationScope(scope, this.scope)) {
       return createNormalizedIntegrationFailure({
         provider: this.provider,
         operation,
@@ -389,15 +398,6 @@ function failedHealthChecks(
   ];
 }
 
-function sameScope(
-  left: ListDocumentsRequest["scope"],
-  right: ListDocumentsRequest["scope"],
-): boolean {
-  return left.tenantId === right.tenantId &&
-    left.workspaceId === right.workspaceId &&
-    left.dealId === right.dealId;
-}
-
-function sourceProviderMarker() {
+function sourceProviderMarker(): ProviderMarker {
   return createProviderMarker("papermark");
 }

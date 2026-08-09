@@ -31,7 +31,13 @@ export const INTEGRATION_ENVIRONMENTS = [
 
 export type IntegrationEnvironment = typeof INTEGRATION_ENVIRONMENTS[number];
 
-export type ProviderLifecycle = "enabled" | "disabled" | "deferred";
+export const PROVIDER_LIFECYCLES = [
+  "enabled",
+  "disabled",
+  "deferred",
+] as const;
+
+export type ProviderLifecycle = typeof PROVIDER_LIFECYCLES[number];
 
 export interface IntegrationScope {
   readonly tenantId: TenantId;
@@ -71,20 +77,23 @@ export interface DownloadDocumentRequest {
   readonly providerDocumentId: string;
 }
 
-export type IntegrationFailureCode =
-  | "AUTHENTICATION_FAILED"
-  | "AUTHORIZATION_DENIED"
-  | "NOT_CONFIGURED"
-  | "DISABLED"
-  | "DEFERRED"
-  | "INVALID_REQUEST"
-  | "MALFORMED_RESPONSE"
-  | "NOT_FOUND"
-  | "TIMEOUT"
-  | "RATE_LIMITED"
-  | "UNAVAILABLE"
-  | "RETRY_EXHAUSTED"
-  | "UNKNOWN";
+export const INTEGRATION_FAILURE_CODES = [
+  "AUTHENTICATION_FAILED",
+  "AUTHORIZATION_DENIED",
+  "NOT_CONFIGURED",
+  "DISABLED",
+  "DEFERRED",
+  "INVALID_REQUEST",
+  "MALFORMED_RESPONSE",
+  "NOT_FOUND",
+  "TIMEOUT",
+  "RATE_LIMITED",
+  "UNAVAILABLE",
+  "RETRY_EXHAUSTED",
+  "UNKNOWN",
+] as const;
+
+export type IntegrationFailureCode = typeof INTEGRATION_FAILURE_CODES[number];
 
 export interface NormalizedIntegrationFailure {
   readonly code: IntegrationFailureCode;
@@ -170,7 +179,13 @@ export const INTEGRATION_CAPABILITIES: readonly IntegrationCapability[] = [
   "document_lifecycle",
 ];
 
-export type CapabilityStatus = "supported" | "denied" | "unavailable";
+export const CAPABILITY_STATUSES = [
+  "supported",
+  "denied",
+  "unavailable",
+] as const;
+
+export type CapabilityStatus = typeof CAPABILITY_STATUSES[number];
 
 export type CapabilityObservationSource =
   | "provider"
@@ -207,11 +222,14 @@ export interface CapabilitySnapshotInput {
   readonly observedAt: Date;
 }
 
-export type HealthCheckState =
-  | "passed"
-  | "failed"
-  | "unavailable"
-  | "skipped";
+export const HEALTH_CHECK_STATES = [
+  "passed",
+  "failed",
+  "unavailable",
+  "skipped",
+] as const;
+
+export type HealthCheckState = typeof HEALTH_CHECK_STATES[number];
 
 export interface HealthCheck {
   readonly name: string;
@@ -265,58 +283,23 @@ export function parseIntegrationScope(value: unknown): IntegrationScope {
 }
 
 /**
- * Validates and freezes an explicit capability observation set.
+ * Compares the complete tenant, workspace, and deal scope exactly.
  *
- * @example createCapabilitySnapshot({ provider: "fixture", environment: "fixture", lifecycle: "enabled", configured: true, source: "fixture", scope, requested: ["list_documents"], observations: [{ capability: "list_documents", status: "supported" }], observedAt: new Date() })
+ * @example sameIntegrationScope(leftScope, rightScope)
  */
-export function createCapabilitySnapshot(
-  input: CapabilitySnapshotInput,
-): CapabilitySnapshot {
-  assertProvider(input.provider);
-  assertEnvironment(input.environment);
-  assertScope(input.scope);
-  assertDate(input.observedAt, "Capability observation timestamp");
-  assertCapabilitySource(input.source, input.environment);
-  const requested = uniqueCapabilities(input.requested);
-  const observations = validateObservations(input.observations, requested);
-  if (
-    (input.lifecycle !== "enabled" || !input.configured) &&
-    observations.some(({ status }) => status === "supported")
-  ) {
-    throw new Error(
-      `Provider "${input.provider}" capability snapshot must not claim supported capabilities while disabled or unconfigured.`,
-    );
-  }
-  return Object.freeze({
-    ...input,
-    scope: Object.freeze({ ...input.scope }),
-    requested: Object.freeze(requested),
-    observations: Object.freeze(observations),
-    observedAt: new Date(input.observedAt),
-  });
+export function sameIntegrationScope(
+  left: IntegrationScope,
+  right: IntegrationScope,
+): boolean {
+  return left.tenantId === right.tenantId &&
+    left.workspaceId === right.workspaceId &&
+    left.dealId === right.dealId;
 }
 
-/**
- * Derives fail-closed health from lifecycle, configuration, and checks.
- *
- * @example createHealthSnapshot({ provider: "papermark", environment: "local-development", lifecycle: "enabled", configured: true, scope, checks: [{ name: "endpoint", state: "passed" }], observedAt: new Date() })
- */
-export function createHealthSnapshot(
-  input: HealthSnapshotInput,
-): HealthSnapshot {
-  assertProvider(input.provider);
-  assertEnvironment(input.environment);
-  assertScope(input.scope);
-  assertDate(input.observedAt, "Health observation timestamp");
-  const checks = validateHealthChecks(input.checks);
-  return Object.freeze({
-    ...input,
-    scope: Object.freeze({ ...input.scope }),
-    checks: Object.freeze(checks),
-    observedAt: new Date(input.observedAt),
-    state: deriveHealthState(input.lifecycle, input.configured, checks),
-  });
-}
+export {
+  createCapabilitySnapshot,
+  createHealthSnapshot,
+} from "./snapshot_contracts.ts";
 
 function requiredIdentifier<T>(
   value: unknown,
@@ -331,165 +314,6 @@ function requiredIdentifier<T>(
     `Integration ${label} ID "${
       String(value)
     }" is invalid; expected a canonical ${label}_ identifier.`,
-  );
-}
-
-function assertScope(scope: IntegrationScope): void {
-  parseIntegrationScope(scope);
-}
-
-function assertProvider(provider: IntegrationProvider): void {
-  if (INTEGRATION_PROVIDERS.includes(provider)) return;
-  throw new Error(
-    `Integration provider "${
-      String(provider)
-    }" is invalid; expected a registered provider marker.`,
-  );
-}
-
-function assertEnvironment(environment: IntegrationEnvironment): void {
-  if (INTEGRATION_ENVIRONMENTS.includes(environment)) return;
-  throw new Error(
-    `Integration environment "${
-      String(environment)
-    }" is invalid; expected an approved environment state.`,
-  );
-}
-
-function assertCapabilitySource(
-  source: CapabilityObservationSource,
-  environment: IntegrationEnvironment,
-): void {
-  if (source === "fixture" && environment !== "fixture") {
-    throw new Error(
-      `Fixture capability evidence uses environment "${environment}"; expected fixture environment.`,
-    );
-  }
-  if (source !== "fixture" && environment === "fixture") {
-    throw new Error(
-      `Capability evidence source "${source}" uses fixture environment; expected a real provider environment.`,
-    );
-  }
-}
-
-function uniqueCapabilities(
-  capabilities: readonly IntegrationCapability[],
-): IntegrationCapability[] {
-  if (capabilities.length === 0) {
-    throw new Error(
-      "Capability request is empty; expected at least one explicit capability.",
-    );
-  }
-  const unique = new Set<IntegrationCapability>();
-  for (const capability of capabilities) {
-    assertCapability(capability);
-    if (unique.has(capability)) {
-      throw new Error(
-        `Capability "${capability}" is duplicated; expected one observation per requested capability.`,
-      );
-    }
-    unique.add(capability);
-  }
-  return [...unique];
-}
-
-function validateObservations(
-  observations: readonly CapabilityObservation[],
-  requested: readonly IntegrationCapability[],
-): CapabilityObservation[] {
-  const values = observations.map((observation) => ({ ...observation }));
-  const observed = new Set<IntegrationCapability>();
-  for (const observation of values) {
-    assertCapability(observation.capability);
-    if (observed.has(observation.capability)) {
-      throw new Error(
-        `Capability "${observation.capability}" is observed more than once; expected one status.`,
-      );
-    }
-    observed.add(observation.capability);
-    if (
-      observation.status === "supported" &&
-      observation.reasonCode !== undefined
-    ) {
-      throw new Error(
-        `Capability "${observation.capability}" has reason "${observation.reasonCode}"; supported capabilities must not carry a failure reason.`,
-      );
-    }
-    if (
-      observation.status !== "supported" &&
-      observation.reasonCode === undefined
-    ) {
-      throw new Error(
-        `Capability "${observation.capability}" is ${observation.status}; expected an explicit normalized failure reason.`,
-      );
-    }
-  }
-  const missing = requested.filter((capability) => !observed.has(capability));
-  if (missing.length > 0) {
-    throw new Error(
-      `Capability observations omit "${
-        missing.join(",")
-      }"; expected every requested capability explicitly.`,
-    );
-  }
-  return values;
-}
-
-function assertCapability(capability: IntegrationCapability): void {
-  if (INTEGRATION_CAPABILITIES.includes(capability)) return;
-  throw new Error(
-    `Integration capability "${
-      String(capability)
-    }" is invalid; expected a registered capability.`,
-  );
-}
-
-function validateHealthChecks(checks: readonly HealthCheck[]): HealthCheck[] {
-  if (checks.length === 0) {
-    throw new Error(
-      "Provider health checks are empty; expected explicit dependency checks.",
-    );
-  }
-  const names = new Set<string>();
-  return checks.map((check) => {
-    if (!check.name.trim() || check.name.length > 128) {
-      throw new Error(
-        `Provider health check name "${check.name}" is invalid; expected 1-128 non-whitespace characters.`,
-      );
-    }
-    if (names.has(check.name)) {
-      throw new Error(
-        `Provider health check "${check.name}" is duplicated; expected one result per check.`,
-      );
-    }
-    names.add(check.name);
-    return Object.freeze({ ...check });
-  });
-}
-
-function deriveHealthState(
-  lifecycle: ProviderLifecycle,
-  configured: boolean,
-  checks: readonly HealthCheck[],
-): HealthState {
-  if (lifecycle === "disabled") return "disabled";
-  if (lifecycle === "deferred") return "deferred";
-  if (!configured) return "unavailable";
-  if (
-    checks.some(({ state }) => state === "unavailable" || state === "skipped")
-  ) {
-    return "unavailable";
-  }
-  if (checks.some(({ state }) => state === "failed")) return "degraded";
-  return "healthy";
-}
-
-function assertDate(value: Date, label: string): void {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return;
-  throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected a valid Date supplied by the caller.`,
   );
 }
 

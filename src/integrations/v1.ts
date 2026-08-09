@@ -7,6 +7,5 @@ export * from "./configuration.ts";
 export * from "./contracts.ts";
 export * from "./failures.ts";
 export * from "./fixture_conformance.ts";
-export * from "./papermark/index.ts";
 export * from "./provider_selection.ts";
 export * from "./readiness.ts";

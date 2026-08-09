@@ -7,6 +7,7 @@ import {
   type IntegrationResult,
   type IntegrationScope,
   type ProviderDocumentPage,
+  sameIntegrationScope,
 } from "./contracts.ts";
 import {
   createNormalizedIntegrationFailure,
@@ -159,7 +160,8 @@ function assertFixtureIdentity(
 ): void {
   if (
     adapter.provider !== "fixture" || adapter.environment !== "fixture" ||
-    adapter.lifecycle !== "enabled" || !sameScope(adapter.scope, plan.scope) ||
+    adapter.lifecycle !== "enabled" ||
+    !sameIntegrationScope(adapter.scope, plan.scope) ||
     adapter.connectorAccountId !== plan.connectorAccountId ||
     adapter.providerWorkspaceId !== plan.providerWorkspaceId
   ) throw new Error("fixture identity mismatch");
@@ -173,7 +175,7 @@ async function capabilityCheck(
   if (
     snapshot.provider !== "fixture" || snapshot.environment !== "fixture" ||
     snapshot.source !== "fixture" || !snapshot.configured ||
-    !sameScope(snapshot.scope, plan.scope)
+    !sameIntegrationScope(snapshot.scope, plan.scope)
   ) throw new Error("fixture capability metadata mismatch");
   if (snapshot.observations.length !== snapshot.requested.length) {
     throw new Error("fixture capability observations are incomplete");
@@ -187,7 +189,8 @@ async function healthCheck(
   const health = await adapter.checkHealth();
   if (
     health.provider !== "fixture" || health.environment !== "fixture" ||
-    !sameScope(health.scope, plan.scope) || health.state !== "healthy"
+    !sameIntegrationScope(health.scope, plan.scope) ||
+    health.state !== "healthy"
   ) throw new Error("fixture health is not healthy");
 }
 
@@ -385,9 +388,4 @@ function evidence(
     passed: checks.every(({ status }) => status === "passed"),
     observedAt: new Date("2026-08-08T12:00:00.000Z"),
   });
-}
-
-function sameScope(left: IntegrationScope, right: IntegrationScope): boolean {
-  return left.tenantId === right.tenantId &&
-    left.workspaceId === right.workspaceId && left.dealId === right.dealId;
 }

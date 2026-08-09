@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import {
   PapermarkAdapter,
   type PapermarkAdapterDependencies,
@@ -13,6 +13,10 @@ import {
   parseIntegrationScope,
   type RuntimeSecret,
 } from "../../../src/integrations/contracts.ts";
+import {
+  createSyntheticPapermarkCallAuthorizationForTests,
+} from "../../../src/integrations/papermark/authorization.ts";
+import { PapermarkTransport } from "../../../src/integrations/papermark/transport.ts";
 
 const scope = parseIntegrationScope({
   tenantId: "tenant_acme",
@@ -22,7 +26,10 @@ const scope = parseIntegrationScope({
 const secret = "synthetic-secret-never-return-this" as RuntimeSecret;
 
 class SecretResolverFake {
+  calls = 0;
+
   resolve(): Promise<RuntimeSecret> {
+    this.calls += 1;
     return Promise.resolve(secret);
   }
 }
@@ -54,7 +61,7 @@ function documentPayload(): Record<string, unknown> {
   };
 }
 
-function config() {
+function config(folderId = "folder_horizon") {
   return parsePapermarkAdapterConfig({
     configuration: parseProviderConfiguration({
       provider: "papermark",
@@ -74,19 +81,25 @@ function config() {
       tenantId: scope.tenantId,
     },
     providerWorkspaceId: "papermark_workspace_horizon",
-    folderId: "folder_horizon",
+    folderId,
     pageSize: 50,
     timeoutMs: 1_000,
     retry: { maxAttempts: 1, maxDelayMs: 250 },
   });
 }
 
-function dependencies(fake: FetchFake): PapermarkAdapterDependencies {
+function dependencies(
+  fake: FetchFake,
+  adapterConfig = config(),
+): PapermarkAdapterDependencies {
   return {
     secretResolver: new SecretResolverFake(),
     fetch: fake.fetch,
     sleep: () => Promise.resolve(),
     now: () => new Date("2026-08-08T12:00:00.000Z"),
+    authorization: createSyntheticPapermarkCallAuthorizationForTests(
+      adapterConfig,
+    ),
   };
 }
 
@@ -129,7 +142,11 @@ Deno.test("Papermark adapter advertises list-only capability and gates binary do
   const download = capabilities.observations.find(({ capability }) =>
     capability === "download_document"
   );
+  const pagination = capabilities.observations.find(({ capability }) =>
+    capability === "pagination"
+  );
   assertEquals(list?.status, "supported");
+  assertEquals(pagination?.status, "supported");
   assertEquals(capabilities.source, "implementation");
   assertEquals(download?.status, "unavailable");
 
@@ -173,6 +190,84 @@ Deno.test("Papermark adapter rejects a scope or workspace mismatch before fetch"
   });
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.failure.code, "INVALID_REQUEST");
+  assertEquals(fake.calls.length, 0);
+});
+
+Deno.test("Papermark adapter rejects missing authorization before resolver or fetch", () => {
+  const fake = new FetchFake();
+  const resolver = new SecretResolverFake();
+  assertThrows(
+    () =>
+      new PapermarkIntegrationAdapter(config(), {
+        ...dependencies(fake),
+        secretResolver: resolver,
+        authorization: undefined as never,
+      }),
+    Error,
+    "authorization",
+  );
+  assertEquals(resolver.calls, 0);
+  assertEquals(fake.calls.length, 0);
+});
+
+Deno.test("Papermark adapter rejects mismatched or forged authorization before resolver or fetch", () => {
+  const fake = new FetchFake();
+  const resolver = new SecretResolverFake();
+  const otherConfig = config("folder_other");
+  const mismatched = createSyntheticPapermarkCallAuthorizationForTests(
+    otherConfig,
+  );
+  assertThrows(
+    () =>
+      new PapermarkIntegrationAdapter(config(), {
+        ...dependencies(fake),
+        secretResolver: resolver,
+        authorization: mismatched,
+      }),
+    Error,
+    "authorization",
+  );
+  assertThrows(
+    () =>
+      new PapermarkIntegrationAdapter(config(), {
+        ...dependencies(fake),
+        secretResolver: resolver,
+        authorization: {} as never,
+      }),
+    Error,
+    "authorization",
+  );
+  assertEquals(resolver.calls, 0);
+  assertEquals(fake.calls.length, 0);
+});
+
+Deno.test("Papermark transport rejects mismatched authorization before resolver or fetch", () => {
+  const fake = new FetchFake();
+  const resolver = new SecretResolverFake();
+  const otherConfig = config("folder_other");
+  const dependencies = {
+    fetch: fake.fetch,
+    sleep: () => Promise.resolve(),
+    now: () => new Date("2026-08-08T12:00:00.000Z"),
+    authorization: createSyntheticPapermarkCallAuthorizationForTests(
+      otherConfig,
+    ),
+  };
+  assertThrows(
+    () => new PapermarkTransport(config(), resolver, dependencies),
+    Error,
+    "authorization",
+  );
+  assertThrows(
+    () =>
+      new PapermarkTransport(config(), resolver, {
+        ...dependencies,
+        authorization: {} as never,
+      }),
+    Error,
+    "authorization",
+  );
+  assertEquals(resolver.calls, 0);
   assertEquals(fake.calls.length, 0);
 });
 

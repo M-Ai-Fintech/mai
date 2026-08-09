@@ -5,6 +5,10 @@ import {
   type SecretResolver,
 } from "../contracts.ts";
 import { integrationFailureMessage } from "../failures.ts";
+import {
+  assertPapermarkCallAuthorization,
+  type PapermarkCallAuthorization,
+} from "./authorization.ts";
 import type { PapermarkAdapterConfig } from "./config.ts";
 
 const RETRYABLE_CODES = new Set<IntegrationFailureCode>([
@@ -12,6 +16,8 @@ const RETRYABLE_CODES = new Set<IntegrationFailureCode>([
   "RATE_LIMITED",
   "UNAVAILABLE",
 ]);
+
+export type PapermarkRateLimitDelayState = "valid" | "missing" | "invalid";
 
 export type PapermarkFetch = (
   url: string,
@@ -28,6 +34,7 @@ export interface PapermarkTransportDependencies {
   readonly sleep: (delayMs: number) => Promise<void>;
   readonly now: () => Date;
   readonly timer?: PapermarkTimer;
+  readonly authorization: PapermarkCallAuthorization;
 }
 
 export class PapermarkTransportFailure extends Error {
@@ -35,12 +42,14 @@ export class PapermarkTransportFailure extends Error {
   readonly status?: number;
   readonly providerRequestId?: string;
   readonly retryAfterMs?: number;
+  readonly rateLimitDelayState?: PapermarkRateLimitDelayState;
 
   constructor(input: {
     readonly code: IntegrationFailureCode;
     readonly status?: number;
     readonly providerRequestId?: string;
     readonly retryAfterMs?: number;
+    readonly rateLimitDelayState?: PapermarkRateLimitDelayState;
   }) {
     super(integrationFailureMessage(input.code));
     this.name = "PapermarkTransportFailure";
@@ -48,6 +57,7 @@ export class PapermarkTransportFailure extends Error {
     this.status = input.status;
     this.providerRequestId = safeRequestId(input.providerRequestId);
     this.retryAfterMs = safeRetryAfter(input.retryAfterMs);
+    this.rateLimitDelayState = input.rateLimitDelayState;
   }
 }
 
@@ -64,6 +74,7 @@ export class PapermarkTransport {
     private readonly secretResolver: SecretResolver,
     private readonly dependencies: PapermarkTransportDependencies,
   ) {
+    assertPapermarkCallAuthorization(dependencies.authorization, config);
     this.timer = dependencies.timer ?? systemTimer();
   }
 
@@ -85,7 +96,9 @@ export class PapermarkTransport {
           if (attempt === 1) throw failure;
           throw retryExhausted(failure);
         }
-        await this.dependencies.sleep(this.retryDelay(attempt, failure));
+        const delay = this.retryDelay(attempt, failure);
+        if (delay === undefined) throw failure;
+        await this.dependencies.sleep(delay);
       }
     }
   }
@@ -93,6 +106,10 @@ export class PapermarkTransport {
   private async resolveSecret(signal: AbortSignal): Promise<RuntimeSecret> {
     const reference = this.config.configuration.secretRef as SecretReference;
     if (signal.aborted) throw timeoutFailure();
+    assertPapermarkCallAuthorization(
+      this.dependencies.authorization,
+      this.config,
+    );
     try {
       const secret = await this.secretResolver.resolve(reference, signal);
       if (signal.aborted) throw timeoutFailure();
@@ -111,7 +128,9 @@ export class PapermarkTransport {
       async () => {
         const token = await this.resolveSecret(controller.signal);
         response = await this.fetchPage(token, cursor, controller.signal);
-        if (!response.ok) throw responseFailure(response);
+        if (!response.ok) {
+          throw responseFailure(response, this.dependencies.now());
+        }
         return await this.parseJson(response, controller.signal);
       },
       controller,
@@ -136,6 +155,10 @@ export class PapermarkTransport {
       Authorization: `Bearer ${token}`,
     });
     if (signal.aborted) throw timeoutFailure();
+    assertPapermarkCallAuthorization(
+      this.dependencies.authorization,
+      this.config,
+    );
     return this.dependencies.fetch(url.toString(), {
       method: "GET",
       headers,
@@ -192,23 +215,35 @@ export class PapermarkTransport {
   private retryDelay(
     attempt: number,
     failure: PapermarkTransportFailure,
-  ): number {
-    const retryAfter = failure.retryAfterMs;
-    if (retryAfter !== undefined) {
-      return Math.min(retryAfter, this.config.retry.maxDelayMs);
+  ): number | undefined {
+    if (this.config.retry.maxDelayMs <= 0) return undefined;
+    if (failure.code === "RATE_LIMITED") {
+      if (failure.rateLimitDelayState !== "valid") return undefined;
+      if (
+        failure.retryAfterMs === undefined ||
+        failure.retryAfterMs > this.config.retry.maxDelayMs
+      ) return undefined;
+      return failure.retryAfterMs;
     }
     const exponential = 100 * 2 ** (attempt - 1);
     return Math.min(exponential, this.config.retry.maxDelayMs);
   }
 }
 
-function responseFailure(response: Response): PapermarkTransportFailure {
+function responseFailure(
+  response: Response,
+  now: Date,
+): PapermarkTransportFailure {
   const code = failureCodeForStatus(response.status);
+  const rateLimitDelay = code === "RATE_LIMITED"
+    ? parseRateLimitDelay(response.headers, now)
+    : undefined;
   return new PapermarkTransportFailure({
     code,
     status: response.status,
     providerRequestId: response.headers.get("x-request-id") ?? undefined,
-    retryAfterMs: parseRetryAfter(response.headers.get("retry-after")),
+    retryAfterMs: rateLimitDelay?.delayMs,
+    rateLimitDelayState: rateLimitDelay?.state,
   });
 }
 
@@ -233,11 +268,71 @@ function failureCodeForStatus(status: number): IntegrationFailureCode {
   return "UNKNOWN";
 }
 
-function parseRetryAfter(value: string | null): number | undefined {
-  if (value === null || !/^\d+(?:\.\d+)?$/.test(value)) return undefined;
+function parseRateLimitDelay(
+  headers: Headers,
+  now: Date,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
+  const retryAfter = parseRetryAfter(headers.get("retry-after"), now);
+  const reset = parseRateLimitReset(headers.get("x-ratelimit-reset"), now);
+  if (retryAfter.state === "invalid" || reset.state === "invalid") {
+    return { state: "invalid" };
+  }
+  const delays = [retryAfter.delayMs, reset.delayMs].filter(
+    (delay): delay is number => delay !== undefined,
+  );
+  if (delays.length === 0) return { state: "missing" };
+  return { state: "valid", delayMs: Math.max(...delays) };
+}
+
+function parseRetryAfter(
+  value: string | null,
+  now: Date,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
+  if (value === null) return { state: "missing" };
+  const normalized = value.trim();
+  if (/^\d+(?:\.\d+)?$/.test(normalized)) {
+    return delayFromSeconds(normalized);
+  }
+  if (!/^[A-Za-z]{3},\s/.test(normalized)) return { state: "invalid" };
+  return delayFromTimestamp(normalized, now);
+}
+
+function parseRateLimitReset(
+  value: string | null,
+  now: Date,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
+  if (value === null) return { state: "missing" };
+  const normalized = value.trim();
+  if (!/^\d+$/.test(normalized)) return { state: "invalid" };
+  const seconds = Number(normalized);
+  if (!Number.isSafeInteger(seconds)) return { state: "invalid" };
+  return delayFromMilliseconds(seconds * 1_000 - now.getTime());
+}
+
+function delayFromSeconds(
+  value: string,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
   const seconds = Number(value);
-  if (!Number.isFinite(seconds) || seconds < 0) return undefined;
-  return Math.ceil(seconds * 1_000);
+  if (!Number.isFinite(seconds) || seconds < 0) return { state: "invalid" };
+  return delayFromMilliseconds(seconds * 1_000);
+}
+
+function delayFromTimestamp(
+  value: string,
+  now: Date,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return { state: "invalid" };
+  return delayFromMilliseconds(timestamp - now.getTime());
+}
+
+function delayFromMilliseconds(
+  value: number,
+): { readonly state: PapermarkRateLimitDelayState; readonly delayMs?: number } {
+  if (!Number.isFinite(value) || !Number.isSafeInteger(Math.ceil(value))) {
+    return { state: "invalid" };
+  }
+  return { state: "valid", delayMs: Math.max(0, Math.ceil(value)) };
 }
 
 function safeRequestId(value: string | undefined): string | undefined {

@@ -17,6 +17,9 @@ import {
   type RuntimeSecret,
   type SecretReference,
 } from "../../../src/integrations/contracts.ts";
+import {
+  createSyntheticPapermarkCallAuthorizationForTests,
+} from "../../../src/integrations/papermark/authorization.ts";
 
 const scope = parseIntegrationScope({
   tenantId: "tenant_acme",
@@ -25,6 +28,12 @@ const scope = parseIntegrationScope({
 });
 
 const secret = "synthetic-secret-never-log-this" as RuntimeSecret;
+
+type TransportFailure = Error & {
+  readonly code: string;
+  readonly status?: number;
+  readonly providerRequestId?: string;
+};
 
 class SecretResolverFake {
   calls = 0;
@@ -156,6 +165,7 @@ function transport(
     },
     now: () => new Date("2026-08-08T12:00:00.000Z"),
     timer,
+    authorization: createSyntheticPapermarkCallAuthorizationForTests(config),
   });
   return { instance, resolver, sleeps };
 }
@@ -212,18 +222,130 @@ Deno.test("Papermark transport normalizes authentication and authorization respo
   }
 });
 
-Deno.test("Papermark transport retries transient responses within the configured bound", async () => {
+Deno.test("Papermark transport honors a valid Retry-After delay", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "retry-after": "0.1",
+    }),
+    jsonResponse({ data: [], next_cursor: null }),
+  );
+  const { instance, sleeps } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 3, maxDelayMs: 10_000 } }),
+  );
+  await instance.getDocumentsPage(undefined);
+  assertEquals(fake.calls.length, 2);
+  assertEquals(sleeps, [100]);
+});
+
+Deno.test("Papermark transport honors X-RateLimit-Reset epoch seconds", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "x-ratelimit-reset": "1786190407",
+    }),
+    jsonResponse({ data: [], next_cursor: null }),
+  );
+  const { instance, sleeps } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 3, maxDelayMs: 10_000 } }),
+  );
+  await instance.getDocumentsPage(undefined);
+  assertEquals(fake.calls.length, 2);
+  assertEquals(sleeps, [7_000]);
+});
+
+Deno.test("Papermark transport honors an HTTP-date Retry-After value", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "retry-after": "Sat, 08 Aug 2026 12:00:05 GMT",
+    }),
+    jsonResponse({ data: [], next_cursor: null }),
+  );
+  const { instance, sleeps } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 3, maxDelayMs: 15_000 } }),
+  );
+  await instance.getDocumentsPage(undefined);
+  assertEquals(fake.calls.length, 2);
+  assertEquals(sleeps, [5_000]);
+});
+
+Deno.test("Papermark transport uses the greater delay when both rate-limit headers exist", async () => {
   const fake = new FetchFake();
   fake.responses.push(
     jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
       "retry-after": "2",
+      "x-ratelimit-reset": "1786190410",
     }),
     jsonResponse({ data: [], next_cursor: null }),
   );
-  const { instance, sleeps } = transport(fake);
+  const { instance, sleeps } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 3, maxDelayMs: 15_000 } }),
+  );
   await instance.getDocumentsPage(undefined);
   assertEquals(fake.calls.length, 2);
-  assertEquals(sleeps, [250]);
+  assertEquals(sleeps, [10_000]);
+});
+
+Deno.test("Papermark transport fails closed when a rate-limit delay is excessive", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "retry-after": "31",
+    }),
+  );
+  const { instance, sleeps } = transport(fake);
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "RATE_LIMITED");
+  assertEquals(fake.calls.length, 1);
+  assertEquals(sleeps, []);
+});
+
+Deno.test("Papermark transport fails closed when a rate-limit delay header is missing", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429),
+  );
+  const { instance, sleeps } = transport(fake);
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "RATE_LIMITED");
+  assertEquals(fake.calls.length, 1);
+  assertEquals(sleeps, []);
+});
+
+Deno.test("Papermark transport fails closed when a rate-limit delay header is invalid", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "retry-after": "later",
+    }),
+  );
+  const { instance, sleeps } = transport(fake);
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "RATE_LIMITED");
+  assertEquals(fake.calls.length, 1);
+  assertEquals(sleeps, []);
+});
+
+Deno.test("Papermark transport does not retry a rate limit with maxDelayMs zero", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: { code: "rate_limit_exceeded" } }, 429, {
+      "retry-after": "0",
+    }),
+  );
+  const { instance, sleeps } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 3, maxDelayMs: 0 } }),
+  );
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "RATE_LIMITED");
+  assertEquals(fake.calls.length, 1);
+  assertEquals(sleeps, []);
 });
 
 Deno.test("Papermark transport does not retry malformed responses", async () => {
@@ -265,6 +387,7 @@ Deno.test("Papermark transport times out a stalled secret resolver", async () =>
       sleep: () => Promise.resolve(),
       now: () => new Date("2026-08-08T12:00:00.000Z"),
       timer,
+      authorization: createSyntheticPapermarkCallAuthorizationForTests(config),
     },
   );
 
@@ -284,6 +407,9 @@ Deno.test("Papermark transport rejects a resolver that completes after timeout b
     sleep: () => Promise.resolve(),
     now: () => new Date("2026-08-08T12:00:00.000Z"),
     timer,
+    authorization: createSyntheticPapermarkCallAuthorizationForTests(
+      configWithSingleAttempt(),
+    ),
   });
 
   const pending = instance.getDocumentsPage(undefined);
@@ -363,21 +489,11 @@ function configWithSingleAttempt(): PapermarkAdapterConfig {
 
 async function captureError(
   operation: () => Promise<unknown>,
-): Promise<
-  Error & {
-    readonly code: string;
-    readonly status?: number;
-    readonly providerRequestId?: string;
-  }
-> {
+): Promise<TransportFailure> {
   try {
     await operation();
   } catch (error) {
-    return error as Error & {
-      readonly code: string;
-      readonly status?: number;
-      readonly providerRequestId?: string;
-    };
+    return error as TransportFailure;
   }
   throw new Error("Expected the operation to fail.");
 }

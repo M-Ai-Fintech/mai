@@ -5,6 +5,7 @@ import {
   type IntegrationResult,
   type IntegrationScope,
   parseIntegrationScope,
+  sameIntegrationScope,
 } from "./contracts.ts";
 import {
   assertPapermarkEndpointForEnvironment,
@@ -321,7 +322,7 @@ function validateAdapter(
       adapter.provider !== expectedProvider ||
       adapter.environment !== expectedEnvironment ||
       adapter.lifecycle !== "enabled" ||
-      !sameScope(adapter.scope, input.scope) ||
+      !sameIntegrationScope(adapter.scope, input.scope) ||
       adapter.connectorAccountId !== input.connectorAccountId ||
       adapter.providerWorkspaceId !== input.providerWorkspaceId
     ) return failure(input, "INVALID_REQUEST");
@@ -357,11 +358,6 @@ function failure(
     operation: "select_provider",
     code,
   });
-}
-
-function sameScope(left: IntegrationScope, right: IntegrationScope): boolean {
-  return left.tenantId === right.tenantId &&
-    left.workspaceId === right.workspaceId && left.dealId === right.dealId;
 }
 
 function safeBindingText(value: string): boolean {

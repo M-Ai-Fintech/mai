@@ -70,6 +70,30 @@ Deno.test("denied and unavailable capabilities never invoke provider operations"
   assertEquals(unavailableCalls, 0);
 });
 
+Deno.test("an unrequested download capability is unavailable and never invokes its operation", async () => {
+  const snapshot = createCapabilitySnapshot({
+    provider: "fixture",
+    environment: "fixture",
+    lifecycle: "enabled",
+    configured: true,
+    source: "fixture",
+    scope: integrationScope(),
+    requested: ["list_documents"],
+    observations: [{ capability: "list_documents", status: "supported" }],
+    observedAt: timestamp(),
+  });
+  let calls = 0;
+  const result = await invokeCapability(snapshot, "download_document", () => {
+    calls += 1;
+    return Promise.resolve({ ok: true, value: new Uint8Array() });
+  });
+
+  assertEquals(result.ok, false);
+  assert(result.ok === false);
+  assertEquals(result.failure.code, "UNAVAILABLE");
+  assertEquals(calls, 0);
+});
+
 Deno.test("fixture conformance refuses a provider adapter and makes no document calls", async () => {
   const adapter = new NonFixtureAdapter();
   const evidence = await runFixtureConformance(adapter, conformancePlan());
