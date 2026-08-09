@@ -9,7 +9,6 @@ import {
 } from "./definitions/index.ts";
 import type {
   GovernedExecutionBinding,
-  GovernedProposalClaims,
   GovernedProvenanceVerificationRequest,
   GovernedProvenanceVerifier,
   GovernedVerifiedProvenance,
@@ -30,7 +29,7 @@ import type { SourceVersionChecker } from "../agent_runtime/runner.ts";
 /** Public AgentRuntimeReadService methods used by the production adapter. */
 export type GovernedRuntimeReceiptReader = Pick<
   AgentRuntimeReadService,
-  "getRun" | "getToolActivity" | "listResults"
+  "getRun" | "getResult" | "getToolActivity"
 >;
 
 export class GovernedProvenanceError extends Error {
@@ -56,26 +55,40 @@ export class AgentRuntimeProvenanceVerifier
     request: GovernedProvenanceVerificationRequest,
   ): Promise<GovernedVerifiedProvenance> {
     const execution = request.execution;
-    const run = await readReceipt(
-      this.reads.getRun(execution.context, execution.actor, execution.runId),
-      "run",
-    );
-    assertRuntimeRun(run, execution);
-    const results = await readReceipt(
-      this.reads.listResults(
-        execution.context,
-        execution.actor,
-        execution.runId,
-      ),
-      "result list",
-    );
-    assertRuntimeResults(results, execution);
-    const model = runtimeModelLineage(run, results, request.definition);
-    const tools = await runtimeToolLineage(this.reads, request, results);
-    const evidence = runtimeEvidenceLineage(request.claims, results);
+    const run = await readRun(this.reads, execution);
+    const result = await readResult(this.reads, execution, request.resultId);
+    assertRuntimeResult(result, request.resultId, execution);
+    const model = runtimeModelLineage(run, result, request.definition);
+    const tools = await runtimeToolLineage(this.reads, request, result);
+    const evidence = runtimeEvidenceLineage(result);
     await assertEvidenceCurrent(this.sources, evidence);
-    return { execution, lineage: { model, tools, evidence } };
+    const currentRun = await readRun(this.reads, execution);
+    assertRunUnchanged(run, currentRun, execution);
+    return { execution, result, lineage: { model, tools, evidence } };
   }
+}
+
+async function readRun(
+  reads: GovernedRuntimeReceiptReader,
+  execution: GovernedExecutionBinding,
+): Promise<RunRecord> {
+  const run = await readReceipt(
+    reads.getRun(execution.context, execution.actor, execution.runId),
+    "run",
+  );
+  assertRuntimeRun(run, execution);
+  return run;
+}
+
+async function readResult(
+  reads: GovernedRuntimeReceiptReader,
+  execution: GovernedExecutionBinding,
+  resultId: string,
+): Promise<ResultRecord> {
+  return await readReceipt(
+    reads.getResult(execution.context, execution.actor, resultId),
+    `result "${resultId}"`,
+  );
 }
 
 async function assertEvidenceCurrent(
@@ -135,6 +148,11 @@ function assertRuntimeRun(
   run: RunRecord,
   execution: GovernedExecutionBinding,
 ): void {
+  if (!isRecord(run)) {
+    throw new GovernedProvenanceError(
+      "runtime run receipt is malformed; expected a durable run record",
+    );
+  }
   if (
     run.runId !== execution.runId || !sameScope(run.scope, execution.scope) ||
     !sameActor(run.actor, execution.actor)
@@ -143,27 +161,51 @@ function assertRuntimeRun(
       "runtime run receipt is cross-scope, cross-run, or actor-mismatched",
     );
   }
-  if (run.state !== "running" && run.state !== "succeeded") {
+  if (run.state !== "succeeded") {
     throw new GovernedProvenanceError(
-      `runtime run "${run.runId}" is stale in state "${run.state}"`,
+      `runtime run "${run.runId}" is not succeeded; received state "${run.state}"`,
     );
   }
 }
 
-function assertRuntimeResults(
-  results: readonly ResultRecord[],
+function assertRuntimeResult(
+  result: ResultRecord,
+  resultId: string,
   execution: GovernedExecutionBinding,
 ): void {
-  if (results.some((result) => result.runId !== execution.runId)) {
+  if (!isRecord(result)) {
     throw new GovernedProvenanceError(
-      "runtime result receipt is cross-run; expected the bound run",
+      `durable result "${resultId}" is malformed; expected a durable result record`,
+    );
+  }
+  if (result.resultId !== resultId || result.runId !== execution.runId) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" is cross-run or bound to another result ID`,
+    );
+  }
+  if (result.kind !== "proposal" && result.kind !== "reversible_draft") {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has unsupported kind "${result.kind}"; expected proposal or reversible_draft`,
+    );
+  }
+  if (!isRecord(result.value) || !isRecord(result.lineage)) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" is malformed; expected a value and lineage record`,
+    );
+  }
+  if (
+    !Array.isArray(result.lineage.toolActivityIds) ||
+    !Array.isArray(result.lineage.evidence)
+  ) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has incomplete tool or evidence lineage`,
     );
   }
 }
 
 function runtimeModelLineage(
   run: RunRecord,
-  results: readonly ResultRecord[],
+  result: ResultRecord,
   definition: GovernedProvenanceVerificationRequest["definition"],
 ): AgentModelLineage {
   if (run.model === undefined) {
@@ -171,35 +213,19 @@ function runtimeModelLineage(
       "runtime run has no model receipt; expected durable model metadata",
     );
   }
-  const modelResults = results.filter((result) =>
-    result.lineage.model !== undefined
-  );
-  const promptResults = results.filter((result) =>
-    result.lineage.prompt !== undefined
-  );
-  if (modelResults.length === 0 || promptResults.length === 0) {
+  const model = result.lineage.model;
+  const prompt = result.lineage.prompt;
+  if (model === undefined || prompt === undefined) {
     throw new GovernedProvenanceError(
-      "runtime results lack model or prompt lineage; expected durable execution receipts",
+      "durable result lacks model or prompt lineage; expected the bound definition identity",
     );
   }
   if (
-    modelResults.some((result) => {
-      const model = result.lineage.model!;
-      return !sameRuntimeModel(model, run.model!) ||
-        !sameDefinitionModel(model, definition);
-    })
+    !sameRuntimeModel(model, run.model) ||
+    !sameDefinitionModel(model, definition) || !samePrompt(prompt, definition)
   ) {
     throw new GovernedProvenanceError(
-      "runtime model receipt does not match the bound run or definition policy",
-    );
-  }
-  if (
-    promptResults.some((result) =>
-      !samePrompt(result.lineage.prompt!, definition)
-    )
-  ) {
-    throw new GovernedProvenanceError(
-      "runtime prompt receipt does not match the selected definition",
+      "durable result model or prompt receipt does not match the bound definition",
     );
   }
   return {
@@ -239,21 +265,13 @@ function samePrompt(
 async function runtimeToolLineage(
   reads: GovernedRuntimeReceiptReader,
   request: GovernedProvenanceVerificationRequest,
-  results: readonly ResultRecord[],
+  result: ResultRecord,
 ): Promise<AgentToolLineage[]> {
-  const claims = request.claims.tools ?? [];
-  assertUnique(
-    claims.map((claim) => isRecord(claim) ? claim.activityId : undefined),
-    "tool activity claim",
-  );
+  const activityIds = result.lineage.toolActivityIds;
+  assertUnique(activityIds, "durable result tool activity");
   return await Promise.all(
-    claims.map((claim) =>
-      runtimeTool(
-        reads,
-        request,
-        results,
-        isRecord(claim) ? claim.activityId : undefined,
-      )
+    activityIds.map((activityId) =>
+      runtimeTool(reads, request, result, activityId)
     ),
   );
 }
@@ -261,12 +279,12 @@ async function runtimeToolLineage(
 async function runtimeTool(
   reads: GovernedRuntimeReceiptReader,
   request: GovernedProvenanceVerificationRequest,
-  results: readonly ResultRecord[],
+  result: ResultRecord,
   activityId: unknown,
 ): Promise<AgentToolLineage> {
   if (typeof activityId !== "string" || !activityId.trim()) {
     throw new GovernedProvenanceError(
-      "tool activity claim is malformed; expected a durable activity ID",
+      "durable result tool lineage is malformed; expected durable activity IDs",
     );
   }
   const activity = await readReceipt(
@@ -277,23 +295,23 @@ async function runtimeTool(
     ),
     `tool activity "${activityId}"`,
   );
-  if (activity.runId !== request.execution.runId) {
+  if (!isRecord(activity)) {
     throw new GovernedProvenanceError(
-      `tool activity "${activityId}" belongs to another run`,
+      `tool activity "${activityId}" is malformed; expected a durable activity record`,
+    );
+  }
+  if (
+    activity.activityId !== activityId ||
+    activity.runId !== request.execution.runId ||
+    activity.runId !== result.runId
+  ) {
+    throw new GovernedProvenanceError(
+      `tool activity "${activityId}" belongs to another run or result binding`,
     );
   }
   if (activity.state !== "succeeded") {
     throw new GovernedProvenanceError(
       `tool activity "${activityId}" is not succeeded`,
-    );
-  }
-  if (
-    !results.some((result) =>
-      result.lineage.toolActivityIds.includes(activity.activityId)
-    )
-  ) {
-    throw new GovernedProvenanceError(
-      `tool activity "${activityId}" is not linked by a durable result`,
     );
   }
   if (
@@ -317,29 +335,19 @@ async function runtimeTool(
 }
 
 function runtimeEvidenceLineage(
-  claims: GovernedProposalClaims,
-  results: readonly ResultRecord[],
+  result: ResultRecord,
 ): AgentSourceVersionReference[] {
-  const evidence = claims.evidence ?? [];
+  const evidence = result.lineage.evidence;
   evidence.forEach(assertSourceReference);
-  assertUnique(evidence.map(sourceReferenceKey), "evidence claim");
-  return evidence.map((reference) => {
-    const receipt = results.flatMap((result) => result.lineage.evidence).find(
-      (candidate) =>
-        sourceReferenceKey(candidate) === sourceReferenceKey(reference),
-    );
-    if (receipt === undefined) {
-      throw new GovernedProvenanceError(
-        `evidence claim "${reference.sourceType}:${reference.sourceId}@${reference.version}" is invented, cross-run, or stale`,
-      );
-    }
-    return {
-      sourceType: receipt.sourceType,
-      sourceId: receipt.sourceId,
-      version: receipt.version,
-      ...(receipt.checksum === undefined ? {} : { checksum: receipt.checksum }),
-    };
-  });
+  assertUnique(evidence.map(sourceReferenceKey), "durable result evidence");
+  return evidence.map((reference) => ({
+    sourceType: reference.sourceType,
+    sourceId: reference.sourceId,
+    version: reference.version,
+    ...(reference.checksum === undefined
+      ? {}
+      : { checksum: reference.checksum }),
+  }));
 }
 
 function assertSourceReference(
@@ -347,7 +355,7 @@ function assertSourceReference(
 ): asserts value is AgentSourceVersionReference {
   if (sourceVersionReferenceSchema.safeParse(value).success) return;
   throw new GovernedProvenanceError(
-    "evidence claim is malformed; expected an exact source version",
+    "durable result evidence lineage is malformed; expected exact source versions",
   );
 }
 
@@ -368,8 +376,37 @@ function assertUnique(values: readonly unknown[], label: string): void {
     new Set(values).size === values.length
   ) return;
   throw new GovernedProvenanceError(
-    `${label} list contains a duplicate or malformed value`,
+    `${label} lineage contains a duplicate or malformed value`,
   );
+}
+
+function assertRunUnchanged(
+  initial: RunRecord,
+  current: RunRecord,
+  execution: GovernedExecutionBinding,
+): void {
+  assertRuntimeRun(current, execution);
+  if (
+    current.aggregateVersion !== initial.aggregateVersion ||
+    current.state !== initial.state ||
+    !sameScope(current.scope, initial.scope) ||
+    !sameActor(current.actor, initial.actor) ||
+    !sameModel(current.model, initial.model)
+  ) {
+    throw new GovernedProvenanceError(
+      `runtime run "${execution.runId}" changed while its result was being verified; expected the same aggregate version, state, scope, actor, and model`,
+    );
+  }
+}
+
+function sameModel(
+  left: RunRecord["model"],
+  right: RunRecord["model"],
+): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  return left.provider === right.provider && left.model === right.model &&
+    left.modelVersion === right.modelVersion &&
+    left.responseReference === right.responseReference;
 }
 
 function sameScope(

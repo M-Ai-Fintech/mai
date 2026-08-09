@@ -67,6 +67,7 @@ Deno.test("listing rechecks declared sources before protected loading", async ()
       name: "Contract.pdf",
       mimeType: "application/pdf",
       classification: "legal",
+      currentVersion: exactReference,
     },
   ]);
   const tool = createGovernedDocumentListingTool(listing, versions);
@@ -109,6 +110,37 @@ Deno.test("listing rechecks returned versions and fails closed without documents
   assertEquals(result.value.documents, []);
   assertEquals(listing.requests.length, 1);
   assertEquals(versions.checks, 1);
+});
+
+Deno.test("listing rechecks every returned current version", async () => {
+  const versions = new ToggleSourceVersionPort();
+  const listing = new RecordingDocumentListingPort([
+    {
+      documentId: "doc_contract",
+      name: "Contract.pdf",
+      mimeType: "application/pdf",
+      classification: "legal",
+      currentVersion: exactReference,
+    },
+    {
+      documentId: "doc_schedule",
+      name: "Schedule.pdf",
+      mimeType: "application/pdf",
+      classification: "financial",
+      currentVersion: {
+        documentVersionId: "docv_schedule_v1",
+        version: 1,
+        checksum: { algorithm: "sha256", value: "b".repeat(64) },
+      },
+    },
+  ]);
+  const tool = createGovernedDocumentListingTool(listing, versions);
+  const result = await tool.execute(
+    authorizedInvocation(tool.name, "list_documents"),
+  );
+
+  assertEquals(result.value.status, "ok");
+  assertEquals(versions.checks, 2);
 });
 
 Deno.test("listing returns unavailable without loading protected documents", async () => {

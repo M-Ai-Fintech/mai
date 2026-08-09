@@ -1,8 +1,9 @@
 // src/agent/agents/broker-orchestrator/index.ts
-import { Agent } from "@mastra/core/agent";
-import { google } from "@ai-sdk/google";
-import * as tools from "./tools/index.ts";
 import { DatabaseMemoryService } from "../../../core/db/memory_service.ts";
+import {
+  createLegacyAgentAdapter,
+  type LegacyAgentAdapter,
+} from "../../legacy_agent_adapter.ts";
 
 type CorrectionType =
   | "domain_knowledge"
@@ -33,17 +34,8 @@ interface LegacyCorrectionResult {
   conflictReason?: string;
 }
 
-const instructions = Deno.readTextFileSync(
-  new URL("./instructions.md", import.meta.url),
-);
-
-export const BrokerOrchestratorAgent = new Agent({
-  id: "broker-orchestrator-agent",
-  name: "BrokerOrchestratorAgent",
-  model: google("gemini-3.5-flash"),
-  instructions: instructions,
-  tools: tools,
-});
+export const BrokerOrchestratorAgent: LegacyAgentAdapter =
+  createLegacyAgentAdapter("BrokerOrchestratorAgent");
 
 export const brokerOrchestratorAgent = BrokerOrchestratorAgent;
 

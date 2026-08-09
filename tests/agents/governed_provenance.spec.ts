@@ -10,10 +10,7 @@ import {
   GovernedProvenanceError,
   type GovernedRuntimeReceiptReader,
 } from "../../src/agent/governed.ts";
-import type {
-  AgentDefinition,
-  AgentSourceVersionReference,
-} from "../../src/agent/definitions/index.ts";
+import type { AgentDefinition } from "../../src/agent/definitions/index.ts";
 import type { RuntimeReadResult } from "../../src/agent_runtime/reads.ts";
 import type { SourceVersionChecker } from "../../src/agent_runtime/runner.ts";
 import type {
@@ -37,11 +34,12 @@ class NamedRecordingProposalPort implements GovernedProposalPort {
 
 class NamedFakeAgentRuntimeReadService implements GovernedRuntimeReceiptReader {
   readonly calls: string[] = [];
+  private runReadCount = 0;
 
   constructor(
-    private readonly run: RunRecord,
+    private readonly runs: readonly RunRecord[],
     private readonly activities: readonly ToolActivityRecord[],
-    private readonly results: readonly ResultRecord[],
+    private readonly result: ResultRecord | undefined,
     private readonly afterActivity?: () => void,
   ) {}
 
@@ -51,9 +49,24 @@ class NamedFakeAgentRuntimeReadService implements GovernedRuntimeReceiptReader {
     runId: RunRecord["runId"],
   ): Promise<RuntimeReadResult<RunRecord>> {
     this.calls.push(`run:${runId}`);
+    const run = this.runs[Math.min(this.runReadCount++, this.runs.length - 1)];
     return Promise.resolve(
-      this.authorized(context, actor, runId)
-        ? { kind: "loaded", value: this.run, decision: {} as never }
+      run !== undefined && this.authorized(context, actor, runId)
+        ? { kind: "loaded", value: run, decision: {} as never }
+        : this.notFound(),
+    );
+  }
+
+  getResult(
+    context: RequestContext,
+    actor: RunRecord["actor"],
+    resultId: string,
+  ): Promise<RuntimeReadResult<ResultRecord>> {
+    this.calls.push(`result:${resultId}`);
+    return Promise.resolve(
+      this.result !== undefined && this.result.resultId === resultId &&
+        this.authorized(context, actor, this.result.runId)
+        ? { kind: "loaded", value: this.result, decision: {} as never }
         : this.notFound(),
     );
   }
@@ -68,24 +81,11 @@ class NamedFakeAgentRuntimeReadService implements GovernedRuntimeReceiptReader {
       item.activityId === activityId
     );
     const receipt = activity !== undefined &&
-        this.authorized(context, actor, this.run.runId)
+        this.authorized(context, actor, this.runs[0]?.runId)
       ? { kind: "loaded" as const, value: activity, decision: {} as never }
       : this.notFound<ToolActivityRecord>();
     if (receipt.kind === "loaded") this.afterActivity?.();
     return Promise.resolve(receipt);
-  }
-
-  listResults(
-    context: RequestContext,
-    actor: RunRecord["actor"],
-    runId: RunRecord["runId"],
-  ): Promise<RuntimeReadResult<ResultRecord[]>> {
-    this.calls.push(`results:${runId}`);
-    return Promise.resolve(
-      this.authorized(context, actor, runId)
-        ? { kind: "loaded", value: [...this.results], decision: {} as never }
-        : this.notFound(),
-    );
   }
 
   private authorized(
@@ -93,12 +93,13 @@ class NamedFakeAgentRuntimeReadService implements GovernedRuntimeReceiptReader {
     actor: RunRecord["actor"],
     runId: RunRecord["runId"],
   ): boolean {
-    return runId === this.run.runId &&
-      actor.actorId === this.run.actor.actorId &&
+    const firstRun = this.runs[0];
+    return firstRun !== undefined && runId === firstRun.runId &&
+      actor.actorId === firstRun.actor.actorId &&
       context.actorId === actor.actorId &&
-      context.tenantId === this.run.scope.tenantId &&
-      context.workspaceId === this.run.scope.workspaceId &&
-      context.dealId === this.run.scope.dealId;
+      context.tenantId === firstRun.scope.tenantId &&
+      context.workspaceId === firstRun.scope.workspaceId &&
+      context.dealId === firstRun.scope.dealId;
   }
 
   private notFound<T>(): RuntimeReadResult<T> {
@@ -126,26 +127,22 @@ const proposedOutput = {
   timestamp: "2026-08-08T12:00:00.000Z",
 };
 
-Deno.test("runtime provenance adapter derives exact lineage from authorized receipts", async () => {
+Deno.test("runtime provenance reads the exact result and derives complete lineage", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const definition = catalog.current("broker-orchestrator-agent");
   const execution = executionContext();
   const receipts = runtimeReceiptFixture(definition, execution);
   const reads = new NamedFakeAgentRuntimeReadService(
-    receipts.run,
+    [receipts.run],
     [receipts.activity],
-    [receipts.result],
-    undefined,
+    receipts.result,
   );
   const sources = new NamedFlippingSourceVersionChecker();
   const result = await createGovernedSpecialist(
     catalog,
     definition.id,
     new NamedRecordingProposalPort(
-      runtimeProposalResponse(
-        receipts.activity.activityId,
-        receipts.result.lineage.evidence,
-      ),
+      runtimeProposalResponse(receipts.result.resultId),
     ),
     new AgentRuntimeProvenanceVerifier(reads, sources),
     execution,
@@ -154,6 +151,8 @@ Deno.test("runtime provenance adapter derives exact lineage from authorized rece
     capability: "evidence.search",
   });
 
+  assertEquals(result.artifact.value, proposedOutput);
+  assertEquals(result.artifact.kind, "proposal");
   assertEquals(result.lineage.tools, [{
     name: "governed.evidence.search",
     activityId: "activity_exact_evidence",
@@ -169,8 +168,9 @@ Deno.test("runtime provenance adapter derives exact lineage from authorized rece
   assertEquals(result.lineage.model.model, "gemini-3.5-flash");
   assertEquals(reads.calls, [
     "run:run_governed",
-    "results:run_governed",
+    "result:result_receipt",
     "activity:activity_exact_evidence",
+    "run:run_governed",
   ]);
   assertEquals(sources.checks, [{
     sourceType: "document_version",
@@ -180,57 +180,71 @@ Deno.test("runtime provenance adapter derives exact lineage from authorized rece
   }]);
 });
 
-Deno.test("runtime provenance adapter rejects invented, cross-run, stale, and mismatched receipts", async () => {
+Deno.test("runtime provenance rejects missing, cross-run, stale, wrong-kind, and mismatched results", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const definition = catalog.current("broker-orchestrator-agent");
   const execution = executionContext();
   const base = runtimeReceiptFixture(definition, execution);
-  const response = runtimeProposalResponse(
-    base.activity.activityId,
-    base.result.lineage.evidence,
-  );
 
   const missingReader = new NamedFakeAgentRuntimeReadService(
-    base.run,
+    [base.run],
     [],
-    [base.result],
+    base.result,
   );
   await assertRejects(
     () =>
-      createRuntimeAdapterAgent(catalog, response, missingReader).propose(
-        agentRequest(),
-      ),
+      createRuntimeAdapterAgent(catalog, base.result.resultId, missingReader)
+        .propose(
+          agentRequest(),
+        ),
     GovernedProvenanceError,
     "unavailable",
   );
 
   const crossRunActivity = { ...base.activity, runId: "run_other" as never };
   const crossRunReader = new NamedFakeAgentRuntimeReadService(
-    base.run,
+    [base.run],
     [crossRunActivity],
-    [base.result],
+    base.result,
   );
   await assertRejects(
     () =>
-      createRuntimeAdapterAgent(catalog, response, crossRunReader).propose(
-        agentRequest(),
-      ),
+      createRuntimeAdapterAgent(catalog, base.result.resultId, crossRunReader)
+        .propose(
+          agentRequest(),
+        ),
     GovernedProvenanceError,
     "another run",
   );
 
   const staleReader = new NamedFakeAgentRuntimeReadService(
-    { ...base.run, state: "invalidated" },
+    [{ ...base.run, state: "invalidated" }],
     [base.activity],
-    [base.result],
+    base.result,
   );
   await assertRejects(
     () =>
-      createRuntimeAdapterAgent(catalog, response, staleReader).propose(
-        agentRequest(),
-      ),
+      createRuntimeAdapterAgent(catalog, base.result.resultId, staleReader)
+        .propose(
+          agentRequest(),
+        ),
     GovernedProvenanceError,
-    "stale",
+    "not succeeded",
+  );
+
+  const wrongKindReader = new NamedFakeAgentRuntimeReadService(
+    [base.run],
+    [base.activity],
+    { ...base.result, kind: "calculation" },
+  );
+  await assertRejects(
+    () =>
+      createRuntimeAdapterAgent(catalog, base.result.resultId, wrongKindReader)
+        .propose(
+          agentRequest(),
+        ),
+    GovernedProvenanceError,
+    "unsupported kind",
   );
 
   const mismatchedResult = {
@@ -241,30 +255,67 @@ Deno.test("runtime provenance adapter rejects invented, cross-run, stale, and mi
     },
   } as ResultRecord;
   const mismatchedReader = new NamedFakeAgentRuntimeReadService(
-    base.run,
+    [base.run],
     [base.activity],
-    [mismatchedResult],
+    mismatchedResult,
   );
   await assertRejects(
     () =>
-      createRuntimeAdapterAgent(catalog, response, mismatchedReader).propose(
-        agentRequest(),
-      ),
+      createRuntimeAdapterAgent(catalog, base.result.resultId, mismatchedReader)
+        .propose(
+          agentRequest(),
+        ),
     GovernedProvenanceError,
-    "prompt receipt",
+    "model or prompt",
   );
 });
 
-Deno.test("runtime provenance adapter rejects receipts that become stale after loading", async () => {
+Deno.test("runtime provenance rejects invented result IDs and result ID rebinding", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const definition = catalog.current("broker-orchestrator-agent");
+  const execution = executionContext();
+  const base = runtimeReceiptFixture(definition, execution);
+  const reads = new NamedFakeAgentRuntimeReadService(
+    [base.run],
+    [base.activity],
+    base.result,
+  );
+  await assertRejects(
+    () =>
+      createRuntimeAdapterAgent(catalog, "result_invented", reads).propose(
+        agentRequest(),
+      ),
+    GovernedProvenanceError,
+    "unavailable",
+  );
+
+  const rebound = { ...base.result, resultId: "result_other" as never };
+  const reboundReader = new NamedFakeAgentRuntimeReadService(
+    [base.run],
+    [base.activity],
+    rebound,
+  );
+  await assertRejects(
+    () =>
+      createRuntimeAdapterAgent(catalog, base.result.resultId, reboundReader)
+        .propose(
+          agentRequest(),
+        ),
+    GovernedProvenanceError,
+    "unavailable",
+  );
+});
+
+Deno.test("runtime provenance rejects receipts that become stale after loading", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const definition = catalog.current("broker-orchestrator-agent");
   const execution = executionContext();
   const base = runtimeReceiptFixture(definition, execution);
   const sources = new NamedFlippingSourceVersionChecker();
   const reads = new NamedFakeAgentRuntimeReadService(
-    base.run,
+    [base.run],
     [base.activity],
-    [base.result],
+    base.result,
     sources.flipStale.bind(sources),
   );
 
@@ -272,10 +323,7 @@ Deno.test("runtime provenance adapter rejects receipts that become stale after l
     () =>
       createRuntimeAdapterAgent(
         catalog,
-        runtimeProposalResponse(
-          base.activity.activityId,
-          base.result.lineage.evidence,
-        ),
+        base.result.resultId,
         reads,
         sources,
       ).propose(agentRequest()),
@@ -290,21 +338,53 @@ Deno.test("runtime provenance adapter rejects receipts that become stale after l
   }]);
   assertEquals(reads.calls, [
     "run:run_governed",
-    "results:run_governed",
+    "result:result_receipt",
     "activity:activity_exact_evidence",
+  ]);
+});
+
+Deno.test("runtime provenance rejects concurrent run invalidation after freshness awaits", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const definition = catalog.current("broker-orchestrator-agent");
+  const execution = executionContext();
+  const base = runtimeReceiptFixture(definition, execution);
+  const invalidated = {
+    ...base.run,
+    aggregateVersion: 4 as never,
+    state: "invalidated" as const,
+  };
+  const reads = new NamedFakeAgentRuntimeReadService(
+    [base.run, invalidated],
+    [base.activity],
+    base.result,
+  );
+
+  await assertRejects(
+    () =>
+      createRuntimeAdapterAgent(catalog, base.result.resultId, reads).propose(
+        agentRequest(),
+      ),
+    GovernedProvenanceError,
+    "not succeeded",
+  );
+  assertEquals(reads.calls, [
+    "run:run_governed",
+    "result:result_receipt",
+    "activity:activity_exact_evidence",
+    "run:run_governed",
   ]);
 });
 
 function createRuntimeAdapterAgent(
   catalog: ReturnType<typeof createSpecialistDefinitionCatalog>,
-  response: GovernedProposalResponse,
+  resultId: string,
   reads: GovernedRuntimeReceiptReader,
   sources = new NamedFlippingSourceVersionChecker(),
 ) {
   return createGovernedSpecialist(
     catalog,
     "broker-orchestrator-agent",
-    new NamedRecordingProposalPort(response),
+    new NamedRecordingProposalPort(runtimeProposalResponse(resultId)),
     new AgentRuntimeProvenanceVerifier(reads, sources),
     executionContext(),
   );
@@ -317,18 +397,8 @@ function agentRequest(): { input: Record<string, string>; capability: string } {
   };
 }
 
-function runtimeProposalResponse(
-  activityId: string,
-  evidence: readonly AgentSourceVersionReference[],
-): GovernedProposalResponse {
-  return {
-    status: "proposed",
-    value: proposedOutput,
-    provenanceClaims: {
-      tools: [{ activityId }],
-      evidence,
-    },
-  };
+function runtimeProposalResponse(resultId: string): GovernedProposalResponse {
+  return { status: "proposed", resultId };
 }
 
 function runtimeReceiptFixture(
@@ -382,12 +452,13 @@ function runtimeReceiptFixture(
     scope: execution.scope,
     actor: execution.actor,
     state: "succeeded" as const,
+    aggregateVersion: 3 as never,
     model: {
       provider: definition.modelPolicy.provider,
       model: definition.modelPolicy.model,
       modelVersion: definition.modelPolicy.modelVersion,
     },
-  } as RunRecord;
+  } as unknown as RunRecord;
   return { run, activity, result };
 }
 

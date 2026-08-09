@@ -76,6 +76,7 @@ Deno.test("governed listing is authorized before protected loading", async () =>
       name: "Contract.pdf",
       mimeType: "application/pdf",
       classification: "legal",
+      currentVersion: exactReference,
     },
   ]);
   const tool = createGovernedDocumentListingTool(listing, versions);
@@ -92,6 +93,40 @@ Deno.test("governed listing is authorized before protected loading", async () =>
   assertEquals(events, ["authorize"]);
   assertEquals(listing.requests.length, 1);
   assertEquals(listing.requests[0].scope, scope);
+});
+
+Deno.test("governed listing rejects missing or malformed current versions", async () => {
+  const invalidSummaries = [
+    {
+      documentId: "doc_missing_version",
+      name: "Missing.pdf",
+      mimeType: "application/pdf",
+      classification: "legal",
+    },
+    {
+      documentId: "doc_malformed_version",
+      name: "Malformed.pdf",
+      mimeType: "application/pdf",
+      classification: "legal",
+      currentVersion: { ...exactReference, version: 0 },
+    },
+  ] as const;
+
+  for (const summary of invalidSummaries) {
+    const versions = new ToggleSourceVersionPort();
+    const listing = new RecordingDocumentListingPort([
+      summary as unknown as DocumentSummary,
+    ]);
+    const tool = createGovernedDocumentListingTool(listing, versions);
+    const result = await tool.execute(
+      authorizedInvocation(tool.name, "list_documents"),
+    );
+
+    assertEquals(result.value.status, "unavailable");
+    assertEquals(result.value.reasonCode, "INVALID_PROVIDER_RESPONSE");
+    assertEquals(result.value.documents, []);
+    assertEquals(versions.checks, 0);
+  }
 });
 
 Deno.test("gateway denial prevents every governed port from loading", async () => {

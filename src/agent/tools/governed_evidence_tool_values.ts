@@ -135,23 +135,17 @@ export function sanitizeDocumentSummary(
   const documentId = safeText(value.documentId, 96);
   const name = safeText(value.name, 512);
   const mimeType = safeText(value.mimeType, 256);
-  const classification = isClassification(value.classification)
-    ? value.classification
-    : undefined;
-  const currentVersion = value.currentVersion === undefined
-    ? undefined
-    : parseExactDocumentReference(value.currentVersion);
+  const currentVersion = parseExactDocumentReference(value.currentVersion);
   if (
     documentId === undefined || name === undefined || mimeType === undefined ||
-    classification === undefined ||
-    (value.currentVersion !== undefined && currentVersion === undefined)
+    !isClassification(value.classification) || currentVersion === undefined
   ) return undefined;
   return {
     documentId,
     name,
     mimeType,
-    classification,
-    ...(currentVersion === undefined ? {} : { currentVersion }),
+    classification: value.classification,
+    currentVersion,
   };
 }
 

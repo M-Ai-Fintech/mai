@@ -2,18 +2,21 @@
 // Legacy execution remains a fail-closed compatibility surface only.
 
 export * from "./governed.ts";
+export {
+  createLegacyAgentAdapter,
+  LEGACY_RAW_AGENT_EXECUTION_DISABLED,
+} from "./legacy_agent_adapter.ts";
+export type { LegacyAgentAdapter } from "./legacy_agent_adapter.ts";
 
 import type { JsonObject } from "../shared/json.ts";
+import {
+  createLegacyAgentAdapter,
+  LEGACY_RAW_AGENT_EXECUTION_DISABLED,
+} from "./legacy_agent_adapter.ts";
 
-const LEGACY_AGENT_EXECUTION_REASON = "LEGACY_RAW_AGENT_EXECUTION_DISABLED";
+const LEGACY_AGENT_EXECUTION_REASON = LEGACY_RAW_AGENT_EXECUTION_DISABLED;
 const LEGACY_CORRECTION_REASON = "LEGACY_CONTINUOUS_LEARNING_DISABLED";
 const MEMORY_UNAVAILABLE_REASON = "MEMORY_UNAVAILABLE";
-
-export interface LegacyAgentAdapter {
-  readonly id: string;
-  readonly name: string;
-  generate(prompt: string): Promise<never>;
-}
 
 export class ComplianceConflictError extends Error {
   constructor(message: string, public preferenceData: JsonObject) {
@@ -96,29 +99,24 @@ export class AgentOrchestrator {
   }
 }
 
-function legacyAgentAdapter(name: string): LegacyAgentAdapter {
-  return Object.freeze({
-    id: name,
-    name,
-    generate: (_prompt: string) =>
-      Promise.reject(new Error(LEGACY_AGENT_EXECUTION_REASON)),
-  });
-}
-
-export const brokerOrchestratorAgent = legacyAgentAdapter(
+export const brokerOrchestratorAgent = createLegacyAgentAdapter(
   "BrokerOrchestratorAgent",
 );
-export const sourcingAndKYBAgent = legacyAgentAdapter("SourcingAndKYBAgent");
-export const generalDueDiligenceAgent = legacyAgentAdapter(
+export const sourcingAndKYBAgent = createLegacyAgentAdapter(
+  "SourcingAndKYBAgent",
+);
+export const generalDueDiligenceAgent = createLegacyAgentAdapter(
   "GeneralDueDiligenceAgent",
 );
-export const financialRiskAgent = legacyAgentAdapter("FinancialRiskAgent");
-export const legalDueDiligenceAgent = legacyAgentAdapter(
+export const financialRiskAgent = createLegacyAgentAdapter(
+  "FinancialRiskAgent",
+);
+export const legalDueDiligenceAgent = createLegacyAgentAdapter(
   "LegalDueDiligenceAgent",
 );
-export const dealMatchingAgent = legacyAgentAdapter("DealMatchingAgent");
-export const negotiationAgent = legacyAgentAdapter("NegotiationAgent");
-export const legalClosingAgent = legacyAgentAdapter("LegalClosingAgent");
+export const dealMatchingAgent = createLegacyAgentAdapter("DealMatchingAgent");
+export const negotiationAgent = createLegacyAgentAdapter("NegotiationAgent");
+export const legalClosingAgent = createLegacyAgentAdapter("LegalClosingAgent");
 
 /**
  * Retains prompt construction for clients migrating to governed proposals;

@@ -43,7 +43,7 @@ export interface DocumentSummary {
   readonly name: string;
   readonly mimeType: string;
   readonly classification: DocumentClassification;
-  readonly currentVersion?: ExactDocumentVersionReference;
+  readonly currentVersion: ExactDocumentVersionReference;
 }
 export interface GovernedDocumentMetadata {
   readonly reference: ExactDocumentVersionReference;

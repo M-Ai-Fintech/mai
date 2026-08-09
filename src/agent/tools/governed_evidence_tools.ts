@@ -451,9 +451,7 @@ function sanitizeListingDocuments(
 function documentVersions(
   documents: readonly DocumentSummary[],
 ): readonly ExactDocumentVersionReference[] {
-  return documents.flatMap((document) =>
-    document.currentVersion === undefined ? [] : [document.currentVersion]
-  );
+  return documents.map((document) => document.currentVersion);
 }
 
 function isDocumentSummary(

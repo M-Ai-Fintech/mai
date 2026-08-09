@@ -1,10 +1,19 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
+import { BrokerOrchestratorAgent } from "../../src/agent/agents/broker-orchestrator/index.ts";
+import { DealMatchingAgent } from "../../src/agent/agents/deal-matching/index.ts";
+import { FinancialRiskAgent } from "../../src/agent/agents/financial-risk/index.ts";
+import { GeneralDueDiligenceAgent } from "../../src/agent/agents/general-dd/index.ts";
+import { LegalClosingAgent } from "../../src/agent/agents/legal-closing/index.ts";
+import { LegalDueDiligenceAgent } from "../../src/agent/agents/legal-dd/index.ts";
+import { NegotiationAgent } from "../../src/agent/agents/negotiation/index.ts";
+import { SourcingAndKYBAgent } from "../../src/agent/agents/sourcing-kyb/index.ts";
 import * as financialRiskTools from "../../src/agent/agents/financial-risk/tools/index.ts";
 import * as generalDueDiligenceTools from "../../src/agent/agents/general-dd/tools/index.ts";
 import * as legalDueDiligenceTools from "../../src/agent/agents/legal-dd/tools/index.ts";
 import {
   AgentOrchestrator,
   BrokerOrchestratorService,
+  type LegacyAgentAdapter,
 } from "../../src/agent/index.ts";
 import {
   geminiGoogleSearchTool,
@@ -14,6 +23,17 @@ import { testToolContext } from "../support/tool_context.ts";
 import { requireRecord } from "../support/value_guards.ts";
 
 const ADAPTATION_MODEL = "meta-llama/Llama-3-8B-Instruct";
+
+const directLegacyAdapters: readonly LegacyAgentAdapter[] = [
+  BrokerOrchestratorAgent,
+  SourcingAndKYBAgent,
+  GeneralDueDiligenceAgent,
+  FinancialRiskAgent,
+  LegalDueDiligenceAgent,
+  DealMatchingAgent,
+  NegotiationAgent,
+  LegalClosingAgent,
+];
 
 class UnavailableMemoryStore {
   public searchSimilarPreferences(
@@ -54,6 +74,17 @@ class UnavailableMemoryStore {
 function exportedNames(module: object): string[] {
   return Object.keys(module);
 }
+
+Deno.test("direct specialist imports are provider-free and fail closed", async () => {
+  for (const adapter of directLegacyAdapters) {
+    assertEquals(adapter.name, adapter.id);
+    await assertRejects(
+      () => adapter.generate("the direct raw agent path must stay disabled"),
+      Error,
+      "LEGACY_RAW_AGENT_EXECUTION_DISABLED",
+    );
+  }
+});
 
 async function runAdaptationTask(
   task: "load_lora_adapter" | "fine_tuned_inference",

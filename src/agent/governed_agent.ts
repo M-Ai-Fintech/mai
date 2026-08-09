@@ -2,7 +2,6 @@ import type {
   AgentDefinition,
   AgentDefinitionId,
   AgentProposalResult,
-  AgentSourceVersionReference,
   DefinitionCatalog,
   HumanOnlyEffect,
   VerifiedAgentLineage,
@@ -13,8 +12,12 @@ import {
   createUnavailableAgentResult,
 } from "./definitions/index.ts";
 import { GovernedProvenanceError } from "./governed_provenance.ts";
+import type {
+  ResultRecord,
+  RuntimeActor,
+  RuntimeScope,
+} from "../agent_runtime/model.ts";
 import type { RunId } from "../agent_runtime/ids.ts";
-import type { RuntimeActor, RuntimeScope } from "../agent_runtime/model.ts";
 import type { RequestContext } from "../shared/contracts/request_context.ts";
 
 export {
@@ -44,18 +47,14 @@ export interface GovernedProposalRequest {
   readonly capability: string;
 }
 
-export interface GovernedProposalClaims {
-  /** Only opaque receipt IDs cross from untrusted output to the verifier. */
-  readonly tools?: readonly { readonly activityId: string }[];
-  readonly evidence?: readonly AgentSourceVersionReference[];
-}
-
+/**
+ * The proposal adapter may return only an opaque durable result binding.
+ * Values and lineage are read from AgentRuntime after authorization.
+ */
 export type GovernedProposalResponse =
   | {
     readonly status: "proposed";
-    readonly value: Readonly<Record<string, unknown>>;
-    readonly kind?: "proposal" | "reversible_draft";
-    readonly provenanceClaims?: GovernedProposalClaims;
+    readonly resultId: string;
   }
   | {
     readonly status: "unavailable" | "denied";
@@ -75,16 +74,17 @@ export interface GovernedProvenanceVerificationRequest {
     AgentDefinition,
     "id" | "version" | "prompt" | "modelPolicy" | "toolReferences"
   >;
-  readonly claims: GovernedProposalClaims;
+  readonly resultId: string;
 }
 
 export interface GovernedVerifiedProvenance {
   readonly execution: GovernedExecutionBinding;
+  readonly result: ResultRecord;
   readonly lineage: VerifiedAgentLineage;
 }
 
 export interface GovernedProvenanceVerifier {
-  /** Reads and verifies durable receipts for the bound execution. */
+  /** Reads and verifies the exact durable result for the bound execution. */
   verify(
     request: GovernedProvenanceVerificationRequest,
   ): Promise<GovernedVerifiedProvenance>;
@@ -214,7 +214,7 @@ async function resultFromResponse(
       response.status,
     );
   }
-  const value = definition.outputValidator.parse(response.value);
+  const resultId = exactResultId(response.resultId);
   const verified = await provenance.verify({
     execution,
     definition: {
@@ -224,53 +224,80 @@ async function resultFromResponse(
       modelPolicy: definition.modelPolicy,
       toolReferences: definition.toolReferences,
     },
-    claims: proposalClaims(response),
+    resultId,
   });
-  assertVerifiedProvenance(definition, execution, verified);
+  assertVerifiedProvenance(definition, execution, resultId, verified);
+  const value = definition.outputValidator.parse(verified.result.value);
   return createAgentProposalResult(
     definition,
-    { value, ...(response.kind === undefined ? {} : { kind: response.kind }) },
+    {
+      value,
+      kind: verified.result.kind === "proposal"
+        ? "proposal"
+        : "reversible_draft",
+    },
     verified.lineage,
   );
 }
 
-function proposalClaims(
-  response: Extract<GovernedProposalResponse, { status: "proposed" }>,
-): GovernedProposalClaims {
-  const claims = response.provenanceClaims;
-  if (claims === undefined) return {};
-  if (!isRecord(claims)) {
+function exactResultId(resultId: unknown): string {
+  if (
+    typeof resultId !== "string" || resultId.length === 0 ||
+    resultId.trim() !== resultId
+  ) {
     throw new GovernedProvenanceError(
-      "proposal claims are not an object; expected receipt claim lists",
+      "proposal result binding is malformed; expected one exact durable result ID",
     );
   }
-  if (claims.tools !== undefined && !Array.isArray(claims.tools)) {
-    throw new GovernedProvenanceError(
-      "tool claims are not a list; expected durable tool activity IDs",
-    );
-  }
-  if (claims.evidence !== undefined && !Array.isArray(claims.evidence)) {
-    throw new GovernedProvenanceError(
-      "evidence claims are not a list; expected exact source versions",
-    );
-  }
-  return {
-    ...(claims.tools === undefined ? {} : { tools: claims.tools }),
-    ...(claims.evidence === undefined ? {} : { evidence: claims.evidence }),
-  };
+  return resultId;
 }
 
 function assertVerifiedProvenance(
   definition: AgentDefinition,
   execution: GovernedExecutionBinding,
+  resultId: string,
   verified: GovernedVerifiedProvenance,
 ): void {
+  if (
+    !isRecord(verified) || !isRecord(verified.execution) ||
+    !isRecord(verified.result) || !isRecord(verified.lineage)
+  ) {
+    throw new GovernedProvenanceError(
+      "verifier returned a malformed durable result or lineage binding",
+    );
+  }
   if (!sameExecution(execution, verified.execution)) {
     throw new GovernedProvenanceError(
       "verifier returned a cross-scope, cross-run, actor-mismatched, or definition-mismatched binding",
     );
   }
+  const result = verified.result;
+  if (
+    !isRecord(result) || result.resultId !== resultId ||
+    result.runId !== execution.runId
+  ) {
+    throw new GovernedProvenanceError(
+      `verifier returned result "${resultId}" with a mismatched durable binding`,
+    );
+  }
+  if (result.kind !== "proposal" && result.kind !== "reversible_draft") {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has unsupported kind "${
+        String(result.kind)
+      }"`,
+    );
+  }
+  if (!isRecord(result.value)) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has a malformed value; expected a record`,
+    );
+  }
   const model = verified.lineage.model;
+  if (!isRecord(model)) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has malformed model lineage`,
+    );
+  }
   const expected = definition.modelPolicy;
   if (
     model.policyReference !== expected.policyReference ||
