@@ -21,6 +21,7 @@ export interface FixtureConformancePage {
 
 export interface FixtureConformancePlan {
   readonly scope: IntegrationScope;
+  readonly connectorAccountId: string;
   readonly providerWorkspaceId: string;
   readonly pages: readonly FixtureConformancePage[];
   readonly downloadDocumentId: string;
@@ -158,7 +159,9 @@ function assertFixtureIdentity(
 ): void {
   if (
     adapter.provider !== "fixture" || adapter.environment !== "fixture" ||
-    adapter.lifecycle !== "enabled" || !sameScope(adapter.scope, plan.scope)
+    adapter.lifecycle !== "enabled" || !sameScope(adapter.scope, plan.scope) ||
+    adapter.connectorAccountId !== plan.connectorAccountId ||
+    adapter.providerWorkspaceId !== plan.providerWorkspaceId
   ) throw new Error("fixture identity mismatch");
 }
 

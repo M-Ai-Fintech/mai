@@ -100,7 +100,8 @@ Deno.test("sandbox evidence is required before sandbox certification", () => {
   );
 
   assertEquals(localAttempt.state, "gated");
-  assertEquals(sandboxResult.state, "sandbox-certification");
+  assertEquals(sandboxResult.state, "gated");
+  assert(sandboxResult.missingGates.includes("coordinator-authorization"));
 });
 
 Deno.test("lifecycle and implementation states fail closed before evidence evaluation", () => {
@@ -142,8 +143,55 @@ Deno.test("production candidate and verified claims require exact environment ev
     request("production-verified", "commit-prod-002", "papermark-production"),
   );
 
-  assertEquals(candidate.state, "production-candidate");
-  assertEquals(verified.state, "production-verified");
+  assertEquals(candidate.state, "gated");
+  assertEquals(verified.state, "gated");
+  assert(candidate.missingGates.includes("coordinator-authorization"));
+  assert(verified.missingGates.includes("coordinator-authorization"));
+});
+
+Deno.test("forged coordinator authorization fails closed without a runtime symbol error", () => {
+  assertThrows(
+    () =>
+      evaluateReadiness({
+        ...request(
+          "sandbox-certification",
+          "commit-sandbox-001",
+          "papermark-sandbox",
+        ),
+        coordinatorAuthorization: {
+          authorizationReference: "forged",
+        } as never,
+      }),
+    Error,
+    "coordinator authorization",
+  );
+});
+
+Deno.test("fixture evidence cannot be evaluated for a non-fixture target", () => {
+  assertThrows(
+    () =>
+      evaluateReadiness({
+        ...request("local-development", "fixture-v1", "local-development"),
+        provider: "fixture",
+      }),
+    Error,
+    "fixture target",
+  );
+});
+
+Deno.test("deferred iDeals and Intralinks cannot claim readiness", () => {
+  for (const provider of ["ideals", "intralinks"] as const) {
+    assertThrows(
+      () =>
+        evaluateReadiness({
+          ...request("local-development", "provider-v1", "provider-local"),
+          provider,
+          lifecycle: "enabled",
+        }),
+      Error,
+      "Deferred provider",
+    );
+  }
 });
 
 Deno.test("readiness register append is immutable and rejects duplicate evidence IDs", () => {
@@ -172,7 +220,7 @@ function request(
   environmentId: string,
 ) {
   return {
-    provider: "papermark" as const,
+    provider: target === "fixture" ? "fixture" as const : "papermark" as const,
     target,
     providerVersion,
     environmentId,
@@ -196,7 +244,7 @@ function evidenceFor(
   return requiredReadinessGates(environment).map((gate, index) =>
     createReadinessEvidence({
       evidenceId: `evidence_${environment}_${index}`,
-      provider: "papermark",
+      provider: environment === "fixture" ? "fixture" : "papermark",
       environment,
       providerVersion,
       environmentId,

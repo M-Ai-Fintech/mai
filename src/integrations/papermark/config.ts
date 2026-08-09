@@ -1,12 +1,11 @@
 import { type IntegrationScope, parseIntegrationScope } from "../contracts.ts";
-import type { ProviderConfiguration } from "../configuration.ts";
+import {
+  assertPapermarkEndpointForEnvironment,
+  parseOwnerApprovedActivation,
+  type ProviderConfiguration,
+} from "../configuration.ts";
 
 const PAPERMARK_PROVIDER = "papermark" as const;
-const LEGACY_PAPERMARK_HOST = "api.papermark.io";
-const OFFICIAL_PAPERMARK_HOST = "api.papermark.com";
-const LOCAL_PAPERMARK_HOST = "localhost";
-const LOCAL_PAPERMARK_PORT = "3000";
-const LOCAL_PAPERMARK_PATH = "/api";
 const INLINE_CREDENTIAL_KEY =
   /(api[-_]?key|authorization|credential|password|private[-_]?key|token|value)/i;
 
@@ -76,12 +75,15 @@ export function parsePapermarkAdapterConfig(
     ...(input.configuration.secretRef === undefined
       ? {}
       : { secretRef: Object.freeze({ ...input.configuration.secretRef }) }),
+    ...(input.configuration.activation === undefined
+      ? {}
+      : { activation: Object.freeze({ ...input.configuration.activation }) }),
   });
   return Object.freeze({
     provider: PAPERMARK_PROVIDER,
     configuration,
     binding,
-    pageSize: parseBoundedInteger(input.pageSize ?? 50, "page size", 1, 1_000),
+    pageSize: parseBoundedInteger(input.pageSize ?? 50, "page size", 1, 100),
     timeoutMs: parseBoundedInteger(
       input.timeoutMs ?? 10_000,
       "timeout",
@@ -134,12 +136,21 @@ function assertEnabledConfiguration(
       "Papermark endpoint is missing; expected an explicit official or approved local URL.",
     );
   }
-  assertPapermarkEndpoint(configuration.endpoint);
   if (configuration.secretRef === undefined) {
     throw new Error(
       "Papermark secret reference is missing; expected a resolver locator and never an inline credential.",
     );
   }
+  if (configuration.activation === undefined) {
+    throw new Error(
+      "Papermark activation is missing; expected owner-approved credential-free metadata.",
+    );
+  }
+  parseOwnerApprovedActivation(configuration.activation);
+  assertPapermarkEndpointForEnvironment(
+    configuration.endpoint,
+    configuration.environment,
+  );
 }
 
 function assertNoInlineCredentialKeys(
@@ -157,44 +168,6 @@ function assertNoInlineCredentialKeys(
       );
     }
   }
-}
-
-function assertPapermarkEndpoint(endpoint: string): void {
-  let parsed: URL;
-  try {
-    parsed = new URL(endpoint);
-  } catch {
-    throw new Error(
-      "Papermark endpoint is invalid; expected an approved absolute HTTP(S) URL.",
-    );
-  }
-  if (parsed.username || parsed.password || parsed.search || parsed.hash) {
-    throw new Error(
-      "Papermark endpoint is invalid; expected an approved URL without credentials, query, or fragment.",
-    );
-  }
-  if (parsed.hostname === LEGACY_PAPERMARK_HOST) {
-    throw new Error(
-      `Papermark endpoint "${endpoint}" is legacy; expected ${OFFICIAL_PAPERMARK_HOST} or the approved local development endpoint.`,
-    );
-  }
-  if (parsed.hostname === OFFICIAL_PAPERMARK_HOST) {
-    if (parsed.protocol !== "https:" || parsed.pathname !== "/") {
-      throw new Error(
-        `Papermark endpoint "${endpoint}" is invalid; expected https://${OFFICIAL_PAPERMARK_HOST}.`,
-      );
-    }
-    return;
-  }
-  if (
-    parsed.hostname === LOCAL_PAPERMARK_HOST &&
-    parsed.protocol === "http:" &&
-    parsed.port === LOCAL_PAPERMARK_PORT &&
-    parsed.pathname.replace(/\/$/, "") === LOCAL_PAPERMARK_PATH
-  ) return;
-  throw new Error(
-    `Papermark endpoint "${endpoint}" is not approved; expected https://${OFFICIAL_PAPERMARK_HOST} or http://${LOCAL_PAPERMARK_HOST}:${LOCAL_PAPERMARK_PORT}${LOCAL_PAPERMARK_PATH}.`,
-  );
 }
 
 function assertScope(scope: IntegrationScope): void {

@@ -9,24 +9,26 @@ Deno.test("Papermark local configuration retains only a secret reference", () =>
     provider: "papermark",
     lifecycle: "enabled",
     environment: "local-development",
-    endpoint: "http://localhost:3000",
+    endpoint: "http://localhost:3000/api",
     secretRef: {
       manager: "environment",
       name: "PAPER_MARK_SECRET",
       version: "current",
     },
+    activation: activation(),
   });
 
   assertEquals(configuration, {
     provider: "papermark",
     lifecycle: "enabled",
     environment: "local-development",
-    endpoint: "http://localhost:3000",
+    endpoint: "http://localhost:3000/api",
     secretRef: {
       manager: "environment",
       name: "PAPER_MARK_SECRET",
       version: "current",
     },
+    activation: activation(),
   });
   assertEquals(JSON.stringify(configuration).includes("secret-value"), false);
   assertEquals(Object.isFrozen(configuration), true);
@@ -78,6 +80,7 @@ Deno.test("deferred iDeals and Intralinks cannot be configured as real adapters"
           environment: "local-development",
           endpoint: "https://provider.example",
           secretRef: { manager: "vault", name: "provider/token" },
+          activation: activation(),
         }),
       Error,
       "deferred",
@@ -97,6 +100,31 @@ Deno.test("disabled Papermark configuration has no endpoint or credential materi
   assertEquals("secretRef" in configuration, false);
 });
 
+Deno.test("disabled and deferred configurations reject activation metadata", () => {
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "disabled",
+        environment: "interface-only",
+        activation: activation(),
+      }),
+    Error,
+    "endpoint or credential metadata",
+  );
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "ideals",
+        lifecycle: "deferred",
+        environment: "interface-only",
+        activation: activation(),
+      }),
+    Error,
+    "endpoint or credential metadata",
+  );
+});
+
 Deno.test("configuration rejects inline credential keys without echoing their values", () => {
   const secret = "do-not-echo-this-secret";
   assertThrows(
@@ -105,9 +133,10 @@ Deno.test("configuration rejects inline credential keys without echoing their va
         provider: "papermark",
         lifecycle: "enabled",
         environment: "local-development",
-        endpoint: "http://localhost:3000",
+        endpoint: "http://localhost:3000/api",
         apiKey: secret,
         secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: activation(),
       }),
     Error,
     "secret reference",
@@ -117,9 +146,10 @@ Deno.test("configuration rejects inline credential keys without echoing their va
       provider: "papermark",
       lifecycle: "enabled",
       environment: "local-development",
-      endpoint: "http://localhost:3000",
+      endpoint: "http://localhost:3000/api",
       token: secret,
       secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+      activation: activation(),
     });
   } catch (error) {
     assertEquals(String(error).includes(secret), false);
@@ -142,6 +172,7 @@ Deno.test("credential-bearing endpoint URL forms are rejected", () => {
           environment: "sandbox-certification",
           endpoint,
           secretRef: { manager: "vault", name: "papermark/token" },
+          activation: activation(),
         }),
       Error,
       "endpoint",
@@ -170,3 +201,121 @@ Deno.test("secret references reject values and preserve locator metadata only", 
     "secret reference",
   );
 });
+
+Deno.test("enabled Papermark requires every owner-approved activation field", () => {
+  for (const field of Object.keys(activation())) {
+    const incomplete = { ...activation() } as Record<string, string>;
+    delete incomplete[field];
+    assertThrows(
+      () =>
+        parseProviderConfiguration({
+          provider: "papermark",
+          lifecycle: "enabled",
+          environment: "local-development",
+          endpoint: "http://localhost:3000/api",
+          secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+          activation: incomplete,
+        }),
+      Error,
+      "activation",
+    );
+  }
+});
+
+Deno.test("activation metadata rejects credentials and project issue IDs", () => {
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "http://localhost:3000/api",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: { ...activation(), token: "credential" },
+      }),
+    Error,
+    "inline credential",
+  );
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "http://localhost:3000/api",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: { ...activation(), approvalReference: "MAI-61" },
+      }),
+    Error,
+    "activation",
+  );
+});
+
+Deno.test("Papermark endpoint environment mismatches are rejected without echoing URLs", () => {
+  const credentialEndpoint =
+    "https://user:raw-endpoint-secret@api.papermark.com";
+  try {
+    parseProviderConfiguration({
+      provider: "papermark",
+      lifecycle: "enabled",
+      environment: "local-development",
+      endpoint: credentialEndpoint,
+      secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+      activation: activation(),
+    });
+  } catch (error) {
+    assertEquals(String(error).includes(credentialEndpoint), false);
+    assertEquals(String(error).includes("raw-endpoint-secret"), false);
+  }
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "https://api.papermark.com",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: activation(),
+      }),
+    Error,
+    "localhost",
+  );
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "sandbox-certification",
+        endpoint: "http://localhost:3000/api",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: activation(),
+      }),
+    Error,
+    "official hosted",
+  );
+  assertThrows(
+    () =>
+      parseProviderConfiguration({
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "http://localhost:3000",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: activation(),
+      }),
+    Error,
+    "localhost",
+  );
+});
+
+function activation() {
+  return {
+    approvalReference: "approval_papermark_local",
+    providerVersion: "papermark-1.0.0",
+    license: "AGPLv3",
+    deploymentModel: "self-hosted",
+    region: "local",
+    storageTopology: "postgres-object-store",
+    rollbackOperator: "platform-on-call",
+  } as const;
+}

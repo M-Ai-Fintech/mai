@@ -6,7 +6,11 @@ import {
   type IntegrationScope,
   parseIntegrationScope,
 } from "./contracts.ts";
-import type { ProviderConfiguration } from "./configuration.ts";
+import {
+  assertPapermarkEndpointForEnvironment,
+  parseOwnerApprovedActivation,
+  type ProviderConfiguration,
+} from "./configuration.ts";
 import {
   createNormalizedIntegrationFailure,
   normalizeIntegrationFailure,
@@ -129,16 +133,13 @@ export async function selectIntegrationProvider(
 export async function executeSelectedOperation<TResult>(
   selection: ProviderSelectionResult,
   operation: string,
-  request: (
-    adapter: IntegrationAdapter,
-  ) => Promise<TResult | IntegrationResult<TResult>>,
+  request: (adapter: IntegrationAdapter) => Promise<IntegrationResult<TResult>>,
 ): Promise<IntegrationResult<TResult>> {
   if (selection.kind === "blocked") {
     return { ok: false, failure: selection.failure };
   }
   try {
-    const value = await request(selection.adapter);
-    return isIntegrationResult(value) ? value : { ok: true, value };
+    return await request(selection.adapter);
   } catch (error: unknown) {
     return {
       ok: false,
@@ -295,7 +296,9 @@ function validateAdapter(
       adapter.provider !== expectedProvider ||
       adapter.environment !== expectedEnvironment ||
       adapter.lifecycle !== "enabled" ||
-      !sameScope(adapter.scope, input.scope)
+      !sameScope(adapter.scope, input.scope) ||
+      adapter.connectorAccountId !== input.connectorAccountId ||
+      adapter.providerWorkspaceId !== input.providerWorkspaceId
     ) return failure(input, "INVALID_REQUEST");
   } catch {
     return failure(input, "INVALID_REQUEST");
@@ -347,17 +350,26 @@ function validPapermarkEnvironment(
   return (configuration.environment === "local-development" ||
     configuration.environment === "sandbox-certification") &&
     configuration.endpoint !== undefined &&
-    configuration.secretRef !== undefined;
+    configuration.secretRef !== undefined &&
+    configuration.activation !== undefined &&
+    hasApprovedPapermarkMetadata(configuration);
+}
+
+function hasApprovedPapermarkMetadata(
+  configuration: ProviderConfiguration,
+): boolean {
+  try {
+    parseOwnerApprovedActivation(configuration.activation);
+    assertPapermarkEndpointForEnvironment(
+      configuration.endpoint!,
+      configuration.environment,
+    );
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-function isIntegrationResult<TResult>(
-  value: TResult | IntegrationResult<TResult>,
-): value is IntegrationResult<TResult> {
-  if (typeof value !== "object" || value === null) return false;
-  const candidate = value as { readonly ok?: unknown };
-  return typeof candidate.ok === "boolean";
 }

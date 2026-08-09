@@ -60,11 +60,12 @@ function config() {
       provider: "papermark",
       lifecycle: "enabled",
       environment: "local-development",
-      endpoint: "https://api.papermark.com",
+      endpoint: "http://localhost:3000/api",
       secretRef: parseSecretReference({
         manager: "environment",
         name: "PAPERMARK_BEARER_TOKEN",
       }),
+      activation: activation(),
     }),
     scope,
     connectorAccount: {
@@ -129,6 +130,7 @@ Deno.test("Papermark adapter advertises list-only capability and gates binary do
     capability === "download_document"
   );
   assertEquals(list?.status, "supported");
+  assertEquals(capabilities.source, "implementation");
   assertEquals(download?.status, "unavailable");
 
   const result = await adapter.documents.downloadDocument({
@@ -205,4 +207,16 @@ async function captureError(operation: () => Promise<unknown>): Promise<Error> {
     return error as Error;
   }
   throw new Error("Expected the operation to fail.");
+}
+
+function activation() {
+  return {
+    approvalReference: "approval_papermark_local",
+    providerVersion: "papermark-1.0.0",
+    license: "AGPLv3",
+    deploymentModel: "self-hosted",
+    region: "local",
+    storageTopology: "postgres-object-store",
+    rollbackOperator: "platform-on-call",
+  } as const;
 }

@@ -56,12 +56,16 @@ export interface PapermarkAdapterDependencies {
 export class PapermarkAdapter implements DocumentSourceProvider {
   readonly provider = sourceProviderMarker();
   readonly neutralAdapter: PapermarkIntegrationAdapter;
+  readonly connectorAccountId: string;
+  readonly providerWorkspaceId: string;
 
   constructor(
     config: PapermarkAdapterConfig,
     dependencies: PapermarkAdapterDependencies,
   ) {
     this.neutralAdapter = new PapermarkIntegrationAdapter(config, dependencies);
+    this.connectorAccountId = this.neutralAdapter.connectorAccountId;
+    this.providerWorkspaceId = this.neutralAdapter.providerWorkspaceId;
   }
 
   /**
@@ -122,6 +126,8 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   readonly environment: PapermarkAdapterConfig["configuration"]["environment"];
   readonly lifecycle: PapermarkAdapterConfig["configuration"]["lifecycle"];
   readonly scope: PapermarkAdapterConfig["binding"]["scope"];
+  readonly connectorAccountId: string;
+  readonly providerWorkspaceId: string;
   readonly documents: ScopedDocumentPort;
   readonly now: () => Date;
   private readonly config: PapermarkAdapterConfig;
@@ -135,6 +141,8 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     this.environment = config.configuration.environment;
     this.lifecycle = config.configuration.lifecycle;
     this.scope = config.binding.scope;
+    this.connectorAccountId = config.binding.connectorAccount.id;
+    this.providerWorkspaceId = config.binding.providerWorkspaceId;
     this.now = dependencies.now ?? (() => new Date());
     this.transport = new PapermarkTransport(
       config,
@@ -172,7 +180,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
       environment: this.environment,
       lifecycle: this.lifecycle,
       configured: true,
-      source: "provider",
+      source: "implementation",
       scope: this.scope,
       requested: [...INTEGRATION_CAPABILITIES],
       observations,

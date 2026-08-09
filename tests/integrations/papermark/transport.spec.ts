@@ -54,15 +54,22 @@ class FetchFake {
 class TimerFake implements PapermarkTimer {
   readonly delays: number[] = [];
   private nextHandle = 1;
+  private readonly callbacks = new Map<number, () => void>();
 
   setTimeout(callback: () => void, delayMs: number): number {
     this.delays.push(delayMs);
-    callback();
-    return this.nextHandle++;
+    const handle = this.nextHandle++;
+    this.callbacks.set(handle, callback);
+    return handle;
   }
 
-  clearTimeout(): void {
-    return;
+  clearTimeout(handle: unknown): void {
+    this.callbacks.delete(handle as number);
+  }
+
+  fire(): void {
+    const next = this.callbacks.values().next();
+    if (!next.done) next.value();
   }
 }
 
@@ -72,11 +79,12 @@ function configuration(overrides: Partial<PapermarkAdapterConfig> = {}) {
       provider: "papermark",
       lifecycle: "enabled",
       environment: "local-development",
-      endpoint: "https://api.papermark.com",
+      endpoint: "http://localhost:3000/api",
       secretRef: parseSecretReference({
         manager: "environment",
         name: "PAPERMARK_BEARER_TOKEN",
       }),
+      activation: activation(),
     }),
     scope,
     connectorAccount: {
@@ -133,7 +141,7 @@ Deno.test("Papermark transport requests the scoped official v1 list", async () =
   assertEquals(resolver.calls, 1);
   assertEquals(
     fake.calls[0].url,
-    "https://api.papermark.com/v1/documents?folderId=folder_horizon&limit=50",
+    "http://localhost:3000/api/v1/documents?folderId=folder_horizon&limit=50",
   );
   const headers = new Headers(fake.calls[0].init.headers);
   assertEquals(headers.get("authorization"), `Bearer ${secret}`);
@@ -207,10 +215,96 @@ Deno.test("Papermark transport converts timeout into a bounded failure", async (
     configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
     timer,
   );
-  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  const pending = instance.getDocumentsPage(undefined);
+  timer.fire();
+  const error = await captureError(() => pending);
   assertEquals(error.code, "TIMEOUT");
   assertEquals(timer.delays, [1_000]);
 });
+
+Deno.test("Papermark transport times out a stalled secret resolver", async () => {
+  const fake = new FetchFake();
+  const timer = new TimerFake();
+  const config = configuration({
+    retry: { maxAttempts: 1, maxDelayMs: 250 },
+  });
+  const instance = new PapermarkTransport(config, {
+    resolve: () => new Promise<RuntimeSecret>(() => undefined),
+  }, {
+    fetch: fake.fetch,
+    sleep: () => Promise.resolve(),
+    now: () => new Date("2026-08-08T12:00:00.000Z"),
+    timer,
+  });
+
+  const pending = instance.getDocumentsPage(undefined);
+  timer.fire();
+  const error = await captureError(() => pending);
+  assertEquals(error.code, "TIMEOUT");
+  assertEquals(fake.calls.length, 0);
+});
+
+Deno.test("Papermark transport aborts a stalled response body", async () => {
+  const fake = new FetchFake();
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    cancel: () => {
+      cancelled = true;
+    },
+  });
+  const response = new Response(body, {
+    headers: { "content-type": "application/json" },
+  });
+  Object.defineProperty(response, "json", {
+    value: () => new Promise<unknown>(() => undefined),
+  });
+  fake.responses.push(response);
+  const timer = new TimerFake();
+  const { instance } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } }),
+    timer,
+  );
+
+  const pending = instance.getDocumentsPage(undefined);
+  for (let index = 0; index < 5; index += 1) await Promise.resolve();
+  timer.fire();
+  const error = await captureError(() => pending);
+  await Promise.resolve();
+  assertEquals(error.code, "TIMEOUT");
+  assertEquals(cancelled, true);
+  assertEquals(fake.calls[0].init.signal instanceof AbortSignal, true);
+  assertEquals((fake.calls[0].init.signal as AbortSignal).aborted, true);
+});
+
+Deno.test("Papermark transport reports safe retry exhaustion metadata", async () => {
+  const fake = new FetchFake();
+  fake.responses.push(
+    jsonResponse({ error: "temporary" }, 503, { "x-request-id": "req_safe" }),
+    jsonResponse({ error: "temporary" }, 503, { "x-request-id": "req_safe" }),
+  );
+  const { instance } = transport(
+    fake,
+    configuration({ retry: { maxAttempts: 2, maxDelayMs: 250 } }),
+  );
+  const error = await captureError(() => instance.getDocumentsPage(undefined));
+  assertEquals(error.code, "RETRY_EXHAUSTED");
+  assertEquals(error.status, 503);
+  assertEquals(error.providerRequestId, "req_safe");
+  assertEquals(fake.calls.length, 2);
+});
+
+function activation() {
+  return {
+    approvalReference: "approval_papermark_local",
+    providerVersion: "papermark-1.0.0",
+    license: "AGPLv3",
+    deploymentModel: "self-hosted",
+    region: "local",
+    storageTopology: "postgres-object-store",
+    rollbackOperator: "platform-on-call",
+  } as const;
+}
 
 async function captureError(
   operation: () => Promise<unknown>,

@@ -6,9 +6,20 @@ import {
   type SecretManager,
   type SecretReference,
 } from "./contracts.ts";
+import {
+  type OwnerApprovedActivation,
+  parseOwnerApprovedActivation,
+} from "./configuration_activation.ts";
+import {
+  assertKnownKeys,
+  assertRecord,
+  rejectInlineCredentialKeys,
+} from "./configuration_validation.ts";
+import { assertPapermarkEndpointForEnvironment } from "./papermark_endpoint.ts";
 
-const INLINE_CREDENTIAL_KEY =
-  /(api[-_]?key|authorization|credential|password|private[-_]?key|secret|token|value)/i;
+export { parseOwnerApprovedActivation } from "./configuration_activation.ts";
+export type { OwnerApprovedActivation } from "./configuration_activation.ts";
+export { assertPapermarkEndpointForEnvironment } from "./papermark_endpoint.ts";
 
 const CONFIGURATION_KEYS = new Set([
   "provider",
@@ -16,6 +27,7 @@ const CONFIGURATION_KEYS = new Set([
   "environment",
   "endpoint",
   "secretRef",
+  "activation",
 ]);
 
 const SECRET_REFERENCE_KEYS = new Set(["manager", "name", "version"]);
@@ -26,12 +38,13 @@ export interface ProviderConfiguration {
   readonly environment: IntegrationEnvironment;
   readonly endpoint?: string;
   readonly secretRef?: SecretReference;
+  readonly activation?: OwnerApprovedActivation;
 }
 
 /**
  * Parses strict provider configuration without accepting credential values.
  *
- * @example parseProviderConfiguration({ provider: "papermark", lifecycle: "enabled", environment: "local-development", endpoint: "http://localhost:3000", secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" } })
+ * @example parseProviderConfiguration({ provider: "papermark", lifecycle: "enabled", environment: "local-development", endpoint: "http://localhost:3000/api", secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" } })
  */
 export function parseProviderConfiguration(
   value: unknown,
@@ -48,6 +61,9 @@ export function parseProviderConfiguration(
   const secretRef = value.secretRef === undefined
     ? undefined
     : parseSecretReference(value.secretRef);
+  const activation = value.activation === undefined
+    ? undefined
+    : parseOwnerApprovedActivation(value.activation);
 
   assertProviderConfiguration({
     provider,
@@ -55,6 +71,7 @@ export function parseProviderConfiguration(
     environment,
     endpoint,
     secretRef,
+    activation,
   });
   return freezeConfiguration({
     provider,
@@ -62,6 +79,7 @@ export function parseProviderConfiguration(
     environment,
     ...(endpoint === undefined ? {} : { endpoint }),
     ...(secretRef === undefined ? {} : { secretRef }),
+    ...(activation === undefined ? {} : { activation }),
   });
 }
 
@@ -107,7 +125,8 @@ function assertProviderConfiguration(
   }
   if (
     configuration.endpoint !== undefined ||
-    configuration.secretRef !== undefined
+    configuration.secretRef !== undefined ||
+    configuration.activation !== undefined
   ) {
     throw new Error(
       `Papermark lifecycle "${configuration.lifecycle}" carries endpoint or credential metadata; expected no provider credentials while disabled or deferred.`,
@@ -128,7 +147,8 @@ function assertDeferredProvider(configuration: ProviderConfiguration): void {
   }
   if (
     configuration.endpoint !== undefined ||
-    configuration.secretRef !== undefined
+    configuration.secretRef !== undefined ||
+    configuration.activation !== undefined
   ) {
     throw new Error(
       `Provider "${configuration.provider}" is deferred; expected no endpoint or credential metadata.`,
@@ -155,6 +175,16 @@ function assertEnabledPapermark(configuration: ProviderConfiguration): void {
       "Papermark enabled configuration is missing secret reference; expected locator metadata instead of a credential value.",
     );
   }
+  if (configuration.activation === undefined) {
+    throw new Error(
+      "Papermark enabled configuration is missing owner-approved activation metadata; expected a credential-free approval record.",
+    );
+  }
+  parseOwnerApprovedActivation(configuration.activation);
+  assertPapermarkEndpointForEnvironment(
+    configuration.endpoint,
+    configuration.environment,
+  );
 }
 
 function parseRealProvider(value: unknown): RealIntegrationProvider {
@@ -196,19 +226,10 @@ function parseEnvironment(value: unknown): IntegrationEnvironment {
 function parseEndpoint(value: unknown): string {
   if (typeof value !== "string" || value.trim() !== value || !value) {
     throw new Error(
-      `Provider endpoint "${
-        String(value)
-      }" is invalid; expected an absolute HTTP(S) URL without credentials.`,
+      "Provider endpoint is invalid; expected an absolute HTTP(S) URL without credentials.",
     );
   }
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new Error(
-      `Provider endpoint "${value}" is invalid; expected an absolute HTTP(S) URL without credentials.`,
-    );
-  }
+  const parsed = parseEndpointUrl(value);
   if (
     (parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
     !parsed.hostname ||
@@ -218,7 +239,7 @@ function parseEndpoint(value: unknown): string {
     parsed.hash
   ) {
     throw new Error(
-      `Provider endpoint "${value}" is invalid; expected an HTTP(S) URL without userinfo, query, or fragment credentials.`,
+      "Provider endpoint is invalid; expected an HTTP(S) URL without userinfo, query, or fragment credentials.",
     );
   }
   return value;
@@ -264,49 +285,18 @@ function freezeConfiguration(
     ...(configuration.secretRef === undefined
       ? {}
       : { secretRef: Object.freeze({ ...configuration.secretRef }) }),
+    ...(configuration.activation === undefined
+      ? {}
+      : { activation: Object.freeze({ ...configuration.activation }) }),
   });
 }
 
-function rejectInlineCredentialKeys(value: unknown): void {
-  if (Array.isArray(value)) {
-    for (const child of value) rejectInlineCredentialKeys(child);
-    return;
+function parseEndpointUrl(value: string): URL {
+  try {
+    return new URL(value);
+  } catch {
+    throw new Error(
+      "Provider endpoint is invalid; expected an absolute HTTP(S) URL without credentials.",
+    );
   }
-  if (!isRecord(value)) return;
-  for (const [key, child] of Object.entries(value)) {
-    if (INLINE_CREDENTIAL_KEY.test(key) && key !== "secretRef") {
-      throw new Error(
-        `Provider configuration key "${key}" is an inline credential; expected a secret reference locator.`,
-      );
-    }
-    rejectInlineCredentialKeys(child);
-  }
-}
-
-function assertKnownKeys(
-  value: Record<string, unknown>,
-  allowed: ReadonlySet<string>,
-  label: string,
-): void {
-  const unknown = Object.keys(value).find((key) => !allowed.has(key));
-  if (unknown === undefined) return;
-  throw new Error(
-    `${label} key "${unknown}" is not recognized; expected the strict ${label} shape.`,
-  );
-}
-
-function assertRecord(
-  value: unknown,
-  label: string,
-): asserts value is Record<string, unknown> {
-  if (isRecord(value)) return;
-  throw new Error(
-    `${label} "${
-      String(value)
-    }" is invalid; expected an object with explicit fields.`,
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

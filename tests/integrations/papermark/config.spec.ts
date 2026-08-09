@@ -15,24 +15,31 @@ const scope = parseIntegrationScope({
   dealId: "deal_horizon",
 });
 
-function providerConfiguration(endpoint = "https://api.papermark.com") {
+function providerConfiguration(
+  endpoint = "http://localhost:3000/api",
+  environment: "local-development" | "sandbox-certification" =
+    "local-development",
+) {
   return parseProviderConfiguration({
     provider: "papermark",
     lifecycle: "enabled",
-    environment: "local-development",
+    environment,
     endpoint,
     secretRef: parseSecretReference({
       manager: "environment",
       name: "PAPERMARK_BEARER_TOKEN",
     }),
+    activation: activation(),
   });
 }
 
 function validInput(
-  endpoint = "https://api.papermark.com",
+  endpoint = "http://localhost:3000/api",
+  environment: "local-development" | "sandbox-certification" =
+    "local-development",
 ): PapermarkAdapterConfigInput {
   return {
-    configuration: providerConfiguration(endpoint),
+    configuration: providerConfiguration(endpoint, environment),
     scope,
     connectorAccount: {
       id: "connector_papermark",
@@ -66,11 +73,21 @@ Deno.test("Papermark configuration accepts the approved local development endpoi
   );
 });
 
+Deno.test("Papermark configuration permits the official hosted endpoint only in sandbox", () => {
+  const configuration = parsePapermarkAdapterConfig(
+    validInput("https://api.papermark.com", "sandbox-certification"),
+  );
+  assertEquals(
+    configuration.configuration.environment,
+    "sandbox-certification",
+  );
+});
+
 Deno.test("Papermark configuration rejects the legacy hosted endpoint", () => {
   assertThrows(
     () => parsePapermarkAdapterConfig(validInput("https://api.papermark.io")),
     Error,
-    "api.papermark.io",
+    "localhost",
   );
 });
 
@@ -121,4 +138,21 @@ Deno.test("Papermark configuration enforces bounded request policy", () => {
     Error,
     "max attempts",
   );
+  assertThrows(
+    () => parsePapermarkAdapterConfig({ ...validInput(), pageSize: 101 }),
+    Error,
+    "page size",
+  );
 });
+
+function activation() {
+  return {
+    approvalReference: "approval_papermark_local",
+    providerVersion: "papermark-1.0.0",
+    license: "AGPLv3",
+    deploymentModel: "self-hosted",
+    region: "local",
+    storageTopology: "postgres-object-store",
+    rollbackOperator: "platform-on-call",
+  } as const;
+}

@@ -41,6 +41,8 @@ Deno.test("selection constructs configured Papermark only for the exact binding"
   assert(result.kind === "configured");
   assertEquals(result.adapter, adapter);
   assertEquals(calls.length, 1);
+  assertEquals(result.connectorAccountId, "connector_papermark");
+  assertEquals(result.providerWorkspaceId, "room_local");
   assertEquals(calls[0], {
     provider: "papermark",
     configuration: papermarkConfiguration(),
@@ -236,6 +238,38 @@ Deno.test("selected operation failure remains a real-provider failure", async ()
   assertEquals(result.failure.provider, "papermark");
 });
 
+Deno.test("selected operation callbacks require an IntegrationResult", () => {
+  const rawCallback = () => Promise.resolve({ ok: true });
+  // @ts-expect-error Raw ok:boolean payloads are not IntegrationResult values.
+  const typedCallback: (
+    adapter: IntegrationAdapter,
+  ) => Promise<IntegrationResult<unknown>> = rawCallback;
+  void typedCallback;
+});
+
+Deno.test("selection rejects adapters returning a different binding", async () => {
+  const result = await selectProvider({
+    mode: "configured",
+    provider: "papermark",
+    scope: integrationScope(),
+    connectorAccountId: "connector_papermark",
+    providerWorkspaceId: "room_local",
+    configuration: papermarkConfiguration(),
+    factories: {
+      papermark: () =>
+        new RecordingAdapter(
+          "papermark",
+          "local-development",
+          integrationScope(),
+          "connector_other",
+          "room_other",
+        ),
+    },
+  });
+
+  assertBlocked(result, "invalid", "INVALID_REQUEST");
+});
+
 function assertBlocked(
   result: ProviderSelectionResult,
   reason: "disabled" | "deferred" | "unconfigured" | "unavailable" | "invalid",
@@ -252,8 +286,17 @@ function papermarkConfiguration() {
     provider: "papermark",
     lifecycle: "enabled",
     environment: "local-development",
-    endpoint: "http://localhost:3000",
+    endpoint: "http://localhost:3000/api",
     secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+    activation: {
+      approvalReference: "approval_papermark_local",
+      providerVersion: "papermark-1.0.0",
+      license: "AGPLv3",
+      deploymentModel: "self-hosted",
+      region: "local",
+      storageTopology: "postgres-object-store",
+      rollbackOperator: "platform-on-call",
+    },
   });
 }
 
@@ -276,6 +319,10 @@ class RecordingAdapter implements IntegrationAdapter {
       | "fixture"
       | "local-development",
     scope = integrationScope(),
+    readonly connectorAccountId = `connector_${provider}`,
+    readonly providerWorkspaceId = provider === "fixture"
+      ? "room_fixture"
+      : "room_local",
   ) {
     this.scope = scope;
   }

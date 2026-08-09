@@ -33,17 +33,20 @@ export class PapermarkTransportFailure extends Error {
   readonly code: IntegrationFailureCode;
   readonly status?: number;
   readonly providerRequestId?: string;
+  readonly retryAfterMs?: number;
 
   constructor(input: {
     readonly code: IntegrationFailureCode;
     readonly status?: number;
     readonly providerRequestId?: string;
+    readonly retryAfterMs?: number;
   }) {
     super(safeMessage(input.code));
     this.name = "PapermarkTransportFailure";
     this.code = input.code;
     this.status = input.status;
     this.providerRequestId = safeRequestId(input.providerRequestId);
+    this.retryAfterMs = safeRetryAfter(input.retryAfterMs);
   }
 }
 
@@ -69,23 +72,21 @@ export class PapermarkTransport {
    * @example await transport.getDocumentsPage(undefined)
    */
   async getDocumentsPage(cursor: string | undefined): Promise<unknown> {
-    const token = await this.resolveSecret();
     let attempt = 0;
-    while (attempt < this.config.retry.maxAttempts) {
+    while (true) {
       attempt += 1;
       try {
-        const response = await this.requestPage(token, cursor);
-        if (response.ok) return await this.parseJson(response);
-        const failure = responseFailure(response);
-        if (!this.shouldRetry(failure.code, attempt)) throw failure;
-        await this.dependencies.sleep(this.retryDelay(attempt, response));
+        return await this.requestPage(cursor);
       } catch (error) {
         const failure = this.asTransportFailure(error);
-        if (!this.shouldRetry(failure.code, attempt)) throw failure;
-        await this.dependencies.sleep(this.retryDelay(attempt));
+        if (!RETRYABLE_CODES.has(failure.code)) throw failure;
+        if (attempt >= this.config.retry.maxAttempts) {
+          if (attempt === 1) throw failure;
+          throw retryExhausted(failure);
+        }
+        await this.dependencies.sleep(this.retryDelay(attempt, failure));
       }
     }
-    throw new PapermarkTransportFailure({ code: "RETRY_EXHAUSTED" });
   }
 
   private async resolveSecret(): Promise<RuntimeSecret> {
@@ -99,9 +100,25 @@ export class PapermarkTransport {
     throw new PapermarkTransportFailure({ code: "NOT_CONFIGURED" });
   }
 
-  private requestPage(
+  private requestPage(cursor: string | undefined): Promise<unknown> {
+    const controller = new AbortController();
+    let response: Response | undefined;
+    return this.withTimeout(
+      async () => {
+        const token = await this.resolveSecret();
+        response = await this.fetchPage(token, cursor, controller.signal);
+        if (!response.ok) throw responseFailure(response);
+        return await this.parseJson(response, controller.signal);
+      },
+      controller,
+      () => abortResponseBody(response),
+    );
+  }
+
+  private fetchPage(
     token: RuntimeSecret,
     cursor: string | undefined,
+    signal: AbortSignal,
   ): Promise<Response> {
     const url = new URL(
       `${trimTrailingSlash(this.config.configuration.endpoint!)}/v1/documents`,
@@ -113,25 +130,24 @@ export class PapermarkTransport {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     });
-    return this.requestWithTimeout(url.toString(), {
+    return this.dependencies.fetch(url.toString(), {
       method: "GET",
       headers,
+      signal,
     });
   }
 
-  private requestWithTimeout(
-    url: string,
-    init: RequestInit,
-  ): Promise<Response> {
-    const controller = new AbortController();
+  private withTimeout<TResult>(
+    operation: () => Promise<TResult>,
+    controller: AbortController,
+    onTimeout: () => void,
+  ): Promise<TResult> {
     let handle: unknown;
-    const response = this.dependencies.fetch(url, {
-      ...init,
-      signal: controller.signal,
-    });
+    const response = operation();
     const timeout = new Promise<never>((_resolve, reject) => {
       handle = this.timer.setTimeout(() => {
         controller.abort();
+        onTimeout();
         reject(new PapermarkTransportFailure({ code: "TIMEOUT" }));
       }, this.config.timeoutMs);
     });
@@ -140,10 +156,17 @@ export class PapermarkTransport {
     });
   }
 
-  private async parseJson(response: Response): Promise<unknown> {
+  private async parseJson(
+    response: Response,
+    signal: AbortSignal,
+  ): Promise<unknown> {
     try {
       return await response.json();
-    } catch {
+    } catch (error) {
+      if (signal.aborted) {
+        throw new PapermarkTransportFailure({ code: "TIMEOUT" });
+      }
+      if (isAbortError(error)) throw error;
       throw new PapermarkTransportFailure({
         code: "MALFORMED_RESPONSE",
         status: response.status,
@@ -160,14 +183,11 @@ export class PapermarkTransport {
     return new PapermarkTransportFailure({ code: "UNAVAILABLE" });
   }
 
-  private shouldRetry(code: IntegrationFailureCode, attempt: number): boolean {
-    return attempt < this.config.retry.maxAttempts && RETRYABLE_CODES.has(code);
-  }
-
-  private retryDelay(attempt: number, response?: Response): number {
-    const retryAfter = response === undefined
-      ? undefined
-      : parseRetryAfter(response.headers.get("retry-after"));
+  private retryDelay(
+    attempt: number,
+    failure: PapermarkTransportFailure,
+  ): number {
+    const retryAfter = failure.retryAfterMs;
     if (retryAfter !== undefined) {
       return Math.min(retryAfter, this.config.retry.maxDelayMs);
     }
@@ -182,6 +202,17 @@ function responseFailure(response: Response): PapermarkTransportFailure {
     code,
     status: response.status,
     providerRequestId: response.headers.get("x-request-id") ?? undefined,
+    retryAfterMs: parseRetryAfter(response.headers.get("retry-after")),
+  });
+}
+
+function retryExhausted(
+  failure: PapermarkTransportFailure,
+): PapermarkTransportFailure {
+  return new PapermarkTransportFailure({
+    code: "RETRY_EXHAUSTED",
+    status: failure.status,
+    providerRequestId: failure.providerRequestId,
   });
 }
 
@@ -210,6 +241,13 @@ function safeRequestId(value: string | undefined): string | undefined {
   return undefined;
 }
 
+function safeRetryAfter(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isSafeInteger(value) || value < 0) {
+    return undefined;
+  }
+  return value;
+}
+
 function safeMessage(code: IntegrationFailureCode): string {
   const messages: Record<IntegrationFailureCode, string> = {
     AUTHENTICATION_FAILED: "The provider rejected the configured credentials.",
@@ -231,6 +269,16 @@ function safeMessage(code: IntegrationFailureCode): string {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function abortResponseBody(response: Response | undefined): void {
+  const body = response?.body;
+  if (body === null || body === undefined) return;
+  try {
+    void body.cancel().catch(() => undefined);
+  } catch {
+    // A body cancellation failure must not mask the timeout result.
+  }
 }
 
 function trimTrailingSlash(endpoint: string): string {

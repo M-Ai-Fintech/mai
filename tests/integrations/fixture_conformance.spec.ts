@@ -97,6 +97,7 @@ Deno.test("fixture conformance records safe normalized missing-document failure"
 function conformancePlan(): FixtureConformancePlan {
   return {
     scope: integrationScope(),
+    connectorAccountId: "connector_fixture",
     providerWorkspaceId: "room_fixture",
     pages: [
       {
@@ -127,6 +128,8 @@ class DeterministicFixtureAdapter implements IntegrationAdapter {
   readonly environment = "fixture" as const;
   readonly lifecycle = "enabled" as const;
   readonly scope = integrationScope();
+  readonly connectorAccountId = "connector_fixture";
+  readonly providerWorkspaceId = "room_fixture";
   readonly documents = new FixtureDocumentPort();
 
   discoverCapabilities(): Promise<CapabilitySnapshot> {
@@ -181,6 +184,8 @@ class NonFixtureAdapter implements IntegrationAdapter {
   readonly environment = "local-development" as const;
   readonly lifecycle = "enabled" as const;
   readonly scope = integrationScope();
+  readonly connectorAccountId = "connector_papermark";
+  readonly providerWorkspaceId = "room_fixture";
   readonly documents = new FixtureDocumentPort();
 
   discoverCapabilities(): Promise<CapabilitySnapshot> {

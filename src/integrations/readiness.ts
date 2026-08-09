@@ -4,6 +4,13 @@ import {
   type IntegrationProvider,
   type ProviderLifecycle,
 } from "./contracts.ts";
+import {
+  assertReadinessProviderTarget,
+  type CoordinatorAuthorization,
+  hasCoordinatorAuthorization,
+} from "./readiness_guards.ts";
+
+export type { CoordinatorAuthorization } from "./readiness_guards.ts";
 
 export type ReadinessState =
   | "interface-only"
@@ -26,6 +33,7 @@ export type ReadinessTarget = Extract<
 export const READINESS_GATES = [
   "interface-contract",
   "fixture-conformance",
+  "coordinator-authorization",
   "configuration",
   "credentials",
   "provider-version",
@@ -86,6 +94,7 @@ export interface ReadinessEvaluationRequest {
   readonly configured: boolean;
   readonly implementation: "complete" | "partial";
   readonly evidence: readonly ReadinessEvidence[];
+  readonly coordinatorAuthorization?: CoordinatorAuthorization;
 }
 
 export interface ReadinessEvaluation {
@@ -121,6 +130,7 @@ const REQUIRED_GATES: Readonly<
   ],
   "sandbox-certification": [
     "interface-contract",
+    "coordinator-authorization",
     "configuration",
     "credentials",
     "provider-version",
@@ -144,6 +154,7 @@ const REQUIRED_GATES: Readonly<
   ],
   "production-candidate": [
     "interface-contract",
+    "coordinator-authorization",
     "configuration",
     "credentials",
     "provider-version",
@@ -169,6 +180,7 @@ const REQUIRED_GATES: Readonly<
   ],
   "production-verified": [
     "interface-contract",
+    "coordinator-authorization",
     "configuration",
     "credentials",
     "provider-version",
@@ -322,7 +334,9 @@ function missingReadinessGates(
 ): ReadinessGate[] {
   const latest = latestMatchingEvidence(input);
   return requiredReadinessGates(input.target).filter((gate) =>
-    latest.get(gate)?.outcome !== "passed"
+    gate === "coordinator-authorization"
+      ? !hasCoordinatorAuthorization(input.coordinatorAuthorization)
+      : latest.get(gate)?.outcome !== "passed"
   );
 }
 
@@ -330,6 +344,7 @@ function matchingEvidence(
   input: ReadinessEvaluationRequest,
 ): ReadinessEvidence[] {
   return input.evidence.filter((evidence) =>
+    evidence.gate !== "coordinator-authorization" &&
     evidence.provider === input.provider &&
     evidence.environment === input.target &&
     evidence.providerVersion === input.providerVersion &&
@@ -368,6 +383,15 @@ function assertReadinessRequest(input: ReadinessEvaluationRequest): void {
   assertTarget(input.target);
   assertIdentifier(input.providerVersion, "provider version");
   assertIdentifier(input.environmentId, "environment ID");
+  assertReadinessProviderTarget(input.provider, input.target, input.lifecycle);
+  if (
+    input.coordinatorAuthorization !== undefined &&
+    !hasCoordinatorAuthorization(input.coordinatorAuthorization)
+  ) {
+    throw new Error(
+      "Readiness coordinator authorization is invalid; expected coordinator-owned authorization metadata.",
+    );
+  }
   for (const evidence of input.evidence) createReadinessEvidence(evidence);
 }
 

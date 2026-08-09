@@ -115,6 +115,8 @@ export interface IntegrationAdapter {
   readonly environment: IntegrationEnvironment;
   readonly lifecycle: ProviderLifecycle;
   readonly scope: IntegrationScope;
+  readonly connectorAccountId: string;
+  readonly providerWorkspaceId: string;
   readonly documents: ScopedDocumentPort;
   discoverCapabilities(): Promise<CapabilitySnapshot>;
   checkHealth(): Promise<HealthSnapshot>;
@@ -167,6 +169,11 @@ export const INTEGRATION_CAPABILITIES: readonly IntegrationCapability[] = [
 
 export type CapabilityStatus = "supported" | "denied" | "unavailable";
 
+export type CapabilityObservationSource =
+  | "provider"
+  | "implementation"
+  | "fixture";
+
 export interface CapabilityObservation {
   readonly capability: IntegrationCapability;
   readonly status: CapabilityStatus;
@@ -178,7 +185,7 @@ export interface CapabilitySnapshot {
   readonly environment: IntegrationEnvironment;
   readonly lifecycle: ProviderLifecycle;
   readonly configured: boolean;
-  readonly source: "provider" | "fixture";
+  readonly source: CapabilityObservationSource;
   readonly scope: IntegrationScope;
   readonly requested: readonly IntegrationCapability[];
   readonly observations: readonly CapabilityObservation[];
@@ -190,7 +197,7 @@ export interface CapabilitySnapshotInput {
   readonly environment: IntegrationEnvironment;
   readonly lifecycle: ProviderLifecycle;
   readonly configured: boolean;
-  readonly source: "provider" | "fixture";
+  readonly source: CapabilityObservationSource;
   readonly scope: IntegrationScope;
   readonly requested: readonly IntegrationCapability[];
   readonly observations: readonly CapabilityObservation[];
@@ -347,7 +354,7 @@ function assertEnvironment(environment: IntegrationEnvironment): void {
 }
 
 function assertCapabilitySource(
-  source: "provider" | "fixture",
+  source: CapabilityObservationSource,
   environment: IntegrationEnvironment,
 ): void {
   if (source === "fixture" && environment !== "fixture") {
@@ -355,9 +362,9 @@ function assertCapabilitySource(
       `Fixture capability evidence uses environment "${environment}"; expected fixture environment.`,
     );
   }
-  if (source === "provider" && environment === "fixture") {
+  if (source !== "fixture" && environment === "fixture") {
     throw new Error(
-      `Provider capability evidence uses fixture environment; expected a real provider environment.`,
+      `Capability evidence source "${source}" uses fixture environment; expected a real provider environment.`,
     );
   }
 }
