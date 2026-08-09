@@ -353,13 +353,18 @@ function toDocumentFailureCode(
   return "UNKNOWN";
 }
 
-function passedHealthChecks(): readonly { name: string; state: "passed" }[] {
+function passedHealthChecks(): readonly {
+  name: string;
+  state: "passed" | "unavailable";
+}[] {
   return [
     { name: "configuration", state: "passed" },
-    { name: "credentials", state: "passed" },
     { name: "endpoint", state: "passed" },
     { name: "capabilities", state: "passed" },
-    { name: "scope-isolation", state: "passed" },
+    // A folder list proves reachability only; coordinator/provider identity
+    // evidence is required before credentials or scope ownership can pass.
+    { name: "credentials", state: "unavailable" as const },
+    { name: "scope-isolation", state: "unavailable" as const },
   ];
 }
 
@@ -376,11 +381,11 @@ function failedHealthChecks(
     { name: "configuration", state: "passed" },
     {
       name: "credentials",
-      state: code === "AUTHENTICATION_FAILED" ? "failed" : "passed",
+      state: code === "AUTHENTICATION_FAILED" ? "failed" : "unavailable",
     },
     { name: "endpoint", state },
     { name: "capabilities", state },
-    { name: "scope-isolation", state },
+    { name: "scope-isolation", state: "unavailable" },
   ];
 }
 

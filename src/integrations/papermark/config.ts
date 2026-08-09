@@ -2,6 +2,7 @@ import { type IntegrationScope, parseIntegrationScope } from "../contracts.ts";
 import {
   assertPapermarkEndpointForEnvironment,
   parseOwnerApprovedActivation,
+  parseProviderConfiguration,
   type ProviderConfiguration,
 } from "../configuration.ts";
 
@@ -55,7 +56,8 @@ export interface PapermarkAdapterConfigInput {
 export function parsePapermarkAdapterConfig(
   input: PapermarkAdapterConfigInput,
 ): PapermarkAdapterConfig {
-  assertEnabledConfiguration(input.configuration);
+  const configuration = parseProviderConfiguration(input.configuration);
+  assertEnabledConfiguration(configuration);
   assertScope(input.scope);
   assertConnectorAccount(input.connectorAccount, input.scope);
   const binding = Object.freeze({
@@ -66,18 +68,6 @@ export function parsePapermarkAdapterConfig(
       "provider workspace ID",
     ),
     folderId: parseLocator(input.folderId, "Papermark folder ID"),
-  });
-  const configuration = Object.freeze({
-    provider: input.configuration.provider,
-    lifecycle: input.configuration.lifecycle,
-    environment: input.configuration.environment,
-    endpoint: input.configuration.endpoint,
-    ...(input.configuration.secretRef === undefined
-      ? {}
-      : { secretRef: Object.freeze({ ...input.configuration.secretRef }) }),
-    ...(input.configuration.activation === undefined
-      ? {}
-      : { activation: Object.freeze({ ...input.configuration.activation }) }),
   });
   return Object.freeze({
     provider: PAPERMARK_PROVIDER,

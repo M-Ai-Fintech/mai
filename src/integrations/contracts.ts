@@ -137,7 +137,10 @@ export type RuntimeSecret = string & {
 };
 
 export interface SecretResolver {
-  resolve(reference: SecretReference): Promise<RuntimeSecret>;
+  resolve(
+    reference: SecretReference,
+    signal?: AbortSignal,
+  ): Promise<RuntimeSecret>;
 }
 
 export type IntegrationCapability =

@@ -15,6 +15,7 @@ import {
 import {
   parseIntegrationScope,
   type RuntimeSecret,
+  type SecretReference,
 } from "../../../src/integrations/contracts.ts";
 
 const scope = parseIntegrationScope({
@@ -31,6 +32,34 @@ class SecretResolverFake {
   resolve(): Promise<RuntimeSecret> {
     this.calls += 1;
     return Promise.resolve(secret);
+  }
+}
+
+class StalledSecretResolverFake {
+  resolve(
+    _reference: SecretReference,
+    _signal?: AbortSignal,
+  ): Promise<RuntimeSecret> {
+    return new Promise<RuntimeSecret>(() => undefined);
+  }
+}
+
+class DelayedSecretResolverFake {
+  signal?: AbortSignal;
+  private releaseSecret?: (secret: RuntimeSecret) => void;
+
+  resolve(
+    _reference: SecretReference,
+    signal?: AbortSignal,
+  ): Promise<RuntimeSecret> {
+    this.signal = signal;
+    return new Promise<RuntimeSecret>((resolve) => {
+      this.releaseSecret = resolve;
+    });
+  }
+
+  release(): void {
+    this.releaseSecret?.(secret);
   }
 }
 
@@ -228,9 +257,29 @@ Deno.test("Papermark transport times out a stalled secret resolver", async () =>
   const config = configuration({
     retry: { maxAttempts: 1, maxDelayMs: 250 },
   });
-  const instance = new PapermarkTransport(config, {
-    resolve: () => new Promise<RuntimeSecret>(() => undefined),
-  }, {
+  const instance = new PapermarkTransport(
+    config,
+    new StalledSecretResolverFake(),
+    {
+      fetch: fake.fetch,
+      sleep: () => Promise.resolve(),
+      now: () => new Date("2026-08-08T12:00:00.000Z"),
+      timer,
+    },
+  );
+
+  const pending = instance.getDocumentsPage(undefined);
+  timer.fire();
+  const error = await captureError(() => pending);
+  assertEquals(error.code, "TIMEOUT");
+  assertEquals(fake.calls.length, 0);
+});
+
+Deno.test("Papermark transport rejects a resolver that completes after timeout before fetch", async () => {
+  const fake = new FetchFake();
+  const timer = new TimerFake();
+  const resolver = new DelayedSecretResolverFake();
+  const instance = new PapermarkTransport(configWithSingleAttempt(), resolver, {
     fetch: fake.fetch,
     sleep: () => Promise.resolve(),
     now: () => new Date("2026-08-08T12:00:00.000Z"),
@@ -239,9 +288,11 @@ Deno.test("Papermark transport times out a stalled secret resolver", async () =>
 
   const pending = instance.getDocumentsPage(undefined);
   timer.fire();
+  resolver.release();
   const error = await captureError(() => pending);
   assertEquals(error.code, "TIMEOUT");
   assertEquals(fake.calls.length, 0);
+  assertEquals(resolver.signal?.aborted, true);
 });
 
 Deno.test("Papermark transport aborts a stalled response body", async () => {
@@ -304,6 +355,10 @@ function activation() {
     storageTopology: "postgres-object-store",
     rollbackOperator: "platform-on-call",
   } as const;
+}
+
+function configWithSingleAttempt(): PapermarkAdapterConfig {
+  return configuration({ retry: { maxAttempts: 1, maxDelayMs: 250 } });
 }
 
 async function captureError(

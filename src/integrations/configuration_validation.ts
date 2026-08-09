@@ -1,6 +1,11 @@
 const INLINE_CREDENTIAL_KEY =
   /(api[-_]?key|authorization|credential|password|private[-_]?key|secret|token|value)/i;
 
+/**
+ * Rejects credential-shaped keys at every nested configuration level.
+ *
+ * @example rejectInlineCredentialKeys({ secretRef: { value: "raw-secret" } })
+ */
 export function rejectInlineCredentialKeys(value: unknown): void {
   if (Array.isArray(value)) {
     for (const child of value) rejectInlineCredentialKeys(child);
@@ -17,6 +22,11 @@ export function rejectInlineCredentialKeys(value: unknown): void {
   }
 }
 
+/**
+ * Rejects keys outside a caller-owned strict object shape.
+ *
+ * @example assertKnownKeys({ provider: "papermark" }, new Set(["provider"]), "provider configuration")
+ */
 export function assertKnownKeys(
   value: Record<string, unknown>,
   allowed: ReadonlySet<string>,
@@ -29,6 +39,11 @@ export function assertKnownKeys(
   );
 }
 
+/**
+ * Narrows unknown input to a non-array record for strict parsing.
+ *
+ * @example assertRecord({ provider: "papermark" }, "provider configuration")
+ */
 export function assertRecord(
   value: unknown,
   label: string,

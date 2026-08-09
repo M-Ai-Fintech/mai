@@ -93,7 +93,7 @@ export function parseSecretReference(value: unknown): SecretReference {
   rejectInlineCredentialKeys(value);
   assertKnownKeys(value, SECRET_REFERENCE_KEYS, "secret reference");
   const manager = parseSecretManager(value.manager);
-  const name = parseLocatorText(value.name, "secret reference name");
+  const name = parseSecretLocator(manager, value.name);
   const version = value.version === undefined
     ? undefined
     : parseLocatorText(value.version, "secret reference version");
@@ -274,6 +274,26 @@ function parseLocatorText(value: unknown, label: string): string {
     `${label} "${
       String(value)
     }" is invalid; expected 1-255 non-whitespace locator characters.`,
+  );
+}
+
+function parseSecretLocator(manager: SecretManager, value: unknown): string {
+  const locator = parseLocatorText(value, "secret reference name");
+  if (manager === "environment") {
+    if (/^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/.test(locator)) return locator;
+    throw new Error(
+      "Environment secret reference name is invalid; expected an uppercase environment-variable locator.",
+    );
+  }
+  if (
+    /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)+$/.test(
+      locator,
+    ) && !/^(?:sk|pk|rk|ghp|glpat|xox[abp]|AIza)[A-Za-z0-9_-]{16,}$/.test(
+      locator,
+    )
+  ) return locator;
+  throw new Error(
+    `Secret manager "${manager}" reference name is invalid; expected a bounded path locator without credential material.`,
   );
 }
 

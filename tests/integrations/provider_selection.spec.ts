@@ -14,14 +14,12 @@ import {
 import { parseProviderConfiguration } from "../../src/integrations/configuration.ts";
 import {
   executeSelectedOperation,
-  type ProviderSelectionFactoryContext,
   type ProviderSelectionResult,
   selectProvider,
 } from "../../src/integrations/provider_selection.ts";
 
-Deno.test("selection constructs configured Papermark only for the exact binding", async () => {
-  const calls: ProviderSelectionFactoryContext[] = [];
-  const adapter = new RecordingAdapter("papermark", "local-development");
+Deno.test("configured Papermark selection fails closed before factory authority exists", async () => {
+  let factoryCalls = 0;
   const result = await selectProvider({
     mode: "configured",
     provider: "papermark",
@@ -30,26 +28,15 @@ Deno.test("selection constructs configured Papermark only for the exact binding"
     providerWorkspaceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: {
-      papermark: (context) => {
-        calls.push(context);
-        return adapter;
+      papermark: () => {
+        factoryCalls += 1;
+        return new RecordingAdapter("papermark", "local-development");
       },
     },
   });
 
-  assertEquals(result.kind, "configured");
-  assert(result.kind === "configured");
-  assertEquals(result.adapter, adapter);
-  assertEquals(calls.length, 1);
-  assertEquals(result.connectorAccountId, "connector_papermark");
-  assertEquals(result.providerWorkspaceId, "room_local");
-  assertEquals(calls[0], {
-    provider: "papermark",
-    configuration: papermarkConfiguration(),
-    scope: integrationScope(),
-    connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
-  });
+  assertBlocked(result, "unauthorized", "AUTHORIZATION_DENIED");
+  assertEquals(factoryCalls, 0);
 });
 
 Deno.test("fixture selection is explicit and is labeled synthetic", async () => {
@@ -153,7 +140,8 @@ Deno.test("disabled Papermark is blocked without constructing an adapter", async
   assertEquals(factoryCalls, 0);
 });
 
-Deno.test("configured construction failure is normalized and never falls back", async () => {
+Deno.test("configured Papermark never invokes real or fixture factories without authority", async () => {
+  let papermarkCalls = 0;
   let fixtureCalls = 0;
   const result = await selectProvider({
     mode: "configured",
@@ -164,6 +152,7 @@ Deno.test("configured construction failure is normalized and never falls back", 
     configuration: papermarkConfiguration(),
     factories: {
       papermark: () => {
+        papermarkCalls += 1;
         throw new Error("provider token=raw-secret unavailable");
       },
       fixture: () => {
@@ -173,10 +162,75 @@ Deno.test("configured construction failure is normalized and never falls back", 
     },
   });
 
-  assertBlocked(result, "unavailable", "UNAVAILABLE");
-  assert(result.kind === "blocked");
-  assertEquals(result.failure.message.includes("raw-secret"), false);
+  assertBlocked(result, "unauthorized", "AUTHORIZATION_DENIED");
+  assertEquals(papermarkCalls, 0);
   assertEquals(fixtureCalls, 0);
+});
+
+Deno.test("hosted sandbox and localhost Papermark configs cannot invoke a factory", async () => {
+  let factoryCalls = 0;
+  for (
+    const [environment, endpoint] of [
+      ["local-development", "http://localhost:3000/api"],
+      ["sandbox-certification", "https://api.papermark.com"],
+    ] as const
+  ) {
+    const result = await selectProvider({
+      mode: "configured",
+      provider: "papermark",
+      scope: integrationScope(),
+      connectorAccountId: "connector_papermark",
+      providerWorkspaceId: "room_local",
+      configuration: papermarkConfiguration(endpoint, environment),
+      factories: {
+        papermark: () => {
+          factoryCalls += 1;
+          return new RecordingAdapter("papermark", environment);
+        },
+      },
+    });
+    assertBlocked(result, "unauthorized", "AUTHORIZATION_DENIED");
+  }
+  assertEquals(factoryCalls, 0);
+});
+
+Deno.test("nested configuration credentials are rejected before factory invocation", async () => {
+  let factoryCalls = 0;
+  const secret = "nested-secret-must-not-be-retained";
+  const configurations = [
+    {
+      ...papermarkConfiguration(),
+      secretRef: {
+        manager: "environment",
+        name: "PAPER_MARK_SECRET",
+        value: secret,
+      },
+    },
+    {
+      ...papermarkConfiguration(),
+      activation: { ...activation(), credentials: { value: secret } },
+    },
+  ];
+  for (const configuration of configurations) {
+    const result = await selectProvider({
+      mode: "configured",
+      provider: "papermark",
+      scope: integrationScope(),
+      connectorAccountId: "connector_papermark",
+      providerWorkspaceId: "room_local",
+      configuration: configuration as never,
+      factories: {
+        papermark: () => {
+          factoryCalls += 1;
+          return new RecordingAdapter("papermark", "local-development");
+        },
+      },
+    });
+
+    assertBlocked(result, "invalid", "INVALID_REQUEST");
+    assertEquals(JSON.stringify(result).includes(secret), false);
+  }
+  assertEquals(factoryCalls, 0);
 });
 
 Deno.test("binding validation rejects missing connector or provider workspace before factory", async () => {
@@ -224,8 +278,7 @@ Deno.test("selected operation failure remains a real-provider failure", async ()
     },
   });
 
-  assertEquals(selection.kind, "configured");
-  assert(selection.kind === "configured");
+  assertEquals(selection.kind, "blocked");
   const result = await executeSelectedOperation(
     selection,
     "list_documents",
@@ -234,7 +287,7 @@ Deno.test("selected operation failure remains a real-provider failure", async ()
 
   assertEquals(result.ok, false);
   assert(result.ok === false);
-  assertEquals(result.failure.code, "UNAVAILABLE");
+  assertEquals(result.failure.code, "AUTHORIZATION_DENIED");
   assertEquals(result.failure.provider, "papermark");
 });
 
@@ -267,12 +320,18 @@ Deno.test("selection rejects adapters returning a different binding", async () =
     },
   });
 
-  assertBlocked(result, "invalid", "INVALID_REQUEST");
+  assertBlocked(result, "unauthorized", "AUTHORIZATION_DENIED");
 });
 
 function assertBlocked(
   result: ProviderSelectionResult,
-  reason: "disabled" | "deferred" | "unconfigured" | "unavailable" | "invalid",
+  reason:
+    | "disabled"
+    | "deferred"
+    | "unconfigured"
+    | "unavailable"
+    | "unauthorized"
+    | "invalid",
   code: string,
 ): void {
   assertEquals(result.kind, "blocked");
@@ -281,23 +340,31 @@ function assertBlocked(
   assertEquals(result.failure.code, code);
 }
 
-function papermarkConfiguration() {
+function papermarkConfiguration(
+  endpoint = "http://localhost:3000/api",
+  environment: "local-development" | "sandbox-certification" =
+    "local-development",
+) {
   return parseProviderConfiguration({
     provider: "papermark",
     lifecycle: "enabled",
-    environment: "local-development",
-    endpoint: "http://localhost:3000/api",
+    environment,
+    endpoint,
     secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
-    activation: {
-      approvalReference: "approval_papermark_local",
-      providerVersion: "papermark-1.0.0",
-      license: "AGPLv3",
-      deploymentModel: "self-hosted",
-      region: "local",
-      storageTopology: "postgres-object-store",
-      rollbackOperator: "platform-on-call",
-    },
+    activation: activation(),
   });
+}
+
+function activation() {
+  return {
+    approvalReference: "approval_papermark_local",
+    providerVersion: "papermark-1.0.0",
+    license: "AGPLv3",
+    deploymentModel: "self-hosted",
+    region: "local",
+    storageTopology: "postgres-object-store",
+    rollbackOperator: "platform-on-call",
+  } as const;
 }
 
 function integrationScope(): IntegrationScope {
@@ -317,7 +384,8 @@ class RecordingAdapter implements IntegrationAdapter {
     readonly environment:
       | "interface-only"
       | "fixture"
-      | "local-development",
+      | "local-development"
+      | "sandbox-certification",
     scope = integrationScope(),
     readonly connectorAccountId = `connector_${provider}`,
     readonly providerWorkspaceId = provider === "fixture"

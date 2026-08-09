@@ -9,6 +9,7 @@ import {
 import {
   assertPapermarkEndpointForEnvironment,
   parseOwnerApprovedActivation,
+  parseProviderConfiguration,
   type ProviderConfiguration,
 } from "./configuration.ts";
 import {
@@ -52,6 +53,7 @@ export type ProviderSelectionBlockedReason =
   | "deferred"
   | "unconfigured"
   | "unavailable"
+  | "unauthorized"
   | "invalid";
 
 export interface ConfiguredProviderSelection {
@@ -106,12 +108,17 @@ export type ProviderSelectionResult =
 export async function selectProvider(
   input: ProviderSelectionRequest,
 ): Promise<ProviderSelectionResult> {
-  const bindingFailure = validateBinding(input);
+  const canonical = canonicalizeConfiguration(input);
+  if (!canonical.ok) return canonical.result;
+  const request = canonical.configuration === undefined
+    ? input
+    : canonicalRequest(input, canonical.configuration);
+  const bindingFailure = validateBinding(request);
   if (bindingFailure !== undefined) {
-    return blocked(input, "invalid", bindingFailure);
+    return blocked(request, "invalid", bindingFailure);
   }
-  if (input.mode === "fixture") return await selectFixture(input);
-  return await selectConfigured(input);
+  if (request.mode === "fixture") return await selectFixture(request);
+  return await selectConfigured(request);
 }
 
 /**
@@ -184,9 +191,9 @@ async function selectFixture(
   });
 }
 
-async function selectConfigured(
+function selectConfigured(
   input: ProviderSelectionRequest,
-): Promise<ProviderSelectionResult> {
+): ProviderSelectionResult {
   if (input.provider === "fixture") {
     return blocked(input, "invalid", failure(input, "INVALID_REQUEST"));
   }
@@ -209,27 +216,45 @@ async function selectConfigured(
   if (!validPapermarkEnvironment(configuration)) {
     return blocked(input, "invalid", failure(input, "INVALID_REQUEST"));
   }
-  const factory = input.factories.papermark;
-  if (factory === undefined) {
-    return blocked(input, "unconfigured", failure(input, "NOT_CONFIGURED"));
+  // Activation metadata is descriptive only. Future coordinator composition
+  // must supply claim-bound authority before this seam can construct a real adapter.
+  return blocked(input, "unauthorized", failure(input, "AUTHORIZATION_DENIED"));
+}
+
+function canonicalizeConfiguration(
+  input: ProviderSelectionRequest,
+):
+  | { readonly ok: true; readonly configuration?: ProviderConfiguration }
+  | { readonly ok: false; readonly result: BlockedProviderSelection } {
+  if (input.configuration === undefined) {
+    return { ok: true };
   }
-  const adapter = await constructAdapter(input, factory, configuration);
-  if (!adapter.ok) return blocked(input, "unavailable", adapter.failure);
-  const identity = validateAdapter(adapter.value, input, "configured");
-  if (identity !== undefined) return blocked(input, "invalid", identity);
-  return Object.freeze({
-    kind: "configured",
-    status: "selected",
-    source: "provider",
-    synthetic: false,
-    readiness: "not-claimed",
+  try {
+    return {
+      ok: true,
+      configuration: parseProviderConfiguration(input.configuration),
+    };
+  } catch {
+    return {
+      ok: false,
+      result: blocked(input, "invalid", failure(input, "INVALID_REQUEST")),
+    };
+  }
+}
+
+function canonicalRequest(
+  input: ProviderSelectionRequest,
+  configuration: ProviderConfiguration,
+): ProviderSelectionRequest {
+  return {
+    mode: input.mode,
     provider: input.provider,
-    environment: configuration.environment,
     scope: input.scope,
     connectorAccountId: input.connectorAccountId,
     providerWorkspaceId: input.providerWorkspaceId,
-    adapter: adapter.value,
-  });
+    configuration,
+    factories: input.factories,
+  };
 }
 
 async function constructAdapter(

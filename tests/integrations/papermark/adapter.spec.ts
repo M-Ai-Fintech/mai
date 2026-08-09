@@ -143,13 +143,20 @@ Deno.test("Papermark adapter advertises list-only capability and gates binary do
   assertEquals(fake.calls.length, 0);
 });
 
-Deno.test("Papermark adapter health uses the scoped list probe without claiming production readiness", async () => {
+Deno.test("Papermark adapter health does not infer identity or scope ownership from a folder list", async () => {
   const fake = new FetchFake();
   const adapter = new PapermarkIntegrationAdapter(config(), dependencies(fake));
   const health = await adapter.checkHealth();
   assertEquals(health.environment, "local-development");
-  assertEquals(health.state, "healthy");
-  assertEquals(health.checks.every(({ state }) => state === "passed"), true);
+  assertEquals(health.state, "unavailable");
+  assertEquals(
+    health.checks.find(({ name }) => name === "credentials")?.state,
+    "unavailable",
+  );
+  assertEquals(
+    health.checks.find(({ name }) => name === "scope-isolation")?.state,
+    "unavailable",
+  );
   assertEquals(fake.calls.length, 1);
 });
 

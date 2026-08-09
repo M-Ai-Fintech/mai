@@ -202,6 +202,70 @@ Deno.test("secret references reject values and preserve locator metadata only", 
   );
 });
 
+Deno.test("secret references enforce manager-specific locator shapes", () => {
+  assertThrows(
+    () =>
+      parseSecretReference({
+        manager: "environment",
+        name: "papermark_token",
+      }),
+    Error,
+    "uppercase environment-variable",
+  );
+  assertThrows(
+    () =>
+      parseSecretReference({
+        manager: "vault",
+        name: "raw-secret-value",
+      }),
+    Error,
+    "bounded path locator",
+  );
+  assertEquals(
+    parseSecretReference({
+      manager: "local-secret-store",
+      name: "papermark/token",
+    }),
+    { manager: "local-secret-store", name: "papermark/token" },
+  );
+});
+
+Deno.test("nested credential values are rejected before canonical configuration output", () => {
+  const secret = "nested-secret-must-not-be-retained";
+  for (
+    const configuration of [
+      {
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "http://localhost:3000/api",
+        secretRef: {
+          manager: "environment",
+          name: "PAPER_MARK_SECRET",
+          value: secret,
+        },
+        activation: activation(),
+      },
+      {
+        provider: "papermark",
+        lifecycle: "enabled",
+        environment: "local-development",
+        endpoint: "http://localhost:3000/api",
+        secretRef: { manager: "environment", name: "PAPER_MARK_SECRET" },
+        activation: { ...activation(), credentials: { value: secret } },
+      },
+    ]
+  ) {
+    try {
+      parseProviderConfiguration(configuration);
+      throw new Error("Expected nested credential input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes(secret), false);
+      assertEquals(String(error).includes("inline credential"), true);
+    }
+  }
+});
+
 Deno.test("enabled Papermark requires every owner-approved activation field", () => {
   for (const field of Object.keys(activation())) {
     const incomplete = { ...activation() } as Record<string, string>;

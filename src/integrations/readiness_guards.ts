@@ -13,6 +13,11 @@ export interface CoordinatorAuthorization {
   readonly [coordinatorAuthorizationBrand]: "coordinator";
 }
 
+/**
+ * Checks a coordinator-issued, claim-bound authorization marker.
+ *
+ * @example hasCoordinatorAuthorization(undefined)
+ */
 export function hasCoordinatorAuthorization(value: unknown): boolean {
   if (!isRecord(value)) return false;
   const candidate = value as Partial<CoordinatorAuthorization>;
@@ -21,6 +26,11 @@ export function hasCoordinatorAuthorization(value: unknown): boolean {
     /^[A-Za-z0-9._-]{1,128}$/.test(candidate.authorizationReference);
 }
 
+/**
+ * Rejects readiness targets that contradict provider lifecycle ownership.
+ *
+ * @example assertReadinessProviderTarget("fixture", "fixture", "enabled")
+ */
 export function assertReadinessProviderTarget(
   provider: IntegrationProvider,
   target: IntegrationEnvironment,

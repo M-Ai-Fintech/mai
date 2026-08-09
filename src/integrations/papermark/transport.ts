@@ -4,6 +4,7 @@ import {
   type SecretReference,
   type SecretResolver,
 } from "../contracts.ts";
+import { integrationFailureMessage } from "../failures.ts";
 import type { PapermarkAdapterConfig } from "./config.ts";
 
 const RETRYABLE_CODES = new Set<IntegrationFailureCode>([
@@ -41,7 +42,7 @@ export class PapermarkTransportFailure extends Error {
     readonly providerRequestId?: string;
     readonly retryAfterMs?: number;
   }) {
-    super(safeMessage(input.code));
+    super(integrationFailureMessage(input.code));
     this.name = "PapermarkTransportFailure";
     this.code = input.code;
     this.status = input.status;
@@ -89,15 +90,18 @@ export class PapermarkTransport {
     }
   }
 
-  private async resolveSecret(): Promise<RuntimeSecret> {
+  private async resolveSecret(signal: AbortSignal): Promise<RuntimeSecret> {
     const reference = this.config.configuration.secretRef as SecretReference;
+    if (signal.aborted) throw timeoutFailure();
     try {
-      const secret = await this.secretResolver.resolve(reference);
+      const secret = await this.secretResolver.resolve(reference, signal);
+      if (signal.aborted) throw timeoutFailure();
       if (typeof secret === "string" && secret.trim()) return secret;
     } catch {
+      if (signal.aborted) throw timeoutFailure();
       // Secret resolver failures must not cross the adapter seam.
     }
-    throw new PapermarkTransportFailure({ code: "NOT_CONFIGURED" });
+    throw notConfiguredFailure();
   }
 
   private requestPage(cursor: string | undefined): Promise<unknown> {
@@ -105,7 +109,7 @@ export class PapermarkTransport {
     let response: Response | undefined;
     return this.withTimeout(
       async () => {
-        const token = await this.resolveSecret();
+        const token = await this.resolveSecret(controller.signal);
         response = await this.fetchPage(token, cursor, controller.signal);
         if (!response.ok) throw responseFailure(response);
         return await this.parseJson(response, controller.signal);
@@ -120,6 +124,7 @@ export class PapermarkTransport {
     cursor: string | undefined,
     signal: AbortSignal,
   ): Promise<Response> {
+    if (signal.aborted) throw timeoutFailure();
     const url = new URL(
       `${trimTrailingSlash(this.config.configuration.endpoint!)}/v1/documents`,
     );
@@ -130,6 +135,7 @@ export class PapermarkTransport {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     });
+    if (signal.aborted) throw timeoutFailure();
     return this.dependencies.fetch(url.toString(), {
       method: "GET",
       headers,
@@ -248,23 +254,12 @@ function safeRetryAfter(value: number | undefined): number | undefined {
   return value;
 }
 
-function safeMessage(code: IntegrationFailureCode): string {
-  const messages: Record<IntegrationFailureCode, string> = {
-    AUTHENTICATION_FAILED: "The provider rejected the configured credentials.",
-    AUTHORIZATION_DENIED: "The provider denied the requested operation.",
-    NOT_CONFIGURED: "The provider is not configured.",
-    DISABLED: "The provider adapter is disabled.",
-    DEFERRED: "The provider adapter is deferred.",
-    INVALID_REQUEST: "The provider rejected the request shape.",
-    MALFORMED_RESPONSE: "The provider returned a malformed response.",
-    NOT_FOUND: "The provider resource was not found.",
-    TIMEOUT: "The provider operation timed out.",
-    RATE_LIMITED: "The provider rate limited the operation.",
-    UNAVAILABLE: "The provider is unavailable.",
-    RETRY_EXHAUSTED: "Provider operation retries were exhausted.",
-    UNKNOWN: "The provider operation failed.",
-  };
-  return messages[code];
+function timeoutFailure(): PapermarkTransportFailure {
+  return new PapermarkTransportFailure({ code: "TIMEOUT" });
+}
+
+function notConfiguredFailure(): PapermarkTransportFailure {
+  return new PapermarkTransportFailure({ code: "NOT_CONFIGURED" });
 }
 
 function isAbortError(error: unknown): boolean {

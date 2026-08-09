@@ -122,6 +122,37 @@ Deno.test("Papermark configuration rejects inline bearer material", () => {
   );
 });
 
+Deno.test("Papermark configuration canonicalizes nested secret and activation input", () => {
+  const secret = "nested-secret-must-not-be-retained";
+  const secretRefInput = {
+    ...validInput(),
+    configuration: {
+      ...providerConfiguration(),
+      secretRef: {
+        manager: "environment",
+        name: "PAPERMARK_BEARER_TOKEN",
+        value: secret,
+      },
+    } as never,
+  };
+  const activationInput = {
+    ...validInput(),
+    configuration: {
+      ...providerConfiguration(),
+      activation: { ...activation(), credentials: { value: secret } },
+    } as never,
+  };
+  for (const input of [secretRefInput, activationInput]) {
+    try {
+      parsePapermarkAdapterConfig(input);
+      throw new Error("Expected nested credential input to be rejected.");
+    } catch (error) {
+      assertEquals(String(error).includes(secret), false);
+      assertEquals(String(error).includes("inline credential"), true);
+    }
+  }
+});
+
 Deno.test("Papermark configuration enforces bounded request policy", () => {
   const input = { ...validInput(), timeoutMs: 0 };
   assertThrows(

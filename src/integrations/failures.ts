@@ -28,6 +28,17 @@ const SAFE_MESSAGES: Record<IntegrationFailureCode, string> = {
   UNKNOWN: "The provider operation failed.",
 };
 
+/**
+ * Returns the redacted message for a normalized integration failure code.
+ *
+ * @example integrationFailureMessage("TIMEOUT")
+ */
+export function integrationFailureMessage(
+  code: IntegrationFailureCode,
+): string {
+  return SAFE_MESSAGES[code];
+}
+
 export interface NormalizeIntegrationFailureInput {
   readonly provider: IntegrationProvider;
   readonly operation: string;
@@ -61,7 +72,7 @@ export function createNormalizedIntegrationFailure(
     code,
     provider: input.provider,
     operation: input.operation,
-    message: SAFE_MESSAGES[code],
+    message: integrationFailureMessage(code),
     retryable: RETRYABLE_CODES.has(code),
     occurredAt: new Date(input.occurredAt ?? Date.now()),
     ...(input.providerRequestId === undefined ? {} : {
