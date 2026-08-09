@@ -26,7 +26,7 @@ Deno.test("public integration seam exposes selection and readiness contracts", a
       dealId: "deal_horizon",
     }),
     connectorAccountId: "connector-1",
-    providerWorkspaceId: "provider-workspace-1",
+    providerResourceId: "provider-workspace-1",
     factories: {},
   });
 

@@ -7,6 +7,7 @@ import {
 const ACTIVATION_KEYS = new Set([
   "approvalReference",
   "providerVersion",
+  "apiScopes",
   "license",
   "deploymentModel",
   "region",
@@ -28,6 +29,7 @@ const APPROVED_DEPLOYMENTS = new Set([
 export interface OwnerApprovedActivation {
   readonly approvalReference: string;
   readonly providerVersion: string;
+  readonly apiScopes: readonly string[];
   readonly license: string;
   readonly deploymentModel: string;
   readonly region: string;
@@ -38,7 +40,7 @@ export interface OwnerApprovedActivation {
 /**
  * Parses credential-free owner approval metadata for an enabled provider.
  *
- * @example parseOwnerApprovedActivation({ approvalReference: "approval_papermark_local", providerVersion: "papermark-v1.0.0", license: "AGPLv3", deploymentModel: "self-hosted", region: "local", storageTopology: "postgres-object-store", rollbackOperator: "platform-on-call" })
+ * @example parseOwnerApprovedActivation({ approvalReference: "approval_papermark_local", providerVersion: "papermark-v1.0.0", apiScopes: ["datarooms.read"], license: "AGPLv3", deploymentModel: "self-hosted", region: "local", storageTopology: "postgres-object-store", rollbackOperator: "platform-on-call" })
  */
 export function parseOwnerApprovedActivation(
   value: unknown,
@@ -48,9 +50,33 @@ export function parseOwnerApprovedActivation(
   assertKnownKeys(value, ACTIVATION_KEYS, "provider activation");
   return Object.freeze({
     ...parseActivationApproval(value),
+    apiScopes: parseApiScopes(value.apiScopes),
     ...parseActivationDeployment(value),
     ...parseActivationRollback(value),
   });
+}
+
+function parseApiScopes(value: unknown): readonly string[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 32) {
+    throw new Error(
+      "Provider activation API scopes are invalid; expected one to thirty-two documented scope names; value=<redacted>.",
+    );
+  }
+  const scopes = value.map((scope) => {
+    if (
+      typeof scope !== "string" ||
+      scope.length === 0 ||
+      scope.length > 128 ||
+      !/^[a-z][a-z0-9_.:-]*$/.test(scope) ||
+      looksCredentialLike(scope)
+    ) {
+      throw new Error(
+        "Provider activation API scope is invalid; expected a credential-free documented scope name; value=<redacted>.",
+      );
+    }
+    return scope;
+  });
+  return Object.freeze([...new Set(scopes)]);
 }
 
 function parseActivationField(

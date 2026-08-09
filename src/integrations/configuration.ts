@@ -183,6 +183,11 @@ function assertEnabledPapermark(configuration: ProviderConfiguration): void {
     );
   }
   parseOwnerApprovedActivation(configuration.activation);
+  if (!configuration.activation.apiScopes.includes("datarooms.read")) {
+    throw new Error(
+      "Papermark enabled configuration is missing the datarooms.read API scope; expected documented data-room read authorization in activation evidence; value=<redacted>.",
+    );
+  }
   assertPapermarkEndpointForEnvironment(
     configuration.endpoint,
     configuration.environment,

@@ -140,7 +140,7 @@ function conformancePlan(): FixtureConformancePlan {
   return {
     scope: integrationScope(),
     connectorAccountId: "connector_fixture",
-    providerWorkspaceId: "room_fixture",
+    providerResourceId: "room_fixture",
     pages: [
       {
         cursor: undefined,
@@ -171,7 +171,7 @@ class DeterministicFixtureAdapter implements IntegrationAdapter {
   readonly lifecycle = "enabled" as const;
   readonly scope = integrationScope();
   readonly connectorAccountId = "connector_fixture";
-  readonly providerWorkspaceId = "room_fixture";
+  readonly providerResourceId = "room_fixture";
   readonly documents = new FixtureDocumentPort();
 
   discoverCapabilities(): Promise<CapabilitySnapshot> {
@@ -227,7 +227,7 @@ class NonFixtureAdapter implements IntegrationAdapter {
   readonly lifecycle = "enabled" as const;
   readonly scope = integrationScope();
   readonly connectorAccountId = "connector_papermark";
-  readonly providerWorkspaceId = "room_fixture";
+  readonly providerResourceId = "room_fixture";
   readonly documents = new FixtureDocumentPort();
 
   discoverCapabilities(): Promise<CapabilitySnapshot> {
@@ -266,7 +266,7 @@ class FixtureDocumentPort implements ScopedDocumentPort {
 
   listDocuments(request: {
     readonly scope: IntegrationScope;
-    readonly providerWorkspaceId: string;
+    readonly providerResourceId: string;
     readonly cursor?: string;
   }): Promise<IntegrationResult<ProviderDocumentPage>> {
     this.listCalls.push(request.cursor);
@@ -291,7 +291,7 @@ class FixtureDocumentPort implements ScopedDocumentPort {
 
   downloadDocument(request: {
     readonly scope: IntegrationScope;
-    readonly providerWorkspaceId: string;
+    readonly providerResourceId: string;
     readonly providerDocumentId: string;
   }): Promise<IntegrationResult<IntegrationByteSource>> {
     this.downloadCalls.push(request.providerDocumentId);

@@ -76,7 +76,7 @@ export class PapermarkTransport {
   }
 
   /**
-   * Fetches one official Papermark document page using the bound folder.
+   * Fetches one official Papermark dataroom document page using both bindings.
    *
    * @example await transport.getDocumentsPage(undefined)
    */
@@ -150,9 +150,11 @@ export class PapermarkTransport {
   ): Promise<Response> {
     if (signal.aborted) throw timeoutFailure();
     const url = new URL(
-      `${trimTrailingSlash(this.config.configuration.endpoint!)}/v1/documents`,
+      `${trimTrailingSlash(this.config.configuration.endpoint!)}/v1/datarooms/${
+        encodeURIComponent(this.config.binding.dataRoomId)
+      }/documents`,
     );
-    url.searchParams.set("folderId", this.config.binding.folderId);
+    url.searchParams.set("folder_id", this.config.binding.dataRoomFolderId);
     url.searchParams.set("limit", String(this.config.pageSize));
     if (cursor !== undefined) url.searchParams.set("cursor", cursor);
     const headers = new Headers({

@@ -301,7 +301,7 @@ Deno.test("nested credential values are rejected before canonical configuration 
 
 Deno.test("enabled Papermark requires every owner-approved activation field", () => {
   for (const field of Object.keys(activation())) {
-    const incomplete = { ...activation() } as Record<string, string>;
+    const incomplete = { ...activation() } as Record<string, unknown>;
     delete incomplete[field];
     assertThrows(
       () =>
@@ -375,7 +375,7 @@ Deno.test("Papermark endpoint environment mismatches are rejected without echoin
         activation: activation(),
       }),
     Error,
-    "localhost",
+    "loopback",
   );
   assertThrows(
     () =>
@@ -401,7 +401,7 @@ Deno.test("Papermark endpoint environment mismatches are rejected without echoin
         activation: activation(),
       }),
     Error,
-    "localhost",
+    "loopback",
   );
 });
 
@@ -409,6 +409,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

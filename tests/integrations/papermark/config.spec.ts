@@ -46,8 +46,12 @@ function validInput(
       provider: "papermark",
       tenantId: scope.tenantId,
     },
-    providerWorkspaceId: "papermark_workspace_horizon",
-    folderId: "folder_horizon",
+    providerAccount: {
+      accountId: "account_papermark",
+      teamId: "team_papermark",
+    },
+    dataRoomId: "dataroom_horizon",
+    dataRoomFolderId: "folder_horizon",
     pageSize: 50,
     timeoutMs: 1_000,
     retry: { maxAttempts: 3, maxDelayMs: 250 },
@@ -58,7 +62,8 @@ Deno.test("Papermark configuration requires explicit scoped provider metadata", 
   const configuration = parsePapermarkAdapterConfig(validInput());
   assertEquals(configuration.provider, "papermark");
   assertEquals(configuration.binding.scope, scope);
-  assertEquals(configuration.binding.folderId, "folder_horizon");
+  assertEquals(configuration.binding.dataRoomId, "dataroom_horizon");
+  assertEquals(configuration.binding.dataRoomFolderId, "folder_horizon");
   assertEquals(configuration.pageSize, 50);
   assertEquals(configuration.retry.maxAttempts, 3);
 });
@@ -87,7 +92,7 @@ Deno.test("Papermark configuration rejects the legacy hosted endpoint", () => {
   assertThrows(
     () => parsePapermarkAdapterConfig(validInput("https://api.papermark.io")),
     Error,
-    "localhost",
+    "loopback",
   );
 });
 
@@ -224,9 +229,9 @@ Deno.test("Papermark configuration canonicalizes nested secret and activation in
 Deno.test("Papermark binding locators reject credential-shaped values safely", () => {
   const secret = "sk_live_papermark_binding_secret_123456789";
   const cases = [
-    { ...validInput(), providerWorkspaceId: secret },
-    { ...validInput(), folderId: secret },
-    { ...validInput(), providerWorkspaceId: "workspace-secret-value" },
+    { ...validInput(), dataRoomId: secret },
+    { ...validInput(), dataRoomFolderId: secret },
+    { ...validInput(), dataRoomId: "dataroom-secret-value" },
     {
       ...validInput(),
       connectorAccount: {
@@ -275,6 +280,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

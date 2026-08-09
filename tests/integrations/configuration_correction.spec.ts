@@ -101,6 +101,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

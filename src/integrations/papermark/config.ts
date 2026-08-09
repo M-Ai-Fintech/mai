@@ -14,13 +14,15 @@ const ADAPTER_CONFIG_KEYS = new Set([
   "configuration",
   "scope",
   "connectorAccount",
-  "providerWorkspaceId",
-  "folderId",
+  "providerAccount",
+  "dataRoomId",
+  "dataRoomFolderId",
   "pageSize",
   "timeoutMs",
   "retry",
 ]);
 const CONNECTOR_ACCOUNT_KEYS = new Set(["id", "provider", "tenantId"]);
+const PROVIDER_ACCOUNT_KEYS = new Set(["accountId", "teamId"]);
 const SCOPE_KEYS = new Set(["tenantId", "workspaceId", "dealId"]);
 const RETRY_POLICY_KEYS = new Set(["maxAttempts", "maxDelayMs"]);
 const CREDENTIAL_PREFIX =
@@ -32,11 +34,17 @@ export interface PapermarkConnectorBinding {
   readonly tenantId: IntegrationScope["tenantId"];
 }
 
+export interface PapermarkProviderAccountBinding {
+  readonly accountId: string;
+  readonly teamId: string;
+}
+
 export interface PapermarkScopeBinding {
   readonly scope: IntegrationScope;
   readonly connectorAccount: PapermarkConnectorBinding;
-  readonly providerWorkspaceId: string;
-  readonly folderId: string;
+  readonly providerAccount: PapermarkProviderAccountBinding;
+  readonly dataRoomId: string;
+  readonly dataRoomFolderId: string;
 }
 
 export interface PapermarkRetryPolicy {
@@ -57,8 +65,9 @@ export interface PapermarkAdapterConfigInput {
   readonly configuration: ProviderConfiguration;
   readonly scope: IntegrationScope;
   readonly connectorAccount: PapermarkConnectorBinding;
-  readonly providerWorkspaceId: string;
-  readonly folderId: string;
+  readonly providerAccount: PapermarkProviderAccountBinding;
+  readonly dataRoomId: string;
+  readonly dataRoomFolderId: string;
   readonly pageSize?: number;
   readonly timeoutMs?: number;
   readonly retry?: Partial<PapermarkRetryPolicy>;
@@ -67,7 +76,7 @@ export interface PapermarkAdapterConfigInput {
 /**
  * Validates explicit Papermark endpoint, scope, and bounded request settings.
  *
- * @example parsePapermarkAdapterConfig({ configuration, scope, connectorAccount, providerWorkspaceId: "workspace-room", folderId: "folder-1" })
+ * @example parsePapermarkAdapterConfig({ configuration, scope, connectorAccount, providerAccount: { accountId: "account_papermark", teamId: "team_papermark" }, dataRoomId: "dataroom_horizon", dataRoomFolderId: "folder_1" })
  */
 export function parsePapermarkAdapterConfig(
   input: PapermarkAdapterConfigInput,
@@ -105,16 +114,28 @@ function parsePapermarkBinding(
 ): PapermarkScopeBinding {
   const scope = parsePapermarkScope(value.scope);
   const connectorAccount = parseConnectorAccount(value.connectorAccount, scope);
-  const providerWorkspaceId = parseLocator(
-    value.providerWorkspaceId,
-    "provider workspace ID",
+  const providerAccount = parseProviderAccount(value.providerAccount);
+  const dataRoomId = parseLocator(value.dataRoomId, "Papermark data-room ID");
+  const dataRoomFolderId = parseLocator(
+    value.dataRoomFolderId,
+    "Papermark data-room folder ID",
   );
-  const folderId = parseLocator(value.folderId, "Papermark folder ID");
   return Object.freeze({
     scope,
     connectorAccount,
-    providerWorkspaceId,
-    folderId,
+    providerAccount,
+    dataRoomId,
+    dataRoomFolderId,
+  });
+}
+
+function parseProviderAccount(value: unknown): PapermarkProviderAccountBinding {
+  assertRecord(value, "Papermark provider account");
+  rejectInlineCredentialKeys(value);
+  assertKnownKeys(value, PROVIDER_ACCOUNT_KEYS, "Papermark provider account");
+  return Object.freeze({
+    accountId: parseLocator(value.accountId, "Papermark provider account ID"),
+    teamId: parseLocator(value.teamId, "Papermark provider team ID"),
   });
 }
 
@@ -241,7 +262,7 @@ function parseLocator(value: unknown, label: string): string {
     value.length > 0 &&
     value.length <= 255 &&
     value.trim() === value &&
-    !/\s/.test(value) &&
+    /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value) &&
     !looksCredentialLike(value)
   ) return value;
   throw new Error(

@@ -2,15 +2,18 @@ import {
   type RuntimeSecret,
   type SecretReference,
   type SecretResolver,
-} from "../contracts.ts";
+} from "../../../../src/integrations/contracts.ts";
 import type {
   PapermarkSyntheticFetchCall,
   PapermarkSyntheticSecretCall,
   PapermarkSyntheticSecretScript,
-} from "./authorization.ts";
-import { type PapermarkFetch, type PapermarkTimer } from "./transport.ts";
+} from "./synthetic_test_bundle.ts";
+import {
+  type PapermarkFetch,
+  type PapermarkTimer,
+} from "../../../../src/integrations/papermark/transport.ts";
 
-/** @internal Closed-bundle secret fake; not a public provider dependency. */
+/** Closed-bundle secret fake; not a production provider dependency. */
 export class SecretResolverFake implements SecretResolver {
   readonly calls: PapermarkSyntheticSecretCall[] = [];
   private readonly pending: Array<(secret: RuntimeSecret) => void> = [];
@@ -39,7 +42,7 @@ export class SecretResolverFake implements SecretResolver {
   }
 }
 
-/** @internal Closed-bundle fetch fake; it never delegates to global fetch. */
+/** Closed-bundle fetch fake; it never delegates to global fetch. */
 export class FetchFake {
   readonly calls: PapermarkSyntheticFetchCall[] = [];
   private readonly queue: Array<Response | Error>;
@@ -63,7 +66,7 @@ export class FetchFake {
   };
 }
 
-/** @internal Closed-bundle sleep fake that records retry delays. */
+/** Closed-bundle sleep fake that records retry delays. */
 export class SleepFake {
   readonly delays: number[] = [];
 
@@ -73,7 +76,7 @@ export class SleepFake {
   };
 }
 
-/** @internal Closed-bundle clock fake returning one defensive fixed time. */
+/** Closed-bundle clock fake returning one defensive fixed time. */
 export class ClockFake {
   calls = 0;
   private readonly fixedTime: number;
@@ -88,7 +91,7 @@ export class ClockFake {
   };
 }
 
-/** @internal Closed-bundle timer fake with explicit manual firing. */
+/** Closed-bundle timer fake with explicit manual firing. */
 export class TimerFake implements PapermarkTimer {
   readonly delays: number[] = [];
   private nextHandle = 1;

@@ -1,5 +1,26 @@
 import type { IntegrationEnvironment } from "./contracts.ts";
 
+export const APPROVED_LOCAL_PAPERMARK_ENDPOINTS = Object.freeze([
+  Object.freeze({
+    protocol: "http:",
+    hostname: "localhost",
+    port: "3000",
+    path: "/api",
+  }),
+  Object.freeze({
+    protocol: "http:",
+    hostname: "127.0.0.1",
+    port: "3000",
+    path: "/api",
+  }),
+  Object.freeze({
+    protocol: "http:",
+    hostname: "[::1]",
+    port: "3000",
+    path: "/api",
+  }),
+]);
+
 /**
  * Validates Papermark's environment-specific endpoint allow-list.
  *
@@ -15,7 +36,7 @@ export function assertPapermarkEndpointForEnvironment(
   const isHosted = isHostedPapermarkEndpoint(parsed, path);
   if (environment === "local-development" && !isLocal) {
     throw new Error(
-      "Papermark local-development requires the approved localhost endpoint; hosted provider URLs are not permitted.",
+      "Papermark local-development requires an owner-approved loopback endpoint; hosted or arbitrary provider URLs are not permitted; value=<redacted>.",
     );
   }
   if (environment === "sandbox-certification" && !isHosted) {
@@ -46,8 +67,11 @@ function parsePapermarkEndpoint(endpoint: string): URL {
 }
 
 function isLocalPapermarkEndpoint(parsed: URL, path: string): boolean {
-  return parsed.protocol === "http:" && parsed.hostname === "localhost" &&
-    parsed.port === "3000" && path === "/api";
+  return APPROVED_LOCAL_PAPERMARK_ENDPOINTS.some((candidate) =>
+    candidate.protocol === parsed.protocol &&
+    candidate.hostname === parsed.hostname &&
+    candidate.port === parsed.port && candidate.path === path
+  );
 }
 
 function isHostedPapermarkEndpoint(parsed: URL, path: string): boolean {

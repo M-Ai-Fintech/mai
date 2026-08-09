@@ -25,7 +25,7 @@ Deno.test("configured Papermark selection fails closed before factory authority 
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: {
       papermark: () => {
@@ -46,7 +46,7 @@ Deno.test("fixture selection is explicit and is labeled synthetic", async () => 
     provider: "fixture",
     scope: integrationScope(),
     connectorAccountId: "connector_fixture",
-    providerWorkspaceId: "room_fixture",
+    providerResourceId: "room_fixture",
     factories: {
       fixture: () => {
         fixtureCalls += 1;
@@ -70,7 +70,7 @@ Deno.test("an unconfigured real provider never invokes the fixture factory", asy
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     factories: {
       papermark: () => new RecordingAdapter("papermark", "local-development"),
       fixture: () => {
@@ -92,7 +92,7 @@ Deno.test("iDeals and Intralinks remain deferred without factory or network call
       provider,
       scope: integrationScope(),
       connectorAccountId: `connector_${provider}`,
-      providerWorkspaceId: "room_deferred",
+      providerResourceId: "room_deferred",
       configuration: parseProviderConfiguration({
         provider,
         lifecycle: "deferred",
@@ -122,7 +122,7 @@ Deno.test("disabled Papermark is blocked without constructing an adapter", async
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_disabled",
+    providerResourceId: "room_disabled",
     configuration: parseProviderConfiguration({
       provider: "papermark",
       lifecycle: "disabled",
@@ -148,7 +148,7 @@ Deno.test("configured Papermark never invokes real or fixture factories without 
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: {
       papermark: () => {
@@ -180,7 +180,7 @@ Deno.test("hosted sandbox and localhost Papermark configs cannot invoke a factor
       provider: "papermark",
       scope: integrationScope(),
       connectorAccountId: "connector_papermark",
-      providerWorkspaceId: "room_local",
+      providerResourceId: "room_local",
       configuration: papermarkConfiguration(endpoint, environment),
       factories: {
         papermark: () => {
@@ -217,7 +217,7 @@ Deno.test("nested configuration credentials are rejected before factory invocati
       provider: "papermark",
       scope: integrationScope(),
       connectorAccountId: "connector_papermark",
-      providerWorkspaceId: "room_local",
+      providerResourceId: "room_local",
       configuration: configuration as never,
       factories: {
         papermark: () => {
@@ -245,7 +245,7 @@ Deno.test("binding validation rejects missing connector or provider workspace be
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: " ",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: { papermark: factory },
   });
@@ -254,7 +254,7 @@ Deno.test("binding validation rejects missing connector or provider workspace be
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "",
+    providerResourceId: "",
     configuration: papermarkConfiguration(),
     factories: { papermark: factory },
   });
@@ -270,7 +270,7 @@ Deno.test("selected operation failure remains a real-provider failure", async ()
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: {
       papermark: () => new RecordingAdapter("papermark", "local-development"),
@@ -306,7 +306,7 @@ Deno.test("selection rejects adapters returning a different binding", async () =
     provider: "papermark",
     scope: integrationScope(),
     connectorAccountId: "connector_papermark",
-    providerWorkspaceId: "room_local",
+    providerResourceId: "room_local",
     configuration: papermarkConfiguration(),
     factories: {
       papermark: () =>
@@ -359,6 +359,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",
@@ -388,7 +389,7 @@ class RecordingAdapter implements IntegrationAdapter {
       | "sandbox-certification",
     scope = integrationScope(),
     readonly connectorAccountId = `connector_${provider}`,
-    readonly providerWorkspaceId = provider === "fixture"
+    readonly providerResourceId = provider === "fixture"
       ? "room_fixture"
       : "room_local",
   ) {

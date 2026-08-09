@@ -18,7 +18,7 @@ import {
 } from "../../../src/integrations/contracts.ts";
 import {
   createPapermarkSyntheticTestBundle,
-} from "../../../src/integrations/papermark/synthetic_test_bundle.ts";
+} from "./support/synthetic_test_bundle.ts";
 import { PapermarkTransport } from "../../../src/integrations/papermark/transport.ts";
 
 const scope = parseIntegrationScope({
@@ -41,12 +41,13 @@ class FetchFake {
 
 function documentPayload(): Record<string, unknown> {
   return {
-    id: "provider_doc_1",
-    name: "Contract.pdf",
+    id: "dataroom_membership_1",
+    object: "dataroom_document",
+    document_id: "provider_doc_1",
+    document_name: "Contract.pdf",
     content_type: "application/pdf",
     folder_id: "folder_horizon",
     created: "2026-08-08T11:00:00.000Z",
-    updated_at: "2026-08-08T11:30:00.000Z",
   };
 }
 
@@ -69,8 +70,12 @@ function config(folderId = "folder_horizon") {
       provider: "papermark",
       tenantId: scope.tenantId,
     },
-    providerWorkspaceId: "papermark_workspace_horizon",
-    folderId,
+    providerAccount: {
+      accountId: "account_papermark",
+      teamId: "team_papermark",
+    },
+    dataRoomId: "dataroom_horizon",
+    dataRoomFolderId: folderId,
     pageSize: 50,
     timeoutMs: 1_000,
     retry: { maxAttempts: 1, maxDelayMs: 250 },
@@ -100,12 +105,13 @@ Deno.test("Papermark adapter maps the official page into both public seams", asy
 
   const neutralPage = await neutral.documents.listDocuments({
     scope,
-    providerWorkspaceId: "papermark_workspace_horizon",
+    providerResourceId: "dataroom_horizon",
   });
   assertEquals(neutralPage.ok, true);
   if (neutralPage.ok) {
     assertEquals(neutralPage.value.documents[0], {
       providerDocumentId: "provider_doc_1",
+      providerDataRoomDocumentId: "dataroom_membership_1",
       name: "Contract.pdf",
       mimeType: "application/pdf",
       providerFolderId: "folder_horizon",
@@ -114,7 +120,7 @@ Deno.test("Papermark adapter maps the official page into both public seams", asy
   }
 
   const sourcePage = await provider.listDocuments({
-    providerWorkspaceId: "papermark_workspace_horizon",
+    providerWorkspaceId: "dataroom_horizon",
   });
   assertEquals(sourcePage.documents[0].providerDocumentId, "provider_doc_1");
   assertEquals(sourcePage.documents[0].mimeType, "application/pdf");
@@ -142,7 +148,7 @@ Deno.test("Papermark adapter advertises list-only capability and gates binary do
 
   const result = await adapter.documents.downloadDocument({
     scope,
-    providerWorkspaceId: "papermark_workspace_horizon",
+    providerResourceId: "dataroom_horizon",
     providerDocumentId: "provider_doc_1",
   });
   assertEquals(result.ok, false);
@@ -176,7 +182,7 @@ Deno.test("Papermark adapter rejects a scope or workspace mismatch before fetch"
       workspaceId: "workspace_horizon",
       dealId: "deal_horizon",
     }),
-    providerWorkspaceId: "papermark_workspace_horizon",
+    providerResourceId: "dataroom_horizon",
   });
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.failure.code, "INVALID_REQUEST");
@@ -318,7 +324,7 @@ Deno.test("Papermark adapter rejects provider documents from another folder", as
   const adapter = new PapermarkIntegrationAdapter(config(), dependencies(fake));
   const result = await adapter.documents.listDocuments({
     scope,
-    providerWorkspaceId: "papermark_workspace_horizon",
+    providerResourceId: "dataroom_horizon",
   });
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.failure.code, "MALFORMED_RESPONSE");
@@ -330,7 +336,7 @@ Deno.test("Papermark Documents port never reflects the bearer secret in failures
   const provider = new PapermarkAdapter(config(), dependencies(fake));
   const error = await captureError(() =>
     provider.listDocuments({
-      providerWorkspaceId: "papermark_workspace_horizon",
+      providerWorkspaceId: "dataroom_horizon",
     })
   );
   assert(!error.message.includes(String(secret)));
@@ -350,6 +356,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",

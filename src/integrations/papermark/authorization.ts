@@ -1,387 +1,308 @@
-import {
-  type IntegrationEnvironment,
-  type IntegrationScope,
-  sameIntegrationScope,
-  type SecretReference,
-  type SecretResolver,
-} from "../contracts.ts";
+import type {
+  ActorReference,
+  AuthorizationDecision,
+  AuthorizationRequest,
+} from "../../platform/authz/v1.ts";
+import { resourceKind } from "../../platform/authz/v1.ts";
+import type { RequestContext } from "../../shared/contracts/request_context.ts";
+import type { IntegrationScope } from "../contracts.ts";
 import type { PapermarkAdapterConfig } from "./config.ts";
 import { type PapermarkFetch, type PapermarkTimer } from "./transport.ts";
-import {
-  ClockFake,
-  FetchFake,
-  SecretResolverFake,
-  SleepFake,
-  TimerFake,
-} from "./synthetic_fakes.ts";
 
 const callAuthorizationBrand: unique symbol = Symbol(
   "papermark-call-authorization",
 );
 const claimRegistry = new WeakMap<object, PapermarkCallClaim>();
-const DEFAULT_TEST_TIME = "2026-08-08T12:00:00.000Z";
 
 export type PapermarkCallAuthorization = {
   readonly [callAuthorizationBrand]: true;
 };
 
 export interface PapermarkCallDependencies {
-  readonly secretResolver: SecretResolver;
+  readonly secretResolver: {
+    resolve(
+      reference: import("../contracts.ts").SecretReference,
+      signal?: AbortSignal,
+    ): Promise<import("../contracts.ts").RuntimeSecret>;
+  };
   readonly fetch: PapermarkFetch;
   readonly sleep: (delayMs: number) => Promise<void>;
   readonly now: () => Date;
   readonly timer: PapermarkTimer;
 }
 
-export type PapermarkSyntheticSecretMode =
-  | "immediate"
-  | "stalled"
-  | "delayed";
-
-export interface PapermarkSyntheticSecretScript {
-  readonly mode?: PapermarkSyntheticSecretMode;
-  readonly value?: string;
+export interface PapermarkAuthorizationState {
+  readonly request: PapermarkAuthorizationRequest;
+  readonly decision: AuthorizationDecision;
 }
 
-export interface PapermarkSyntheticTestBundleOptions {
-  readonly secret?: string | PapermarkSyntheticSecretScript;
-  readonly secretMode?: PapermarkSyntheticSecretMode;
-  readonly responses?: readonly (Response | Error)[];
-  readonly responseQueue?: readonly (Response | Error)[];
-  readonly now?: Date | string;
+export interface PapermarkAuthorizationRequest extends AuthorizationRequest {
+  readonly capability: "list_documents";
+  readonly connectorAccountId: string;
+  readonly providerAccountId: string;
+  readonly providerTeamId: string;
+  readonly dataRoomId: string;
+  readonly dataRoomFolderId: string;
 }
 
-export interface PapermarkSyntheticSecretCall {
-  readonly reference: SecretReference;
-  readonly signal?: AbortSignal;
-}
-
-export interface PapermarkSyntheticFetchCall {
-  readonly url: string;
-  readonly init: RequestInit;
-}
-
-export interface PapermarkSyntheticTestControls {
-  readonly secret: {
-    readonly calls: readonly PapermarkSyntheticSecretCall[];
-    release(): void;
-  };
-  readonly fetch: {
-    readonly calls: readonly PapermarkSyntheticFetchCall[];
-  };
-  readonly sleep: {
-    readonly delays: readonly number[];
-  };
-  readonly clock: {
-    readonly calls: number;
-  };
-  readonly timer: {
-    readonly delays: readonly number[];
-    fire(): void;
-  };
-}
-
-export interface PapermarkSyntheticTestBundle {
-  readonly dependencies: PapermarkCallDependencies & {
-    readonly authorization: PapermarkCallAuthorization;
-  };
-  readonly controls: PapermarkSyntheticTestControls;
-}
-
-/**
- * Builds the only synthetic Papermark I/O bundle used by integration tests.
- *
- * @internal This factory is intentionally absent from every v1 public seam.
- *
- * @example const bundle = createPapermarkSyntheticTestBundle(config, { responses: [new Response("{}")], secret: "test-secret" })
- */
-export function createPapermarkSyntheticTestBundle(
-  config: PapermarkAdapterConfig,
-  options: PapermarkSyntheticTestBundleOptions = {},
-): PapermarkSyntheticTestBundle {
-  assertTestEnvironment();
-  assertBundleOptions(options);
-  const script = parseSecretScript(options);
-  const responses = parseResponseQueue(options);
-  const secretFake = new SecretResolverFake(script);
-  const fetchFake = new FetchFake(responses);
-  const sleepFake = new SleepFake();
-  const clockFake = new ClockFake(parseTestTime(options.now));
-  const timerFake = new TimerFake();
-  const dependencies: PapermarkCallDependencies = Object.freeze({
-    secretResolver: secretFake,
-    fetch: fetchFake.fetch,
-    sleep: sleepFake.sleep,
-    now: clockFake.now,
-    timer: timerFake,
-  });
-  const authorization = issuePapermarkCallAuthorization(
-    config,
-    dependencies,
-  );
-  const completeDependencies = Object.freeze({
-    ...dependencies,
-    authorization,
-  });
-  return Object.freeze({
-    dependencies: completeDependencies,
-    controls: Object.freeze({
-      secret: Object.freeze({
-        calls: secretFake.calls,
-        release: () => secretFake.release(),
-      }),
-      fetch: Object.freeze({ calls: fetchFake.calls }),
-      sleep: Object.freeze({ delays: sleepFake.delays }),
-      clock: Object.freeze({
-        get calls(): number {
-          return clockFake.calls;
-        },
-      }),
-      timer: Object.freeze({
-        delays: timerFake.delays,
-        fire: () => timerFake.fire(),
-      }),
-    }),
-  });
-}
-
-function assertTestEnvironment(): void {
-  if (Deno.env.get("DENO_ENV") === "test") return;
-  throw new Error(
-    "Synthetic Papermark test bundles require DENO_ENV=test; expected closed scripted fake I/O.",
-  );
-}
-
-function parseSecretScript(
-  options: PapermarkSyntheticTestBundleOptions,
-): Required<PapermarkSyntheticSecretScript> {
-  const secret = options.secret;
-  if (typeof secret === "function") {
-    throw new Error(
-      "Synthetic secret script is invalid; expected inert scripted values and never a function; value=<redacted>.",
-    );
-  }
-  const parsed = secret === undefined
-    ? { mode: "immediate" as const, value: "synthetic-test-secret" }
-    : typeof secret === "string"
-    ? { mode: "immediate" as const, value: secret }
-    : parseSecretObject(secret);
-  if (options.secretMode !== undefined) {
-    assertSecretMode(options.secretMode);
-    if (options.secretMode !== parsed.mode) {
-      throw new Error(
-        "Synthetic secret script is invalid; expected one consistent inert secret mode.",
-      );
-    }
-  }
-  return Object.freeze({
-    mode: options.secretMode ?? parsed.mode,
-    value: parsed.value,
-  });
-}
-
-function assertBundleOptions(
-  value: unknown,
-): asserts value is PapermarkSyntheticTestBundleOptions {
-  if (!isPlainObject(value) || hasAccessor(value)) {
-    throw new Error(
-      "Synthetic test bundle options are invalid; expected an inert script object; value=<redacted>.",
-    );
-  }
-  const allowed = new Set([
-    "secret",
-    "secretMode",
-    "responses",
-    "responseQueue",
-    "now",
-  ]);
-  if (Object.keys(value).some((key) => !allowed.has(key))) {
-    throw new Error(
-      "Synthetic test bundle options contain an unsupported field; expected inert scripted values; field=<redacted>.",
-    );
-  }
-}
-
-function parseSecretObject(
-  value: PapermarkSyntheticSecretScript,
-): Required<PapermarkSyntheticSecretScript> {
-  if (!isPlainObject(value) || hasAccessor(value)) {
-    throw new Error(
-      "Synthetic secret script is invalid; expected an inert mode and secret string object; value=<redacted>.",
-    );
-  }
-  const candidate = value as unknown as Record<string, unknown>;
-  const keys = Object.keys(candidate);
-  if (keys.some((key) => key !== "mode" && key !== "value")) {
-    throw new Error(
-      "Synthetic secret script is invalid; expected only inert mode and secret string fields; value=<redacted>.",
-    );
-  }
-  const mode = candidate.mode ?? "immediate";
-  const secret = candidate.value ?? "synthetic-test-secret";
-  assertSecretMode(mode);
-  if (typeof secret !== "string") {
-    throw new Error(
-      "Synthetic secret script is invalid; expected an inert secret string; value=<redacted>.",
-    );
-  }
-  return { mode, value: secret };
-}
-
-function assertSecretMode(
-  value: unknown,
-): asserts value is PapermarkSyntheticSecretMode {
-  if (value === "immediate" || value === "stalled" || value === "delayed") {
-    return;
-  }
-  throw new Error(
-    "Synthetic secret mode is invalid; expected immediate, stalled, or delayed; value=<redacted>.",
-  );
-}
-
-function parseResponseQueue(
-  options: PapermarkSyntheticTestBundleOptions,
-): readonly (Response | Error)[] {
-  if (options.responses !== undefined && options.responseQueue !== undefined) {
-    throw new Error(
-      "Synthetic response script is invalid; expected one inert response queue.",
-    );
-  }
-  const queue = options.responses ?? options.responseQueue ?? [];
-  if (!Array.isArray(queue)) {
-    throw new Error(
-      "Synthetic response script is invalid; expected an inert response/error queue.",
-    );
-  }
-  for (const item of queue) {
-    if (
-      item instanceof Response || item instanceof Error ||
-      item instanceof DOMException
-    ) {
-      continue;
-    }
-    throw new Error(
-      "Synthetic response script is invalid; expected only Response or Error values; value=<redacted>.",
-    );
-  }
-  return queue.slice();
-}
-
-function parseTestTime(value: Date | string | undefined): Date {
-  const time = value === undefined
-    ? new Date(DEFAULT_TEST_TIME)
-    : value instanceof Date
-    ? new Date(value.getTime())
-    : typeof value === "string"
-    ? new Date(value)
-    : undefined;
-  if (time === undefined || Number.isNaN(time.getTime())) {
-    throw new Error(
-      "Synthetic clock value is invalid; expected one fixed valid Date; value=<redacted>.",
-    );
-  }
-  return time;
+export interface PapermarkCallAuthorizationIssue {
+  readonly config: PapermarkAdapterConfig;
+  readonly dependencies: PapermarkCallDependencies;
+  readonly context: RequestContext;
+  readonly actor: ActorReference;
+  readonly scope: IntegrationScope;
+  readonly authorized: PapermarkAuthorizationState;
+  readonly revalidate: () => PapermarkAuthorizationState;
 }
 
 interface PapermarkCallClaim {
   readonly config: PapermarkConfigSnapshot;
-  readonly secretResolver: SecretResolver;
+  readonly authorization: PapermarkAuthorizationSnapshot;
+  readonly secretResolver: PapermarkCallDependencies["secretResolver"];
   readonly fetch: PapermarkFetch;
   readonly sleep: (delayMs: number) => Promise<void>;
   readonly now: () => Date;
   readonly timer: PapermarkTimer;
+  readonly revalidate: () => PapermarkAuthorizationState;
 }
 
 interface PapermarkConfigSnapshot {
   readonly provider: "papermark";
   readonly lifecycle: "enabled";
-  readonly environment: IntegrationEnvironment;
+  readonly environment: PapermarkAdapterConfig["configuration"]["environment"];
   readonly endpoint: string;
-  readonly secretRef: SecretReference;
+  readonly secretRef: Readonly<Record<string, string | undefined>>;
   readonly activation: Readonly<Record<string, string>>;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
-  readonly folderId: string;
+  readonly providerAccountId: string;
+  readonly providerTeamId: string;
+  readonly dataRoomId: string;
+  readonly dataRoomFolderId: string;
   readonly pageSize: number;
   readonly timeoutMs: number;
   readonly maxAttempts: number;
   readonly maxDelayMs: number;
 }
 
+interface PapermarkAuthorizationSnapshot {
+  readonly context: Readonly<Record<string, string | undefined>>;
+  readonly actor: Readonly<Pick<ActorReference, "id" | "kind" | "state">>;
+  readonly scope: Readonly<{
+    tenantId: IntegrationScope["tenantId"];
+    workspaceId: IntegrationScope["workspaceId"];
+    dealId?: IntegrationScope["dealId"];
+  }>;
+  readonly resource: Readonly<{ kind: string; id: string }>;
+  readonly action: string;
+  readonly capability: "list_documents";
+  readonly connectorAccountId: string;
+  readonly providerAccountId: string;
+  readonly providerTeamId: string;
+  readonly dataRoomId: string;
+  readonly dataRoomFolderId: string;
+  readonly decisionReference: string;
+  readonly expiresAt?: string;
+}
+
 /**
- * Revalidates exact claim-bound authority immediately before a provider effect.
+ * Issues a claim only for an already-allowed platform authorization state.
+ *
+ * @internal Only trusted integration composition and test-only orchestration call this function.
+ */
+export function issuePapermarkCallAuthorization(
+  input: PapermarkCallAuthorizationIssue,
+): PapermarkCallAuthorization {
+  if (
+    input.authorized.decision.outcome !== "allow" ||
+    !sameRequestBinding(input.authorized.request, input)
+  ) {
+    throw invalidAuthorizationError();
+  }
+  const token = Object.freeze({
+    [callAuthorizationBrand]: true,
+    toJSON: (): undefined => undefined,
+  });
+  claimRegistry.set(token, {
+    config: configSnapshot(input.config),
+    authorization: authorizationSnapshot(input.authorized),
+    secretResolver: input.dependencies.secretResolver,
+    fetch: input.dependencies.fetch,
+    sleep: input.dependencies.sleep,
+    now: input.dependencies.now,
+    timer: input.dependencies.timer,
+    revalidate: input.revalidate,
+  });
+  return token as PapermarkCallAuthorization;
+}
+
+/**
+ * Revalidates exact configuration, scope, actor, and current platform policy.
  *
  * @example assertPapermarkCallAuthorization(authorization, config, dependencies)
  */
 export function assertPapermarkCallAuthorization(
   authorization: unknown,
   config: PapermarkAdapterConfig,
-  dependencies: PapermarkCallDependencies,
+  dependencies: PapermarkCallDependencies & {
+    readonly authorization?: PapermarkCallAuthorization;
+  },
 ): asserts authorization is PapermarkCallAuthorization {
   const claim = readClaim(authorization);
   if (
     claim === undefined ||
-    !sameClaim(claim, claimFor(config, dependencies))
+    !sameClaimDependencies(claim, config, dependencies) ||
+    !sameAuthorization(claim)
   ) {
-    throw new Error(
-      "Papermark call authorization is invalid; expected a private claim bound to the exact canonical configuration and transport dependencies.",
-    );
+    throw invalidAuthorizationError();
   }
 }
 
-function issuePapermarkCallAuthorization(
+function sameClaimDependencies(
+  claim: PapermarkCallClaim,
   config: PapermarkAdapterConfig,
   dependencies: PapermarkCallDependencies,
-): PapermarkCallAuthorization {
-  const token = Object.freeze({ [callAuthorizationBrand]: true });
-  claimRegistry.set(token, claimFor(config, dependencies));
-  return token as PapermarkCallAuthorization;
+): boolean {
+  return sameConfig(claim.config, config) &&
+    claim.secretResolver === dependencies.secretResolver &&
+    claim.fetch === dependencies.fetch &&
+    claim.sleep === dependencies.sleep &&
+    claim.now === dependencies.now &&
+    claim.timer === dependencies.timer;
 }
 
-function claimFor(
-  config: PapermarkAdapterConfig,
-  dependencies: PapermarkCallDependencies,
-): PapermarkCallClaim {
-  const snapshot = configSnapshot(config);
+function sameAuthorization(claim: PapermarkCallClaim): boolean {
+  try {
+    const current = claim.revalidate();
+    return current.decision.outcome === "allow" &&
+      sameAuthorizationSnapshot(
+        claim.authorization,
+        authorizationSnapshot(current),
+      );
+  } catch {
+    return false;
+  }
+}
+
+function sameRequestBinding(
+  request: PapermarkAuthorizationRequest,
+  input: PapermarkCallAuthorizationIssue,
+): boolean {
+  return request.context.actorId === input.context.actorId &&
+    request.context.tenantId === input.context.tenantId &&
+    request.context.workspaceId === input.context.workspaceId &&
+    request.context.dealId === input.context.dealId &&
+    request.context.sessionId === input.context.sessionId &&
+    request.context.identityId === input.context.identityId &&
+    request.context.origin === input.context.origin &&
+    request.actor.id === input.actor.id &&
+    request.actor.kind === input.actor.kind &&
+    request.actor.state === input.actor.state &&
+    request.scope.tenantId === input.scope.tenantId &&
+    request.scope.workspaceId === input.scope.workspaceId &&
+    request.scope.dealId === input.scope.dealId &&
+    request.resource.kind === resourceKind("papermark_dataroom") &&
+    request.resource.id === input.config.binding.dataRoomId &&
+    request.action === "list_documents" &&
+    request.capability === "list_documents" &&
+    request.connectorAccountId === input.config.binding.connectorAccount.id &&
+    request.providerAccountId ===
+      input.config.binding.providerAccount.accountId &&
+    request.providerTeamId === input.config.binding.providerAccount.teamId &&
+    request.dataRoomId === input.config.binding.dataRoomId &&
+    request.dataRoomFolderId === input.config.binding.dataRoomFolderId;
+}
+
+function authorizationSnapshot(
+  state: PapermarkAuthorizationState,
+): PapermarkAuthorizationSnapshot {
+  if (state.decision.outcome !== "allow") throw invalidAuthorizationError();
+  const approved = state.decision.approvedScope;
   return Object.freeze({
-    config: snapshot,
-    secretResolver: dependencies.secretResolver,
-    fetch: dependencies.fetch,
-    sleep: dependencies.sleep,
-    now: dependencies.now,
-    timer: dependencies.timer,
+    context: Object.freeze({
+      actorId: state.request.context.actorId,
+      tenantId: state.request.context.tenantId,
+      workspaceId: state.request.context.workspaceId,
+      dealId: state.request.context.dealId,
+      sessionId: state.request.context.sessionId,
+      identityId: state.request.context.identityId,
+      origin: state.request.context.origin,
+    }),
+    actor: Object.freeze({
+      id: state.request.actor.id,
+      kind: state.request.actor.kind,
+      state: state.request.actor.state,
+    }),
+    scope: Object.freeze({ ...state.request.scope }),
+    resource: Object.freeze({
+      kind: state.request.resource.kind,
+      id: state.request.resource.id,
+    }),
+    action: state.request.action,
+    capability: state.request.capability,
+    connectorAccountId: state.request.connectorAccountId,
+    providerAccountId: state.request.providerAccountId,
+    providerTeamId: state.request.providerTeamId,
+    dataRoomId: state.request.dataRoomId,
+    dataRoomFolderId: state.request.dataRoomFolderId,
+    decisionReference: approved.decisionReference,
+    ...(approved.expiresAt === undefined
+      ? {}
+      : { expiresAt: approved.expiresAt }),
   });
+}
+
+function sameAuthorizationSnapshot(
+  left: PapermarkAuthorizationSnapshot,
+  right: PapermarkAuthorizationSnapshot,
+): boolean {
+  return sameRecord(left.context, right.context) &&
+    left.actor.id === right.actor.id &&
+    left.actor.kind === right.actor.kind &&
+    left.actor.state === right.actor.state &&
+    left.scope.tenantId === right.scope.tenantId &&
+    left.scope.workspaceId === right.scope.workspaceId &&
+    left.scope.dealId === right.scope.dealId &&
+    left.resource.kind === right.resource.kind &&
+    left.resource.id === right.resource.id &&
+    left.action === right.action &&
+    left.capability === right.capability &&
+    left.connectorAccountId === right.connectorAccountId &&
+    left.providerAccountId === right.providerAccountId &&
+    left.providerTeamId === right.providerTeamId &&
+    left.dataRoomId === right.dataRoomId &&
+    left.dataRoomFolderId === right.dataRoomFolderId &&
+    left.decisionReference === right.decisionReference &&
+    left.expiresAt === right.expiresAt;
 }
 
 function configSnapshot(
   config: PapermarkAdapterConfig,
 ): PapermarkConfigSnapshot {
-  const activation = config.configuration.activation;
   const endpoint = config.configuration.endpoint;
   const secretRef = config.configuration.secretRef;
+  const activation = config.configuration.activation;
   if (
     config.provider !== "papermark" ||
     config.configuration.provider !== "papermark" ||
     config.configuration.lifecycle !== "enabled" ||
-    activation === undefined || endpoint === undefined ||
-    secretRef === undefined
-  ) {
-    throw new Error(
-      "Papermark call authorization cannot be bound; expected enabled configuration with complete canonical metadata.",
-    );
-  }
+    endpoint === undefined ||
+    secretRef === undefined ||
+    activation === undefined
+  ) throw invalidAuthorizationError();
   return Object.freeze({
     provider: config.provider,
     lifecycle: config.configuration.lifecycle,
     environment: config.configuration.environment,
     endpoint,
     secretRef: Object.freeze({ ...secretRef }),
-    activation: Object.freeze({ ...activation }),
+    activation: activationSnapshot(activation),
     scope: Object.freeze({ ...config.binding.scope }),
     connectorAccountId: config.binding.connectorAccount.id,
-    providerWorkspaceId: config.binding.providerWorkspaceId,
-    folderId: config.binding.folderId,
+    providerAccountId: config.binding.providerAccount.accountId,
+    providerTeamId: config.binding.providerAccount.teamId,
+    dataRoomId: config.binding.dataRoomId,
+    dataRoomFolderId: config.binding.dataRoomFolderId,
     pageSize: config.pageSize,
     timeoutMs: config.timeoutMs,
     maxAttempts: config.retry.maxAttempts,
@@ -389,88 +310,76 @@ function configSnapshot(
   });
 }
 
-function sameClaim(
-  left: PapermarkCallClaim,
-  right: PapermarkCallClaim,
-): boolean {
-  return sameConfig(left.config, right.config) &&
-    left.secretResolver === right.secretResolver &&
-    left.fetch === right.fetch &&
-    left.sleep === right.sleep &&
-    left.now === right.now &&
-    left.timer === right.timer;
+function activationSnapshot(
+  activation: NonNullable<
+    PapermarkAdapterConfig["configuration"]["activation"]
+  >,
+): Readonly<Record<string, string>> {
+  return Object.freeze({
+    approvalReference: activation.approvalReference,
+    providerVersion: activation.providerVersion,
+    apiScopes: activation.apiScopes.join(","),
+    license: activation.license,
+    deploymentModel: activation.deploymentModel,
+    region: activation.region,
+    storageTopology: activation.storageTopology,
+    rollbackOperator: activation.rollbackOperator,
+  });
 }
 
 function sameConfig(
   left: PapermarkConfigSnapshot,
-  right: PapermarkConfigSnapshot,
+  right: PapermarkAdapterConfig,
 ): boolean {
-  return left.provider === right.provider &&
-    left.lifecycle === right.lifecycle &&
-    left.environment === right.environment &&
-    left.endpoint === right.endpoint &&
-    sameSecretReference(left.secretRef, right.secretRef) &&
-    sameActivation(left.activation, right.activation) &&
-    sameIntegrationScope(left.scope, right.scope) &&
-    left.connectorAccountId === right.connectorAccountId &&
-    left.providerWorkspaceId === right.providerWorkspaceId &&
-    left.folderId === right.folderId &&
-    left.pageSize === right.pageSize &&
-    left.timeoutMs === right.timeoutMs &&
-    left.maxAttempts === right.maxAttempts &&
-    left.maxDelayMs === right.maxDelayMs;
+  const current = configSnapshot(right);
+  return left.provider === current.provider &&
+    left.lifecycle === current.lifecycle &&
+    left.environment === current.environment &&
+    left.endpoint === current.endpoint &&
+    sameRecord(left.secretRef, current.secretRef) &&
+    sameRecord(left.activation, current.activation) &&
+    sameIntegrationScope(left.scope, current.scope) &&
+    left.connectorAccountId === current.connectorAccountId &&
+    left.providerAccountId === current.providerAccountId &&
+    left.providerTeamId === current.providerTeamId &&
+    left.dataRoomId === current.dataRoomId &&
+    left.dataRoomFolderId === current.dataRoomFolderId &&
+    left.pageSize === current.pageSize &&
+    left.timeoutMs === current.timeoutMs &&
+    left.maxAttempts === current.maxAttempts &&
+    left.maxDelayMs === current.maxDelayMs;
 }
 
-function sameSecretReference(
-  left: SecretReference,
-  right: SecretReference,
+function sameIntegrationScope(
+  left: IntegrationScope,
+  right: IntegrationScope,
 ): boolean {
-  return left.manager === right.manager && left.name === right.name &&
-    left.version === right.version;
+  return left.tenantId === right.tenantId &&
+    left.workspaceId === right.workspaceId &&
+    left.dealId === right.dealId;
 }
 
-function sameActivation(
-  left: Readonly<Record<string, string>>,
-  right: Readonly<Record<string, string>>,
+function sameRecord(
+  left: Readonly<Record<string, unknown>>,
+  right: Readonly<Record<string, unknown>>,
 ): boolean {
-  return left.approvalReference === right.approvalReference &&
-    left.providerVersion === right.providerVersion &&
-    left.license === right.license &&
-    left.deploymentModel === right.deploymentModel &&
-    left.region === right.region &&
-    left.storageTopology === right.storageTopology &&
-    left.rollbackOperator === right.rollbackOperator;
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  return [...keys].every((key) => left[key] === right[key]);
 }
 
 function readClaim(value: unknown): PapermarkCallClaim | undefined {
-  if (!isObject(value)) return undefined;
-  if (value[callAuthorizationBrand] !== true) return undefined;
+  if (!isObject(value) || value[callAuthorizationBrand] !== true) {
+    return undefined;
+  }
   return claimRegistry.get(value);
+}
+
+function invalidAuthorizationError(): Error {
+  return new Error(
+    "Papermark call authorization is invalid; expected a private claim bound to current platform authorization, exact configuration, scope, and transport dependencies.",
+  );
 }
 
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  try {
-    const prototype = Object.getPrototypeOf(value);
-    return prototype === Object.prototype || prototype === null;
-  } catch {
-    return false;
-  }
-}
-
-function hasAccessor(value: Record<string, unknown>): boolean {
-  try {
-    return Object.keys(value).some((key) => {
-      const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      return descriptor?.get !== undefined || descriptor?.set !== undefined;
-    });
-  } catch {
-    return true;
-  }
 }

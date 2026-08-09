@@ -56,7 +56,7 @@ export class PapermarkAdapter implements DocumentSourceProvider {
   readonly provider = sourceProviderMarker();
   readonly neutralAdapter: PapermarkIntegrationAdapter;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerDataRoomId: string;
 
   constructor(
     config: PapermarkAdapterConfig,
@@ -64,7 +64,7 @@ export class PapermarkAdapter implements DocumentSourceProvider {
   ) {
     this.neutralAdapter = new PapermarkIntegrationAdapter(config, dependencies);
     this.connectorAccountId = this.neutralAdapter.connectorAccountId;
-    this.providerWorkspaceId = this.neutralAdapter.providerWorkspaceId;
+    this.providerDataRoomId = this.neutralAdapter.providerResourceId;
   }
 
   /**
@@ -81,16 +81,18 @@ export class PapermarkAdapter implements DocumentSourceProvider {
   }
 
   /**
-   * Lists documents in the adapter's immutable Papermark folder binding.
+   * Lists documents in the adapter's immutable Papermark data-room binding.
+   * The Documents port retains its historical providerWorkspaceId field name;
+   * this adapter treats that value as the exact Papermark data-room ID.
    *
-   * @example await provider.listDocuments({ providerWorkspaceId: "workspace-room" })
+   * @example await provider.listDocuments({ providerWorkspaceId: "dataroom_horizon" })
    */
   async listDocuments(
     request: ListSourceDocumentsRequest,
   ): Promise<SourceDocumentPage> {
     const result = await this.neutralAdapter.documents.listDocuments({
       scope: this.neutralAdapter.scope,
-      providerWorkspaceId: request.providerWorkspaceId,
+      providerResourceId: request.providerWorkspaceId,
       cursor: request.cursor,
     });
     if (!result.ok) throw toDocumentProviderFailure(result.failure);
@@ -99,15 +101,17 @@ export class PapermarkAdapter implements DocumentSourceProvider {
 
   /**
    * Fails closed because the verified public Papermark contract has no binary endpoint.
+   * The Documents port retains its historical providerWorkspaceId field name;
+   * this adapter treats that value as the exact Papermark data-room ID.
    *
-   * @example await provider.downloadDocument({ providerWorkspaceId: "workspace-room", providerDocumentId: "doc-1" })
+   * @example await provider.downloadDocument({ providerWorkspaceId: "dataroom_horizon", providerDocumentId: "doc-1" })
    */
   async downloadDocument(
     request: DownloadSourceDocumentRequest,
   ): Promise<ByteSource> {
     const result = await this.neutralAdapter.documents.downloadDocument({
       scope: this.neutralAdapter.scope,
-      providerWorkspaceId: request.providerWorkspaceId,
+      providerResourceId: request.providerWorkspaceId,
       providerDocumentId: request.providerDocumentId,
     });
     if (!result.ok) throw toDocumentProviderFailure(result.failure);
@@ -126,7 +130,10 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   readonly lifecycle: PapermarkAdapterConfig["configuration"]["lifecycle"];
   readonly scope: PapermarkAdapterConfig["binding"]["scope"];
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
+  readonly providerAccountId: string;
+  readonly providerTeamId: string;
+  readonly providerFolderId: string;
   readonly documents: ScopedDocumentPort;
   readonly now: () => Date;
   private readonly config: PapermarkAdapterConfig;
@@ -141,7 +148,10 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
     this.lifecycle = config.configuration.lifecycle;
     this.scope = config.binding.scope;
     this.connectorAccountId = config.binding.connectorAccount.id;
-    this.providerWorkspaceId = config.binding.providerWorkspaceId;
+    this.providerResourceId = config.binding.dataRoomId;
+    this.providerAccountId = config.binding.providerAccount.accountId;
+    this.providerTeamId = config.binding.providerAccount.teamId;
+    this.providerFolderId = config.binding.dataRoomFolderId;
     assertPapermarkCallAuthorization(
       dependencies.authorization,
       config,
@@ -201,7 +211,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   async checkHealth(): Promise<HealthSnapshot> {
     const result = await this.listDocuments({
       scope: this.scope,
-      providerWorkspaceId: this.config.binding.providerWorkspaceId,
+      providerResourceId: this.config.binding.dataRoomId,
     });
     const checks = result.ok
       ? passedHealthChecks()
@@ -222,7 +232,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   ): Promise<IntegrationResult<ProviderDocumentPage>> {
     const bindingFailure = this.validateBinding(
       request.scope,
-      request.providerWorkspaceId,
+      request.providerResourceId,
       "list_documents",
     );
     if (bindingFailure !== undefined) {
@@ -232,7 +242,11 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
       const payload = await this.transport.getDocumentsPage(request.cursor);
       return {
         ok: true,
-        value: decodePapermarkPage(payload, this.config.binding.folderId),
+        value: decodePapermarkPage(
+          payload,
+          this.config.binding.dataRoomId,
+          this.config.binding.dataRoomFolderId,
+        ),
       };
     } catch (error) {
       return {
@@ -247,7 +261,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
   ): Promise<IntegrationResult<IntegrationByteSource>> {
     const bindingFailure = this.validateBinding(
       request.scope,
-      request.providerWorkspaceId,
+      request.providerResourceId,
       "download_document",
     );
     if (bindingFailure !== undefined) {
@@ -266,7 +280,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
 
   private validateBinding(
     scope: ListDocumentsRequest["scope"],
-    providerWorkspaceId: string,
+    providerResourceId: string,
     operation: string,
   ): NormalizedIntegrationFailure | undefined {
     if (!sameIntegrationScope(scope, this.scope)) {
@@ -277,7 +291,7 @@ export class PapermarkIntegrationAdapter implements IntegrationAdapter {
         occurredAt: this.now(),
       });
     }
-    if (providerWorkspaceId !== this.config.binding.providerWorkspaceId) {
+    if (providerResourceId !== this.config.binding.dataRoomId) {
       return createNormalizedIntegrationFailure({
         provider: this.provider,
         operation,

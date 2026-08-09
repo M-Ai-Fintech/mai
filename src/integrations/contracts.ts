@@ -46,6 +46,8 @@ export interface IntegrationScope {
 }
 
 export interface ProviderDocument {
+  /** Papermark's dataroom membership row identity, when exposed. */
+  readonly providerDataRoomDocumentId?: string;
   readonly providerDocumentId: string;
   readonly name: string;
   readonly mimeType: string;
@@ -67,13 +69,13 @@ export type IntegrationByteSource =
 
 export interface ListDocumentsRequest {
   readonly scope: IntegrationScope;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly cursor?: string;
 }
 
 export interface DownloadDocumentRequest {
   readonly scope: IntegrationScope;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly providerDocumentId: string;
 }
 
@@ -125,7 +127,10 @@ export interface IntegrationAdapter {
   readonly lifecycle: ProviderLifecycle;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
+  readonly providerAccountId?: string;
+  readonly providerTeamId?: string;
+  readonly providerFolderId?: string;
   readonly documents: ScopedDocumentPort;
   discoverCapabilities(): Promise<CapabilitySnapshot>;
   checkHealth(): Promise<HealthSnapshot>;

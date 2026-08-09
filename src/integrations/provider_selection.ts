@@ -27,7 +27,7 @@ export interface ProviderSelectionFactoryContext {
   readonly configuration?: ProviderConfiguration;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
 }
 
 export type ProviderSelectionFactory = (
@@ -46,7 +46,11 @@ export interface ProviderSelectionRequest {
   readonly provider: IntegrationProvider;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
+  readonly providerAccountId?: string;
+  readonly providerTeamId?: string;
+  readonly dataRoomId?: string;
+  readonly dataRoomFolderId?: string;
   readonly configuration?: ProviderConfiguration;
   readonly factories: ProviderSelectionFactories;
 }
@@ -69,7 +73,12 @@ export interface ConfiguredProviderSelection {
   readonly environment: IntegrationEnvironment;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
+  readonly providerAccountId?: string;
+  readonly providerTeamId?: string;
+  readonly providerFolderId?: string;
+  readonly dataRoomId?: string;
+  readonly dataRoomFolderId?: string;
   readonly adapter: IntegrationAdapter;
 }
 
@@ -83,7 +92,7 @@ export interface FixtureProviderSelection {
   readonly environment: "fixture";
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly adapter: IntegrationAdapter;
 }
 
@@ -94,7 +103,7 @@ export interface BlockedProviderSelection {
   readonly reason: ProviderSelectionBlockedReason;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly failure: ReturnType<typeof createNormalizedIntegrationFailure>;
 }
 
@@ -106,7 +115,7 @@ export type ProviderSelectionResult =
 /**
  * Selects one explicitly requested provider path without fixture fallback.
  *
- * @example await selectProvider({ mode: "fixture", provider: "fixture", scope, connectorAccountId: "connector_fixture", providerWorkspaceId: "room_fixture", factories: { fixture: () => fixtureAdapter } })
+ * @example await selectProvider({ mode: "fixture", provider: "fixture", scope, connectorAccountId: "connector_fixture", providerResourceId: "room_fixture", factories: { fixture: () => fixtureAdapter } })
  */
 export async function selectProvider(
   input: ProviderSelectionRequest,
@@ -184,7 +193,7 @@ async function selectFixture(
     environment: "fixture",
     scope: input.scope,
     connectorAccountId: input.connectorAccountId,
-    providerWorkspaceId: input.providerWorkspaceId,
+    providerResourceId: input.providerResourceId,
     adapter: selectedAdapter,
   });
 }
@@ -233,9 +242,9 @@ function canonicalizeRequest(
       raw.connectorAccountId,
       "connector account",
     );
-    const providerWorkspaceId = parseBinding(
-      raw.providerWorkspaceId,
-      "provider workspace",
+    const providerResourceId = parseBinding(
+      raw.providerResourceId,
+      "provider resource",
     );
     const configuration = raw.configuration === undefined
       ? undefined
@@ -248,7 +257,7 @@ function canonicalizeRequest(
         provider,
         scope,
         connectorAccountId,
-        providerWorkspaceId,
+        providerResourceId,
         ...(configuration === undefined ? {} : { configuration }),
         factories,
       }),
@@ -283,7 +292,7 @@ async function constructAdapter(
       ...(configuration === undefined ? {} : { configuration }),
       scope: input.scope,
       connectorAccountId: input.connectorAccountId,
-      providerWorkspaceId: input.providerWorkspaceId,
+      providerResourceId: input.providerResourceId,
     });
     const value = await factory(context);
     return { ok: true, value };
@@ -316,7 +325,7 @@ function validateAdapter(
       adapter.lifecycle !== "enabled" ||
       !sameIntegrationScope(adapter.scope, input.scope) ||
       adapter.connectorAccountId !== input.connectorAccountId ||
-      adapter.providerWorkspaceId !== input.providerWorkspaceId
+      adapter.providerResourceId !== input.providerResourceId
     ) return failure(input, "INVALID_REQUEST");
   } catch {
     return failure(input, "INVALID_REQUEST");
@@ -336,7 +345,7 @@ function blocked(
     reason,
     scope: input.scope,
     connectorAccountId: input.connectorAccountId,
-    providerWorkspaceId: input.providerWorkspaceId,
+    providerResourceId: input.providerResourceId,
     failure: normalized,
   });
 }
@@ -364,7 +373,7 @@ function safeBindingText(value: string): boolean {
 function parseMode(value: unknown): ProviderSelectionMode {
   if (value === "configured" || value === "fixture") return value;
   throw new Error(
-    "Provider selection mode is invalid; expected configured or fixture.",
+    "Provider selection mode is invalid; expected configured or fixture; value=<redacted>.",
   );
 }
 
@@ -373,7 +382,7 @@ function parseProvider(value: unknown): IntegrationProvider {
     return value as IntegrationProvider;
   }
   throw new Error(
-    "Provider selection provider is invalid; expected a registered provider.",
+    "Provider selection provider is invalid; expected a registered provider; value=<redacted>.",
   );
 }
 
@@ -395,7 +404,7 @@ function freezeScope(scope: IntegrationScope): IntegrationScope {
 function freezeFactories(value: unknown): ProviderSelectionFactories {
   if (!isRecord(value)) {
     throw new Error(
-      "Provider selection factories are invalid; expected factory functions.",
+      "Provider selection factories are invalid; expected factory functions; value=<redacted>.",
     );
   }
   const factories: Record<string, ProviderSelectionFactory> = {};
@@ -404,7 +413,7 @@ function freezeFactories(value: unknown): ProviderSelectionFactories {
     if (factory === undefined) continue;
     if (typeof factory !== "function") {
       throw new Error(
-        "Provider selection factory is invalid; expected a function.",
+        "Provider selection factory is invalid; expected a function; value=<redacted>.",
       );
     }
     factories[key] = factory as ProviderSelectionFactory;
@@ -425,17 +434,17 @@ function fallbackRequest(value: unknown): ProviderSelectionRequest {
   const connectorAccountId = safeBindingText(rawConnector as string)
     ? rawConnector as string
     : "invalid-connector";
-  const rawWorkspace = readField(source, "providerWorkspaceId");
-  const providerWorkspaceId = safeBindingText(rawWorkspace as string)
-    ? rawWorkspace as string
-    : "invalid-workspace";
+  const rawResource = readField(source, "providerResourceId");
+  const providerResourceId = safeBindingText(rawResource as string)
+    ? rawResource as string
+    : "invalid-resource";
   const rawMode = readField(source, "mode");
   return Object.freeze({
     mode: rawMode === "fixture" ? "fixture" : "configured",
     provider,
     scope,
     connectorAccountId,
-    providerWorkspaceId,
+    providerResourceId,
     factories: Object.freeze({}),
   });
 }
@@ -454,7 +463,9 @@ function fallbackScope(value: unknown): IntegrationScope {
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (isRecord(value)) return value;
-  throw new Error("Provider selection request is invalid; expected an object.");
+  throw new Error(
+    "Provider selection request is invalid; expected an object; value=<redacted>.",
+  );
 }
 
 function readField(

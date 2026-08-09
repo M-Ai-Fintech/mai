@@ -23,7 +23,7 @@ export interface FixtureConformancePage {
 export interface FixtureConformancePlan {
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly pages: readonly FixtureConformancePage[];
   readonly downloadDocumentId: string;
   readonly expectedContent: Uint8Array;
@@ -54,47 +54,55 @@ export interface FixtureConformanceEvidence {
 /**
  * Runs deterministic conformance checks against an explicitly injected fixture.
  *
- * @example await runFixtureConformance(fixtureAdapter, { scope, providerWorkspaceId: "room_fixture", pages, downloadDocumentId: "doc-1", expectedContent, missingDocumentId: "missing", deniedCapability: "permissions", unavailableCapability: "create_folder" })
+ * @example await runFixtureConformance(fixtureAdapter, { scope, providerResourceId: "room_fixture", pages, downloadDocumentId: "doc-1", expectedContent, missingDocumentId: "missing", deniedCapability: "permissions", unavailableCapability: "create_folder" })
  */
 export async function runFixtureConformance(
   adapter: IntegrationAdapter,
   plan: FixtureConformancePlan,
 ): Promise<FixtureConformanceEvidence> {
+  const snapshot = snapshotConformancePlan(plan);
   const checks: FixtureConformanceCheck[] = [];
   checks.push(
     await runCheck(
       "fixture-identity",
-      () => assertFixtureIdentity(adapter, plan),
+      () => assertFixtureIdentity(adapter, snapshot),
     ),
   );
-  if (checks[0].status === "failed") return evidence(plan.scope, checks);
+  if (checks[0].status === "failed") {
+    return evidence(snapshot.scope, checks);
+  }
   checks.push(
     await runCheck(
       "capability-discovery",
-      () => capabilityCheck(adapter, plan),
+      () => capabilityCheck(adapter, snapshot),
     ),
   );
-  checks.push(await runCheck("health", () => healthCheck(adapter, plan)));
+  checks.push(await runCheck("health", () => healthCheck(adapter, snapshot)));
   checks.push(
-    await runCheck("pagination", () => paginationCheck(adapter, plan)),
+    await runCheck("pagination", () => paginationCheck(adapter, snapshot)),
   );
-  checks.push(await runCheck("download", () => downloadCheck(adapter, plan)));
   checks.push(
-    await runCheck("failure-normalization", () => failureCheck(adapter, plan)),
+    await runCheck("download", () => downloadCheck(adapter, snapshot)),
+  );
+  checks.push(
+    await runCheck(
+      "failure-normalization",
+      () => failureCheck(adapter, snapshot),
+    ),
   );
   checks.push(
     await runCheck(
       "denied-capability",
-      () => deniedCapabilityCheck(adapter, plan),
+      () => deniedCapabilityCheck(adapter, snapshot),
     ),
   );
   checks.push(
     await runCheck(
       "unavailable-capability",
-      () => unavailableCapabilityCheck(adapter, plan),
+      () => unavailableCapabilityCheck(adapter, snapshot),
     ),
   );
-  return evidence(plan.scope, checks);
+  return evidence(snapshot.scope, checks);
 }
 
 /**
@@ -163,7 +171,7 @@ function assertFixtureIdentity(
     adapter.lifecycle !== "enabled" ||
     !sameIntegrationScope(adapter.scope, plan.scope) ||
     adapter.connectorAccountId !== plan.connectorAccountId ||
-    adapter.providerWorkspaceId !== plan.providerWorkspaceId
+    adapter.providerResourceId !== plan.providerResourceId
   ) throw new Error("fixture identity mismatch");
 }
 
@@ -205,7 +213,7 @@ async function paginationCheck(
       () =>
         adapter.documents.listDocuments({
           scope: plan.scope,
-          providerWorkspaceId: plan.providerWorkspaceId,
+          providerResourceId: plan.providerResourceId,
           cursor: expected.cursor,
         }),
     );
@@ -224,7 +232,7 @@ async function downloadCheck(
     () =>
       adapter.documents.downloadDocument({
         scope: plan.scope,
-        providerWorkspaceId: plan.providerWorkspaceId,
+        providerResourceId: plan.providerResourceId,
         providerDocumentId: plan.downloadDocumentId,
       }),
   );
@@ -245,7 +253,7 @@ async function failureCheck(
     () =>
       adapter.documents.downloadDocument({
         scope: plan.scope,
-        providerWorkspaceId: plan.providerWorkspaceId,
+        providerResourceId: plan.providerResourceId,
         providerDocumentId: plan.missingDocumentId,
       }),
   );
@@ -359,6 +367,35 @@ function concatBytes(chunks: readonly Uint8Array[]): Uint8Array {
 function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
   return left.length === right.length &&
     left.every((value, index) => value === right[index]);
+}
+
+function snapshotConformancePlan(
+  plan: FixtureConformancePlan,
+): FixtureConformancePlan {
+  return Object.freeze({
+    scope: Object.freeze({ ...plan.scope }),
+    connectorAccountId: plan.connectorAccountId,
+    providerResourceId: plan.providerResourceId,
+    pages: Object.freeze(
+      plan.pages.map((page) =>
+        Object.freeze({
+          ...(page.cursor === undefined ? {} : { cursor: page.cursor }),
+          documentIds: Object.freeze([...page.documentIds]),
+          ...(page.nextCursor === undefined
+            ? {}
+            : { nextCursor: page.nextCursor }),
+        })
+      ),
+    ),
+    downloadDocumentId: plan.downloadDocumentId,
+    expectedContent: Uint8Array.from(plan.expectedContent),
+    missingDocumentId: plan.missingDocumentId,
+    deniedCapability: plan.deniedCapability,
+    unavailableCapability: plan.unavailableCapability,
+    ...(plan.expectedMissingFailure === undefined
+      ? {}
+      : { expectedMissingFailure: plan.expectedMissingFailure }),
+  });
 }
 
 async function runCheck(

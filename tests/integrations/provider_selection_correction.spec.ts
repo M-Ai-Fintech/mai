@@ -48,7 +48,7 @@ Deno.test("provider selection snapshots scope, bindings, and factory before awai
     provider: "fixture" as const,
     scope: mutableScope,
     connectorAccountId: "connector_original",
-    providerWorkspaceId: "workspace-provider-original",
+    providerResourceId: "workspace-provider-original",
     factories,
   };
   const pending = selectProvider(request);
@@ -57,7 +57,7 @@ Deno.test("provider selection snapshots scope, bindings, and factory before awai
     "workspace_mutated" as typeof mutableScope.workspaceId;
   mutableScope.dealId = "deal_mutated" as typeof mutableScope.dealId;
   request.connectorAccountId = "connector_mutated";
-  request.providerWorkspaceId = "workspace-provider-mutated";
+  request.providerResourceId = "workspace-provider-mutated";
   factories.fixture = () => Promise.reject(new Error("replacement factory"));
   release?.();
 
@@ -66,7 +66,7 @@ Deno.test("provider selection snapshots scope, bindings, and factory before awai
   assert(result.kind === "fixture");
   assertEquals(result.scope.tenantId, "tenant_original");
   assertEquals(result.connectorAccountId, "connector_original");
-  assertEquals(result.providerWorkspaceId, "workspace-provider-original");
+  assertEquals(result.providerResourceId, "workspace-provider-original");
   assertEquals(Object.isFrozen(result.scope), true);
   assertEquals(Object.isFrozen(context), true);
 });
@@ -82,7 +82,7 @@ Deno.test("fixture selection owns a frozen adapter facade after original mutatio
       dealId: "deal_original",
     }),
     connectorAccountId: "connector_original",
-    providerWorkspaceId: "workspace-provider-original",
+    providerResourceId: "workspace-provider-original",
     factories: {
       fixture: (context) => {
         const adapter = new CanonicalFixtureAdapter(context);
@@ -105,7 +105,7 @@ Deno.test("fixture selection owns a frozen adapter facade after original mutatio
     dealId: "deal_mutated",
   });
   mutable.connectorAccountId = "connector_mutated";
-  mutable.providerWorkspaceId = "workspace-provider-mutated";
+  mutable.providerResourceId = "workspace-provider-mutated";
   mutable.documents = new ThrowingDocumentPort();
   mutable.discoverCapabilities = () => Promise.reject(new Error("replaced"));
   mutable.checkHealth = () => Promise.reject(new Error("replaced"));
@@ -116,7 +116,7 @@ Deno.test("fixture selection owns a frozen adapter facade after original mutatio
   assertEquals(result.adapter.scope.tenantId, "tenant_original");
   assertEquals(result.adapter.connectorAccountId, "connector_original");
   assertEquals(
-    result.adapter.providerWorkspaceId,
+    result.adapter.providerResourceId,
     "workspace-provider-original",
   );
   const capabilities = await result.adapter.discoverCapabilities();
@@ -125,7 +125,7 @@ Deno.test("fixture selection owns a frozen adapter facade after original mutatio
   assertEquals(health.provider, "fixture");
   const documents = await result.adapter.documents.listDocuments({
     scope: result.adapter.scope,
-    providerWorkspaceId: "workspace-provider-original",
+    providerResourceId: "workspace-provider-original",
   });
   assertEquals(documents.ok, true);
 });
@@ -136,13 +136,13 @@ class CanonicalFixtureAdapter implements IntegrationAdapter {
   readonly lifecycle = "enabled" as const;
   readonly scope: IntegrationScope;
   readonly connectorAccountId: string;
-  readonly providerWorkspaceId: string;
+  readonly providerResourceId: string;
   readonly documents: ScopedDocumentPort = new EmptyDocumentPort();
 
   constructor(context: ProviderSelectionFactoryContext) {
     this.scope = context.scope;
     this.connectorAccountId = context.connectorAccountId;
-    this.providerWorkspaceId = context.providerWorkspaceId;
+    this.providerResourceId = context.providerResourceId;
   }
 
   discoverCapabilities() {

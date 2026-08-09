@@ -16,7 +16,7 @@ import {
 } from "../../../src/integrations/contracts.ts";
 import {
   createPapermarkSyntheticTestBundle,
-} from "../../../src/integrations/papermark/synthetic_test_bundle.ts";
+} from "./support/synthetic_test_bundle.ts";
 
 const scope = parseIntegrationScope({
   tenantId: "tenant_acme",
@@ -57,8 +57,12 @@ function configuration(overrides: Partial<PapermarkAdapterConfig> = {}) {
       provider: "papermark",
       tenantId: scope.tenantId,
     },
-    providerWorkspaceId: "papermark_workspace_horizon",
-    folderId: "folder_horizon",
+    providerAccount: {
+      accountId: "account_papermark",
+      teamId: "team_papermark",
+    },
+    dataRoomId: "dataroom_horizon",
+    dataRoomFolderId: "folder_horizon",
     pageSize: 50,
     timeoutMs: 1_000,
     retry: { maxAttempts: 3, maxDelayMs: 250 },
@@ -115,7 +119,7 @@ Deno.test("Papermark transport requests the scoped official v1 list", async () =
   assertEquals(resolver.calls, 1);
   assertEquals(
     fake.calls[0].url,
-    "http://localhost:3000/api/v1/documents?folderId=folder_horizon&limit=50",
+    "http://localhost:3000/api/v1/datarooms/dataroom_horizon/documents?folder_id=folder_horizon&limit=50",
   );
   const headers = new Headers(fake.calls[0].init.headers);
   assertEquals(headers.get("authorization"), `Bearer ${secret}`);
@@ -375,6 +379,7 @@ function activation() {
   return {
     approvalReference: "approval_papermark_local",
     providerVersion: "papermark-v1.0.0",
+    apiScopes: ["datarooms.read"],
     license: "AGPLv3",
     deploymentModel: "self-hosted",
     region: "local",
