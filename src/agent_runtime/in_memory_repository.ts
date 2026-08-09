@@ -204,7 +204,26 @@ export class InMemoryAgentRuntimeStore
       .sort((left, right) =>
         left.createdAt.getTime() - right.createdAt.getTime()
       )[0];
-    if (candidate === undefined) return undefined;
+    return candidate === undefined
+      ? undefined
+      : await this.claimCandidate(candidate, claim);
+  }
+
+  async claimRunById(
+    runId: RunId,
+    claim: RuntimeRunClaim,
+  ): Promise<ClaimedRun | undefined> {
+    const candidate = this.runs.get(runId);
+    if (candidate === undefined || !isClaimable(candidate, claim.now)) {
+      return undefined;
+    }
+    return await this.claimCandidate(candidate, claim);
+  }
+
+  private async claimCandidate(
+    candidate: RunRecord,
+    claim: RuntimeRunClaim,
+  ): Promise<ClaimedRun> {
     const attemptNumber = candidate.attemptCount + 1;
     if (candidate.state === "running") {
       await this.completeExpiredAttempt(candidate, claim.now);

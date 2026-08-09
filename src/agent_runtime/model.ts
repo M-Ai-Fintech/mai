@@ -16,6 +16,15 @@ import type {
   StepId,
   ToolActivityId,
 } from "./ids.ts";
+import {
+  assertSourceVersionReceipt,
+  sourceVersionKey,
+} from "./source_version_receipts.ts";
+export {
+  assertSourceVersionReceipt,
+  isLowercaseSha256Checksum,
+  sourceVersionKey,
+} from "./source_version_receipts.ts";
 
 export interface RuntimeScope {
   readonly tenantId: TenantId;
@@ -60,10 +69,17 @@ export interface PromptLineage {
   readonly promptDigest: string;
 }
 
+export type RuntimeCalculationLineage = Record<
+  "capability" | "purePort" | "operation" | "action" | "stepId",
+  string
+>;
+
 export interface ModelMetadata {
   readonly provider: string;
   readonly model: string;
   readonly modelVersion: string;
+  /** Durable policy receipt when a governed definition selects the model. */
+  readonly policyReference?: string;
   readonly responseReference?: string;
 }
 
@@ -77,8 +93,20 @@ export interface CostMetadata {
 }
 
 export interface RuntimeLineage {
+  /** Durable definition identity selected for this result. */
+  readonly definition?: {
+    readonly id: string;
+    readonly version: string;
+  };
+  /** Stable aliases retained for JSON consumers of the result lineage. */
+  readonly definitionId?: string;
+  readonly definitionVersion?: string;
+  readonly modelPolicyReference?: string;
+  /** Capability persisted by a non-tool executor when no tool proves it. */
+  readonly capability?: string;
   readonly prompt?: PromptLineage;
   readonly model?: ModelMetadata;
+  readonly calculation?: RuntimeCalculationLineage;
   readonly toolActivityIds: readonly ToolActivityId[];
   readonly evidence: readonly SourceVersionReference[];
 }
@@ -328,13 +356,57 @@ export function assertPlanTransition(from: PlanState, to: PlanState): void {
   assertTransition("plan", from, to, PLAN_TRANSITIONS);
 }
 
-export function sourceVersionKey(reference: SourceVersionReference): string {
-  return [
+export function sourceVersionIdentityKey(
+  reference: SourceVersionReference,
+): string {
+  return JSON.stringify([
     reference.sourceType,
     reference.sourceId,
     reference.version,
-    reference.checksum ?? "",
-  ].join(":");
+  ]);
+}
+
+export function deduplicateSourceVersions(
+  references: readonly SourceVersionReference[],
+): readonly SourceVersionReference[] {
+  const unique = new Map<string, SourceVersionReference>();
+  for (const reference of references) {
+    assertSourceVersionReceipt(reference);
+    const identity = sourceVersionIdentityKey(reference);
+    const existing = unique.get(identity);
+    if (existing === undefined) {
+      unique.set(identity, reference);
+      continue;
+    }
+    if (sameSourceVersionReceipt(existing, reference)) continue;
+    throw new Error(
+      `Source version receipt "${identity}" conflicts: "${
+        sourceVersionKey(existing)
+      }" and "${sourceVersionKey(reference)}"; expected one exact checksum.`,
+    );
+  }
+  return [...unique.values()];
+}
+
+function sameSourceVersionReceipt(
+  left: SourceVersionReference,
+  right: SourceVersionReference,
+): boolean {
+  return sameSourceVersion(left, right) &&
+    JSON.stringify(receiptMetadata(left)) ===
+      JSON.stringify(receiptMetadata(right));
+}
+
+function receiptMetadata(reference: SourceVersionReference): unknown {
+  const value = reference as unknown as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) =>
+        key !== "sourceType" && key !== "sourceId" && key !== "version" &&
+        key !== "checksum"
+      )
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
 }
 
 export function sameSourceVersion(

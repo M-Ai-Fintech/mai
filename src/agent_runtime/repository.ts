@@ -102,6 +102,10 @@ export interface RuntimeTransaction {
   ): Promise<RuntimeAttemptRecord | undefined>;
   listSteps(scope: RuntimeScope, runId: RunId): Promise<StepRecord[]>;
   claimRun(claim: RuntimeRunClaim): Promise<ClaimedRun | undefined>;
+  claimRunById(
+    runId: RunId,
+    claim: RuntimeRunClaim,
+  ): Promise<ClaimedRun | undefined>;
   assertRunLease(run: ClaimedRun, now: Date): Promise<void>;
   cancellationRequested(run: ClaimedRun, now: Date): Promise<boolean>;
   updateRun(

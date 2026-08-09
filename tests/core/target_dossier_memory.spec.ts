@@ -68,7 +68,7 @@ Deno.test("MAI-75 Memory & Target Dossier Boundary Tests", async (t) => {
   );
 
   await t.step(
-    "6. Domain knowledge and user preferences still work",
+    "6. Legacy corrections are unsupported and non-authoritative",
     async () => {
       const service = new BrokerOrchestratorService();
       const resultPref = await service.processUserCorrection(
@@ -77,7 +77,9 @@ Deno.test("MAI-75 Memory & Target Dossier Boundary Tests", async (t) => {
         "wacc",
         { value: 0.12 },
       );
-      assertEquals(resultPref.success, true);
+      assertEquals(resultPref.success, false);
+      assertEquals(resultPref.status, "unsupported");
+      assertEquals(resultPref.reason, "LEGACY_CONTINUOUS_LEARNING_DISABLED");
 
       const resultDomain = await service.processUserCorrection(
         "test_user",
@@ -85,7 +87,9 @@ Deno.test("MAI-75 Memory & Target Dossier Boundary Tests", async (t) => {
         "tax",
         { rule: "LC214" },
       );
-      assertEquals(resultDomain.success, true);
+      assertEquals(resultDomain.success, false);
+      assertEquals(resultDomain.status, "unsupported");
+      assertEquals(resultDomain.reason, "LEGACY_CONTINUOUS_LEARNING_DISABLED");
     },
   );
 

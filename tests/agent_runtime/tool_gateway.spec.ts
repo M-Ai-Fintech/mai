@@ -53,6 +53,34 @@ Deno.test("gateway exposes only read, proposal, and reversible draft outputs", a
   assertEquals(result, { status: "denied", reason: "TOOL_NOT_REGISTERED" });
 });
 
+Deno.test("gateway blocks explicit governed non-success output statuses", async () => {
+  for (
+    const semanticStatus of [
+      "denied",
+      "unavailable",
+      "stale",
+      "not_found",
+    ] as const
+  ) {
+    const tool = new SemanticStatusTool(semanticStatus);
+    const gateway = new ToolGateway(
+      [tool],
+      new SequencedAuthorization(["allow"]),
+    );
+    const result = await gateway.invoke(fixtureRequest(tool.name));
+
+    assertEquals(result.status, "blocked");
+    if (result.status === "blocked") {
+      assertEquals(result.semanticStatus, semanticStatus);
+      assertEquals(result.output.value.status, semanticStatus);
+      assertEquals(
+        result.reason,
+        `TOOL_OUTPUT_${semanticStatus.toUpperCase()}:TEST_STATUS`,
+      );
+    }
+  }
+});
+
 function fixtureRequest(toolName: string) {
   return {
     activityId: "activity_alpha" as ToolActivityId,
@@ -94,6 +122,26 @@ class RecordingProposalTool implements ToolDefinition {
     return Promise.resolve({
       kind: "proposal" as const,
       value: { proposed: true },
+    });
+  }
+}
+
+class SemanticStatusTool implements ToolDefinition {
+  readonly name = "semantic_status_tool";
+  readonly capability = "read" as const;
+
+  constructor(
+    private readonly semanticStatus:
+      | "denied"
+      | "unavailable"
+      | "stale"
+      | "not_found",
+  ) {}
+
+  execute(_request: AuthorizedToolInvocation) {
+    return Promise.resolve({
+      kind: "read" as const,
+      value: { status: this.semanticStatus, reasonCode: "TEST_STATUS" },
     });
   }
 }
