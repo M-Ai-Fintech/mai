@@ -2,6 +2,7 @@ import type {
   AgentDefinition,
   CalculationBinding,
 } from "./definitions/index.ts";
+import { canonicalizePostParseRecord } from "./definitions/post_parse_data_policy.ts";
 import { calculationBindingFor } from "./governed_capability_binding.ts";
 import type {
   GovernedCalculationOutput,
@@ -113,10 +114,14 @@ export class DurableProposalStepExecutor implements RuntimeStepExecutor {
     claims: ReturnType<typeof readDurableStepClaims>,
     output: StepExecutionOutput,
   ): Promise<StepExecutionOutput> {
+    const value = canonicalizePostParseRecord(
+      output.value,
+      `step.${step.stepId}.output`,
+    );
     const lineage = await this.readLineage(step, context, claims);
     return {
       kind: output.kind,
-      value: output.value,
+      value,
       lineage,
       cost: output.cost,
       artifact: output.artifact,
@@ -240,7 +245,7 @@ export function governedStepInput(
   request: GovernedProposalRequest,
   calculation?: AgentDefinition["calculationBindings"][number],
 ): Readonly<Record<string, unknown>> {
-  return {
+  return canonicalizePostParseRecord({
     [GOVERNED_STEP_CLAIMS_KEY]: {
       definition: {
         id: request.definition.id,
@@ -252,5 +257,5 @@ export function governedStepInput(
       ...(calculation === undefined ? {} : { calculation }),
     },
     request: request.input,
-  };
+  }, "durable.step.input");
 }

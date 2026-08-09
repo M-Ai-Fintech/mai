@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import {
   agentProposalResultSchema,
   AgentRuntimeProvenanceVerifier,
@@ -14,10 +14,6 @@ import {
 import { AgentRuntimeReadService } from "../../src/agent_runtime/reads.ts";
 import { InMemoryAgentRuntimeStore } from "../../src/agent_runtime/repository.ts";
 import { AgentRuntimeProposalService } from "../../src/agent_runtime/proposal_service.ts";
-import {
-  CalculationPortRegistry,
-  type GovernedCalculationPort,
-} from "../../src/agent/governed_calculation_ports.ts";
 import type {
   RuntimeActor,
   RuntimeScope,
@@ -47,7 +43,7 @@ Deno.test("durable governed adapter produces schema-valid proposals for all eigh
   const cases = [
     ["broker-orchestrator-agent", "evidence.search"],
     ["deal-matching-agent", "calculation.portfolio"],
-    ["financial-risk-agent", "calculation.financial-risk"],
+    ["financial-risk-agent", "evidence.search"],
     ["general-dd-agent", "evidence.search"],
     ["legal-closing-agent", "calculation.term-sheet"],
     ["legal-dd-agent", "evidence.search"],
@@ -63,10 +59,7 @@ Deno.test("durable governed adapter produces schema-valid proposals for all eigh
       runtime.dependencies,
       execution,
     ).propose({
-      input: {
-        dealId: execution.scope.dealId,
-        query: "Prepare a bounded proposal.",
-      },
+      input: inputForCapability(capability, execution),
       capability,
     });
     assertEquals(result.status, "proposed");
@@ -87,6 +80,31 @@ Deno.test("durable governed adapter produces schema-valid proposals for all eigh
   }
 });
 
+Deno.test("financial-risk calculation remains unavailable until MAI-65", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const runtime = createRuntime();
+  const execution = executionContext("run_financial_risk_unavailable");
+  const result = await createAgentRuntimeGovernedSpecialist(
+    catalog,
+    "financial-risk-agent",
+    runtime.dependencies,
+    execution,
+  ).propose({
+    input: inputForCapability("calculation.financial-risk", execution),
+    capability: "calculation.financial-risk",
+  });
+
+  assertEquals(result.status, "unavailable");
+  assertEquals(result.artifact.value.capability, "calculation.financial-risk");
+  assertStringIncludes(String(result.artifact.value.reason), "MAI-65");
+  assertEquals(
+    await runtime.store.transaction((transaction) =>
+      transaction.listSteps(execution.scope, execution.runId)
+    ),
+    [],
+  );
+});
+
 Deno.test("calculation verification rejects a rebinding hidden behind lineage.capability", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const runtime = createRuntime();
@@ -97,7 +115,7 @@ Deno.test("calculation verification rejects a rebinding hidden behind lineage.ca
     runtime.dependencies,
     execution,
   ).propose({
-    input: { dealId: execution.scope.dealId, query: "Calculate portfolio." },
+    input: inputForCapability("calculation.portfolio", execution),
     capability: "calculation.portfolio",
   });
   assertEquals(result.status, "proposed");
@@ -283,12 +301,6 @@ function createRuntime() {
   );
   const sources = new CurrentSources();
   const executor = new NamedProposalExecutor();
-  const calculations = new CalculationPortRegistry([
-    new NamedCalculationPort("portfolio-selection"),
-    new NamedCalculationPort("synergy-pricing"),
-    new NamedCalculationPort("financial-value-calculations"),
-    new NamedCalculationPort("negotiation-proposal-optimizer"),
-  ]);
   return {
     store,
     reads,
@@ -300,13 +312,139 @@ function createRuntime() {
       sources,
       gateway,
       executor,
-      calculations,
       getRun: reads.getRun.bind(reads),
       getResult: reads.getResult.bind(reads),
       getStep: reads.getStep.bind(reads),
       getToolActivity: reads.getToolActivity.bind(reads),
       listToolActivities: reads.listToolActivities.bind(reads),
       listResults: reads.listResults.bind(reads),
+    },
+  };
+}
+
+function inputForCapability(
+  capability: string,
+  execution: GovernedExecutionContext,
+) {
+  const input = {
+    dealId: execution.scope.dealId,
+    query: "Prepare a bounded proposal.",
+  };
+  if (capability === "calculation.portfolio") {
+    return { ...input, context: portfolioContext() };
+  }
+  if (capability === "calculation.term-sheet") {
+    return { ...input, context: termSheetContext() };
+  }
+  return input;
+}
+
+function portfolioContext() {
+  return {
+    candidates: [{
+      id: "target-alpha",
+      synergyValue: 100,
+      acquisitionCost: 30,
+      sector: "software",
+      riskScore: 0.2,
+      taxDebt: 0,
+      eligibility: {
+        contractVersion: "matching-eligibility/v1" as const,
+        status: "eligible" as const,
+        evidence: {
+          evidenceVersion: "eligibility-v1",
+          findingId: "finding-target-alpha",
+          decisionRecordId: "decision-target-alpha",
+          policyVersion: "matching-policy-v1",
+          actorOrApprovalAuthority: "human-authority",
+          effectiveAt: "2026-08-09T12:00:00.000Z",
+          staleness: "current" as const,
+        },
+      },
+    }],
+    criteria: {
+      budgetLimit: 100,
+      riskThreshold: 1,
+      taxDebtCap: 100,
+      seed: 146,
+    },
+  };
+}
+
+function termSheetContext() {
+  const metadata = {
+    source: "MAI-60 runtime fixture",
+    policyVersion: "fixture-v1",
+    effectiveDate: "2026-08-09",
+    evidenceVersion: "fixture-v1",
+    enforcement: "mandatory" as const,
+  };
+  const dimensions = [
+    ["valuation", 10, 20, "currency-amount"],
+    ["cashPercentage", 0, 0.5, "fraction"],
+    ["equityPercentage", 0, 0.5, "fraction"],
+    ["earnOutPercentage", 0, 0.5, "fraction"],
+    ["escrowPercentage", 0, 0.5, "fraction"],
+    ["earnOutTargetYears", 1, 5, "years"],
+    ["nonCompeteMonths", 12, 60, "months"],
+  ] as const;
+  const bounds = Object.fromEntries(
+    dimensions.map(([id, minimum, maximum, units]) => [
+      id,
+      { id, minimum, maximum, metadata: { ...metadata, units } },
+    ]),
+  );
+  const weights = Object.fromEntries([
+    ["valuation", 0.2],
+    ["cashPercentage", 0.2],
+    ["equityPercentage", 0.2],
+    ["earnOutPercentage", 0.1],
+    ["escrowPercentage", 0.1],
+    ["earnOutTargetYears", 0.1],
+    ["nonCompeteMonths", 0.1],
+  ]);
+  const directions = (valuation: "higher" | "lower") => ({
+    valuation,
+    cashPercentage: "higher",
+    equityPercentage: "higher",
+    earnOutPercentage: "higher",
+    escrowPercentage: "higher",
+    earnOutTargetYears: "lower",
+    nonCompeteMonths: "lower",
+  });
+  const utility = (id: string, valuation: "higher" | "lower") => ({
+    id,
+    version: "v1",
+    units: "normalized-utility[0,1]",
+    weights,
+    directions: directions(valuation),
+  });
+  return {
+    bounds,
+    utilities: {
+      buyer: utility("buyer", "lower"),
+      seller: utility("seller", "higher"),
+      reservation: {
+        buyer: {
+          minimum: 0.2,
+          metadata: { ...metadata, units: "normalized-utility[0,1]" },
+        },
+        seller: {
+          minimum: 0.2,
+          metadata: { ...metadata, units: "normalized-utility[0,1]" },
+        },
+      },
+    },
+    seed: 146,
+    config: {
+      populationSize: 12,
+      maxGenerations: 5,
+      mutationRate: 0.1,
+      crossoverRate: 0.8,
+      tournamentSize: 3,
+      alternativeCount: 3,
+      stagnationGenerations: 3,
+      minimumImprovement: 0.000001,
     },
   };
 }
@@ -341,25 +479,6 @@ class NamedProposalExecutor implements RuntimeStepExecutor {
       value: {
         success: true,
         response: "Named durable proposal.",
-        timestamp: "2026-08-09T12:00:00.000Z",
-      },
-      lineage: { toolActivityIds: [], evidence: [] },
-      cost: emptyCost(),
-    });
-  }
-}
-
-class NamedCalculationPort implements GovernedCalculationPort {
-  readonly deterministic = true as const;
-
-  constructor(readonly name: string) {}
-
-  execute(): Promise<StepExecutionOutput> {
-    return Promise.resolve({
-      kind: "proposal",
-      value: {
-        success: true,
-        response: `Calculation ${this.name}.`,
         timestamp: "2026-08-09T12:00:00.000Z",
       },
       lineage: { toolActivityIds: [], evidence: [] },

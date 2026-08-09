@@ -10,7 +10,12 @@ import type {
   RuntimeScope,
   SourceVersionReference,
 } from "./model.ts";
-import { deduplicateSourceVersions, sourceVersionKey } from "./model.ts";
+import {
+  assertSourceVersionReceipt,
+  deduplicateSourceVersions,
+  isLowercaseSha256Checksum,
+  sourceVersionKey,
+} from "./model.ts";
 import type { ToolActivityId } from "./ids.ts";
 import {
   actorReference,
@@ -243,10 +248,10 @@ function assertDiscoveredEvidence(
   value: Readonly<Record<string, unknown>>,
   discovered: readonly SourceVersionReference[],
 ): void {
+  for (const reference of discovered) assertSourceVersionReceipt(reference);
   const recorded = new Map(
     discovered.map((reference) => [sourceVersionKey(reference), reference]),
   );
-  for (const reference of discovered) assertSourceVersion(reference);
   for (
     const reference of deduplicateSourceVersions(extractSourceVersions(value))
   ) {
@@ -272,7 +277,7 @@ function visitSourceValues(
   if (typeof value !== "object" || value === null) return;
   if (visited.has(value)) return;
   visited.add(value);
-  if (isExactSourceValue(value)) references.push(toSourceReference(value));
+  if (isDocumentVersionValue(value)) references.push(toSourceReference(value));
   if (Array.isArray(value)) {
     for (const entry of value) visitSourceValues(entry, references, visited);
     return;
@@ -282,47 +287,34 @@ function visitSourceValues(
   }
 }
 
-function isExactSourceValue(
-  value: object,
-): value is {
-  readonly documentVersionId: string;
-  readonly version: number;
-  readonly checksum: { readonly algorithm: string; readonly value: string };
-} {
+function isDocumentVersionValue(value: object): boolean {
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.documentVersionId === "string" &&
+    Object.prototype.hasOwnProperty.call(candidate, "version");
+}
+
+function toSourceReference(value: object): SourceVersionReference {
   const candidate = value as Record<string, unknown>;
   const checksum = candidate.checksum;
-  return typeof candidate.documentVersionId === "string" &&
-    typeof candidate.version === "number" &&
-    Number.isSafeInteger(candidate.version) && candidate.version > 0 &&
-    typeof checksum === "object" && checksum !== null &&
-    (checksum as Record<string, unknown>).algorithm === "sha256" &&
-    typeof (checksum as Record<string, unknown>).value === "string" &&
-    /^[0-9a-f]{64}$/.test(
-      (checksum as Record<string, unknown>).value as string,
-    );
-}
-
-function toSourceReference(value: {
-  readonly documentVersionId: string;
-  readonly version: number;
-  readonly checksum: { readonly algorithm: string; readonly value: string };
-}): SourceVersionReference {
-  return {
-    sourceType: "document_version",
-    sourceId: value.documentVersionId,
-    version: value.version as SourceVersionReference["version"],
-    checksum: value.checksum.value,
-  };
-}
-
-function assertSourceVersion(reference: SourceVersionReference): void {
   if (
-    reference.sourceType.trim() && reference.sourceId.trim() &&
-    Number.isSafeInteger(reference.version) && reference.version > 0 &&
-    (reference.checksum === undefined ||
-      /^[0-9a-f]{64}$/.test(reference.checksum))
-  ) return;
-  throw new Error(
-    `Tool output discovered source "${reference.sourceType}:${reference.sourceId}@${reference.version}" is malformed; expected an exact positive version and checksum.`,
-  );
+    typeof candidate.version !== "number" ||
+    !Number.isSafeInteger(candidate.version) || candidate.version <= 0 ||
+    typeof checksum !== "object" || checksum === null ||
+    (checksum as Record<string, unknown>).algorithm !== "sha256" ||
+    !isLowercaseSha256Checksum((checksum as Record<string, unknown>).value)
+  ) {
+    throw new Error(
+      `Tool output exact document version "${
+        String(candidate.documentVersionId)
+      }" is malformed; expected a positive version and lowercase 64-hex SHA-256 checksum.`,
+    );
+  }
+  const reference: SourceVersionReference = {
+    sourceType: "document_version",
+    sourceId: candidate.documentVersionId as string,
+    version: candidate.version as SourceVersionReference["version"],
+    checksum: (checksum as Record<string, unknown>).value as string,
+  };
+  assertSourceVersionReceipt(reference);
+  return reference;
 }

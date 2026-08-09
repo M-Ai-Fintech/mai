@@ -12,6 +12,10 @@ import {
   createUnavailableAgentResult,
 } from "./definitions/index.ts";
 import { GovernedProvenanceError } from "./governed_provenance.ts";
+import {
+  canonicalizePostParseData,
+  canonicalizePostParseRecord,
+} from "./definitions/post_parse_data_policy.ts";
 import type {
   ResultRecord,
   RuntimeActor,
@@ -124,7 +128,9 @@ export class GovernedSpecialistAgent {
     }
     const admission = capabilityAdmission(this.definition, capability);
     if (admission !== undefined) return admission;
-    const input = this.definition.inputValidator.parse(request.input);
+    const canonicalInput = canonicalizePostParseData(request.input, "input");
+    const parsedInput = this.definition.inputValidator.parse(canonicalInput);
+    const input = canonicalizePostParseData(parsedInput, "input.parsed");
     const response = await this.proposals.propose({
       definition: this.definition,
       execution: this.execution,
@@ -244,7 +250,12 @@ async function resultFromResponse(
     resultId,
     verified,
   );
-  const value = definition.outputValidator.parse(verified.result.value);
+  const durableValue = canonicalizePostParseRecord(
+    verified.result.value,
+    `result.${resultId}.value`,
+  );
+  const parsedValue = definition.outputValidator.parse(durableValue);
+  const value = canonicalizePostParseRecord(parsedValue, "output.parsed");
   return createAgentProposalResult(
     definition,
     {

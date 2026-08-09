@@ -20,6 +20,7 @@ import {
   type GovernedCalculationPortRegistry,
   hasCalculationPort,
 } from "./governed_calculation_ports.ts";
+import { createProductionCalculationRegistry } from "./production_calculation_ports.ts";
 import {
   AgentRuntimeProvenanceVerifier,
   type GovernedRuntimeReceiptReader,
@@ -53,7 +54,7 @@ export interface GovernedRuntimeAdapterDependencies
   readonly sources: SourceVersionChecker;
   readonly gateway: ToolGateway;
   readonly executor: RuntimeStepExecutor;
-  readonly calculations: GovernedCalculationPortRegistry;
+  readonly calculations?: GovernedCalculationPortRegistry;
   readonly workerId?: string;
   readonly leaseMilliseconds?: number;
 }
@@ -92,6 +93,8 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
     if (mappedInput.status === "unavailable") {
       return unavailable(request, mappedInput.reason);
     }
+    const calculations = this.dependencies.calculations ??
+      createProductionCalculationRegistry();
     const steps = proposalSteps(request, tool, calculation, mappedInput.input);
     const run = await this.dependencies.proposalService.submit(
       request.execution.context,
@@ -112,7 +115,7 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
     }
     if (
       calculation !== undefined &&
-      !hasCalculationPort(this.dependencies.calculations, calculation)
+      !hasCalculationPort(calculations, calculation)
     ) {
       return unavailable(
         request,
@@ -128,7 +131,7 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
         request,
         this.dependencies.executor,
         this.dependencies,
-        this.dependencies.calculations,
+        calculations,
       ),
     );
     const outcome = await runner.executeRun(

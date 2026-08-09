@@ -15,14 +15,11 @@ export const MATCHING_CALCULATION_BINDINGS = Object.freeze([
   ),
 ]);
 
-export const FINANCIAL_RISK_CALCULATION_BINDINGS = Object.freeze([
-  calculationBinding(
-    "calculation.financial-risk",
-    "financial-value-calculations",
-    "calculate_financial_risk",
-    "calculate_financial_risk",
-  ),
-]);
+export const FINANCIAL_RISK_UNAVAILABLE = Object.freeze({
+  capability: "calculation.financial-risk",
+  reason:
+    "Financial-risk calculation is unavailable until MAI-65 supplies the governed model-backed domain service; valuation calculations do not implement financial-risk semantics.",
+});
 
 export const TERM_SHEET_CALCULATION_BINDINGS = Object.freeze([
   calculationBinding(

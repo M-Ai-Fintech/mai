@@ -56,7 +56,7 @@ import {
   purePort,
 } from "./factory.ts";
 import {
-  FINANCIAL_RISK_CALCULATION_BINDINGS,
+  FINANCIAL_RISK_UNAVAILABLE,
   MATCHING_CALCULATION_BINDINGS,
   TERM_SHEET_CALCULATION_BINDINGS,
 } from "./specialist_calculations.ts";
@@ -165,7 +165,11 @@ export const financialRiskDefinition = defineSpecialist({
     "document.metadata.read",
     "evidence.search",
     "citation.propose",
-    "calculation.financial-risk",
+  ],
+  unavailableCapabilities: [
+    PROVIDER_UNAVAILABLE,
+    MODEL_ADAPTATION_UNAVAILABLE,
+    FINANCIAL_RISK_UNAVAILABLE,
   ],
   knowledgeAssets: [
     asset("src/agent/agents/financial-risk/instructions.md", "rules"),
@@ -188,13 +192,7 @@ export const financialRiskDefinition = defineSpecialist({
     "governed.evidence.search",
     "governed.evidence.citation_proposal",
   ],
-  purePorts: [
-    purePort(
-      "financial-value-calculations",
-      "src/engines/valuation/value_calculations.ts",
-    ),
-  ],
-  calculationBindings: FINANCIAL_RISK_CALCULATION_BINDINGS,
+  purePorts: [],
   legacyToolReferences: [
     "analyzeCompanyRisksTool",
     "databaseMemoryServiceTool",

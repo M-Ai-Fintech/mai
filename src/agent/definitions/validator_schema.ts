@@ -30,8 +30,14 @@ function isZodValidator(value: unknown): value is ZodTypeAny {
 }
 
 function hasApprovedOwnKeys(value: ZodTypeAny): boolean {
+  const typeName = schemaDefinition(value)?.typeName;
+  const approvedInternalKeys = typeName === "ZodEnum" ||
+      typeName === "ZodNativeEnum"
+    ? new Set(["_cache"])
+    : new Set<string>();
   return Object.keys(value).every((key) =>
-    approvedZodValidatorOwnKeys.has(key) && !sensitiveValidatorKeys.has(key)
+    (approvedZodValidatorOwnKeys.has(key) || approvedInternalKeys.has(key)) &&
+    !sensitiveValidatorKeys.has(key)
   );
 }
 
@@ -65,7 +71,11 @@ function inspectSchemaDefinition(
     case "ZodBranded":
       return inspectNestedSchema(definition.type, state);
     case "ZodEffects":
-      return inspectNestedSchema(definition.schema, state);
+      // Shape-preserving refinements are safe to retain. Transforms and
+      // preprocessors are rejected because they can emit an uninspected shape;
+      // the durable boundary still checks every parsed value independently.
+      return isRefinementEffect(definition.effect) &&
+        inspectNestedSchema(definition.schema, state);
     case "ZodLazy":
       return inspectLazyDefinition(definition, state);
     case "ZodTuple":
@@ -120,6 +130,7 @@ type SchemaDefinition = {
   readonly right?: unknown;
   readonly innerType?: unknown;
   readonly schema?: unknown;
+  readonly effect?: unknown;
   readonly getter?: unknown;
   readonly items?: unknown;
   readonly rest?: unknown;
@@ -136,6 +147,11 @@ function schemaDefinition(schema: ZodTypeAny): SchemaDefinition | undefined {
   if (typeof definition !== "object" || definition === null) return undefined;
   if (!("typeName" in definition)) return undefined;
   return definition as SchemaDefinition;
+}
+
+function isRefinementEffect(effect: unknown): boolean {
+  if (typeof effect !== "object" || effect === null) return false;
+  return (effect as { readonly type?: unknown }).type === "refinement";
 }
 
 function inspectObjectDefinition(
