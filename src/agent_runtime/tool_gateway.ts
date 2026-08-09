@@ -54,6 +54,15 @@ export type ToolOutput = {
   readonly discoveredSourceVersions?: readonly SourceVersionReference[];
 };
 
+export type ToolOutputSemanticStatus =
+  | "ok"
+  | "proposal"
+  | "denied"
+  | "unavailable"
+  | "stale"
+  | "not_found"
+  | "unknown";
+
 export interface AuthorizedToolInvocation
   extends Omit<ToolInvocationRequest, "beforeEffect"> {
   readonly authority: RuntimeAuthority;
@@ -71,6 +80,13 @@ export type ToolInvocationResult =
     readonly status: "succeeded";
     readonly output: ToolOutput;
     readonly authority: RuntimeAuthority;
+  }
+  | {
+    readonly status: "blocked";
+    readonly semanticStatus: ToolOutputSemanticStatus;
+    readonly output: ToolOutput;
+    readonly authority: RuntimeAuthority;
+    readonly reason: string;
   }
   | { readonly status: "denied"; readonly reason: string }
   | { readonly status: "failed"; readonly reason: "TOOL_EXECUTION_FAILED" };
@@ -120,6 +136,16 @@ export class ToolGateway {
       });
       assertOutputCapability(definition, output);
       const normalizedOutput = normalizeToolOutput(output);
+      const semanticStatus = blockedOutputStatus(normalizedOutput.value);
+      if (semanticStatus !== undefined) {
+        return {
+          status: "blocked",
+          semanticStatus,
+          output: normalizedOutput,
+          authority,
+          reason: outputBlockReason(normalizedOutput.value, semanticStatus),
+        };
+      }
       return {
         status: "succeeded",
         output: normalizedOutput,
@@ -135,6 +161,33 @@ export class ToolGateway {
   ): Promise<AuthorizationDecision> {
     return await this.authorizer.authorize(request);
   }
+}
+
+function blockedOutputStatus(
+  value: Readonly<Record<string, unknown>>,
+): ToolOutputSemanticStatus | undefined {
+  const status = semanticStatus(value.status);
+  return status === undefined || status === "ok" || status === "proposal"
+    ? undefined
+    : status;
+}
+
+function semanticStatus(value: unknown): ToolOutputSemanticStatus | undefined {
+  if (typeof value !== "string") return undefined;
+  return value === "ok" || value === "proposal" || value === "denied" ||
+      value === "unavailable" || value === "stale" || value === "not_found"
+    ? value
+    : "unknown";
+}
+
+function outputBlockReason(
+  value: Readonly<Record<string, unknown>>,
+  status: ToolOutputSemanticStatus,
+): string {
+  const reasonCode = value.reasonCode;
+  return typeof reasonCode === "string"
+    ? `TOOL_OUTPUT_${status.toUpperCase()}:${reasonCode}`
+    : `TOOL_OUTPUT_${status.toUpperCase()}`;
 }
 
 function indexDefinitions(

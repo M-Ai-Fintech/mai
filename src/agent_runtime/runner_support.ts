@@ -30,6 +30,17 @@ export class RuntimeToolDeniedError extends Error {
   }
 }
 
+export class RuntimeToolOutputBlockedError extends Error {
+  readonly code = "RUNTIME_TOOL_OUTPUT_BLOCKED";
+
+  constructor(toolName: string, status: string, reason: string) {
+    super(
+      `Tool "${toolName}" returned semantic status "${status}" with reason "${reason}"; expected a successful governed output.`,
+    );
+    this.name = "RuntimeToolOutputBlockedError";
+  }
+}
+
 export class RuntimeCancelledError extends Error {
   readonly code = "RUNTIME_CANCELLED";
 
@@ -262,6 +273,7 @@ export function failureCode(error: unknown): string {
   if (error instanceof SourceVersionInvalidatedError) return error.code;
   if (error instanceof RuntimeCancelledError) return error.code;
   if (error instanceof RuntimeToolDeniedError) return error.code;
+  if (error instanceof RuntimeToolOutputBlockedError) return error.code;
   if (error instanceof RuntimeEffectDeniedError) return error.code;
   if (error instanceof RuntimeCostCeilingError) return error.code;
   if (error instanceof RuntimeLeaseLostError) return error.code;
@@ -277,6 +289,7 @@ export function failureStepState(
   if (error instanceof RuntimeCancelledError) return "cancelled";
   if (
     error instanceof RuntimeToolDeniedError ||
+    error instanceof RuntimeToolOutputBlockedError ||
     error instanceof RuntimeEffectDeniedError ||
     error instanceof RuntimeCostCeilingError
   ) return "failed";

@@ -31,6 +31,26 @@ export async function claimCandidate(
   return result.rows[0];
 }
 
+export async function claimCandidateById(
+  transaction: TransactionHandle,
+  runId: RunId,
+  now: Date,
+): Promise<RawRunRow | undefined> {
+  const result = await transaction.query<RawRunRow>(
+    `${runSelect()}
+     WHERE run_id = $1 AND (
+       state = 'queued'
+       OR (state = 'retry_scheduled' AND (next_attempt_at IS NULL OR next_attempt_at <= $2))
+       OR (state = 'running' AND lease_expires_at <= $2)
+     )
+       AND workspace_id IS NOT NULL
+       AND deal_id IS NOT NULL
+     FOR UPDATE SKIP LOCKED`,
+    [runId, now],
+  );
+  return result.rows[0];
+}
+
 export async function claimCandidateRow(
   transaction: TransactionHandle,
   runId: RunId,

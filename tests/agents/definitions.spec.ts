@@ -5,6 +5,7 @@ import {
   assertMatch,
   assertThrows,
 } from "@std/assert";
+import { z } from "zod";
 import {
   AGENT_DEFINITION_IDS,
   type AgentDefinition,
@@ -284,6 +285,86 @@ Deno.test("catalog rejects fake sensitive validators at every validator field", 
     assertEquals(Object.hasOwn(registered[field], "apiKey"), false);
     assertEquals(Object.hasOwn(registered[field], "providerClient"), false);
   }
+});
+
+Deno.test("validator schemas reject nested credential leaves at every field", () => {
+  const current = SPECIALIST_DEFINITIONS[0];
+  const validatorFields = [
+    "inputValidator",
+    "outputValidator",
+    "inputSchema",
+    "outputSchema",
+  ] as const;
+  const hostileSchemas = [
+    z.object({ nested: z.object({ apiKey: z.string() }) }),
+    z.object({ nested: z.object({ secret: z.string() }).optional() }),
+    z.object({ nested: z.array(z.object({ token: z.string() })) }),
+    z.union([z.string(), z.object({ password: z.string() })]),
+    z.object({
+      nested: z.object({ providerClient: z.string() }).transform((value) =>
+        value
+      ),
+    }),
+    z.lazy(() => z.object({ rawClient: z.string() })),
+  ];
+
+  for (const field of validatorFields) {
+    for (const schema of hostileSchemas) {
+      const adversarial = {
+        ...current,
+        [field]: schema,
+      } as AgentDefinition;
+      assertEquals(
+        agentDefinitionEnvelopeSchema.safeParse(adversarial).success,
+        false,
+        `${field} accepted a prohibited nested schema leaf`,
+      );
+      assertThrows(() => createDefinitionCatalog([adversarial]), Error);
+    }
+  }
+});
+
+Deno.test("validator inspection preserves legitimate schemas and Zod identity", () => {
+  const current = SPECIALIST_DEFINITIONS[0];
+  const legitimate = z.object({
+    clientName: z.string(),
+    tokenizedQuery: z.string(),
+    context: z.record(z.unknown()).optional(),
+  });
+  const validatorFields = [
+    "inputValidator",
+    "outputValidator",
+    "inputSchema",
+    "outputSchema",
+  ] as const;
+
+  for (const field of validatorFields) {
+    const candidate = { ...current, [field]: legitimate } as AgentDefinition;
+    assertEquals(
+      agentDefinitionEnvelopeSchema.safeParse(candidate).success,
+      true,
+    );
+    const catalog = createDefinitionCatalog(
+      SPECIALIST_DEFINITIONS.map((definition) =>
+        definition.id === current.id ? candidate : definition
+      ),
+    );
+    assert(catalog.current(current.id)[field] === legitimate);
+  }
+});
+
+Deno.test("validator inspection is cycle-safe", () => {
+  const current = SPECIALIST_DEFINITIONS[0];
+  const cyclic: z.ZodTypeAny = z.lazy(() => cyclic);
+  const candidate = {
+    ...current,
+    inputValidator: cyclic,
+  } as AgentDefinition;
+
+  assertEquals(
+    agentDefinitionEnvelopeSchema.safeParse(candidate).success,
+    true,
+  );
 });
 
 type KnownAgentDefinitionId = AgentDefinitionId;

@@ -17,6 +17,10 @@ import {
   type DurableCapabilityBinding,
 } from "./governed_capability_binding.ts";
 import {
+  type GovernedCalculationPortRegistry,
+  hasCalculationPort,
+} from "./governed_calculation_ports.ts";
+import {
   AgentRuntimeProvenanceVerifier,
   type GovernedRuntimeReceiptReader,
 } from "./governed_provenance.ts";
@@ -25,10 +29,12 @@ import {
   type GovernedProposalRuntimeReader,
   governedStepInput,
 } from "./governed_runtime_adapter_support.ts";
+import { mapGovernedToolInput } from "./governed_runtime_adapter_input.ts";
 import { AgentRuntimeProposalService } from "../agent_runtime/proposal_service.ts";
 import type { RuntimeClock } from "../agent_runtime/service.ts";
 import type {
   PlanStepDefinition,
+  RunRecord,
   SourceVersionReference,
 } from "../agent_runtime/model.ts";
 import type { AgentRuntimeStore } from "../agent_runtime/repository.ts";
@@ -47,6 +53,7 @@ export interface GovernedRuntimeAdapterDependencies
   readonly sources: SourceVersionChecker;
   readonly gateway: ToolGateway;
   readonly executor: RuntimeStepExecutor;
+  readonly calculations: GovernedCalculationPortRegistry;
   readonly workerId?: string;
   readonly leaseMilliseconds?: number;
 }
@@ -77,12 +84,41 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
         "Capability has no durable tool or calculation binding.",
       );
     }
-    const steps = proposalSteps(request, tool, calculation);
+    const mappedInput = mapGovernedToolInput(
+      request.capability,
+      request.input,
+      request.execution.scope,
+    );
+    if (mappedInput.status === "unavailable") {
+      return unavailable(request, mappedInput.reason);
+    }
+    const steps = proposalSteps(request, tool, calculation, mappedInput.input);
     const run = await this.dependencies.proposalService.submit(
       request.execution.context,
       request.execution.actor,
       proposalInput(request, steps),
     );
+    const durableRun = await submittedRun(this.dependencies, request, run);
+    if (durableRun === undefined) {
+      return unavailable(request, "Durable proposal run is unavailable.");
+    }
+    if (durableRun.state === "succeeded") {
+      return await exactProposalResult(
+        this.dependencies,
+        request,
+        run.runId,
+        steps,
+      );
+    }
+    if (
+      calculation !== undefined &&
+      !hasCalculationPort(this.dependencies.calculations, calculation)
+    ) {
+      return unavailable(
+        request,
+        `Calculation pure port "${calculation.purePort}" is unavailable; expected an injected deterministic implementation.`,
+      );
+    }
     const runner = new AgentRuntimeRunner(
       this.dependencies.store,
       this.dependencies.clock,
@@ -92,11 +128,13 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
         request,
         this.dependencies.executor,
         this.dependencies,
+        this.dependencies.calculations,
       ),
     );
-    const outcome = await runner.executeOne(
+    const outcome = await runner.executeRun(
       this.dependencies.workerId ?? "governed-proposal-worker",
       this.dependencies.leaseMilliseconds ?? 60_000,
+      run.runId,
     );
     if (outcome.status !== "succeeded") {
       return unavailable(
@@ -117,6 +155,21 @@ export class AgentRuntimeGovernedProposalPort implements GovernedProposalPort {
       steps,
     );
   }
+}
+
+async function submittedRun(
+  reads: GovernedProposalRuntimeReader,
+  request: GovernedProposalRequest,
+  run: RunRecord,
+): Promise<RunRecord | undefined> {
+  const receipt = await reads.getRun(
+    request.execution.context,
+    request.execution.actor,
+    run.runId,
+  );
+  return receipt.kind === "loaded" && receipt.value.runId === run.runId
+    ? receipt.value
+    : undefined;
 }
 
 export function createAgentRuntimeGovernedSpecialist(
@@ -169,10 +222,11 @@ function proposalSteps(
   request: GovernedProposalRequest,
   tool: DurableCapabilityBinding | undefined,
   calculation: AgentDefinition["calculationBindings"][number] | undefined,
+  toolInput: Readonly<Record<string, unknown>>,
 ): PlanStepDefinition[] {
   if (calculation !== undefined) return [calculationStep(request, calculation)];
   if (tool === undefined) return [];
-  return [toolStep(request, tool), proposalStep(request)];
+  return [toolStep(tool, toolInput), proposalStep(request)];
 }
 
 function calculationStep(
@@ -190,8 +244,8 @@ function calculationStep(
 }
 
 function toolStep(
-  request: GovernedProposalRequest,
   binding: DurableCapabilityBinding,
+  input: Readonly<Record<string, unknown>>,
 ): PlanStepDefinition {
   return {
     ordinal: 0,
@@ -201,7 +255,7 @@ function toolStep(
     action: binding.action,
     resourceKind: "agent_tool",
     resourceId: binding.toolName,
-    input: toolInput(request),
+    input,
     sourceVersions: [],
   };
 }
@@ -214,30 +268,6 @@ function proposalStep(request: GovernedProposalRequest): PlanStepDefinition {
     input: governedStepInput(request),
     sourceVersions: [],
   };
-}
-
-function toolInput(
-  request: GovernedProposalRequest,
-): Readonly<Record<string, unknown>> {
-  const input = record(request.input);
-  const scope = request.execution.scope;
-  if (request.capability === "evidence.search") {
-    return {
-      scope,
-      query: text(input.query) ?? "governed proposal",
-      limit: 50,
-    };
-  }
-  if (request.capability === "document.list") return { scope, limit: 50 };
-  if (request.capability === "finding.propose") {
-    return {
-      scope,
-      title: "Governed proposal finding",
-      statement: text(input.query) ?? "Review required.",
-      basis: [],
-    };
-  }
-  return { scope, ...input };
 }
 
 async function exactProposalResult(
@@ -269,16 +299,6 @@ async function exactProposalResult(
 function executionMatchesDefinition(request: GovernedProposalRequest): boolean {
   return request.execution.definition.id === request.definition.id &&
     request.execution.definition.version === request.definition.version;
-}
-
-function record(value: unknown): Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function text(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function denied(

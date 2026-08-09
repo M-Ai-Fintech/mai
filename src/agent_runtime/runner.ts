@@ -13,10 +13,10 @@ import type {
 import { runtimeAuthority } from "./authorization.ts";
 import {
   assertCostMetadata,
+  deduplicateSourceVersions,
   SourceVersionInvalidatedError,
-  sourceVersionKey,
 } from "./model.ts";
-import type { ResultId, ToolActivityId } from "./ids.ts";
+import type { ResultId, RunId, ToolActivityId } from "./ids.ts";
 import type { AgentRuntimeStore, RuntimeTransaction } from "./repository.ts";
 import { ToolGateway } from "./tool_gateway.ts";
 import {
@@ -34,6 +34,7 @@ import {
   RuntimeEffectDeniedError,
   runtimeEvent,
   RuntimeToolDeniedError,
+  RuntimeToolOutputBlockedError,
   stepAttempt,
   stepAuthorizationRequest,
   toolActivity,
@@ -45,6 +46,7 @@ export {
   RuntimeCostCeilingError,
   RuntimeEffectDeniedError,
   RuntimeToolDeniedError,
+  RuntimeToolOutputBlockedError,
 } from "./runner_support.ts";
 
 export interface SourceVersionChecker {
@@ -79,6 +81,7 @@ export type RuntimeRunnerOutcome =
   | { readonly status: "idle" }
   | {
     readonly status:
+      | "busy"
       | "succeeded"
       | "retry_scheduled"
       | "failed"
@@ -102,25 +105,31 @@ export class AgentRuntimeRunner {
     this.maxAttempts = maxAttempts;
   }
 
-  /**
-   * Claims and executes one run while fencing every step boundary.
-   *
-   * @example await runner.executeOne("worker_alpha", 60_000)
-   */
+  /** Claims and executes one run while fencing every step boundary. */
   async executeOne(
     workerId: string,
     leaseMilliseconds: number,
+    runId?: string,
   ): Promise<RuntimeRunnerOutcome> {
     assertPositive(leaseMilliseconds, "lease milliseconds");
     const now = this.clock.now();
     const run = await this.store.transaction((transaction) =>
-      transaction.claimRun({
-        workerId,
-        now,
-        leaseUntil: new Date(now.getTime() + leaseMilliseconds),
-      })
+      runId === undefined
+        ? transaction.claimRun({
+          workerId,
+          now,
+          leaseUntil: new Date(now.getTime() + leaseMilliseconds),
+        })
+        : transaction.claimRunById(runId as RunId, {
+          workerId,
+          now,
+          leaseUntil: new Date(now.getTime() + leaseMilliseconds),
+        })
     );
-    if (run === undefined) return { status: "idle" };
+    if (run === undefined) {
+      if (runId === undefined) return { status: "idle" };
+      return { status: "busy", runId };
+    }
     try {
       await this.preflight(run);
       let cost = run.cost;
@@ -137,6 +146,15 @@ export class AgentRuntimeRunner {
     } catch (error) {
       return await this.recordFailure(run, error);
     }
+  }
+
+  /** Claims only the submitted run; a missing claim is never replaced globally. */
+  async executeRun(
+    workerId: string,
+    leaseMilliseconds: number,
+    runId: string,
+  ): Promise<RuntimeRunnerOutcome> {
+    return await this.executeOne(workerId, leaseMilliseconds, runId);
   }
 
   private async preflight(run: ClaimedRun): Promise<void> {
@@ -213,6 +231,19 @@ export class AgentRuntimeRunner {
       });
       throw new RuntimeToolDeniedError(step.toolName, result.reason);
     }
+    if (result.status === "blocked") {
+      await this.recordToolActivity(run, {
+        ...activity,
+        state: "failed",
+        denialReason: result.reason,
+        completedAt: this.clock.now(),
+      });
+      throw new RuntimeToolOutputBlockedError(
+        step.toolName,
+        result.semanticStatus,
+        result.reason,
+      );
+    }
     if (result.status === "failed") {
       await this.recordToolActivity(run, {
         ...activity,
@@ -223,6 +254,12 @@ export class AgentRuntimeRunner {
         `Tool "${step.toolName}" execution failed; expected a safe tool result.`,
       );
     }
+    const evidence = await this.validateToolEvidence(
+      run,
+      activity,
+      step.sourceVersions,
+      result.output.discoveredSourceVersions ?? [],
+    );
     await this.ensureBeforeDurableEffect(run);
     await this.recordToolActivity(run, {
       ...activity,
@@ -235,13 +272,31 @@ export class AgentRuntimeRunner {
       value: result.output.value,
       lineage: {
         toolActivityIds: [activity.activityId],
-        evidence: mergeToolEvidence(
-          step.sourceVersions,
-          result.output.discoveredSourceVersions ?? [],
-        ),
+        evidence,
       },
       cost: emptyCost(),
     };
+  }
+
+  private async validateToolEvidence(
+    run: ClaimedRun,
+    activity: ToolActivityRecord,
+    declared: readonly SourceVersionReference[],
+    discovered: readonly SourceVersionReference[],
+  ): Promise<readonly SourceVersionReference[]> {
+    try {
+      return deduplicateSourceVersions([...declared, ...discovered]);
+    } catch (error) {
+      await this.recordToolActivity(run, {
+        ...activity,
+        state: "failed",
+        denialReason: error instanceof Error
+          ? error.message
+          : "EVIDENCE_REJECTED",
+        completedAt: this.clock.now(),
+      });
+      throw error;
+    }
   }
 
   private executeNonTool(
@@ -359,6 +414,7 @@ export class AgentRuntimeRunner {
       : error instanceof RuntimeCancelledError
       ? "cancelled"
       : error instanceof RuntimeToolDeniedError ||
+          error instanceof RuntimeToolOutputBlockedError ||
           error instanceof RuntimeEffectDeniedError ||
           error instanceof RuntimeCostCeilingError
       ? "failed"
@@ -440,15 +496,4 @@ export class AgentRuntimeRunner {
     await this.ensureRunnable(run);
     return runtimeAuthority(decision);
   }
-}
-
-function mergeToolEvidence(
-  declared: readonly SourceVersionReference[],
-  discovered: readonly SourceVersionReference[],
-): readonly SourceVersionReference[] {
-  const references = new Map<string, SourceVersionReference>();
-  for (const reference of [...declared, ...discovered]) {
-    references.set(sourceVersionKey(reference), reference);
-  }
-  return [...references.values()];
 }

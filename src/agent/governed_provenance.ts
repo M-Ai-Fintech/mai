@@ -370,15 +370,7 @@ function runtimeEvidenceLineage(
 ): AgentSourceVersionReference[] {
   const evidence = result.lineage.evidence;
   evidence.forEach(assertSourceReference);
-  assertUnique(evidence.map(sourceReferenceKey), "durable result evidence");
-  return evidence.map((reference) => ({
-    sourceType: reference.sourceType,
-    sourceId: reference.sourceId,
-    version: reference.version,
-    ...(reference.checksum === undefined
-      ? {}
-      : { checksum: reference.checksum }),
-  }));
+  return deduplicateAgentEvidence(evidence.map(normalizedSourceReference));
 }
 
 function assertSourceReference(
@@ -396,19 +388,52 @@ function sourceReferenceKey(reference: {
   readonly version: string | number;
   readonly checksum?: string;
 }): string {
-  return `${reference.sourceType}:${reference.sourceId}:${reference.version}:${
-    reference.checksum ?? ""
-  }`;
+  return JSON.stringify([
+    reference.sourceType,
+    reference.sourceId,
+    String(reference.version),
+    reference.checksum ?? null,
+  ]);
 }
 
-function assertUnique(values: readonly unknown[], label: string): void {
-  if (
-    values.every((value) => typeof value === "string") &&
-    new Set(values).size === values.length
-  ) return;
-  throw new GovernedProvenanceError(
-    `${label} lineage contains a duplicate or malformed value`,
-  );
+function normalizedSourceReference(
+  reference: AgentSourceVersionReference,
+): AgentSourceVersionReference {
+  return {
+    sourceType: reference.sourceType,
+    sourceId: reference.sourceId,
+    version: reference.version,
+    ...(reference.checksum === undefined
+      ? {}
+      : { checksum: reference.checksum }),
+  };
+}
+
+function deduplicateAgentEvidence(
+  evidence: readonly AgentSourceVersionReference[],
+): AgentSourceVersionReference[] {
+  const unique = new Map<string, AgentSourceVersionReference>();
+  for (const reference of evidence) {
+    const identity = JSON.stringify([
+      reference.sourceType,
+      reference.sourceId,
+      String(reference.version),
+    ]);
+    const existing = unique.get(identity);
+    if (existing === undefined) {
+      unique.set(identity, reference);
+      continue;
+    }
+    if (sourceReferenceKey(existing) === sourceReferenceKey(reference)) {
+      continue;
+    }
+    throw new GovernedProvenanceError(
+      `durable result evidence receipt "${identity}" conflicts: "${
+        sourceReferenceKey(existing)
+      }" and "${sourceReferenceKey(reference)}"; expected one exact checksum`,
+    );
+  }
+  return [...unique.values()];
 }
 
 function assertRunUnchanged(

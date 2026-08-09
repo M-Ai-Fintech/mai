@@ -1,4 +1,12 @@
-import type { AgentDefinition } from "./definitions/index.ts";
+import type {
+  AgentDefinition,
+  CalculationBinding,
+} from "./definitions/index.ts";
+import { calculationBindingFor } from "./governed_capability_binding.ts";
+import type {
+  GovernedCalculationOutput,
+  GovernedCalculationPortRegistry,
+} from "./governed_calculation_ports.ts";
 import {
   GOVERNED_STEP_CLAIMS_KEY,
   readDurableStepClaims,
@@ -15,6 +23,7 @@ import type {
   StepRecord,
   ToolActivityRecord,
 } from "../agent_runtime/model.ts";
+import { deduplicateSourceVersions } from "../agent_runtime/model.ts";
 import type {
   RuntimeStepExecutor,
   StepExecutionContext,
@@ -23,7 +32,7 @@ import type {
 
 export type GovernedProposalRuntimeReader = Pick<
   AgentRuntimeReadService,
-  "getStep" | "listToolActivities" | "listResults"
+  "getRun" | "getStep" | "listToolActivities" | "listResults"
 >;
 
 export class DurableProposalStepExecutor implements RuntimeStepExecutor {
@@ -31,11 +40,25 @@ export class DurableProposalStepExecutor implements RuntimeStepExecutor {
     private readonly request: GovernedProposalRequest,
     private readonly delegate: RuntimeStepExecutor,
     private readonly reads: GovernedProposalRuntimeReader,
+    private readonly calculations: GovernedCalculationPortRegistry,
   ) {}
 
   async execute(
     step: StepRecord,
     context: StepExecutionContext,
+  ): Promise<StepExecutionOutput> {
+    const claims = readDurableStepClaims(step);
+    assertDefinitionClaim(claims.definition, this.request.definition);
+    if (step.kind === "compute") {
+      return await this.executeCalculation(step, context, claims);
+    }
+    return await this.executeProposal(step, context, claims);
+  }
+
+  private async executeProposal(
+    step: StepRecord,
+    context: StepExecutionContext,
+    claims: ReturnType<typeof readDurableStepClaims>,
   ): Promise<StepExecutionOutput> {
     const output = await this.delegate.execute(step, context);
     if (output.kind !== "proposal" && output.kind !== "reversible_draft") {
@@ -43,8 +66,68 @@ export class DurableProposalStepExecutor implements RuntimeStepExecutor {
         `Governed proposal step "${step.stepId}" returned kind "${output.kind}"; expected a proposal artifact.`,
       );
     }
-    const claims = readDurableStepClaims(step);
-    assertDefinitionClaim(claims.definition, this.request.definition);
+    return await this.decorateOutput(step, context, claims, output);
+  }
+
+  private async executeCalculation(
+    step: StepRecord,
+    context: StepExecutionContext,
+    claims: ReturnType<typeof readDurableStepClaims>,
+  ): Promise<StepExecutionOutput> {
+    const binding = exactCalculationBinding(this.request, step, claims);
+    const output = await this.runCalculationPort(binding, step, context);
+    return await this.decorateOutput(step, context, claims, {
+      kind: "proposal",
+      value: output.value,
+      lineage: { toolActivityIds: [], evidence: [] },
+      cost: output.cost,
+    });
+  }
+
+  private runCalculationPort(
+    binding: CalculationBinding,
+    step: StepRecord,
+    context: StepExecutionContext,
+  ): Promise<GovernedCalculationOutput> {
+    const port = this.calculations.resolve(binding.purePort);
+    if (
+      port === undefined || port.name !== binding.purePort ||
+      port.deterministic !== true
+    ) {
+      throw new Error(
+        `Calculation pure port "${binding.purePort}" is unavailable; expected an injected deterministic implementation.`,
+      );
+    }
+    return port.execute({
+      capability: this.request.capability,
+      binding,
+      input: step.input.request,
+      step,
+      context,
+    });
+  }
+
+  private async decorateOutput(
+    step: StepRecord,
+    context: StepExecutionContext,
+    claims: ReturnType<typeof readDurableStepClaims>,
+    output: StepExecutionOutput,
+  ): Promise<StepExecutionOutput> {
+    const lineage = await this.readLineage(step, context, claims);
+    return {
+      kind: output.kind,
+      value: output.value,
+      lineage,
+      cost: output.cost,
+      artifact: output.artifact,
+    };
+  }
+
+  private async readLineage(
+    step: StepRecord,
+    context: StepExecutionContext,
+    claims: ReturnType<typeof readDurableStepClaims>,
+  ): Promise<RuntimeLineage> {
     const activities = await loaded(
       this.reads.listToolActivities(
         this.request.execution.context,
@@ -61,14 +144,37 @@ export class DurableProposalStepExecutor implements RuntimeStepExecutor {
       ),
       "tool result lineage",
     );
-    return {
-      kind: output.kind,
-      value: output.value,
-      lineage: governedLineage(context, step, claims, activities, results),
-      cost: output.cost,
-      artifact: output.artifact,
-    };
+    return governedLineage(context, step, claims, activities, results);
   }
+}
+
+function exactCalculationBinding(
+  request: GovernedProposalRequest,
+  step: StepRecord,
+  claims: ReturnType<typeof readDurableStepClaims>,
+): CalculationBinding {
+  const binding = calculationBindingFor(request.definition, request.capability);
+  if (
+    binding === undefined || step.name !== binding.operation ||
+    step.action !== binding.action || !sameCalculationBinding(
+      claims.calculation,
+      binding,
+    )
+  ) {
+    throw new Error(
+      `Calculation step "${step.stepId}" lacks the exact definition-bound pure operation receipt.`,
+    );
+  }
+  return binding;
+}
+
+function sameCalculationBinding(
+  left: CalculationBinding | undefined,
+  right: CalculationBinding,
+): boolean {
+  return left !== undefined && left.capability === right.capability &&
+    left.purePort === right.purePort && left.operation === right.operation &&
+    left.action === right.action;
 }
 
 function governedLineage(
@@ -97,25 +203,16 @@ function governedLineage(
     toolActivityIds: activities.filter((activity) =>
       activity.state === "succeeded"
     ).map((activity) => activity.activityId),
-    evidence: uniqueEvidence(results),
+    evidence: aggregateRuntimeEvidence(results),
   };
 }
 
-function uniqueEvidence(
+export function aggregateRuntimeEvidence(
   results: readonly ResultRecord[],
 ): readonly SourceVersionReference[] {
-  const references = results.flatMap((result) => result.lineage.evidence);
-  const unique = new Map<string, SourceVersionReference>();
-  for (const reference of references) {
-    unique.set(sourceKey(reference), reference);
-  }
-  return [...unique.values()];
-}
-
-function sourceKey(reference: SourceVersionReference): string {
-  return `${reference.sourceType}:${reference.sourceId}:${reference.version}:${
-    reference.checksum ?? ""
-  }`;
+  return deduplicateSourceVersions(
+    results.flatMap((result) => result.lineage.evidence),
+  );
 }
 
 function assertDefinitionClaim(

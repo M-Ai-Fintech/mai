@@ -62,6 +62,7 @@ import {
 } from "./postgres_record_reads.ts";
 import {
   claimCandidate,
+  claimCandidateById,
   claimCandidateRow,
   completeExpiredAttempt,
   loadRequiredRun,
@@ -168,7 +169,27 @@ export class PostgresRuntimeTransaction implements RuntimeTransaction {
   async claimRun(claim: RuntimeRunClaim): Promise<ClaimedRun | undefined> {
     const candidate = await claimCandidate(this.transaction, claim.now);
     if (candidate === undefined) return undefined;
-    const current = toRun(candidate);
+    return await this.claimCandidate(toRun(candidate), claim);
+  }
+
+  async claimRunById(
+    runId: RunId,
+    claim: RuntimeRunClaim,
+  ): Promise<ClaimedRun | undefined> {
+    const candidate = await claimCandidateById(
+      this.transaction,
+      runId,
+      claim.now,
+    );
+    return candidate === undefined
+      ? undefined
+      : await this.claimCandidate(toRun(candidate), claim);
+  }
+
+  private async claimCandidate(
+    current: RunRecord,
+    claim: RuntimeRunClaim,
+  ): Promise<ClaimedRun> {
     const attemptNumber = current.attemptCount + 1;
     await claimCandidateRow(
       this.transaction,

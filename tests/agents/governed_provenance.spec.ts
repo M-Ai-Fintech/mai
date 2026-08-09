@@ -308,18 +308,81 @@ Deno.test("runtime provenance rejects concurrent run invalidation after freshnes
   ]);
 });
 
+Deno.test("runtime provenance deduplicates identical evidence and rejects checksum conflicts", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const definition = catalog.current("broker-orchestrator-agent");
+  const execution = executionContext("run_evidence_duplicates");
+  const base = runtimeReceiptFixture(definition, execution);
+  const duplicate = {
+    ...base.result,
+    lineage: {
+      ...base.result.lineage,
+      evidence: [
+        ...base.result.lineage.evidence,
+        ...base.result.lineage.evidence,
+      ],
+    },
+  } as ResultRecord;
+  const duplicateResult = await createRuntimeAdapterAgent(
+    catalog,
+    duplicate.resultId,
+    new NamedFakeAgentRuntimeReadService(
+      [base.run],
+      [base.activity],
+      duplicate,
+    ),
+    new NamedFlippingSourceVersionChecker(),
+    execution,
+  ).propose(agentRequest());
+
+  assertEquals(duplicateResult.lineage.evidence, [{
+    sourceType: "document_version",
+    sourceId: "docv_contract_v2",
+    version: 2,
+    checksum: "a".repeat(64),
+  }]);
+
+  const conflict = {
+    ...base.result,
+    lineage: {
+      ...base.result.lineage,
+      evidence: [
+        ...base.result.lineage.evidence,
+        { ...base.result.lineage.evidence[0], checksum: "b".repeat(64) },
+      ],
+    },
+  } as ResultRecord;
+  await assertRejects(
+    () =>
+      createRuntimeAdapterAgent(
+        catalog,
+        conflict.resultId,
+        new NamedFakeAgentRuntimeReadService(
+          [base.run],
+          [base.activity],
+          conflict,
+        ),
+        new NamedFlippingSourceVersionChecker(),
+        execution,
+      ).propose(agentRequest()),
+    GovernedProvenanceError,
+    "conflicts",
+  );
+});
+
 function createRuntimeAdapterAgent(
   catalog: ReturnType<typeof createSpecialistDefinitionCatalog>,
   resultId: string,
   reads: GovernedRuntimeReceiptReader,
   sources = new NamedFlippingSourceVersionChecker(),
+  execution = executionContext(),
 ) {
   return createGovernedSpecialist(
     catalog,
     "broker-orchestrator-agent",
     new NamedRecordingProposalPort(runtimeProposalResponse(resultId)),
     new AgentRuntimeProvenanceVerifier(reads, sources),
-    executionContext(),
+    execution,
   );
 }
 

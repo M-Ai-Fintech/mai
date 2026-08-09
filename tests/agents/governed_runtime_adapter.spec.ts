@@ -14,6 +14,10 @@ import {
 import { AgentRuntimeReadService } from "../../src/agent_runtime/reads.ts";
 import { InMemoryAgentRuntimeStore } from "../../src/agent_runtime/repository.ts";
 import { AgentRuntimeProposalService } from "../../src/agent_runtime/proposal_service.ts";
+import {
+  CalculationPortRegistry,
+  type GovernedCalculationPort,
+} from "../../src/agent/governed_calculation_ports.ts";
 import type {
   RuntimeActor,
   RuntimeScope,
@@ -35,6 +39,7 @@ import type { RequestContext } from "../../src/shared/contracts/request_context.
 import {
   AllowingAuthorization,
 } from "../agent_runtime/authorization_support.ts";
+import { exactReference } from "./governed_evidence_fakes.ts";
 
 Deno.test("durable governed adapter produces schema-valid proposals for all eight specialists", async () => {
   const catalog = createSpecialistDefinitionCatalog();
@@ -145,7 +150,7 @@ Deno.test("calculation verification rejects a rebinding hidden behind lineage.ca
   );
 });
 
-Deno.test("adapter rejects a successful outcome for another queued run", async () => {
+Deno.test("adapter executes the submitted run without claiming an older queue entry", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const runtime = createRuntime();
   const competing = executionContext("run_competing_queued");
@@ -165,11 +170,101 @@ Deno.test("adapter rejects a successful outcome for another queued run", async (
     capability: "evidence.search",
   });
 
+  assertEquals(result.status, "proposed");
+  const competingRun = await runtime.store.transaction((transaction) =>
+    transaction.findRun(competing.scope, competing.runId)
+  );
+  assertEquals(competingRun?.state, "queued");
+});
+
+Deno.test("adapter returns unavailable before submitting missing exact document input", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const runtime = createRuntime();
+  const execution = executionContext("run_missing_exact_input");
+  const result = await createAgentRuntimeGovernedSpecialist(
+    catalog,
+    "general-dd-agent",
+    runtime.dependencies,
+    execution,
+  ).propose({
+    input: {
+      dealId: execution.scope.dealId,
+      query: "Read metadata.",
+      context: {},
+    },
+    capability: "document.metadata.read",
+  });
+
   assertEquals(result.status, "unavailable");
   assertEquals(
-    result.artifact.value.reason,
-    `Durable proposal runner completed run "${competing.runId}" instead of submitted run "${requested.runId}".`,
+    await runtime.store.transaction((transaction) =>
+      transaction.listSteps(execution.scope, execution.runId)
+    ),
+    [],
   );
+});
+
+Deno.test("adapter persists typed exact document input for the production tool", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const runtime = createRuntime();
+  const execution = executionContext("run_exact_document_input");
+  const result = await createAgentRuntimeGovernedSpecialist(
+    catalog,
+    "general-dd-agent",
+    runtime.dependencies,
+    execution,
+  ).propose({
+    input: {
+      dealId: execution.scope.dealId,
+      query: "Read metadata.",
+      context: { reference: exactReference },
+    },
+    capability: "document.metadata.read",
+  });
+
+  assertEquals(result.status, "unavailable");
+  const steps = await runtime.store.transaction((transaction) =>
+    transaction.listSteps(execution.scope, execution.runId)
+  );
+  assertEquals(steps[0]?.input, {
+    scope: execution.scope,
+    reference: exactReference,
+  });
+});
+
+Deno.test("adapter persists typed citation source input for the production tool", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const runtime = createRuntime();
+  const execution = executionContext("run_exact_citation_input");
+  const source = {
+    ...exactReference,
+    location: { kind: "page", page: 4 },
+    classification: "legal",
+    processingVersion: "extract-v1",
+  };
+  const result = await createAgentRuntimeGovernedSpecialist(
+    catalog,
+    "general-dd-agent",
+    runtime.dependencies,
+    execution,
+  ).propose({
+    input: {
+      dealId: execution.scope.dealId,
+      query: "Propose citation.",
+      context: { source, excerpt: "Signed consent." },
+    },
+    capability: "citation.propose",
+  });
+
+  assertEquals(result.status, "unavailable");
+  const steps = await runtime.store.transaction((transaction) =>
+    transaction.listSteps(execution.scope, execution.runId)
+  );
+  assertEquals(steps[0]?.input, {
+    scope: execution.scope,
+    source,
+    excerpt: "Signed consent.",
+  });
 });
 
 function createRuntime() {
@@ -188,6 +283,12 @@ function createRuntime() {
   );
   const sources = new CurrentSources();
   const executor = new NamedProposalExecutor();
+  const calculations = new CalculationPortRegistry([
+    new NamedCalculationPort("portfolio-selection"),
+    new NamedCalculationPort("synergy-pricing"),
+    new NamedCalculationPort("financial-value-calculations"),
+    new NamedCalculationPort("negotiation-proposal-optimizer"),
+  ]);
   return {
     store,
     reads,
@@ -199,6 +300,7 @@ function createRuntime() {
       sources,
       gateway,
       executor,
+      calculations,
       getRun: reads.getRun.bind(reads),
       getResult: reads.getResult.bind(reads),
       getStep: reads.getStep.bind(reads),
@@ -239,6 +341,25 @@ class NamedProposalExecutor implements RuntimeStepExecutor {
       value: {
         success: true,
         response: "Named durable proposal.",
+        timestamp: "2026-08-09T12:00:00.000Z",
+      },
+      lineage: { toolActivityIds: [], evidence: [] },
+      cost: emptyCost(),
+    });
+  }
+}
+
+class NamedCalculationPort implements GovernedCalculationPort {
+  readonly deterministic = true as const;
+
+  constructor(readonly name: string) {}
+
+  execute(): Promise<StepExecutionOutput> {
+    return Promise.resolve({
+      kind: "proposal",
+      value: {
+        success: true,
+        response: `Calculation ${this.name}.`,
         timestamp: "2026-08-09T12:00:00.000Z",
       },
       lineage: { toolActivityIds: [], evidence: [] },

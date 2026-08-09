@@ -127,8 +127,9 @@ Deno.test("gateway denial prevents every governed port from loading", async () =
     resourceId: "governed.documents.other",
   });
 
-  assertEquals(mismatch.status, "succeeded");
-  if (mismatch.status === "succeeded") {
+  assertEquals(mismatch.status, "blocked");
+  if (mismatch.status === "blocked") {
+    assertEquals(mismatch.semanticStatus, "denied");
     assertEquals(mismatch.output.value.status, "denied");
     assertEquals(mismatch.output.value.reasonCode, "TOOL_REQUEST_MISMATCH");
   }
