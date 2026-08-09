@@ -64,6 +64,8 @@ export interface ModelMetadata {
   readonly provider: string;
   readonly model: string;
   readonly modelVersion: string;
+  /** Durable policy receipt when a governed definition selects the model. */
+  readonly policyReference?: string;
   readonly responseReference?: string;
 }
 
@@ -77,6 +79,17 @@ export interface CostMetadata {
 }
 
 export interface RuntimeLineage {
+  /** Durable definition identity selected for this result. */
+  readonly definition?: {
+    readonly id: string;
+    readonly version: string;
+  };
+  /** Stable aliases retained for JSON consumers of the result lineage. */
+  readonly definitionId?: string;
+  readonly definitionVersion?: string;
+  readonly modelPolicyReference?: string;
+  /** Capability persisted by a non-tool executor when no tool proves it. */
+  readonly capability?: string;
   readonly prompt?: PromptLineage;
   readonly model?: ModelMetadata;
   readonly toolActivityIds: readonly ToolActivityId[];

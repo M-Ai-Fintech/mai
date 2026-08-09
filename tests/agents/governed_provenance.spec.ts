@@ -415,7 +415,7 @@ function runtimeReceiptFixture(
     runId: execution.runId,
     stepId: "step_receipt" as never,
     toolName: "governed.evidence.search",
-    action: "read",
+    action: "search_evidence",
     resourceKind: "evidence",
     resourceId: "docv_contract_v2",
     requestDigest: "digest_receipt",
@@ -430,11 +430,19 @@ function runtimeReceiptFixture(
     kind: "proposal" as const,
     value: proposedOutput,
     lineage: {
+      definition: {
+        id: definition.id,
+        version: definition.version,
+      },
+      definitionId: definition.id,
+      definitionVersion: definition.version,
+      modelPolicyReference: definition.modelPolicy.policyReference,
       prompt: definition.prompt,
       model: {
         provider: definition.modelPolicy.provider,
         model: definition.modelPolicy.model,
         modelVersion: definition.modelPolicy.modelVersion,
+        policyReference: definition.modelPolicy.policyReference,
       },
       toolActivityIds: [activity.activityId],
       evidence: [{

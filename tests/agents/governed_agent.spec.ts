@@ -71,8 +71,16 @@ class NamedFakeRuntimeReceiptVerifier implements GovernedProvenanceVerifier {
       kind: this.resultKind,
       value: this.durableValue,
       lineage: {
+        definition: {
+          id: request.definition.id,
+          version: request.definition.version,
+        },
+        definitionId: request.definition.id,
+        definitionVersion: request.definition.version,
+        modelPolicyReference: request.definition.modelPolicy.policyReference,
         prompt: request.definition.prompt,
         model: {
+          policyReference: request.definition.modelPolicy.policyReference,
           provider: request.definition.modelPolicy.provider,
           model: request.definition.modelPolicy.model,
           modelVersion: request.definition.modelPolicy.modelVersion,
@@ -139,6 +147,7 @@ Deno.test("all pinned specialists emit schema-valid non-authoritative proposals"
     );
     assertEquals(port.requests.length, 1);
     assertEquals(verifier.requests[0].resultId, "result_exact");
+    assertEquals(verifier.requests[0].capability, "evidence.search");
   }
 });
 
@@ -411,10 +420,19 @@ function executionContext(
 }
 
 function trustedLineage(
-  definition: Pick<AgentDefinition, "modelPolicy">,
+  definition: Pick<
+    AgentDefinition,
+    "id" | "version" | "prompt" | "modelPolicy"
+  >,
   overrides: Partial<VerifiedAgentLineage> = {},
 ): VerifiedAgentLineage {
   return {
+    definition: {
+      id: definition.id,
+      version: definition.version,
+    },
+    prompt: definition.prompt,
+    modelPolicyReference: definition.modelPolicy.policyReference,
     model: {
       policyReference: definition.modelPolicy.policyReference,
       provider: definition.modelPolicy.provider,

@@ -2,6 +2,7 @@ import type {
   AgentModelLineage,
   AgentSourceVersionReference,
   AgentToolLineage,
+  VerifiedAgentLineage,
 } from "./definitions/index.ts";
 import {
   capabilitySchema,
@@ -25,6 +26,17 @@ import type {
   RuntimeReadResult,
 } from "../agent_runtime/reads.ts";
 import type { SourceVersionChecker } from "../agent_runtime/runner.ts";
+import {
+  capabilityBindingForTool,
+  capabilityForTool,
+  requestedCapabilityMismatch,
+  type RuntimeToolReceipt,
+} from "./governed_capability_binding.ts";
+import {
+  sameDefinitionModel,
+  samePrompt,
+  sameRuntimeModel,
+} from "./governed_provenance_values.ts";
 
 /** Public AgentRuntimeReadService methods used by the production adapter. */
 export type GovernedRuntimeReceiptReader = Pick<
@@ -58,13 +70,18 @@ export class AgentRuntimeProvenanceVerifier
     const run = await readRun(this.reads, execution);
     const result = await readResult(this.reads, execution, request.resultId);
     assertRuntimeResult(result, request.resultId, execution);
+    const identity = runtimeIdentityLineage(result, request.definition);
     const model = runtimeModelLineage(run, result, request.definition);
     const tools = await runtimeToolLineage(this.reads, request, result);
     const evidence = runtimeEvidenceLineage(result);
     await assertEvidenceCurrent(this.sources, evidence);
     const currentRun = await readRun(this.reads, execution);
     assertRunUnchanged(run, currentRun, execution);
-    return { execution, result, lineage: { model, tools, evidence } };
+    return {
+      execution,
+      result,
+      lineage: { ...identity, model, tools, evidence },
+    };
   }
 }
 
@@ -203,6 +220,58 @@ function assertRuntimeResult(
   }
 }
 
+function runtimeIdentityLineage(
+  result: ResultRecord,
+  definition: GovernedProvenanceVerificationRequest["definition"],
+): Pick<
+  VerifiedAgentLineage,
+  "definition" | "prompt" | "modelPolicyReference"
+> {
+  const lineage = result.lineage;
+  const durableDefinition = lineage.definition;
+  if (!isRecord(durableDefinition)) {
+    throw new GovernedProvenanceError(
+      `durable result "${result.resultId}" lacks a definition receipt; expected durable definition ID and version`,
+    );
+  }
+  if (
+    durableDefinition.id !== definition.id ||
+    durableDefinition.version !== definition.version ||
+    lineage.definitionId !== durableDefinition.id ||
+    lineage.definitionVersion !== durableDefinition.version
+  ) {
+    throw new GovernedProvenanceError(
+      `durable result "${result.resultId}" definition receipt does not match the selected definition`,
+    );
+  }
+  const prompt = lineage.prompt;
+  if (!isRecord(prompt) || !samePrompt(prompt, definition)) {
+    throw new GovernedProvenanceError(
+      `durable result "${result.resultId}" model or prompt receipt does not match the selected definition`,
+    );
+  }
+  if (
+    typeof lineage.modelPolicyReference !== "string" ||
+    lineage.modelPolicyReference !== definition.modelPolicy.policyReference
+  ) {
+    throw new GovernedProvenanceError(
+      `durable result "${result.resultId}" model policy receipt does not match the selected definition`,
+    );
+  }
+  return {
+    definition: {
+      id: durableDefinition.id as typeof definition.id,
+      version: durableDefinition.version,
+    },
+    prompt: {
+      templateReference: prompt.templateReference as string,
+      templateVersion: prompt.templateVersion as string,
+      promptDigest: prompt.promptDigest as string,
+    },
+    modelPolicyReference: lineage.modelPolicyReference,
+  };
+}
+
 function runtimeModelLineage(
   run: RunRecord,
   result: ResultRecord,
@@ -221,6 +290,14 @@ function runtimeModelLineage(
     );
   }
   if (
+    typeof model.policyReference !== "string" ||
+    model.policyReference !== definition.modelPolicy.policyReference
+  ) {
+    throw new GovernedProvenanceError(
+      "durable result model receipt lacks the durable model policy reference",
+    );
+  }
+  if (
     !sameRuntimeModel(model, run.model) ||
     !sameDefinitionModel(model, definition) || !samePrompt(prompt, definition)
   ) {
@@ -229,37 +306,11 @@ function runtimeModelLineage(
     );
   }
   return {
-    policyReference: definition.modelPolicy.policyReference,
+    policyReference: model.policyReference,
     provider: run.model.provider,
     model: run.model.model,
     modelVersion: run.model.modelVersion,
   };
-}
-
-function sameRuntimeModel(
-  left: NonNullable<RunRecord["model"]>,
-  right: NonNullable<RunRecord["model"]>,
-): boolean {
-  return left.provider === right.provider && left.model === right.model &&
-    left.modelVersion === right.modelVersion;
-}
-
-function sameDefinitionModel(
-  model: NonNullable<RunRecord["model"]>,
-  definition: GovernedProvenanceVerificationRequest["definition"],
-): boolean {
-  return model.provider === definition.modelPolicy.provider &&
-    model.model === definition.modelPolicy.model &&
-    model.modelVersion === definition.modelPolicy.modelVersion;
-}
-
-function samePrompt(
-  prompt: NonNullable<ResultRecord["lineage"]["prompt"]>,
-  definition: GovernedProvenanceVerificationRequest["definition"],
-): boolean {
-  return prompt.templateReference === definition.prompt.templateReference &&
-    prompt.templateVersion === definition.prompt.templateVersion &&
-    prompt.promptDigest === definition.prompt.promptDigest;
 }
 
 async function runtimeToolLineage(
@@ -269,11 +320,20 @@ async function runtimeToolLineage(
 ): Promise<AgentToolLineage[]> {
   const activityIds = result.lineage.toolActivityIds;
   assertUnique(activityIds, "durable result tool activity");
-  return await Promise.all(
+  const receipts = await Promise.all(
     activityIds.map((activityId) =>
       runtimeTool(reads, request, result, activityId)
     ),
   );
+  const mismatch = requestedCapabilityMismatch(
+    request.capability,
+    result,
+    receipts,
+  );
+  if (mismatch !== undefined) {
+    throw new GovernedProvenanceError(mismatch);
+  }
+  return receipts.map(({ action: _action, ...tool }) => tool);
 }
 
 async function runtimeTool(
@@ -281,7 +341,7 @@ async function runtimeTool(
   request: GovernedProvenanceVerificationRequest,
   result: ResultRecord,
   activityId: unknown,
-): Promise<AgentToolLineage> {
+): Promise<RuntimeToolReceipt> {
   if (typeof activityId !== "string" || !activityId.trim()) {
     throw new GovernedProvenanceError(
       "durable result tool lineage is malformed; expected durable activity IDs",
@@ -323,12 +383,17 @@ async function runtimeTool(
       `tool activity "${activityId}" has an invalid tool name`,
     );
   }
-  const capability = capabilitySchema.safeParse(activity.action).success
-    ? { capability: activity.action }
-    : {};
+  const binding = capabilityBindingForTool(activity.toolName);
+  if (binding !== undefined && activity.action !== binding.action) {
+    throw new GovernedProvenanceError(
+      `tool activity "${activityId}" action "${activity.action}" does not match tool "${activity.toolName}"`,
+    );
+  }
+  const capability = capabilityForTool(activity.toolName, activity.action);
   return {
     name: activity.toolName,
     activityId: activity.activityId,
+    action: activity.action,
     ...capability,
     status: "succeeded",
   };
@@ -406,6 +471,7 @@ function sameModel(
   if (left === undefined || right === undefined) return left === right;
   return left.provider === right.provider && left.model === right.model &&
     left.modelVersion === right.modelVersion &&
+    left.policyReference === right.policyReference &&
     left.responseReference === right.responseReference;
 }
 

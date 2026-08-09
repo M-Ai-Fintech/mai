@@ -1,9 +1,9 @@
 import {
   AGENT_DEFINITION_IDS,
   type AgentDefinition,
-  agentDefinitionEnvelopeSchema,
   type AgentDefinitionId,
   CURRENT_DEFINITION_VERSIONS,
+  parseAgentDefinitionEnvelope,
 } from "./contract.ts";
 
 export interface DefinitionRollbackSelection {
@@ -31,8 +31,7 @@ export function createDefinitionCatalog(
 ): DefinitionCatalog {
   const byId = new Map<AgentDefinitionId, Map<string, AgentDefinition>>();
   for (const definition of definitions) {
-    validateEnvelope(definition);
-    addDefinition(byId, definition);
+    addDefinition(byId, parseAgentDefinitionEnvelope(definition));
   }
   const pinnedVersions = Object.freeze({ ...currentVersions });
   validatePins(byId, pinnedVersions);
@@ -80,10 +79,6 @@ class ImmutableDefinitionCatalog implements DefinitionCatalog {
   versions(id: AgentDefinitionId): readonly string[] {
     return [...(this.definitions.get(id)?.keys() ?? [])].sort(compareVersions);
   }
-}
-
-function validateEnvelope(definition: AgentDefinition): void {
-  agentDefinitionEnvelopeSchema.parse(definition);
 }
 
 function addDefinition(

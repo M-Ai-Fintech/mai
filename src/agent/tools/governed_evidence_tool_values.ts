@@ -1,4 +1,5 @@
 import type { ToolOutput } from "../../agent_runtime/tool_gateway.ts";
+import type { SourceVersionReference } from "../../agent_runtime/model.ts";
 import type {
   CapabilityUnavailable,
   Checksum,
@@ -49,8 +50,26 @@ export function parseExactEvidenceReference(
 export function result(
   kind: "read" | "proposal",
   value: Record<string, unknown>,
+  discoveredSourceVersions: readonly SourceVersionReference[] = [],
 ): ToolOutput {
-  return { kind, value: Object.freeze(value) };
+  return {
+    kind,
+    value: Object.freeze(value),
+    ...(discoveredSourceVersions.length === 0 ? {} : {
+      discoveredSourceVersions: Object.freeze([...discoveredSourceVersions]),
+    }),
+  };
+}
+
+export function runtimeSourceReference(
+  reference: ExactDocumentVersionReference,
+): SourceVersionReference {
+  return {
+    sourceType: "document_version",
+    sourceId: reference.documentVersionId,
+    version: reference.version as SourceVersionReference["version"],
+    checksum: reference.checksum.value,
+  };
 }
 
 export function denied(

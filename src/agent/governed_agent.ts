@@ -70,6 +70,8 @@ export interface GovernedProposalPort {
 
 export interface GovernedProvenanceVerificationRequest {
   readonly execution: GovernedExecutionBinding;
+  /** Capability requested by the caller and proven by the durable receipt. */
+  readonly capability: string;
   readonly definition: Pick<
     AgentDefinition,
     "id" | "version" | "prompt" | "modelPolicy" | "toolReferences"
@@ -128,6 +130,7 @@ export class GovernedSpecialistAgent {
       this.definition,
       this.execution,
       this.provenance,
+      capability,
       response,
     );
   }
@@ -199,6 +202,7 @@ async function resultFromResponse(
   definition: AgentDefinition,
   execution: GovernedExecutionBinding,
   provenance: GovernedProvenanceVerifier,
+  capability: string,
   response: GovernedProposalResponse,
 ): Promise<AgentProposalResult> {
   if (response.status !== "proposed") {
@@ -217,6 +221,7 @@ async function resultFromResponse(
   const resultId = exactResultId(response.resultId);
   const verified = await provenance.verify({
     execution,
+    capability,
     definition: {
       id: definition.id,
       version: definition.version,
@@ -226,7 +231,13 @@ async function resultFromResponse(
     },
     resultId,
   });
-  assertVerifiedProvenance(definition, execution, resultId, verified);
+  assertVerifiedProvenance(
+    definition,
+    execution,
+    capability,
+    resultId,
+    verified,
+  );
   const value = definition.outputValidator.parse(verified.result.value);
   return createAgentProposalResult(
     definition,
@@ -255,6 +266,7 @@ function exactResultId(resultId: unknown): string {
 function assertVerifiedProvenance(
   definition: AgentDefinition,
   execution: GovernedExecutionBinding,
+  capability: string,
   resultId: string,
   verified: GovernedVerifiedProvenance,
 ): void {
@@ -292,6 +304,7 @@ function assertVerifiedProvenance(
       `durable result "${resultId}" has a malformed value; expected a record`,
     );
   }
+  assertDurableIdentity(definition, resultId, result, capability);
   const model = verified.lineage.model;
   if (!isRecord(model)) {
     throw new GovernedProvenanceError(
@@ -315,6 +328,41 @@ function assertVerifiedProvenance(
   ) {
     throw new GovernedProvenanceError(
       "verified lineage lists are malformed; expected durable receipt lists",
+    );
+  }
+}
+
+function assertDurableIdentity(
+  definition: AgentDefinition,
+  resultId: string,
+  result: ResultRecord,
+  capability: string,
+): void {
+  const lineage = result.lineage;
+  if (!isRecord(lineage)) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" has a malformed identity receipt; expected durable lineage`,
+    );
+  }
+  const model = lineage.model;
+  const prompt = lineage.prompt;
+  if (
+    !isRecord(lineage.definition) ||
+    lineage.definition.id !== definition.id ||
+    lineage.definition.version !== definition.version ||
+    lineage.definitionId !== definition.id ||
+    lineage.definitionVersion !== definition.version ||
+    lineage.modelPolicyReference !== definition.modelPolicy.policyReference ||
+    !isRecord(model) ||
+    model.policyReference !== definition.modelPolicy.policyReference ||
+    !isRecord(prompt) ||
+    prompt.templateReference !== definition.prompt.templateReference ||
+    prompt.templateVersion !== definition.prompt.templateVersion ||
+    prompt.promptDigest !== definition.prompt.promptDigest ||
+    lineage.capability !== undefined && lineage.capability !== capability
+  ) {
+    throw new GovernedProvenanceError(
+      `durable result "${resultId}" identity receipt does not match requested definition or capability`,
     );
   }
 }

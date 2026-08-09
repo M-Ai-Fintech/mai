@@ -68,6 +68,37 @@ Deno.test("runner records tool/model lineage, cost, and retained attempts", asyn
   );
 });
 
+Deno.test("runner persists tool-discovered evidence in result lineage", async () => {
+  const store = new InMemoryAgentRuntimeStore();
+  const clock = new MutableClock();
+  const source: SourceVersionReference = {
+    sourceType: "document_version",
+    sourceId: "document_version_alpha",
+    version: 3 as never,
+    checksum: "a".repeat(64),
+  };
+  const run = await queueRun(store, clock, [toolStep(1)], "run_discovered");
+  const runner = new AgentRuntimeRunner(
+    store,
+    clock,
+    new CurrentSources(),
+    new ToolGateway(
+      [new DiscoveringEvidenceTool(source)],
+      new AllowingAuthorization(),
+    ),
+    new RecordingModelExecutor(),
+  );
+
+  assertEquals(await runner.executeOne("worker_a", 60_000), {
+    status: "succeeded",
+    runId: run.runId,
+  });
+  const results = await store.transaction((transaction) =>
+    transaction.listResults(run.scope, run.runId)
+  );
+  assertEquals(results[0]?.lineage.evidence, [source]);
+});
+
 Deno.test("denied tool fails the run without invoking the tool", async () => {
   const store = new InMemoryAgentRuntimeStore();
   const clock = new MutableClock();
@@ -504,6 +535,28 @@ class RecordingProposalTool implements ToolDefinition {
     return Promise.resolve({
       kind: "proposal" as const,
       value: { proposed: true },
+    });
+  }
+}
+
+class DiscoveringEvidenceTool implements ToolDefinition {
+  readonly name = "proposal_tool";
+  readonly capability = "proposal" as const;
+
+  constructor(private readonly source: SourceVersionReference) {}
+
+  execute() {
+    return Promise.resolve({
+      kind: "proposal" as const,
+      value: {
+        status: "ok",
+        reference: {
+          documentVersionId: this.source.sourceId,
+          version: this.source.version,
+          checksum: { algorithm: "sha256", value: this.source.checksum },
+        },
+      },
+      discoveredSourceVersions: [this.source],
     });
   }
 }

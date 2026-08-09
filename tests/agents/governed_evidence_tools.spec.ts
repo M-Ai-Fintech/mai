@@ -93,6 +93,9 @@ Deno.test("governed listing is authorized before protected loading", async () =>
   assertEquals(events, ["authorize"]);
   assertEquals(listing.requests.length, 1);
   assertEquals(listing.requests[0].scope, scope);
+  if (result.status === "succeeded") {
+    assertEquals(result.output.discoveredSourceVersions, [sourceVersion]);
+  }
 });
 
 Deno.test("governed listing rejects missing or malformed current versions", async () => {
@@ -214,6 +217,8 @@ Deno.test("exact metadata and content reads invalidate stale versions before loa
   assertEquals(metadata.requests.length, 1);
   assertEquals(content.requests.length, 1);
   assertStringIncludes(String(contentResult.value.content), "Y29udHJhY3Q=");
+  assertEquals(metadataResult.discoveredSourceVersions, [sourceVersion]);
+  assertEquals(contentResult.discoveredSourceVersions, [sourceVersion]);
 
   versions.current = false;
   const stale = await contentTool.execute({
@@ -285,6 +290,7 @@ Deno.test("evidence search returns only exact, current references", async () => 
   );
   assertEquals(searchValue.results[0].source.version, exactReference.version);
   assertFalse("objectKey" in searchValue.results[0]);
+  assertEquals(result.discoveredSourceVersions, [sourceVersion]);
 
   versions.current = false;
   const stale = await tool.execute({
@@ -339,6 +345,8 @@ Deno.test("citation and missing-document tools emit proposal-only values", async
     (finding.value.finding as { readonly state: string }).state,
     "proposed",
   );
+  assertEquals(citation.discoveredSourceVersions, [sourceVersion]);
+  assertEquals(finding.discoveredSourceVersions, [sourceVersion]);
   assertEquals(versions.checks, 2);
 });
 

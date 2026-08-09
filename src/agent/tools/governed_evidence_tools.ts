@@ -29,6 +29,7 @@ import {
   proposalStatus,
   reason,
   result,
+  runtimeSourceReference,
   sanitizeContent,
   sanitizeDocumentSummary,
   sanitizeMetadata,
@@ -94,7 +95,7 @@ export class GovernedDocumentListingTool implements ToolDefinition {
     return result(this.capability, {
       status: "ok",
       documents,
-    });
+    }, documentVersions(documents).map(runtimeSourceReference));
   }
 }
 
@@ -189,7 +190,7 @@ export class GovernedEvidenceSearchTool implements ToolDefinition {
       status: "ok",
       query,
       results: safeHits,
-    });
+    }, safeHits.map(({ source }) => runtimeSourceReference(source)));
   }
 }
 
@@ -237,7 +238,7 @@ export class GovernedCitationProposalTool implements ToolDefinition {
       proposal,
       persisted: false,
       approved: false,
-    });
+    }, [runtimeSourceReference(source)]);
   }
 }
 
@@ -287,7 +288,7 @@ export class GovernedMissingDocumentFindingTool implements ToolDefinition {
       proposal: finding,
       persisted: false,
       approved: false,
-    });
+    }, basis.map(runtimeSourceReference));
   }
 }
 
@@ -403,7 +404,7 @@ async function executeExact(
     return result("read", {
       status: "ok",
       metadata,
-    });
+    }, [runtimeSourceReference(reference)]);
   }
   const content = sanitizeContent(response);
   if (content === undefined) {
@@ -418,7 +419,7 @@ async function executeExact(
     contentEncoding: "base64",
     mediaType: content.mediaType,
     reference: content.reference,
-  });
+  }, [runtimeSourceReference(reference)]);
 }
 
 function parseListingOptions(

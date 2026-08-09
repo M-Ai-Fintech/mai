@@ -11,7 +11,11 @@ import type {
   ToolActivityRecord,
 } from "./model.ts";
 import { runtimeAuthority } from "./authorization.ts";
-import { assertCostMetadata, SourceVersionInvalidatedError } from "./model.ts";
+import {
+  assertCostMetadata,
+  SourceVersionInvalidatedError,
+  sourceVersionKey,
+} from "./model.ts";
 import type { ResultId, ToolActivityId } from "./ids.ts";
 import type { AgentRuntimeStore, RuntimeTransaction } from "./repository.ts";
 import { ToolGateway } from "./tool_gateway.ts";
@@ -231,7 +235,10 @@ export class AgentRuntimeRunner {
       value: result.output.value,
       lineage: {
         toolActivityIds: [activity.activityId],
-        evidence: step.sourceVersions,
+        evidence: mergeToolEvidence(
+          step.sourceVersions,
+          result.output.discoveredSourceVersions ?? [],
+        ),
       },
       cost: emptyCost(),
     };
@@ -433,4 +440,15 @@ export class AgentRuntimeRunner {
     await this.ensureRunnable(run);
     return runtimeAuthority(decision);
   }
+}
+
+function mergeToolEvidence(
+  declared: readonly SourceVersionReference[],
+  discovered: readonly SourceVersionReference[],
+): readonly SourceVersionReference[] {
+  const references = new Map<string, SourceVersionReference>();
+  for (const reference of [...declared, ...discovered]) {
+    references.set(sourceVersionKey(reference), reference);
+  }
+  return [...references.values()];
 }

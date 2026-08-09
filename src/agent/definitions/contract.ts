@@ -79,13 +79,13 @@ export const schemaReferenceSchema = z.object({
   reference: textSchema,
   version: versionSchema,
   digest: digestSchema.optional(),
-});
+}).strict();
 
 export const promptTemplateSchema = z.object({
   templateReference: textSchema,
   templateVersion: versionSchema,
   promptDigest: digestSchema,
-});
+}).strict();
 
 export const modelPolicySchema = z.object({
   policyReference: textSchema,
@@ -94,24 +94,24 @@ export const modelPolicySchema = z.object({
   model: textSchema,
   modelVersion: textSchema,
   fallback: z.literal("unavailable"),
-});
+}).strict();
 
 export const knowledgeAssetSchema = z.object({
   reference: textSchema,
   kind: z.enum(["knowledge", "checklist", "template", "playbook", "rules"]),
-});
+}).strict();
 
 export const purePortSchema = z.object({
   name: textSchema,
   reference: textSchema,
   contractVersion: versionSchema,
   deterministic: z.literal(true),
-});
+}).strict();
 
 export const unavailableCapabilitySchema = z.object({
   capability: capabilitySchema,
   reason: textSchema,
-});
+}).strict();
 
 export const artifactPolicySchema = z.object({
   defaultKind: z.enum(["proposal", "reversible_draft"]),
@@ -119,7 +119,7 @@ export const artifactPolicySchema = z.object({
   authoritative: z.literal(false),
   providerReadiness: z.literal("not_claimed"),
   humanAcceptanceRequired: z.literal(true),
-});
+}).strict();
 
 const definitionIdSchema = z.enum(AGENT_DEFINITION_IDS);
 
@@ -141,7 +141,7 @@ const agentDefinitionEnvelopeBaseSchema = z.object({
     allowed: z.array(capabilitySchema),
     unavailable: z.array(unavailableCapabilitySchema),
     denied: z.array(unavailableCapabilitySchema),
-  }),
+  }).strict(),
   prohibitedEffects: z.array(effectSchema),
   prompt: promptTemplateSchema,
   promptTemplateDigest: digestSchema,
@@ -155,8 +155,8 @@ const agentDefinitionEnvelopeBaseSchema = z.object({
   lifecycle: z.object({
     status: z.literal("approved"),
     rollout: z.literal("pinned"),
-  }),
-});
+  }).strict(),
+}).strict();
 
 type AgentDefinitionEnvelopeBase = z.infer<
   typeof agentDefinitionEnvelopeBaseSchema
@@ -172,6 +172,19 @@ export interface AgentDefinition extends AgentDefinitionEnvelope {
   readonly outputValidator: ZodTypeAny;
   readonly inputSchema: ZodTypeAny;
   readonly outputSchema: ZodTypeAny;
+}
+
+/**
+ * Validates a definition and returns the strict parsed envelope.
+ *
+ * ```ts
+ * const definition = parseAgentDefinitionEnvelope(candidate);
+ * ```
+ */
+export function parseAgentDefinitionEnvelope(
+  value: unknown,
+): AgentDefinition {
+  return agentDefinitionEnvelopeSchema.parse(value);
 }
 
 export const sourceVersionReferenceSchema = z.object({
@@ -222,6 +235,12 @@ export type AgentModelLineage = z.infer<typeof resultLineageSchema>["model"];
  * governed agent only accepts it from its separately injected verifier.
  */
 export interface VerifiedAgentLineage {
+  readonly definition: {
+    readonly id: AgentDefinitionId;
+    readonly version: string;
+  };
+  readonly prompt: AgentDefinition["prompt"];
+  readonly modelPolicyReference: string;
   readonly model: AgentModelLineage;
   readonly tools: readonly AgentToolLineage[];
   readonly evidence: readonly AgentSourceVersionReference[];
@@ -261,7 +280,7 @@ export function createAgentProposalResult(
       authoritative: false,
       providerReadiness: "not_claimed",
     },
-    lineage: lineageFor(definition, lineage),
+    lineage: lineageFor(lineage),
     providerReadinessClaimed: false,
   });
 }
@@ -282,7 +301,6 @@ export function createUnavailableAgentResult(
       providerReadiness: "not_claimed",
     },
     lineage: lineageFor(
-      definition,
       definitionLineage(definition, [{ name: capability, status }], []),
     ),
     providerReadinessClaimed: false,
@@ -295,6 +313,9 @@ function definitionLineage(
   evidence: readonly z.input<typeof sourceVersionReferenceSchema>[],
 ): VerifiedAgentLineage {
   return {
+    definition: { id: definition.id, version: definition.version },
+    prompt: definition.prompt,
+    modelPolicyReference: definition.modelPolicy.policyReference,
     model: {
       policyReference: definition.modelPolicy.policyReference,
       provider: definition.modelPolicy.provider,
@@ -306,18 +327,15 @@ function definitionLineage(
   };
 }
 
-function lineageFor(
-  definition: AgentDefinition,
-  lineage: VerifiedAgentLineage,
-) {
+function lineageFor(lineage: VerifiedAgentLineage) {
   return {
-    definition: { id: definition.id, version: definition.version },
-    definitionId: definition.id,
-    definitionVersion: definition.version,
-    prompt: definition.prompt,
-    promptDigest: definition.prompt.promptDigest,
+    definition: lineage.definition,
+    definitionId: lineage.definition.id,
+    definitionVersion: lineage.definition.version,
+    prompt: lineage.prompt,
+    promptDigest: lineage.prompt.promptDigest,
     model: lineage.model,
-    modelPolicyReference: definition.modelPolicy.policyReference,
+    modelPolicyReference: lineage.modelPolicyReference,
     tools: lineage.tools,
     toolActivityIds: lineage.tools.flatMap((tool) =>
       tool.activityId === undefined ? [] : [tool.activityId]

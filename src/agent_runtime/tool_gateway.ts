@@ -10,6 +10,7 @@ import type {
   RuntimeScope,
   SourceVersionReference,
 } from "./model.ts";
+import { sourceVersionKey } from "./model.ts";
 import type { ToolActivityId } from "./ids.ts";
 import {
   actorReference,
@@ -49,6 +50,8 @@ export interface RuntimeAuthorizer {
 export type ToolOutput = {
   readonly kind: ToolCapability;
   readonly value: Readonly<Record<string, unknown>>;
+  /** Exact source versions discovered by this execution, if any. */
+  readonly discoveredSourceVersions?: readonly SourceVersionReference[];
 };
 
 export interface AuthorizedToolInvocation
@@ -116,6 +119,7 @@ export class ToolGateway {
         authority,
       });
       assertOutputCapability(definition, output);
+      assertDiscoveredEvidence(output);
       return {
         status: "succeeded",
         output,
@@ -165,5 +169,94 @@ function assertOutputCapability(
   if (output.kind === definition.capability) return;
   throw new Error(
     `Tool "${definition.name}" returned capability "${output.kind}"; expected "${definition.capability}".`,
+  );
+}
+
+function assertDiscoveredEvidence(output: ToolOutput): void {
+  const discovered = output.discoveredSourceVersions ?? [];
+  const recorded = new Map(
+    discovered.map((reference) => [sourceVersionKey(reference), reference]),
+  );
+  if (recorded.size !== discovered.length) {
+    throw new Error(
+      "Tool output discovered evidence contains duplicates; expected one exact source version per reference.",
+    );
+  }
+  for (const reference of discovered) assertSourceVersion(reference);
+  for (const reference of extractSourceVersions(output.value)) {
+    if (recorded.has(sourceVersionKey(reference))) continue;
+    throw new Error(
+      `Tool output returned source "${reference.sourceType}:${reference.sourceId}@${reference.version}" without a discovered evidence receipt; expected every returned exact reference in durable lineage.`,
+    );
+  }
+}
+
+function extractSourceVersions(value: unknown): SourceVersionReference[] {
+  const references: SourceVersionReference[] = [];
+  const visited = new Set<object>();
+  visitSourceValues(value, references, visited);
+  return references;
+}
+
+function visitSourceValues(
+  value: unknown,
+  references: SourceVersionReference[],
+  visited: Set<object>,
+): void {
+  if (typeof value !== "object" || value === null) return;
+  if (visited.has(value)) return;
+  visited.add(value);
+  if (isExactSourceValue(value)) references.push(toSourceReference(value));
+  if (Array.isArray(value)) {
+    for (const entry of value) visitSourceValues(entry, references, visited);
+    return;
+  }
+  for (const entry of Object.values(value)) {
+    visitSourceValues(entry, references, visited);
+  }
+}
+
+function isExactSourceValue(
+  value: object,
+): value is {
+  readonly documentVersionId: string;
+  readonly version: number;
+  readonly checksum: { readonly algorithm: string; readonly value: string };
+} {
+  const candidate = value as Record<string, unknown>;
+  const checksum = candidate.checksum;
+  return typeof candidate.documentVersionId === "string" &&
+    typeof candidate.version === "number" &&
+    Number.isSafeInteger(candidate.version) && candidate.version > 0 &&
+    typeof checksum === "object" && checksum !== null &&
+    (checksum as Record<string, unknown>).algorithm === "sha256" &&
+    typeof (checksum as Record<string, unknown>).value === "string" &&
+    /^[0-9a-f]{64}$/.test(
+      (checksum as Record<string, unknown>).value as string,
+    );
+}
+
+function toSourceReference(value: {
+  readonly documentVersionId: string;
+  readonly version: number;
+  readonly checksum: { readonly algorithm: string; readonly value: string };
+}): SourceVersionReference {
+  return {
+    sourceType: "document_version",
+    sourceId: value.documentVersionId,
+    version: value.version as SourceVersionReference["version"],
+    checksum: value.checksum.value,
+  };
+}
+
+function assertSourceVersion(reference: SourceVersionReference): void {
+  if (
+    reference.sourceType.trim() && reference.sourceId.trim() &&
+    Number.isSafeInteger(reference.version) && reference.version > 0 &&
+    (reference.checksum === undefined ||
+      /^[0-9a-f]{64}$/.test(reference.checksum))
+  ) return;
+  throw new Error(
+    `Tool output discovered source "${reference.sourceType}:${reference.sourceId}@${reference.version}" is malformed; expected an exact positive version and checksum.`,
   );
 }

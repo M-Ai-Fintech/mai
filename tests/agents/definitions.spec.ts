@@ -214,6 +214,39 @@ Deno.test("catalog selections are immutable snapshots", () => {
   assertEquals(catalog.current(selected.id).allowedCapabilities, allowed);
 });
 
+Deno.test("definition envelopes reject unknown sensitive fields before registration", () => {
+  const current = SPECIALIST_DEFINITIONS[0];
+  const adversarial = {
+    ...current,
+    providerClient: { apiKey: "secret" },
+    modelPolicy: {
+      ...current.modelPolicy,
+      providerClient: { apiKey: "secret" },
+    },
+    capabilities: {
+      ...current.capabilities,
+      rawClient: { secret: "value" },
+    },
+    knowledgeAssets: [
+      {
+        ...current.knowledgeAssets[0],
+        secrets: { apiKey: "secret" },
+      },
+      ...current.knowledgeAssets.slice(1),
+    ],
+  };
+
+  assertEquals(
+    agentDefinitionEnvelopeSchema.safeParse(adversarial).success,
+    false,
+  );
+  assertThrows(
+    () => createDefinitionCatalog([adversarial as AgentDefinition]),
+    Error,
+    "Unrecognized key",
+  );
+});
+
 type KnownAgentDefinitionId = AgentDefinitionId;
 const _typeCheck: KnownAgentDefinitionId = "broker-orchestrator-agent";
 assertEquals(_typeCheck, "broker-orchestrator-agent");
@@ -223,6 +256,9 @@ function trustedLineage(
   overrides: Partial<VerifiedAgentLineage> = {},
 ): VerifiedAgentLineage {
   return {
+    definition: { id: definition.id, version: definition.version },
+    prompt: definition.prompt,
+    modelPolicyReference: definition.modelPolicy.policyReference,
     model: {
       policyReference: definition.modelPolicy.policyReference,
       provider: definition.modelPolicy.provider,

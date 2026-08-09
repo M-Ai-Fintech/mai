@@ -5,7 +5,12 @@ import type {
   SourceVersionReference,
 } from "../../src/agent_runtime/model.ts";
 import type { ToolActivityId } from "../../src/agent_runtime/ids.ts";
+import {
+  type ToolDefinition,
+  ToolGateway,
+} from "../../src/agent_runtime/tool_gateway.ts";
 import type { RequestContext } from "../../src/shared/contracts/request_context.ts";
+import type { AuthorizationDecision } from "../../src/platform/authz/v1.ts";
 import type {
   CapabilityUnavailable,
   DocumentListRequest,
@@ -278,6 +283,20 @@ Deno.test("nested provider references are reconstructed before output", async ()
   assertFalse(serialized.includes("access-secret"));
 });
 
+Deno.test("gateway rejects returned exact references without complete discovered evidence", async () => {
+  const tool: ToolDefinition = new IncompleteEvidenceTool();
+  const gateway = new ToolGateway([tool], new AllowingRuntimeAuthorizer());
+
+  const result = await gateway.invoke(
+    authorizedInvocation(tool.name, "read_document_metadata"),
+  );
+
+  assertEquals(result, {
+    status: "failed",
+    reason: "TOOL_EXECUTION_FAILED",
+  });
+});
+
 function authorizedInvocation(toolName: string, action: string) {
   return {
     activityId: "activity_tools_security" as ToolActivityId,
@@ -351,5 +370,35 @@ class ToggleSourceVersionPort implements GovernedSourceVersionPort {
     this.checks += 1;
     this.onCheck?.();
     return Promise.resolve(this.current);
+  }
+}
+
+class IncompleteEvidenceTool implements ToolDefinition {
+  readonly name = "governed.documents.version_metadata";
+  readonly capability = "read" as const;
+
+  execute() {
+    return Promise.resolve({
+      kind: "read" as const,
+      value: { status: "ok", reference: exactReference },
+      discoveredSourceVersions: [],
+    });
+  }
+}
+
+class AllowingRuntimeAuthorizer {
+  authorize(): AuthorizationDecision {
+    return {
+      outcome: "allow",
+      reasonCode: "ALLOWED",
+      allowedActions: [],
+      approvedScope: { decisionReference: "decision_tools_security" } as never,
+      fieldMask: {
+        include: [],
+        omit: [],
+        redact: [],
+        approvedClassifications: [],
+      },
+    } as unknown as AuthorizationDecision;
   }
 }
