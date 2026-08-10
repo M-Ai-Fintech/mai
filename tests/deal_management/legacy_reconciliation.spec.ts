@@ -4,7 +4,10 @@ import {
   assertNotEquals,
   assertRejects,
 } from "@std/assert";
-import { runReconciliationCli } from "../../scripts/deal_reconciliation.ts";
+import {
+  runReconciliationCli,
+  runReconciliationExecutable,
+} from "../../scripts/deal_reconciliation.ts";
 import {
   CompatibilityDealReader,
   DealManagementService,
@@ -268,57 +271,8 @@ Deno.test("operator input accepts selectors, not legacy Deal documents", async (
   }
 });
 
-Deno.test("arbitrary operator runtime overrides are denied outside test", async () => {
-  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
+Deno.test("retired runtime-module option is rejected in every environment", async () => {
   const previousEnvironment = Deno.env.get("DENO_ENV");
-  await Deno.writeTextFile(
-    inputPath,
-    JSON.stringify([{
-      source: "legacy.fixture",
-      legacyDealId: "legacy-deal-1",
-    }]),
-  );
-  Deno.env.set("DENO_ENV", "production");
-  try {
-    await assertRejects(
-      () =>
-        runReconciliationCli([
-          "--mode",
-          "dry-run",
-          "--input",
-          inputPath,
-          "--tenant",
-          scope.tenantId,
-          "--workspace",
-          scope.workspaceId,
-          "--runtime-module",
-          "./untrusted-runtime.ts",
-        ]),
-      Error,
-      "outside DENO_ENV=test",
-    );
-  } finally {
-    if (previousEnvironment === undefined) Deno.env.delete("DENO_ENV");
-    else Deno.env.set("DENO_ENV", previousEnvironment);
-    await Deno.remove(inputPath);
-  }
-});
-
-Deno.test("explicit test runtime injection remains available only in test", async () => {
-  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
-  const runtimePath = await Deno.makeTempFile({ suffix: ".mjs" });
-  const previousEnvironment = Deno.env.get("DENO_ENV");
-  await Deno.writeTextFile(
-    inputPath,
-    JSON.stringify([{
-      source: "legacy.fixture",
-      legacyDealId: "legacy-deal-1",
-    }]),
-  );
-  await Deno.writeTextFile(
-    runtimePath,
-    'export async function createRuntime() { throw new Error("controlled test runtime"); }',
-  );
   Deno.env.set("DENO_ENV", "test");
   try {
     await assertRejects(
@@ -327,23 +281,133 @@ Deno.test("explicit test runtime injection remains available only in test", asyn
           "--mode",
           "dry-run",
           "--input",
-          inputPath,
+          "unused.json",
           "--tenant",
           scope.tenantId,
           "--workspace",
           scope.workspaceId,
           "--runtime-module",
-          runtimePath,
+          "./untrusted-runtime.ts",
         ]),
       Error,
-      "controlled test runtime",
+      "retired",
     );
   } finally {
     if (previousEnvironment === undefined) Deno.env.delete("DENO_ENV");
     else Deno.env.set("DENO_ENV", previousEnvironment);
-    await Deno.remove(inputPath);
-    await Deno.remove(runtimePath);
   }
+});
+
+Deno.test("test runtime injection uses the owned dependency seam", async () => {
+  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
+  await Deno.writeTextFile(
+    inputPath,
+    JSON.stringify([{
+      source: "legacy.fixture",
+      legacyDealId: "legacy-deal-1",
+    }]),
+  );
+  try {
+    await assertRejects(
+      () =>
+        runReconciliationCli([
+          "--mode",
+          "dry-run",
+          "--input",
+          inputPath,
+          "--tenant",
+          scope.tenantId,
+          "--workspace",
+          scope.workspaceId,
+        ], {
+          createRuntime: () =>
+            Promise.reject(new Error("controlled test runtime")),
+        }),
+      Error,
+      "controlled test runtime",
+    );
+  } finally {
+    await Deno.remove(inputPath);
+  }
+});
+
+Deno.test("operator success output excludes protected Deal details", async () => {
+  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
+  const fixture = executorFixture(validLegacyDeal({
+    name: "PROTECTED_NAME_MARKER",
+    parties: [{
+      legacyPartyId: "business-target",
+      reference: { kind: "organization", id: "PROTECTED_PARTY_MARKER" },
+      side: "target",
+      label: "PROTECTED_PARTY_LABEL_MARKER",
+    }],
+  }));
+  await Deno.writeTextFile(
+    inputPath,
+    JSON.stringify([{
+      source: "legacy.fixture",
+      legacyDealId: "legacy-deal-1",
+    }]),
+  );
+  const lines: string[] = [];
+  const previousLog = console.log;
+  console.log = (...values: unknown[]) => lines.push(values.join(" "));
+  try {
+    await runReconciliationCli([
+      "--mode",
+      "dry-run",
+      "--input",
+      inputPath,
+      "--tenant",
+      scope.tenantId,
+      "--workspace",
+      scope.workspaceId,
+    ], {
+      createRuntime: () =>
+        Promise.resolve({
+          executor: fixture.executor,
+          commandContext: context,
+          close: () => Promise.resolve(),
+        }),
+    });
+  } finally {
+    console.log = previousLog;
+    await Deno.remove(inputPath);
+  }
+  const output = lines.join("\n");
+  assert(output.includes('"mode":"dry-run"'));
+  assert(!output.includes("intendedDeal"));
+  assert(!output.includes("PROTECTED_NAME_MARKER"));
+  assert(!output.includes("PROTECTED_PARTY_MARKER"));
+  assert(!output.includes("authorityConstraints"));
+  assert(!output.includes("mandate"));
+});
+
+Deno.test("direct operator failure output is redacted", async () => {
+  const marker = "TOP_SECRET_OPERATOR_MARKER";
+  const previousError = console.error;
+  const previousExitCode = Deno.exitCode;
+  const lines: string[] = [];
+  console.error = (...values: unknown[]) => lines.push(values.join(" "));
+  try {
+    await runReconciliationExecutable([
+      "--mode",
+      "dry-run",
+      "--input",
+      `/tmp/${marker}.json`,
+      "--tenant",
+      scope.tenantId,
+      "--workspace",
+      scope.workspaceId,
+    ]);
+  } finally {
+    console.error = previousError;
+    Deno.exitCode = previousExitCode;
+  }
+  const output = lines.join("\n");
+  assert(output.includes("RECONCILIATION_FAILED"));
+  assert(!output.includes(marker));
+  assert(!output.includes("stack"));
 });
 
 Deno.test("reconciliation rejects a selector source that differs from loaded source", async () => {

@@ -389,6 +389,12 @@ Deno.test("runtime registrations are fully classified and non-product", async ()
   const classified = classifiedEntries(RUNTIME_REGISTRATION_CLASSIFICATIONS)
     .sort();
   assertUniqueEntries(classified, "Runtime registration inventory");
+  assertEquals(classified.length, 24);
+  assertEquals(
+    RUNTIME_REGISTRATION_CLASSIFICATIONS.PRESERVE_DEVELOPER.length,
+    22,
+  );
+  assertEquals(RUNTIME_REGISTRATION_CLASSIFICATIONS.SHARED.length, 2);
   assertEquals(classified, discovered);
   assertStringIncludes(gui.scripts?.dev ?? "", "next dev");
   assertStringIncludes(gui.scripts?.start ?? "", "next start");
@@ -427,6 +433,10 @@ Deno.test("retained tools and shared consumers keep focused contracts", async ()
     "scripts/deal_reconciliation.ts",
   );
   assertStringIncludes(reconciliation, "APPLY_MAI_110");
+  assertStringIncludes(reconciliation, "sanitizeOperatorReport");
+  assert(!reconciliation.includes("JSON.stringify(report)"));
+  assert(!reconciliation.includes("import(new URL"));
+  assertStringIncludes(reconciliation, '"--runtime-module"');
   const reconciliationRuntime = await Deno.readTextFile(
     "scripts/deal_reconciliation_runtime.ts",
   );
@@ -435,6 +445,10 @@ Deno.test("retained tools and shared consumers keep focused contracts", async ()
     "DEAL_MANAGEMENT_OPERATOR_SESSION",
   );
   assertStringIncludes(reconciliationRuntime, "assertOperatorScope");
+  assertStringIncludes(
+    reconciliationRuntime,
+    "assertReconciliationPermission",
+  );
 });
 
 Deno.test("approved API and shared engine boundaries remain present", async () => {

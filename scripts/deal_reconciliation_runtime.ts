@@ -13,10 +13,12 @@ import type {
 import type { DealCommandContext } from "../src/deal_management/v1.ts";
 import type {
   ReconciliationRuntime,
-  ReconciliationRuntimeModule,
+  ReconciliationRuntimeFactory,
 } from "./deal_reconciliation.ts";
 
-type RuntimeInput = Parameters<ReconciliationRuntimeModule["createRuntime"]>[0];
+type RuntimeInput = Parameters<
+  ReconciliationRuntimeFactory["createRuntime"]
+>[0];
 type RuntimeComposition = Pick<
   DealManagementComposition,
   "reconciliation" | "close"
@@ -28,6 +30,10 @@ interface OperatorAuthorization {
     readonly actorId: string;
     readonly tenantId: string;
     readonly workspaceId: string;
+  }): Promise<void>;
+  assertReconciliationPermission(input: {
+    readonly context: DealCommandContext;
+    readonly scope: RuntimeInput["scope"];
   }): Promise<void>;
 }
 
@@ -79,9 +85,14 @@ export async function createOperatorRuntime(
       tenantId: input.scope.tenantId,
       workspaceId: input.scope.workspaceId,
     });
+    const context = commandContext(input, principal);
+    await dependencies.authorization.assertReconciliationPermission({
+      context,
+      scope: input.scope,
+    });
     return {
       executor: composition.reconciliation,
-      commandContext: commandContext(input, principal),
+      commandContext: context,
       close: () => composition.close(),
     };
   } catch (error) {
@@ -110,6 +121,11 @@ function assertPrincipal(
   input: RuntimeInput,
   principal: AuthenticatedPrincipal,
 ): void {
+  if (principal.actor.kind !== "human") {
+    throw new Error(
+      `Reconciliation operator actor "${principal.actor.id}" is not human; expected a human actor.`,
+    );
+  }
   const matches = principal.actor.id === input.actorId &&
     principal.tenantId === input.scope.tenantId &&
     principal.workspaceId === input.scope.workspaceId;
@@ -138,5 +154,5 @@ function commandContext(
   };
 }
 
-const runtimeModule: ReconciliationRuntimeModule = { createRuntime };
-export default runtimeModule;
+const runtimeFactory: ReconciliationRuntimeFactory = { createRuntime };
+export default runtimeFactory;
