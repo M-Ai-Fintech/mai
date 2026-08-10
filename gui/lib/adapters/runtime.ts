@@ -6,13 +6,10 @@ import {
   type V1RequestOptions,
   type V1Response,
 } from "@/lib/api-client/v1";
+import { adapterDescriptorFor, type AdapterFamily } from "./catalog";
 import {
-  adapterDescriptorFor,
-  type AdapterFamily,
-} from "./catalog";
-import {
-  adapterReadModelSchemaFor,
   type AdapterReadModel,
+  adapterReadModelSchemaFor,
   type AdapterResult,
 } from "./contracts";
 import { adapterCanaryFor } from "./feature-flags";
@@ -101,9 +98,17 @@ class RouteParameterError extends Error {
 }
 
 function readyResult<T>(response: V1Response<T>): AdapterResult<T> {
+  const freshness = response.meta.freshness;
+  if (freshness !== "current" && freshness !== "stale") {
+    const received = freshness ?? "missing";
+    return unavailableAdapterResult(
+      "FRESHNESS_UNKNOWN",
+      `The v1 response freshness "${received}" is not current; expected "current" or "stale" metadata.`,
+    );
+  }
   return {
     source: "v1",
-    state: response.meta.freshness === "stale" ? "stale" : "ready",
+    state: freshness === "stale" ? "stale" : "ready",
     data: response.data,
     meta: response.meta,
     etag: response.etag,

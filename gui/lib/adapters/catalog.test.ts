@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  adapterCatalog,
-  adapterFamilies,
-  isAdapterFamily,
-} from "./catalog";
+import { adapterCatalog, adapterFamilies, isAdapterFamily } from "./catalog";
 import { adapterCanaryFor } from "./feature-flags";
 import { readDealIntelligenceFamily } from "./deal-intelligence/adapter";
 import { readGlobalFamily } from "./global/adapter";
@@ -41,16 +37,25 @@ describe("frontend adapter catalog", () => {
     expect(adapterCatalog.every((item) => item.states.length > 0)).toBe(true);
   });
 
-  it("turns unregistered routes off while allowing registered routes", () => {
+  it("turns unregistered and contract-pending routes off", () => {
     expect(
       adapterCanaryFor("command-center", {}).activation,
     ).toBe("off");
     expect(
       adapterCanaryFor("new-deal-setup", {}).activation,
     ).toBe("off");
-    expect(
-      adapterCanaryFor("deal-overview", {}).activation,
-    ).toBe("v1");
+    for (
+      const family of [
+        "deal-overview",
+        "negotiation-room",
+        "closing-control-room",
+        "deal-activity-audit",
+        "deliverables-exports",
+        "deal-settings-archive",
+      ] as const
+    ) {
+      expect(adapterCanaryFor(family, {}).activation).toBe("off");
+    }
   });
 
   it("selects the previous adapter from the generic canary map", () => {
@@ -69,6 +74,15 @@ describe("frontend adapter catalog", () => {
         NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"deal-overview":"off"}',
       }),
     ).toMatchObject({ mode: "off", activation: "off" });
+  });
+
+  it("fails closed when the canary map is malformed", () => {
+    expect(adapterCanaryFor("command-center", {
+      NEXT_PUBLIC_ADAPTER_CANARY_MAP: "{not-json",
+    })).toMatchObject({ mode: "off", activation: "off" });
+    expect(adapterCanaryFor("command-center", {
+      NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"command-center":"invalid"}',
+    })).toMatchObject({ mode: "off", activation: "off" });
   });
 
   it("selects an injected previous adapter during rollback", async () => {
@@ -114,16 +128,8 @@ describe("frontend adapter catalog", () => {
     expect(transport.requests).toHaveLength(0);
   });
 
-  it("parses a registered deal family through the v1 adapter", async () => {
-    const transport = new FakeAdapterTransport(
-      Response.json({
-        data: {
-          family: "deal-overview",
-          items: [],
-        },
-        meta: { correlationId: "correlation-2" },
-      }),
-    );
+  it("does not send generic live requests for a pending domain contract", async () => {
+    const transport = new FakeAdapterTransport(Response.json({}));
     transport.install();
 
     const result = await readDealIntelligenceFamily("deal-overview", {
@@ -132,9 +138,9 @@ describe("frontend adapter catalog", () => {
 
     expect(result).toMatchObject({
       source: "v1",
-      state: "ready",
-      data: { family: "deal-overview", items: [] },
+      state: "unavailable",
+      failure: { code: "ROUTE_UNAVAILABLE" },
     });
-    expect(String(transport.requests[0])).toContain("/api/v1/deals/deal-1");
+    expect(transport.requests).toHaveLength(0);
   });
 });

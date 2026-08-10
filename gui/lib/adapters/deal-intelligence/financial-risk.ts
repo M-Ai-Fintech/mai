@@ -1,6 +1,7 @@
-import { adapterCanaryFor, type AdapterMode } from "../feature-flags";
+import type { AdapterMode } from "../feature-flags";
 import {
   failureFor,
+  freshnessFailureFor,
   previousAdapterMissing,
   unavailableResult,
 } from "./financial-risk-errors";
@@ -9,6 +10,7 @@ import {
   presentFinancialRiskAssessment,
   presentFinancialRiskJob,
 } from "./financial-risk-presentation";
+import { financialRiskCanaryFor } from "./financial-risk-config";
 import {
   captureFinancialRiskPollScope,
   enqueueFinancialRiskCompute,
@@ -134,7 +136,7 @@ export interface FinancialRiskComputeOptions {
   readonly previousAdapter?: () => Promise<FinancialRiskComputeResult>;
 }
 
-/** Reads the banker-facing assessment while preserving the valuation rollback canary. */
+/** Reads the banker-facing assessment through its scoped readiness canary. */
 export async function readFinancialRiskAssessmentAdapter(
   assessmentId: string,
   scope: FinancialRiskPollScope,
@@ -210,7 +212,9 @@ export function financialRiskPollerFor(
 
 function assessmentSuccess(
   response: V1Response<FinancialRiskAssessment>,
-): FinancialRiskReadSuccess {
+): FinancialRiskReadResult {
+  const freshnessFailure = readyAssessmentFreshnessFailure(response);
+  if (freshnessFailure !== undefined) return freshnessFailure;
   return {
     source: "v1",
     state: response.data.state,
@@ -221,6 +225,17 @@ function assessmentSuccess(
     meta: response.meta,
     etag: response.etag,
   };
+}
+
+function readyAssessmentFreshnessFailure(
+  response: V1Response<FinancialRiskAssessment>,
+): FinancialRiskReadFailure | undefined {
+  if (
+    response.data.state !== "completed" && response.data.state !== "fallback"
+  ) {
+    return undefined;
+  }
+  return freshnessFailureFor(response.meta.freshness);
 }
 
 function readCanaryResult(
@@ -283,9 +298,7 @@ function pendingComputeResult(
 function financialRiskCanaryMode(
   environment?: Readonly<Record<string, string | undefined>>,
 ): AdapterMode {
-  // The existing valuation canary owns rollback; MAI-65 supplies a separate
-  // financial-risk route, so valuation route readiness must not gate this seam.
-  return adapterCanaryFor("valuation-lab", environment).mode;
+  return financialRiskCanaryFor(environment).activation;
 }
 
 function requestOptionsFor(

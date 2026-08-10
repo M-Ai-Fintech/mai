@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { APIError } from "@/lib/api-client/errors";
 import {
@@ -8,6 +8,7 @@ import {
   presentFinancialRiskJob,
   readFinancialRiskAssessmentAdapter,
 } from "./financial-risk";
+import { financialRiskCanaryFor } from "./financial-risk-config";
 import type { FinancialRiskJobStatus } from "@/lib/api-client/financial-risk-schemas";
 
 const scope = {
@@ -97,8 +98,36 @@ function jobStatus(
 }
 
 afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_FINANCIAL_RISK_ROUTE_READINESS", "registered");
+});
+afterEach(() => vi.unstubAllEnvs());
 
 describe("financial-risk banker-facing adapter", () => {
+  it("keeps the financial-risk route off until readiness is explicit", async () => {
+    expect(financialRiskCanaryFor({})).toMatchObject({
+      mode: "v1",
+      activation: "off",
+      routeReadiness: "not-registered",
+    });
+    expect(financialRiskCanaryFor({
+      NEXT_PUBLIC_FINANCIAL_RISK_ROUTE_READINESS: "registered",
+    })).toMatchObject({ activation: "v1" });
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+      { environment: {} },
+    );
+    expect(result).toMatchObject({
+      state: "unavailable",
+      failure: { code: "ADAPTER_DISABLED" },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each(
     [
       ["completed", "model-backed", true, true],
@@ -153,6 +182,40 @@ describe("financial-risk banker-facing adapter", () => {
       etag: '"v4"',
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("requires current freshness for a completed assessment", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({
+        data: assessment("completed"),
+        meta: { correlationId: "cor_risk" },
+      })),
+    );
+    await expect(readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+    )).resolves.toMatchObject({
+      state: "unavailable",
+      failure: { code: "FRESHNESS_UNKNOWN" },
+    });
+  });
+
+  it("keeps a stale completed projection out of the current state", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({
+        data: assessment("completed"),
+        meta: { correlationId: "cor_risk", freshness: "stale" },
+      })),
+    );
+    await expect(readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+    )).resolves.toMatchObject({
+      state: "stale",
+      failure: { code: "STALE_VERSION" },
+    });
   });
 
   it("keeps a field-filtered completed result truthful when outputs are withheld", async () => {
@@ -272,6 +335,23 @@ describe("financial-risk banker-facing adapter", () => {
     });
   });
 
+  it("does not treat a bare 404 as protected-not-found", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json(
+        { error: { message: "Not found", retryable: false } },
+        { status: 404 },
+      )),
+    );
+    await expect(readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+    )).resolves.toMatchObject({
+      state: "failed",
+      failure: { code: "not_found" },
+    });
+  });
+
   it("fails closed on runtime unavailable and never uses a fixture success", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json(
       {
@@ -293,7 +373,7 @@ describe("financial-risk banker-facing adapter", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("uses the existing valuation canary for rollback without adding a family", async () => {
+  it("uses an explicit financial-risk canary without adding a family", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const previous = {
@@ -310,7 +390,7 @@ describe("financial-risk banker-facing adapter", () => {
       scope,
       {
         environment: {
-          NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"valuation-lab":"previous"}',
+          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "previous",
         },
         previousAdapter: async () => previous,
       },
@@ -320,12 +400,31 @@ describe("financial-risk banker-facing adapter", () => {
       scope,
       {
         environment: {
-          NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"valuation-lab":"off"}',
+          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "off",
         },
       },
     )).resolves.toMatchObject({
       state: "unavailable",
       failure: { code: "ADAPTER_DISABLED" },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not substitute a fixture when previous rollback lacks injection", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+      {
+        environment: {
+          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "previous",
+        },
+      },
+    )).resolves.toMatchObject({
+      source: "previous",
+      state: "previous",
+      failure: { code: "PREVIOUS_ADAPTER_NOT_PROVIDED" },
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

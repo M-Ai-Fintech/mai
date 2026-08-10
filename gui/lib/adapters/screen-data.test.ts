@@ -47,7 +47,7 @@ describe("screen adapter integration", () => {
     expect(transport.requests).toHaveLength(0);
   });
 
-  it("passes route parameters to a registered deal adapter", async () => {
+  it("fails closed for a contract-pending deal adapter", async () => {
     const transport = new FakeScreenTransport(
       Response.json({
         data: { family: "deal-overview", items: [] },
@@ -60,8 +60,11 @@ describe("screen adapter integration", () => {
       resolution("deal.overview", { dealId: "deal-1" }),
     );
 
-    expect(result).toMatchObject({ state: "ready", data: { family: "deal-overview" } });
-    expect(String(transport.requests[0])).toContain("/api/v1/deals/deal-1");
+    expect(result).toMatchObject({
+      state: "unavailable",
+      failure: { code: "ROUTE_UNAVAILABLE" },
+    });
+    expect(transport.requests).toHaveLength(0);
   });
 
   it("maps every approved global route to its named family adapter", async () => {
@@ -84,7 +87,7 @@ describe("screen adapter integration", () => {
     }
   });
 
-  it("does not request a registered route when its required identifier is absent", async () => {
+  it("does not request a contract-pending route when its identifier is absent", async () => {
     const transport = new FakeScreenTransport(Response.json({}));
     transport.install();
 
@@ -92,7 +95,7 @@ describe("screen adapter integration", () => {
 
     expect(result).toMatchObject({
       state: "unavailable",
-      failure: { code: "ROUTE_PARAMETER_MISSING" },
+      failure: { code: "ROUTE_UNAVAILABLE" },
     });
     expect(transport.requests).toHaveLength(0);
   });

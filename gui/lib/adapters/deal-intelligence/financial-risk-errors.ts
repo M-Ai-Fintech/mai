@@ -1,4 +1,5 @@
 import { APIError } from "@/lib/api-client/errors";
+import type { V1Meta } from "@/lib/api-client/v1";
 import type { FinancialRiskReadFailure } from "./financial-risk";
 
 export function failureFor(error: unknown): FinancialRiskReadFailure {
@@ -78,8 +79,31 @@ export function previousAdapterMissing(): FinancialRiskReadFailure {
   };
 }
 
+export function freshnessFailureFor(
+  freshness: V1Meta["freshness"],
+): FinancialRiskReadFailure | undefined {
+  if (freshness === "current") return undefined;
+  if (freshness === "stale") {
+    return {
+      source: "v1",
+      state: "stale",
+      failure: {
+        code: "STALE_VERSION",
+        message:
+          "Financial risk assessment freshness is stale; refresh before relying on it.",
+        retryable: true,
+      },
+    };
+  }
+  const received = freshness ?? "missing";
+  return unavailableResult(
+    "FRESHNESS_UNKNOWN",
+    `Financial risk assessment freshness "${received}" is not current; expected "current" metadata.`,
+  );
+}
+
 function isProtectedNotFound(error: APIError): boolean {
-  return error.code === "PROTECTED_NOT_FOUND" || error.kind === "not_found";
+  return error.code === "PROTECTED_NOT_FOUND";
 }
 
 function isUnavailableError(error: APIError): boolean {

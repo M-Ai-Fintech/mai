@@ -17,7 +17,8 @@ const CANARY_MAP_ENV = "NEXT_PUBLIC_ADAPTER_CANARY_MAP";
 
 export function adapterCanaryFor(
   family: AdapterFamily,
-  environment: Readonly<Record<string, string | undefined>> = runtimeEnvironment(),
+  environment: Readonly<Record<string, string | undefined>> =
+    runtimeEnvironment(),
 ): AdapterCanary {
   const descriptor = adapterDescriptorFor(family);
   const mode = configuredMode(family, environment);
@@ -35,13 +36,17 @@ function configuredMode(
   const raw = environment[CANARY_MAP_ENV];
   if (raw === undefined) return "v1";
   const values = parseCanaryMap(raw);
+  if (values === undefined) return "off";
   return values[family] ?? "v1";
 }
 
-function parseCanaryMap(raw: string): Partial<Record<AdapterFamily, AdapterMode>> {
+function parseCanaryMap(
+  raw: string,
+): Partial<Record<AdapterFamily, AdapterMode>> | undefined {
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed)) return {};
+    if (!isRecord(parsed)) return undefined;
+    if (hasInvalidFamilyMode(parsed)) return undefined;
     return Object.fromEntries(
       adapterFamilies.flatMap((family) =>
         parsed[family] === "previous" || parsed[family] === "v1" ||
@@ -51,8 +56,15 @@ function parseCanaryMap(raw: string): Partial<Record<AdapterFamily, AdapterMode>
       ),
     ) as Partial<Record<AdapterFamily, AdapterMode>>;
   } catch {
-    return {};
+    return undefined;
   }
+}
+
+function hasInvalidFamilyMode(values: Record<string, unknown>): boolean {
+  return Object.entries(values).some(([family, value]) =>
+    !adapterFamilies.includes(family as AdapterFamily) ||
+    (value !== "previous" && value !== "v1" && value !== "off")
+  );
 }
 
 function activationFor(
