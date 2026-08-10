@@ -13,7 +13,13 @@ import type {
   TransactionHandle,
   TransactionQueryResult,
 } from "../../src/platform/persistence/v1.ts";
-import type { ClaimedJob, DurableJob } from "../../src/platform/jobs/v1.ts";
+import type {
+  ClaimedJob,
+  DurableJob,
+  StoredJob,
+} from "../../src/platform/jobs/v1.ts";
+import { JobRepository } from "../../src/platform/jobs/v1.ts";
+import type { ActorId, JobId, TenantId } from "../../src/platform/api/v1.ts";
 import { IdempotencyRepository } from "../../src/platform/persistence/v1.ts";
 import { FinancialRiskApplication } from "../../src/financial_risk/application.ts";
 import {
@@ -108,6 +114,31 @@ Deno.test("financial-risk job port enqueues through the platform job repository"
     ),
     true,
   );
+});
+
+Deno.test("financial-risk job status hides foreign actors and unrelated job types", async () => {
+  const request = computeRequest();
+  const scope = financialRiskScope();
+  const job: StoredJob = {
+    ...queuedJob(request, scope, request.references, fakeClock.now()),
+    operationId: request.operationId,
+    state: "queued",
+    progress: 0,
+    attemptCount: 0,
+  };
+  const actorId = request.actor.id;
+  const mismatches: readonly StoredJob[] = [
+    { ...job, initiatingActorId: "actor_foreign" as ActorId },
+    { ...job, jobType: "document.process" },
+  ];
+
+  for (const mismatch of mismatches) {
+    const port = new PostgresFinancialRiskJobPort(
+      new JobRecordingTransactionRunner() as unknown as PostgresTransactionRunner,
+      new SingleJobRepository(mismatch),
+    );
+    assertEquals(await port.findStatus(scope, actorId, job.jobId), undefined);
+  }
 });
 
 Deno.test("financial-risk queue claim, job insert, and completion share one transaction", async () => {
@@ -247,6 +278,20 @@ class JobRecordingTransaction implements TransactionHandle {
   ): Promise<TransactionQueryResult<TRow>> {
     this.queries.push({ sql: text, parameters });
     return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+}
+
+class SingleJobRepository extends JobRepository {
+  constructor(private readonly job: StoredJob) {
+    super();
+  }
+
+  override find(
+    _transaction: TransactionHandle,
+    _tenantId: TenantId,
+    _jobId: JobId,
+  ): Promise<StoredJob | undefined> {
+    return Promise.resolve(this.job);
   }
 }
 

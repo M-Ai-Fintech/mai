@@ -447,13 +447,18 @@ export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
 
   findStatus(
     scope: FinancialRiskScope,
+    actorId: ActorId,
     jobId: JobId,
   ): Promise<FinancialRiskJobStatus | undefined> {
     this.statusCalls++;
     const job = this.jobs.get(jobId);
     if (
       job === undefined || job.tenantId !== scope.tenantId ||
-      job.workspaceId !== scope.workspaceId || job.dealId !== scope.dealId
+      job.workspaceId !== scope.workspaceId || job.dealId !== scope.dealId ||
+      job.initiatingActorId !== actorId ||
+      !["financial-risk.compute", "financial-risk.invalidate"].includes(
+        job.jobType,
+      )
     ) return Promise.resolve(undefined);
     return Promise.resolve(this.statuses.get(jobId));
   }

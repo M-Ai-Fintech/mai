@@ -1,6 +1,6 @@
 import type { DurableJob, JobState, StoredJob } from "../platform/jobs/v1.ts";
 import { JobRepository } from "../platform/jobs/repository.ts";
-import type { JobId, OperationId } from "../platform/api/v1.ts";
+import type { ActorId, JobId, OperationId } from "../platform/api/v1.ts";
 import type { PostgresTransactionRunner } from "../platform/persistence/v1.ts";
 import type { FinancialRiskScope } from "./model.ts";
 import type {
@@ -36,6 +36,7 @@ export interface FinancialRiskJobPort {
   ): Promise<DurableJob | undefined>;
   findStatus(
     scope: FinancialRiskScope,
+    actorId: ActorId,
     jobId: JobId,
   ): Promise<FinancialRiskJobStatus | undefined>;
 }
@@ -138,11 +139,14 @@ export class PostgresFinancialRiskJobPort implements FinancialRiskJobPort {
 
   findStatus(
     scope: FinancialRiskScope,
+    actorId: ActorId,
     jobId: JobId,
   ): Promise<FinancialRiskJobStatus | undefined> {
     return this.transactions.run(async (transaction) => {
       const job = await this.jobs.find(transaction, scope.tenantId, jobId);
-      if (job === undefined || !jobMatchesScope(job, scope)) return undefined;
+      if (job === undefined || !jobMatchesStatusRead(job, scope, actorId)) {
+        return undefined;
+      }
       return toFinancialRiskJobStatus(job);
     });
   }
@@ -168,11 +172,15 @@ function assertJobMatchesClaim(
   );
 }
 
-function jobMatchesScope(
+function jobMatchesStatusRead(
   job: DurableJob,
   scope: FinancialRiskScope,
+  actorId: ActorId,
 ): boolean {
-  return job.workspaceId === scope.workspaceId && job.dealId === scope.dealId;
+  return job.workspaceId === scope.workspaceId && job.dealId === scope.dealId &&
+    job.initiatingActorId === actorId &&
+    (job.jobType === "financial-risk.compute" ||
+      job.jobType === "financial-risk.invalidate");
 }
 
 function toFinancialRiskJobStatus(job: StoredJob): FinancialRiskJobStatus {

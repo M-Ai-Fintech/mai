@@ -224,7 +224,7 @@ export class FinancialRiskApplication {
         "Financial-risk durable job queue is not configured; expected an injected job port.",
       );
     }
-    const status = await this.jobs.findStatus(scope, jobId);
+    const status = await this.jobs.findStatus(scope, actor.id, jobId);
     if (status === undefined) throw protectedNotFound(jobId);
     return status;
   }

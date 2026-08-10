@@ -46,11 +46,14 @@ Deno.test("financial-risk API enqueues a durable job without claiming a result",
   const accepted = await responseBody(compute);
   assertEquals(accepted.data.status, "queued");
   assertEquals(accepted.data.jobId, "job_api-compute");
-  assertEquals(accepted.data.statusUrl, "/api/v1/jobs/job_api-compute");
+  assertEquals(
+    accepted.data.statusUrl,
+    "/api/v1/financial-risk/jobs/job_api-compute",
+  );
   assertEquals(fixture.jobs.jobs.has("job_api-compute"), true);
 
   const status = await handleFinancialRiskV1Route(
-    request("/api/v1/jobs/job_api-compute"),
+    request("/api/v1/financial-risk/jobs/job_api-compute"),
     fixture.dependencies,
   );
   assertExists(status);
@@ -93,7 +96,7 @@ Deno.test("financial-risk job status is protected-not-found before an unauthoriz
     new FakeFinancialRiskAuthorization("deny"),
   );
   const response = await handleFinancialRiskV1Route(
-    request("/api/v1/jobs/job_hidden"),
+    request("/api/v1/financial-risk/jobs/job_hidden"),
     fixture.dependencies,
   );
 
@@ -105,7 +108,7 @@ Deno.test("financial-risk job status is protected-not-found before an unauthoriz
 Deno.test("financial-risk job status returns protected-not-found for a missing job", async () => {
   const fixture = financialRiskRoutes();
   const response = await handleFinancialRiskV1Route(
-    request("/api/v1/jobs/job_missing"),
+    request("/api/v1/financial-risk/jobs/job_missing"),
     fixture.dependencies,
   );
 
@@ -146,13 +149,48 @@ Deno.test("financial-risk job status does not cross a stored deal scope", async 
   };
 
   const response = await handleFinancialRiskV1Route(
-    request("/api/v1/jobs/job_scope-status"),
+    request("/api/v1/financial-risk/jobs/job_scope-status"),
     foreignDependencies,
   );
 
   assertExists(response);
   assertEquals(response.status, 404);
   assertEquals(fixture.jobs.statusCalls, 1);
+});
+
+Deno.test("financial-risk job status hides a same-deal foreign actor job", async () => {
+  const fixture = financialRiskRoutes();
+  await enqueueFinancialRiskJob(fixture, "foreign-actor");
+  const job = fixture.jobs.jobs.get("job_foreign-actor");
+  assertExists(job);
+  fixture.jobs.jobs.set(job.jobId, {
+    ...job,
+    initiatingActorId: "actor_foreign" as never,
+  });
+
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/financial-risk/jobs/job_foreign-actor"),
+    fixture.dependencies,
+  );
+
+  assertExists(response);
+  assertEquals(response.status, 404);
+});
+
+Deno.test("financial-risk job status hides a same-actor non-financial-risk job", async () => {
+  const fixture = financialRiskRoutes();
+  await enqueueFinancialRiskJob(fixture, "foreign-type");
+  const job = fixture.jobs.jobs.get("job_foreign-type");
+  assertExists(job);
+  fixture.jobs.jobs.set(job.jobId, { ...job, jobType: "document.process" });
+
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/financial-risk/jobs/job_foreign-type"),
+    fixture.dependencies,
+  );
+
+  assertExists(response);
+  assertEquals(response.status, 404);
 });
 
 Deno.test("financial-risk API requires command concurrency and idempotency headers", async () => {
@@ -367,6 +405,11 @@ Deno.test("application server exposes only the banker financial-risk route and f
   const unavailableBody = await responseBody(unavailable);
   assertEquals(unavailableBody.error?.code, "DEPENDENCY_UNAVAILABLE");
   assertEquals(unavailableBody.error?.correlationId, "cor_unconfigured");
+
+  const sharedJob = await createApiServer().handle(
+    request("/api/v1/jobs/non-financial-job"),
+  );
+  assertEquals(sharedJob.status, 404);
 });
 
 class FakeFinancialRiskRequestContext
@@ -412,6 +455,30 @@ function financialRiskRoutes(
       inputLoader: new RecordingInputLoader(),
     },
   };
+}
+
+async function enqueueFinancialRiskJob(
+  fixture: FinancialRiskRouteFixture,
+  suffix: string,
+): Promise<void> {
+  const response = await handleFinancialRiskV1Route(
+    request(
+      "/api/v1/financial-risk/assessments/risk_assessment_alpha/compute",
+      {
+        method: "POST",
+        headers: commandHeaders(`idem_${suffix}`),
+        body: JSON.stringify({
+          resultId: `risk_result_${suffix}`,
+          operationId: `op_${suffix}`,
+          jobId: `job_${suffix}`,
+          references: financialRiskReferences(),
+        }),
+      },
+    ),
+    fixture.dependencies,
+  );
+  assertExists(response);
+  assertEquals(response.status, 202);
 }
 
 function commandHeaders(

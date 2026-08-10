@@ -121,10 +121,10 @@ type Route =
 function parseRoute(path: string): Route | undefined {
   const parts = path.replace(/\/+$/, "").split("/").filter(Boolean);
   if (
-    parts.length === 4 && parts[0] === "api" && parts[1] === "v1" &&
-    parts[2] === "jobs"
+    parts.length === 5 && parts[0] === "api" && parts[1] === "v1" &&
+    parts[2] === "financial-risk" && parts[3] === "jobs"
   ) {
-    const jobId = parseJobId(decode(parts[3]));
+    const jobId = parseJobId(decode(parts[4]));
     return jobId.ok ? { kind: "job-status", jobId: jobId.value } : undefined;
   }
   if (
@@ -379,13 +379,20 @@ function accepted(
   if (job.operationId === undefined) {
     return errorResponse(dependencyError(context.correlationId));
   }
+  const envelope = createAcceptedJobEnvelope({
+    operationId: job.operationId,
+    jobId: job.jobId,
+    status,
+    correlationId: context.correlationId,
+  });
   return Response.json(
-    createAcceptedJobEnvelope({
-      operationId: job.operationId,
-      jobId: job.jobId,
-      status,
-      correlationId: context.correlationId,
-    }),
+    {
+      ...envelope,
+      data: {
+        ...envelope.data,
+        statusUrl: `/api/v1/financial-risk/jobs/${job.jobId}`,
+      },
+    },
     responseOptions(context),
   );
 }
