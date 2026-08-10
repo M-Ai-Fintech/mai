@@ -73,10 +73,11 @@ export {
 } from "./api-client/v1";
 export type { APIErrorKind } from "./api-client/errors";
 export type {
-  V1Meta,
-  V1RequestOptions,
-  V1Response,
-} from "./api-client/v1";
+  FieldError,
+  FieldErrors,
+  ValidationIssue,
+} from "./api-client/common-schemas";
+export type { V1Meta, V1RequestOptions, V1Response } from "./api-client/v1";
 export type {
   ChatMessage,
   ChatStreamEvent,

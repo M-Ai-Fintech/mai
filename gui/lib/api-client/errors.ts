@@ -1,3 +1,5 @@
+import type { FieldErrors } from "./common-schemas";
+
 export type APIErrorKind =
   | "validation"
   | "unauthenticated"
@@ -21,7 +23,7 @@ export class APIError extends Error {
   readonly status?: number;
   readonly code?: string;
   readonly kind: APIErrorKind;
-  readonly fieldErrors?: Record<string, string[]>;
+  readonly fieldErrors?: FieldErrors;
   readonly retryable?: boolean;
 
   constructor(
@@ -30,7 +32,7 @@ export class APIError extends Error {
       status?: number;
       code?: string;
       kind?: APIErrorKind;
-      fieldErrors?: Record<string, string[]>;
+      fieldErrors?: FieldErrors;
       retryable?: boolean;
       cause?: unknown;
     } = {},

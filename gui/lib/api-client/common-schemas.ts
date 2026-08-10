@@ -32,7 +32,30 @@ export const paginationMetaSchema = z.object({
   totalPages: z.number().int().nonnegative(),
 });
 
-export const fieldErrorsSchema = z.record(z.string(), z.array(z.string()));
+export const validationIssueCodeSchema = z.enum([
+  "REQUIRED",
+  "INVALID_TYPE",
+  "TOO_LONG",
+]);
+
+export const validationIssueSchema = z.object({
+  field: z.string().refine((value) => value.trim().length > 0),
+  code: validationIssueCodeSchema,
+  message: z.string().refine((value) => value.trim().length > 0),
+});
+
+const structuredFieldErrorsSchema = z.array(validationIssueSchema).readonly();
+const legacyFieldErrorsSchema = z.array(z.string()).readonly();
+
+/** Accepts the structured v1 contract while retaining legacy string messages. */
+export const fieldErrorsSchema = z.record(
+  z.string(),
+  z.union([structuredFieldErrorsSchema, legacyFieldErrorsSchema]),
+);
+
+export type ValidationIssue = z.infer<typeof validationIssueSchema>;
+export type FieldError = ValidationIssue | string;
+export type FieldErrors = Readonly<Record<string, readonly FieldError[]>>;
 
 export const errorEnvelopeSchema = z.object({
   error: z.object({

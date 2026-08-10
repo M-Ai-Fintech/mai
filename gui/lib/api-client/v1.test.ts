@@ -4,7 +4,8 @@ import { z } from "zod";
 import { requestV1, requestV1Accepted } from "./v1";
 
 class FakeV1Transport {
-  readonly requests: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  readonly requests: Array<{ input: RequestInfo | URL; init?: RequestInit }> =
+    [];
 
   constructor(private readonly response: Response) {}
 
@@ -12,7 +13,10 @@ class FakeV1Transport {
     vi.stubGlobal("fetch", this.fetch.bind(this));
   }
 
-  private fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  private fetch(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> {
     this.requests.push({ input, init });
     return Promise.resolve(this.response.clone());
   }
@@ -83,6 +87,31 @@ describe("v1 API client contract", () => {
       code: "ACTION_FORBIDDEN",
       kind: "forbidden",
       status: 403,
+    });
+  });
+
+  it("retains legacy string field errors while accepting structured issues", async () => {
+    const transport = new FakeV1Transport(
+      Response.json(
+        {
+          error: {
+            code: "VALIDATION_FAILED",
+            message: "The request is invalid.",
+            retryable: false,
+            fieldErrors: { dealId: ["Deal ID is required."] },
+          },
+        },
+        { status: 422 },
+      ),
+    );
+    transport.install();
+
+    await expect(
+      requestV1("/api/v1/deals/deal-1", z.object({ id: z.string() })),
+    ).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      kind: "validation",
+      fieldErrors: { dealId: ["Deal ID is required."] },
     });
   });
 

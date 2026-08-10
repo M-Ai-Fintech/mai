@@ -46,6 +46,11 @@ import {
   runDealEngine,
   saveDashboardLayout,
 } from "./resource-client";
+import {
+  enqueueFinancialRiskCompute,
+  enqueueFinancialRiskInvalidation,
+  readFinancialRiskAssessment,
+} from "./financial-risk-client";
 
 export const ApiClient = {
   checkKyb,
@@ -86,4 +91,7 @@ export const ApiClient = {
   getDashboardLayout,
   saveDashboardLayout,
   resetDashboardLayout,
+  readFinancialRiskAssessment,
+  enqueueFinancialRiskCompute,
+  enqueueFinancialRiskInvalidation,
 };

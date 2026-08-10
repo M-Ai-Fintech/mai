@@ -1,7 +1,4 @@
-import {
-  readFamilyAdapter,
-  type AdapterReadOptions,
-} from "../runtime";
+import { type AdapterReadOptions, readFamilyAdapter } from "../runtime";
 import type { AdapterReadModel, AdapterResult } from "../contracts";
 
 export type DealIntelligenceFamily =
@@ -33,3 +30,25 @@ export function readDealIntelligenceFamily(
 ): Promise<AdapterResult<AdapterReadModel>> {
   return readFamilyAdapter(family, options);
 }
+
+export {
+  computeFinancialRiskAssessmentAdapter,
+  financialRiskPollerFor,
+  invalidateFinancialRiskAssessmentAdapter,
+  pollFinancialRiskJob,
+  presentFinancialRiskAssessment,
+  presentFinancialRiskJob,
+  readFinancialRiskAssessmentAdapter,
+} from "./financial-risk";
+export type {
+  FinancialRiskAssessmentPresentation,
+  FinancialRiskComputeResult,
+  FinancialRiskComputeSuccess,
+  FinancialRiskJobPollResult,
+  FinancialRiskJobPollSuccess,
+  FinancialRiskJobPresentation,
+  FinancialRiskReadData,
+  FinancialRiskReadFailure,
+  FinancialRiskReadResult,
+  FinancialRiskReadSuccess,
+} from "./financial-risk";
