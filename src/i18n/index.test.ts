@@ -1,12 +1,5 @@
 import { assertEquals } from "@std/assert";
-import {
-  getLocale,
-  isLocale,
-  resolveLocale,
-  setLocale,
-  t,
-  tList,
-} from "./index.ts";
+import { getLocale, isLocale, resolveLocale, setLocale, t } from "./index.ts";
 
 Deno.test("i18n defaults unknown locale input to English", () => {
   assertEquals(resolveLocale(undefined), "en");
@@ -41,11 +34,4 @@ Deno.test("i18n interpolates document-generation variables", () => {
     t("documentGen.latex.signatureBuyer"),
     "Buyer: {{buyer}}",
   );
-});
-
-Deno.test("i18n returns list translations through the list API", () => {
-  assertEquals(tList("documentGen.latex.buyer", "en"), [
-    "documentGen.latex.buyer",
-  ]);
-  assertEquals(tList("missing.list", "pt-BR"), ["missing.list"]);
 });

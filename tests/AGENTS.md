@@ -9,14 +9,14 @@ microservices, engines, API endpoints, and end-to-end workflows.
   sub-agents (`config.spec.ts`, `vdr_tools.spec.ts`).
 - **`api/`**: API contract validation (`contracts/`), endpoint route tests
   (`routes/`), and store state synchronization tests (`store/`).
-- **`cli/`**: Tests for CLI commands and administrative tools
-  (`errors.spec.ts`).
+- **`cli/`**: Banker-facing CLI contract tests were removed; `retirement.spec.ts`
+  proves the product CLI is absent and bounded administrative task boundaries
+  remain explicit.
 - **`core/`**: Core infrastructure tests (database persistence, memory service,
   continuous learning, Papermark VDR).
 - **`engines/`**: Mathematical optimization, valuation models, ONNX model
   predictions, transformers, and document generation tests.
-- **`e2e/`**: End-to-end user journey and integration tests (`cli.spec.ts`,
-  `flow.test.ts`).
+- **`e2e/`**: End-to-end user journey and integration tests (`flow.test.ts`).
 - **`fixtures/`**: Shared static test data, mock payloads, and snapshot fixtures
   (`ideals.json`, `intralinks.json`).
 - **`workflows/`**: End-to-end multi-agent deal lifecycle execution tests

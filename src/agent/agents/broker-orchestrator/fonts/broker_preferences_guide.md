@@ -9,10 +9,11 @@ alimentando o **Database Memory Service** do ecossistema de M&A (**M&Ai**).
 
 ## 1. Captura e Intercepção de Correções do Usuário
 
-Durante as sessões no terminal da CLI, os brokers emitem correções linguísticas
-diretas (ex: _"Não, use múltiplos de 10x EBITDA para tecnologia, não de 8x"_ ou
-_"Trabalhe com o WACC de 12% de agora em diante"_). O Orquestrador tem o dever
-cognitivo de identificar essas alterações em tempo real.
+Durante as sessões do Agentic Workspace e nas interações aprovadas pela API,
+os brokers emitem correções linguísticas diretas (ex: _"Não, use múltiplos de
+10x EBITDA para tecnologia, não de 8x"_ ou _"Trabalhe com o WACC de 12% de agora
+em diante"_). O Orquestrador tem o dever cognitivo de identificar essas
+alterações em tempo real.
 
 ```mermaid
 graph TD
@@ -100,8 +101,9 @@ valuation), o Orquestrador deve executar o seguinte procedimento de segurança:
 2. **Gravação da Preferência sob Alerta:** A preferência é salva na tabela
    `user_preferences` com uma flag de conformidade:
    `{"bypass_regulatory_checks": true}`.
-3. **Emissão de Alerta Crítico:** O terminal CLI deve exibir um aviso detalhado
-   em Markdown com o formato de alerta do conselho de administração:
+3. **Emissão de Alerta Crítico:** A camada de aplicação deve registrar um aviso
+   estruturado e a superfície Agentic Workspace deve exibi-lo em Markdown com o
+   formato de alerta do conselho de administração:
 
 > [!WARNING]
 > **ALERTA DE CONFORMIDADE CRÍTICA (HITL REQUIREMENT)** A preferência de ignorar
