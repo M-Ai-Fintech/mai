@@ -2,7 +2,9 @@ import { allowedDecision } from "../../src/platform/authz/vocabulary.ts";
 import {
   type Action,
   type ActorReference,
+  type AllowedAuthorizationDecision,
   type AuthorizationDecision,
+  type FieldMask,
 } from "../../src/platform/authz/v1.ts";
 import type {
   ActorId,
@@ -33,9 +35,16 @@ import type {
   FinancialRiskReferences,
   FinancialRiskScope,
 } from "../../src/financial_risk/model.ts";
+import { FINANCIAL_RISK_PROJECTION_FIELD_MASK } from "../../src/financial_risk/projection.ts";
 import type { FinancialRiskInferenceResult } from "../../src/financial_risk/inference.ts";
 import type { FinancialRiskInferencePort } from "../../src/financial_risk/ports.ts";
 import type { FinancialRiskJobPort } from "../../src/financial_risk/job_port.ts";
+import type {
+  FinancialRiskIdempotencyClaim,
+  FinancialRiskIdempotencyClaimResult,
+  FinancialRiskVersionConflictCode,
+} from "../../src/financial_risk/repository.ts";
+import type { FinancialRiskQueueLookupResult } from "../../src/financial_risk/job_port.ts";
 import { ZScoreLabel } from "../../src/engines/prediction/contracts.ts";
 import type {
   FinancialRiskAssessmentId,
@@ -192,7 +201,11 @@ export class FakeFinancialRiskAuthorization
   implements FinancialRiskAuthorizationPort {
   calls = 0;
 
-  constructor(private readonly outcome: "allow" | "deny" = "allow") {}
+  constructor(
+    private readonly outcome: "allow" | "deny" = "allow",
+    private readonly fieldMask: FieldMask =
+      FINANCIAL_RISK_PROJECTION_FIELD_MASK,
+  ) {}
 
   authorize(
     input: Parameters<FinancialRiskAuthorizationPort["authorize"]>[0],
@@ -206,6 +219,7 @@ export class FakeFinancialRiskAuthorization
         input.scope,
         input.action as Action,
         input.resource,
+        this.fieldMask,
       ),
     );
   }
@@ -214,11 +228,24 @@ export class FakeFinancialRiskAuthorization
 export class RecordingReferenceVerifier
   implements FinancialRiskReferenceVerificationPort {
   calls = 0;
+  authorization?: AllowedAuthorizationDecision;
 
-  constructor(private readonly failure?: Error) {}
+  constructor(private failure?: Error) {}
 
-  verify(): Promise<void> {
+  setFailure(failure?: Error): void {
+    this.failure = failure;
+  }
+
+  clearFailure(): void {
+    this.failure = undefined;
+  }
+
+  verify(
+    _context: RequestContext,
+    authorization: AllowedAuthorizationDecision,
+  ): Promise<void> {
     this.calls++;
+    this.authorization = authorization;
     return this.failure === undefined
       ? Promise.resolve()
       : Promise.reject(this.failure);
@@ -227,9 +254,14 @@ export class RecordingReferenceVerifier
 
 export class RecordingInputLoader implements FinancialRiskInputLoader {
   calls = 0;
+  authorization?: AllowedAuthorizationDecision;
 
-  load(): Promise<FinancialRiskInput> {
+  load(
+    _context: RequestContext,
+    authorization: AllowedAuthorizationDecision,
+  ): Promise<FinancialRiskInput> {
     this.calls++;
+    this.authorization = authorization;
     return Promise.resolve(TEST_INPUT);
   }
 }
@@ -256,15 +288,98 @@ export class ThrowingFinancialRiskInference
 
 export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
   readonly jobs = new Map<string, DurableJob>();
+  private readonly claims = new Map<string, TestJobClaim>();
   enqueueCalls = 0;
 
-  constructor(private readonly failure?: Error) {}
+  constructor(private failure?: Error) {}
+
+  clearFailure(): void {
+    this.failure = undefined;
+  }
 
   enqueue(job: DurableJob): Promise<void> {
     this.enqueueCalls++;
     if (this.failure !== undefined) return Promise.reject(this.failure);
     this.jobs.set(job.jobId, job);
     return Promise.resolve();
+  }
+
+  claimAndEnqueue(
+    claim: FinancialRiskIdempotencyClaim,
+    job: DurableJob,
+  ): Promise<FinancialRiskIdempotencyClaimResult> {
+    const key = claimKey(claim);
+    const existing = this.claims.get(key);
+    if (existing !== undefined) {
+      if (existing.payloadDigest !== claim.payloadDigest) {
+        return Promise.reject(
+          new Error(
+            `IDEMPOTENCY_CONFLICT: key "${claim.idempotencyKey}" payload changed.`,
+          ),
+        );
+      }
+      return existing.state === "failed"
+        ? Promise.resolve({
+          status: "failed",
+          failureCode: existing.failureCode!,
+        })
+        : existing.state === "completed"
+        ? Promise.resolve({ status: "replayed", resultId: existing.jobId! })
+        : Promise.resolve({ status: "in_progress" });
+    }
+    this.enqueueCalls++;
+    if (this.failure !== undefined) return Promise.reject(this.failure);
+    this.jobs.set(job.jobId, job);
+    this.claims.set(key, { ...claim, state: "completed", jobId: job.jobId });
+    return Promise.resolve({ status: "claimed" });
+  }
+
+  peek(
+    claim: FinancialRiskIdempotencyClaim,
+  ): Promise<FinancialRiskQueueLookupResult> {
+    const existing = this.claims.get(claimKey(claim));
+    if (existing === undefined) return Promise.resolve({ status: "missing" });
+    if (existing.payloadDigest !== claim.payloadDigest) {
+      return Promise.reject(
+        new Error(
+          `IDEMPOTENCY_CONFLICT: key "${claim.idempotencyKey}" payload changed.`,
+        ),
+      );
+    }
+    if (existing.state === "failed") {
+      return Promise.resolve({
+        status: "failed",
+        failureCode: existing.failureCode!,
+      });
+    }
+    return existing.state === "completed"
+      ? Promise.resolve({ status: "replayed", resultId: existing.jobId! })
+      : Promise.resolve({ status: "in_progress" });
+  }
+
+  claimAndFail(
+    claim: FinancialRiskIdempotencyClaim,
+    failureCode: FinancialRiskVersionConflictCode,
+  ): Promise<FinancialRiskIdempotencyClaimResult> {
+    const key = claimKey(claim);
+    const existing = this.claims.get(key);
+    if (existing !== undefined) {
+      if (existing.state === "failed") {
+        return Promise.resolve({
+          status: "failed",
+          failureCode: existing.failureCode!,
+        });
+      }
+      if (existing.state === "completed") {
+        return Promise.resolve({
+          status: "replayed",
+          resultId: existing.jobId!,
+        });
+      }
+      return Promise.resolve({ status: "in_progress" });
+    }
+    this.claims.set(key, { ...claim, state: "failed", failureCode });
+    return Promise.resolve({ status: "failed", failureCode });
   }
 
   find(
@@ -302,6 +417,7 @@ function allowedFor(
   scope: FinancialRiskScope,
   command: Action,
   resource: { readonly kind: string; readonly id: string },
+  fieldMask: FieldMask,
 ): AuthorizationDecision {
   return allowedDecision({
     request: {
@@ -318,12 +434,7 @@ function allowedFor(
       clock: { now: () => TEST_TIME.toISOString() },
     },
     allowedActions: [command],
-    fieldMask: {
-      include: [],
-      omit: [],
-      redact: [],
-      approvedClassifications: [],
-    },
+    fieldMask,
   });
 }
 
@@ -341,3 +452,21 @@ function deniedDecision(): AuthorizationDecision {
     },
   };
 }
+
+function claimKey(claim: FinancialRiskIdempotencyClaim): string {
+  return [
+    claim.scope.tenantId,
+    claim.scope.workspaceId,
+    claim.scope.dealId,
+    claim.commandType,
+    claim.actorId,
+    claim.assessmentId,
+    claim.idempotencyKey,
+  ].join(":");
+}
+
+type TestJobClaim = FinancialRiskIdempotencyClaim & {
+  readonly state: "in_progress" | "completed" | "failed";
+  readonly jobId?: string;
+  readonly failureCode?: FinancialRiskVersionConflictCode;
+};

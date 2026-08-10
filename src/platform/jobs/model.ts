@@ -27,6 +27,8 @@ export interface JobInputVersionReference {
   readonly aggregateType: string;
   readonly aggregateId: string;
   readonly version: AggregateVersion;
+  /** Immutable semantic identity when a source has no numeric version. */
+  readonly exactReference?: string;
   readonly documentId?: string;
 }
 
@@ -134,6 +136,7 @@ function assertInputVersionReferences(job: DurableJob): void {
         `Job "${job.jobId}" input version "${reference.version}" is invalid; expected a positive aggregate version.`,
       );
     }
+    assertText(reference.exactReference, "exact input reference", 512);
   }
 }
 

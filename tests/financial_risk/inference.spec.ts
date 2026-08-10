@@ -67,6 +67,32 @@ Deno.test("model results missing immutable artifact lineage fail closed", async 
   assertEquals(result.state, "failed");
 });
 
+Deno.test("model results with runtime-mismatched provenance fail closed", async () => {
+  const runtime = new FakeRuntime(undefined, {
+    resultKind: "model",
+    provenance: {
+      kind: "reference-model",
+      modelId: "unloaded-model",
+      modelVersion: "9.9.9",
+      artifactSha256: "b".repeat(64),
+    },
+    insolvencyRisk: MODEL_OUTPUTS.insolvencyRisk,
+    churnProbability: MODEL_OUTPUTS.churnProbability,
+    dcfVolatility: MODEL_OUTPUTS.dcfVolatility,
+    industry4Score: MODEL_OUTPUTS.industry4Score,
+    zScore: MODEL_OUTPUTS.zScore,
+  });
+
+  const result = await new FinancialRiskInferenceAdapter(runtime).infer(
+    TEST_INPUT,
+  );
+
+  assertEquals(result.state, "failed");
+  if (result.state === "failed" && result.provenance.kind === "failed") {
+    assertEquals(result.provenance.reason.includes("does not match"), true);
+  }
+});
+
 Deno.test("model results with heuristic-fallback provenance fail closed", async () => {
   const runtime = new FakeRuntime(undefined, {
     resultKind: "model",

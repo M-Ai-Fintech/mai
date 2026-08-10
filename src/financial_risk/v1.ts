@@ -11,3 +11,7 @@ export * from "./composition.ts";
 export * from "./job_port.ts";
 export * from "./migrations/index.ts";
 export * from "./finding_proposal.ts";
+export * from "./projection.ts";
+export * from "./worker.ts";
+export * from "./queue_service.ts";
+export * from "./queued_execution.ts";

@@ -1,11 +1,10 @@
 import type {
   Clock,
-  IdempotencyClaim,
-  IdempotencyClaimResult,
   PostgresTransactionRunner,
   TransactionHandle,
 } from "../platform/persistence/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
+import type { ApprovedScopeToken } from "../platform/authz/v1.ts";
 import {
   IdempotencyRepository as DurableIdempotencyRepository,
 } from "../platform/persistence/v1.ts";
@@ -15,7 +14,10 @@ import type {
   FinancialRiskIdempotencyClaimResult,
   FinancialRiskRepository,
 } from "./repository.ts";
-import { FinancialRiskRepositoryConflictError } from "./repository.ts";
+import {
+  FinancialRiskRepositoryConflictError,
+  financialRiskScopeFromApprovedScope,
+} from "./repository.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -26,8 +28,10 @@ import {
   type FinancialRiskEffects,
   PostgresFinancialRiskEffects,
 } from "./effects.ts";
-
-const TARGET_TYPE = "financial-risk-assessment";
+import {
+  durableFinancialRiskClaim,
+  mapFinancialRiskClaimResult,
+} from "./idempotency.ts";
 
 export class PostgresFinancialRiskRepository
   implements FinancialRiskRepository {
@@ -48,9 +52,12 @@ export class PostgresFinancialRiskRepository
     claim: FinancialRiskIdempotencyClaim,
   ): Promise<FinancialRiskIdempotencyClaimResult> {
     const durable = await this.transactions.run((transaction) =>
-      this.idempotency.claim(transaction, durableClaim(claim, this.clock.now()))
+      this.idempotency.claim(
+        transaction,
+        durableFinancialRiskClaim(claim, this.clock),
+      )
     );
-    return mapClaimResult(durable, claim.idempotencyKey);
+    return mapFinancialRiskClaimResult(durable, claim.idempotencyKey);
   }
 
   completeIdempotency(
@@ -60,7 +67,7 @@ export class PostgresFinancialRiskRepository
     return this.transactions.run((transaction) =>
       this.idempotency.complete(
         transaction,
-        durableClaim(claim, this.clock.now()),
+        durableFinancialRiskClaim(claim, this.clock),
         resultId,
       )
     );
@@ -73,7 +80,7 @@ export class PostgresFinancialRiskRepository
     return this.transactions.run((transaction) =>
       this.idempotency.fail(
         transaction,
-        durableClaim(claim, this.clock.now()),
+        durableFinancialRiskClaim(claim, this.clock),
         failureCode,
       )
     );
@@ -96,9 +103,47 @@ export class PostgresFinancialRiskRepository
         await appendEffects(this.effects, transaction, result);
         await this.idempotency.complete(
           transaction,
-          durableClaim(claim, this.clock.now()),
+          durableFinancialRiskClaim(claim, this.clock),
           result.resultId,
         );
+      });
+    } catch (error) {
+      if (isUniqueVersionViolation(error)) {
+        throw new FinancialRiskRepositoryConflictError(
+          "VERSION_CONFLICT",
+          `Financial-risk assessment "${result.assessmentId}" was concurrently committed; expected version "${expectedVersion}".`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async commitQueuedResult(
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
+  ): Promise<void> {
+    try {
+      await this.transactions.run(async (transaction) => {
+        const existing = await findResult(
+          transaction,
+          result.scope,
+          result.resultId,
+        );
+        if (existing !== undefined) {
+          if (existing.idempotencyKey === result.idempotencyKey) return;
+          throw new FinancialRiskRepositoryConflictError(
+            "VERSION_CONFLICT",
+            `Financial-risk result "${result.resultId}" already exists; expected immutable worker replay identity.`,
+          );
+        }
+        const latest = await findLatestResultForUpdate(
+          transaction,
+          result.scope,
+          result.assessmentId,
+        );
+        assertCommitVersion(latest, result, expectedVersion);
+        await insertResult(transaction, result);
+        await appendEffects(this.effects, transaction, result);
       });
     } catch (error) {
       if (isUniqueVersionViolation(error)) {
@@ -133,6 +178,16 @@ export class PostgresFinancialRiskRepository
   ): Promise<FinancialRiskResult | undefined> {
     return this.transactions.run((transaction) =>
       findLatestResult(transaction, scope, assessmentId)
+    );
+  }
+
+  findLatestAuthorized(
+    approvedScope: ApprovedScopeToken,
+    assessmentId: FinancialRiskAssessmentId,
+  ): Promise<FinancialRiskResult | undefined> {
+    return this.findLatest(
+      financialRiskScopeFromApprovedScope(approvedScope, assessmentId),
+      assessmentId,
     );
   }
 
@@ -281,67 +336,6 @@ function rowResult(payload: unknown): FinancialRiskResult {
     createdAt: dateValue(record.createdAt),
     updatedAt: dateValue(record.updatedAt),
   } as unknown as FinancialRiskResult);
-}
-
-function durableClaim(
-  claim: FinancialRiskIdempotencyClaim,
-  now: Date,
-): IdempotencyClaim {
-  return {
-    tenantId: claim.scope.tenantId,
-    actorId: claim.actorId,
-    commandType: claim.commandType,
-    targetType: TARGET_TYPE,
-    targetId: durableTargetId(claim),
-    idempotencyKey: claim.idempotencyKey,
-    payloadDigest: claim.payloadDigest,
-    expiresAt: new Date(now.getTime() + 900_000),
-  };
-}
-
-function durableTargetId(claim: FinancialRiskIdempotencyClaim): string {
-  return [
-    claim.scope.workspaceId,
-    claim.scope.dealId,
-    claim.assessmentId,
-  ].join(":");
-}
-
-function mapClaimResult(
-  result: IdempotencyClaimResult,
-  idempotencyKey: FinancialRiskIdempotencyClaim["idempotencyKey"],
-): FinancialRiskIdempotencyClaimResult {
-  if (result.status === "claimed") return { status: "claimed" };
-  if (result.status === "in_progress" || result.status === "abandoned") {
-    return { status: "in_progress" };
-  }
-  if (result.status !== "replay") {
-    throw new Error(
-      `Idempotency key "${idempotencyKey}" returned an unknown state; expected a durable replay or in-progress state.`,
-    );
-  }
-  if (result.state === "failed") {
-    if (
-      result.errorReference !== "STALE_VERSION" &&
-      result.errorReference !== "VERSION_CONFLICT"
-    ) {
-      throw new Error(
-        `Idempotency key "${idempotencyKey}" failed with "${
-          String(result.errorReference)
-        }"; expected the supported stale-version failure code.`,
-      );
-    }
-    return {
-      status: "failed",
-      failureCode: result.errorReference,
-    };
-  }
-  if (result.resultReference === undefined) {
-    throw new Error(
-      `Idempotency key "${idempotencyKey}" completed without a result reference; expected a durable financial-risk result.`,
-    );
-  }
-  return { status: "replayed", resultId: result.resultReference };
 }
 
 function parsePayload(value: unknown): Record<string, unknown> {

@@ -9,6 +9,7 @@ import {
   parseFindingId,
 } from "../../diligence_decisions/ids.ts";
 import { FinancialRiskApplication } from "../../financial_risk/application.ts";
+import type { FinancialRiskAuthorizedRead } from "../../financial_risk/application.ts";
 import { FinancialRiskError } from "../../financial_risk/errors.ts";
 import type {
   FinancialRiskFindingProposal,
@@ -19,6 +20,10 @@ import {
   parseFinancialRiskAssessmentId,
 } from "../../financial_risk/ids.ts";
 import type { FinancialRiskResult } from "../../financial_risk/model.ts";
+import {
+  financialRiskFieldGranted,
+  projectFinancialRiskResult,
+} from "../../financial_risk/projection.ts";
 import type {
   AuthorizedToolInvocation,
   ToolDefinition,
@@ -50,12 +55,12 @@ export class GovernedFinancialRiskAssessmentTool implements ToolDefinition {
       return denied(this.capability, "INVALID_INPUT");
     }
     try {
-      const result = await this.application.read(
+      const authorized = await this.application.read(
         invocation.context,
         runtimeActor(invocation.actor),
         assessmentId,
       );
-      return readOutput(this.capability, result);
+      return readOutput(this.capability, authorized);
     } catch (error) {
       return errorOutput(this.capability, error);
     }
@@ -96,14 +101,14 @@ export class GovernedFinancialRiskFindingProposalTool
       }
     }
     try {
-      const result = await this.application.read(
+      const authorized = await this.application.read(
         invocation.context,
         runtimeActor(invocation.actor),
         assessmentId,
       );
       return await proposalOutput(
         this.capability,
-        result,
+        authorized,
         title,
         statement,
         findingId,
@@ -154,34 +159,30 @@ function validAssessment(
 
 function readOutput(
   capability: "read" | "proposal",
-  result: FinancialRiskResult,
+  authorized: FinancialRiskAuthorizedRead,
 ): ToolOutput {
+  const result = authorized.result;
+  const projected = projectFinancialRiskResult(
+    result,
+    authorized.authorization,
+  );
   return {
     kind: capability,
     value: {
       status: stateStatus(result.state),
       reasonCode: result.reason ?? result.state,
       authoritative: false,
-      assessmentId: result.assessmentId,
-      resultId: result.resultId,
-      state: result.state,
-      version: result.version,
-      scope: result.scope,
-      outputs: result.outputs,
-      provenance: result.provenance,
-      references: result.references,
-      actor: result.actor,
-      correlationId: result.correlationId,
-      idempotencyKey: result.idempotencyKey,
-      execution: result.execution,
+      ...projected,
     },
-    discoveredSourceVersions: sourceReceipts(result),
+    ...(financialRiskFieldGranted(authorized.authorization, "references")
+      ? { discoveredSourceVersions: sourceReceipts(result) }
+      : {}),
   };
 }
 
 async function proposalOutput(
   capability: "proposal",
-  result: FinancialRiskResult,
+  authorized: FinancialRiskAuthorizedRead,
   title: string,
   statement: string,
   findingId: FindingId | undefined,
@@ -189,10 +190,14 @@ async function proposalOutput(
   invocation: AuthorizedToolInvocation,
   findingProposals: FinancialRiskFindingProposalPort | undefined,
 ): Promise<ToolOutput> {
-  const read = readOutput(capability, result);
+  const result = authorized.result;
+  const read = readOutput(capability, authorized);
+  if (!financialRiskFieldGranted(authorized.authorization, "references")) {
+    return denied(capability, "FIELD_SCOPE_DENIED");
+  }
   if (result.state !== "completed" && result.state !== "fallback") return read;
   if (findingProposals === undefined) {
-    return proposalOnlyOutput(read, result, title, statement);
+    return proposalOnlyOutput(read, title, statement);
   }
   if (findingProposals.context !== "diligence_decisions") {
     return denied(capability, "INVALID_CONFIGURATION");
@@ -210,40 +215,51 @@ async function proposalOutput(
     statement,
     idempotencyKey,
   });
-  return proposalOnlyOutput(read, result, title, statement, finding);
+  return proposalOnlyOutput(read, title, statement, finding);
 }
 
 function proposalOnlyOutput(
   read: ToolOutput,
-  result: FinancialRiskResult,
   title: string,
   statement: string,
   finding?: FinancialRiskFindingProposal,
 ): ToolOutput {
+  const proposal: Record<string, unknown> = {
+    proposalType: "financial-risk-finding",
+    title,
+    statement,
+    proposalOnly: true,
+    authoritative: false,
+    persisted: finding !== undefined,
+    approved: false,
+    final: false,
+    humanAuthorityRequired: true,
+  };
+  copyIfPresent(read.value, proposal, "assessmentId");
+  copyIfPresent(read.value, proposal, "state", "assessmentState");
+  copyIfPresent(read.value, proposal, "provenance");
+  copyIfPresent(read.value, proposal, "scope");
+  if (read.discoveredSourceVersions !== undefined) {
+    proposal.sourceReceipts = read.discoveredSourceVersions;
+  }
+  if (finding !== undefined) proposal.finding = finding;
   return {
     ...read,
     value: {
       ...read.value,
       status: "proposal",
-      proposal: {
-        proposalType: "financial-risk-finding",
-        title,
-        statement,
-        assessmentId: result.assessmentId,
-        assessmentState: result.state,
-        provenance: result.provenance,
-        scope: result.scope,
-        sourceReceipts: sourceReceipts(result),
-        proposalOnly: true,
-        authoritative: false,
-        persisted: finding !== undefined,
-        finding,
-        approved: false,
-        final: false,
-        humanAuthorityRequired: true,
-      },
+      proposal,
     },
   };
+}
+
+function copyIfPresent(
+  source: Readonly<Record<string, unknown>>,
+  target: Record<string, unknown>,
+  sourceKey: string,
+  targetKey = sourceKey,
+): void {
+  if (source[sourceKey] !== undefined) target[targetKey] = source[sourceKey];
 }
 
 function errorOutput(

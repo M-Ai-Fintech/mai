@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { FinancialRiskError } from "../../src/financial_risk/errors.ts";
 import type { FinancialRiskScope } from "../../src/financial_risk/model.ts";
 import {
@@ -51,6 +51,37 @@ Deno.test("exact reference verification happens before protected input loading",
   );
   assertEquals(references.calls, 1);
   assertEquals(loader.calls, 0);
+});
+
+Deno.test("authorization grant scope reaches evidence and input protected loaders", async () => {
+  const references = new RecordingReferenceVerifier();
+  const loader = new RecordingInputLoader();
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    references,
+  );
+
+  await application.compute(computeRequest({ loadInput: loader }));
+
+  assertExists(references.authorization);
+  assertExists(loader.authorization);
+  assertEquals(references.authorization, loader.authorization);
+  assertEquals(
+    loader.authorization?.approvedScope.tenantId,
+    financialRiskScope().tenantId,
+  );
+  assertEquals(
+    loader.authorization?.approvedScope.workspaceId,
+    financialRiskScope().workspaceId,
+  );
+  assertEquals(
+    loader.authorization?.approvedScope.dealId,
+    financialRiskScope().dealId,
+  );
+  assertEquals(
+    loader.authorization?.fieldMask,
+    references.authorization?.fieldMask,
+  );
 });
 
 Deno.test("compute preserves model outputs, provenance, durable execution, and idempotent replay", async () => {

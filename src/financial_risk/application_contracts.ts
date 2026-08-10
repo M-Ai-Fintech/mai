@@ -1,5 +1,6 @@
 import type {
   ActorReference,
+  AllowedAuthorizationDecision,
   AuthorizationDecision,
 } from "../platform/authz/v1.ts";
 import type {
@@ -35,6 +36,7 @@ export interface FinancialRiskAuthorizationPort {
 export interface FinancialRiskReferenceVerificationPort {
   verify(
     context: RequestContext,
+    authorization: AllowedAuthorizationDecision,
     scope: FinancialRiskScope,
     references: FinancialRiskReferences,
   ): Promise<void>;
@@ -43,9 +45,15 @@ export interface FinancialRiskReferenceVerificationPort {
 export interface FinancialRiskInputLoader {
   load(
     context: RequestContext,
+    authorization: AllowedAuthorizationDecision,
     scope: FinancialRiskScope,
     references: FinancialRiskReferences,
   ): Promise<FinancialRiskInput>;
+}
+
+export interface FinancialRiskAuthorizedRead {
+  readonly result: FinancialRiskResult;
+  readonly authorization: AllowedAuthorizationDecision;
 }
 
 export interface FinancialRiskComputeRequest {
@@ -62,6 +70,11 @@ export interface FinancialRiskComputeRequest {
   readonly cancellationRequested?: () => Promise<boolean>;
 }
 
+export type FinancialRiskQueuedComputeRequest = Omit<
+  FinancialRiskComputeRequest,
+  "loadInput" | "cancellationRequested"
+>;
+
 export interface FinancialRiskInvalidationRequest {
   readonly context: RequestContext;
   readonly actor: ActorReference;
@@ -74,6 +87,16 @@ export interface FinancialRiskInvalidationRequest {
   readonly expectedVersion: AggregateVersion;
   readonly reason: string;
 }
+
+export type FinancialRiskQueuedCommand =
+  | {
+    readonly kind: "compute";
+    readonly request: FinancialRiskQueuedComputeRequest;
+  }
+  | {
+    readonly kind: "invalidate";
+    readonly request: FinancialRiskInvalidationRequest;
+  };
 
 export interface FinancialRiskCommandResult {
   readonly status: "accepted" | "replayed";

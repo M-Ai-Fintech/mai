@@ -41,7 +41,47 @@ export function mapGovernedToolInput(
   if (capability === "citation.propose") {
     return mapCitationInput(capability, input, context, scope);
   }
+  if (
+    capability === "financial-risk.read" ||
+    capability === "financial-risk.finding-propose"
+  ) return mapFinancialRiskInput(capability, input, context, scope);
   return mapLegacyInput(capability, input, scope);
+}
+
+function mapFinancialRiskInput(
+  capability: string,
+  input: Record<string, unknown>,
+  context: Record<string, unknown>,
+  scope: RuntimeScope,
+): GovernedToolInputMapping {
+  const assessmentId = text(context.assessmentId ?? input.assessmentId);
+  if (assessmentId === undefined) {
+    return unavailable(
+      capability,
+      "assessmentId exact financial-risk resource",
+    );
+  }
+  if (capability === "financial-risk.read") {
+    return ready({ scope, assessmentId });
+  }
+  const title = text(context.title ?? input.title);
+  const statement = text(context.statement ?? input.statement ?? input.query);
+  if (title === undefined || statement === undefined) {
+    return unavailable(
+      capability,
+      "title and statement for a Diligence proposal",
+    );
+  }
+  return ready({
+    scope,
+    assessmentId,
+    title,
+    statement,
+    ...(input.findingId === undefined ? {} : { findingId: input.findingId }),
+    ...(input.idempotencyKey === undefined
+      ? {}
+      : { idempotencyKey: input.idempotencyKey }),
+  });
 }
 
 function mapDocumentInput(

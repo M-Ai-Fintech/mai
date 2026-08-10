@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import type {
   Clock,
   IdempotencyClaim,
@@ -13,7 +13,11 @@ import {
   PostgresFinancialRiskRepository,
 } from "../../src/financial_risk/postgres_repository.ts";
 import { PostgresFinancialRiskJobPort } from "../../src/financial_risk/job_port.ts";
-import { queuedJob } from "../../src/financial_risk/application_support.ts";
+import {
+  commandDigest,
+  queuedJob,
+} from "../../src/financial_risk/application_support.ts";
+import { createCommandClaim } from "../../src/financial_risk/application_internal.ts";
 import { InMemoryFinancialRiskRepository } from "../../src/financial_risk/repository.ts";
 import type { FinancialRiskEffects } from "../../src/financial_risk/effects.ts";
 import { financialRiskMigration } from "../../src/financial_risk/migrations/index.ts";
@@ -98,6 +102,39 @@ Deno.test("financial-risk job port enqueues through the platform job repository"
   );
 });
 
+Deno.test("financial-risk queue claim, job insert, and completion share one transaction", async () => {
+  const runner = new JobRecordingTransactionRunner();
+  const port = new PostgresFinancialRiskJobPort(
+    runner as unknown as PostgresTransactionRunner,
+  );
+  const request = computeRequest();
+  const job = queuedJob(
+    request,
+    financialRiskScope(),
+    request.references,
+    fakeClock.now(),
+  );
+  const claim = createCommandClaim(
+    request,
+    financialRiskScope(),
+    await commandDigest(request),
+  );
+
+  assertEquals(await port.claimAndEnqueue(claim, job), { status: "claimed" });
+  assertEquals(runner.runs, 1);
+  const statements = runner.queries.map((query) => query.sql);
+  const claimIndex = statements.findIndex((sql) =>
+    sql.includes("INSERT INTO platform.idempotency_records")
+  );
+  const jobIndex = statements.findIndex((sql) =>
+    sql.includes("INSERT INTO platform.jobs")
+  );
+  const completeIndex = statements.findIndex((sql) =>
+    sql.includes("UPDATE platform.idempotency_records")
+  );
+  assert(claimIndex >= 0 && claimIndex < jobIndex && jobIndex < completeIndex);
+});
+
 class RecordingTransactionRunner {
   readonly queries: RecordedQuery[] = [];
 
@@ -112,10 +149,12 @@ class RecordingTransactionRunner {
 
 class JobRecordingTransactionRunner {
   readonly queries: RecordedQuery[] = [];
+  runs = 0;
 
   async run<TResult>(
     callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
   ): Promise<TResult> {
+    this.runs++;
     return await callback(new JobRecordingTransaction(this.queries));
   }
 }

@@ -134,19 +134,29 @@ async function readAssessment(
   authenticated: FinancialRiskAuthenticatedContext,
   application: FinancialRiskApplication,
 ): Promise<Response> {
-  const result = await application.read(
+  const authorized = await application.read(
     authenticated.context,
     authenticated.actor,
     assessmentId,
   );
   return Response.json(
-    createSuccessEnvelope(financialRiskAssessmentResponse(result), {
-      correlationId: authenticated.context.correlationId,
-      freshness: result.state === "stale" || result.state === "superseded"
-        ? "stale"
-        : "current",
-    }),
-    responseOptions(authenticated.context, formatEtag(result.version)),
+    createSuccessEnvelope(
+      financialRiskAssessmentResponse(
+        authorized.result,
+        authorized.authorization,
+      ),
+      {
+        correlationId: authenticated.context.correlationId,
+        freshness: authorized.result.state === "stale" ||
+            authorized.result.state === "superseded"
+          ? "stale"
+          : "current",
+      },
+    ),
+    responseOptions(
+      authenticated.context,
+      formatEtag(authorized.result.version),
+    ),
   );
 }
 

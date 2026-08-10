@@ -20,6 +20,10 @@ import {
   PostgresFinancialRiskJobPort,
 } from "./job_port.ts";
 import { financialRiskMigrations } from "./migrations/index.ts";
+import {
+  FinancialRiskWorker,
+  type FinancialRiskWorkerConfig,
+} from "./worker.ts";
 
 export interface FinancialRiskCompositionConfig {
   readonly pool: TransactionPool;
@@ -54,7 +58,12 @@ export class FinancialRiskComposition {
       config.clock,
     );
     this.jobs = config.jobs ??
-      new PostgresFinancialRiskJobPort(this.transactions);
+      new PostgresFinancialRiskJobPort(
+        this.transactions,
+        undefined,
+        undefined,
+        config.clock,
+      );
     this.application = new FinancialRiskApplication(
       config.authorization,
       config.references,
@@ -63,5 +72,14 @@ export class FinancialRiskComposition {
       config.clock,
       this.jobs,
     );
+  }
+
+  createWorker(
+    config: Omit<FinancialRiskWorkerConfig, "application">,
+  ): FinancialRiskWorker {
+    return new FinancialRiskWorker({
+      ...config,
+      application: this.application,
+    });
   }
 }

@@ -26,6 +26,12 @@ import {
   RecordingReferenceVerifier,
 } from "./support.ts";
 import type { RequestContext } from "../../src/platform/api/v1.ts";
+import {
+  FINANCIAL_RISK_PROJECTION_FIELD_MASK,
+  FINANCIAL_RISK_PROJECTION_FIELDS,
+} from "../../src/financial_risk/projection.ts";
+import { financialRiskDefinition } from "../../src/agent/definitions/specialists.ts";
+import { DURABLE_CAPABILITY_BINDINGS } from "../../src/agent/governed_capability_binding.ts";
 
 Deno.test("governed financial-risk read reauthorizes and returns exact receipts", async () => {
   const application = await seededApplication(MODEL_RESULT);
@@ -110,6 +116,44 @@ Deno.test("governed financial-risk fallback remains explicitly non-model", async
   assertEquals(provenance.modelId, undefined);
 });
 
+Deno.test("financial-risk projections omit fields outside the approved grant", async () => {
+  const fieldMask = restrictedFieldMask();
+  const application = await seededApplication(
+    MODEL_RESULT,
+    new FakeFinancialRiskAuthorization("allow", fieldMask),
+  );
+  const tool = createGovernedFinancialRiskTools(application)[0];
+  const result = await new ToolGateway([tool], new AllowingAuthorization())
+    .invoke(invocation(tool.name, "read_financial_risk_assessment", {}));
+
+  assertEquals(result.status, "succeeded");
+  if (result.status !== "succeeded") return;
+  assertEquals(result.output.value.assessmentId, "risk_assessment_alpha");
+  assertEquals(result.output.value.state, "completed");
+  assertEquals(result.output.value.outputs, undefined);
+  assertEquals(result.output.value.references, undefined);
+  assertEquals(result.output.value.scope, undefined);
+  assertEquals(result.output.discoveredSourceVersions, undefined);
+});
+
+Deno.test("financial-risk capabilities bind to governed tools, not deterministic ports", () => {
+  assertEquals(
+    DURABLE_CAPABILITY_BINDINGS["financial-risk.read"],
+    {
+      toolName: "governed.financial-risk.assessment",
+      action: "read_financial_risk_assessment",
+    },
+  );
+  assertEquals(
+    DURABLE_CAPABILITY_BINDINGS["financial-risk.finding-propose"],
+    {
+      toolName: "governed.financial-risk.finding-proposal",
+      action: "propose_financial_risk_finding",
+    },
+  );
+  assertEquals(financialRiskDefinition.calculationBindings, []);
+});
+
 Deno.test("finding proposal persists only through the Diligence proposal port", async () => {
   const application = await seededApplication(MODEL_RESULT);
   const proposals = new RecordingFinancialRiskFindingProposalPort();
@@ -140,9 +184,10 @@ Deno.test("finding proposal persists only through the Diligence proposal port", 
 
 async function seededApplication(
   inferenceResult: typeof MODEL_RESULT | typeof FALLBACK_RESULT,
+  authorization = new FakeFinancialRiskAuthorization(),
 ): Promise<FinancialRiskApplication> {
   const application = new FinancialRiskApplication(
-    new FakeFinancialRiskAuthorization(),
+    authorization,
     new RecordingReferenceVerifier(),
     new FakeFinancialRiskInference(inferenceResult),
     new InMemoryFinancialRiskRepository(),
@@ -156,6 +201,17 @@ async function seededApplication(
     }),
   );
   return application;
+}
+
+function restrictedFieldMask() {
+  return {
+    ...FINANCIAL_RISK_PROJECTION_FIELD_MASK,
+    omit: [
+      FINANCIAL_RISK_PROJECTION_FIELDS.outputs,
+      FINANCIAL_RISK_PROJECTION_FIELDS.references,
+    ],
+    redact: [FINANCIAL_RISK_PROJECTION_FIELDS.scope],
+  };
 }
 
 function invocation(

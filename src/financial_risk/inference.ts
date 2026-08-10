@@ -193,16 +193,29 @@ function modelInference(
       lineage,
     );
   }
-  const modelId = result.provenance.modelId ?? metadata.modelId;
-  const modelVersion = result.provenance.modelVersion ?? metadata.modelVersion;
-  const artifactChecksum = result.provenance.artifactSha256 ??
-    metadata.artifactChecksum;
+  const modelId = result.provenance.modelId;
+  const modelVersion = result.provenance.modelVersion;
+  const artifactChecksum = result.provenance.artifactSha256;
   if (
     modelId === undefined || modelVersion === undefined ||
-    artifactChecksum === undefined || metadata.readiness !== "reference-only"
+    artifactChecksum === undefined || metadata.modelId === undefined ||
+    metadata.modelVersion === undefined ||
+    metadata.artifactChecksum === undefined ||
+    metadata.readiness !== "reference-only"
   ) {
     return failedResult(
       "Model provenance is incomplete; expected reference readiness, model, version, and artifact checksum.",
+      metadata,
+      lineage,
+    );
+  }
+  if (
+    modelId !== metadata.modelId ||
+    modelVersion !== metadata.modelVersion ||
+    artifactChecksum !== metadata.artifactChecksum
+  ) {
+    return failedResult(
+      "Model provenance does not match the loaded runtime metadata; inference is rejected.",
       metadata,
       lineage,
     );

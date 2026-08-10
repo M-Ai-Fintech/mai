@@ -3,6 +3,7 @@ import type {
   AggregateVersion,
   IdempotencyKey,
 } from "../platform/api/v1.ts";
+import type { ApprovedScopeToken } from "../platform/authz/v1.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -63,6 +64,10 @@ export interface FinancialRiskRepository {
     result: FinancialRiskResult,
     expectedVersion: AggregateVersion,
   ): Promise<void>;
+  commitQueuedResult(
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
+  ): Promise<void>;
   append(result: FinancialRiskResult): Promise<void>;
   findById(
     scope: FinancialRiskScope,
@@ -70,6 +75,10 @@ export interface FinancialRiskRepository {
   ): Promise<FinancialRiskResult | undefined>;
   findLatest(
     scope: FinancialRiskScope,
+    assessmentId: FinancialRiskAssessmentId,
+  ): Promise<FinancialRiskResult | undefined>;
+  findLatestAuthorized(
+    approvedScope: ApprovedScopeToken,
     assessmentId: FinancialRiskAssessmentId,
   ): Promise<FinancialRiskResult | undefined>;
   listHistory(
@@ -192,6 +201,32 @@ export class InMemoryFinancialRiskRepository
     return Promise.resolve();
   }
 
+  commitQueuedResult(
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
+  ): Promise<void> {
+    const resultKeyValue = resultKey(result.scope, result.resultId);
+    const existing = this.results.get(resultKeyValue);
+    if (existing !== undefined) {
+      if (existing.idempotencyKey === result.idempotencyKey) {
+        return Promise.resolve();
+      }
+      return Promise.reject(
+        new FinancialRiskRepositoryConflictError(
+          "VERSION_CONFLICT",
+          `Financial-risk result "${result.resultId}" already exists; expected immutable worker replay identity.`,
+        ),
+      );
+    }
+    assertCommitVersion(
+      this.latestResult(result.scope, result.assessmentId),
+      result,
+      expectedVersion,
+    );
+    this.results.set(resultKeyValue, snapshotResult(result));
+    return Promise.resolve();
+  }
+
   append(result: FinancialRiskResult): Promise<void> {
     const key = resultKey(result.scope, result.resultId);
     if (this.results.has(key)) {
@@ -238,6 +273,16 @@ export class InMemoryFinancialRiskRepository
     values.sort((left, right) => right.version - left.version);
     return Promise.resolve(
       values[0] === undefined ? undefined : snapshotResult(values[0]),
+    );
+  }
+
+  findLatestAuthorized(
+    approvedScope: ApprovedScopeToken,
+    assessmentId: FinancialRiskAssessmentId,
+  ): Promise<FinancialRiskResult | undefined> {
+    return this.findLatest(
+      financialRiskScopeFromApprovedScope(approvedScope, assessmentId),
+      assessmentId,
     );
   }
 
@@ -345,4 +390,24 @@ function sameScope(
 ): boolean {
   return left.tenantId === right.tenantId &&
     left.workspaceId === right.workspaceId && left.dealId === right.dealId;
+}
+
+export function financialRiskScopeFromApprovedScope(
+  approvedScope: ApprovedScopeToken,
+  assessmentId: FinancialRiskAssessmentId,
+): FinancialRiskScope {
+  if (
+    approvedScope.dealId === undefined ||
+    approvedScope.resource.kind !== "financial-risk-assessment" ||
+    approvedScope.resource.id !== assessmentId
+  ) {
+    throw new Error(
+      `Approved financial-risk scope is bound to resource "${approvedScope.resource.id}"; expected assessment "${assessmentId}".`,
+    );
+  }
+  return {
+    tenantId: approvedScope.tenantId,
+    workspaceId: approvedScope.workspaceId,
+    dealId: approvedScope.dealId!,
+  };
 }

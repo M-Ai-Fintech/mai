@@ -1,4 +1,5 @@
 import type { AggregateVersion } from "../platform/api/v1.ts";
+import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
 import { FinancialRiskError } from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import type {
@@ -53,11 +54,27 @@ export async function claim(
 
 export async function assertExpectedVersion(
   repository: FinancialRiskRepository,
+  authorization: AllowedAuthorizationDecision,
   scope: FinancialRiskScope,
   assessmentId: FinancialRiskCommandRequest["assessmentId"],
   expectedVersion: AggregateVersion,
 ): Promise<FinancialRiskResult | undefined> {
-  const latest = await repository.findLatest(scope, assessmentId);
+  if (
+    authorization.approvedScope.tenantId !== scope.tenantId ||
+    authorization.approvedScope.workspaceId !== scope.workspaceId ||
+    authorization.approvedScope.dealId !== scope.dealId
+  ) {
+    throw new FinancialRiskError(
+      "SCOPE_MISMATCH",
+      `Approved financial-risk scope does not match requested scope "${
+        JSON.stringify(scope)
+      }"; expected exact tenant, workspace, and deal identity.`,
+    );
+  }
+  const latest = await repository.findLatestAuthorized(
+    authorization.approvedScope,
+    assessmentId,
+  );
   if (latest === undefined && expectedVersion === 1) return latest;
   if (latest !== undefined && latest.version === expectedVersion) {
     return latest;
@@ -87,6 +104,21 @@ export function normalizeCommandError(error: unknown): unknown {
   return error;
 }
 
+export function createCommandClaim(
+  request: FinancialRiskCommandRequest,
+  scope: FinancialRiskScope,
+  digest: string,
+): FinancialRiskIdempotencyClaim {
+  return {
+    commandType: commandType(request),
+    scope,
+    actorId: request.actor.id,
+    assessmentId: request.assessmentId,
+    idempotencyKey: request.idempotencyKey,
+    payloadDigest: digest,
+  };
+}
+
 export function commandType(
   request: FinancialRiskCommandRequest,
 ): FinancialRiskCommandType {
@@ -108,14 +140,7 @@ function createClaim(
   scope: FinancialRiskScope,
   digest: string,
 ): FinancialRiskIdempotencyClaim {
-  return {
-    commandType: commandType(request),
-    scope,
-    actorId: request.actor.id,
-    assessmentId: request.assessmentId,
-    idempotencyKey: request.idempotencyKey,
-    payloadDigest: digest,
-  };
+  return createCommandClaim(request, scope, digest);
 }
 
 function isIdempotencyConflict(error: unknown): error is Error {

@@ -1,19 +1,22 @@
-import type { ActorReference } from "../platform/authz/v1.ts";
+import type {
+  ActorReference,
+  AllowedAuthorizationDecision,
+} from "../platform/authz/v1.ts";
 import {
   type AggregateVersion,
   type RequestContext,
 } from "../platform/api/v1.ts";
-import type { DurableJob } from "../platform/jobs/v1.ts";
 import { type Clock, payloadDigest } from "../platform/persistence/v1.ts";
 import {
   createFinancialRiskResult,
-  type FinancialRiskReferences,
   type FinancialRiskResult,
   type FinancialRiskScope,
 } from "./model.ts";
 import { FinancialRiskError } from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import type { FinancialRiskJobPort } from "./job_port.ts";
+import { FinancialRiskQueuedExecution } from "./queued_execution.ts";
+import { FinancialRiskQueueService } from "./queue_service.ts";
 import type { FinancialRiskAssessmentId } from "./ids.ts";
 import type { FinancialRiskRepository } from "./repository.ts";
 import {
@@ -23,7 +26,6 @@ import {
   commandDigest,
   durableJob,
   protectedNotFound,
-  queuedJob,
   replayed,
   requiredScope,
   staleProvenance,
@@ -34,26 +36,31 @@ import {
   claim,
   executionStatus,
   failVersionClaim,
-  type FinancialRiskClaim,
   normalizeCommandError,
   safeInference,
 } from "./application_internal.ts";
 import type {
   FinancialRiskAuthorizationPort,
+  FinancialRiskAuthorizedRead,
   FinancialRiskCommandResult,
   FinancialRiskComputeRequest,
+  FinancialRiskInputLoader,
   FinancialRiskInvalidationRequest,
+  FinancialRiskQueuedCommand,
   FinancialRiskQueuedCommandResult,
   FinancialRiskReferenceVerificationPort,
 } from "./application_contracts.ts";
 export type {
   FinancialRiskAuthorizationPort,
+  FinancialRiskAuthorizedRead,
   FinancialRiskCommandRequest,
   FinancialRiskCommandResult,
   FinancialRiskComputeRequest,
   FinancialRiskInputLoader,
   FinancialRiskInvalidationRequest,
+  FinancialRiskQueuedCommand,
   FinancialRiskQueuedCommandResult,
+  FinancialRiskQueuedComputeRequest,
   FinancialRiskReferenceVerificationPort,
 } from "./application_contracts.ts";
 
@@ -64,20 +71,47 @@ export class FinancialRiskApplication {
     private readonly inference: FinancialRiskInferencePort,
     private readonly repository: FinancialRiskRepository,
     private readonly clock: Clock = systemClock,
-    private readonly jobs?: FinancialRiskJobPort,
-  ) {}
+    jobs?: FinancialRiskJobPort,
+  ) {
+    this.queuedExecution = new FinancialRiskQueuedExecution({
+      authorization,
+      references,
+      inference,
+      repository,
+      clock,
+    });
+    this.queue = new FinancialRiskQueueService(
+      authorization,
+      references,
+      repository,
+      jobs,
+      clock,
+    );
+  }
+
+  private readonly queuedExecution: FinancialRiskQueuedExecution;
+  private readonly queue: FinancialRiskQueueService;
 
   async read(
     context: RequestContext,
     actor: ActorReference,
     assessmentId: FinancialRiskAssessmentId,
-  ): Promise<FinancialRiskResult> {
+  ): Promise<FinancialRiskAuthorizedRead> {
     const scope = requiredScope(context);
     assertActor(context, actor);
-    await this.authorize(context, actor, scope, assessmentId, "read");
-    const result = await this.repository.findLatest(scope, assessmentId);
+    const authorization = await this.authorize(
+      context,
+      actor,
+      scope,
+      assessmentId,
+      "read",
+    );
+    const result = await this.repository.findLatestAuthorized(
+      authorization.approvedScope,
+      assessmentId,
+    );
     if (result === undefined) throw protectedNotFound(assessmentId);
-    return result;
+    return { result, authorization };
   }
 
   async compute(
@@ -85,7 +119,7 @@ export class FinancialRiskApplication {
   ): Promise<FinancialRiskCommandResult> {
     const scope = requiredScope(request.context);
     assertActor(request.context, request.actor);
-    await this.authorize(
+    const authorization = await this.authorize(
       request.context,
       request.actor,
       scope,
@@ -116,14 +150,25 @@ export class FinancialRiskApplication {
       );
     }
     try {
-      await this.references.verify(request.context, scope, request.references);
+      await this.references.verify(
+        request.context,
+        authorization,
+        scope,
+        request.references,
+      );
       const latest = await assertExpectedVersion(
         this.repository,
+        authorization,
         scope,
         request.assessmentId,
         request.expectedVersion,
       );
-      const result = await this.executeCompute(request, scope, latest);
+      const result = await this.executeCompute(
+        request,
+        authorization,
+        scope,
+        latest,
+      );
       await this.repository.commitResult(
         claimResult.claim,
         result,
@@ -144,23 +189,24 @@ export class FinancialRiskApplication {
   async enqueueCompute(
     request: FinancialRiskComputeRequest,
   ): Promise<FinancialRiskQueuedCommandResult> {
-    const scope = await this.authorizedCommandScope(
-      request,
-      request.assessmentId,
-      "compute",
-    );
-    assertReferenceScope(scope, request.references);
-    const claimResult = await claim(
-      this.repository,
-      request,
-      scope,
-      await commandDigest(request),
-    );
-    return await this.enqueueClaim(
-      claimResult,
-      request,
-      scope,
-      request.references,
+    return await this.queue.enqueueCompute(request);
+  }
+
+  async recheckQueuedCommand(
+    command: FinancialRiskQueuedCommand,
+  ): Promise<boolean> {
+    return await this.queuedExecution.recheck(command);
+  }
+
+  async executeQueuedCommand(
+    command: FinancialRiskQueuedCommand,
+    loadInput: FinancialRiskInputLoader,
+    cancellationRequested?: () => Promise<boolean>,
+  ): Promise<FinancialRiskResult> {
+    return await this.queuedExecution.execute(
+      command,
+      loadInput,
+      cancellationRequested,
     );
   }
 
@@ -169,7 +215,7 @@ export class FinancialRiskApplication {
   ): Promise<FinancialRiskCommandResult> {
     const scope = requiredScope(request.context);
     assertActor(request.context, request.actor);
-    await this.authorize(
+    const authorization = await this.authorize(
       request.context,
       request.actor,
       scope,
@@ -209,6 +255,7 @@ export class FinancialRiskApplication {
     try {
       const latest = await assertExpectedVersion(
         this.repository,
+        authorization,
         scope,
         request.assessmentId,
         request.expectedVersion,
@@ -257,34 +304,12 @@ export class FinancialRiskApplication {
   async enqueueInvalidate(
     request: FinancialRiskInvalidationRequest,
   ): Promise<FinancialRiskQueuedCommandResult> {
-    const scope = await this.authorizedCommandScope(
-      request,
-      request.assessmentId,
-      "invalidate",
-    );
-    if (
-      await this.repository.findLatest(scope, request.assessmentId) ===
-        undefined
-    ) throw protectedNotFound(request.assessmentId);
-    const claimResult = await claim(
-      this.repository,
-      request,
-      scope,
-      await payloadDigest({
-        assessmentId: request.assessmentId,
-        resultId: request.resultId,
-        invalidationId: request.invalidationId,
-        operationId: request.operationId,
-        jobId: request.jobId,
-        expectedVersion: request.expectedVersion,
-        reason: request.reason,
-      }),
-    );
-    return await this.enqueueClaim(claimResult, request, scope);
+    return await this.queue.enqueueInvalidate(request);
   }
 
   private async executeCompute(
     request: FinancialRiskComputeRequest,
+    authorization: AllowedAuthorizationDecision,
     scope: FinancialRiskScope,
     latest: FinancialRiskResult | undefined,
   ): Promise<FinancialRiskResult> {
@@ -293,6 +318,7 @@ export class FinancialRiskApplication {
     }
     const input = await request.loadInput.load(
       request.context,
+      authorization,
       scope,
       request.references,
     );
@@ -366,7 +392,7 @@ export class FinancialRiskApplication {
     scope: FinancialRiskScope,
     assessmentId: string,
     operation: "read" | "compute" | "invalidate",
-  ): Promise<void> {
+  ): Promise<AllowedAuthorizationDecision> {
     const decision = await this.authorization.authorize({
       context,
       actor,
@@ -374,94 +400,29 @@ export class FinancialRiskApplication {
       resource: { kind: "financial-risk-assessment", id: assessmentId },
       action: `financial-risk.${operation}`,
     });
-    if (decision.outcome === "allow") return;
+    if (
+      decision.outcome === "allow" &&
+      approvedScopeMatches(decision, actor, scope, assessmentId, operation)
+    ) return decision;
     throw protectedNotFound(assessmentId);
   }
+}
 
-  private async authorizedCommandScope(
-    request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
-    assessmentId: FinancialRiskAssessmentId,
-    operation: "compute" | "invalidate",
-  ): Promise<FinancialRiskScope> {
-    const scope = requiredScope(request.context);
-    assertActor(request.context, request.actor);
-    await this.authorize(
-      request.context,
-      request.actor,
-      scope,
-      assessmentId,
-      operation,
+function approvedScopeMatches(
+  decision: AllowedAuthorizationDecision,
+  actor: ActorReference,
+  scope: FinancialRiskScope,
+  assessmentId: string,
+  operation: "read" | "compute" | "invalidate",
+): boolean {
+  const approved = decision.approvedScope;
+  return approved.actorId === actor.id &&
+    approved.tenantId === scope.tenantId &&
+    approved.workspaceId === scope.workspaceId &&
+    approved.dealId === scope.dealId &&
+    approved.resource.kind === "financial-risk-assessment" &&
+    approved.resource.id === assessmentId &&
+    decision.allowedActions.some((allowed) =>
+      allowed === `financial-risk.${operation}`
     );
-    return scope;
-  }
-
-  private async enqueueClaim(
-    claim: FinancialRiskClaim,
-    request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
-    scope: FinancialRiskScope,
-    references?: FinancialRiskReferences,
-  ): Promise<FinancialRiskQueuedCommandResult> {
-    if (claim.status === "replayed") {
-      return {
-        status: "replayed",
-        job: await this.replayedJob(scope, claim.resultId),
-      };
-    }
-    if (claim.status === "failed") {
-      throw new FinancialRiskError(
-        claim.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claim.failureCode}".`,
-      );
-    }
-    if (claim.status === "in_progress") {
-      throw new FinancialRiskError(
-        "IDEMPOTENCY_IN_PROGRESS",
-        `Idempotency key "${request.idempotencyKey}" is already running.`,
-      );
-    }
-    try {
-      const latest = await assertExpectedVersion(
-        this.repository,
-        scope,
-        request.assessmentId,
-        request.expectedVersion,
-      );
-      if (latest === undefined && !("loadInput" in request)) {
-        throw protectedNotFound(request.assessmentId);
-      }
-      if (references !== undefined) {
-        await this.references.verify(request.context, scope, references);
-      }
-      const job = queuedJob(
-        request,
-        scope,
-        references,
-        this.clock.now(),
-      );
-      await this.requiredJobs().enqueue(job);
-      await this.repository.completeIdempotency(claim.claim, job.jobId);
-      return { status: "accepted", job };
-    } catch (error) {
-      const normalized = normalizeCommandError(error);
-      await failVersionClaim(this.repository, claim.claim, normalized);
-      throw normalized;
-    }
-  }
-
-  private async replayedJob(
-    scope: FinancialRiskScope,
-    jobId: string,
-  ): Promise<DurableJob> {
-    const job = await this.requiredJobs().find(scope, jobId);
-    if (job !== undefined) return job;
-    throw protectedNotFound(jobId);
-  }
-
-  private requiredJobs(): FinancialRiskJobPort {
-    if (this.jobs !== undefined) return this.jobs;
-    throw new FinancialRiskError(
-      "DEPENDENCY_UNAVAILABLE",
-      "Financial-risk durable job queue is not configured; expected an injected job port.",
-    );
-  }
 }

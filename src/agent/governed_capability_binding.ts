@@ -48,6 +48,14 @@ export const DURABLE_CAPABILITY_BINDINGS: Readonly<
     toolName: "governed.evidence.missing_document_finding_proposal",
     action: "propose_missing_document_finding",
   },
+  "financial-risk.read": {
+    toolName: "governed.financial-risk.assessment",
+    action: "read_financial_risk_assessment",
+  },
+  "financial-risk.finding-propose": {
+    toolName: "governed.financial-risk.finding-proposal",
+    action: "propose_financial_risk_finding",
+  },
 });
 
 export function capabilityBindingForTool(

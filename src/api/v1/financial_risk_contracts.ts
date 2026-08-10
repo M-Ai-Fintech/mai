@@ -20,16 +20,16 @@ import {
   parseTenantId,
   parseWorkspaceId,
 } from "../../platform/api/v1.ts";
+import type { AllowedAuthorizationDecision } from "../../platform/authz/v1.ts";
 import type {
   FinancialDataReference,
   FinancialRiskCalculationReference,
-  FinancialRiskOutputs,
-  FinancialRiskProvenance,
   FinancialRiskReferences,
   FinancialRiskResult,
   FinancialRiskResultState,
   FinancialRiskScope,
 } from "../../financial_risk/model.ts";
+import { projectFinancialRiskResult } from "../../financial_risk/projection.ts";
 
 export type FinancialRiskApiState = FinancialRiskResultState;
 
@@ -47,50 +47,15 @@ export type FinancialRiskApiReferences =
   >
   & { readonly evidenceBasis: FinancialRiskApiEvidenceBasis };
 
-export interface FinancialRiskAssessmentResponse {
-  readonly aggregateType: "financial_risk_result";
-  readonly resultId: FinancialRiskResult["resultId"];
-  readonly assessmentId: FinancialRiskResult["assessmentId"];
-  readonly scope: FinancialRiskScope;
-  readonly version: FinancialRiskResult["version"];
-  readonly state: FinancialRiskApiState;
-  readonly outputs?: FinancialRiskOutputs;
-  readonly provenance: FinancialRiskProvenance;
-  readonly references: FinancialRiskApiReferences;
-  readonly execution: FinancialRiskResult["execution"];
-  readonly supersedesResultId?: FinancialRiskResult["supersedesResultId"];
-  readonly reason?: string;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-}
+export type FinancialRiskAssessmentResponse = Readonly<
+  Record<string, unknown>
+>;
 
 export function financialRiskAssessmentResponse(
   result: FinancialRiskResult,
+  authorization: AllowedAuthorizationDecision,
 ): FinancialRiskAssessmentResponse {
-  return {
-    aggregateType: result.aggregateType,
-    resultId: result.resultId,
-    assessmentId: result.assessmentId,
-    scope: result.scope,
-    version: result.version,
-    state: result.state,
-    ...(result.outputs === undefined ? {} : { outputs: result.outputs }),
-    provenance: result.provenance,
-    references: {
-      ...result.references,
-      evidenceBasis: {
-        ...result.references.evidenceBasis,
-        capturedAt: result.references.evidenceBasis.capturedAt.toISOString(),
-      },
-    },
-    execution: result.execution,
-    ...(result.supersedesResultId === undefined
-      ? {}
-      : { supersedesResultId: result.supersedesResultId }),
-    ...(result.reason === undefined ? {} : { reason: result.reason }),
-    createdAt: result.createdAt.toISOString(),
-    updatedAt: result.updatedAt.toISOString(),
-  };
+  return projectFinancialRiskResult(result, authorization);
 }
 
 export type FinancialRiskReferencesParseResult =

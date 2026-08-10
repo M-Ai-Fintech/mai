@@ -241,3 +241,30 @@ Deno.test("reference version conflicts become replayable queue failures", async 
   assertEquals(references.calls, 1);
   assertEquals(jobs.enqueueCalls, 0);
 });
+
+Deno.test("queue persistence failure does not strand the idempotency key", async () => {
+  const jobs = new RecordingFinancialRiskJobPort(
+    new Error("durable queue unavailable"),
+  );
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    new InMemoryFinancialRiskRepository(),
+    jobs,
+  );
+  const request = computeRequest({
+    idempotencyKey: "idem_queue-retry-after-failure" as never,
+  });
+
+  await assertRejects(
+    () => application.enqueueCompute(request),
+    Error,
+    "durable queue unavailable",
+  );
+  jobs.clearFailure();
+  const accepted = await application.enqueueCompute(request);
+
+  assertEquals(accepted.status, "accepted");
+  assertEquals(jobs.enqueueCalls, 2);
+});
