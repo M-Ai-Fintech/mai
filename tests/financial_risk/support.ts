@@ -1,0 +1,320 @@
+import { allowedDecision } from "../../src/platform/authz/vocabulary.ts";
+import {
+  type Action,
+  type ActorReference,
+  type AuthorizationDecision,
+} from "../../src/platform/authz/v1.ts";
+import type {
+  ActorId,
+  CorrelationId,
+  DealId,
+  IdempotencyKey,
+  JobId,
+  OperationId,
+  TenantId,
+  WorkspaceId,
+} from "../../src/platform/api/v1.ts";
+import type { RequestContext } from "../../src/platform/api/v1.ts";
+import { createExactEvidenceBasis } from "../../src/diligence_decisions/basis.ts";
+import type {
+  FinancialRiskAuthorizationPort,
+  FinancialRiskComputeRequest,
+  FinancialRiskInputLoader,
+  FinancialRiskReferenceVerificationPort,
+} from "../../src/financial_risk/application.ts";
+import type {
+  FinancialRiskFindingProposal,
+  FinancialRiskFindingProposalInput,
+  FinancialRiskFindingProposalPort,
+} from "../../src/financial_risk/finding_proposal.ts";
+import type {
+  FinancialRiskInput,
+  FinancialRiskReferences,
+  FinancialRiskScope,
+} from "../../src/financial_risk/model.ts";
+import type { FinancialRiskInferenceResult } from "../../src/financial_risk/inference.ts";
+import type { FinancialRiskInferencePort } from "../../src/financial_risk/ports.ts";
+import { ZScoreLabel } from "../../src/engines/prediction/contracts.ts";
+import type {
+  FinancialRiskAssessmentId,
+  FinancialRiskResultId,
+} from "../../src/financial_risk/ids.ts";
+
+export const TEST_TIME = new Date("2026-08-10T12:00:00.000Z");
+export const TEST_CHECKSUM = "a".repeat(64);
+
+export const TEST_INPUT: FinancialRiskInput = Object.freeze({
+  ebitda: 100,
+  revenue: 1_000,
+  totalAssets: 2_000,
+  totalLiabilities: 900,
+  operatingCashFlow: 80,
+  historicalVolatility: 0.12,
+});
+
+export const MODEL_OUTPUTS = {
+  insolvencyRisk: 0.2,
+  churnProbability: 0.3,
+  dcfVolatility: 14,
+  industry4Score: 72,
+  zScore: ZScoreLabel.Safe,
+} as const;
+
+export const MODEL_RESULT: FinancialRiskInferenceResult = {
+  state: "completed",
+  outputs: MODEL_OUTPUTS,
+  provenance: {
+    kind: "model-inference",
+    providerIdentity: "reference-risk-provider",
+    prompt: {
+      templateReference: "src/agent/agents/financial-risk/instructions.md",
+      templateVersion: "1.0.0",
+      promptDigest:
+        "sha256:363b21dd3cf0b8704492506711ba6e42e1f6ab95de62b8d046d6495688bb2d8b",
+    },
+    inputDigest: TEST_CHECKSUM,
+    modelId: "reference-risk-model",
+    modelVersion: "1.0.0",
+    artifactChecksum: TEST_CHECKSUM,
+    readiness: "reference-only",
+    runtimeIdentity: "fake-runtime",
+    adapterIdentity: "fake-adapter",
+  },
+};
+
+export const FALLBACK_OUTPUTS = {
+  insolvencyRisk: 0.7,
+  churnProbability: 0.65,
+  dcfVolatility: 44,
+  industry4Score: 38,
+  zScore: ZScoreLabel.Distress,
+} as const;
+
+export const FALLBACK_RESULT: FinancialRiskInferenceResult = {
+  state: "fallback",
+  outputs: FALLBACK_OUTPUTS,
+  provenance: {
+    kind: "configured-fallback",
+    providerIdentity: "reference-risk-provider",
+    prompt: {
+      templateReference: "src/agent/agents/financial-risk/instructions.md",
+      templateVersion: "1.0.0",
+      promptDigest:
+        "sha256:363b21dd3cf0b8704492506711ba6e42e1f6ab95de62b8d046d6495688bb2d8b",
+    },
+    inputDigest: TEST_CHECKSUM,
+    fallbackReason: "Configured local fallback for contract evidence.",
+    readiness: "not-claimed",
+    runtimeIdentity: "fake-runtime",
+    adapterIdentity: "fake-adapter",
+  },
+};
+
+export function financialRiskContext(
+  scope: FinancialRiskScope = financialRiskScope(),
+  actorId: ActorId = "actor_alpha" as ActorId,
+): RequestContext {
+  return {
+    actorId,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+    correlationId: "cor_alpha" as CorrelationId,
+    origin: "internal",
+  };
+}
+
+export function financialRiskScope(): FinancialRiskScope {
+  return {
+    tenantId: "tenant_alpha" as TenantId,
+    workspaceId: "workspace_alpha" as WorkspaceId,
+    dealId: "deal_alpha" as DealId,
+  };
+}
+
+export function financialRiskActor(
+  actorId: ActorId = "actor_alpha" as ActorId,
+): ActorReference {
+  return { id: actorId, kind: "human", state: "active" };
+}
+
+export function financialRiskReferences(
+  calculationVersion = 1,
+): FinancialRiskReferences {
+  return {
+    financialData: [{
+      kind: "financial_data",
+      sourceId: "financial_source_alpha",
+      version: 1,
+      checksum: TEST_CHECKSUM,
+    }],
+    evidenceBasis: createExactEvidenceBasis({
+      scope: financialRiskScope(),
+      references: [{
+        kind: "evidence",
+        evidenceId: "evidence_alpha" as never,
+      }],
+      basisDigest: TEST_CHECKSUM,
+      capturedAt: TEST_TIME,
+    }),
+    calculations: [{
+      kind: "calculation",
+      calculationId: "calc_alpha" as never,
+      version: calculationVersion,
+      algorithmVersion: "financial-risk-input-v1",
+    }],
+  };
+}
+
+export function computeRequest(
+  overrides: Partial<FinancialRiskComputeRequest> = {},
+): FinancialRiskComputeRequest {
+  const scope = financialRiskScope();
+  const context = financialRiskContext(scope);
+  return {
+    context,
+    actor: financialRiskActor(),
+    assessmentId: "risk_assessment_alpha" as FinancialRiskAssessmentId,
+    resultId: "risk_result_alpha" as FinancialRiskResultId,
+    operationId: "op_alpha" as OperationId,
+    jobId: "job_alpha" as JobId,
+    idempotencyKey: "idem_alpha" as IdempotencyKey,
+    expectedVersion: 1 as never,
+    references: financialRiskReferences(),
+    loadInput: new RecordingInputLoader(),
+    ...overrides,
+  };
+}
+
+export class FakeFinancialRiskAuthorization
+  implements FinancialRiskAuthorizationPort {
+  calls = 0;
+
+  constructor(private readonly outcome: "allow" | "deny" = "allow") {}
+
+  authorize(
+    input: Parameters<FinancialRiskAuthorizationPort["authorize"]>[0],
+  ): Promise<AuthorizationDecision> {
+    this.calls++;
+    if (this.outcome === "deny") return Promise.resolve(deniedDecision());
+    return Promise.resolve(
+      allowedFor(
+        input.context,
+        input.actor,
+        input.scope,
+        input.action as Action,
+        input.resource,
+      ),
+    );
+  }
+}
+
+export class RecordingReferenceVerifier
+  implements FinancialRiskReferenceVerificationPort {
+  calls = 0;
+
+  constructor(private readonly failure?: Error) {}
+
+  verify(): Promise<void> {
+    this.calls++;
+    return this.failure === undefined
+      ? Promise.resolve()
+      : Promise.reject(this.failure);
+  }
+}
+
+export class RecordingInputLoader implements FinancialRiskInputLoader {
+  calls = 0;
+
+  load(): Promise<FinancialRiskInput> {
+    this.calls++;
+    return Promise.resolve(TEST_INPUT);
+  }
+}
+
+export class FakeFinancialRiskInference implements FinancialRiskInferencePort {
+  calls = 0;
+
+  constructor(
+    private readonly result: FinancialRiskInferenceResult = MODEL_RESULT,
+  ) {}
+
+  infer(): Promise<FinancialRiskInferenceResult> {
+    this.calls++;
+    return Promise.resolve(this.result);
+  }
+}
+
+export class ThrowingFinancialRiskInference
+  implements FinancialRiskInferencePort {
+  infer(): Promise<never> {
+    return Promise.reject(new Error("inference adapter failed"));
+  }
+}
+
+export class RecordingFinancialRiskFindingProposalPort
+  implements FinancialRiskFindingProposalPort {
+  readonly context = "diligence_decisions" as const;
+  calls = 0;
+  lastInput?: FinancialRiskFindingProposalInput;
+
+  propose(
+    input: FinancialRiskFindingProposalInput,
+  ): Promise<FinancialRiskFindingProposal> {
+    this.calls++;
+    this.lastInput = input;
+    return Promise.resolve({
+      findingId: input.findingId,
+      state: "proposed",
+      version: 1,
+      basisDigest: input.assessment.references.evidenceBasis.basisDigest,
+      commandStatus: "accepted",
+    });
+  }
+}
+
+function allowedFor(
+  context: RequestContext,
+  actor: ActorReference,
+  scope: FinancialRiskScope,
+  command: Action,
+  resource: { readonly kind: string; readonly id: string },
+): AuthorizationDecision {
+  return allowedDecision({
+    request: {
+      context,
+      actor,
+      scope,
+      resource: { kind: resource.kind as never, id: resource.id },
+      action: command,
+      requestedFields: [],
+      roleFacts: [],
+      grantFacts: [],
+      restrictionFacts: [],
+      relationshipFacts: [],
+      clock: { now: () => TEST_TIME.toISOString() },
+    },
+    allowedActions: [command],
+    fieldMask: {
+      include: [],
+      omit: [],
+      redact: [],
+      approvedClassifications: [],
+    },
+  });
+}
+
+function deniedDecision(): AuthorizationDecision {
+  return {
+    outcome: "deny",
+    reasonCode: "NO_MATCHING_GRANT",
+    allowedActions: [],
+    approvedScope: undefined,
+    fieldMask: {
+      include: [],
+      omit: [],
+      redact: [],
+      approvedClassifications: [],
+    },
+  };
+}

@@ -67,6 +67,8 @@ export const GOVERNED_TOOL_NAMES = [
   "governed.evidence.search",
   "governed.evidence.citation_proposal",
   "governed.evidence.missing_document_finding_proposal",
+  "governed.financial-risk.assessment",
+  "governed.financial-risk.finding-proposal",
 ] as const;
 export type GovernedToolName = typeof GOVERNED_TOOL_NAMES[number];
 export const GOVERNED_TOOL_CAPABILITIES = GOVERNED_TOOL_NAMES;
