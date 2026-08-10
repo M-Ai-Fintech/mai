@@ -211,6 +211,7 @@ async function loadRuntime(
   scope: DealScope,
   options: ReconciliationOptions,
 ): Promise<ReconciliationRuntime> {
+  assertRuntimeOverrideAllowed(path);
   const runtimePath = path ?? "./scripts/deal_reconciliation_runtime.ts";
   const imported: unknown = await importRuntime(runtimePath);
   if (!isRuntimeModule(imported)) {
@@ -225,6 +226,13 @@ async function loadRuntime(
     correlationId: identity.correlationId,
     now: options.now,
   });
+}
+
+function assertRuntimeOverrideAllowed(path: string | undefined): void {
+  if (path === undefined || Deno.env.get("DENO_ENV") === "test") return;
+  throw new Error(
+    `Operator runtime module override "${path}" is unavailable outside DENO_ENV=test; expected the project-owned authenticated runtime.`,
+  );
 }
 
 function importRuntime(path: string): Promise<unknown> {

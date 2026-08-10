@@ -268,6 +268,84 @@ Deno.test("operator input accepts selectors, not legacy Deal documents", async (
   }
 });
 
+Deno.test("arbitrary operator runtime overrides are denied outside test", async () => {
+  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
+  const previousEnvironment = Deno.env.get("DENO_ENV");
+  await Deno.writeTextFile(
+    inputPath,
+    JSON.stringify([{
+      source: "legacy.fixture",
+      legacyDealId: "legacy-deal-1",
+    }]),
+  );
+  Deno.env.set("DENO_ENV", "production");
+  try {
+    await assertRejects(
+      () =>
+        runReconciliationCli([
+          "--mode",
+          "dry-run",
+          "--input",
+          inputPath,
+          "--tenant",
+          scope.tenantId,
+          "--workspace",
+          scope.workspaceId,
+          "--runtime-module",
+          "./untrusted-runtime.ts",
+        ]),
+      Error,
+      "outside DENO_ENV=test",
+    );
+  } finally {
+    if (previousEnvironment === undefined) Deno.env.delete("DENO_ENV");
+    else Deno.env.set("DENO_ENV", previousEnvironment);
+    await Deno.remove(inputPath);
+  }
+});
+
+Deno.test("explicit test runtime injection remains available only in test", async () => {
+  const inputPath = await Deno.makeTempFile({ suffix: ".json" });
+  const runtimePath = await Deno.makeTempFile({ suffix: ".mjs" });
+  const previousEnvironment = Deno.env.get("DENO_ENV");
+  await Deno.writeTextFile(
+    inputPath,
+    JSON.stringify([{
+      source: "legacy.fixture",
+      legacyDealId: "legacy-deal-1",
+    }]),
+  );
+  await Deno.writeTextFile(
+    runtimePath,
+    'export async function createRuntime() { throw new Error("controlled test runtime"); }',
+  );
+  Deno.env.set("DENO_ENV", "test");
+  try {
+    await assertRejects(
+      () =>
+        runReconciliationCli([
+          "--mode",
+          "dry-run",
+          "--input",
+          inputPath,
+          "--tenant",
+          scope.tenantId,
+          "--workspace",
+          scope.workspaceId,
+          "--runtime-module",
+          runtimePath,
+        ]),
+      Error,
+      "controlled test runtime",
+    );
+  } finally {
+    if (previousEnvironment === undefined) Deno.env.delete("DENO_ENV");
+    else Deno.env.set("DENO_ENV", previousEnvironment);
+    await Deno.remove(inputPath);
+    await Deno.remove(runtimePath);
+  }
+});
+
 Deno.test("reconciliation rejects a selector source that differs from loaded source", async () => {
   const fixture = executorFixture(validLegacyDeal());
   await assertRejects(

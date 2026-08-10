@@ -114,6 +114,9 @@ const DIRECT_ENTRYPOINT_CLASSIFICATIONS: Readonly<
   PRESERVE_DEVELOPER: [
     ".githooks/post-checkout",
     ".githooks/post-commit",
+    "gui/scripts/generate-design-tokens.mjs",
+    "gui/scripts/verify-components.mjs",
+    "gui/scripts/verify-design-tokens.mjs",
     "scripts/check_docs.ts",
     "scripts/check_i18n.ts",
     "scripts/check_linear_policy.ts",
@@ -222,7 +225,11 @@ async function directEntrypoints(directory: string): Promise<string[]> {
       continue;
     }
     const content = await Deno.readTextFile(path);
-    if (content.startsWith("#!") || content.includes("import.meta.main")) {
+    if (
+      content.startsWith("#!") || content.includes("import.meta.main") ||
+      (content.includes("import.meta.url") &&
+        content.includes("process.argv[1]"))
+    ) {
       files.push(path);
     }
   }
@@ -345,6 +352,7 @@ Deno.test("operator, migration, recovery, and developer boundaries remain explic
 Deno.test("direct executable entrypoints are fully classified", async () => {
   const discovered = (await Promise.all([
     directEntrypoints(".githooks"),
+    directEntrypoints("gui/scripts"),
     directEntrypoints("scripts"),
     directEntrypoints("src"),
   ])).flat().sort();
