@@ -19,9 +19,6 @@ term_sheets/
 .DS_Store
 Thumbs.db
 
-# Logs
-data/logs/
-
 # Python Virtual Environments
 .venv_torch/
 venv/
