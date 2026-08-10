@@ -1,6 +1,5 @@
 import { AppShell } from "@/app/_shell/AppShell";
 import { ShellState } from "@/app/_shell/ShellState";
-import { fixtureShellAdapter } from "@/lib/shell/adapters";
 import {
   readScreenAdapter,
   type ScreenPreviousAdapters,
@@ -9,7 +8,6 @@ import { resolveRouteContext } from "@/lib/shell/route-context";
 import type { ScreenDataSource } from "@/screens/screen-contracts";
 
 const previousAdapterRegistry = {
-  shell: fixtureShellAdapter,
   screens: {} satisfies ScreenPreviousAdapters,
 };
 
@@ -22,7 +20,6 @@ export default async function ShellRoute(
   const result = await resolveRouteContext([route, ...segments], {
     dataSource,
     environment: process.env,
-    previousShellAdapter: previousAdapterRegistry.shell,
   });
   if (result.kind !== "ready") return <ShellState result={result} />;
   const adapter = dataSource === "v1"

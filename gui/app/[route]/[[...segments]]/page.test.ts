@@ -4,8 +4,8 @@ import ShellRoute from "./page";
 
 afterEach(() => vi.unstubAllEnvs());
 
-describe("ShellRoute rollback composition", () => {
-  it("passes the explicit shell previous adapter through the v1 route flow", async () => {
+describe("ShellRoute rollback boundary", () => {
+  it("keeps v1 previous mode unavailable without a production legacy shell adapter", async () => {
     vi.stubEnv("MAI_FRONTEND_DATA_SOURCE", "v1");
     vi.stubEnv(
       "NEXT_PUBLIC_ADAPTER_CANARY_MAP",
@@ -17,9 +17,11 @@ describe("ShellRoute rollback composition", () => {
     });
     const html = renderToStaticMarkup(element);
 
-    expect(html).toContain('data-shell-mode="global"');
-    expect(html).toContain('data-screen-family="command-center"');
-    expect(html).toContain("Demo Advisory");
-    expect(html).toContain("Temporarily unavailable");
+    expect(html).toContain("Resource unavailable");
+    expect(html).toContain(
+      "The previous shell adapter is not registered for global.home.",
+    );
+    expect(html).not.toContain('data-shell-mode="global"');
+    expect(html).not.toContain("Demo Advisory");
   });
 });
