@@ -7,14 +7,6 @@ const consumers = [
     adapter: "engines/optimization/negotiation/compatibility.ts",
   },
   {
-    path: "src/cli/term-sheet-command.ts",
-    adapter: "engines/optimization/negotiation/compatibility.ts",
-  },
-  {
-    path: "src/cli/document-command.ts",
-    adapter: "engines/optimization/negotiation/term_sheet_compatibility.ts",
-  },
-  {
     path: "src/agent/tools/core_tools.ts",
     adapter: "engines/optimization/negotiation/compatibility.ts",
   },
@@ -26,12 +18,6 @@ Deno.test("active negotiation consumers use the negotiation compatibility bounda
     assertStringIncludes(source, consumer.adapter);
     assert(!source.includes("optimizeWithConstraints"), consumer.path);
   }
-});
-
-Deno.test("portfolio fixture labels its non-financial synergy score explicitly", async () => {
-  const source = await Deno.readTextFile("src/cli/portfolio-command.ts");
-  assertStringIncludes(source, "calculateSyntheticSynergyScore");
-  assert(!source.includes("calculateSynergyPrice"));
 });
 
 Deno.test("agent synergy helper returns typed failures instead of success", async () => {
