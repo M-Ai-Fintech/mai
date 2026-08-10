@@ -12,6 +12,8 @@ import { FinancialRiskApplication } from "../../src/financial_risk/application.t
 import {
   PostgresFinancialRiskRepository,
 } from "../../src/financial_risk/postgres_repository.ts";
+import { PostgresFinancialRiskJobPort } from "../../src/financial_risk/job_port.ts";
+import { queuedJob } from "../../src/financial_risk/application_support.ts";
 import { InMemoryFinancialRiskRepository } from "../../src/financial_risk/repository.ts";
 import type { FinancialRiskEffects } from "../../src/financial_risk/effects.ts";
 import { financialRiskMigration } from "../../src/financial_risk/migrations/index.ts";
@@ -19,6 +21,7 @@ import {
   computeRequest,
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
+  financialRiskScope,
   MODEL_RESULT,
   RecordingReferenceVerifier,
 } from "./support.ts";
@@ -71,6 +74,30 @@ Deno.test("financial-risk migration owns only semantic financial-risk tables", (
   }
 });
 
+Deno.test("financial-risk job port enqueues through the platform job repository", async () => {
+  const runner = new JobRecordingTransactionRunner();
+  const port = new PostgresFinancialRiskJobPort(
+    runner as unknown as PostgresTransactionRunner,
+  );
+  const request = computeRequest();
+
+  await port.enqueue(
+    queuedJob(
+      request,
+      financialRiskScope(),
+      request.references,
+      fakeClock.now(),
+    ),
+  );
+
+  assertEquals(
+    runner.queries.some((query) =>
+      query.sql.includes("INSERT INTO platform.jobs")
+    ),
+    true,
+  );
+});
+
 class RecordingTransactionRunner {
   readonly queries: RecordedQuery[] = [];
 
@@ -80,6 +107,30 @@ class RecordingTransactionRunner {
     callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
   ): Promise<TResult> {
     return await callback(new RecordingTransaction(this.queries, this.payload));
+  }
+}
+
+class JobRecordingTransactionRunner {
+  readonly queries: RecordedQuery[] = [];
+
+  async run<TResult>(
+    callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
+  ): Promise<TResult> {
+    return await callback(new JobRecordingTransaction(this.queries));
+  }
+}
+
+class JobRecordingTransaction implements TransactionHandle {
+  readonly metadata = {};
+
+  constructor(private readonly queries: RecordedQuery[]) {}
+
+  query<TRow = Record<string, unknown>>(
+    text: string,
+    parameters: readonly unknown[] = [],
+  ): Promise<TransactionQueryResult<TRow>> {
+    this.queries.push({ sql: text, parameters });
+    return Promise.resolve({ rows: [], rowCount: 1 });
   }
 }
 

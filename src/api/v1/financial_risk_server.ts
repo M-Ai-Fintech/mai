@@ -1,4 +1,5 @@
 import { withCorsHeaders } from "../server_runtime.ts";
+import { type CorrelationId, createApiError } from "../../platform/api/v1.ts";
 import {
   type FinancialRiskV1RouteDependencies,
   handleFinancialRiskV1Route,
@@ -12,6 +13,7 @@ export async function routeFinancialRiskRequest(
   request: Request,
   dependencies: FinancialRiskServerRouteDependencies,
   headers: Headers,
+  correlationId: CorrelationId,
 ): Promise<Response | undefined> {
   const path = new URL(request.url).pathname;
   if (
@@ -19,7 +21,7 @@ export async function routeFinancialRiskRequest(
     !path.startsWith("/api/v1/financial-risk/")
   ) return undefined;
   if (dependencies.financialRisk === undefined) {
-    return unavailable(headers);
+    return unavailable(headers, correlationId);
   }
   return withCorsHeaders(
     await handleFinancialRiskV1Route(request, dependencies.financialRisk) ??
@@ -28,9 +30,14 @@ export async function routeFinancialRiskRequest(
   );
 }
 
-function unavailable(headers: Headers): Response {
+function unavailable(headers: Headers, correlationId: CorrelationId): Response {
   return Response.json(
-    { error: "Financial-risk route is not configured." },
+    createApiError({
+      code: "DEPENDENCY_UNAVAILABLE",
+      message: "Financial-risk route is not configured.",
+      correlationId,
+      retryable: true,
+    }),
     { status: 503, headers },
   );
 }

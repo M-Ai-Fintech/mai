@@ -1,4 +1,8 @@
-import type { ActorId, IdempotencyKey } from "../platform/api/v1.ts";
+import type {
+  ActorId,
+  AggregateVersion,
+  IdempotencyKey,
+} from "../platform/api/v1.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -12,8 +16,22 @@ export type FinancialRiskIdempotencyClaimResult =
   | { readonly status: "replayed"; readonly resultId: string }
   | {
     readonly status: "failed";
-    readonly failureCode: "STALE_VERSION";
+    readonly failureCode: FinancialRiskVersionConflictCode;
   };
+
+export type FinancialRiskVersionConflictCode =
+  | "STALE_VERSION"
+  | "VERSION_CONFLICT";
+
+export class FinancialRiskRepositoryConflictError extends Error {
+  constructor(
+    readonly code: FinancialRiskVersionConflictCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "FinancialRiskRepositoryConflictError";
+  }
+}
 
 export type FinancialRiskCommandType =
   | "financial-risk.compute"
@@ -38,7 +56,12 @@ export interface FinancialRiskRepository {
   ): Promise<void>;
   failIdempotency(
     claim: FinancialRiskIdempotencyClaim,
-    failureCode: "STALE_VERSION",
+    failureCode: FinancialRiskVersionConflictCode,
+  ): Promise<void>;
+  commitResult(
+    claim: FinancialRiskIdempotencyClaim,
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
   ): Promise<void>;
   append(result: FinancialRiskResult): Promise<void>;
   findById(
@@ -55,17 +78,16 @@ export interface FinancialRiskRepository {
   ): Promise<readonly FinancialRiskResult[]>;
 }
 
+type InMemoryIdempotencyClaim = FinancialRiskIdempotencyClaim & {
+  readonly state: "in_progress" | "completed" | "failed";
+  readonly resultId?: string;
+  readonly failureCode?: FinancialRiskVersionConflictCode;
+};
+
 export class InMemoryFinancialRiskRepository
   implements FinancialRiskRepository {
   private readonly results = new Map<string, FinancialRiskResult>();
-  private readonly claims = new Map<
-    string,
-    FinancialRiskIdempotencyClaim & {
-      readonly state: "in_progress" | "completed" | "failed";
-      readonly resultId?: string;
-      readonly failureCode?: "STALE_VERSION";
-    }
-  >();
+  private readonly claims = new Map<string, InMemoryIdempotencyClaim>();
 
   claimIdempotency(
     claim: FinancialRiskIdempotencyClaim,
@@ -118,7 +140,7 @@ export class InMemoryFinancialRiskRepository
 
   failIdempotency(
     claim: FinancialRiskIdempotencyClaim,
-    failureCode: "STALE_VERSION",
+    failureCode: FinancialRiskVersionConflictCode,
   ): Promise<void> {
     const key = claimKey(claim);
     const existing = this.claims.get(key);
@@ -142,12 +164,53 @@ export class InMemoryFinancialRiskRepository
     return Promise.resolve();
   }
 
+  commitResult(
+    claim: FinancialRiskIdempotencyClaim,
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
+  ): Promise<void> {
+    const latest = this.latestResult(result.scope, result.assessmentId);
+    const resultKeyValue = resultKey(result.scope, result.resultId);
+    if (this.results.has(resultKeyValue)) {
+      return Promise.reject(
+        new FinancialRiskRepositoryConflictError(
+          "VERSION_CONFLICT",
+          `Financial-risk result "${result.resultId}" already exists; expected an immutable unique result ID.`,
+        ),
+      );
+    }
+    assertCommitVersion(latest, result, expectedVersion);
+    const key = claimKey(claim);
+    const existing = this.claims.get(key);
+    assertCommitClaim(existing, claim, result);
+    this.results.set(resultKeyValue, snapshotResult(result));
+    this.claims.set(key, {
+      ...existing!,
+      state: "completed",
+      resultId: result.resultId,
+    });
+    return Promise.resolve();
+  }
+
   append(result: FinancialRiskResult): Promise<void> {
     const key = resultKey(result.scope, result.resultId);
     if (this.results.has(key)) {
       return Promise.reject(
         new Error(
           `Financial-risk result "${result.resultId}" already exists; expected immutable unique history.`,
+        ),
+      );
+    }
+    const existingVersion = [...this.results.values()].find((existing) =>
+      existing.assessmentId === result.assessmentId &&
+      sameScope(existing.scope, result.scope) &&
+      existing.version === result.version
+    );
+    if (existingVersion !== undefined) {
+      return Promise.reject(
+        new FinancialRiskRepositoryConflictError(
+          "VERSION_CONFLICT",
+          `Financial-risk assessment "${result.assessmentId}" already has version "${result.version}"; expected immutable unique history.`,
         ),
       );
     }
@@ -187,6 +250,70 @@ export class InMemoryFinancialRiskRepository
     );
     values.sort((left, right) => left.version - right.version);
     return Promise.resolve(Object.freeze(values.map(snapshotResult)));
+  }
+
+  private latestResult(
+    scope: FinancialRiskScope,
+    assessmentId: FinancialRiskAssessmentId,
+  ): FinancialRiskResult | undefined {
+    const values = [...this.results.values()].filter((result) =>
+      result.assessmentId === assessmentId && sameScope(result.scope, scope)
+    );
+    values.sort((left, right) => right.version - left.version);
+    return values[0];
+  }
+}
+
+function assertCommitVersion(
+  latest: FinancialRiskResult | undefined,
+  result: FinancialRiskResult,
+  expectedVersion: AggregateVersion,
+): void {
+  if (latest === undefined && expectedVersion !== 1) {
+    throw new FinancialRiskRepositoryConflictError(
+      "STALE_VERSION",
+      `Expected financial-risk initial version "${expectedVersion}" but no result exists; expected initial version "1".`,
+    );
+  }
+  if (latest !== undefined && latest.version !== expectedVersion) {
+    throw new FinancialRiskRepositoryConflictError(
+      "STALE_VERSION",
+      `Expected financial-risk version "${expectedVersion}" but current version is "${latest.version}".`,
+    );
+  }
+  const nextVersion = latest === undefined ? 1 : latest.version + 1;
+  if (result.version === nextVersion) return;
+  throw new FinancialRiskRepositoryConflictError(
+    "VERSION_CONFLICT",
+    `Financial-risk result version "${result.version}" does not follow current version "${
+      latest?.version ?? 0
+    }"; expected "${nextVersion}".`,
+  );
+}
+
+function assertCommitClaim(
+  existing: InMemoryIdempotencyClaim | undefined,
+  claim: FinancialRiskIdempotencyClaim,
+  result: FinancialRiskResult,
+): void {
+  if (
+    existing === undefined || existing.payloadDigest !== claim.payloadDigest ||
+    existing.state !== "in_progress"
+  ) {
+    throw new Error(
+      `Idempotency key "${claim.idempotencyKey}" cannot commit; expected its active claim.`,
+    );
+  }
+  if (
+    result.scope.tenantId !== claim.scope.tenantId ||
+    result.scope.workspaceId !== claim.scope.workspaceId ||
+    result.scope.dealId !== claim.scope.dealId ||
+    result.assessmentId !== claim.assessmentId ||
+    result.idempotencyKey !== claim.idempotencyKey
+  ) {
+    throw new Error(
+      `Idempotency key "${claim.idempotencyKey}" cannot commit result "${result.resultId}"; expected the claimed financial-risk scope and identity.`,
+    );
   }
 }
 

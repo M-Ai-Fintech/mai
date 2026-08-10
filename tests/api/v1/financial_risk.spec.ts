@@ -11,17 +11,18 @@ import {
   handleFinancialRiskV1Route,
 } from "../../../src/api/v1/financial_risk_routes.ts";
 import {
+  computeRequest,
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
   financialRiskActor,
   financialRiskContext,
   financialRiskReferences,
-  MODEL_OUTPUTS,
+  RecordingFinancialRiskJobPort,
   RecordingInputLoader,
   RecordingReferenceVerifier,
 } from "../../financial_risk/support.ts";
 
-Deno.test("financial-risk API computes and reads a versioned assessment", async () => {
+Deno.test("financial-risk API enqueues a durable job without claiming a result", async () => {
   const fixture = financialRiskRoutes();
   const compute = await handleFinancialRiskV1Route(
     request(
@@ -43,23 +44,15 @@ Deno.test("financial-risk API computes and reads a versioned assessment", async 
   assertEquals(compute.status, 202);
   const accepted = await responseBody(compute);
   assertEquals(accepted.data.status, "queued");
+  assertEquals(accepted.data.jobId, "job_api-compute");
+  assertEquals(fixture.jobs.jobs.has("job_api-compute"), true);
 
   const read = await handleFinancialRiskV1Route(
     request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
     fixture.dependencies,
   );
   assertExists(read);
-  assertEquals(read.status, 200);
-  assertEquals(read.headers.get("ETag"), '"v1"');
-  const envelope = await responseBody(read);
-  assertEquals(envelope.data.state, "completed");
-  assertExists(envelope.data.outputs);
-  assertEquals("actor" in envelope.data, false);
-  assertEquals("idempotencyKey" in envelope.data, false);
-  assertEquals(
-    envelope.data.outputs.industry4Score,
-    MODEL_OUTPUTS.industry4Score,
-  );
+  assertEquals(read.status, 404);
 });
 
 Deno.test("financial-risk API requires command concurrency and idempotency headers", async () => {
@@ -118,7 +111,11 @@ Deno.test("financial-risk API rejects a basis from another exact deal scope", as
 
 Deno.test("financial-risk API invalidates with an append-only stale result", async () => {
   const fixture = financialRiskRoutes();
-  await computeAssessment(fixture.dependencies, "idem_api-invalidate");
+  await fixture.application.compute(computeRequest({
+    idempotencyKey: "idem_api-seed" as never,
+    operationId: "op_api-seed" as never,
+    jobId: "job_api-seed" as never,
+  }));
   const response = await handleFinancialRiskV1Route(
     request(
       "/api/v1/financial-risk/assessments/risk_assessment_alpha/invalidate",
@@ -138,16 +135,18 @@ Deno.test("financial-risk API invalidates with an append-only stale result", asy
   );
   assertExists(response);
   assertEquals(response.status, 202);
+  const accepted = await responseBody(response);
+  assertEquals(accepted.data.status, "queued");
+  assertEquals(fixture.jobs.jobs.has("job_api-invalidate"), true);
 
   const read = await handleFinancialRiskV1Route(
     request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
     fixture.dependencies,
   );
   assertExists(read);
-  assertEquals(read.headers.get("ETag"), '"v2"');
+  assertEquals(read.headers.get("ETag"), '"v1"');
   const envelope = await responseBody(read);
-  assertEquals(envelope.data.state, "stale");
-  assertEquals(envelope.meta.freshness, "stale");
+  assertEquals(envelope.data.state, "completed");
 });
 
 Deno.test("application server exposes only the banker financial-risk route and fails closed when absent", async () => {
@@ -161,9 +160,14 @@ Deno.test("application server exposes only the banker financial-risk route and f
   assertEquals(unsupported.status, 404);
 
   const unavailable = await createApiServer().handle(
-    request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
+    request("/api/v1/financial-risk/assessments/risk_assessment_alpha", {
+      headers: { "X-Correlation-Id": "cor_unconfigured" },
+    }),
   );
   assertEquals(unavailable.status, 503);
+  const unavailableBody = await responseBody(unavailable);
+  assertEquals(unavailableBody.error?.code, "DEPENDENCY_UNAVAILABLE");
+  assertEquals(unavailableBody.error?.correlationId, "cor_unconfigured");
 });
 
 class FakeFinancialRiskRequestContext
@@ -180,50 +184,33 @@ class FakeFinancialRiskRequestContext
 interface FinancialRiskRouteFixture {
   readonly dependencies: FinancialRiskV1RouteDependencies;
   readonly authorization: FakeFinancialRiskAuthorization;
+  readonly application: FinancialRiskApplication;
+  readonly jobs: RecordingFinancialRiskJobPort;
 }
 
 function financialRiskRoutes(): FinancialRiskRouteFixture {
   const context = financialRiskContext();
   const actor = financialRiskActor();
   const authorization = new FakeFinancialRiskAuthorization();
+  const jobs = new RecordingFinancialRiskJobPort();
   const application = new FinancialRiskApplication(
     authorization,
     new RecordingReferenceVerifier(),
     new FakeFinancialRiskInference(),
     new InMemoryFinancialRiskRepository(),
+    undefined,
+    jobs,
   );
   return {
     authorization,
+    application,
+    jobs,
     dependencies: {
       context: new FakeFinancialRiskRequestContext({ context, actor }),
       application,
       inputLoader: new RecordingInputLoader(),
     },
   };
-}
-
-async function computeAssessment(
-  dependencies: FinancialRiskV1RouteDependencies,
-  idempotencyKey: string,
-): Promise<void> {
-  const response = await handleFinancialRiskV1Route(
-    request(
-      "/api/v1/financial-risk/assessments/risk_assessment_alpha/compute",
-      {
-        method: "POST",
-        headers: commandHeaders(idempotencyKey),
-        body: JSON.stringify({
-          resultId: "risk_result_alpha",
-          operationId: "op_api-seed",
-          jobId: "job_api-seed",
-          references: financialRiskReferences(),
-        }),
-      },
-    ),
-    dependencies,
-  );
-  assertExists(response);
-  assertEquals(response.status, 202);
 }
 
 function commandHeaders(
@@ -246,9 +233,13 @@ async function responseBody(
 interface FinancialRiskResponseBody {
   readonly data: {
     readonly status?: string;
+    readonly jobId?: string;
     readonly state?: string;
     readonly outputs?: { readonly industry4Score: number };
   };
   readonly meta: { readonly freshness?: string };
-  readonly error?: { readonly code: string };
+  readonly error?: {
+    readonly code: string;
+    readonly correlationId?: string;
+  };
 }

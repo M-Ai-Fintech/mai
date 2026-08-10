@@ -183,9 +183,12 @@ function modelInference(
   metadata: FinancialRiskRuntimeMetadata,
   lineage: FinancialRiskLineage,
 ): FinancialRiskInferenceResult {
-  if (result.resultKind !== "model") {
+  if (
+    result.resultKind !== "model" ||
+    result.provenance.kind !== "reference-model"
+  ) {
     return failedResult(
-      "Runtime returned a non-model result for model inference.",
+      "Runtime model result and prediction provenance disagree; expected model/reference-model.",
       metadata,
       lineage,
     );
@@ -232,9 +235,12 @@ function configuredFallback(
   reason: string,
   lineage: FinancialRiskLineage,
 ): FinancialRiskInferenceResult {
-  if (result.resultKind !== "fallback") {
+  if (
+    result.resultKind !== "fallback" ||
+    result.provenance.kind !== "heuristic-fallback"
+  ) {
     return failedResult(
-      "Configured fallback returned a model result.",
+      "Configured fallback result and prediction provenance disagree; expected fallback/heuristic-fallback.",
       metadata,
       lineage,
     );

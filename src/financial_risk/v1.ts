@@ -8,5 +8,6 @@ export * from "./application.ts";
 export * from "./effects.ts";
 export * from "./postgres_repository.ts";
 export * from "./composition.ts";
+export * from "./job_port.ts";
 export * from "./migrations/index.ts";
 export * from "./finding_proposal.ts";

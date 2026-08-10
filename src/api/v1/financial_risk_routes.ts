@@ -169,7 +169,7 @@ async function computeAssessment(
       "Compute requires resultId, operationId, jobId, and exact version references.",
     );
   }
-  const result = await dependencies.application.compute({
+  const result = await dependencies.application.enqueueCompute({
     context: authenticated.context,
     actor: authenticated.actor,
     assessmentId,
@@ -198,7 +198,7 @@ async function invalidateAssessment(
       "Invalidation requires resultId, invalidationId, operationId, jobId, and a reason.",
     );
   }
-  const result = await dependencies.application.invalidate({
+  const result = await dependencies.application.enqueueInvalidate({
     context: authenticated.context,
     actor: authenticated.actor,
     assessmentId,

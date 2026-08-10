@@ -15,6 +15,7 @@ import type {
   WorkspaceId,
 } from "../../src/platform/api/v1.ts";
 import type { RequestContext } from "../../src/platform/api/v1.ts";
+import type { DurableJob } from "../../src/platform/jobs/v1.ts";
 import { createExactEvidenceBasis } from "../../src/diligence_decisions/basis.ts";
 import type {
   FinancialRiskAuthorizationPort,
@@ -34,6 +35,7 @@ import type {
 } from "../../src/financial_risk/model.ts";
 import type { FinancialRiskInferenceResult } from "../../src/financial_risk/inference.ts";
 import type { FinancialRiskInferencePort } from "../../src/financial_risk/ports.ts";
+import type { FinancialRiskJobPort } from "../../src/financial_risk/job_port.ts";
 import { ZScoreLabel } from "../../src/engines/prediction/contracts.ts";
 import type {
   FinancialRiskAssessmentId,
@@ -249,6 +251,27 @@ export class ThrowingFinancialRiskInference
   implements FinancialRiskInferencePort {
   infer(): Promise<never> {
     return Promise.reject(new Error("inference adapter failed"));
+  }
+}
+
+export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
+  readonly jobs = new Map<string, DurableJob>();
+  enqueueCalls = 0;
+
+  constructor(private readonly failure?: Error) {}
+
+  enqueue(job: DurableJob): Promise<void> {
+    this.enqueueCalls++;
+    if (this.failure !== undefined) return Promise.reject(this.failure);
+    this.jobs.set(job.jobId, job);
+    return Promise.resolve();
+  }
+
+  find(
+    _scope: FinancialRiskScope,
+    jobId: string,
+  ): Promise<DurableJob | undefined> {
+    return Promise.resolve(this.jobs.get(jobId));
   }
 }
 

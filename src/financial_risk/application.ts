@@ -1,33 +1,21 @@
-import {
-  type ActorReference,
-  type AuthorizationDecision,
-} from "../platform/authz/v1.ts";
+import type { ActorReference } from "../platform/authz/v1.ts";
 import {
   type AggregateVersion,
-  type IdempotencyKey,
   type RequestContext,
 } from "../platform/api/v1.ts";
 import type { DurableJob } from "../platform/jobs/v1.ts";
 import { type Clock, payloadDigest } from "../platform/persistence/v1.ts";
 import {
   createFinancialRiskResult,
-  type FinancialRiskInput,
-  type FinancialRiskProvenance,
   type FinancialRiskReferences,
   type FinancialRiskResult,
   type FinancialRiskScope,
 } from "./model.ts";
 import { FinancialRiskError } from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
-import {
-  type FinancialRiskAssessmentId,
-  type FinancialRiskInvalidationId,
-  type FinancialRiskResultId,
-} from "./ids.ts";
-import type {
-  FinancialRiskCommandType,
-  FinancialRiskRepository,
-} from "./repository.ts";
+import type { FinancialRiskJobPort } from "./job_port.ts";
+import type { FinancialRiskAssessmentId } from "./ids.ts";
+import type { FinancialRiskRepository } from "./repository.ts";
 import {
   assertActor,
   assertReferenceScope,
@@ -35,71 +23,39 @@ import {
   commandDigest,
   durableJob,
   protectedNotFound,
+  queuedJob,
   replayed,
   requiredScope,
   staleProvenance,
-  staleVersion,
   systemClock,
 } from "./application_support.ts";
-
-export interface FinancialRiskAuthorizationPort {
-  authorize(input: {
-    readonly context: RequestContext;
-    readonly actor: ActorReference;
-    readonly scope: FinancialRiskScope;
-    readonly resource: { readonly kind: string; readonly id: string };
-    readonly action: string;
-  }): Promise<AuthorizationDecision>;
-}
-
-export interface FinancialRiskReferenceVerificationPort {
-  verify(
-    context: RequestContext,
-    scope: FinancialRiskScope,
-    references: FinancialRiskReferences,
-  ): Promise<void>;
-}
-
-export interface FinancialRiskInputLoader {
-  load(
-    context: RequestContext,
-    scope: FinancialRiskScope,
-    references: FinancialRiskReferences,
-  ): Promise<FinancialRiskInput>;
-}
-
-export interface FinancialRiskComputeRequest {
-  readonly context: RequestContext;
-  readonly actor: ActorReference;
-  readonly assessmentId: FinancialRiskAssessmentId;
-  readonly resultId: FinancialRiskResultId;
-  readonly operationId: import("../platform/api/v1.ts").OperationId;
-  readonly jobId: import("../platform/api/v1.ts").JobId;
-  readonly idempotencyKey: IdempotencyKey;
-  readonly expectedVersion: AggregateVersion;
-  readonly references: FinancialRiskReferences;
-  readonly loadInput: FinancialRiskInputLoader;
-  readonly cancellationRequested?: () => Promise<boolean>;
-}
-
-export interface FinancialRiskInvalidationRequest {
-  readonly context: RequestContext;
-  readonly actor: ActorReference;
-  readonly assessmentId: FinancialRiskAssessmentId;
-  readonly resultId: FinancialRiskResultId;
-  readonly invalidationId: FinancialRiskInvalidationId;
-  readonly operationId: import("../platform/api/v1.ts").OperationId;
-  readonly jobId: import("../platform/api/v1.ts").JobId;
-  readonly idempotencyKey: IdempotencyKey;
-  readonly expectedVersion: AggregateVersion;
-  readonly reason: string;
-}
-
-export interface FinancialRiskCommandResult {
-  readonly status: "accepted" | "replayed";
-  readonly result: FinancialRiskResult;
-  readonly job: DurableJob;
-}
+import {
+  assertExpectedVersion,
+  claim,
+  executionStatus,
+  failVersionClaim,
+  type FinancialRiskClaim,
+  normalizeCommandError,
+  safeInference,
+} from "./application_internal.ts";
+import type {
+  FinancialRiskAuthorizationPort,
+  FinancialRiskCommandResult,
+  FinancialRiskComputeRequest,
+  FinancialRiskInvalidationRequest,
+  FinancialRiskQueuedCommandResult,
+  FinancialRiskReferenceVerificationPort,
+} from "./application_contracts.ts";
+export type {
+  FinancialRiskAuthorizationPort,
+  FinancialRiskCommandRequest,
+  FinancialRiskCommandResult,
+  FinancialRiskComputeRequest,
+  FinancialRiskInputLoader,
+  FinancialRiskInvalidationRequest,
+  FinancialRiskQueuedCommandResult,
+  FinancialRiskReferenceVerificationPort,
+} from "./application_contracts.ts";
 
 export class FinancialRiskApplication {
   constructor(
@@ -108,6 +64,7 @@ export class FinancialRiskApplication {
     private readonly inference: FinancialRiskInferencePort,
     private readonly repository: FinancialRiskRepository,
     private readonly clock: Clock = systemClock,
+    private readonly jobs?: FinancialRiskJobPort,
   ) {}
 
   async read(
@@ -137,40 +94,74 @@ export class FinancialRiskApplication {
     );
     assertReferenceScope(scope, request.references);
     const digest = await commandDigest(request);
-    await this.references.verify(request.context, scope, request.references);
-    const claim = await this.claim(request, scope, digest);
-    if (claim.status === "replayed") {
-      return await replayed(this.repository, scope, claim.resultId, request);
-    }
-    if (claim.status === "failed") {
-      throw new FinancialRiskError(
-        claim.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed because its source version was stale.`,
+    const claimResult = await claim(this.repository, request, scope, digest);
+    if (claimResult.status === "replayed") {
+      return await replayed(
+        this.repository,
+        scope,
+        claimResult.resultId,
+        request,
       );
     }
-    if (claim.status === "in_progress") {
+    if (claimResult.status === "failed") {
+      throw new FinancialRiskError(
+        claimResult.failureCode,
+        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claimResult.failureCode}".`,
+      );
+    }
+    if (claimResult.status === "in_progress") {
       throw new FinancialRiskError(
         "IDEMPOTENCY_IN_PROGRESS",
         `Idempotency key "${request.idempotencyKey}" is already running.`,
       );
     }
     try {
-      await this.assertExpectedVersion(
+      await this.references.verify(request.context, scope, request.references);
+      const latest = await assertExpectedVersion(
+        this.repository,
         scope,
         request.assessmentId,
         request.expectedVersion,
       );
-      const result = await this.executeCompute(request, scope);
-      await this.repository.completeIdempotency(claim.claim, result.resultId);
+      const result = await this.executeCompute(request, scope, latest);
+      await this.repository.commitResult(
+        claimResult.claim,
+        result,
+        request.expectedVersion,
+      );
       return {
         status: "accepted",
         result,
         job: durableJob(request, scope, result),
       };
     } catch (error) {
-      await this.failStaleClaim(claim.claim, error);
-      throw error;
+      const normalized = normalizeCommandError(error);
+      await failVersionClaim(this.repository, claimResult.claim, normalized);
+      throw normalized;
     }
+  }
+
+  async enqueueCompute(
+    request: FinancialRiskComputeRequest,
+  ): Promise<FinancialRiskQueuedCommandResult> {
+    const scope = await this.authorizedCommandScope(
+      request,
+      request.assessmentId,
+      "compute",
+    );
+    assertReferenceScope(scope, request.references);
+    const claimResult = await claim(
+      this.repository,
+      request,
+      scope,
+      await commandDigest(request),
+    );
+    return await this.enqueueClaim(
+      claimResult,
+      request,
+      scope,
+      request.references,
+    );
   }
 
   async invalidate(
@@ -194,24 +185,30 @@ export class FinancialRiskApplication {
       expectedVersion: request.expectedVersion,
       reason: request.reason,
     });
-    const claim = await this.claim(request, scope, digest);
-    if (claim.status === "replayed") {
-      return await replayed(this.repository, scope, claim.resultId, request);
-    }
-    if (claim.status === "failed") {
-      throw new FinancialRiskError(
-        claim.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed because its source version was stale.`,
+    const claimResult = await claim(this.repository, request, scope, digest);
+    if (claimResult.status === "replayed") {
+      return await replayed(
+        this.repository,
+        scope,
+        claimResult.resultId,
+        request,
       );
     }
-    if (claim.status === "in_progress") {
+    if (claimResult.status === "failed") {
+      throw new FinancialRiskError(
+        claimResult.failureCode,
+        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claimResult.failureCode}".`,
+      );
+    }
+    if (claimResult.status === "in_progress") {
       throw new FinancialRiskError(
         "IDEMPOTENCY_IN_PROGRESS",
         `Idempotency key "${request.idempotencyKey}" is already running.`,
       );
     }
     try {
-      const latest = await this.assertExpectedVersion(
+      const latest = await assertExpectedVersion(
+        this.repository,
         scope,
         request.assessmentId,
         request.expectedVersion,
@@ -240,30 +237,57 @@ export class FinancialRiskApplication {
         createdAt: now,
         updatedAt: now,
       });
-      await this.repository.append(result);
-      await this.repository.completeIdempotency(claim.claim, result.resultId);
+      await this.repository.commitResult(
+        claimResult.claim,
+        result,
+        request.expectedVersion,
+      );
       return {
         status: "accepted",
         result,
         job: durableJob(request, scope, result),
       };
     } catch (error) {
-      await this.failStaleClaim(claim.claim, error);
-      throw error;
+      const normalized = normalizeCommandError(error);
+      await failVersionClaim(this.repository, claimResult.claim, normalized);
+      throw normalized;
     }
+  }
+
+  async enqueueInvalidate(
+    request: FinancialRiskInvalidationRequest,
+  ): Promise<FinancialRiskQueuedCommandResult> {
+    const scope = await this.authorizedCommandScope(
+      request,
+      request.assessmentId,
+      "invalidate",
+    );
+    if (
+      await this.repository.findLatest(scope, request.assessmentId) ===
+        undefined
+    ) throw protectedNotFound(request.assessmentId);
+    const claimResult = await claim(
+      this.repository,
+      request,
+      scope,
+      await payloadDigest({
+        assessmentId: request.assessmentId,
+        resultId: request.resultId,
+        invalidationId: request.invalidationId,
+        operationId: request.operationId,
+        jobId: request.jobId,
+        expectedVersion: request.expectedVersion,
+        reason: request.reason,
+      }),
+    );
+    return await this.enqueueClaim(claimResult, request, scope);
   }
 
   private async executeCompute(
     request: FinancialRiskComputeRequest,
     scope: FinancialRiskScope,
+    latest: FinancialRiskResult | undefined,
   ): Promise<FinancialRiskResult> {
-    const latest = await this.repository.findLatest(
-      scope,
-      request.assessmentId,
-    );
-    if (latest !== undefined && latest.version !== request.expectedVersion) {
-      throw staleVersion(request.expectedVersion, latest.version);
-    }
     if (await request.cancellationRequested?.()) {
       return this.appendCancelled(request, scope, latest);
     }
@@ -275,7 +299,7 @@ export class FinancialRiskApplication {
     if (await request.cancellationRequested?.()) {
       return this.appendCancelled(request, scope, latest);
     }
-    const inference = await this.safeInference(input);
+    const inference = await safeInference(this.inference, input);
     const now = this.clock.now();
     const result = createFinancialRiskResult({
       aggregateType: "financial_risk_result",
@@ -301,7 +325,6 @@ export class FinancialRiskApplication {
       createdAt: now,
       updatedAt: now,
     });
-    await this.repository.append(result);
     return result;
   }
 
@@ -309,7 +332,7 @@ export class FinancialRiskApplication {
     request: FinancialRiskComputeRequest,
     scope: FinancialRiskScope,
     latest: FinancialRiskResult | undefined,
-  ): Promise<FinancialRiskResult> {
+  ): FinancialRiskResult {
     const now = this.clock.now();
     const result = createFinancialRiskResult({
       aggregateType: "financial_risk_result",
@@ -334,7 +357,7 @@ export class FinancialRiskApplication {
       createdAt: now,
       updatedAt: now,
     });
-    return this.repository.append(result).then(() => result);
+    return result;
   }
 
   private async authorize(
@@ -355,101 +378,90 @@ export class FinancialRiskApplication {
     throw protectedNotFound(assessmentId);
   }
 
-  private async safeInference(
-    input: FinancialRiskInput,
-  ): Promise<Awaited<ReturnType<FinancialRiskInferencePort["infer"]>>> {
-    try {
-      return await this.inference.infer(input);
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      return {
-        state: "failed",
-        reason,
-        provenance: failedProvenance(reason),
-      };
-    }
+  private async authorizedCommandScope(
+    request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
+    assessmentId: FinancialRiskAssessmentId,
+    operation: "compute" | "invalidate",
+  ): Promise<FinancialRiskScope> {
+    const scope = requiredScope(request.context);
+    assertActor(request.context, request.actor);
+    await this.authorize(
+      request.context,
+      request.actor,
+      scope,
+      assessmentId,
+      operation,
+    );
+    return scope;
   }
 
-  private claim(
+  private async enqueueClaim(
+    claim: FinancialRiskClaim,
     request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
     scope: FinancialRiskScope,
-    digest: string,
-  ) {
-    return this.repository.claimIdempotency({
-      commandType: commandType(request),
-      scope,
-      actorId: request.actor.id,
-      assessmentId: request.assessmentId,
-      idempotencyKey: request.idempotencyKey,
-      payloadDigest: digest,
-    }).catch((error) => {
-      if (
-        error instanceof Error &&
-        error.message.startsWith("IDEMPOTENCY_CONFLICT")
-      ) {
-        throw new FinancialRiskError("IDEMPOTENCY_CONFLICT", error.message);
-      }
-      throw error;
-    }).then((value) => ({
-      ...value,
-      claim: {
-        commandType: commandType(request),
+    references?: FinancialRiskReferences,
+  ): Promise<FinancialRiskQueuedCommandResult> {
+    if (claim.status === "replayed") {
+      return {
+        status: "replayed",
+        job: await this.replayedJob(scope, claim.resultId),
+      };
+    }
+    if (claim.status === "failed") {
+      throw new FinancialRiskError(
+        claim.failureCode,
+        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claim.failureCode}".`,
+      );
+    }
+    if (claim.status === "in_progress") {
+      throw new FinancialRiskError(
+        "IDEMPOTENCY_IN_PROGRESS",
+        `Idempotency key "${request.idempotencyKey}" is already running.`,
+      );
+    }
+    try {
+      const latest = await assertExpectedVersion(
+        this.repository,
         scope,
-        actorId: request.actor.id,
-        assessmentId: request.assessmentId,
-        idempotencyKey: request.idempotencyKey,
-        payloadDigest: digest,
-      },
-    }));
+        request.assessmentId,
+        request.expectedVersion,
+      );
+      if (latest === undefined && !("loadInput" in request)) {
+        throw protectedNotFound(request.assessmentId);
+      }
+      if (references !== undefined) {
+        await this.references.verify(request.context, scope, references);
+      }
+      const job = queuedJob(
+        request,
+        scope,
+        references,
+        this.clock.now(),
+      );
+      await this.requiredJobs().enqueue(job);
+      await this.repository.completeIdempotency(claim.claim, job.jobId);
+      return { status: "accepted", job };
+    } catch (error) {
+      const normalized = normalizeCommandError(error);
+      await failVersionClaim(this.repository, claim.claim, normalized);
+      throw normalized;
+    }
   }
 
-  private async assertExpectedVersion(
+  private async replayedJob(
     scope: FinancialRiskScope,
-    assessmentId: FinancialRiskAssessmentId,
-    expectedVersion: AggregateVersion,
-  ): Promise<FinancialRiskResult | undefined> {
-    const latest = await this.repository.findLatest(scope, assessmentId);
-    if (latest === undefined || latest.version === expectedVersion) {
-      return latest;
-    }
-    throw staleVersion(expectedVersion, latest.version);
+    jobId: string,
+  ): Promise<DurableJob> {
+    const job = await this.requiredJobs().find(scope, jobId);
+    if (job !== undefined) return job;
+    throw protectedNotFound(jobId);
   }
 
-  private async failStaleClaim(
-    claim: Parameters<FinancialRiskRepository["completeIdempotency"]>[0],
-    error: unknown,
-  ): Promise<void> {
-    if (
-      !(error instanceof FinancialRiskError) || error.code !== "STALE_VERSION"
-    ) {
-      return;
-    }
-    await this.repository.failIdempotency(claim, "STALE_VERSION");
+  private requiredJobs(): FinancialRiskJobPort {
+    if (this.jobs !== undefined) return this.jobs;
+    throw new FinancialRiskError(
+      "DEPENDENCY_UNAVAILABLE",
+      "Financial-risk durable job queue is not configured; expected an injected job port.",
+    );
   }
-}
-
-function commandType(
-  request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
-): FinancialRiskCommandType {
-  return "loadInput" in request
-    ? "financial-risk.compute"
-    : "financial-risk.invalidate";
-}
-
-function executionStatus(
-  state: Awaited<ReturnType<FinancialRiskInferencePort["infer"]>>["state"],
-): "completed" | "failed" | "cancelled" {
-  if (state === "cancelled") return "cancelled";
-  if (state === "failed" || state === "unavailable") return "failed";
-  return "completed";
-}
-
-function failedProvenance(reason: string): FinancialRiskProvenance {
-  return {
-    kind: "failed",
-    reason,
-    readiness: "unavailable",
-    runtimeIdentity: "financial-risk-domain",
-    adapterIdentity: "financial-risk-port",
-  };
 }

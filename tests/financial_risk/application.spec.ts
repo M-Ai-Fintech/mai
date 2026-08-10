@@ -1,11 +1,10 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { FinancialRiskApplication } from "../../src/financial_risk/application.ts";
 import { FinancialRiskError } from "../../src/financial_risk/errors.ts";
 import type { FinancialRiskScope } from "../../src/financial_risk/model.ts";
-import type { FinancialRiskInferencePort } from "../../src/financial_risk/ports.ts";
 import {
   InMemoryFinancialRiskRepository,
 } from "../../src/financial_risk/repository.ts";
+import { applicationFor } from "./application_test_support.ts";
 import {
   computeRequest,
   FakeFinancialRiskAuthorization,
@@ -19,7 +18,6 @@ import {
   RecordingInputLoader,
   RecordingReferenceVerifier,
   TEST_CHECKSUM,
-  TEST_TIME,
   ThrowingFinancialRiskInference,
 } from "./support.ts";
 
@@ -108,6 +106,50 @@ Deno.test("same idempotency key with changed exact references is rejected", asyn
     "IDEMPOTENCY_CONFLICT",
   );
   assertEquals(loader.calls, 1);
+});
+
+Deno.test("first financial-risk write rejects a non-initial expected version", async () => {
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+  );
+
+  await assertRejects(
+    () => application.compute(computeRequest({ expectedVersion: 2 as never })),
+    FinancialRiskError,
+    'current version is "0"',
+  );
+});
+
+Deno.test("in-memory command commit rejects a duplicate result ID without overwrite", async () => {
+  const repository = new InMemoryFinancialRiskRepository();
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+  );
+  const first = await application.compute(computeRequest());
+
+  await assertRejects(
+    () =>
+      application.compute(computeRequest({
+        resultId: first.result.resultId,
+        idempotencyKey: "idem_duplicate-result" as never,
+        operationId: "op_duplicate-result" as never,
+        jobId: "job_duplicate-result" as never,
+      })),
+    FinancialRiskError,
+    "already exists",
+  );
+  assertEquals(
+    (await repository.findLatest(
+      financialRiskScope(),
+      first.result.assessmentId,
+    ))
+      ?.resultId,
+    first.result.resultId,
+  );
 });
 
 Deno.test("stale commands retain a replayable idempotency failure", async () => {
@@ -266,19 +308,3 @@ Deno.test("in-memory reads return isolated immutable history snapshots", async (
 
   assertEquals(second?.outputs?.insolvencyRisk, MODEL_OUTPUTS.insolvencyRisk);
 });
-
-function applicationFor(
-  authorization: FakeFinancialRiskAuthorization,
-  references: RecordingReferenceVerifier,
-  inference: FinancialRiskInferencePort = new FakeFinancialRiskInference(),
-  repository = new InMemoryFinancialRiskRepository(),
-): FinancialRiskApplication {
-  void TEST_TIME;
-  return new FinancialRiskApplication(
-    authorization,
-    references,
-    inference,
-    repository,
-    { now: () => new Date(TEST_TIME) },
-  );
-}

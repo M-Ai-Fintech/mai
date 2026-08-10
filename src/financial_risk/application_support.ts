@@ -7,7 +7,7 @@ import type {
   FinancialRiskCommandResult,
   FinancialRiskComputeRequest,
   FinancialRiskInvalidationRequest,
-} from "./application.ts";
+} from "./application_contracts.ts";
 import type { FinancialRiskRepository } from "./repository.ts";
 import type {
   FinancialRiskProvenance,
@@ -114,18 +114,7 @@ export function durableJob(
 ): DurableJob {
   const createdAt = result.createdAt;
   const references = result.references;
-  const inputVersionReferences = [
-    ...references.financialData.map((reference) => ({
-      aggregateType: "financial_data",
-      aggregateId: reference.sourceId,
-      version: reference.version as AggregateVersion,
-    })),
-    ...references.calculations.map((reference) => ({
-      aggregateType: "financial_risk_calculation",
-      aggregateId: reference.calculationId,
-      version: reference.version as AggregateVersion,
-    })),
-  ];
+  const inputVersionReferences = inputReferences(references);
   return {
     jobId: request.jobId,
     operationId: request.operationId,
@@ -149,6 +138,64 @@ export function durableJob(
     timeoutAt: new Date(createdAt.getTime() + 300_000),
     createdAt,
   };
+}
+
+export function queuedJob(
+  request: FinancialRiskComputeRequest | FinancialRiskInvalidationRequest,
+  scope: FinancialRiskScope,
+  references: FinancialRiskReferences | undefined,
+  createdAt: Date,
+): DurableJob {
+  const isCompute = "loadInput" in request;
+  const payload = isCompute
+    ? {
+      assessmentId: request.assessmentId,
+      resultId: request.resultId,
+      expectedVersion: request.expectedVersion,
+      state: "queued" as const,
+      references: canonicalReferences(request.references),
+      evidenceBasisDigest: request.references.evidenceBasis.basisDigest,
+    }
+    : {
+      assessmentId: request.assessmentId,
+      resultId: request.resultId,
+      expectedVersion: request.expectedVersion,
+      state: "queued" as const,
+      reason: request.reason,
+    };
+  return {
+    jobId: request.jobId,
+    operationId: request.operationId,
+    jobType: isCompute ? "financial-risk.compute" : "financial-risk.invalidate",
+    schemaVersion: 1,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    dealId: scope.dealId,
+    initiatingActorId: request.actor.id,
+    correlationId: request.context.correlationId,
+    idempotencyKey: request.idempotencyKey,
+    inputVersionReferences: references === undefined
+      ? []
+      : inputReferences(references),
+    payload,
+    timeoutAt: new Date(createdAt.getTime() + 300_000),
+    createdAt,
+  };
+}
+
+function inputReferences(references: FinancialRiskReferences) {
+  return [
+    ...references.financialData.map((reference) => ({
+      aggregateType: "financial_data",
+      aggregateId: reference.sourceId,
+      version: reference.version as AggregateVersion,
+    })),
+    ...references.calculations.map((reference) => ({
+      aggregateType: "financial_risk_calculation",
+      aggregateId: reference.calculationId,
+      version: reference.version as AggregateVersion,
+    })),
+  ];
 }
 
 export function staleVersion(

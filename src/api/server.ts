@@ -1,4 +1,5 @@
 import { AgentOrchestrator } from "../agent/index.ts";
+import type { CorrelationId } from "../platform/api/v1.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
 import {
   createDealManagementComposition,
@@ -126,8 +127,8 @@ async function routeRequest(
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
-  const correlationId = request.headers.get("X-Correlation-Id") ??
-    crypto.randomUUID();
+  const correlationId = (request.headers.get("X-Correlation-Id") ??
+    crypto.randomUUID()) as CorrelationId;
   if (request.method === "OPTIONS") return new Response(null, { headers });
   const healthResponse = handleHealthRequest(request, readiness);
   if (healthResponse) return withCorrelationId(healthResponse, correlationId);
@@ -147,6 +148,7 @@ async function routeRequest(
         waveH,
         waveJ,
         headers,
+        correlationId,
       ),
       correlationId,
     );
@@ -163,6 +165,7 @@ async function routedResponse(
   waveH: WaveHRouteDependencies,
   waveJ: WaveJRouteDependencies,
   headers: Headers,
+  correlationId: CorrelationId,
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
     request,
@@ -178,6 +181,7 @@ async function routedResponse(
     request,
     waveJ,
     headers,
+    correlationId,
   );
   if (waveJResponse !== undefined) return waveJResponse;
   const waveGResponse = await routeWaveGRequest(request, waveG, headers);

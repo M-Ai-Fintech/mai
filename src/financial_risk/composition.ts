@@ -15,6 +15,10 @@ import {
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import { PostgresFinancialRiskRepository } from "./postgres_repository.ts";
 import type { FinancialRiskRepository } from "./repository.ts";
+import {
+  type FinancialRiskJobPort,
+  PostgresFinancialRiskJobPort,
+} from "./job_port.ts";
 import { financialRiskMigrations } from "./migrations/index.ts";
 
 export interface FinancialRiskCompositionConfig {
@@ -25,6 +29,7 @@ export interface FinancialRiskCompositionConfig {
   readonly scopeInstaller?: TransactionScopeInstaller;
   readonly clock?: Clock;
   readonly repository?: FinancialRiskRepository;
+  readonly jobs?: FinancialRiskJobPort;
 }
 
 export class FinancialRiskComposition {
@@ -34,6 +39,7 @@ export class FinancialRiskComposition {
   ]);
   readonly transactions: PostgresTransactionRunner;
   readonly repository: FinancialRiskRepository;
+  readonly jobs: FinancialRiskJobPort;
   readonly application: FinancialRiskApplication;
 
   constructor(config: FinancialRiskCompositionConfig) {
@@ -47,12 +53,15 @@ export class FinancialRiskComposition {
       undefined,
       config.clock,
     );
+    this.jobs = config.jobs ??
+      new PostgresFinancialRiskJobPort(this.transactions);
     this.application = new FinancialRiskApplication(
       config.authorization,
       config.references,
       config.inference,
       this.repository,
       config.clock,
+      this.jobs,
     );
   }
 }

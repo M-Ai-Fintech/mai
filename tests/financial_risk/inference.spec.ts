@@ -67,6 +67,54 @@ Deno.test("model results missing immutable artifact lineage fail closed", async 
   assertEquals(result.state, "failed");
 });
 
+Deno.test("model results with heuristic-fallback provenance fail closed", async () => {
+  const runtime = new FakeRuntime(undefined, {
+    resultKind: "model",
+    provenance: {
+      kind: "heuristic-fallback",
+      reason: "misclassified runtime result",
+    },
+    insolvencyRisk: MODEL_OUTPUTS.insolvencyRisk,
+    churnProbability: MODEL_OUTPUTS.churnProbability,
+    dcfVolatility: MODEL_OUTPUTS.dcfVolatility,
+    industry4Score: MODEL_OUTPUTS.industry4Score,
+    zScore: MODEL_OUTPUTS.zScore,
+  });
+  const result = await new FinancialRiskInferenceAdapter(runtime).infer(
+    TEST_INPUT,
+  );
+
+  assertEquals(result.state, "failed");
+  assertEquals("outputs" in result, false);
+});
+
+Deno.test("fallback results with reference-model provenance fail closed", async () => {
+  const runtime = new FakeRuntime(
+    new PredictionNotInitializedError(),
+    undefined,
+    "reference-only",
+    {
+      resultKind: "fallback",
+      provenance: {
+        kind: "reference-model",
+        modelId: "reference-risk-model",
+        modelVersion: "1.0.0",
+        artifactSha256: TEST_CHECKSUM,
+      },
+      insolvencyRisk: FALLBACK_OUTPUTS.insolvencyRisk,
+      churnProbability: FALLBACK_OUTPUTS.churnProbability,
+      dcfVolatility: FALLBACK_OUTPUTS.dcfVolatility,
+      industry4Score: FALLBACK_OUTPUTS.industry4Score,
+      zScore: FALLBACK_OUTPUTS.zScore,
+    },
+  );
+  const result = await new FinancialRiskInferenceAdapter(runtime, "configured")
+    .infer(TEST_INPUT);
+
+  assertEquals(result.state, "failed");
+  assertEquals("outputs" in result, false);
+});
+
 Deno.test("malformed model outputs become a failed inference result", async () => {
   const runtime = new FakeRuntime(undefined, {
     resultKind: "model",
@@ -95,16 +143,19 @@ class FakeRuntime implements FinancialRiskRuntimePort {
   modelCalls = 0;
   private readonly error?: Error;
   private readonly modelResult?: ONNXPredictionResult;
+  private readonly fallbackResult?: ONNXPredictionResult;
   private readonly readiness: FinancialRiskRuntimeMetadata["readiness"];
 
   constructor(
     error?: Error,
     modelResult?: ONNXPredictionResult,
     readiness: FinancialRiskRuntimeMetadata["readiness"] = "reference-only",
+    fallbackResult?: ONNXPredictionResult,
   ) {
     this.error = error;
     this.modelResult = modelResult;
     this.readiness = readiness;
+    this.fallbackResult = fallbackResult;
   }
 
   metadata(): FinancialRiskRuntimeMetadata {
@@ -144,6 +195,9 @@ class FakeRuntime implements FinancialRiskRuntimePort {
 
   runFallback(_input: FinancialRiskInput, _reason: string) {
     this.fallbackCalls++;
+    if (this.fallbackResult !== undefined) {
+      return Promise.resolve(this.fallbackResult);
+    }
     return Promise.resolve({
       resultKind: "fallback" as const,
       provenance: { kind: "heuristic-fallback" as const, reason: "configured" },

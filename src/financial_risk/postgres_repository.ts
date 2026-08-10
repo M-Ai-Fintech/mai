@@ -5,6 +5,7 @@ import type {
   PostgresTransactionRunner,
   TransactionHandle,
 } from "../platform/persistence/v1.ts";
+import type { AggregateVersion } from "../platform/api/v1.ts";
 import {
   IdempotencyRepository as DurableIdempotencyRepository,
 } from "../platform/persistence/v1.ts";
@@ -14,6 +15,7 @@ import type {
   FinancialRiskIdempotencyClaimResult,
   FinancialRiskRepository,
 } from "./repository.ts";
+import { FinancialRiskRepositoryConflictError } from "./repository.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -66,7 +68,7 @@ export class PostgresFinancialRiskRepository
 
   failIdempotency(
     claim: FinancialRiskIdempotencyClaim,
-    failureCode: "STALE_VERSION",
+    failureCode: "STALE_VERSION" | "VERSION_CONFLICT",
   ): Promise<void> {
     return this.transactions.run((transaction) =>
       this.idempotency.fail(
@@ -77,21 +79,42 @@ export class PostgresFinancialRiskRepository
     );
   }
 
+  async commitResult(
+    claim: FinancialRiskIdempotencyClaim,
+    result: FinancialRiskResult,
+    expectedVersion: AggregateVersion,
+  ): Promise<void> {
+    try {
+      await this.transactions.run(async (transaction) => {
+        const latest = await findLatestResultForUpdate(
+          transaction,
+          result.scope,
+          result.assessmentId,
+        );
+        assertCommitVersion(latest, result, expectedVersion);
+        await insertResult(transaction, result);
+        await appendEffects(this.effects, transaction, result);
+        await this.idempotency.complete(
+          transaction,
+          durableClaim(claim, this.clock.now()),
+          result.resultId,
+        );
+      });
+    } catch (error) {
+      if (isUniqueVersionViolation(error)) {
+        throw new FinancialRiskRepositoryConflictError(
+          "VERSION_CONFLICT",
+          `Financial-risk assessment "${result.assessmentId}" was concurrently committed; expected version "${expectedVersion}".`,
+        );
+      }
+      throw error;
+    }
+  }
+
   append(result: FinancialRiskResult): Promise<void> {
     return this.transactions.run(async (transaction) => {
       await insertResult(transaction, result);
-      await this.effects.append(transaction, {
-        context: {
-          actorId: result.actor.id,
-          tenantId: result.scope.tenantId,
-          workspaceId: result.scope.workspaceId,
-          dealId: result.scope.dealId,
-          correlationId: result.correlationId,
-          origin: "job",
-        },
-        scope: result.scope,
-        result,
-      });
+      await appendEffects(this.effects, transaction, result);
     });
   }
 
@@ -156,6 +179,25 @@ async function insertResult(
   );
 }
 
+async function appendEffects(
+  effects: FinancialRiskEffects,
+  transaction: TransactionHandle,
+  result: FinancialRiskResult,
+): Promise<void> {
+  await effects.append(transaction, {
+    context: {
+      actorId: result.actor.id,
+      tenantId: result.scope.tenantId,
+      workspaceId: result.scope.workspaceId,
+      dealId: result.scope.dealId,
+      correlationId: result.correlationId,
+      origin: "job",
+    },
+    scope: result.scope,
+    result,
+  });
+}
+
 async function findResult(
   transaction: TransactionHandle,
   scope: FinancialRiskScope,
@@ -180,6 +222,22 @@ async function findLatestResult(
     `SELECT payload FROM financial_risk.results
      WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND assessment_id=$4
      ORDER BY version DESC LIMIT 1`,
+    scopeValues(scope).concat(assessmentId),
+  );
+  return query.rows[0] === undefined
+    ? undefined
+    : rowResult(query.rows[0].payload);
+}
+
+async function findLatestResultForUpdate(
+  transaction: TransactionHandle,
+  scope: FinancialRiskScope,
+  assessmentId: FinancialRiskAssessmentId,
+): Promise<FinancialRiskResult | undefined> {
+  const query = await transaction.query<{ payload: unknown }>(
+    `SELECT payload FROM financial_risk.results
+     WHERE tenant_id=$1 AND workspace_id=$2 AND deal_id=$3 AND assessment_id=$4
+     ORDER BY version DESC LIMIT 1 FOR UPDATE`,
     scopeValues(scope).concat(assessmentId),
   );
   return query.rows[0] === undefined
@@ -263,14 +321,20 @@ function mapClaimResult(
     );
   }
   if (result.state === "failed") {
-    if (result.errorReference !== "STALE_VERSION") {
+    if (
+      result.errorReference !== "STALE_VERSION" &&
+      result.errorReference !== "VERSION_CONFLICT"
+    ) {
       throw new Error(
         `Idempotency key "${idempotencyKey}" failed with "${
           String(result.errorReference)
         }"; expected the supported stale-version failure code.`,
       );
     }
-    return { status: "failed", failureCode: "STALE_VERSION" };
+    return {
+      status: "failed",
+      failureCode: result.errorReference,
+    };
   }
   if (result.resultReference === undefined) {
     throw new Error(
@@ -308,6 +372,41 @@ function scopeValues(scope: FinancialRiskScope): string[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function assertCommitVersion(
+  latest: FinancialRiskResult | undefined,
+  result: FinancialRiskResult,
+  expectedVersion: AggregateVersion,
+): void {
+  if (latest === undefined && expectedVersion !== 1) {
+    throw new FinancialRiskRepositoryConflictError(
+      "STALE_VERSION",
+      `Expected financial-risk initial version "${expectedVersion}" but no result exists; expected initial version "1".`,
+    );
+  }
+  if (latest !== undefined && latest.version !== expectedVersion) {
+    throw new FinancialRiskRepositoryConflictError(
+      "STALE_VERSION",
+      `Expected financial-risk version "${expectedVersion}" but current version is "${latest.version}".`,
+    );
+  }
+  const nextVersion = latest === undefined ? 1 : latest.version + 1;
+  if (result.version === nextVersion) return;
+  throw new FinancialRiskRepositoryConflictError(
+    "VERSION_CONFLICT",
+    `Financial-risk result version "${result.version}" does not follow current version "${
+      latest?.version ?? 0
+    }"; expected "${nextVersion}".`,
+  );
+}
+
+function isUniqueVersionViolation(error: unknown): boolean {
+  if (!isRecord(error) || error.code !== "23505") return false;
+  const detail = `${String(error.constraint ?? "")} ${
+    String(error.detail ?? "")
+  }`;
+  return /assessment_id.*version|version.*assessment_id/i.test(detail);
 }
 
 const systemClock: Clock = { now: () => new Date() };
