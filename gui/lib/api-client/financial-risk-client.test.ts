@@ -96,12 +96,22 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("financial-risk typed client", () => {
   it("accepts only the corrected 202 job receipt and exact polling route", async () => {
+    const requestHeaders: Record<string, string> = {
+      Authorization: "Bearer financial-risk-session",
+      "X-Workspace-Id": "workspace_other",
+      "X-Deal-Id": "deal_other",
+      "X-Request-Context": "retain-me",
+    };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(acceptedResponse())
       .mockResolvedValueOnce(jobResponse("queued"));
     vi.stubGlobal("fetch", fetchMock);
 
-    const accepted = await enqueueFinancialRiskCompute(computeCommand());
+    const accepted = await enqueueFinancialRiskCompute({
+      ...computeCommand(),
+      headers: requestHeaders,
+      credentials: "include",
+    });
     const queued = await accepted.poller.poll();
 
     expect(accepted.status).toBe(202);
@@ -116,24 +126,91 @@ describe("financial-risk typed client", () => {
       "http://localhost:8000/api/v1/financial-risk/jobs/job_risk",
     );
     expect(String(fetchMock.mock.calls[1][0])).not.toContain("/api/v1/jobs/");
+    const commandRequest = fetchMock.mock.calls[0][1] as RequestInit;
+    const pollRequest = fetchMock.mock.calls[1][1] as RequestInit;
+    expectBoundHeaders(commandRequest, "Bearer financial-risk-session");
+    expectBoundHeaders(pollRequest, "Bearer financial-risk-session");
+    expect(new Headers(commandRequest.headers).get("X-Request-Context")).toBe(
+      "retain-me",
+    );
+    expect(new Headers(pollRequest.headers).get("X-Request-Context")).toBe(
+      "retain-me",
+    );
+    expect(commandRequest.credentials).toBe("include");
+    expect(pollRequest.credentials).toBe("include");
   });
 
-  it("captures the complete scope and keeps it unchanged for every poll", async () => {
+  it("freezes scope and request context before later input mutation", async () => {
+    const mutableScope = {
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId as string,
+      dealId: scope.dealId,
+      initiatingActorId: scope.initiatingActorId,
+    };
+    const requestHeaders: Record<string, string> = {
+      Authorization: "Bearer immutable-session",
+      "X-Workspace-Id": "workspace_other",
+      "X-Deal-Id": "deal_other",
+    };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(acceptedResponse())
-      .mockResolvedValueOnce(jobResponse("running", 30))
-      .mockResolvedValueOnce(jobResponse("succeeded", 100));
+      .mockResolvedValueOnce(jobResponse("running", 30));
     vi.stubGlobal("fetch", fetchMock);
-    const original = { ...scope };
-    const accepted = await enqueueFinancialRiskCompute(computeCommand());
+    const accepted = await enqueueFinancialRiskCompute({
+      ...computeCommand(),
+      scope: mutableScope,
+      headers: requestHeaders,
+      credentials: "same-origin",
+    });
+
+    mutableScope.workspaceId = "workspace_changed";
+    requestHeaders.Authorization = "Bearer changed-session";
+    requestHeaders["X-Deal-Id"] = "deal_changed";
     const first = await accepted.poller.poll();
-    const second = await accepted.poller.poll();
 
     expect(first.data.state).toBe("running");
-    expect(second.data.state).toBe("succeeded");
-    expect(accepted.scope).toEqual(original);
-    expect(accepted.poller.scope).toEqual(original);
+    expect(accepted.scope).toEqual(scope);
+    expect(accepted.poller.scope).toEqual(scope);
     expect(Object.isFrozen(accepted.poller.scope)).toBe(true);
+    const pollRequest = fetchMock.mock.calls[1][1] as RequestInit;
+    expectBoundHeaders(pollRequest, "Bearer immutable-session");
+    expect(pollRequest.credentials).toBe("same-origin");
+  });
+
+  it("rejects an accepted command receipt with a generic status route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      acceptedResponse("/api/v1/jobs/job_risk"),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(enqueueFinancialRiskCompute(computeCommand())).rejects
+      .toThrow(/exact job route/);
+  });
+
+  it("binds read scope headers over caller conflicts", async () => {
+    const requestHeaders: Record<string, string> = {
+      Authorization: "Bearer read-session",
+      "X-Workspace-Id": "workspace_other",
+      "X-Deal-Id": "deal_other",
+      "X-Request-Context": "retain-read",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({
+      data: assessment("stale"),
+      meta: { correlationId: "cor_risk", freshness: "stale" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await readFinancialRiskAssessment("risk_assessment_horizon", scope, {
+      headers: requestHeaders,
+      credentials: "include",
+    });
+
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    expectBoundHeaders(request, "Bearer read-session");
+    expect(new Headers(request.headers).get("X-Request-Context")).toBe(
+      "retain-read",
+    );
+    expect(request.credentials).toBe("include");
   });
 
   it("rejects a receipt that points at a generic or wrong-scope job route", async () => {
@@ -258,7 +335,14 @@ describe("financial-risk typed client", () => {
   });
 
   it("enqueues source invalidation through the exact assessment command route", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(acceptedResponse());
+    const requestHeaders: Record<string, string> = {
+      Authorization: "Bearer invalidate-session",
+      "X-Workspace-Id": "workspace_other",
+      "X-Deal-Id": "deal_other",
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(acceptedResponse())
+      .mockResolvedValueOnce(jobResponse("queued"));
     vi.stubGlobal("fetch", fetchMock);
 
     const accepted = await enqueueFinancialRiskInvalidation({
@@ -271,7 +355,10 @@ describe("financial-risk typed client", () => {
       reason: "A source version changed.",
       idempotencyKey: "idem_invalidate",
       ifMatch: '"v1"',
+      headers: requestHeaders,
+      credentials: "include",
     });
+    await accepted.poller.poll();
 
     expect(accepted.status).toBe(202);
     expect(String(fetchMock.mock.calls[0][0])).toContain(
@@ -280,6 +367,12 @@ describe("financial-risk typed client", () => {
     expect(accepted.poller.statusUrl).toBe(
       "/api/v1/financial-risk/jobs/job_risk",
     );
+    const commandRequest = fetchMock.mock.calls[0][1] as RequestInit;
+    const pollRequest = fetchMock.mock.calls[1][1] as RequestInit;
+    expectBoundHeaders(commandRequest, "Bearer invalidate-session");
+    expectBoundHeaders(pollRequest, "Bearer invalidate-session");
+    expect(commandRequest.credentials).toBe("include");
+    expect(pollRequest.credentials).toBe("include");
   });
 
   it("maps protected-not-found as a protected result, not permission metadata", async () => {
@@ -344,6 +437,16 @@ describe("financial-risk typed client", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+function expectBoundHeaders(
+  request: RequestInit,
+  authorization: string,
+): void {
+  const headers = new Headers(request.headers);
+  expect(headers.get("Authorization")).toBe(authorization);
+  expect(headers.get("X-Workspace-Id")).toBe(scope.workspaceId);
+  expect(headers.get("X-Deal-Id")).toBe(scope.dealId);
+}
 
 function assessment(state: string) {
   const common = {

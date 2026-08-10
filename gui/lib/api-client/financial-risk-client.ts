@@ -43,6 +43,8 @@ export interface FinancialRiskComputeCommand {
   readonly references: FinancialRiskReferences;
   readonly idempotencyKey: string;
   readonly ifMatch: string;
+  readonly headers?: HeadersInit;
+  readonly credentials?: RequestCredentials;
   readonly signal?: AbortSignal;
   readonly correlationId?: string;
 }
@@ -57,6 +59,8 @@ export interface FinancialRiskInvalidationCommand {
   readonly reason: string;
   readonly idempotencyKey: string;
   readonly ifMatch: string;
+  readonly headers?: HeadersInit;
+  readonly credentials?: RequestCredentials;
   readonly signal?: AbortSignal;
   readonly correlationId?: string;
 }
@@ -76,17 +80,30 @@ export interface FinancialRiskAcceptedCompute {
   readonly meta: { readonly correlationId: string };
 }
 
+type FinancialRiskRequestContext = Readonly<{
+  readonly headers: Headers;
+  readonly credentials?: RequestCredentials;
+}>;
+
 export function readFinancialRiskAssessment(
   assessmentId: string,
   scope: FinancialRiskPollScope,
   options: Omit<V1RequestOptions, "method"> = {},
 ): Promise<V1Response<FinancialRiskAssessment>> {
-  captureFinancialRiskPollScope(scope);
+  const capturedScope = captureFinancialRiskPollScope(scope);
+  const requestContext = captureFinancialRiskRequestContext(
+    capturedScope,
+    options,
+  );
   assertAssessmentId(assessmentId);
   return requestV1(
     assessmentPath(assessmentId),
     financialRiskAssessmentSchema,
-    { ...options, method: "GET" },
+    {
+      ...options,
+      ...requestOptionsForContext(requestContext),
+      method: "GET",
+    },
   );
 }
 
@@ -94,6 +111,10 @@ export async function enqueueFinancialRiskCompute(
   command: FinancialRiskComputeCommand,
 ): Promise<FinancialRiskAcceptedCompute> {
   const capturedScope = captureFinancialRiskPollScope(command.scope);
+  const requestContext = captureFinancialRiskRequestContext(
+    capturedScope,
+    command,
+  );
   assertAssessmentId(command.assessmentId);
   const body = parseComputeCommand(command, capturedScope);
   return enqueueAcceptedFinancialRiskCommand(
@@ -101,6 +122,7 @@ export async function enqueueFinancialRiskCompute(
     body,
     command,
     capturedScope,
+    requestContext,
   );
 }
 
@@ -108,6 +130,10 @@ export async function enqueueFinancialRiskInvalidation(
   command: FinancialRiskInvalidationCommand,
 ): Promise<FinancialRiskAcceptedCompute> {
   const capturedScope = captureFinancialRiskPollScope(command.scope);
+  const requestContext = captureFinancialRiskRequestContext(
+    capturedScope,
+    command,
+  );
   assertAssessmentId(command.assessmentId);
   const body = parseInvalidationCommand(command);
   assertCommandHeaders(command);
@@ -116,36 +142,50 @@ export async function enqueueFinancialRiskInvalidation(
     body,
     command,
     capturedScope,
+    requestContext,
   );
 }
 
 export function createFinancialRiskJobPoller(
   accepted: FinancialRiskAcceptedJobData,
   scope: FinancialRiskPollScope,
+  requestOptions: Pick<RequestInit, "headers" | "credentials"> = {},
 ): FinancialRiskJobPoller {
   const parsed = parseAcceptedJobData(accepted);
   const capturedScope = captureFinancialRiskPollScope(scope);
+  const requestContext = captureFinancialRiskRequestContext(
+    capturedScope,
+    requestOptions,
+  );
   assertExactStatusUrl(parsed.statusUrl, parsed.jobId);
-  return createJobPoller(parsed, capturedScope);
+  return createJobPoller(parsed, capturedScope, requestContext);
 }
 
 function createJobPoller(
   accepted: FinancialRiskAcceptedJobData,
   scope: FinancialRiskPollScope,
+  requestContext: FinancialRiskRequestContext,
 ): FinancialRiskJobPoller {
   const statusUrl = jobStatusPath(accepted.jobId);
+  assertExactStatusUrl(accepted.statusUrl, accepted.jobId);
   return Object.freeze({
     jobId: accepted.jobId,
     statusUrl,
     scope,
     poll: (signal?: AbortSignal) =>
-      readFinancialRiskJobStatus(accepted.jobId, scope, signal),
+      readFinancialRiskJobStatus(
+        accepted.jobId,
+        scope,
+        requestContext,
+        signal,
+      ),
   });
 }
 
 async function readFinancialRiskJobStatus(
   jobId: string,
   scope: FinancialRiskPollScope,
+  requestContext: FinancialRiskRequestContext,
   signal?: AbortSignal,
 ): Promise<V1Response<FinancialRiskJobStatus>> {
   captureFinancialRiskPollScope(scope);
@@ -153,7 +193,11 @@ async function readFinancialRiskJobStatus(
   return requestV1(
     jobStatusPath(jobId),
     financialRiskJobStatusSchema,
-    { method: "GET", signal },
+    {
+      ...requestOptionsForContext(requestContext),
+      method: "GET",
+      signal,
+    },
   );
 }
 
@@ -279,30 +323,39 @@ async function enqueueAcceptedFinancialRiskCommand(
   command: {
     readonly idempotencyKey: string;
     readonly ifMatch: string;
+    readonly headers?: HeadersInit;
+    readonly credentials?: RequestCredentials;
     readonly correlationId?: string;
     readonly signal?: AbortSignal;
   },
   scope: FinancialRiskPollScope,
+  requestContext: FinancialRiskRequestContext,
 ): Promise<FinancialRiskAcceptedCompute> {
   const response = await requestV1Accepted(
     path,
-    acceptedCommandOptions(command, body),
+    acceptedCommandOptions(command, body, requestContext),
   );
-  return acceptedCommandResult(response, scope);
+  return acceptedCommandResult(response, scope, requestContext);
 }
 
 function acceptedCommandOptions(
   command: {
     readonly idempotencyKey: string;
     readonly ifMatch: string;
+    readonly headers?: HeadersInit;
+    readonly credentials?: RequestCredentials;
     readonly correlationId?: string;
     readonly signal?: AbortSignal;
   },
   body: Readonly<Record<string, unknown>>,
+  requestContext: FinancialRiskRequestContext,
 ): V1RequestOptions {
+  const headers = new Headers(requestContext.headers);
+  headers.set("Content-Type", "application/json");
   return {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    ...requestOptionsForContext(requestContext),
+    headers,
     body: JSON.stringify(body),
     idempotencyKey: command.idempotencyKey,
     ifMatch: command.ifMatch,
@@ -314,6 +367,7 @@ function acceptedCommandOptions(
 function acceptedCommandResult(
   response: V1AcceptedResponse,
   scope: FinancialRiskPollScope,
+  requestContext: FinancialRiskRequestContext,
 ): FinancialRiskAcceptedCompute {
   if (response.status !== 202) {
     throw contractError(
@@ -325,7 +379,7 @@ function acceptedCommandResult(
     data,
     status: 202,
     scope,
-    poller: createFinancialRiskJobPoller(data, scope),
+    poller: createJobPoller(data, scope, requestContext),
     meta: response.meta,
   };
 }
@@ -402,6 +456,27 @@ function assessmentPath(assessmentId: string): string {
 
 function jobStatusPath(jobId: string): string {
   return `${FINANCIAL_RISK_BASE}/jobs/${pathSegment(jobId)}`;
+}
+
+function captureFinancialRiskRequestContext(
+  scope: FinancialRiskPollScope,
+  options: Pick<RequestInit, "headers" | "credentials"> = {},
+): FinancialRiskRequestContext {
+  const headers = new Headers(options.headers);
+  headers.set("X-Workspace-Id", scope.workspaceId);
+  headers.set("X-Deal-Id", scope.dealId);
+  return Object.freeze({ headers, credentials: options.credentials });
+}
+
+function requestOptionsForContext(
+  context: FinancialRiskRequestContext,
+): Pick<RequestInit, "headers" | "credentials"> {
+  return {
+    headers: new Headers(context.headers),
+    ...(context.credentials === undefined
+      ? {}
+      : { credentials: context.credentials }),
+  };
 }
 
 function contractError(message: string): APIError {
