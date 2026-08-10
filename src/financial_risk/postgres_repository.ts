@@ -3,6 +3,7 @@ import type {
   PostgresTransactionRunner,
   TransactionHandle,
 } from "../platform/persistence/v1.ts";
+import type { ClaimedJob } from "../platform/jobs/v1.ts";
 import type { AggregateVersion } from "../platform/api/v1.ts";
 import type { ApprovedScopeToken } from "../platform/authz/v1.ts";
 import {
@@ -15,9 +16,11 @@ import type {
   FinancialRiskRepository,
 } from "./repository.ts";
 import {
+  FinancialRiskQueuedCommitError,
   FinancialRiskRepositoryConflictError,
   financialRiskScopeFromApprovedScope,
 } from "./repository.ts";
+import type { FinancialRiskIdempotencyFailureCode } from "./errors.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -75,7 +78,7 @@ export class PostgresFinancialRiskRepository
 
   failIdempotency(
     claim: FinancialRiskIdempotencyClaim,
-    failureCode: "STALE_VERSION" | "VERSION_CONFLICT",
+    failureCode: FinancialRiskIdempotencyFailureCode,
   ): Promise<void> {
     return this.transactions.run((transaction) =>
       this.idempotency.fail(
@@ -121,6 +124,7 @@ export class PostgresFinancialRiskRepository
   async commitQueuedResult(
     result: FinancialRiskResult,
     expectedVersion: AggregateVersion,
+    claimedJob: ClaimedJob,
   ): Promise<void> {
     try {
       await this.transactions.run(async (transaction) => {
@@ -136,6 +140,12 @@ export class PostgresFinancialRiskRepository
             `Financial-risk result "${result.resultId}" already exists; expected immutable worker replay identity.`,
           );
         }
+        await assertQueuedCommitFence(
+          transaction,
+          claimedJob,
+          result,
+          this.clock.now(),
+        );
         const latest = await findLatestResultForUpdate(
           transaction,
           result.scope,
@@ -199,6 +209,63 @@ export class PostgresFinancialRiskRepository
       listResults(transaction, scope, assessmentId)
     );
   }
+}
+
+async function assertQueuedCommitFence(
+  transaction: TransactionHandle,
+  claimedJob: ClaimedJob,
+  result: FinancialRiskResult,
+  now: Date,
+): Promise<void> {
+  assertQueuedResultIdentity(claimedJob, result);
+  const query = await transaction.query<{
+    readonly cancellationRequested: boolean;
+  }>(
+    `SELECT cancellation_requested_at IS NOT NULL AS "cancellationRequested"
+     FROM platform.jobs
+     WHERE job_id=$1 AND tenant_id=$2 AND state='running'
+       AND lease_owner=$3 AND attempt_count=$4
+       AND lease_expires_at=$5 AND lease_expires_at>$6
+     FOR UPDATE`,
+    [
+      claimedJob.jobId,
+      claimedJob.tenantId,
+      claimedJob.workerId,
+      claimedJob.attemptNumber,
+      claimedJob.leaseExpiresAt,
+      now,
+    ],
+  );
+  const row = query.rows[0];
+  if (row === undefined) {
+    throw new FinancialRiskQueuedCommitError(
+      "LEASE_LOST",
+      `Financial-risk result "${result.resultId}" cannot commit; job "${claimedJob.jobId}" no longer owns an active lease.`,
+    );
+  }
+  if (row.cancellationRequested && result.state !== "cancelled") {
+    throw new FinancialRiskQueuedCommitError(
+      "CANCELLED",
+      `Financial-risk result "${result.resultId}" cannot commit real inference; job "${claimedJob.jobId}" was cancelled.`,
+    );
+  }
+}
+
+function assertQueuedResultIdentity(
+  claimedJob: ClaimedJob,
+  result: FinancialRiskResult,
+): void {
+  if (
+    claimedJob.tenantId === result.scope.tenantId &&
+    claimedJob.workspaceId === result.scope.workspaceId &&
+    claimedJob.dealId === result.scope.dealId &&
+    claimedJob.jobId === result.execution.jobId &&
+    claimedJob.initiatingActorId === result.actor.id
+  ) return;
+  throw new FinancialRiskQueuedCommitError(
+    "LEASE_LOST",
+    `Financial-risk result "${result.resultId}" does not match claimed job "${claimedJob.jobId}"; expected exact scope, actor, and job identity.`,
+  );
 }
 
 async function insertResult(

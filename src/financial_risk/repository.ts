@@ -3,6 +3,7 @@ import type {
   AggregateVersion,
   IdempotencyKey,
 } from "../platform/api/v1.ts";
+import type { ClaimedJob } from "../platform/jobs/v1.ts";
 import type { ApprovedScopeToken } from "../platform/authz/v1.ts";
 import {
   createFinancialRiskResult,
@@ -10,6 +11,7 @@ import {
   type FinancialRiskScope,
 } from "./model.ts";
 import type { FinancialRiskAssessmentId } from "./ids.ts";
+import type { FinancialRiskIdempotencyFailureCode } from "./errors.ts";
 
 export type FinancialRiskIdempotencyClaimResult =
   | { readonly status: "claimed" }
@@ -17,7 +19,7 @@ export type FinancialRiskIdempotencyClaimResult =
   | { readonly status: "replayed"; readonly resultId: string }
   | {
     readonly status: "failed";
-    readonly failureCode: FinancialRiskVersionConflictCode;
+    readonly failureCode: FinancialRiskIdempotencyFailureCode;
   };
 
 export type FinancialRiskVersionConflictCode =
@@ -31,6 +33,18 @@ export class FinancialRiskRepositoryConflictError extends Error {
   ) {
     super(message);
     this.name = "FinancialRiskRepositoryConflictError";
+  }
+}
+
+export type FinancialRiskQueuedCommitFailureCode = "CANCELLED" | "LEASE_LOST";
+
+export class FinancialRiskQueuedCommitError extends Error {
+  constructor(
+    readonly code: FinancialRiskQueuedCommitFailureCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "FinancialRiskQueuedCommitError";
   }
 }
 
@@ -57,7 +71,7 @@ export interface FinancialRiskRepository {
   ): Promise<void>;
   failIdempotency(
     claim: FinancialRiskIdempotencyClaim,
-    failureCode: FinancialRiskVersionConflictCode,
+    failureCode: FinancialRiskIdempotencyFailureCode,
   ): Promise<void>;
   commitResult(
     claim: FinancialRiskIdempotencyClaim,
@@ -67,6 +81,7 @@ export interface FinancialRiskRepository {
   commitQueuedResult(
     result: FinancialRiskResult,
     expectedVersion: AggregateVersion,
+    claimedJob: ClaimedJob,
   ): Promise<void>;
   append(result: FinancialRiskResult): Promise<void>;
   findById(
@@ -90,7 +105,7 @@ export interface FinancialRiskRepository {
 type InMemoryIdempotencyClaim = FinancialRiskIdempotencyClaim & {
   readonly state: "in_progress" | "completed" | "failed";
   readonly resultId?: string;
-  readonly failureCode?: FinancialRiskVersionConflictCode;
+  readonly failureCode?: FinancialRiskIdempotencyFailureCode;
 };
 
 export class InMemoryFinancialRiskRepository
@@ -204,7 +219,9 @@ export class InMemoryFinancialRiskRepository
   commitQueuedResult(
     result: FinancialRiskResult,
     expectedVersion: AggregateVersion,
+    claimedJob: ClaimedJob,
   ): Promise<void> {
+    assertQueuedCommitFence(claimedJob, result);
     const resultKeyValue = resultKey(result.scope, result.resultId);
     const existing = this.results.get(resultKeyValue);
     if (existing !== undefined) {
@@ -360,6 +377,25 @@ function assertCommitClaim(
       `Idempotency key "${claim.idempotencyKey}" cannot commit result "${result.resultId}"; expected the claimed financial-risk scope and identity.`,
     );
   }
+}
+
+function assertQueuedCommitFence(
+  claimedJob: ClaimedJob,
+  result: FinancialRiskResult,
+): void {
+  if (
+    claimedJob.state === "running" &&
+    claimedJob.tenantId === result.scope.tenantId &&
+    claimedJob.workspaceId === result.scope.workspaceId &&
+    claimedJob.dealId === result.scope.dealId &&
+    claimedJob.jobId === result.execution.jobId &&
+    claimedJob.initiatingActorId === result.actor.id &&
+    claimedJob.leaseExpiresAt > result.createdAt
+  ) return;
+  throw new FinancialRiskQueuedCommitError(
+    "LEASE_LOST",
+    `Financial-risk result "${result.resultId}" cannot commit for job "${claimedJob.jobId}"; expected the active tenant, workspace, deal, actor, job, and lease fence.`,
+  );
 }
 
 function snapshotResult(result: FinancialRiskResult): FinancialRiskResult {

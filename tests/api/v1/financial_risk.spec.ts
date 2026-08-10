@@ -13,6 +13,7 @@ import {
   computeRequest,
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
+  FALLBACK_RESULT,
   financialRiskActor,
   financialRiskContext,
   financialRiskReferences,
@@ -20,6 +21,7 @@ import {
   RecordingInputLoader,
   RecordingReferenceVerifier,
 } from "../../financial_risk/support.ts";
+import { FINANCIAL_RISK_PROJECTION_FIELDS } from "../../../src/financial_risk/projection.ts";
 
 Deno.test("financial-risk API enqueues a durable job without claiming a result", async () => {
   const fixture = financialRiskRoutes();
@@ -247,6 +249,104 @@ Deno.test("financial-risk API invalidates with an append-only stale result", asy
   assertEquals(envelope.data.state, "completed");
 });
 
+Deno.test("financial-risk assessment read gates restricted banker fields", async () => {
+  const fixture = financialRiskRoutes();
+  await fixture.application.compute(computeRequest());
+  fixture.authorization.setFieldMask({
+    include: [],
+    omit: [],
+    redact: [],
+    approvedClassifications: [],
+  });
+
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
+    fixture.dependencies,
+  );
+  assertExists(response);
+  const body = await responseBody(response);
+  const data = body.data as Record<string, unknown>;
+
+  assertEquals(Object.keys(data).sort(), [
+    "aggregateType",
+    "assessmentId",
+    "createdAt",
+    "provenance",
+    "reasonCode",
+    "resultId",
+    "schemaVersion",
+    "state",
+    "updatedAt",
+    "version",
+  ]);
+  assertEquals(data.state, "completed");
+  assertEquals(data.reasonCode, "MODEL_INFERENCE");
+  assertEquals(data.outputs, undefined);
+  assertEquals(data.provenance, {
+    kind: "model-inference",
+    readiness: "reference-only",
+  });
+  assertEquals(data.actor, undefined);
+  assertEquals(data.correlationId, undefined);
+  assertEquals(data.idempotencyKey, undefined);
+  assertEquals(data.references, undefined);
+  assertEquals(data.execution, undefined);
+
+  fixture.authorization.setFieldMask({
+    include: [
+      FINANCIAL_RISK_PROJECTION_FIELDS.outputs,
+      FINANCIAL_RISK_PROJECTION_FIELDS.provenance,
+    ],
+    omit: [],
+    redact: [],
+    approvedClassifications: [
+      {
+        name: FINANCIAL_RISK_PROJECTION_FIELDS.outputs,
+        classification: "restricted",
+      },
+      {
+        name: FINANCIAL_RISK_PROJECTION_FIELDS.provenance,
+        classification: "internal_audit",
+      },
+    ],
+  });
+  const detailedResponse = await handleFinancialRiskV1Route(
+    request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
+    fixture.dependencies,
+  );
+  assertExists(detailedResponse);
+  const detailedData = (await responseBody(detailedResponse)).data;
+  assertExists(detailedData.outputs);
+  assertEquals(detailedData.provenance, {
+    kind: "model-inference",
+    modelId: "reference-risk-model",
+    modelVersion: "1.0.0",
+    artifactChecksum: "a".repeat(64),
+    readiness: "reference-only",
+  });
+});
+
+Deno.test("financial-risk assessment read preserves explicit fallback truth", async () => {
+  const fixture = financialRiskRoutes(
+    new FakeFinancialRiskAuthorization(),
+    new FakeFinancialRiskInference(FALLBACK_RESULT),
+  );
+  await fixture.application.compute(computeRequest());
+
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
+    fixture.dependencies,
+  );
+  assertExists(response);
+  const body = await responseBody(response);
+  const provenance = body.data.provenance as Record<string, unknown>;
+
+  assertEquals(body.data.state, "fallback");
+  assertEquals(body.data.reasonCode, "CONFIGURED_FALLBACK");
+  assertEquals(provenance.kind, "configured-fallback");
+  assertEquals(provenance.readiness, "not-claimed");
+});
+
 Deno.test("application server exposes only the banker financial-risk route and fails closed when absent", async () => {
   const { createApiServer } = await import("../../../src/api/server.ts");
   const fixture = financialRiskRoutes();
@@ -289,6 +389,7 @@ interface FinancialRiskRouteFixture {
 
 function financialRiskRoutes(
   authorization = new FakeFinancialRiskAuthorization(),
+  inference = new FakeFinancialRiskInference(),
 ): FinancialRiskRouteFixture {
   const context = financialRiskContext();
   const actor = financialRiskActor();
@@ -296,7 +397,7 @@ function financialRiskRoutes(
   const application = new FinancialRiskApplication(
     authorization,
     new RecordingReferenceVerifier(),
-    new FakeFinancialRiskInference(),
+    inference,
     new InMemoryFinancialRiskRepository(),
     undefined,
     jobs,
@@ -336,8 +437,10 @@ interface FinancialRiskResponseBody {
     readonly status?: string;
     readonly jobId?: string;
     readonly state?: string;
+    readonly reasonCode?: string;
     readonly progress?: number;
     readonly outputs?: { readonly industry4Score: number };
+    readonly provenance?: Record<string, unknown>;
     readonly payload?: unknown;
     readonly statusUrl?: string;
   };

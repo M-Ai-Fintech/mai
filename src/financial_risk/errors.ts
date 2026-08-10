@@ -1,3 +1,12 @@
+export type FinancialRiskIdempotencyFailureCode =
+  | "STALE_VERSION"
+  | "VERSION_CONFLICT"
+  | "PROTECTED_NOT_FOUND"
+  | "DEPENDENCY_UNAVAILABLE"
+  | "INFERENCE_FAILED"
+  | "CANCELLED"
+  | "COMMAND_FAILED";
+
 export type FinancialRiskErrorCode =
   | "INVALID_INPUT"
   | "SCOPE_MISMATCH"
@@ -11,7 +20,8 @@ export type FinancialRiskErrorCode =
   | "DEPENDENCY_UNAVAILABLE"
   | "INFERENCE_FAILED"
   | "CANCELLED"
-  | "HUMAN_AUTHORITY_REQUIRED";
+  | "HUMAN_AUTHORITY_REQUIRED"
+  | "COMMAND_FAILED";
 
 export class FinancialRiskError extends Error {
   constructor(
@@ -20,5 +30,18 @@ export class FinancialRiskError extends Error {
   ) {
     super(message);
     this.name = "FinancialRiskError";
+  }
+}
+
+export class FinancialRiskIdempotencyReplayError extends FinancialRiskError {
+  constructor(
+    readonly failureReference: FinancialRiskIdempotencyFailureCode,
+    idempotencyKey: string,
+  ) {
+    super(
+      failureReference,
+      `Idempotency key "${idempotencyKey}" previously failed with terminal reference "${failureReference}"; expected the original command outcome.`,
+    );
+    this.name = "FinancialRiskIdempotencyReplayError";
   }
 }

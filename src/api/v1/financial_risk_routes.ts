@@ -510,6 +510,14 @@ function financialRiskApiError(
   if (error.code === "DEPENDENCY_UNAVAILABLE") {
     return dependencyError(correlationId);
   }
+  if (error.code === "COMMAND_FAILED") {
+    return createApiError({
+      code: "ASYNC_OPERATION_FAILED",
+      message: "The financial-risk command reached a terminal failure.",
+      correlationId,
+      retryable: false,
+    });
+  }
   if (error.code === "INFERENCE_FAILED" || error.code === "CANCELLED") {
     return createApiError({
       code: "ASYNC_OPERATION_FAILED",

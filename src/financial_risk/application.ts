@@ -12,7 +12,10 @@ import {
   type FinancialRiskResult,
   type FinancialRiskScope,
 } from "./model.ts";
-import { FinancialRiskError } from "./errors.ts";
+import {
+  FinancialRiskError,
+  FinancialRiskIdempotencyReplayError,
+} from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import type { FinancialRiskJobPort } from "./job_port.ts";
 import type { FinancialRiskJobStatus } from "./job_port.ts";
@@ -36,7 +39,7 @@ import {
   assertExpectedVersion,
   claim,
   executionStatus,
-  failVersionClaim,
+  failCommandClaim,
   normalizeCommandError,
   safeInference,
 } from "./application_internal.ts";
@@ -144,9 +147,9 @@ export class FinancialRiskApplication {
       );
     }
     if (claimResult.status === "failed") {
-      throw new FinancialRiskError(
+      throw new FinancialRiskIdempotencyReplayError(
         claimResult.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claimResult.failureCode}".`,
+        request.idempotencyKey,
       );
     }
     if (claimResult.status === "in_progress") {
@@ -187,7 +190,7 @@ export class FinancialRiskApplication {
       };
     } catch (error) {
       const normalized = normalizeCommandError(error);
-      await failVersionClaim(this.repository, claimResult.claim, normalized);
+      await failCommandClaim(this.repository, claimResult.claim, normalized);
       throw normalized;
     }
   }
@@ -236,11 +239,13 @@ export class FinancialRiskApplication {
     command: FinancialRiskQueuedCommand,
     loadInput: FinancialRiskInputLoader,
     execution: JobExecutionContext,
+    claimedJob: import("../platform/jobs/v1.ts").ClaimedJob,
   ): Promise<FinancialRiskResult> {
     return await this.queuedExecution.execute(
       command,
       loadInput,
       execution,
+      claimedJob,
     );
   }
 
@@ -275,9 +280,9 @@ export class FinancialRiskApplication {
       );
     }
     if (claimResult.status === "failed") {
-      throw new FinancialRiskError(
+      throw new FinancialRiskIdempotencyReplayError(
         claimResult.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${claimResult.failureCode}".`,
+        request.idempotencyKey,
       );
     }
     if (claimResult.status === "in_progress") {
@@ -330,7 +335,7 @@ export class FinancialRiskApplication {
       };
     } catch (error) {
       const normalized = normalizeCommandError(error);
-      await failVersionClaim(this.repository, claimResult.claim, normalized);
+      await failCommandClaim(this.repository, claimResult.claim, normalized);
       throw normalized;
     }
   }

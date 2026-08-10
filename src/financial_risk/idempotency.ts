@@ -7,6 +7,7 @@ import type {
   FinancialRiskIdempotencyClaim,
   FinancialRiskIdempotencyClaimResult,
 } from "./repository.ts";
+import type { FinancialRiskIdempotencyFailureCode } from "./errors.ts";
 
 export const FINANCIAL_RISK_TARGET_TYPE = "financial-risk-assessment";
 
@@ -45,10 +46,7 @@ export function mapFinancialRiskClaimResult(
     );
   }
   if (result.state === "failed") {
-    if (
-      result.errorReference !== "STALE_VERSION" &&
-      result.errorReference !== "VERSION_CONFLICT"
-    ) {
+    if (!isFinancialRiskFailureReference(result.errorReference)) {
       throw new Error(
         `Idempotency key "${idempotencyKey}" failed with "${
           String(result.errorReference)
@@ -63,4 +61,18 @@ export function mapFinancialRiskClaimResult(
     );
   }
   return { status: "replayed", resultId: result.resultReference };
+}
+
+function isFinancialRiskFailureReference(
+  value: string | undefined,
+): value is FinancialRiskIdempotencyFailureCode {
+  return value !== undefined && [
+    "STALE_VERSION",
+    "VERSION_CONFLICT",
+    "PROTECTED_NOT_FOUND",
+    "DEPENDENCY_UNAVAILABLE",
+    "INFERENCE_FAILED",
+    "CANCELLED",
+    "COMMAND_FAILED",
+  ].includes(value);
 }

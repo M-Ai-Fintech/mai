@@ -1,4 +1,10 @@
-import { assert, assertEquals, assertStringIncludes } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertExists,
+  assertRejects,
+  assertStringIncludes,
+} from "@std/assert";
 import type {
   Clock,
   IdempotencyClaim,
@@ -7,6 +13,7 @@ import type {
   TransactionHandle,
   TransactionQueryResult,
 } from "../../src/platform/persistence/v1.ts";
+import type { ClaimedJob, DurableJob } from "../../src/platform/jobs/v1.ts";
 import { IdempotencyRepository } from "../../src/platform/persistence/v1.ts";
 import { FinancialRiskApplication } from "../../src/financial_risk/application.ts";
 import {
@@ -19,6 +26,7 @@ import {
 } from "../../src/financial_risk/application_support.ts";
 import { createCommandClaim } from "../../src/financial_risk/application_internal.ts";
 import { InMemoryFinancialRiskRepository } from "../../src/financial_risk/repository.ts";
+import { FinancialRiskQueuedCommitError } from "../../src/financial_risk/repository.ts";
 import type { FinancialRiskEffects } from "../../src/financial_risk/effects.ts";
 import { financialRiskMigration } from "../../src/financial_risk/migrations/index.ts";
 import {
@@ -135,6 +143,75 @@ Deno.test("financial-risk queue claim, job insert, and completion share one tran
   assert(claimIndex >= 0 && claimIndex < jobIndex && jobIndex < completeIndex);
 });
 
+Deno.test("queued PostgreSQL commit locks the job fence before real result effects", async () => {
+  const result = await financialRiskResult();
+  const runner = new FenceRecordingTransactionRunner(true);
+  const effects = new RecordingFinancialRiskEffects();
+  const repository = new PostgresFinancialRiskRepository(
+    runner as unknown as PostgresTransactionRunner,
+    effects,
+    new FakeDurableIdempotencyRepository(),
+    fakeClock,
+  );
+  const request = computeRequest();
+  const job = claimedJob(
+    queuedJob(
+      request,
+      financialRiskScope(),
+      request.references,
+      fakeClock.now(),
+    ),
+  );
+
+  const error = await assertRejects(
+    () => repository.commitQueuedResult(result, 1 as never, job),
+    FinancialRiskQueuedCommitError,
+  );
+
+  assertEquals(error.code, "CANCELLED");
+  assertEquals(effects.results, []);
+  const fence = runner.queries.find((query) =>
+    query.sql.includes("FROM platform.jobs")
+  );
+  assertExists(fence);
+  assertStringIncludes(fence.sql, "FOR UPDATE");
+});
+
+Deno.test("queued PostgreSQL commit permits only an explicit cancelled result after cancellation", async () => {
+  const request = computeRequest({
+    cancellationRequested: () => Promise.resolve(true),
+  });
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    new InMemoryFinancialRiskRepository(),
+    fakeClock,
+  );
+  const result = (await application.compute(request)).result;
+  const runner = new FenceRecordingTransactionRunner(true);
+  const effects = new RecordingFinancialRiskEffects();
+  const repository = new PostgresFinancialRiskRepository(
+    runner as unknown as PostgresTransactionRunner,
+    effects,
+    new FakeDurableIdempotencyRepository(),
+    fakeClock,
+  );
+  const job = claimedJob(
+    queuedJob(
+      request,
+      financialRiskScope(),
+      request.references,
+      fakeClock.now(),
+    ),
+  );
+
+  await repository.commitQueuedResult(result, 1 as never, job);
+
+  assertEquals(result.state, "cancelled");
+  assertEquals(effects.results, [result.resultId]);
+});
+
 class RecordingTransactionRunner {
   readonly queries: RecordedQuery[] = [];
 
@@ -169,6 +246,46 @@ class JobRecordingTransaction implements TransactionHandle {
     parameters: readonly unknown[] = [],
   ): Promise<TransactionQueryResult<TRow>> {
     this.queries.push({ sql: text, parameters });
+    return Promise.resolve({ rows: [], rowCount: 1 });
+  }
+}
+
+class FenceRecordingTransactionRunner {
+  readonly queries: RecordedQuery[] = [];
+
+  constructor(private readonly cancellationRequested: boolean) {}
+
+  async run<TResult>(
+    callback: (transaction: TransactionHandle) => Promise<TResult> | TResult,
+  ): Promise<TResult> {
+    return await callback(
+      new FenceRecordingTransaction(
+        this.queries,
+        this.cancellationRequested,
+      ),
+    );
+  }
+}
+
+class FenceRecordingTransaction implements TransactionHandle {
+  readonly metadata = {};
+
+  constructor(
+    private readonly queries: RecordedQuery[],
+    private readonly cancellationRequested: boolean,
+  ) {}
+
+  query<TRow = Record<string, unknown>>(
+    text: string,
+    parameters: readonly unknown[] = [],
+  ): Promise<TransactionQueryResult<TRow>> {
+    this.queries.push({ sql: text, parameters });
+    if (text.includes("FROM platform.jobs")) {
+      return Promise.resolve({
+        rows: [{ cancellationRequested: this.cancellationRequested }] as TRow[],
+        rowCount: 1,
+      });
+    }
     return Promise.resolve({ rows: [], rowCount: 1 });
   }
 }
@@ -244,6 +361,18 @@ async function financialRiskResult() {
     new InMemoryFinancialRiskRepository(),
   );
   return (await application.compute(computeRequest())).result;
+}
+
+function claimedJob(job: DurableJob): ClaimedJob {
+  return {
+    ...job,
+    state: "running",
+    attemptNumber: 1,
+    workerId: "financial-risk-worker",
+    attemptStartedAt: fakeClock.now(),
+    leaseExpiresAt: new Date(fakeClock.now().getTime() + 60_000),
+    progress: 0,
+  };
 }
 
 const fakeClock: Clock = { now: () => new Date("2026-08-10T12:00:00.000Z") };

@@ -24,12 +24,14 @@ import type { AllowedAuthorizationDecision } from "../../platform/authz/v1.ts";
 import type {
   FinancialDataReference,
   FinancialRiskCalculationReference,
+  FinancialRiskOutputs,
+  FinancialRiskProvenance,
   FinancialRiskReferences,
   FinancialRiskResult,
   FinancialRiskResultState,
   FinancialRiskScope,
 } from "../../financial_risk/model.ts";
-import { projectFinancialRiskResult } from "../../financial_risk/projection.ts";
+import { financialRiskFieldGranted } from "../../financial_risk/projection.ts";
 
 export type FinancialRiskApiState = FinancialRiskResultState;
 
@@ -47,15 +49,142 @@ export type FinancialRiskApiReferences =
   >
   & { readonly evidenceBasis: FinancialRiskApiEvidenceBasis };
 
-export type FinancialRiskAssessmentResponse = Readonly<
-  Record<string, unknown>
->;
+export type FinancialRiskBankerReasonCode =
+  | "MODEL_INFERENCE"
+  | "CONFIGURED_FALLBACK"
+  | "CAPABILITY_UNAVAILABLE"
+  | "INFERENCE_FAILED"
+  | "CANCELLED"
+  | "SOURCE_STALE"
+  | "RESULT_SUPERSEDED";
+
+export type FinancialRiskBankerProvenance =
+  | {
+    readonly kind: "model-inference";
+    readonly modelId?: string;
+    readonly modelVersion?: string;
+    readonly artifactChecksum?: string;
+    readonly readiness: "reference-only";
+  }
+  | {
+    readonly kind: "configured-fallback";
+    readonly readiness: "not-claimed";
+    readonly reasonCode: "CONFIGURED_FALLBACK";
+  }
+  | {
+    readonly kind:
+      | "unavailable"
+      | "failed"
+      | "cancelled"
+      | "stale"
+      | "superseded";
+    readonly readiness: "unavailable";
+    readonly reasonCode: Exclude<
+      FinancialRiskBankerReasonCode,
+      "MODEL_INFERENCE" | "CONFIGURED_FALLBACK"
+    >;
+  };
+
+export interface FinancialRiskAssessmentResponse {
+  readonly schemaVersion: 1;
+  readonly aggregateType: "financial_risk_result";
+  readonly assessmentId: string;
+  readonly resultId: string;
+  readonly version: number;
+  readonly state: FinancialRiskResultState;
+  readonly reasonCode: FinancialRiskBankerReasonCode;
+  readonly outputs?: FinancialRiskOutputs;
+  readonly provenance: FinancialRiskBankerProvenance;
+  readonly supersedesResultId?: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
 
 export function financialRiskAssessmentResponse(
   result: FinancialRiskResult,
   authorization: AllowedAuthorizationDecision,
 ): FinancialRiskAssessmentResponse {
-  return projectFinancialRiskResult(result, authorization);
+  const outputsGranted = financialRiskFieldGranted(authorization, "outputs");
+  const provenanceGranted = financialRiskFieldGranted(
+    authorization,
+    "provenance",
+  );
+  return {
+    schemaVersion: 1,
+    aggregateType: result.aggregateType,
+    assessmentId: result.assessmentId,
+    resultId: result.resultId,
+    version: result.version,
+    state: result.state,
+    reasonCode: bankerReasonCode(result),
+    ...(result.outputs === undefined || !outputsGranted
+      ? {}
+      : { outputs: result.outputs }),
+    provenance: bankerProvenance(result.provenance, provenanceGranted),
+    ...(result.supersedesResultId === undefined
+      ? {}
+      : { supersedesResultId: result.supersedesResultId }),
+    createdAt: result.createdAt.toISOString(),
+    updatedAt: result.updatedAt.toISOString(),
+  };
+}
+
+function bankerProvenance(
+  provenance: FinancialRiskProvenance,
+  includeDetails: boolean,
+): FinancialRiskBankerProvenance {
+  if (provenance.kind === "model-inference") {
+    return {
+      kind: provenance.kind,
+      ...(includeDetails
+        ? {
+          modelId: provenance.modelId,
+          modelVersion: provenance.modelVersion,
+          artifactChecksum: provenance.artifactChecksum,
+        }
+        : {}),
+      readiness: provenance.readiness,
+    };
+  }
+  if (provenance.kind === "configured-fallback") {
+    return {
+      kind: provenance.kind,
+      readiness: provenance.readiness,
+      reasonCode: "CONFIGURED_FALLBACK",
+    };
+  }
+  return {
+    kind: provenance.kind,
+    readiness: "unavailable",
+    reasonCode: bankerReasonCodeForState(provenance.kind),
+  };
+}
+
+function bankerReasonCode(
+  result: FinancialRiskResult,
+): FinancialRiskBankerReasonCode {
+  return result.state === "completed"
+    ? "MODEL_INFERENCE"
+    : result.state === "fallback"
+    ? "CONFIGURED_FALLBACK"
+    : bankerReasonCodeForState(result.state);
+}
+
+function bankerReasonCodeForState(
+  state: Exclude<FinancialRiskResultState, "completed" | "fallback">,
+): Exclude<
+  FinancialRiskBankerReasonCode,
+  "MODEL_INFERENCE" | "CONFIGURED_FALLBACK"
+> {
+  return state === "unavailable"
+    ? "CAPABILITY_UNAVAILABLE"
+    : state === "failed"
+    ? "INFERENCE_FAILED"
+    : state === "cancelled"
+    ? "CANCELLED"
+    : state === "stale"
+    ? "SOURCE_STALE"
+    : "RESULT_SUPERSEDED";
 }
 
 export type FinancialRiskReferencesParseResult =

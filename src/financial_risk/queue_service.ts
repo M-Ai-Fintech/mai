@@ -5,7 +5,10 @@ import type {
 import type { RequestContext } from "../platform/api/v1.ts";
 import type { DurableJob } from "../platform/jobs/v1.ts";
 import type { Clock } from "../platform/persistence/v1.ts";
-import { FinancialRiskError } from "./errors.ts";
+import {
+  FinancialRiskError,
+  FinancialRiskIdempotencyReplayError,
+} from "./errors.ts";
 import type {
   FinancialRiskAuthorizationPort,
   FinancialRiskComputeRequest,
@@ -236,9 +239,9 @@ export class FinancialRiskQueueService {
       };
     }
     if (result.status === "failed") {
-      throw new FinancialRiskError(
+      throw new FinancialRiskIdempotencyReplayError(
         result.failureCode,
-        `Idempotent financial-risk command "${request.idempotencyKey}" previously failed with version conflict "${result.failureCode}".`,
+        request.idempotencyKey,
       );
     }
     throw new FinancialRiskError(

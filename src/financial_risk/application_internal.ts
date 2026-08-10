@@ -1,6 +1,10 @@
 import type { AggregateVersion } from "../platform/api/v1.ts";
 import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
-import { FinancialRiskError } from "./errors.ts";
+import {
+  FinancialRiskError,
+  type FinancialRiskErrorCode,
+  type FinancialRiskIdempotencyFailureCode,
+} from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import type {
   FinancialRiskCommandType,
@@ -82,13 +86,15 @@ export async function assertExpectedVersion(
   throw staleVersion(expectedVersion, latest?.version ?? 0);
 }
 
-export async function failVersionClaim(
+export async function failCommandClaim(
   repository: FinancialRiskRepository,
   claim: FinancialRiskIdempotencyClaim,
   error: unknown,
 ): Promise<void> {
-  if (!isVersionFailure(error)) return;
-  await repository.failIdempotency(claim, error.code);
+  await repository.failIdempotency(
+    claim,
+    idempotencyFailureReference(error),
+  );
 }
 
 export function normalizeCommandError(error: unknown): unknown {
@@ -156,6 +162,25 @@ function isVersionFailure(
 } {
   return error instanceof FinancialRiskError &&
     (error.code === "STALE_VERSION" || error.code === "VERSION_CONFLICT");
+}
+
+function idempotencyFailureReference(
+  error: unknown,
+): FinancialRiskIdempotencyFailureCode {
+  if (isVersionFailure(error)) return error.code;
+  if (error instanceof FinancialRiskError) {
+    if (isPersistableFailureCode(error.code)) return error.code;
+  }
+  return "COMMAND_FAILED";
+}
+
+function isPersistableFailureCode(
+  code: FinancialRiskErrorCode,
+): code is FinancialRiskIdempotencyFailureCode {
+  return code === "PROTECTED_NOT_FOUND" ||
+    code === "DEPENDENCY_UNAVAILABLE" ||
+    code === "INFERENCE_FAILED" || code === "CANCELLED" ||
+    code === "COMMAND_FAILED";
 }
 
 function failedProvenance(reason: string): FinancialRiskProvenance {

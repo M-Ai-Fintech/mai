@@ -16,6 +16,7 @@ import {
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
   FINANCIAL_RISK_ALL_FIELD_MASK,
+  FreshnessFlippingInference,
   RecordingFinancialRiskJobPort,
   RecordingInputLoader,
   RecordingReferenceVerifier,
@@ -89,7 +90,7 @@ Deno.test("financial-risk queued jobs carry exact evidence fences and reauthoriz
 
   assertEquals(output.resultReference, "risk_result_alpha");
   assertEquals(loader.calls, 1);
-  assertEquals(references.calls, 4);
+  assertEquals(references.calls, 5);
 
   assertEquals(await checker.recheck(claimed(accepted.job)), true);
   const replayed = await executor.execute(
@@ -133,7 +134,7 @@ Deno.test("queued worker reauthorization blocks a named loader after an input gr
   assertEquals(loader.calls, 0);
 });
 
-Deno.test("queued compute does not commit after cancellation is observed after inference", async () => {
+Deno.test("queued compute records cancellation observed after inference", async () => {
   const jobs = new RecordingFinancialRiskJobPort();
   const repository = new InMemoryFinancialRiskRepository();
   const loader = new RecordingInputLoader();
@@ -151,22 +152,166 @@ Deno.test("queued compute does not commit after cancellation is observed after i
   let cancellationChecks = 0;
   const executor = new FinancialRiskJobExecutor(application, loader);
 
-  await assertRejects(
-    () =>
-      executor.execute(
-        claimed(accepted.job),
-        executionContext({
-          cancellationRequested: () => {
-            cancellationChecks++;
-            return Promise.resolve(cancellationChecks >= 3);
-          },
-        }),
-      ),
-    FinancialRiskError,
-    "after inference",
+  const output = await executor.execute(
+    claimed(accepted.job),
+    executionContext({
+      cancellationRequested: () => {
+        cancellationChecks++;
+        return Promise.resolve(cancellationChecks >= 3);
+      },
+    }),
   );
 
   assertEquals(loader.calls, 1);
+  assertEquals(output.resultReference, "risk_result_alpha");
+  assertEquals(
+    (await repository.findById(
+      financialRiskScopeFromJob(accepted.job),
+      "risk_result_alpha",
+    ))?.state,
+    "cancelled",
+  );
+});
+
+Deno.test("queued compute records cancellation observed before protected input loading", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const loader = new RecordingInputLoader();
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const accepted = await application.enqueueCompute(
+    computeRequest({ loadInput: loader }),
+  );
+  const executor = new FinancialRiskJobExecutor(application, loader);
+
+  const output = await executor.execute(
+    claimed(accepted.job),
+    executionContext({ cancellationRequested: () => Promise.resolve(true) }),
+  );
+
+  assertEquals(output.resultReference, "risk_result_alpha");
+  assertEquals(loader.calls, 0);
+  assertEquals(
+    (await repository.findById(
+      financialRiskScopeFromJob(accepted.job),
+      "risk_result_alpha",
+    ))?.state,
+    "cancelled",
+  );
+});
+
+Deno.test("queued compute rejects a result whose claimed lease is already expired", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const accepted = await application.enqueueCompute(computeRequest());
+  const executor = new FinancialRiskJobExecutor(
+    application,
+    new RecordingInputLoader(),
+  );
+  const expiredLease = new Date(TEST_TIME.getTime() - 1);
+
+  await assertRejects(
+    () =>
+      executor.execute(
+        {
+          ...claimed(accepted.job),
+          leaseExpiresAt: expiredLease,
+        },
+        executionContext({
+          currentLeaseExpiry: () => expiredLease,
+          heartbeat: () => Promise.resolve(expiredLease),
+        }),
+      ),
+    Error,
+    "lease fence",
+  );
+  assertEquals(
+    await repository.findById(
+      financialRiskScopeFromJob(accepted.job),
+      "risk_result_alpha",
+    ),
+    undefined,
+  );
+});
+
+Deno.test("queued compute commits with the lease renewed by execution heartbeat", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const accepted = await application.enqueueCompute(computeRequest());
+  const renewedLease = new Date(TEST_TIME.getTime() + 120_000);
+  const executor = new FinancialRiskJobExecutor(
+    application,
+    new RecordingInputLoader(),
+  );
+
+  const output = await executor.execute(
+    {
+      ...claimed(accepted.job),
+      leaseExpiresAt: new Date(TEST_TIME.getTime() - 1),
+    },
+    executionContext({
+      currentLeaseExpiry: () => renewedLease,
+      heartbeat: () => Promise.resolve(renewedLease),
+    }),
+  );
+
+  assertEquals(output.resultReference, "risk_result_alpha");
+  assertEquals(
+    (await repository.findById(
+      financialRiskScopeFromJob(accepted.job),
+      "risk_result_alpha",
+    ))?.state,
+    "completed",
+  );
+});
+
+Deno.test("queued compute re-verifies exact references after inference", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const references = new RecordingReferenceVerifier();
+  const inference = new FreshnessFlippingInference(references);
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    references,
+    inference,
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const accepted = await application.enqueueCompute(computeRequest());
+  const executor = new FinancialRiskJobExecutor(
+    application,
+    new RecordingInputLoader(),
+  );
+
+  await assertRejects(
+    () => executor.execute(claimed(accepted.job), executionContext()),
+    FinancialRiskError,
+    "changed during inference",
+  );
+  assertEquals(inference.calls, 1);
   assertEquals(
     await repository.findById(
       financialRiskScopeFromJob(accepted.job),

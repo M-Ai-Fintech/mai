@@ -1,5 +1,8 @@
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
-import { FinancialRiskError } from "../../src/financial_risk/errors.ts";
+import {
+  FinancialRiskError,
+  FinancialRiskIdempotencyReplayError,
+} from "../../src/financial_risk/errors.ts";
 import type { FinancialRiskScope } from "../../src/financial_risk/model.ts";
 import {
   InMemoryFinancialRiskRepository,
@@ -78,6 +81,53 @@ Deno.test("exact reference verification happens before protected input loading",
   );
   assertEquals(references.calls, 1);
   assertEquals(loader.calls, 0);
+});
+
+Deno.test("sync reference failures become typed replayable terminal outcomes", async () => {
+  const references = new RecordingReferenceVerifier(
+    new FinancialRiskError(
+      "DEPENDENCY_UNAVAILABLE",
+      "Evidence service failed.",
+    ),
+  );
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    references,
+  );
+  const request = computeRequest({
+    idempotencyKey: "idem_sync-reference-failure" as never,
+  });
+
+  await assertRejects(() => application.compute(request), FinancialRiskError);
+  const replay = await assertRejects(
+    () => application.compute(request),
+    FinancialRiskIdempotencyReplayError,
+  );
+
+  assertEquals(replay.failureReference, "DEPENDENCY_UNAVAILABLE");
+  assertEquals(references.calls, 1);
+});
+
+Deno.test("sync protected input failures do not strand the idempotency claim", async () => {
+  const loader = new RecordingInputLoader();
+  loader.setFailure(new Error("protected input loader failed"));
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+  );
+  const request = computeRequest({
+    idempotencyKey: "idem_sync-input-failure" as never,
+    loadInput: loader,
+  });
+
+  await assertRejects(() => application.compute(request), Error);
+  const replay = await assertRejects(
+    () => application.compute(request),
+    FinancialRiskIdempotencyReplayError,
+  );
+
+  assertEquals(replay.failureReference, "COMMAND_FAILED");
+  assertEquals(loader.calls, 1);
 });
 
 Deno.test("authorization grant scope reaches evidence and input protected loaders", async () => {
@@ -188,18 +238,23 @@ Deno.test("in-memory command commit rejects a duplicate result ID without overwr
     repository,
   );
   const first = await application.compute(computeRequest());
+  const conflicting = computeRequest({
+    resultId: first.result.resultId,
+    idempotencyKey: "idem_duplicate-result" as never,
+    operationId: "op_duplicate-result" as never,
+    jobId: "job_duplicate-result" as never,
+  });
 
   await assertRejects(
-    () =>
-      application.compute(computeRequest({
-        resultId: first.result.resultId,
-        idempotencyKey: "idem_duplicate-result" as never,
-        operationId: "op_duplicate-result" as never,
-        jobId: "job_duplicate-result" as never,
-      })),
+    () => application.compute(conflicting),
     FinancialRiskError,
     "already exists",
   );
+  const replay = await assertRejects(
+    () => application.compute(conflicting),
+    FinancialRiskIdempotencyReplayError,
+  );
+  assertEquals(replay.failureReference, "VERSION_CONFLICT");
   assertEquals(
     (await repository.findLatest(
       financialRiskScope(),

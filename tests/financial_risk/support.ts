@@ -21,6 +21,10 @@ import type {
 } from "../../src/platform/api/v1.ts";
 import type { RequestContext } from "../../src/platform/api/v1.ts";
 import type { DurableJob } from "../../src/platform/jobs/v1.ts";
+import {
+  FinancialRiskError,
+  type FinancialRiskIdempotencyFailureCode,
+} from "../../src/financial_risk/errors.ts";
 import { createExactEvidenceBasis } from "../../src/diligence_decisions/basis.ts";
 import type {
   FinancialRiskAuthorizationPort,
@@ -280,6 +284,11 @@ export class RecordingReferenceVerifier
 export class RecordingInputLoader implements FinancialRiskInputLoader {
   calls = 0;
   authorization?: AllowedAuthorizationDecision;
+  private failure?: Error;
+
+  setFailure(failure?: Error): void {
+    this.failure = failure;
+  }
 
   load(
     _context: RequestContext,
@@ -287,6 +296,7 @@ export class RecordingInputLoader implements FinancialRiskInputLoader {
   ): Promise<FinancialRiskInput> {
     this.calls++;
     this.authorization = authorization;
+    if (this.failure !== undefined) return Promise.reject(this.failure);
     return Promise.resolve(TEST_INPUT);
   }
 }
@@ -301,6 +311,23 @@ export class FakeFinancialRiskInference implements FinancialRiskInferencePort {
   infer(): Promise<FinancialRiskInferenceResult> {
     this.calls++;
     return Promise.resolve(this.result);
+  }
+}
+
+export class FreshnessFlippingInference implements FinancialRiskInferencePort {
+  calls = 0;
+
+  constructor(private readonly references: RecordingReferenceVerifier) {}
+
+  infer(): Promise<FinancialRiskInferenceResult> {
+    this.calls++;
+    this.references.setFailure(
+      new FinancialRiskError(
+        "EXACT_VERSION_MISMATCH",
+        "Exact source version changed during inference.",
+      ),
+    );
+    return Promise.resolve(MODEL_RESULT);
   }
 }
 
@@ -531,5 +558,5 @@ function claimKey(claim: FinancialRiskIdempotencyClaim): string {
 type TestJobClaim = FinancialRiskIdempotencyClaim & {
   readonly state: "in_progress" | "completed" | "failed";
   readonly jobId?: string;
-  readonly failureCode?: FinancialRiskVersionConflictCode;
+  readonly failureCode?: FinancialRiskIdempotencyFailureCode;
 };

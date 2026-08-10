@@ -86,6 +86,7 @@ export class FinancialRiskJobExecutor implements JobExecutor {
       command,
       this.inputLoader,
       context,
+      job,
     );
     return { resultReference: result.resultId };
   }
