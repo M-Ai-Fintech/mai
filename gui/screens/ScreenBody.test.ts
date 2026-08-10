@@ -35,7 +35,10 @@ function html(
   shellMode: "global" | "administration" | "external" = "global",
 ) {
   return renderToStaticMarkup(
-    createElement(ScreenBody, { resolution: resolution(id, shellMode) }),
+    createElement(ScreenBody, {
+      resolution: resolution(id, shellMode),
+      dataSource: "fixture",
+    }),
   );
 }
 
@@ -194,6 +197,7 @@ describe("MAI-102 MAI-99 conformance compositions", () => {
       createElement(ScreenBody, {
         resolution: resolution("global.search"),
         state: "empty",
+        dataSource: "fixture",
       }),
     );
     expect(result).toContain("No matching local demonstration data");

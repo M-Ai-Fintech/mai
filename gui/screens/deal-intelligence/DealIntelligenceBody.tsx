@@ -71,12 +71,12 @@ const familyNames: readonly DealFamily[] = [
 export function DealIntelligenceBody({
   resolution,
   state = "default",
-  dataSource = "fixture",
+  dataSource,
   adapter,
 }: {
   resolution: ReadyRouteResolution;
   state?: DealState;
-  dataSource?: ScreenDataSource;
+  dataSource: ScreenDataSource;
   adapter?: AdapterResult<AdapterReadModel>;
 }) {
   const family = resolution.route.id.slice("deal.".length) as DealFamily;

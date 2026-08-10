@@ -64,6 +64,26 @@ describe("screen adapter integration", () => {
     expect(String(transport.requests[0])).toContain("/api/v1/deals/deal-1");
   });
 
+  it("maps every approved global route to its named family adapter", async () => {
+    const routeIds = [
+      "global.deals",
+      "global.new-deal",
+      "global.tasks",
+      "global.approvals",
+      "global.notifications",
+      "global.search",
+      "global.organizations",
+      "global.organization-detail",
+      "global.team",
+    ];
+
+    for (const routeId of routeIds) {
+      const result = await readScreenAdapter(resolution(routeId));
+      expect(result.failure?.code).toBeDefined();
+      expect(result.failure?.code).not.toBe("SCREEN_ADAPTER_UNAVAILABLE");
+    }
+  });
+
   it("does not request a registered route when its required identifier is absent", async () => {
     const transport = new FakeScreenTransport(Response.json({}));
     transport.install();

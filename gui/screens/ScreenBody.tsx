@@ -505,12 +505,12 @@ export function ScreenBody(
   {
     resolution,
     state: stateOverride,
-    dataSource = "fixture",
+    dataSource,
     adapter,
   }: {
     resolution: ReadyRouteResolution;
     state?: ScreenState;
-    dataSource?: ScreenDataSource;
+    dataSource: ScreenDataSource;
     adapter?: AdapterResult<AdapterReadModel>;
   },
 ) {

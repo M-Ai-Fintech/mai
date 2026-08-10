@@ -49,6 +49,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Deal horizon-01");
@@ -60,10 +61,14 @@ describe("MAI-101 execution boundary", () => {
     const body = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
       }),
     );
     const integrated = renderToStaticMarkup(
-      createElement(AppShell, { resolution: resolution("deal.negotiation") }),
+      createElement(AppShell, {
+        resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
+      }),
     );
     expect(body).toContain("Proposal and round registry");
     expect(body).toContain("Normalized terms and economics");
@@ -78,6 +83,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.team", ["workspace"]),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Deal access is required");
@@ -88,6 +94,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.settings"),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Archive is not deletion");
@@ -96,6 +103,7 @@ describe("MAI-101 execution boundary", () => {
       renderToStaticMarkup(
         createElement(DealExecutionBody, {
           resolution: resolution("deal.closing"),
+          dataSource: "fixture",
         }),
       ),
     ).toContain("separate from signature");

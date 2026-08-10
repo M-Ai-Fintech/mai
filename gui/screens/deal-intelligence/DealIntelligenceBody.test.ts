@@ -13,23 +13,23 @@ function resolution(routeId: string, permissions: readonly ("workspace" | "deal"
 describe("MAI-100 deal intelligence bodies", () => {
   it("maps exactly the six approved routes to their own body", () => {
     const families = ["overview", "dossier", "documents", "diligence", "valuation", "matching"];
-    for (const family of families) expect(renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution(`deal.${family}`) }))).toContain(`data-screen-family="deal-${family}"`);
+    for (const family of families) expect(renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution(`deal.${family}`), dataSource: "fixture" }))).toContain(`data-screen-family="deal-${family}"`);
   });
   it("keeps the evidence-to-decision invalidation trace visible", () => {
-    const html = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.overview") }));
+    const html = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.overview"), dataSource: "fixture" }));
     expect(html).toContain("DOC-120/v18 changed");
     expect(html).toContain("FAC-018 becomes stale");
     expect(html).toContain("FND-014 requires review");
   });
   it("does not construct protected values before permission is present", () => {
-    const html = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.matching", ["workspace"]) }));
+    const html = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.matching", ["workspace"]), dataSource: "fixture" }));
     expect(html).toContain("Deal access is required");
     expect(html).not.toContain("R$ 1.6bn");
     expect(html).not.toContain("CP-001");
   });
   it("keeps calculation, recommendation, and human approval distinct", () => {
-    const valuation = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.valuation") }));
-    const matching = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.matching") }));
+    const valuation = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.valuation"), dataSource: "fixture" }));
+    const matching = renderToStaticMarkup(createElement(DealIntelligenceBody, { resolution: resolution("deal.matching"), dataSource: "fixture" }));
     expect(valuation).toContain("Calculation CALC-31 is deterministic");
     expect(valuation).toContain("No AI-selected price");
     expect(matching).toContain("Shortlist approval does not authorize outreach");

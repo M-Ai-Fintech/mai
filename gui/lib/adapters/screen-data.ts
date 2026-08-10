@@ -62,8 +62,20 @@ function adapterFamilyForRoute(routeId: string): AdapterFamily | undefined {
 
 function globalFamilyForRoute(routeId: string): GlobalFamily | undefined {
   const suffix = routeId.slice("global.".length);
-  const family = suffix === "home" ? "command-center" : suffix;
-  return isGlobalFamily(family) ? family : undefined;
+  const familyByRoute: Readonly<Record<string, GlobalFamily>> = {
+    home: "command-center",
+    deals: "deals-portfolio",
+    "new-deal": "new-deal-setup",
+    tasks: "tasks-approvals",
+    approvals: "tasks-approvals",
+    notifications: "notification-center",
+    search: "global-search",
+    organizations: "organizations",
+    "organization-detail": "organization-detail",
+    team: "team-workspace",
+  };
+  const family = familyByRoute[suffix];
+  return family !== undefined && isGlobalFamily(family) ? family : undefined;
 }
 
 function isGlobalFamily(value: string): value is GlobalFamily {

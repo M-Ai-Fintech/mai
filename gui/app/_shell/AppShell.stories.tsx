@@ -34,6 +34,7 @@ function fixture(
 const meta = {
   title: "Shell/AppShell",
   component: AppShell,
+  args: { dataSource: "fixture" as const },
   parameters: {
     layout: "fullscreen",
     docs: {

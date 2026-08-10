@@ -4,6 +4,7 @@ import {
   type OrganizationContext,
   type ShellCounts,
 } from "./adapters";
+import { adapterCanaryFor } from "@/lib/adapters/feature-flags";
 import {
   matchRoute,
   navigationRoutes,
@@ -17,7 +18,7 @@ export type RouteResolution =
   | { readonly kind: "not-found" }
   | { readonly kind: "invalid-context"; readonly reason: string }
   | { readonly kind: "restricted" }
-  | { readonly kind: "unavailable" }
+  | { readonly kind: "unavailable"; readonly reason?: string }
   | {
       readonly kind: "ready";
       readonly route: RouteDefinition;
@@ -27,6 +28,10 @@ export type RouteResolution =
       readonly deal?: DealContext;
       readonly counts?: ShellCounts;
     };
+
+export interface RouteContextOptions {
+  readonly dataSource: "fixture" | "v1";
+}
 
 export type ReadyRouteResolution = Extract<RouteResolution, { kind: "ready" }>;
 export type ShellNavigationState = "available" | "active" | "restricted" | "unavailable" | "disabled";
@@ -143,7 +148,10 @@ export function breadcrumbsForResolution(
   return crumbs.filter((crumb): crumb is ShellBreadcrumb => Boolean(crumb));
 }
 
-export async function resolveRouteContext(parts: readonly string[]): Promise<RouteResolution> {
+export async function resolveRouteContext(
+  parts: readonly string[],
+  options: RouteContextOptions,
+): Promise<RouteResolution> {
   const route = matchRoute(parts);
   if (!route) return { kind: "not-found" };
 
@@ -155,6 +163,8 @@ export async function resolveRouteContext(parts: readonly string[]): Promise<Rou
       reason: `The ${malformedParameter[0]} route identifier must use lowercase letters, numbers, or hyphens.`,
     };
   }
+
+  if (options.dataSource === "v1") return unavailableV1Shell(route.id);
 
   const access = await fixtureShellAdapter.resolveAccess(route.shellMode);
   if (!access.permissions.includes(route.permission)) return { kind: "restricted" };
@@ -182,5 +192,15 @@ export async function resolveRouteContext(parts: readonly string[]): Promise<Rou
     organization,
     deal,
     counts: await fixtureShellAdapter.resolveCounts(),
+  };
+}
+
+function unavailableV1Shell(routeId: string): RouteResolution {
+  const shell = adapterCanaryFor("application-shell");
+  return {
+    kind: "unavailable",
+    reason: shell.activation === "off"
+      ? `The v1 shell read model is unavailable for ${routeId}; its route is not registered or configured.`
+      : "The v1 shell read model requires its banker-facing contract before route context can be resolved.",
   };
 }

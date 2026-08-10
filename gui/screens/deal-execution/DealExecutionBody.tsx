@@ -73,12 +73,12 @@ export function DealExecutionBody(
   {
     resolution,
     state = "default",
-    dataSource = "fixture",
+    dataSource,
     adapter,
   }: {
     resolution: ReadyRouteResolution;
     state?: ExecutionState;
-    dataSource?: ScreenDataSource;
+    dataSource: ScreenDataSource;
     adapter?: AdapterResult<AdapterReadModel>;
   },
 ) {

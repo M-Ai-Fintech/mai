@@ -104,13 +104,18 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("distinguishes malformed, unavailable, and unknown context", async () => {
-    await expect(resolveRouteContext(["deals", "BAD!", "documents"])).resolves
+    await expect(resolveRouteContext(["deals", "BAD!", "documents"], { dataSource: "fixture" })).resolves
       .toMatchObject({ kind: "invalid-context" });
-    await expect(resolveRouteContext(["deals", "missing-deal", "documents"]))
+    await expect(resolveRouteContext(["deals", "missing-deal", "documents"], { dataSource: "fixture" }))
       .resolves.toMatchObject({ kind: "unavailable" });
-    await expect(resolveRouteContext(["missing"])).resolves.toMatchObject({
+    await expect(resolveRouteContext(["missing"], { dataSource: "fixture" })).resolves.toMatchObject({
       kind: "not-found",
     });
+  });
+
+  it("keeps the production route context unavailable until the v1 shell is registered", async () => {
+    await expect(resolveRouteContext(["home"], { dataSource: "v1" })).resolves
+      .toMatchObject({ kind: "unavailable" });
   });
 
   it("builds linked breadcrumbs with the exact deal context", async () => {
@@ -118,7 +123,7 @@ describe("MAI-98 route architecture", () => {
       "deals",
       "demo-deal",
       "documents",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
@@ -148,7 +153,7 @@ describe("MAI-98 route architecture", () => {
       "deals",
       "demo-deal",
       "documents",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
@@ -169,7 +174,7 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("keeps administration navigation non-actionable without permission", async () => {
-    const result = await resolveRouteContext(["home"]);
+    const result = await resolveRouteContext(["home"], { dataSource: "fixture" });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
     const restrictedResult = {
@@ -189,7 +194,7 @@ describe("MAI-98 route architecture", () => {
       "portal",
       "project",
       "fixture-workspace",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result).toMatchObject({ kind: "ready" });
     if (result.kind !== "ready") return;
     expect(result.organization).toBeUndefined();

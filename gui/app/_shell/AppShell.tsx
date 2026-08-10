@@ -31,11 +31,11 @@ function entryCount(
 
 export function AppShell({
   resolution,
-  dataSource = "fixture",
+  dataSource,
   adapter,
 }: {
   resolution: Extract<RouteResolution, { kind: "ready" }>;
-  dataSource?: ScreenDataSource;
+  dataSource: ScreenDataSource;
   adapter?: AdapterResult<AdapterReadModel>;
 }) {
   const { route, organization, deal, counts } = resolution;

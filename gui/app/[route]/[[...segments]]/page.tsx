@@ -2,13 +2,14 @@ import { AppShell } from "@/app/_shell/AppShell";
 import { ShellState } from "@/app/_shell/ShellState";
 import { readScreenAdapter } from "@/lib/adapters/screen-data";
 import { resolveRouteContext } from "@/lib/shell/route-context";
+import type { ScreenDataSource } from "@/screens/screen-contracts";
 export default async function ShellRoute({ params }: { params: Promise<{ route: string; segments?: string[] }> }) {
   const { route, segments = [] } = await params;
-  const result = await resolveRouteContext([route, ...segments]);
-  if (result.kind !== "ready") return <ShellState result={result} />;
-  const dataSource = process.env.MAI_FRONTEND_DATA_SOURCE === "fixture"
+  const dataSource: ScreenDataSource = process.env.MAI_FRONTEND_DATA_SOURCE === "fixture"
     ? "fixture"
     : "v1";
+  const result = await resolveRouteContext([route, ...segments], { dataSource });
+  if (result.kind !== "ready") return <ShellState result={result} />;
   const adapter = dataSource === "v1"
     ? await readScreenAdapter(result)
     : undefined;
