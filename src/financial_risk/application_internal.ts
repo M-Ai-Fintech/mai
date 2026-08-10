@@ -1,0 +1,194 @@
+import type { AggregateVersion } from "../platform/api/v1.ts";
+import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
+import {
+  FinancialRiskError,
+  type FinancialRiskErrorCode,
+  type FinancialRiskIdempotencyFailureCode,
+} from "./errors.ts";
+import type { FinancialRiskInferencePort } from "./ports.ts";
+import type {
+  FinancialRiskCommandType,
+  FinancialRiskIdempotencyClaim,
+  FinancialRiskIdempotencyClaimResult,
+  FinancialRiskRepository,
+} from "./repository.ts";
+import { FinancialRiskRepositoryConflictError } from "./repository.ts";
+import type { FinancialRiskCommandRequest } from "./application_contracts.ts";
+import type {
+  FinancialRiskInput,
+  FinancialRiskProvenance,
+  FinancialRiskResult,
+  FinancialRiskScope,
+} from "./model.ts";
+import { staleVersion } from "./application_support.ts";
+
+export type FinancialRiskClaim = FinancialRiskIdempotencyClaimResult & {
+  readonly claim: FinancialRiskIdempotencyClaim;
+};
+
+export async function safeInference(
+  inference: FinancialRiskInferencePort,
+  input: FinancialRiskInput,
+): Promise<Awaited<ReturnType<FinancialRiskInferencePort["infer"]>>> {
+  try {
+    return await inference.infer(input);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return { state: "failed", reason, provenance: failedProvenance(reason) };
+  }
+}
+
+export async function claim(
+  repository: FinancialRiskRepository,
+  request: FinancialRiskCommandRequest,
+  scope: FinancialRiskScope,
+  digest: string,
+): Promise<FinancialRiskClaim> {
+  const commandClaim = createClaim(request, scope, digest);
+  try {
+    const value = await repository.claimIdempotency(commandClaim);
+    return { ...value, claim: commandClaim };
+  } catch (error) {
+    if (isIdempotencyConflict(error)) {
+      throw new FinancialRiskError("IDEMPOTENCY_CONFLICT", error.message);
+    }
+    throw error;
+  }
+}
+
+export async function assertExpectedVersion(
+  repository: FinancialRiskRepository,
+  authorization: AllowedAuthorizationDecision,
+  scope: FinancialRiskScope,
+  assessmentId: FinancialRiskCommandRequest["assessmentId"],
+  expectedVersion: AggregateVersion,
+): Promise<FinancialRiskResult | undefined> {
+  if (
+    authorization.approvedScope.tenantId !== scope.tenantId ||
+    authorization.approvedScope.workspaceId !== scope.workspaceId ||
+    authorization.approvedScope.dealId !== scope.dealId
+  ) {
+    throw new FinancialRiskError(
+      "SCOPE_MISMATCH",
+      `Approved financial-risk scope does not match requested scope "${
+        JSON.stringify(scope)
+      }"; expected exact tenant, workspace, and deal identity.`,
+    );
+  }
+  const latest = await repository.findLatestAuthorized(
+    authorization.approvedScope,
+    assessmentId,
+  );
+  if (latest === undefined && expectedVersion === 1) return latest;
+  if (latest !== undefined && latest.version === expectedVersion) {
+    return latest;
+  }
+  throw staleVersion(expectedVersion, latest?.version ?? 0);
+}
+
+export async function failCommandClaim(
+  repository: FinancialRiskRepository,
+  claim: FinancialRiskIdempotencyClaim,
+  error: unknown,
+): Promise<void> {
+  await repository.failIdempotency(
+    claim,
+    idempotencyFailureReference(error),
+  );
+}
+
+export function normalizeCommandError(error: unknown): unknown {
+  if (error instanceof FinancialRiskRepositoryConflictError) {
+    return new FinancialRiskError(error.code, error.message);
+  }
+  if (
+    error instanceof FinancialRiskError &&
+    error.code === "EXACT_VERSION_MISMATCH"
+  ) {
+    return new FinancialRiskError("STALE_VERSION", error.message);
+  }
+  return error;
+}
+
+export function createCommandClaim(
+  request: FinancialRiskCommandRequest,
+  scope: FinancialRiskScope,
+  digest: string,
+): FinancialRiskIdempotencyClaim {
+  return {
+    commandType: commandType(request),
+    scope,
+    actorId: request.actor.id,
+    assessmentId: request.assessmentId,
+    idempotencyKey: request.idempotencyKey,
+    payloadDigest: digest,
+  };
+}
+
+export function commandType(
+  request: FinancialRiskCommandRequest,
+): FinancialRiskCommandType {
+  return "loadInput" in request
+    ? "financial-risk.compute"
+    : "financial-risk.invalidate";
+}
+
+export function executionStatus(
+  state: Awaited<ReturnType<FinancialRiskInferencePort["infer"]>>["state"],
+): "completed" | "failed" | "cancelled" {
+  if (state === "cancelled") return "cancelled";
+  if (state === "failed" || state === "unavailable") return "failed";
+  return "completed";
+}
+
+function createClaim(
+  request: FinancialRiskCommandRequest,
+  scope: FinancialRiskScope,
+  digest: string,
+): FinancialRiskIdempotencyClaim {
+  return createCommandClaim(request, scope, digest);
+}
+
+function isIdempotencyConflict(error: unknown): error is Error {
+  return error instanceof Error && error.message.startsWith(
+    "IDEMPOTENCY_CONFLICT",
+  );
+}
+
+function isVersionFailure(
+  error: unknown,
+): error is FinancialRiskError & {
+  readonly code: "STALE_VERSION" | "VERSION_CONFLICT";
+} {
+  return error instanceof FinancialRiskError &&
+    (error.code === "STALE_VERSION" || error.code === "VERSION_CONFLICT");
+}
+
+function idempotencyFailureReference(
+  error: unknown,
+): FinancialRiskIdempotencyFailureCode {
+  if (isVersionFailure(error)) return error.code;
+  if (error instanceof FinancialRiskError) {
+    if (isPersistableFailureCode(error.code)) return error.code;
+  }
+  return "COMMAND_FAILED";
+}
+
+function isPersistableFailureCode(
+  code: FinancialRiskErrorCode,
+): code is FinancialRiskIdempotencyFailureCode {
+  return code === "PROTECTED_NOT_FOUND" ||
+    code === "DEPENDENCY_UNAVAILABLE" ||
+    code === "INFERENCE_FAILED" || code === "CANCELLED" ||
+    code === "COMMAND_FAILED";
+}
+
+function failedProvenance(reason: string): FinancialRiskProvenance {
+  return {
+    kind: "failed",
+    reason,
+    readiness: "unavailable",
+    runtimeIdentity: "financial-risk-domain",
+    adapterIdentity: "financial-risk-port",
+  };
+}

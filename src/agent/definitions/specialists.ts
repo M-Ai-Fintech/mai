@@ -165,6 +165,8 @@ export const financialRiskDefinition = defineSpecialist({
     "document.metadata.read",
     "evidence.search",
     "citation.propose",
+    "financial-risk.read",
+    "financial-risk.finding-propose",
   ],
   unavailableCapabilities: [
     PROVIDER_UNAVAILABLE,
@@ -191,6 +193,8 @@ export const financialRiskDefinition = defineSpecialist({
     "governed.documents.version_content",
     "governed.evidence.search",
     "governed.evidence.citation_proposal",
+    "governed.financial-risk.assessment",
+    "governed.financial-risk.finding-proposal",
   ],
   purePorts: [],
   legacyToolReferences: [

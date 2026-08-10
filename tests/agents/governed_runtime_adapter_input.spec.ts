@@ -66,3 +66,36 @@ Deno.test("adapter rejects missing or malformed exact tool inputs before executi
   assertEquals(malformedDocument.status, "unavailable");
   assertEquals(missingCitation.status, "unavailable");
 });
+
+Deno.test("adapter binds financial-risk capabilities to exact governed inputs", () => {
+  const read = mapGovernedToolInput(
+    "financial-risk.read",
+    { context: { assessmentId: "risk_assessment_alpha" } },
+    scope,
+  );
+  const proposal = mapGovernedToolInput(
+    "financial-risk.finding-propose",
+    {
+      context: {
+        assessmentId: "risk_assessment_alpha",
+        title: "Review risk",
+        statement: "The banker should review this assessment.",
+      },
+    },
+    scope,
+  );
+
+  assertEquals(read, {
+    status: "ready",
+    input: { scope, assessmentId: "risk_assessment_alpha" },
+  });
+  assertEquals(proposal, {
+    status: "ready",
+    input: {
+      scope,
+      assessmentId: "risk_assessment_alpha",
+      title: "Review risk",
+      statement: "The banker should review this assessment.",
+    },
+  });
+});

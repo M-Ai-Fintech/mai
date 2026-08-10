@@ -17,6 +17,7 @@ import type {
   RuntimeScope,
   SourceVersionReference,
 } from "../agent_runtime/model.ts";
+import { assertSourceVersionReceipt } from "../agent_runtime/model.ts";
 import type {
   AgentRuntimeReadService,
   RuntimeReadResult,
@@ -177,22 +178,22 @@ async function assertEvidenceCurrent(
 function runtimeSourceReference(
   reference: AgentSourceVersionReference,
 ): SourceVersionReference {
-  if (
-    typeof reference.version !== "number" ||
-    !Number.isSafeInteger(reference.version) || reference.version <= 0
-  ) {
-    throw new GovernedProvenanceError(
-      `evidence receipt "${reference.sourceType}:${reference.sourceId}@${reference.version}" freshness is unavailable; expected a positive runtime version`,
-    );
-  }
-  return {
+  const runtimeReference: SourceVersionReference = {
     sourceType: reference.sourceType,
     sourceId: reference.sourceId,
-    version: reference.version as SourceVersionReference["version"],
+    version: reference.version,
     ...(reference.checksum === undefined
       ? {}
       : { checksum: reference.checksum }),
   };
+  try {
+    assertSourceVersionReceipt(runtimeReference);
+  } catch (_error) {
+    throw new GovernedProvenanceError(
+      `evidence receipt "${reference.sourceType}:${reference.sourceId}@${reference.version}" freshness is unavailable; expected its exact numeric or semantic source version`,
+    );
+  }
+  return runtimeReference;
 }
 
 async function readReceipt<T>(

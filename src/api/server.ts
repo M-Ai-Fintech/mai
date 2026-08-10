@@ -1,4 +1,5 @@
 import { AgentOrchestrator } from "../agent/index.ts";
+import type { CorrelationId } from "../platform/api/v1.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
 import {
   createDealManagementComposition,
@@ -30,6 +31,10 @@ import {
   type DealGovernanceV1RouteDependencies,
   handleDealGovernanceV1Route,
 } from "./v1/deal_governance_routes.ts";
+import {
+  type FinancialRiskServerRouteDependencies,
+  routeFinancialRiskRequest,
+} from "./v1/financial_risk_server.ts";
 import { handleLegacyRoute } from "./routes/legacy.ts";
 import { handleMvpRoute } from "./mvp_routes.ts";
 import {
@@ -64,6 +69,8 @@ export interface WaveHRouteDependencies {
   readonly negotiation?: NegotiationV1RouteDependencies;
 }
 
+export type WaveJRouteDependencies = FinancialRiskServerRouteDependencies;
+
 export interface ApiServerOptions {
   readonly dealManagement?:
     | DealManagementComposition
@@ -72,6 +79,7 @@ export interface ApiServerOptions {
   readonly repository?: DealRepository;
   readonly waveG?: WaveGRouteDependencies;
   readonly waveH?: WaveHRouteDependencies;
+  readonly waveJ?: WaveJRouteDependencies;
 }
 
 export interface ApiServerRouter {
@@ -80,6 +88,7 @@ export interface ApiServerRouter {
   readonly readiness: RuntimeReadiness;
   readonly waveG: WaveGRouteDependencies;
   readonly waveH: WaveHRouteDependencies;
+  readonly waveJ: WaveJRouteDependencies;
   handle(request: Request): Promise<Response>;
 }
 
@@ -114,11 +123,12 @@ async function routeRequest(
   dealManagement: DealManagementCompositionResult,
   waveG: WaveGRouteDependencies,
   waveH: WaveHRouteDependencies,
+  waveJ: WaveJRouteDependencies,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = corsHeaders();
-  const correlationId = request.headers.get("X-Correlation-Id") ??
-    crypto.randomUUID();
+  const correlationId = (request.headers.get("X-Correlation-Id") ??
+    crypto.randomUUID()) as CorrelationId;
   if (request.method === "OPTIONS") return new Response(null, { headers });
   const healthResponse = handleHealthRequest(request, readiness);
   if (healthResponse) return withCorrelationId(healthResponse, correlationId);
@@ -136,7 +146,9 @@ async function routeRequest(
         dealManagement,
         waveG,
         waveH,
+        waveJ,
         headers,
+        correlationId,
       ),
       correlationId,
     );
@@ -151,7 +163,9 @@ async function routedResponse(
   dealManagement: DealManagementCompositionResult,
   waveG: WaveGRouteDependencies,
   waveH: WaveHRouteDependencies,
+  waveJ: WaveJRouteDependencies,
   headers: Headers,
+  correlationId: CorrelationId,
 ): Promise<Response> {
   const dealManagementResponse = await handleDealManagementRoute(
     request,
@@ -163,6 +177,13 @@ async function routedResponse(
   if (dealManagementResponse) return dealManagementResponse;
   const waveHResponse = await routeWaveHRequest(request, waveH, headers);
   if (waveHResponse !== undefined) return waveHResponse;
+  const waveJResponse = await routeFinancialRiskRequest(
+    request,
+    waveJ,
+    headers,
+    correlationId,
+  );
+  if (waveJResponse !== undefined) return waveJResponse;
   const waveGResponse = await routeWaveGRequest(request, waveG, headers);
   if (waveGResponse !== undefined) return waveGResponse;
   return await nonDealResponse(request, repository, headers);
@@ -354,6 +375,7 @@ export function createApiServer(
     readiness,
     waveG: options.waveG ?? {},
     waveH: options.waveH ?? {},
+    waveJ: options.waveJ ?? {},
     handle: (request) =>
       routeRequest(
         request,
@@ -361,6 +383,7 @@ export function createApiServer(
         dealManagement,
         options.waveG ?? {},
         options.waveH ?? {},
+        options.waveJ ?? {},
         readiness,
       ),
   };
@@ -389,6 +412,7 @@ export function createExecutableApiServer(
   options: {
     readonly dealManagement?: ApiServerOptions["dealManagement"];
     readonly waveH?: WaveHRouteDependencies;
+    readonly waveJ?: WaveJRouteDependencies;
     readonly negotiation?: ExecutableNegotiationConfig;
   } = {},
 ): ApiServerRouter {
@@ -399,12 +423,20 @@ export function createExecutableApiServer(
   } catch (error) {
     throw error;
   }
-  if (options.waveH !== undefined) {
-    return createApiServer({ dealManagement, waveH: options.waveH });
+  if (options.waveH !== undefined || options.waveJ !== undefined) {
+    return createApiServer({
+      dealManagement,
+      waveH: options.waveH,
+      waveJ: options.waveJ,
+    });
   }
   const resolved = resolveDealManagement(dealManagement);
   if (resolved.kind !== "configured") {
-    return createApiServer({ dealManagement, waveH: {} });
+    return createApiServer({
+      dealManagement,
+      waveH: {},
+      waveJ: options.waveJ,
+    });
   }
   try {
     const negotiation = createExecutableNegotiationComposition({
@@ -414,10 +446,15 @@ export function createExecutableApiServer(
     return createApiServer({
       dealManagement,
       waveH: { negotiation },
+      waveJ: options.waveJ,
     });
   } catch (error) {
     console.error("[API Server] Negotiation composition unavailable", error);
-    return createApiServer({ dealManagement, waveH: {} });
+    return createApiServer({
+      dealManagement,
+      waveH: {},
+      waveJ: options.waveJ,
+    });
   }
 }
 

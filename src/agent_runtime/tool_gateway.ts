@@ -61,6 +61,7 @@ export type ToolOutput = {
 
 export type ToolOutputSemanticStatus =
   | "ok"
+  | "fallback"
   | "proposal"
   | "denied"
   | "unavailable"
@@ -172,14 +173,16 @@ function blockedOutputStatus(
   value: Readonly<Record<string, unknown>>,
 ): ToolOutputSemanticStatus | undefined {
   const status = semanticStatus(value.status);
-  return status === undefined || status === "ok" || status === "proposal"
+  return status === undefined || status === "ok" || status === "fallback" ||
+      status === "proposal"
     ? undefined
     : status;
 }
 
 function semanticStatus(value: unknown): ToolOutputSemanticStatus | undefined {
   if (typeof value !== "string") return undefined;
-  return value === "ok" || value === "proposal" || value === "denied" ||
+  return value === "ok" || value === "fallback" || value === "proposal" ||
+      value === "denied" ||
       value === "unavailable" || value === "stale" || value === "not_found"
     ? value
     : "unknown";

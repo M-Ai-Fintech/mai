@@ -30,6 +30,10 @@ export type IdempotencyClaimResult =
     readonly errorReference: string | undefined;
   };
 
+export type IdempotencyPeekResult =
+  | IdempotencyClaimResult
+  | { readonly status: "missing" };
+
 interface IdempotencyRow {
   readonly payloadDigest: string;
   readonly state: "in_progress" | "completed" | "failed" | "abandoned";
@@ -65,6 +69,17 @@ export class IdempotencyRepository {
     if (inserted.rowCount === 1) return { status: "claimed" };
     const existing = await loadClaim(transaction, claim);
     return existingClaimResult(existing, claim);
+  }
+
+  async peek(
+    transaction: TransactionHandle,
+    claim: IdempotencyClaim,
+  ): Promise<IdempotencyPeekResult> {
+    assertDigest(claim.payloadDigest);
+    const existing = await loadClaimOrUndefined(transaction, claim);
+    return existing === undefined
+      ? { status: "missing" }
+      : existingClaimResult(existing, claim);
   }
 
   /**
@@ -187,6 +202,22 @@ async function loadClaim(
   throw new Error(
     `Idempotency key "${claim.idempotencyKey}" disappeared; expected a durable conflicting row.`,
   );
+}
+
+async function loadClaimOrUndefined(
+  transaction: TransactionHandle,
+  claim: IdempotencyClaim,
+): Promise<IdempotencyRow | undefined> {
+  const result = await transaction.query<IdempotencyRow>(
+    `SELECT payload_digest AS "payloadDigest", state,
+       result_reference AS "resultReference",
+       error_reference AS "errorReference"
+     FROM platform.idempotency_records
+     WHERE tenant_id = $1 AND actor_id = $2 AND command_type = $3
+       AND target_type = $4 AND target_id = $5 AND idempotency_key = $6`,
+    claimIdentity(claim),
+  );
+  return result.rows[0];
 }
 
 function existingClaimResult(
