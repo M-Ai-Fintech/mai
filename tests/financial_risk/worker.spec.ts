@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "@std/assert";
 import type {
   ClaimedJob,
   DurableJob,
@@ -15,11 +15,16 @@ import {
   computeRequest,
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
+  FINANCIAL_RISK_ALL_FIELD_MASK,
   RecordingFinancialRiskJobPort,
   RecordingInputLoader,
   RecordingReferenceVerifier,
   TEST_TIME,
 } from "./support.ts";
+import {
+  FINANCIAL_RISK_INPUT_FIELD_MASK,
+  FINANCIAL_RISK_INPUT_FIELDS,
+} from "../../src/financial_risk/input_contract.ts";
 
 Deno.test("financial-risk queued jobs carry exact evidence fences and reauthorize before loading", async () => {
   const jobs = new RecordingFinancialRiskJobPort();
@@ -95,6 +100,142 @@ Deno.test("financial-risk queued jobs carry exact evidence fences and reauthoriz
   assertEquals(loader.calls, 1);
 });
 
+Deno.test("queued worker reauthorization blocks a named loader after an input grant is narrowed", async () => {
+  const authorization = new FakeFinancialRiskAuthorization();
+  const loader = new RecordingInputLoader();
+  const application = new FinancialRiskApplication(
+    authorization,
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    new InMemoryFinancialRiskRepository(),
+    { now: () => new Date(TEST_TIME) },
+    new RecordingFinancialRiskJobPort(),
+  );
+  const accepted = await application.enqueueCompute(
+    computeRequest({ loadInput: loader }),
+  );
+  const missing = FINANCIAL_RISK_INPUT_FIELDS.totalAssets;
+  authorization.setFieldMask({
+    ...FINANCIAL_RISK_ALL_FIELD_MASK,
+    include: FINANCIAL_RISK_INPUT_FIELD_MASK.include.filter((name) =>
+      name !== missing
+    ),
+    approvedClassifications: FINANCIAL_RISK_INPUT_FIELD_MASK
+      .approvedClassifications.filter((entry) => entry.name !== missing),
+  });
+
+  const executor = new FinancialRiskJobExecutor(application, loader);
+  await assertRejects(
+    () => executor.execute(claimed(accepted.job), executionContext()),
+    FinancialRiskError,
+    "Financial-risk assessment",
+  );
+  assertEquals(loader.calls, 0);
+});
+
+Deno.test("queued compute does not commit after cancellation is observed after inference", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const loader = new RecordingInputLoader();
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const accepted = await application.enqueueCompute(
+    computeRequest({ loadInput: loader }),
+  );
+  let cancellationChecks = 0;
+  const executor = new FinancialRiskJobExecutor(application, loader);
+
+  await assertRejects(
+    () =>
+      executor.execute(
+        claimed(accepted.job),
+        executionContext({
+          cancellationRequested: () => {
+            cancellationChecks++;
+            return Promise.resolve(cancellationChecks >= 3);
+          },
+        }),
+      ),
+    FinancialRiskError,
+    "after inference",
+  );
+
+  assertEquals(loader.calls, 1);
+  assertEquals(
+    await repository.findById(
+      financialRiskScopeFromJob(accepted.job),
+      "risk_result_alpha",
+    ),
+    undefined,
+  );
+});
+
+Deno.test("queued compute and invalidation honor the lease fence before effects", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const repository = new InMemoryFinancialRiskRepository();
+  const application = new FinancialRiskApplication(
+    new FakeFinancialRiskAuthorization(),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    repository,
+    { now: () => new Date(TEST_TIME) },
+    jobs,
+  );
+  const compute = await application.enqueueCompute(computeRequest());
+  const executor = new FinancialRiskJobExecutor(
+    application,
+    new RecordingInputLoader(),
+  );
+  const expired = executionContext({
+    beforeExternalEffect: () => Promise.reject(new Error("lease expired")),
+  });
+
+  await assertRejects(
+    () => executor.execute(claimed(compute.job), expired),
+    Error,
+    "lease expired",
+  );
+  assertEquals(
+    await repository.findById(
+      financialRiskScopeFromJob(compute.job),
+      "risk_result_alpha",
+    ),
+    undefined,
+  );
+
+  await application.compute(computeRequest());
+  const invalidation = await application.enqueueInvalidate({
+    context: computeRequest().context,
+    actor: computeRequest().actor,
+    assessmentId: "risk_assessment_alpha" as never,
+    resultId: "risk_result_worker-stale" as never,
+    invalidationId: "risk_invalidation_worker" as never,
+    operationId: "op_worker-invalidate" as never,
+    jobId: "job_worker-invalidate" as never,
+    idempotencyKey: "idem_worker-invalidate" as never,
+    expectedVersion: 1 as never,
+    reason: "Worker lease test.",
+  });
+  await assertRejects(
+    () => executor.execute(claimed(invalidation.job), expired),
+    Error,
+    "lease expired",
+  );
+  assertEquals(
+    (await repository.listHistory(
+      financialRiskScopeFromJob(compute.job),
+      "risk_assessment_alpha" as never,
+    )).length,
+    1,
+  );
+});
+
 function claimed(job: DurableJob): ClaimedJob {
   return {
     ...job,
@@ -107,12 +248,23 @@ function claimed(job: DurableJob): ClaimedJob {
   };
 }
 
-function executionContext(): JobExecutionContext {
+function executionContext(
+  overrides: Partial<JobExecutionContext> = {},
+): JobExecutionContext {
   return {
     deadline: new Date(TEST_TIME.getTime() + 300_000),
     currentLeaseExpiry: () => new Date(TEST_TIME.getTime() + 60_000),
     cancellationRequested: () => Promise.resolve(false),
     heartbeat: () => Promise.resolve(new Date(TEST_TIME.getTime() + 60_000)),
     beforeExternalEffect: () => Promise.resolve(),
+    ...overrides,
   };
+}
+
+function financialRiskScopeFromJob(job: DurableJob) {
+  return {
+    tenantId: job.tenantId,
+    workspaceId: job.workspaceId!,
+    dealId: job.dealId!,
+  } as never;
 }

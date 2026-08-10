@@ -170,7 +170,7 @@ function readOutput(
     kind: capability,
     value: {
       status: stateStatus(result.state),
-      reasonCode: result.reason ?? result.state,
+      reasonCode: safeReasonCode(result.state),
       authoritative: false,
       ...projected,
     },
@@ -302,7 +302,7 @@ function sourceReceipts(
     receipts.push({
       sourceType: "financial_data",
       sourceId: reference.sourceId,
-      version: reference.version as SourceVersionReference["version"],
+      version: reference.version,
       checksum: reference.checksum,
     });
   }
@@ -311,8 +311,7 @@ function sourceReceipts(
       receipts.push({
         sourceType: "document_version",
         sourceId: reference.reference.documentVersionId,
-        version: reference.reference
-          .processingVersion as unknown as SourceVersionReference["version"],
+        version: reference.reference.processingVersion,
         checksum: reference.reference.checksum.value,
       });
       continue;
@@ -322,17 +321,18 @@ function sourceReceipts(
       sourceId: reference.kind === "evidence"
         ? reference.evidenceId
         : reference.factVersionId,
-      // Evidence Knowledge exposes a basis digest rather than a numeric
-      // aggregate version for these references; the runtime receipt validator
-      // accepts the semantic exact marker even though its public type is numeric.
-      version: "exact" as unknown as SourceVersionReference["version"],
+      version: `${result.references.evidenceBasis.basisDigest}:${
+        reference.kind === "evidence"
+          ? reference.evidenceId
+          : reference.factVersionId
+      }`,
     });
   }
   for (const reference of result.references.calculations) {
     receipts.push({
       sourceType: "calculation",
       sourceId: reference.calculationId,
-      version: reference.version as SourceVersionReference["version"],
+      version: reference.version,
     });
   }
   return Object.freeze(receipts);
@@ -340,10 +340,15 @@ function sourceReceipts(
 
 function stateStatus(
   state: FinancialRiskResult["state"],
-): "ok" | "stale" | "unavailable" {
-  if (state === "completed" || state === "fallback") return "ok";
+): "ok" | "fallback" | "stale" | "unavailable" {
+  if (state === "completed") return "ok";
+  if (state === "fallback") return "fallback";
   if (state === "stale" || state === "superseded") return "stale";
   return "unavailable";
+}
+
+function safeReasonCode(state: FinancialRiskResult["state"]): string {
+  return `FINANCIAL_RISK_${state.toUpperCase()}`;
 }
 
 function runtimeActor(actor: RuntimeActor): ActorReference {

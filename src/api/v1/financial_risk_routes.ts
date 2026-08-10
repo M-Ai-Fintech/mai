@@ -14,6 +14,7 @@ import {
 } from "../../platform/api/v1.ts";
 import type { ActorReference } from "../../platform/authz/v1.ts";
 import type { DurableJob } from "../../platform/jobs/v1.ts";
+import type { FinancialRiskJobStatus } from "../../financial_risk/job_port.ts";
 import type { FinancialRiskInputLoader } from "../../financial_risk/application.ts";
 import {
   FinancialRiskApplication,
@@ -60,6 +61,13 @@ export async function handleFinancialRiskV1Route(
   if (route === undefined) return null;
   const authenticated = await dependencies.context.contextFor(request);
   try {
+    if (request.method === "GET" && route.kind === "job-status") {
+      return await readJobStatus(
+        route.jobId,
+        authenticated,
+        dependencies.application,
+      );
+    }
     if (request.method === "GET" && route.kind === "assessment") {
       return await readAssessment(
         route.assessmentId,
@@ -94,6 +102,10 @@ export async function handleFinancialRiskV1Route(
 
 type Route =
   | {
+    readonly kind: "job-status";
+    readonly jobId: import("../../platform/api/v1.ts").JobId;
+  }
+  | {
     readonly kind: "assessment";
     readonly assessmentId: FinancialRiskAssessmentId;
   }
@@ -108,6 +120,13 @@ type Route =
 
 function parseRoute(path: string): Route | undefined {
   const parts = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  if (
+    parts.length === 4 && parts[0] === "api" && parts[1] === "v1" &&
+    parts[2] === "jobs"
+  ) {
+    const jobId = parseJobId(decode(parts[3]));
+    return jobId.ok ? { kind: "job-status", jobId: jobId.value } : undefined;
+  }
   if (
     parts.length < 5 || parts[0] !== "api" || parts[1] !== "v1" ||
     parts[2] !== "financial-risk"
@@ -160,6 +179,25 @@ async function readAssessment(
   );
 }
 
+async function readJobStatus(
+  jobId: import("../../platform/api/v1.ts").JobId,
+  authenticated: FinancialRiskAuthenticatedContext,
+  application: FinancialRiskApplication,
+): Promise<Response> {
+  const status = await application.readJobStatus(
+    authenticated.context,
+    authenticated.actor,
+    jobId,
+  );
+  return Response.json(
+    createSuccessEnvelope(
+      financialRiskJobStatusResponse(status),
+      { correlationId: authenticated.context.correlationId },
+    ),
+    responseOptions(authenticated.context, undefined, 200),
+  );
+}
+
 async function computeAssessment(
   assessmentId: FinancialRiskAssessmentId,
   authenticated: FinancialRiskAuthenticatedContext,
@@ -188,7 +226,11 @@ async function computeAssessment(
     expectedVersion: headers.expectedVersion,
     loadInput: dependencies.inputLoader,
   });
-  return accepted(result.job, authenticated.context);
+  return accepted(
+    result.job,
+    authenticated.context,
+    result.status === "replayed" ? "accepted" : "queued",
+  );
 }
 
 async function invalidateAssessment(
@@ -216,7 +258,11 @@ async function invalidateAssessment(
     idempotencyKey: headers.idempotency,
     expectedVersion: headers.expectedVersion,
   });
-  return accepted(result.job, authenticated.context);
+  return accepted(
+    result.job,
+    authenticated.context,
+    result.status === "replayed" ? "accepted" : "queued",
+  );
 }
 
 function parseComputeBody(
@@ -325,7 +371,11 @@ function requestScope(context: RequestContext): FinancialRiskScope | undefined {
   };
 }
 
-function accepted(job: DurableJob, context: RequestContext): Response {
+function accepted(
+  job: DurableJob,
+  context: RequestContext,
+  status: "queued" | "accepted",
+): Response {
   if (job.operationId === undefined) {
     return errorResponse(dependencyError(context.correlationId));
   }
@@ -333,7 +383,7 @@ function accepted(job: DurableJob, context: RequestContext): Response {
     createAcceptedJobEnvelope({
       operationId: job.operationId,
       jobId: job.jobId,
-      status: "queued",
+      status,
       correlationId: context.correlationId,
     }),
     responseOptions(context),
@@ -343,13 +393,37 @@ function accepted(job: DurableJob, context: RequestContext): Response {
 function responseOptions(
   context: RequestContext,
   etag?: string,
+  status = etag === undefined ? 202 : 200,
 ): ResponseInit {
   const headers = new Headers({
     "Content-Type": "application/json; charset=utf-8",
     "X-Correlation-Id": context.correlationId,
   });
   if (etag !== undefined) headers.set("ETag", etag);
-  return { status: etag === undefined ? 202 : 200, headers };
+  return { status, headers };
+}
+
+function financialRiskJobStatusResponse(
+  status: FinancialRiskJobStatus,
+): Readonly<Record<string, unknown>> {
+  return {
+    schemaVersion: status.schemaVersion,
+    jobId: status.jobId,
+    ...(status.operationId === undefined
+      ? {}
+      : { operationId: status.operationId }),
+    state: status.state,
+    progress: status.progress,
+    attemptCount: status.attemptCount,
+    cancellationRequested: status.cancellationRequested,
+    createdAt: status.createdAt.toISOString(),
+    ...(status.startedAt === undefined
+      ? {}
+      : { startedAt: status.startedAt.toISOString() }),
+    ...(status.terminalAt === undefined
+      ? {}
+      : { terminalAt: status.terminalAt.toISOString() }),
+  };
 }
 
 async function jsonBody(

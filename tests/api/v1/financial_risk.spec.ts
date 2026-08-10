@@ -1,5 +1,4 @@
 import { assertEquals, assertExists } from "@std/assert";
-import { createApiServer } from "../../../src/api/server.ts";
 import {
   FinancialRiskApplication,
 } from "../../../src/financial_risk/application.ts";
@@ -45,7 +44,39 @@ Deno.test("financial-risk API enqueues a durable job without claiming a result",
   const accepted = await responseBody(compute);
   assertEquals(accepted.data.status, "queued");
   assertEquals(accepted.data.jobId, "job_api-compute");
+  assertEquals(accepted.data.statusUrl, "/api/v1/jobs/job_api-compute");
   assertEquals(fixture.jobs.jobs.has("job_api-compute"), true);
+
+  const status = await handleFinancialRiskV1Route(
+    request("/api/v1/jobs/job_api-compute"),
+    fixture.dependencies,
+  );
+  assertExists(status);
+  assertEquals(status.status, 200);
+  const statusBody = await responseBody(status);
+  assertEquals(statusBody.data.schemaVersion, 1);
+  assertEquals(statusBody.data.state, "queued");
+  assertEquals(statusBody.data.progress, 0);
+  assertEquals(statusBody.data.payload, undefined);
+
+  const replay = await handleFinancialRiskV1Route(
+    request(
+      "/api/v1/financial-risk/assessments/risk_assessment_alpha/compute",
+      {
+        method: "POST",
+        headers: commandHeaders(),
+        body: JSON.stringify({
+          resultId: "risk_result_alpha",
+          operationId: "op_api-compute",
+          jobId: "job_api-compute",
+          references: financialRiskReferences(),
+        }),
+      },
+    ),
+    fixture.dependencies,
+  );
+  assertExists(replay);
+  assertEquals((await responseBody(replay)).data.status, "accepted");
 
   const read = await handleFinancialRiskV1Route(
     request("/api/v1/financial-risk/assessments/risk_assessment_alpha"),
@@ -53,6 +84,73 @@ Deno.test("financial-risk API enqueues a durable job without claiming a result",
   );
   assertExists(read);
   assertEquals(read.status, 404);
+});
+
+Deno.test("financial-risk job status is protected-not-found before an unauthorized job load", async () => {
+  const fixture = financialRiskRoutes(
+    new FakeFinancialRiskAuthorization("deny"),
+  );
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/jobs/job_hidden"),
+    fixture.dependencies,
+  );
+
+  assertExists(response);
+  assertEquals(response.status, 404);
+  assertEquals(fixture.jobs.statusCalls, 0);
+});
+
+Deno.test("financial-risk job status returns protected-not-found for a missing job", async () => {
+  const fixture = financialRiskRoutes();
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/jobs/job_missing"),
+    fixture.dependencies,
+  );
+
+  assertExists(response);
+  assertEquals(response.status, 404);
+  assertEquals(fixture.jobs.statusCalls, 1);
+});
+
+Deno.test("financial-risk job status does not cross a stored deal scope", async () => {
+  const fixture = financialRiskRoutes();
+  const compute = await handleFinancialRiskV1Route(
+    request(
+      "/api/v1/financial-risk/assessments/risk_assessment_alpha/compute",
+      {
+        method: "POST",
+        headers: commandHeaders("idem_scope-status"),
+        body: JSON.stringify({
+          resultId: "risk_result_scope-status",
+          operationId: "op_scope-status",
+          jobId: "job_scope-status",
+          references: financialRiskReferences(),
+        }),
+      },
+    ),
+    fixture.dependencies,
+  );
+  assertExists(compute);
+  const foreignContext = financialRiskContext({
+    ...financialRiskReferences().evidenceBasis.scope,
+    dealId: "deal_foreign" as never,
+  });
+  const foreignDependencies = {
+    ...fixture.dependencies,
+    context: new FakeFinancialRiskRequestContext({
+      context: foreignContext,
+      actor: financialRiskActor(),
+    }),
+  };
+
+  const response = await handleFinancialRiskV1Route(
+    request("/api/v1/jobs/job_scope-status"),
+    foreignDependencies,
+  );
+
+  assertExists(response);
+  assertEquals(response.status, 404);
+  assertEquals(fixture.jobs.statusCalls, 1);
 });
 
 Deno.test("financial-risk API requires command concurrency and idempotency headers", async () => {
@@ -150,6 +248,7 @@ Deno.test("financial-risk API invalidates with an append-only stale result", asy
 });
 
 Deno.test("application server exposes only the banker financial-risk route and fails closed when absent", async () => {
+  const { createApiServer } = await import("../../../src/api/server.ts");
   const fixture = financialRiskRoutes();
   const configured = createApiServer({
     waveJ: { financialRisk: fixture.dependencies },
@@ -188,10 +287,11 @@ interface FinancialRiskRouteFixture {
   readonly jobs: RecordingFinancialRiskJobPort;
 }
 
-function financialRiskRoutes(): FinancialRiskRouteFixture {
+function financialRiskRoutes(
+  authorization = new FakeFinancialRiskAuthorization(),
+): FinancialRiskRouteFixture {
   const context = financialRiskContext();
   const actor = financialRiskActor();
-  const authorization = new FakeFinancialRiskAuthorization();
   const jobs = new RecordingFinancialRiskJobPort();
   const application = new FinancialRiskApplication(
     authorization,
@@ -232,10 +332,14 @@ async function responseBody(
 
 interface FinancialRiskResponseBody {
   readonly data: {
+    readonly schemaVersion?: number;
     readonly status?: string;
     readonly jobId?: string;
     readonly state?: string;
+    readonly progress?: number;
     readonly outputs?: { readonly industry4Score: number };
+    readonly payload?: unknown;
+    readonly statusUrl?: string;
   };
   readonly meta: { readonly freshness?: string };
   readonly error?: {

@@ -1,6 +1,6 @@
-import type { DurableJob } from "../platform/jobs/v1.ts";
+import type { DurableJob, JobState, StoredJob } from "../platform/jobs/v1.ts";
 import { JobRepository } from "../platform/jobs/repository.ts";
-import type { JobId } from "../platform/api/v1.ts";
+import type { JobId, OperationId } from "../platform/api/v1.ts";
 import type { PostgresTransactionRunner } from "../platform/persistence/v1.ts";
 import type { FinancialRiskScope } from "./model.ts";
 import type {
@@ -34,6 +34,23 @@ export interface FinancialRiskJobPort {
     scope: FinancialRiskScope,
     jobId: string,
   ): Promise<DurableJob | undefined>;
+  findStatus(
+    scope: FinancialRiskScope,
+    jobId: JobId,
+  ): Promise<FinancialRiskJobStatus | undefined>;
+}
+
+export interface FinancialRiskJobStatus {
+  readonly schemaVersion: 1;
+  readonly jobId: JobId;
+  readonly operationId?: OperationId;
+  readonly state: JobState;
+  readonly progress: number;
+  readonly attemptCount: number;
+  readonly cancellationRequested: boolean;
+  readonly createdAt: Date;
+  readonly startedAt?: Date;
+  readonly terminalAt?: Date;
 }
 
 export type FinancialRiskQueueLookupResult =
@@ -118,6 +135,17 @@ export class PostgresFinancialRiskJobPort implements FinancialRiskJobPort {
       return job;
     });
   }
+
+  findStatus(
+    scope: FinancialRiskScope,
+    jobId: JobId,
+  ): Promise<FinancialRiskJobStatus | undefined> {
+    return this.transactions.run(async (transaction) => {
+      const job = await this.jobs.find(transaction, scope.tenantId, jobId);
+      if (job === undefined || !jobMatchesScope(job, scope)) return undefined;
+      return toFinancialRiskJobStatus(job);
+    });
+  }
 }
 
 const defaultClock: Clock = { now: () => new Date() };
@@ -138,4 +166,26 @@ function assertJobMatchesClaim(
   throw new Error(
     `Financial-risk job "${job.jobId}" does not match idempotency key "${claim.idempotencyKey}"; expected the exact tenant, deal, actor, command, and assessment identity.`,
   );
+}
+
+function jobMatchesScope(
+  job: DurableJob,
+  scope: FinancialRiskScope,
+): boolean {
+  return job.workspaceId === scope.workspaceId && job.dealId === scope.dealId;
+}
+
+function toFinancialRiskJobStatus(job: StoredJob): FinancialRiskJobStatus {
+  return {
+    schemaVersion: 1,
+    jobId: job.jobId,
+    operationId: job.operationId,
+    state: job.state,
+    progress: job.progress,
+    attemptCount: job.attemptCount,
+    cancellationRequested: job.cancellationRequestedAt !== undefined,
+    createdAt: job.createdAt,
+    ...(job.startedAt === undefined ? {} : { startedAt: job.startedAt }),
+    ...(job.terminalAt === undefined ? {} : { terminalAt: job.terminalAt }),
+  };
 }

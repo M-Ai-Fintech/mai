@@ -2,6 +2,7 @@ import type { AggregateVersion, RequestContext } from "../platform/api/v1.ts";
 import { type Clock, payloadDigest } from "../platform/persistence/v1.ts";
 import type { DurableJob } from "../platform/jobs/v1.ts";
 import type { ActorReference } from "../platform/authz/v1.ts";
+import type { AllowedAuthorizationDecision } from "../platform/authz/v1.ts";
 import { createExactEvidenceBasis } from "../diligence_decisions/basis.ts";
 import { FinancialRiskError } from "./errors.ts";
 import { assertFinancialRiskReferences } from "./model.ts";
@@ -149,6 +150,7 @@ export function queuedJob(
   scope: FinancialRiskScope,
   references: FinancialRiskReferences | undefined,
   createdAt: Date,
+  authorization?: AllowedAuthorizationDecision,
 ): DurableJob {
   const isCompute = "loadInput" in request;
   const payload = isCompute
@@ -179,6 +181,9 @@ export function queuedJob(
     workspaceId: scope.workspaceId,
     dealId: scope.dealId,
     initiatingActorId: request.actor.id,
+    ...(authorization?.authoritySnapshotReference === undefined ? {} : {
+      authoritySnapshotReference: authorization.authoritySnapshotReference,
+    }),
     correlationId: request.context.correlationId,
     idempotencyKey: request.idempotencyKey,
     inputVersionReferences: references === undefined

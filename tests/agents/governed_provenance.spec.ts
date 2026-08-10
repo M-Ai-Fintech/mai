@@ -109,6 +109,42 @@ Deno.test("runtime provenance reads the exact result and derives complete lineag
   }]);
 });
 
+Deno.test("durable provenance preserves a semantic financial-risk evidence receipt", async () => {
+  const catalog = createSpecialistDefinitionCatalog();
+  const definition = catalog.current("broker-orchestrator-agent");
+  const execution = executionContext();
+  const base = runtimeReceiptFixture(definition, execution);
+  const exactVersion = `${"a".repeat(64)}:evidence_alpha`;
+  const result = {
+    ...base.result,
+    lineage: {
+      ...base.result.lineage,
+      evidence: [{
+        ...base.result.lineage.evidence[0],
+        sourceType: "evidence",
+        sourceId: "evidence_alpha",
+        version: exactVersion,
+        checksum: undefined,
+      }],
+    },
+  } as ResultRecord;
+  const sources = new NamedFlippingSourceVersionChecker();
+  const verified = await createRuntimeAdapterAgent(
+    catalog,
+    result.resultId,
+    new NamedFakeAgentRuntimeReadService(
+      [base.run],
+      [base.activity],
+      result,
+    ),
+    sources,
+    execution,
+  ).propose(agentRequest());
+
+  assertEquals(verified.lineage.evidence[0]?.version, exactVersion);
+  assertEquals(sources.checks[0]?.version, exactVersion);
+});
+
 Deno.test("runtime provenance rejects missing, cross-run, stale, wrong-kind, and mismatched results", async () => {
   const catalog = createSpecialistDefinitionCatalog();
   const definition = catalog.current("broker-orchestrator-agent");

@@ -18,7 +18,9 @@ export async function routeFinancialRiskRequest(
   const path = new URL(request.url).pathname;
   if (
     path !== "/api/v1/financial-risk" &&
-    !path.startsWith("/api/v1/financial-risk/")
+    !path.startsWith("/api/v1/financial-risk/") &&
+    path !== "/api/v1/jobs" &&
+    !path.startsWith("/api/v1/jobs/")
   ) return undefined;
   if (dependencies.financialRisk === undefined) {
     return unavailable(headers, correlationId);

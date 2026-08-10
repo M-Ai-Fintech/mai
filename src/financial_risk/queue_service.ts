@@ -38,6 +38,7 @@ import {
   type FinancialRiskQueueLookupResult,
 } from "./job_port.ts";
 import { payloadDigest } from "../platform/persistence/v1.ts";
+import { assertFinancialRiskInputAccess } from "./input_contract.ts";
 
 export class FinancialRiskQueueService {
   constructor(
@@ -103,7 +104,12 @@ export class FinancialRiskQueueService {
         request.assessmentId,
         operation,
       )
-    ) return { scope, authorization: decision };
+    ) {
+      if (operation === "compute") {
+        assertFinancialRiskInputAccess(decision, request.assessmentId);
+      }
+      return { scope, authorization: decision };
+    }
     throw protectedNotFound(request.assessmentId);
   }
 
@@ -177,7 +183,13 @@ export class FinancialRiskQueueService {
           references,
         );
       }
-      return queuedJob(request, scope, references, this.clock.now());
+      return queuedJob(
+        request,
+        scope,
+        references,
+        this.clock.now(),
+        authorization,
+      );
     } catch (error) {
       const normalized = normalizeCommandError(error);
       if (!isVersionFailure(normalized)) throw normalized;

@@ -4,6 +4,7 @@ import type {
 } from "../platform/authz/v1.ts";
 import type { AggregateVersion, RequestContext } from "../platform/api/v1.ts";
 import type { Clock } from "../platform/persistence/v1.ts";
+import type { JobExecutionContext } from "../platform/jobs/v1.ts";
 import {
   createFinancialRiskResult,
   type FinancialRiskResult,
@@ -22,7 +23,6 @@ import type { FinancialRiskRepository } from "./repository.ts";
 import {
   assertActor,
   assertReferenceScope,
-  cancelledProvenance,
   canonicalReferences,
   protectedNotFound,
   requiredScope,
@@ -34,6 +34,7 @@ import {
   safeInference,
 } from "./application_internal.ts";
 import type { FinancialRiskInvalidationRequest } from "./application_contracts.ts";
+import { assertFinancialRiskInputAccess } from "./input_contract.ts";
 
 export interface FinancialRiskQueuedExecutionDependencies {
   readonly authorization: FinancialRiskAuthorizationPort;
@@ -64,11 +65,11 @@ export class FinancialRiskQueuedExecution {
   execute(
     command: FinancialRiskQueuedCommand,
     loadInput: FinancialRiskInputLoader,
-    cancellationRequested?: () => Promise<boolean>,
+    execution: JobExecutionContext,
   ): Promise<FinancialRiskResult> {
     return command.kind === "compute"
-      ? this.executeCompute(command.request, loadInput, cancellationRequested)
-      : this.executeInvalidation(command.request);
+      ? this.executeCompute(command.request, loadInput, execution)
+      : this.executeInvalidation(command.request, execution);
   }
 
   private async recheckCompute(
@@ -102,7 +103,7 @@ export class FinancialRiskQueuedExecution {
   private async executeCompute(
     request: FinancialRiskQueuedComputeRequest,
     loadInput: FinancialRiskInputLoader,
-    cancellationRequested?: () => Promise<boolean>,
+    execution: JobExecutionContext,
   ): Promise<FinancialRiskResult> {
     const authorized = await this.authorized(request, "compute");
     assertReferenceScope(authorized.scope, request.references);
@@ -121,8 +122,9 @@ export class FinancialRiskQueuedExecution {
       authorized.scope,
       latest,
       loadInput,
-      cancellationRequested,
+      execution,
     );
+    await beforeQueuedEffect(execution);
     await this.dependencies.repository.commitQueuedResult(
       result,
       request.expectedVersion,
@@ -132,6 +134,7 @@ export class FinancialRiskQueuedExecution {
 
   private async executeInvalidation(
     request: FinancialRiskInvalidationRequest,
+    execution: JobExecutionContext,
   ): Promise<FinancialRiskResult> {
     const authorized = await this.authorized(request, "invalidate");
     const replayed = await this.existingResult(request, authorized.scope);
@@ -144,6 +147,7 @@ export class FinancialRiskQueuedExecution {
       latest,
       this.dependencies.clock,
     );
+    await beforeQueuedEffect(execution);
     await this.dependencies.repository.commitQueuedResult(
       result,
       request.expectedVersion,
@@ -157,21 +161,19 @@ export class FinancialRiskQueuedExecution {
     scope: FinancialRiskScope,
     latest: FinancialRiskResult | undefined,
     loadInput: FinancialRiskInputLoader,
-    cancellationRequested?: () => Promise<boolean>,
+    execution: JobExecutionContext,
   ): Promise<FinancialRiskResult> {
-    if (await cancellationRequested?.()) {
-      return cancelledResult(request, scope, latest, this.dependencies.clock);
-    }
+    await execution.heartbeat();
+    await throwIfCancelled(execution, "before protected input loading");
     const input = await loadInput.load(
       request.context,
       authorization,
       scope,
       request.references,
     );
-    if (await cancellationRequested?.()) {
-      return cancelledResult(request, scope, latest, this.dependencies.clock);
-    }
+    await throwIfCancelled(execution, "after protected input loading");
     const inference = await safeInference(this.dependencies.inference, input);
+    await throwIfCancelled(execution, "after inference");
     const now = this.dependencies.clock.now();
     return createFinancialRiskResult({
       aggregateType: "financial_risk_result",
@@ -221,7 +223,12 @@ export class FinancialRiskQueuedExecution {
         request.assessmentId,
         operation,
       )
-    ) return { scope, authorization: decision };
+    ) {
+      if (operation === "compute") {
+        assertFinancialRiskInputAccess(decision, request.assessmentId);
+      }
+      return { scope, authorization: decision };
+    }
     throw protectedNotFound(request.assessmentId);
   }
 
@@ -299,34 +306,23 @@ function approvedScopeMatches(
     );
 }
 
-function cancelledResult(
-  request: FinancialRiskQueuedComputeRequest,
-  scope: FinancialRiskScope,
-  latest: FinancialRiskResult | undefined,
-  clock: Clock,
-): FinancialRiskResult {
-  const now = clock.now();
-  return createFinancialRiskResult({
-    aggregateType: "financial_risk_result",
-    resultId: request.resultId,
-    assessmentId: request.assessmentId,
-    scope,
-    version: ((latest?.version ?? 0) + 1) as AggregateVersion,
-    state: "cancelled",
-    provenance: cancelledProvenance("Cancellation requested before inference."),
-    references: request.references,
-    actor: request.actor,
-    correlationId: request.context.correlationId,
-    idempotencyKey: request.idempotencyKey,
-    execution: {
-      operationId: request.operationId,
-      jobId: request.jobId,
-      status: "cancelled",
-    },
-    reason: "Cancellation requested before inference.",
-    createdAt: now,
-    updatedAt: now,
-  });
+async function beforeQueuedEffect(
+  execution: JobExecutionContext,
+): Promise<void> {
+  await execution.beforeExternalEffect();
+  await throwIfCancelled(execution, "before result commit");
+}
+
+async function throwIfCancelled(
+  execution: JobExecutionContext,
+  boundary: string,
+): Promise<void> {
+  if (await execution.cancellationRequested()) {
+    throw new FinancialRiskError(
+      "CANCELLED",
+      `Financial-risk worker cancellation was observed ${boundary}; expected no result or effect commit.`,
+    );
+  }
 }
 
 function staleResult(

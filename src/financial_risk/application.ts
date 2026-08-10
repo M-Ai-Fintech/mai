@@ -15,6 +15,7 @@ import {
 import { FinancialRiskError } from "./errors.ts";
 import type { FinancialRiskInferencePort } from "./ports.ts";
 import type { FinancialRiskJobPort } from "./job_port.ts";
+import type { FinancialRiskJobStatus } from "./job_port.ts";
 import { FinancialRiskQueuedExecution } from "./queued_execution.ts";
 import { FinancialRiskQueueService } from "./queue_service.ts";
 import type { FinancialRiskAssessmentId } from "./ids.ts";
@@ -50,6 +51,9 @@ import type {
   FinancialRiskQueuedCommandResult,
   FinancialRiskReferenceVerificationPort,
 } from "./application_contracts.ts";
+import { assertFinancialRiskInputAccess } from "./input_contract.ts";
+import type { JobExecutionContext } from "../platform/jobs/v1.ts";
+import type { JobId } from "../platform/api/v1.ts";
 export type {
   FinancialRiskAuthorizationPort,
   FinancialRiskAuthorizedRead,
@@ -73,6 +77,7 @@ export class FinancialRiskApplication {
     private readonly clock: Clock = systemClock,
     jobs?: FinancialRiskJobPort,
   ) {
+    this.jobs = jobs;
     this.queuedExecution = new FinancialRiskQueuedExecution({
       authorization,
       references,
@@ -91,6 +96,7 @@ export class FinancialRiskApplication {
 
   private readonly queuedExecution: FinancialRiskQueuedExecution;
   private readonly queue: FinancialRiskQueueService;
+  private readonly jobs?: FinancialRiskJobPort;
 
   async read(
     context: RequestContext,
@@ -192,6 +198,34 @@ export class FinancialRiskApplication {
     return await this.queue.enqueueCompute(request);
   }
 
+  async readJobStatus(
+    context: RequestContext,
+    actor: ActorReference,
+    jobId: JobId,
+  ): Promise<FinancialRiskJobStatus> {
+    const scope = requiredScope(context);
+    assertActor(context, actor);
+    const decision = await this.authorization.authorize({
+      context,
+      actor,
+      scope,
+      resource: { kind: "financial-risk-job", id: jobId },
+      action: "financial-risk.job.read",
+    });
+    if (!jobStatusScopeMatches(decision, actor, scope, jobId)) {
+      throw protectedNotFound(jobId);
+    }
+    if (this.jobs === undefined) {
+      throw new FinancialRiskError(
+        "DEPENDENCY_UNAVAILABLE",
+        "Financial-risk durable job queue is not configured; expected an injected job port.",
+      );
+    }
+    const status = await this.jobs.findStatus(scope, jobId);
+    if (status === undefined) throw protectedNotFound(jobId);
+    return status;
+  }
+
   async recheckQueuedCommand(
     command: FinancialRiskQueuedCommand,
   ): Promise<boolean> {
@@ -201,12 +235,12 @@ export class FinancialRiskApplication {
   async executeQueuedCommand(
     command: FinancialRiskQueuedCommand,
     loadInput: FinancialRiskInputLoader,
-    cancellationRequested?: () => Promise<boolean>,
+    execution: JobExecutionContext,
   ): Promise<FinancialRiskResult> {
     return await this.queuedExecution.execute(
       command,
       loadInput,
-      cancellationRequested,
+      execution,
     );
   }
 
@@ -403,7 +437,12 @@ export class FinancialRiskApplication {
     if (
       decision.outcome === "allow" &&
       approvedScopeMatches(decision, actor, scope, assessmentId, operation)
-    ) return decision;
+    ) {
+      if (operation === "compute") {
+        assertFinancialRiskInputAccess(decision, assessmentId);
+      }
+      return decision;
+    }
     throw protectedNotFound(assessmentId);
   }
 }
@@ -424,5 +463,24 @@ function approvedScopeMatches(
     approved.resource.id === assessmentId &&
     decision.allowedActions.some((allowed) =>
       allowed === `financial-risk.${operation}`
+    );
+}
+
+function jobStatusScopeMatches(
+  decision: import("../platform/authz/v1.ts").AuthorizationDecision,
+  actor: ActorReference,
+  scope: FinancialRiskScope,
+  jobId: JobId,
+): boolean {
+  if (decision.outcome !== "allow") return false;
+  const approved = decision.approvedScope;
+  return approved.actorId === actor.id &&
+    approved.tenantId === scope.tenantId &&
+    approved.workspaceId === scope.workspaceId &&
+    approved.dealId === scope.dealId &&
+    approved.resource.kind === "financial-risk-job" &&
+    approved.resource.id === jobId &&
+    decision.allowedActions.some((allowed) =>
+      allowed === "financial-risk.job.read"
     );
 }

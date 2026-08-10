@@ -11,6 +11,7 @@ import {
   FakeFinancialRiskInference,
   FALLBACK_OUTPUTS,
   FALLBACK_RESULT,
+  FINANCIAL_RISK_ALL_FIELD_MASK,
   financialRiskContext,
   financialRiskReferences,
   financialRiskScope,
@@ -20,6 +21,7 @@ import {
   TEST_CHECKSUM,
   ThrowingFinancialRiskInference,
 } from "./support.ts";
+import { FINANCIAL_RISK_INPUT_FIELDS } from "../../src/financial_risk/input_contract.ts";
 
 Deno.test("financial-risk authorization happens before protected input loading", async () => {
   const authorization = new FakeFinancialRiskAuthorization("deny");
@@ -32,6 +34,31 @@ Deno.test("financial-risk authorization happens before protected input loading",
     FinancialRiskError,
     "Financial-risk assessment",
   );
+  assertEquals(references.calls, 0);
+  assertEquals(loader.calls, 0);
+});
+
+Deno.test("compute fails closed before a named loader sees an ungranted input field", async () => {
+  const missing = FINANCIAL_RISK_INPUT_FIELDS.ebitda;
+  const fieldMask = {
+    ...FINANCIAL_RISK_ALL_FIELD_MASK,
+    include: FINANCIAL_RISK_ALL_FIELD_MASK.include.filter((name) =>
+      name !== missing
+    ),
+    approvedClassifications: FINANCIAL_RISK_ALL_FIELD_MASK
+      .approvedClassifications.filter((entry) => entry.name !== missing),
+  };
+  const authorization = new FakeFinancialRiskAuthorization("allow", fieldMask);
+  const references = new RecordingReferenceVerifier();
+  const loader = new RecordingInputLoader();
+  const application = applicationFor(authorization, references);
+
+  const error = await assertRejects(
+    () => application.compute(computeRequest({ loadInput: loader })),
+    FinancialRiskError,
+  );
+
+  assertEquals(error.code, "PROTECTED_NOT_FOUND");
   assertEquals(references.calls, 0);
   assertEquals(loader.calls, 0);
 });

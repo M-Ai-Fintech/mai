@@ -1,4 +1,7 @@
-import { allowedDecision } from "../../src/platform/authz/vocabulary.ts";
+import {
+  allowedDecision,
+  authoritySnapshotReference,
+} from "../../src/platform/authz/vocabulary.ts";
 import {
   type Action,
   type ActorReference,
@@ -36,9 +39,13 @@ import type {
   FinancialRiskScope,
 } from "../../src/financial_risk/model.ts";
 import { FINANCIAL_RISK_PROJECTION_FIELD_MASK } from "../../src/financial_risk/projection.ts";
+import { FINANCIAL_RISK_INPUT_FIELD_MASK } from "../../src/financial_risk/input_contract.ts";
 import type { FinancialRiskInferenceResult } from "../../src/financial_risk/inference.ts";
 import type { FinancialRiskInferencePort } from "../../src/financial_risk/ports.ts";
-import type { FinancialRiskJobPort } from "../../src/financial_risk/job_port.ts";
+import type {
+  FinancialRiskJobPort,
+  FinancialRiskJobStatus,
+} from "../../src/financial_risk/job_port.ts";
 import type {
   FinancialRiskIdempotencyClaim,
   FinancialRiskIdempotencyClaimResult,
@@ -53,6 +60,19 @@ import type {
 
 export const TEST_TIME = new Date("2026-08-10T12:00:00.000Z");
 export const TEST_CHECKSUM = "a".repeat(64);
+
+export const FINANCIAL_RISK_ALL_FIELD_MASK: FieldMask = Object.freeze({
+  include: Object.freeze([
+    ...FINANCIAL_RISK_PROJECTION_FIELD_MASK.include,
+    ...FINANCIAL_RISK_INPUT_FIELD_MASK.include,
+  ]),
+  omit: Object.freeze([]),
+  redact: Object.freeze([]),
+  approvedClassifications: Object.freeze([
+    ...FINANCIAL_RISK_PROJECTION_FIELD_MASK.approvedClassifications,
+    ...FINANCIAL_RISK_INPUT_FIELD_MASK.approvedClassifications,
+  ]),
+});
 
 export const TEST_INPUT: FinancialRiskInput = Object.freeze({
   ebitda: 100,
@@ -203,9 +223,13 @@ export class FakeFinancialRiskAuthorization
 
   constructor(
     private readonly outcome: "allow" | "deny" = "allow",
-    private readonly fieldMask: FieldMask =
-      FINANCIAL_RISK_PROJECTION_FIELD_MASK,
+    private fieldMask: FieldMask = FINANCIAL_RISK_ALL_FIELD_MASK,
+    private readonly snapshotReference?: string,
   ) {}
+
+  setFieldMask(fieldMask: FieldMask): void {
+    this.fieldMask = fieldMask;
+  }
 
   authorize(
     input: Parameters<FinancialRiskAuthorizationPort["authorize"]>[0],
@@ -220,6 +244,7 @@ export class FakeFinancialRiskAuthorization
         input.action as Action,
         input.resource,
         this.fieldMask,
+        this.snapshotReference,
       ),
     );
   }
@@ -288,6 +313,8 @@ export class ThrowingFinancialRiskInference
 
 export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
   readonly jobs = new Map<string, DurableJob>();
+  readonly statuses = new Map<string, FinancialRiskJobStatus>();
+  statusCalls = 0;
   private readonly claims = new Map<string, TestJobClaim>();
   enqueueCalls = 0;
 
@@ -301,6 +328,7 @@ export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
     this.enqueueCalls++;
     if (this.failure !== undefined) return Promise.reject(this.failure);
     this.jobs.set(job.jobId, job);
+    this.statuses.set(job.jobId, queuedJobStatus(job));
     return Promise.resolve();
   }
 
@@ -330,6 +358,7 @@ export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
     this.enqueueCalls++;
     if (this.failure !== undefined) return Promise.reject(this.failure);
     this.jobs.set(job.jobId, job);
+    this.statuses.set(job.jobId, queuedJobStatus(job));
     this.claims.set(key, { ...claim, state: "completed", jobId: job.jobId });
     return Promise.resolve({ status: "claimed" });
   }
@@ -388,6 +417,32 @@ export class RecordingFinancialRiskJobPort implements FinancialRiskJobPort {
   ): Promise<DurableJob | undefined> {
     return Promise.resolve(this.jobs.get(jobId));
   }
+
+  findStatus(
+    scope: FinancialRiskScope,
+    jobId: JobId,
+  ): Promise<FinancialRiskJobStatus | undefined> {
+    this.statusCalls++;
+    const job = this.jobs.get(jobId);
+    if (
+      job === undefined || job.tenantId !== scope.tenantId ||
+      job.workspaceId !== scope.workspaceId || job.dealId !== scope.dealId
+    ) return Promise.resolve(undefined);
+    return Promise.resolve(this.statuses.get(jobId));
+  }
+}
+
+function queuedJobStatus(job: DurableJob): FinancialRiskJobStatus {
+  return {
+    schemaVersion: 1,
+    jobId: job.jobId,
+    operationId: job.operationId,
+    state: "queued",
+    progress: 0,
+    attemptCount: 0,
+    cancellationRequested: false,
+    createdAt: job.createdAt,
+  };
 }
 
 export class RecordingFinancialRiskFindingProposalPort
@@ -418,6 +473,7 @@ function allowedFor(
   command: Action,
   resource: { readonly kind: string; readonly id: string },
   fieldMask: FieldMask,
+  snapshotReference?: string,
 ): AuthorizationDecision {
   return allowedDecision({
     request: {
@@ -432,6 +488,13 @@ function allowedFor(
       restrictionFacts: [],
       relationshipFacts: [],
       clock: { now: () => TEST_TIME.toISOString() },
+      ...(snapshotReference === undefined ? {} : {
+        authorityRequirement: {
+          humanOnly: false,
+          action: command,
+          snapshotReference: authoritySnapshotReference(snapshotReference),
+        },
+      }),
     },
     allowedActions: [command],
     fieldMask,

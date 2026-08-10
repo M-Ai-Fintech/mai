@@ -85,7 +85,7 @@ export class FinancialRiskJobExecutor implements JobExecutor {
     const result = await this.application.executeQueuedCommand(
       command,
       this.inputLoader,
-      context.cancellationRequested,
+      context,
     );
     return { resultReference: result.resultId };
   }

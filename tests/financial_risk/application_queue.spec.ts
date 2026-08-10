@@ -8,12 +8,14 @@ import {
   computeRequest,
   FakeFinancialRiskAuthorization,
   FakeFinancialRiskInference,
+  FINANCIAL_RISK_ALL_FIELD_MASK,
   financialRiskContext,
   financialRiskScope,
   RecordingFinancialRiskJobPort,
   RecordingInputLoader,
   RecordingReferenceVerifier,
 } from "./support.ts";
+import { FINANCIAL_RISK_INPUT_FIELDS } from "../../src/financial_risk/input_contract.ts";
 
 Deno.test("queued compute claims and replays the persisted job without computing", async () => {
   const jobs = new RecordingFinancialRiskJobPort();
@@ -35,6 +37,55 @@ Deno.test("queued compute claims and replays the persisted job without computing
   assertEquals(jobs.enqueueCalls, 1);
   assertEquals(loader.calls, 0);
   assertEquals(accepted.job.jobId, replayed.job.jobId);
+});
+
+Deno.test("queued authorization rejects an ungranted input before the job or loader boundary", async () => {
+  const missing = FINANCIAL_RISK_INPUT_FIELDS.revenue;
+  const fieldMask = {
+    ...FINANCIAL_RISK_ALL_FIELD_MASK,
+    include: FINANCIAL_RISK_ALL_FIELD_MASK.include.filter((name) =>
+      name !== missing
+    ),
+    approvedClassifications: FINANCIAL_RISK_ALL_FIELD_MASK
+      .approvedClassifications.filter((entry) => entry.name !== missing),
+  };
+  const jobs = new RecordingFinancialRiskJobPort();
+  const loader = new RecordingInputLoader();
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization("allow", fieldMask),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    new InMemoryFinancialRiskRepository(),
+    jobs,
+  );
+
+  const error = await assertRejects(
+    () => application.enqueueCompute(computeRequest({ loadInput: loader })),
+    FinancialRiskError,
+  );
+
+  assertEquals(error.code, "PROTECTED_NOT_FOUND");
+  assertEquals(jobs.enqueueCalls, 0);
+  assertEquals(loader.calls, 0);
+});
+
+Deno.test("queued jobs retain the authorization snapshot reference", async () => {
+  const jobs = new RecordingFinancialRiskJobPort();
+  const application = applicationFor(
+    new FakeFinancialRiskAuthorization(
+      "allow",
+      FINANCIAL_RISK_ALL_FIELD_MASK,
+      "snapshot_alpha",
+    ),
+    new RecordingReferenceVerifier(),
+    new FakeFinancialRiskInference(),
+    new InMemoryFinancialRiskRepository(),
+    jobs,
+  );
+
+  const accepted = await application.enqueueCompute(computeRequest());
+
+  assertEquals(accepted.job.authoritySnapshotReference, "snapshot_alpha");
 });
 
 Deno.test("queued compute records a stale first-write version failure before queueing", async () => {

@@ -47,7 +47,8 @@ export interface RuntimeAuthority {
 export interface SourceVersionReference {
   readonly sourceType: string;
   readonly sourceId: string;
-  readonly version: AggregateVersion;
+  /** Exact numeric or semantic source identity; never normalize a source to a fake number. */
+  readonly version: number | string;
   readonly checksum?: string;
 }
 
