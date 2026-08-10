@@ -307,6 +307,7 @@ function requestOptionsFor(
   return {
     signal: options.signal,
     headers: options.headers,
+    credentials: options.credentials,
     ifMatch: options.ifMatch,
     idempotencyKey: options.idempotencyKey,
     correlationId: options.correlationId,

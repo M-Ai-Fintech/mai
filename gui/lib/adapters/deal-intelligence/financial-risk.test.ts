@@ -190,6 +190,34 @@ describe("financial-risk banker-facing adapter", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("preserves request credentials while binding read scope headers", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(readResponse("completed"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await readFinancialRiskAssessmentAdapter(
+      "risk_assessment_horizon",
+      scope,
+      {
+        credentials: "include",
+        headers: {
+          Authorization: "Bearer adapter-session",
+          "X-Workspace-Id": "workspace_other",
+          "X-Deal-Id": "deal_other",
+          "X-Adapter-Context": "retain-me",
+        },
+      },
+    );
+
+    expect(result).toMatchObject({ source: "v1", state: "completed" });
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(request.headers);
+    expect(request.credentials).toBe("include");
+    expect(headers.get("Authorization")).toBe("Bearer adapter-session");
+    expect(headers.get("X-Adapter-Context")).toBe("retain-me");
+    expect(headers.get("X-Workspace-Id")).toBe(scope.workspaceId);
+    expect(headers.get("X-Deal-Id")).toBe(scope.dealId);
+  });
+
   it("requires current freshness for a completed assessment", async () => {
     vi.stubGlobal(
       "fetch",
