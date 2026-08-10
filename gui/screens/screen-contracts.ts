@@ -1,3 +1,4 @@
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import type { Permission } from "@/lib/shell/route-registry";
 
 export type ScreenState =
@@ -7,8 +8,21 @@ export type ScreenState =
   | "partial-failure"
   | "restricted"
   | "unavailable"
+  | "stale"
   | "sensitive"
   | "long-content";
+export type ScreenDataSource = "fixture" | "v1";
+
+export function screenStateForAdapter(
+  adapter: AdapterResult<AdapterReadModel> | undefined,
+): ScreenState {
+  if (adapter?.state === "ready") return "default";
+  if (adapter?.state === "stale") return "stale";
+  if (adapter === undefined || adapter.state === "previous") {
+    return "unavailable";
+  }
+  return adapter.state;
+}
 export type ScreenFamily =
   | "command-center"
   | "deals-portfolio"

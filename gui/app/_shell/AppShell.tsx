@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NavigationItem, StatusIndicator } from "@/components";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import {
   breadcrumbsForResolution,
   navigationForResolution,
@@ -16,6 +17,7 @@ import { ScreenBody } from "@/screens/ScreenBody";
 import { DealIntelligenceBody } from "@/screens/deal-intelligence/DealIntelligenceBody";
 import { DealExecutionBody } from "@/screens/deal-execution/DealExecutionBody";
 import styles from "./AppShell.module.css";
+import type { ScreenDataSource } from "@/screens/screen-contracts";
 
 function entryCount(
   definition: RouteDefinition,
@@ -29,8 +31,12 @@ function entryCount(
 
 export function AppShell({
   resolution,
+  dataSource = "fixture",
+  adapter,
 }: {
   resolution: Extract<RouteResolution, { kind: "ready" }>;
+  dataSource?: ScreenDataSource;
+  adapter?: AdapterResult<AdapterReadModel>;
 }) {
   const { route, organization, deal, counts } = resolution;
   const entries = navigationForResolution(resolution);
@@ -86,7 +92,7 @@ export function AppShell({
             <strong>
               {external ? "Shared workspace" : organization?.name ?? "MAI"}
             </strong>
-            <small>Fixture adapter</small>
+            <small>{dataSource === "fixture" ? "Fixture adapter" : "v1 adapter"}</small>
           </div>
           {!external
             ? (
@@ -214,11 +220,11 @@ export function AppShell({
                 : null}
 
               {route.implementationStatus === "screen-body"
-                ? <ScreenBody resolution={resolution} />
+                ? <ScreenBody resolution={resolution} dataSource={dataSource} adapter={adapter} />
                 : route.implementationStatus === "deal-intelligence"
-                ? <DealIntelligenceBody resolution={resolution} />
+                ? <DealIntelligenceBody resolution={resolution} dataSource={dataSource} adapter={adapter} />
                 : route.implementationStatus === "deal-execution"
-                ? <DealExecutionBody resolution={resolution} />
+                ? <DealExecutionBody resolution={resolution} dataSource={dataSource} adapter={adapter} />
                 : (
                   <DeferredScreenPlaceholder
                     owner={route.deferredScreenOwner}

@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import { routeRegistry } from "@/lib/shell/route-registry";
 import { externalFixture, fixtureFor } from "./fixtures";
 import { resolveScreenFamily, ScreenBody } from "./ScreenBody";
@@ -197,5 +198,34 @@ describe("MAI-102 MAI-99 conformance compositions", () => {
     );
     expect(result).toContain("No matching local demonstration data");
     expect(result).toContain('data-conformance-layout="state"');
+  });
+
+  it("renders v1 data without falling back to the local fixture", () => {
+    const adapter: AdapterResult<AdapterReadModel> = {
+      source: "v1",
+      state: "ready",
+      data: {
+        family: "command-center",
+        items: [{
+          id: "work-1",
+          title: "Authoritative work item",
+          summary: "Returned by the v1 read model",
+          status: "Ready",
+        }],
+      },
+      meta: { correlationId: "correlation-live" },
+    };
+    const result = renderToStaticMarkup(
+      createElement(ScreenBody, {
+        resolution: resolution("global.home"),
+        dataSource: "v1",
+        adapter,
+      }),
+    );
+
+    expect(result).toContain("Authoritative work item");
+    expect(result).toContain("v1 adapter");
+    expect(result).not.toContain("Approve diligence scope");
+    expect(result).not.toContain('data-fixture-only="true"');
   });
 });

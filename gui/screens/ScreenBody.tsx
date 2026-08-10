@@ -10,7 +10,13 @@ import type { StatusIndicatorRole } from "@/components/StatusIndicator/StatusInd
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import type { Permission } from "@/lib/shell/route-registry";
 import { externalFixture, fixtureFor } from "./fixtures";
-import type { ScreenFamily, ScreenState } from "./screen-contracts";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
+import {
+  screenStateForAdapter,
+  type ScreenDataSource,
+  type ScreenFamily,
+  type ScreenState,
+} from "./screen-contracts";
 import styles from "./ScreenBody.module.css";
 
 type RouteScreen = {
@@ -53,6 +59,21 @@ function stateFor(resolution: ReadyRouteResolution): ScreenState {
   return resolution.route.availability === "unavailable"
     ? "unavailable"
     : "default";
+}
+
+function roleForStatus(status: string): StatusIndicatorRole {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("restrict")) return "restricted";
+  if (normalized.includes("block") || normalized.includes("error")) {
+    return "critical";
+  }
+  if (normalized.includes("review") || normalized.includes("stale")) {
+    return "warning";
+  }
+  if (normalized.includes("ready") || normalized.includes("complete")) {
+    return "success";
+  }
+  return "information";
 }
 
 type WorkItem = {
@@ -481,26 +502,40 @@ const deals = [
 
 /** Resolves one MAI-99 screen body from MAI-98's already-resolved route context. */
 export function ScreenBody(
-  { resolution, state: stateOverride }: {
+  {
+    resolution,
+    state: stateOverride,
+    dataSource = "fixture",
+    adapter,
+  }: {
     resolution: ReadyRouteResolution;
     state?: ScreenState;
+    dataSource?: ScreenDataSource;
+    adapter?: AdapterResult<AdapterReadModel>;
   },
 ) {
   const screen = familyFor(resolution);
   if (!screen) return null;
-  const state = stateOverride ?? stateFor(resolution);
-  const fixture = screen.family === "external-participant"
-    ? externalFixture(state)
-    : fixtureFor(screen.family, screen.permission, state);
+  const state = stateOverride ?? (dataSource === "v1"
+    ? screenStateForAdapter(adapter)
+    : stateFor(resolution));
+  const fixture = dataSource === "fixture"
+    ? screen.family === "external-participant"
+      ? externalFixture(state)
+      : fixtureFor(screen.family, screen.permission, state)
+    : undefined;
   const definition = screen.family === "deals-portfolio"
     ? undefined
     : familyDefinitions[screen.family];
+  const data = adapter !== undefined && "data" in adapter
+    ? adapter.data
+    : undefined;
   return (
     <section
       className={styles.page}
       aria-labelledby="screen-title"
-      data-screen-family={fixture.family}
-      data-fixture-only="true"
+      data-screen-family={screen.family}
+      data-fixture-only={dataSource === "fixture" ? "true" : undefined}
       data-conformance-layout={state === "default" ? "list-detail" : "state"}
     >
       <header className={styles.header}>
@@ -523,33 +558,54 @@ export function ScreenBody(
           {state === "default" && screen.family === "deals-portfolio"
             ? <Button hierarchy="secondary">Create deal</Button>
             : null}
-          <StatusIndicator role="incomplete">Fixture-only</StatusIndicator>
+          <StatusIndicator role={dataSource === "fixture" ? "incomplete" : "information"}>
+            {dataSource === "fixture" ? "Fixture-only" : "v1 adapter"}
+          </StatusIndicator>
         </div>
       </header>
-      <p className={styles.disclosure}>{fixture.disclosure}</p>
-      <FamilyContent family={fixture.family} state={fixture.state} />
+      <p className={styles.disclosure}>
+        {fixture?.disclosure ??
+          "Authoritative v1 data only — no fixture fallback is enabled."}
+      </p>
+      <FamilyContent
+        family={screen.family}
+        state={state}
+        data={data}
+        dataSource={dataSource}
+      />
     </section>
   );
 }
 
 function FamilyContent(
-  { family, state }: { family: ScreenFamily; state: ScreenState },
+  { family, state, data, dataSource }: {
+    family: ScreenFamily;
+    state: ScreenState;
+    data?: AdapterReadModel;
+    dataSource: ScreenDataSource;
+  },
 ) {
-  if (state !== "default") return <StatePanel family={family} state={state} />;
-  if (family === "deals-portfolio") return <DealsPortfolioContent />;
-  return <OperationalContent family={family} />;
+  if (state !== "default" && !(state === "stale" && data)) {
+    return <StatePanel family={family} state={state} dataSource={dataSource} />;
+  }
+  if (family === "deals-portfolio") {
+    return <DealsPortfolioContent data={data} dataSource={dataSource} />;
+  }
+  return <OperationalContent family={family} data={data} dataSource={dataSource} />;
 }
 
 function StatePanel(
-  { family, state }: {
+  { family, state, dataSource }: {
     family: ScreenFamily;
     state: Exclude<ScreenState, "default">;
+    dataSource: ScreenDataSource;
   },
 ) {
+  const copy = dataSource === "fixture" ? "local demonstration" : "v1";
   if (state === "loading") {
     return (
       <Surface className={styles.item} aria-busy="true">
-        <h2>Loading local demonstration data</h2>
+        <h2>Loading {copy} data</h2>
         <div className={styles.skeleton} />
         <div className={styles.skeleton} />
       </Surface>
@@ -559,7 +615,7 @@ function StatePanel(
     return (
       <InlineNotice
         role="information"
-        title="No matching local demonstration data"
+        title={`No matching ${copy} data`}
       >
         Change the filter or return when a fixture is available.
       </InlineNotice>
@@ -569,7 +625,7 @@ function StatePanel(
     return (
       <InlineNotice
         role="warning"
-        title="Some local demonstration data could not be prepared"
+        title={`Some ${copy} data could not be prepared`}
       >
         Available work remains separate from this partial failure.
       </InlineNotice>
@@ -590,6 +646,22 @@ function StatePanel(
       </InlineNotice>
     );
   }
+  if (state === "stale") {
+    return (
+      <InlineNotice role="warning" title="Data requires freshness review">
+        The v1 projection is stale. No current claim is made until the source
+        version is reviewed.
+      </InlineNotice>
+    );
+  }
+  if (dataSource === "v1") {
+    return (
+      <InlineNotice role="restricted" title="Sensitive data is restricted">
+        Sensitive values are withheld until the v1 permission decision is
+        available.
+      </InlineNotice>
+    );
+  }
   return (
     <Surface className={styles.item}>
       <h2>
@@ -604,9 +676,27 @@ function StatePanel(
 }
 
 function OperationalContent(
-  { family }: { family: Exclude<ScreenFamily, "deals-portfolio"> },
+  { family, data, dataSource }: {
+    family: Exclude<ScreenFamily, "deals-portfolio">;
+    data?: AdapterReadModel;
+    dataSource: ScreenDataSource;
+  },
 ) {
   const definition = familyDefinitions[family];
+  const items = dataSource === "v1"
+    ? data?.items ?? []
+    : definition.items;
+  const selected = data?.items.find(
+    (item) => item.id === data?.selectedItemId,
+  );
+  const inspector = dataSource === "v1"
+    ? {
+      title: selected?.title ?? "Selected context",
+      copy: selected?.summary ?? "No item is selected in the v1 read model.",
+      status: selected?.status ?? "No current item",
+      role: selected ? roleForStatus(selected.status) : "information" as const,
+    }
+    : definition.inspector;
   return (
     <>
       {family === "global-search"
@@ -624,12 +714,12 @@ function OperationalContent(
           className={styles.registry}
           aria-label={`${definition.eyebrow} items`}
         >
-          {definition.items.map((item, index) => (
-            <li key={`${item.title}-${index}`}>
+          {items.map((item, index) => (
+            <li key={`${"id" in item ? item.id : item.title}-${index}`}>
               <Surface className={styles.row}>
                 <h2>{item.title}</h2>
-                <p className={styles.meta}>{item.meta}</p>
-                <StatusIndicator role={item.role}>
+                <p className={styles.meta}>{"meta" in item ? item.meta : item.summary}</p>
+                <StatusIndicator role={"role" in item ? item.role : roleForStatus(item.status)}>
                   {item.status}
                 </StatusIndicator>
               </Surface>
@@ -638,12 +728,12 @@ function OperationalContent(
         </ol>
         <aside className={styles.inspector} aria-label="Selected context">
           <Surface className={styles.item}>
-            <h2>{definition.inspector.title}</h2>
-            <p className={styles.meta}>{definition.inspector.copy}</p>
-            <StatusIndicator role={definition.inspector.role}>
-              {definition.inspector.status}
+            <h2>{inspector.title}</h2>
+            <p className={styles.meta}>{inspector.copy}</p>
+            <StatusIndicator role={inspector.role}>
+              {inspector.status}
             </StatusIndicator>
-            {definition.inspector.href && definition.inspector.hrefLabel
+            {dataSource === "fixture" && definition.inspector.href && definition.inspector.hrefLabel
               ? (
                 <Link href={definition.inspector.href}>
                   {definition.inspector.hrefLabel}
@@ -657,7 +747,21 @@ function OperationalContent(
   );
 }
 
-function DealsPortfolioContent() {
+function DealsPortfolioContent(
+  { data, dataSource }: {
+    data?: AdapterReadModel;
+    dataSource: ScreenDataSource;
+  },
+) {
+  const rows = dataSource === "v1"
+    ? (data?.items ?? []).map((item) => [
+      item.title,
+      item.summary,
+      item.status,
+      item.status,
+      "Permission resolved",
+    ])
+    : deals;
   return (
     <>
       <div className={styles.filterBar} aria-label="Deal scope and filters">
@@ -681,7 +785,7 @@ function DealsPortfolioContent() {
               </tr>
             </thead>
             <tbody>
-              {deals.map((deal) => (
+              {rows.map((deal) => (
                 <tr key={deal[0]}>
                   {deal.map((value, index) => (
                     <td key={`${value}-${index}`}>{value}</td>
@@ -691,7 +795,7 @@ function DealsPortfolioContent() {
             </tbody>
           </table>
           <ol className={styles.mobileRegistry} aria-label="Deals">
-            {deals.map((deal) => (
+            {rows.map((deal) => (
               <li key={deal[0]}>
                 <Surface className={styles.row}>
                   <h2>{deal[0]}</h2>
@@ -712,15 +816,17 @@ function DealsPortfolioContent() {
         </div>
         <aside className={styles.inspector} aria-label="Selected deal preview">
           <Surface className={styles.item}>
-            <h2>Project Horizon</h2>
+            <h2>{data?.items[0]?.title ?? "Selected deal"}</h2>
             <p className={styles.meta}>
-              Sell-side mandate · diligence stage · 4 work items require
-              attention. Financial values remain in the deal workspace.
+              {data?.items[0]?.summary ??
+                "Selected deal context remains in the deal workspace."}
             </p>
-            <StatusIndicator role="restricted">
-              Restricted values hidden
+            <StatusIndicator role={data?.items[0] ? roleForStatus(data.items[0].status) : "restricted"}>
+              {data?.items[0]?.status ?? "Restricted values hidden"}
             </StatusIndicator>
-            <Link href="/deals/demo-deal/overview">Open deal</Link>
+            {dataSource === "fixture"
+              ? <Link href="/deals/demo-deal/overview">Open deal</Link>
+              : null}
           </Surface>
         </aside>
       </div>

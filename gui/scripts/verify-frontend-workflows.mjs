@@ -93,7 +93,7 @@ const server = spawn(
   ["--prefix", "gui", "run", "start", "--", "-H", "127.0.0.1", "-p", String(port)],
   {
     cwd: repositoryRoot,
-    env: process.env,
+    env: { ...process.env, MAI_FRONTEND_DATA_SOURCE: "fixture" },
     detached: process.platform !== "win32",
     stdio: ["ignore", "pipe", "pipe"],
   },

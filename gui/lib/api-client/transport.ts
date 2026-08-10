@@ -96,6 +96,7 @@ function envelopeError(
     status: response.status,
     code: envelope.error.code,
     fieldErrors: envelope.error.fieldErrors,
+    retryable: envelope.error.retryable,
   });
 }
 
@@ -148,6 +149,8 @@ async function fetchAttempt(
   const composed = requestSignal(options.signal ?? undefined, timeoutMs);
   try {
     const response = await fetch(url, { ...options, signal: composed.signal });
+    const inlineError = await inlineErrorFromResponse(response);
+    if (inlineError !== undefined) throw inlineError;
     if (!response.ok) throw await apiErrorFromResponse(response);
     return response;
   } catch (error) {
@@ -156,6 +159,15 @@ async function fetchAttempt(
   } finally {
     composed.cleanup();
   }
+}
+
+async function inlineErrorFromResponse(
+  response: Response,
+): Promise<APIError | undefined> {
+  const parsed = await response.clone().json().catch(() => undefined);
+  const envelope = errorEnvelopeSchema.safeParse(parsed);
+  if (!envelope.success) return undefined;
+  return envelopeError(response, envelope.data);
 }
 
 function abortedError(cause: unknown): APIError {

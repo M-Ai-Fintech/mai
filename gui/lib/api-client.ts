@@ -64,7 +64,19 @@ export {
 } from "./api-client/resource-schemas";
 export { APIError } from "./api-client/errors";
 export { ApiClient } from "./api-client/client";
+export {
+  acceptedJobDataSchema,
+  acceptedJobEnvelopeSchema,
+  createV1EnvelopeSchema,
+  requestV1,
+  v1MetaSchema,
+} from "./api-client/v1";
 export type { APIErrorKind } from "./api-client/errors";
+export type {
+  V1Meta,
+  V1RequestOptions,
+  V1Response,
+} from "./api-client/v1";
 export type {
   ChatMessage,
   ChatStreamEvent,

@@ -39,5 +39,6 @@ export const errorEnvelopeSchema = z.object({
     code: z.string(),
     message: z.string(),
     fieldErrors: fieldErrorsSchema.optional(),
+    retryable: z.boolean().optional(),
   }),
 });

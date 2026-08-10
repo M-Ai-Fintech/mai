@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import {
   Button,
   DataTable,
@@ -11,6 +12,10 @@ import {
   StatusIndicator,
 } from "@/components";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
+import {
+  screenStateForAdapter,
+  type ScreenDataSource,
+} from "../screen-contracts";
 import {
   candidates,
   fixtureDisclosure,
@@ -33,9 +38,13 @@ export type DealFamily =
 export type DealState =
   | "default"
   | "loading"
+  | "empty"
   | "restricted"
+  | "unavailable"
   | "stale"
   | "error"
+  | "partial-failure"
+  | "sensitive"
   | "invalidated"
   | "recorded"
   | "long-content";
@@ -62,22 +71,31 @@ const familyNames: readonly DealFamily[] = [
 export function DealIntelligenceBody({
   resolution,
   state = "default",
+  dataSource = "fixture",
+  adapter,
 }: {
   resolution: ReadyRouteResolution;
   state?: DealState;
+  dataSource?: ScreenDataSource;
+  adapter?: AdapterResult<AdapterReadModel>;
 }) {
   const family = resolution.route.id.slice("deal.".length) as DealFamily;
   if (!isDealFamily(family)) return null;
   if (!resolution.permissions.includes("deal")) return <Restricted />;
 
-  const replacesBody = state === "loading" || state === "restricted" || state === "error";
+  const resolvedState = dataSource === "v1"
+    ? dealStateForAdapter(adapter)
+    : state;
+  const replacesBody = dataSource === "v1"
+    ? resolvedState !== "default" && resolvedState !== "stale"
+    : resolvedState === "loading" || resolvedState === "restricted" || resolvedState === "error";
   const dealName = resolution.deal?.name ?? "Deal context";
   const dealPhase = resolution.deal?.phase ?? "Review";
   return (
     <section
       className={styles.page}
       data-screen-family={`deal-${family}`}
-      data-fixture-only="true"
+      data-fixture-only={dataSource === "fixture" ? "true" : undefined}
     >
       <header className={styles.header}>
         <div>
@@ -87,16 +105,85 @@ export function DealIntelligenceBody({
             {dealName} · {dealPhase} · deal {resolution.routeParameters.dealId}
           </p>
         </div>
-        <StatusIndicator role={state === "stale" || state === "invalidated" ? "warning" : "information"}>
-          {state === "default" ? "Local demonstration" : state}
+        <StatusIndicator role={resolvedState === "stale" || resolvedState === "invalidated" ? "warning" : "information"}>
+          {dataSource === "fixture"
+            ? resolvedState === "default" ? "Local demonstration" : resolvedState
+            : "v1 adapter"}
         </StatusIndicator>
       </header>
 
-      <p className={styles.disclosure}>{fixtureDisclosure}</p>
+      <p className={styles.disclosure}>
+        {dataSource === "fixture"
+          ? fixtureDisclosure
+          : "Authoritative v1 data only — no fixture fallback is enabled."}
+      </p>
 
-      {state !== "default" && <StatePanel state={state} />}
-      {!replacesBody && <Family family={family} state={state} />}
+      {dataSource === "v1" && replacesBody
+        ? <LiveAdapterStatePanel state={resolvedState} />
+        : null}
+      {dataSource === "fixture" && resolvedState !== "default"
+        ? <StatePanel state={resolvedState} />
+        : null}
+      {!replacesBody && (dataSource === "v1"
+        ? <LiveAdapterContent family={family} data={adapterData(adapter)} />
+        : <Family family={family} state={resolvedState} />)}
     </section>
+  );
+}
+
+function dealStateForAdapter(
+  adapter: AdapterResult<AdapterReadModel> | undefined,
+): DealState {
+  const state = screenStateForAdapter(adapter);
+  if (state === "default" || state === "loading" || state === "empty") {
+    return state;
+  }
+  if (state === "restricted" || state === "unavailable" || state === "stale") {
+    return state;
+  }
+  return "partial-failure";
+}
+
+function adapterData(
+  adapter: AdapterResult<AdapterReadModel> | undefined,
+): AdapterReadModel | undefined {
+  return adapter !== undefined && "data" in adapter
+    ? adapter.data
+    : undefined;
+}
+
+function LiveAdapterStatePanel({ state }: { state: DealState }) {
+  return (
+    <InlineNotice
+      role={state === "restricted" ? "restricted" : "warning"}
+      title={`${state} v1 adapter state`}
+    >
+      The authoritative adapter did not provide a current renderable read
+      model. No fixture data is shown as a fallback.
+    </InlineNotice>
+  );
+}
+
+function LiveAdapterContent(
+  { family, data }: { family: DealFamily; data?: AdapterReadModel },
+) {
+  const items = data?.items ?? [];
+  return (
+    <div className={styles.workspace} data-adapter-read-model={family}>
+      <section className={styles.primaryColumn}>
+        <Card title={`${titles[family]} · v1 read model`}>
+          {items.length === 0
+            ? <InlineNotice role="information" title="No current items">The v1 read model is empty.</InlineNotice>
+            : <OperationalRows rows={items.map((item) => [item.title, item.summary, item.status, item.id])} />}
+        </Card>
+      </section>
+      <aside className={styles.contextRail} aria-label="v1 adapter context">
+        <Card title="Projection metadata">
+          <p>{data?.selectedItemId ?? "No item selected"}</p>
+          <p className={styles.meta}>Permissions, freshness, and source version remain adapter-owned.</p>
+        </Card>
+      </aside>
+    </div>
   );
 }
 
