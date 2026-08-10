@@ -12,6 +12,7 @@ import {
   navigationForResolution,
   resolveRouteContext,
 } from "./route-context";
+import { fixtureShellAdapter } from "./adapters";
 
 describe("MAI-98 route architecture", () => {
   it("has unique IDs and all four shell modes", () => {
@@ -104,12 +105,53 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("distinguishes malformed, unavailable, and unknown context", async () => {
-    await expect(resolveRouteContext(["deals", "BAD!", "documents"])).resolves
+    await expect(
+      resolveRouteContext(["deals", "BAD!", "documents"], {
+        dataSource: "fixture",
+      }),
+    ).resolves
       .toMatchObject({ kind: "invalid-context" });
-    await expect(resolveRouteContext(["deals", "missing-deal", "documents"]))
+    await expect(
+      resolveRouteContext(["deals", "missing-deal", "documents"], {
+        dataSource: "fixture",
+      }),
+    )
       .resolves.toMatchObject({ kind: "unavailable" });
-    await expect(resolveRouteContext(["missing"])).resolves.toMatchObject({
-      kind: "not-found",
+    await expect(resolveRouteContext(["missing"], { dataSource: "fixture" }))
+      .resolves.toMatchObject({
+        kind: "not-found",
+      });
+  });
+
+  it("keeps the production route context unavailable until the v1 shell is registered", async () => {
+    await expect(resolveRouteContext(["home"], { dataSource: "v1" })).resolves
+      .toMatchObject({ kind: "unavailable" });
+  });
+
+  it("uses the shell fixture only for an explicit previous canary", async () => {
+    const result = await resolveRouteContext(["home"], {
+      dataSource: "v1",
+      environment: {
+        NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"application-shell":"previous"}',
+      },
+      previousShellAdapter: fixtureShellAdapter,
+    });
+
+    expect(result).toMatchObject({
+      kind: "ready",
+      organization: { id: "fixture-org" },
+    });
+  });
+
+  it("does not select the shell fixture without an explicit previous adapter", async () => {
+    await expect(resolveRouteContext(["home"], {
+      dataSource: "v1",
+      environment: {
+        NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"application-shell":"previous"}',
+      },
+    })).resolves.toMatchObject({
+      kind: "unavailable",
+      reason: "The previous shell adapter is not registered for global.home.",
     });
   });
 
@@ -118,7 +160,7 @@ describe("MAI-98 route architecture", () => {
       "deals",
       "demo-deal",
       "documents",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
@@ -148,7 +190,7 @@ describe("MAI-98 route architecture", () => {
       "deals",
       "demo-deal",
       "documents",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
 
@@ -169,7 +211,9 @@ describe("MAI-98 route architecture", () => {
   });
 
   it("keeps administration navigation non-actionable without permission", async () => {
-    const result = await resolveRouteContext(["home"]);
+    const result = await resolveRouteContext(["home"], {
+      dataSource: "fixture",
+    });
     expect(result.kind).toBe("ready");
     if (result.kind !== "ready") return;
     const restrictedResult = {
@@ -189,7 +233,7 @@ describe("MAI-98 route architecture", () => {
       "portal",
       "project",
       "fixture-workspace",
-    ]);
+    ], { dataSource: "fixture" });
     expect(result).toMatchObject({ kind: "ready" });
     if (result.kind !== "ready") return;
     expect(result.organization).toBeUndefined();

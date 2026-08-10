@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { routeBodyOwner, routeRegistry } from "@/lib/shell/route-registry";
 import { DealExecutionBody } from "./DealExecutionBody";
@@ -49,6 +50,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Deal horizon-01");
@@ -60,10 +62,14 @@ describe("MAI-101 execution boundary", () => {
     const body = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
       }),
     );
     const integrated = renderToStaticMarkup(
-      createElement(AppShell, { resolution: resolution("deal.negotiation") }),
+      createElement(AppShell, {
+        resolution: resolution("deal.negotiation"),
+        dataSource: "fixture",
+      }),
     );
     expect(body).toContain("Proposal and round registry");
     expect(body).toContain("Normalized terms and economics");
@@ -78,6 +84,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.team", ["workspace"]),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Deal access is required");
@@ -88,6 +95,7 @@ describe("MAI-101 execution boundary", () => {
     const html = renderToStaticMarkup(
       createElement(DealExecutionBody, {
         resolution: resolution("deal.settings"),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain("Archive is not deletion");
@@ -96,8 +104,35 @@ describe("MAI-101 execution boundary", () => {
       renderToStaticMarkup(
         createElement(DealExecutionBody, {
           resolution: resolution("deal.closing"),
+          dataSource: "fixture",
         }),
       ),
     ).toContain("separate from signature");
+  });
+
+  it("warns before rendering stale v1 deal execution content", () => {
+    const adapter: AdapterResult<AdapterReadModel> = {
+      source: "v1",
+      state: "stale",
+      data: {
+        family: "negotiation-room",
+        items: [{
+          id: "negotiation-stale",
+          title: "Stale negotiation",
+          summary: "Refresh required",
+          status: "Review",
+        }],
+      },
+      meta: { correlationId: "correlation-stale", freshness: "stale" },
+    };
+    const html = renderToStaticMarkup(createElement(DealExecutionBody, {
+      resolution: resolution("deal.negotiation"),
+      dataSource: "v1",
+      adapter,
+    }));
+
+    expect(html).toContain("Data requires freshness review");
+    expect(html).toContain("not current authoritative content");
+    expect(html).toContain("Stale negotiation");
   });
 });

@@ -21,7 +21,10 @@ function dealResolution(routeId: string): ReadyRouteResolution {
 describe("MAI-100 and MAI-101 AppShell screen boundary", () => {
   it("selects the explicit MAI-100 deal body without a MAI-99 fallback", () => {
     const html = renderToStaticMarkup(
-      createElement(AppShell, { resolution: dealResolution("deal.overview") }),
+      createElement(AppShell, {
+        resolution: dealResolution("deal.overview"),
+        dataSource: "fixture",
+      }),
     );
 
     expect(html).toContain('data-screen-family="deal-overview"');
@@ -32,6 +35,7 @@ describe("MAI-100 and MAI-101 AppShell screen boundary", () => {
     const html = renderToStaticMarkup(
       createElement(AppShell, {
         resolution: dealResolution("deal.negotiation"),
+        dataSource: "fixture",
       }),
     );
     expect(html).toContain('data-screen-family="deal-negotiation"');

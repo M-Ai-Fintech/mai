@@ -8,7 +8,7 @@ function fixtureResolution(family: DealFamily): ReadyRouteResolution {
   if (!route) throw new Error(`Missing deal route ${family}`);
   return { kind: "ready", route, routeParameters: { dealId: "demo-deal" }, permissions: ["workspace", "deal"], organization: { id: "fixture-org", name: "Demo Advisory" }, deal: { id: "demo-deal", name: "Demo transaction", phase: "Review" } };
 }
-const meta = { title: "Screens/Deal intelligence", component: DealIntelligenceBody, parameters: { docs: { description: { component: "Local demonstration fixtures. Desktop authority: Figma file otMJE31OKIxdXogV4RNbGQ, release v0.3; nodes 205:662, 205:767, 205:3738, 52:21, 205:4234, 205:4436. Five-family responsive stories are implementation coverage, not Figma conformance." } } } } satisfies Meta<typeof DealIntelligenceBody>;
+const meta = { title: "Screens/Deal intelligence", component: DealIntelligenceBody, args: { dataSource: "fixture" as const }, parameters: { docs: { description: { component: "Local demonstration fixtures. Desktop authority: Figma file otMJE31OKIxdXogV4RNbGQ, release v0.3; nodes 205:662, 205:767, 205:3738, 52:21, 205:4234, 205:4436. Five-family responsive stories are implementation coverage, not Figma conformance." } } } } satisfies Meta<typeof DealIntelligenceBody>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const OverviewDesktop: Story = { args: { resolution: fixtureResolution("overview") } };

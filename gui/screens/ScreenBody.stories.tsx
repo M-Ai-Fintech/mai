@@ -25,6 +25,7 @@ const fixture = (
 const meta = {
   title: "Screens/MAI-99 families",
   component: ScreenBody,
+  args: { dataSource: "fixture" as const },
   parameters: {
     docs: {
       description: {

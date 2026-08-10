@@ -1,5 +1,6 @@
 "use client";
 import { type ReactNode, type RefObject, useRef, useState } from "react";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import {
   Button,
   DataTable,
@@ -10,6 +11,10 @@ import {
   StatusIndicator,
 } from "@/components";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
+import {
+  type ScreenDataSource,
+  screenStateForAdapter,
+} from "../screen-contracts";
 import {
   audit,
   closing,
@@ -41,7 +46,10 @@ export type ExecutionState =
   | "blocked"
   | "failed"
   | "completed"
-  | "destructive";
+  | "destructive"
+  | "partial-failure"
+  | "sensitive"
+  | "stale";
 const families: readonly ExecutionFamily[] = [
   "negotiation",
   "closing",
@@ -62,21 +70,39 @@ const titles: Record<ExecutionFamily, string> = {
 };
 /** Renders a MAI-101 family only after MAI-98 has resolved deal permission and identity. */
 export function DealExecutionBody(
-  { resolution, state = "default" }: {
+  {
+    resolution,
+    state = "default",
+    dataSource,
+    adapter,
+  }: {
     resolution: ReadyRouteResolution;
     state?: ExecutionState;
+    dataSource: ScreenDataSource;
+    adapter?: AdapterResult<AdapterReadModel>;
   },
 ) {
   const family = resolution.route.id.slice("deal.".length) as ExecutionFamily;
   if (!families.includes(family)) return null;
   if (!resolution.permissions.includes("deal")) return <Restricted />;
+  const resolvedState = dataSource === "v1"
+    ? executionStateForAdapter(adapter)
+    : state;
   return (
     <ExecutionPage
       family={family}
-      state={state}
+      state={resolvedState}
       dealId={resolution.routeParameters.dealId}
+      dataSource={dataSource}
+      adapter={adapter}
     />
   );
+}
+
+function executionStateForAdapter(
+  adapter: AdapterResult<AdapterReadModel> | undefined,
+): ExecutionState {
+  return screenStateForAdapter(adapter);
 }
 function Restricted() {
   return (
@@ -88,35 +114,58 @@ function Restricted() {
     </section>
   );
 }
+
+function StaleAdapterWarning() {
+  return (
+    <InlineNotice role="warning" title="Data requires freshness review">
+      This v1 projection is stale and is not current authoritative content.
+      Refresh before relying on it.
+    </InlineNotice>
+  );
+}
+
 function ExecutionPage(
-  { family, state, dealId }: {
+  { family, state, dealId, dataSource, adapter }: {
     family: ExecutionFamily;
     state: ExecutionState;
     dealId: string;
+    dataSource: ScreenDataSource;
+    adapter?: AdapterResult<AdapterReadModel>;
   },
 ) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const replacement = ["loading", "empty", "unavailable", "error", "restricted"]
-    .includes(state);
+  const replacement = dataSource === "v1"
+    ? state !== "default" && state !== "stale"
+    : ["loading", "empty", "unavailable", "error", "restricted"].includes(
+      state,
+    );
   return (
     <section
       className={styles.page}
       data-screen-family={`deal-${family}`}
-      data-fixture-only="true"
+      data-fixture-only={dataSource === "fixture" ? "true" : undefined}
     >
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>
-            Deal execution · {family === "negotiation"
-              ? "Figma 239:3"
-              : family === "workspace"
-              ? "Figma 239:551"
-              : "Shared-pattern derivation · Figma 239:921"}
+            {dataSource === "fixture"
+              ? `Deal execution · ${
+                family === "negotiation"
+                  ? "Figma 239:3"
+                  : family === "workspace"
+                  ? "Figma 239:551"
+                  : "Shared-pattern derivation · Figma 239:921"
+              }`
+              : "Deal execution · v1 adapter"}
           </p>
           <h1>{titles[family]}</h1>
-          <p>Deal {dealId} · local demonstration</p>
+          <p>
+            Deal {dealId} · {dataSource === "fixture"
+              ? "local demonstration"
+              : "authoritative read model"}
+          </p>
         </div>
         <StatusIndicator
           role={state === "error" || state === "blocked"
@@ -126,51 +175,121 @@ function ExecutionPage(
           {state}
         </StatusIndicator>
       </header>
-      <p className={styles.disclosure}>{fixtureDisclosure}</p>
-      {replacement ? <State state={state} /> : (
-        <Family
-          family={family}
-          onInspect={() => setDrawerOpen(true)}
-          onConfirm={() => setDialogOpen(true)}
-          trigger={trigger}
-        />
-      )}
-      <Drawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        returnFocusRef={trigger}
-        title="Evidence and authority"
-        description="Citation is fixture evidence; review is human-owned."
-      >
-        <EvidenceReference
-          availability="current"
-          metadata={{
-            source: audit.evidence[0].id,
-            location: audit.evidence[0].citation,
-            documentVersion: audit.evidence[0].version,
-            freshness: "stale",
-          }}
-        />
-        <p>Audit {audit.eventId} · {audit.reconstructionPermission}</p>
-      </Drawer>
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        returnFocusRef={trigger}
-        title="Human authority required"
-        description="This local control records no production side effect."
-        variant="destructive"
-        confirmationAction={{
-          label: "Record local confirmation",
-          onConfirm: () => setDialogOpen(false),
-        }}
-      >
-        <p>
-          Approval, external communication, signature, access, release, archive,
-          and deletion remain separate human decisions with audit records.
-        </p>
-      </Dialog>
+      <p className={styles.disclosure}>
+        {dataSource === "fixture"
+          ? fixtureDisclosure
+          : "Authoritative v1 data only — no fixture fallback is enabled."}
+      </p>
+      {dataSource === "v1" && state === "stale"
+        ? <StaleAdapterWarning />
+        : null}
+      {replacement
+        ? dataSource === "fixture"
+          ? <State state={state} />
+          : <LiveAdapterState state={state} />
+        : dataSource === "v1"
+        ? <LiveAdapterContent family={family} data={adapterData(adapter)} />
+        : (
+          <Family
+            family={family}
+            onInspect={() => setDrawerOpen(true)}
+            onConfirm={() => setDialogOpen(true)}
+            trigger={trigger}
+          />
+        )}
+      {dataSource === "fixture"
+        ? (
+          <>
+            <Drawer
+              open={drawerOpen}
+              onOpenChange={setDrawerOpen}
+              returnFocusRef={trigger}
+              title="Evidence and authority"
+              description="Citation is fixture evidence; review is human-owned."
+            >
+              <EvidenceReference
+                availability="current"
+                metadata={{
+                  source: audit.evidence[0].id,
+                  location: audit.evidence[0].citation,
+                  documentVersion: audit.evidence[0].version,
+                  freshness: "stale",
+                }}
+              />
+              <p>Audit {audit.eventId} · {audit.reconstructionPermission}</p>
+            </Drawer>
+            <Dialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
+              returnFocusRef={trigger}
+              title="Human authority required"
+              description="This local control records no production side effect."
+              variant="destructive"
+              confirmationAction={{
+                label: "Record local confirmation",
+                onConfirm: () => setDialogOpen(false),
+              }}
+            >
+              <p>
+                Approval, external communication, signature, access, release,
+                archive, and deletion remain separate human decisions with audit
+                records.
+              </p>
+            </Dialog>
+          </>
+        )
+        : null}
     </section>
+  );
+}
+
+function adapterData(
+  adapter: AdapterResult<AdapterReadModel> | undefined,
+): AdapterReadModel | undefined {
+  return adapter !== undefined && "data" in adapter ? adapter.data : undefined;
+}
+
+function LiveAdapterState({ state }: { state: ExecutionState }) {
+  return (
+    <InlineNotice
+      role={state === "restricted" ? "restricted" : "warning"}
+      title={`${state} v1 adapter state`}
+    >
+      The authoritative adapter did not provide a current renderable read model.
+      No fixture data is shown as a fallback.
+    </InlineNotice>
+  );
+}
+
+function LiveAdapterContent(
+  { family, data }: { family: ExecutionFamily; data?: AdapterReadModel },
+) {
+  const items = data?.items ?? [];
+  return (
+    <div className={styles.grid} data-adapter-read-model={family}>
+      <Card title={`${titles[family]} · v1 read model`}>
+        {items.length === 0
+          ? (
+            <InlineNotice role="information" title="No current items">
+              The v1 read model is empty.
+            </InlineNotice>
+          )
+          : (
+            <Table
+              rows={items.map((
+                item,
+              ) => [item.id, item.title, item.status, item.summary])}
+            />
+          )}
+      </Card>
+      <Card title="Projection metadata">
+        <p>{data?.selectedItemId ?? "No item selected"}</p>
+        <p>
+          Commands remain separate from this read model and require explicit
+          authority.
+        </p>
+      </Card>
+    </div>
   );
 }
 function State({ state }: { state: ExecutionState }) {

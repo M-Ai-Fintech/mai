@@ -58,9 +58,8 @@ const PREPARE_COMMAND_TIMEOUT_MS = 300_000;
 export async function runPreflight(
   options: PreflightOptions = {},
 ): Promise<PreflightResult[]> {
-  const environment = await loadCanonicalPostgresEnvironment(
-    options.environment ?? Deno.env.toObject(),
-  );
+  const environment = options.environment ??
+    await loadCanonicalPostgresEnvironment(Deno.env.toObject());
   const commandRunner = options.commandRunner ?? runCommand;
   const databaseProbe = options.databaseProbe ?? probeDatabase;
   const databaseProvisioner = options.databaseProvisioner ?? ensureDatabase;

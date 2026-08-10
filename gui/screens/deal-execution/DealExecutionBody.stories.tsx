@@ -18,6 +18,7 @@ function resolution(routeId: string): ReadyRouteResolution {
 const meta = {
   title: "Screens/Deal execution",
   component: DealExecutionBody,
+  args: { dataSource: "fixture" as const },
   parameters: {
     docs: {
       description: {
@@ -31,7 +32,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const NegotiationDesktop: Story = {
   args: { resolution: resolution("deal.negotiation") },
-  render: ({ resolution }) => <AppShell resolution={resolution} />,
+  render: ({ resolution }) => <AppShell resolution={resolution} dataSource="fixture" />,
 };
 export const AgenticDesktop: Story = {
   args: { resolution: resolution("deal.workspace") },
