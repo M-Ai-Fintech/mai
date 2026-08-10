@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { routeBodyOwner, routeRegistry } from "@/lib/shell/route-registry";
 import { DealExecutionBody } from "./DealExecutionBody";
@@ -107,5 +108,31 @@ describe("MAI-101 execution boundary", () => {
         }),
       ),
     ).toContain("separate from signature");
+  });
+
+  it("warns before rendering stale v1 deal execution content", () => {
+    const adapter: AdapterResult<AdapterReadModel> = {
+      source: "v1",
+      state: "stale",
+      data: {
+        family: "negotiation-room",
+        items: [{
+          id: "negotiation-stale",
+          title: "Stale negotiation",
+          summary: "Refresh required",
+          status: "Review",
+        }],
+      },
+      meta: { correlationId: "correlation-stale", freshness: "stale" },
+    };
+    const html = renderToStaticMarkup(createElement(DealExecutionBody, {
+      resolution: resolution("deal.negotiation"),
+      dataSource: "v1",
+      adapter,
+    }));
+
+    expect(html).toContain("Data requires freshness review");
+    expect(html).toContain("not current authoritative content");
+    expect(html).toContain("Stale negotiation");
   });
 });

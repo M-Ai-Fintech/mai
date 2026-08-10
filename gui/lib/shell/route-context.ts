@@ -1,17 +1,18 @@
 import {
-  fixtureShellAdapter,
   type DealContext,
+  fixtureShellAdapter,
   type OrganizationContext,
+  type ShellAdapter,
   type ShellCounts,
 } from "./adapters";
 import { adapterCanaryFor } from "@/lib/adapters/feature-flags";
 import {
   matchRoute,
   navigationRoutes,
-  routePath,
-  routeRegistry,
   type Permission,
   type RouteDefinition,
+  routePath,
+  routeRegistry,
 } from "./route-registry";
 
 export type RouteResolution =
@@ -20,21 +21,28 @@ export type RouteResolution =
   | { readonly kind: "restricted" }
   | { readonly kind: "unavailable"; readonly reason?: string }
   | {
-      readonly kind: "ready";
-      readonly route: RouteDefinition;
-      readonly routeParameters: Readonly<Record<string, string>>;
-      readonly permissions: readonly Permission[];
-      readonly organization?: OrganizationContext;
-      readonly deal?: DealContext;
-      readonly counts?: ShellCounts;
-    };
+    readonly kind: "ready";
+    readonly route: RouteDefinition;
+    readonly routeParameters: Readonly<Record<string, string>>;
+    readonly permissions: readonly Permission[];
+    readonly organization?: OrganizationContext;
+    readonly deal?: DealContext;
+    readonly counts?: ShellCounts;
+  };
 
 export interface RouteContextOptions {
   readonly dataSource: "fixture" | "v1";
+  readonly environment?: Readonly<Record<string, string | undefined>>;
+  readonly previousShellAdapter?: ShellAdapter;
 }
 
 export type ReadyRouteResolution = Extract<RouteResolution, { kind: "ready" }>;
-export type ShellNavigationState = "available" | "active" | "restricted" | "unavailable" | "disabled";
+export type ShellNavigationState =
+  | "available"
+  | "active"
+  | "restricted"
+  | "unavailable"
+  | "disabled";
 
 export interface ShellNavigationEntry {
   readonly routeId: string;
@@ -53,15 +61,24 @@ export interface ShellBreadcrumb {
 
 const identifier = /^[a-z0-9-]+$/;
 
-function routeParameters(route: RouteDefinition, parts: readonly string[]): Readonly<Record<string, string>> {
-  return Object.fromEntries(route.pattern.flatMap((segment, index) =>
-    segment.startsWith(":") ? [[segment.slice(1), parts[index] ?? ""]] : [],
-  ));
+function routeParameters(
+  route: RouteDefinition,
+  parts: readonly string[],
+): Readonly<Record<string, string>> {
+  return Object.fromEntries(
+    route.pattern.flatMap((segment, index) =>
+      segment.startsWith(":") ? [[segment.slice(1), parts[index] ?? ""]] : []
+    ),
+  );
 }
 
 function routeById(routeId: string): RouteDefinition {
-  const definition = routeRegistry.find((candidate) => candidate.id === routeId);
-  if (!definition) throw new Error(`Route ${routeId} is missing from the registry.`);
+  const definition = routeRegistry.find((candidate) =>
+    candidate.id === routeId
+  );
+  if (!definition) {
+    throw new Error(`Route ${routeId} is missing from the registry.`);
+  }
   return definition;
 }
 
@@ -72,8 +89,12 @@ function breadcrumbForRoute(
   current = false,
 ): ShellBreadcrumb | undefined {
   if (!resolution.permissions.includes(definition.permission)) return undefined;
-  if (definition.availability === "unavailable") return { routeId: definition.id, label, current };
-  const href = current ? undefined : routePath(definition, resolution.routeParameters);
+  if (definition.availability === "unavailable") {
+    return { routeId: definition.id, label, current };
+  }
+  const href = current
+    ? undefined
+    : routePath(definition, resolution.routeParameters);
   return { routeId: definition.id, label, current, href };
 }
 
@@ -83,14 +104,29 @@ export function navigationForResolution(
   return navigationRoutes(resolution.route.shellMode).map((definition) => {
     const section = definition.navigation?.section ?? "primary";
     if (!resolution.permissions.includes(definition.permission)) {
-      return { routeId: definition.id, label: definition.label, state: "restricted", section };
+      return {
+        routeId: definition.id,
+        label: definition.label,
+        state: "restricted",
+        section,
+      };
     }
     if (definition.availability === "unavailable") {
-      return { routeId: definition.id, label: definition.label, state: "unavailable", section };
+      return {
+        routeId: definition.id,
+        label: definition.label,
+        state: "unavailable",
+        section,
+      };
     }
     const href = routePath(definition, resolution.routeParameters);
     if (!href) {
-      return { routeId: definition.id, label: definition.label, state: "disabled", section };
+      return {
+        routeId: definition.id,
+        label: definition.label,
+        state: "disabled",
+        section,
+      };
     }
     return {
       routeId: definition.id,
@@ -110,19 +146,44 @@ export function breadcrumbsForResolution(
 
   if (route.shellMode === "global") {
     if (route.id !== "global.home" && organization) {
-      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+      crumbs.push(
+        breadcrumbForRoute(
+          resolution,
+          routeById("global.home"),
+          organization.name,
+        ),
+      );
     }
   } else if (route.shellMode === "deal") {
     if (organization) {
-      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+      crumbs.push(
+        breadcrumbForRoute(
+          resolution,
+          routeById("global.home"),
+          organization.name,
+        ),
+      );
     }
     if (deal) {
       const overview = routeById("deal.overview");
-      crumbs.push(breadcrumbForRoute(resolution, overview, deal.name, route.id === overview.id));
+      crumbs.push(
+        breadcrumbForRoute(
+          resolution,
+          overview,
+          deal.name,
+          route.id === overview.id,
+        ),
+      );
     }
   } else if (route.shellMode === "administration") {
     if (organization) {
-      crumbs.push(breadcrumbForRoute(resolution, routeById("global.home"), organization.name));
+      crumbs.push(
+        breadcrumbForRoute(
+          resolution,
+          routeById("global.home"),
+          organization.name,
+        ),
+      );
     }
     const administration = routeById("administration.profile");
     crumbs.push(breadcrumbForRoute(
@@ -156,18 +217,27 @@ export async function resolveRouteContext(
   if (!route) return { kind: "not-found" };
 
   const parameters = routeParameters(route, parts);
-  const malformedParameter = Object.entries(parameters).find(([, value]) => !identifier.test(value));
+  const malformedParameter = Object.entries(parameters).find(([, value]) =>
+    !identifier.test(value)
+  );
   if (malformedParameter) {
     return {
       kind: "invalid-context",
-      reason: `The ${malformedParameter[0]} route identifier must use lowercase letters, numbers, or hyphens.`,
+      reason: `The ${
+        malformedParameter[0]
+      } route identifier must use lowercase letters, numbers, or hyphens.`,
     };
   }
 
-  if (options.dataSource === "v1") return unavailableV1Shell(route.id);
+  const shellAdapter = shellAdapterFor(options);
+  if (shellAdapter === undefined) {
+    return unavailableV1Shell(route.id, options.environment);
+  }
 
-  const access = await fixtureShellAdapter.resolveAccess(route.shellMode);
-  if (!access.permissions.includes(route.permission)) return { kind: "restricted" };
+  const access = await shellAdapter.resolveAccess(route.shellMode);
+  if (!access.permissions.includes(route.permission)) {
+    return { kind: "restricted" };
+  }
 
   if (route.shellMode === "external") {
     return {
@@ -178,9 +248,9 @@ export async function resolveRouteContext(
     };
   }
 
-  const organization = await fixtureShellAdapter.resolveOrganization();
+  const organization = await shellAdapter.resolveOrganization();
   const dealId = parameters.dealId;
-  const deal = dealId ? await fixtureShellAdapter.resolveDeal(dealId) : undefined;
+  const deal = dealId ? await shellAdapter.resolveDeal(dealId) : undefined;
   if (deal === "inaccessible") return { kind: "restricted" };
   if (deal === "unavailable") return { kind: "unavailable" };
 
@@ -191,12 +261,31 @@ export async function resolveRouteContext(
     permissions: access.permissions,
     organization,
     deal,
-    counts: await fixtureShellAdapter.resolveCounts(),
+    counts: await shellAdapter.resolveCounts(),
   };
 }
 
-function unavailableV1Shell(routeId: string): RouteResolution {
-  const shell = adapterCanaryFor("application-shell");
+function shellAdapterFor(
+  options: RouteContextOptions,
+): ShellAdapter | undefined {
+  if (options.dataSource === "fixture") return fixtureShellAdapter;
+  const shell = adapterCanaryFor("application-shell", options.environment);
+  return shell.activation === "previous"
+    ? options.previousShellAdapter
+    : undefined;
+}
+
+function unavailableV1Shell(
+  routeId: string,
+  environment?: Readonly<Record<string, string | undefined>>,
+): RouteResolution {
+  const shell = adapterCanaryFor("application-shell", environment);
+  if (shell.activation === "previous") {
+    return {
+      kind: "unavailable",
+      reason: `The previous shell adapter is not registered for ${routeId}.`,
+    };
+  }
   return {
     kind: "unavailable",
     reason: shell.activation === "off"

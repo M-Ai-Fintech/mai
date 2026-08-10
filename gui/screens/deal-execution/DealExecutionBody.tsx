@@ -12,8 +12,8 @@ import {
 } from "@/components";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import {
-  screenStateForAdapter,
   type ScreenDataSource,
+  screenStateForAdapter,
 } from "../screen-contracts";
 import {
   audit,
@@ -114,6 +114,16 @@ function Restricted() {
     </section>
   );
 }
+
+function StaleAdapterWarning() {
+  return (
+    <InlineNotice role="warning" title="Data requires freshness review">
+      This v1 projection is stale and is not current authoritative content.
+      Refresh before relying on it.
+    </InlineNotice>
+  );
+}
+
 function ExecutionPage(
   { family, state, dealId, dataSource, adapter }: {
     family: ExecutionFamily;
@@ -128,7 +138,9 @@ function ExecutionPage(
   const trigger = useRef<HTMLButtonElement>(null);
   const replacement = dataSource === "v1"
     ? state !== "default" && state !== "stale"
-    : ["loading", "empty", "unavailable", "error", "restricted"].includes(state);
+    : ["loading", "empty", "unavailable", "error", "restricted"].includes(
+      state,
+    );
   return (
     <section
       className={styles.page}
@@ -139,15 +151,21 @@ function ExecutionPage(
         <div>
           <p className={styles.eyebrow}>
             {dataSource === "fixture"
-              ? `Deal execution · ${family === "negotiation"
-                ? "Figma 239:3"
-                : family === "workspace"
-                ? "Figma 239:551"
-                : "Shared-pattern derivation · Figma 239:921"}`
+              ? `Deal execution · ${
+                family === "negotiation"
+                  ? "Figma 239:3"
+                  : family === "workspace"
+                  ? "Figma 239:551"
+                  : "Shared-pattern derivation · Figma 239:921"
+              }`
               : "Deal execution · v1 adapter"}
           </p>
           <h1>{titles[family]}</h1>
-          <p>Deal {dealId} · {dataSource === "fixture" ? "local demonstration" : "authoritative read model"}</p>
+          <p>
+            Deal {dealId} · {dataSource === "fixture"
+              ? "local demonstration"
+              : "authoritative read model"}
+          </p>
         </div>
         <StatusIndicator
           role={state === "error" || state === "blocked"
@@ -162,6 +180,9 @@ function ExecutionPage(
           ? fixtureDisclosure
           : "Authoritative v1 data only — no fixture fallback is enabled."}
       </p>
+      {dataSource === "v1" && state === "stale"
+        ? <StaleAdapterWarning />
+        : null}
       {replacement
         ? dataSource === "fixture"
           ? <State state={state} />
@@ -169,13 +190,13 @@ function ExecutionPage(
         : dataSource === "v1"
         ? <LiveAdapterContent family={family} data={adapterData(adapter)} />
         : (
-        <Family
-          family={family}
-          onInspect={() => setDrawerOpen(true)}
-          onConfirm={() => setDialogOpen(true)}
-          trigger={trigger}
-        />
-      )}
+          <Family
+            family={family}
+            onInspect={() => setDrawerOpen(true)}
+            onConfirm={() => setDialogOpen(true)}
+            trigger={trigger}
+          />
+        )}
       {dataSource === "fixture"
         ? (
           <>
@@ -225,9 +246,7 @@ function ExecutionPage(
 function adapterData(
   adapter: AdapterResult<AdapterReadModel> | undefined,
 ): AdapterReadModel | undefined {
-  return adapter !== undefined && "data" in adapter
-    ? adapter.data
-    : undefined;
+  return adapter !== undefined && "data" in adapter ? adapter.data : undefined;
 }
 
 function LiveAdapterState({ state }: { state: ExecutionState }) {
@@ -236,8 +255,8 @@ function LiveAdapterState({ state }: { state: ExecutionState }) {
       role={state === "restricted" ? "restricted" : "warning"}
       title={`${state} v1 adapter state`}
     >
-      The authoritative adapter did not provide a current renderable read
-      model. No fixture data is shown as a fallback.
+      The authoritative adapter did not provide a current renderable read model.
+      No fixture data is shown as a fallback.
     </InlineNotice>
   );
 }
@@ -250,12 +269,25 @@ function LiveAdapterContent(
     <div className={styles.grid} data-adapter-read-model={family}>
       <Card title={`${titles[family]} · v1 read model`}>
         {items.length === 0
-          ? <InlineNotice role="information" title="No current items">The v1 read model is empty.</InlineNotice>
-          : <Table rows={items.map((item) => [item.id, item.title, item.status, item.summary])} />}
+          ? (
+            <InlineNotice role="information" title="No current items">
+              The v1 read model is empty.
+            </InlineNotice>
+          )
+          : (
+            <Table
+              rows={items.map((
+                item,
+              ) => [item.id, item.title, item.status, item.summary])}
+            />
+          )}
       </Card>
       <Card title="Projection metadata">
         <p>{data?.selectedItemId ?? "No item selected"}</p>
-        <p>Commands remain separate from this read model and require explicit authority.</p>
+        <p>
+          Commands remain separate from this read model and require explicit
+          authority.
+        </p>
       </Card>
     </div>
   );
