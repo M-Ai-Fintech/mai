@@ -69,22 +69,27 @@ describe("MAI-99 screen resolution", () => {
       "team-workspace",
     );
     expect(
-      resolveScreenFamily(resolution("administration.profile", "administration"))
+      resolveScreenFamily(
+        resolution("administration.profile", "administration"),
+      )
         .family,
     ).toBe("settings");
-    expect(resolveScreenFamily(resolution("external.workspace", "external")).family)
+    expect(
+      resolveScreenFamily(resolution("external.workspace", "external")).family,
+    )
       .toBe("external-participant");
   });
 
   it("does not resolve deferred deal routes to MAI-99 families", () => {
-    const route = (id: string) => ({
-      route: {
-        id,
-        shellMode: "deal",
-        availability: "available",
-        implementationStatus: "shell-placeholder",
-      },
-    }) as never;
+    const route = (id: string) =>
+      ({
+        route: {
+          id,
+          shellMode: "deal",
+          availability: "available",
+          implementationStatus: "shell-placeholder",
+        },
+      }) as never;
 
     for (
       const definition of routeRegistry.filter((item) =>
@@ -230,6 +235,35 @@ describe("MAI-102 MAI-99 conformance compositions", () => {
     expect(result).toContain("Authoritative work item");
     expect(result).toContain("v1 adapter");
     expect(result).not.toContain("Approve diligence scope");
+    expect(result).not.toContain('data-fixture-only="true"');
+  });
+
+  it("marks stale v1 data as non-current before rendering its items", () => {
+    const adapter: AdapterResult<AdapterReadModel> = {
+      source: "v1",
+      state: "stale",
+      data: {
+        family: "command-center",
+        items: [{
+          id: "work-stale",
+          title: "Stale work item",
+          summary: "Requires a fresh read",
+          status: "Review",
+        }],
+      },
+      meta: { correlationId: "correlation-stale", freshness: "stale" },
+    };
+    const result = renderToStaticMarkup(
+      createElement(ScreenBody, {
+        resolution: resolution("global.home"),
+        dataSource: "v1",
+        adapter,
+      }),
+    );
+
+    expect(result).toContain("Data requires freshness review");
+    expect(result).toContain("not current authoritative content");
+    expect(result).toContain("Stale work item");
     expect(result).not.toContain('data-fixture-only="true"');
   });
 });

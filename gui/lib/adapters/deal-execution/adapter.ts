@@ -1,7 +1,4 @@
-import {
-  readFamilyAdapter,
-  type AdapterReadOptions,
-} from "../runtime";
+import { type AdapterReadOptions, readFamilyAdapter } from "../runtime";
 import type { AdapterReadModel, AdapterResult } from "../contracts";
 
 export type DealExecutionFamily =
@@ -32,6 +29,7 @@ export function isDealExecutionFamily(
 export function readDealExecutionFamily(
   family: DealExecutionFamily,
   options: AdapterReadOptions = {},
+  previousAdapter?: () => Promise<AdapterResult<AdapterReadModel>>,
 ): Promise<AdapterResult<AdapterReadModel>> {
-  return readFamilyAdapter(family, options);
+  return readFamilyAdapter(family, options, previousAdapter);
 }

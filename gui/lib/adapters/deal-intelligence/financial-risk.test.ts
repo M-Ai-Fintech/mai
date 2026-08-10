@@ -128,6 +128,12 @@ describe("financial-risk banker-facing adapter", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("uses the generic canary source for explicit financial-risk rollback", () => {
+    expect(financialRiskCanaryFor({
+      NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"financial-risk":"previous"}',
+    })).toMatchObject({ mode: "previous", activation: "previous" });
+  });
+
   it.each(
     [
       ["completed", "model-backed", true, true],
@@ -347,8 +353,8 @@ describe("financial-risk banker-facing adapter", () => {
       "risk_assessment_horizon",
       scope,
     )).resolves.toMatchObject({
-      state: "failed",
-      failure: { code: "not_found" },
+      state: "unavailable",
+      failure: { code: "FINANCIAL_RISK_NOT_FOUND" },
     });
   });
 
@@ -390,7 +396,7 @@ describe("financial-risk banker-facing adapter", () => {
       scope,
       {
         environment: {
-          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "previous",
+          NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"financial-risk":"previous"}',
         },
         previousAdapter: async () => previous,
       },
@@ -400,7 +406,7 @@ describe("financial-risk banker-facing adapter", () => {
       scope,
       {
         environment: {
-          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "off",
+          NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"financial-risk":"off"}',
         },
       },
     )).resolves.toMatchObject({
@@ -418,7 +424,7 @@ describe("financial-risk banker-facing adapter", () => {
       scope,
       {
         environment: {
-          NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE: "previous",
+          NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"financial-risk":"previous"}',
         },
       },
     )).resolves.toMatchObject({

@@ -27,8 +27,9 @@ export function isDealIntelligenceFamily(
 export function readDealIntelligenceFamily(
   family: DealIntelligenceFamily,
   options: AdapterReadOptions = {},
+  previousAdapter?: () => Promise<AdapterResult<AdapterReadModel>>,
 ): Promise<AdapterResult<AdapterReadModel>> {
-  return readFamilyAdapter(family, options);
+  return readFamilyAdapter(family, options, previousAdapter);
 }
 
 export {

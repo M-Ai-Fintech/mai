@@ -44,6 +44,12 @@ function restrictedFailureFor(
 function unavailableFailureFor(
   error: APIError,
 ): FinancialRiskReadFailure | undefined {
+  if (error.kind === "not_found") {
+    return unavailableResult(
+      "FINANCIAL_RISK_NOT_FOUND",
+      "Financial risk assessment is unavailable.",
+    );
+  }
   if (isUnavailableError(error)) {
     return unavailableResult(error.code ?? error.kind, error.message);
   }

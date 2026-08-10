@@ -1,19 +1,32 @@
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import {
-  readDealExecutionFamily,
   isDealExecutionFamily,
+  readDealExecutionFamily,
 } from "./deal-execution/adapter";
 import {
   isDealIntelligenceFamily,
   readDealIntelligenceFamily,
 } from "./deal-intelligence/adapter";
-import { readGlobalFamily, type GlobalFamily } from "./global/adapter";
+import { type GlobalFamily, readGlobalFamily } from "./global/adapter";
 import { type AdapterFamily } from "./catalog";
 import type { AdapterReadModel, AdapterResult } from "./contracts";
 import { unavailableAdapterResult } from "./states";
 
+export type ScreenPreviousAdapter = () => Promise<
+  AdapterResult<AdapterReadModel>
+>;
+export type ScreenPreviousAdapters = Partial<
+  Record<AdapterFamily, ScreenPreviousAdapter>
+>;
+
+export interface ScreenAdapterOptions {
+  readonly environment?: Readonly<Record<string, string | undefined>>;
+  readonly previousAdapters?: ScreenPreviousAdapters;
+}
+
 export async function readScreenAdapter(
   resolution: ReadyRouteResolution,
+  options: ScreenAdapterOptions = {},
 ): Promise<AdapterResult<AdapterReadModel>> {
   const family = adapterFamilyForRoute(resolution.route.id);
   if (family === undefined) {
@@ -22,12 +35,20 @@ export async function readScreenAdapter(
       `No v1 adapter is mapped for route ${resolution.route.id}.`,
     );
   }
-  const options = { routeParameters: resolution.routeParameters };
-  if (isGlobalFamily(family)) return readGlobalFamily(family, options);
-  if (isDealIntelligenceFamily(family)) {
-    return readDealIntelligenceFamily(family, options);
+  const readOptions = {
+    environment: options.environment,
+    routeParameters: resolution.routeParameters,
+  };
+  const previousAdapter = options.previousAdapters?.[family];
+  if (isGlobalFamily(family)) {
+    return readGlobalFamily(family, readOptions, previousAdapter);
   }
-  if (isDealExecutionFamily(family)) return readDealExecutionFamily(family, options);
+  if (isDealIntelligenceFamily(family)) {
+    return readDealIntelligenceFamily(family, readOptions, previousAdapter);
+  }
+  if (isDealExecutionFamily(family)) {
+    return readDealExecutionFamily(family, readOptions, previousAdapter);
+  }
   return unavailableAdapterResult(
     "SCREEN_ADAPTER_UNAVAILABLE",
     `The adapter family ${family} has no screen integration.`,

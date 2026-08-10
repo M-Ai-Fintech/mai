@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   Button,
   InlineNotice,
@@ -12,10 +13,10 @@ import type { Permission } from "@/lib/shell/route-registry";
 import { externalFixture, fixtureFor } from "./fixtures";
 import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import {
-  screenStateForAdapter,
   type ScreenDataSource,
   type ScreenFamily,
   type ScreenState,
+  screenStateForAdapter,
 } from "./screen-contracts";
 import styles from "./ScreenBody.module.css";
 
@@ -516,9 +517,10 @@ export function ScreenBody(
 ) {
   const screen = familyFor(resolution);
   if (!screen) return null;
-  const state = stateOverride ?? (dataSource === "v1"
-    ? screenStateForAdapter(adapter)
-    : stateFor(resolution));
+  const state = stateOverride ??
+    (dataSource === "v1"
+      ? screenStateForAdapter(adapter)
+      : stateFor(resolution));
   const fixture = dataSource === "fixture"
     ? screen.family === "external-participant"
       ? externalFixture(state)
@@ -558,7 +560,9 @@ export function ScreenBody(
           {state === "default" && screen.family === "deals-portfolio"
             ? <Button hierarchy="secondary">Create deal</Button>
             : null}
-          <StatusIndicator role={dataSource === "fixture" ? "incomplete" : "information"}>
+          <StatusIndicator
+            role={dataSource === "fixture" ? "incomplete" : "information"}
+          >
             {dataSource === "fixture" ? "Fixture-only" : "v1 adapter"}
           </StatusIndicator>
         </div>
@@ -588,10 +592,33 @@ function FamilyContent(
   if (state !== "default" && !(state === "stale" && data)) {
     return <StatePanel family={family} state={state} dataSource={dataSource} />;
   }
+  const content = contentForFamily(family, data, dataSource);
+  return state === "stale" ? staleAdapterContent(content) : content;
+}
+
+function contentForFamily(
+  family: ScreenFamily,
+  data: AdapterReadModel | undefined,
+  dataSource: ScreenDataSource,
+): ReactNode {
   if (family === "deals-portfolio") {
     return <DealsPortfolioContent data={data} dataSource={dataSource} />;
   }
-  return <OperationalContent family={family} data={data} dataSource={dataSource} />;
+  return (
+    <OperationalContent family={family} data={data} dataSource={dataSource} />
+  );
+}
+
+function staleAdapterContent(content: ReactNode): ReactNode {
+  return (
+    <>
+      <InlineNotice role="warning" title="Data requires freshness review">
+        This v1 projection is stale and is not current authoritative content.
+        Refresh before relying on it.
+      </InlineNotice>
+      {content}
+    </>
+  );
 }
 
 function StatePanel(
@@ -683,9 +710,7 @@ function OperationalContent(
   },
 ) {
   const definition = familyDefinitions[family];
-  const items = dataSource === "v1"
-    ? data?.items ?? []
-    : definition.items;
+  const items = dataSource === "v1" ? data?.items ?? [] : definition.items;
   const selected = data?.items.find(
     (item) => item.id === data?.selectedItemId,
   );
@@ -718,8 +743,12 @@ function OperationalContent(
             <li key={`${"id" in item ? item.id : item.title}-${index}`}>
               <Surface className={styles.row}>
                 <h2>{item.title}</h2>
-                <p className={styles.meta}>{"meta" in item ? item.meta : item.summary}</p>
-                <StatusIndicator role={"role" in item ? item.role : roleForStatus(item.status)}>
+                <p className={styles.meta}>
+                  {"meta" in item ? item.meta : item.summary}
+                </p>
+                <StatusIndicator
+                  role={"role" in item ? item.role : roleForStatus(item.status)}
+                >
                   {item.status}
                 </StatusIndicator>
               </Surface>
@@ -733,7 +762,8 @@ function OperationalContent(
             <StatusIndicator role={inspector.role}>
               {inspector.status}
             </StatusIndicator>
-            {dataSource === "fixture" && definition.inspector.href && definition.inspector.hrefLabel
+            {dataSource === "fixture" && definition.inspector.href &&
+                definition.inspector.hrefLabel
               ? (
                 <Link href={definition.inspector.href}>
                   {definition.inspector.hrefLabel}
@@ -821,7 +851,11 @@ function DealsPortfolioContent(
               {data?.items[0]?.summary ??
                 "Selected deal context remains in the deal workspace."}
             </p>
-            <StatusIndicator role={data?.items[0] ? roleForStatus(data.items[0].status) : "restricted"}>
+            <StatusIndicator
+              role={data?.items[0]
+                ? roleForStatus(data.items[0].status)
+                : "restricted"}
+            >
               {data?.items[0]?.status ?? "Restricted values hidden"}
             </StatusIndicator>
             {dataSource === "fixture"

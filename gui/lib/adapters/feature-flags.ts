@@ -7,6 +7,7 @@ import {
 
 export type AdapterMode = "v1" | "previous" | "off";
 export type AdapterActivation = "v1" | "previous" | "off";
+export type AdapterCanaryKey = AdapterFamily | "financial-risk";
 export interface AdapterCanary {
   readonly mode: AdapterMode;
   readonly activation: AdapterActivation;
@@ -21,7 +22,7 @@ export function adapterCanaryFor(
     runtimeEnvironment(),
 ): AdapterCanary {
   const descriptor = adapterDescriptorFor(family);
-  const mode = configuredMode(family, environment);
+  const mode = adapterCanaryModeFor(family, environment);
   return {
     mode,
     activation: activationFor(mode, descriptor.routeReadiness),
@@ -29,32 +30,40 @@ export function adapterCanaryFor(
   };
 }
 
+export function adapterCanaryModeFor(
+  key: AdapterCanaryKey,
+  environment: Readonly<Record<string, string | undefined>> =
+    runtimeEnvironment(),
+): AdapterMode {
+  return configuredMode(key, environment);
+}
+
 function configuredMode(
-  family: AdapterFamily,
+  key: AdapterCanaryKey,
   environment: Readonly<Record<string, string | undefined>>,
 ): AdapterMode {
   const raw = environment[CANARY_MAP_ENV];
   if (raw === undefined) return "v1";
   const values = parseCanaryMap(raw);
   if (values === undefined) return "off";
-  return values[family] ?? "v1";
+  return values[key] ?? "v1";
 }
 
 function parseCanaryMap(
   raw: string,
-): Partial<Record<AdapterFamily, AdapterMode>> | undefined {
+): Partial<Record<AdapterCanaryKey, AdapterMode>> | undefined {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed)) return undefined;
     if (hasInvalidFamilyMode(parsed)) return undefined;
     return Object.fromEntries(
-      adapterFamilies.flatMap((family) =>
+      canaryKeys.flatMap((family) =>
         parsed[family] === "previous" || parsed[family] === "v1" ||
           parsed[family] === "off"
           ? [[family, parsed[family]]]
           : []
       ),
-    ) as Partial<Record<AdapterFamily, AdapterMode>>;
+    ) as Partial<Record<AdapterCanaryKey, AdapterMode>>;
   } catch {
     return undefined;
   }
@@ -62,10 +71,15 @@ function parseCanaryMap(
 
 function hasInvalidFamilyMode(values: Record<string, unknown>): boolean {
   return Object.entries(values).some(([family, value]) =>
-    !adapterFamilies.includes(family as AdapterFamily) ||
+    !canaryKeys.includes(family as AdapterCanaryKey) ||
     (value !== "previous" && value !== "v1" && value !== "off")
   );
 }
+
+const canaryKeys: readonly AdapterCanaryKey[] = [
+  ...adapterFamilies,
+  "financial-risk",
+];
 
 function activationFor(
   mode: AdapterMode,

@@ -1,7 +1,4 @@
-import {
-  readFamilyAdapter,
-  type AdapterReadOptions,
-} from "../runtime";
+import { type AdapterReadOptions, readFamilyAdapter } from "../runtime";
 import type { AdapterReadModel, AdapterResult } from "../contracts";
 
 export type GlobalFamily =
@@ -22,6 +19,7 @@ export type GlobalReadModel = AdapterReadModel;
 export function readGlobalFamily(
   family: GlobalFamily,
   options: AdapterReadOptions = {},
+  previousAdapter?: () => Promise<AdapterResult<GlobalReadModel>>,
 ): Promise<AdapterResult<GlobalReadModel>> {
-  return readFamilyAdapter(family, options);
+  return readFamilyAdapter(family, options, previousAdapter);
 }

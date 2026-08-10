@@ -99,4 +99,26 @@ describe("screen adapter integration", () => {
     });
     expect(transport.requests).toHaveLength(0);
   });
+
+  it("injects an explicitly registered previous adapter through screen composition", async () => {
+    const transport = new FakeScreenTransport(Response.json({}));
+    transport.install();
+    const previous: AdapterResult<AdapterReadModel> = {
+      source: "previous",
+      state: "previous",
+      failure: {
+        code: "EXPLICIT_PREVIOUS",
+        message: "Explicit previous adapter selected.",
+        retryable: false,
+      },
+    };
+
+    await expect(readScreenAdapter(resolution("global.home"), {
+      environment: {
+        NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"command-center":"previous"}',
+      },
+      previousAdapters: { "command-center": async () => previous },
+    })).resolves.toEqual(previous);
+    expect(transport.requests).toHaveLength(0);
+  });
 });

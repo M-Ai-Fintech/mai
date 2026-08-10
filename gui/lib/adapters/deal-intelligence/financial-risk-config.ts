@@ -1,6 +1,5 @@
-import type { AdapterMode } from "../feature-flags";
+import { adapterCanaryModeFor, type AdapterMode } from "../feature-flags";
 
-const FINANCIAL_RISK_MODE_ENV = "NEXT_PUBLIC_FINANCIAL_RISK_ADAPTER_MODE";
 const FINANCIAL_RISK_READINESS_ENV =
   "NEXT_PUBLIC_FINANCIAL_RISK_ROUTE_READINESS";
 
@@ -28,10 +27,7 @@ export function financialRiskCanaryFor(
 function configuredFinancialRiskMode(
   environment: Readonly<Record<string, string | undefined>>,
 ): AdapterMode {
-  const value = environment[FINANCIAL_RISK_MODE_ENV];
-  if (value === undefined || value === "v1") return "v1";
-  if (value === "previous" || value === "off") return value;
-  return "off";
+  return adapterCanaryModeFor("financial-risk", environment);
 }
 
 function configuredFinancialRiskReadiness(
