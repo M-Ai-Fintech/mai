@@ -22,6 +22,8 @@ export type ScreenPreviousAdapters = Partial<
 export interface ScreenAdapterOptions {
   readonly environment?: Readonly<Record<string, string | undefined>>;
   readonly previousAdapters?: ScreenPreviousAdapters;
+  readonly routeParameters?: Readonly<Record<string, string>>;
+  readonly headers?: HeadersInit;
 }
 
 export async function readScreenAdapter(
@@ -37,7 +39,11 @@ export async function readScreenAdapter(
   }
   const readOptions = {
     environment: options.environment,
-    routeParameters: resolution.routeParameters,
+    routeParameters: {
+      ...resolution.routeParameters,
+      ...options.routeParameters,
+    },
+    headers: options.headers,
   };
   const previousAdapter = options.previousAdapters?.[family];
   if (isGlobalFamily(family)) {

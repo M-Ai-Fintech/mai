@@ -38,6 +38,7 @@ export type AdapterOwner =
   | "deal-execution";
 export type RouteReadiness =
   | "registered"
+  | "read-only"
   | "not-registered"
   | "operation-missing"
   | "contract-pending";
@@ -74,10 +75,10 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "application-shell",
     "shell",
-    "/api/v1/access/shell",
+    "/api/v1/demo-readiness/deals/:dealId/shell",
     "GetAuthorizedShell",
     ["SwitchWorkspace", "SelectDealContext"],
-    "not-registered",
+    "read-only",
     [
       "global",
       "deal",
@@ -91,19 +92,19 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "command-center",
     "global",
-    "/api/v1/work-management/command-center",
+    "/api/v1/demo-readiness/deals/:dealId/screens/command-center",
     "GetCommandCenter",
     ["DismissPriorityItem"],
-    "not-registered",
+    "read-only",
     ["default", "empty", "unavailable"],
   ),
   descriptor(
     "deals-portfolio",
     "global",
-    "/api/v1/deals",
+    "/api/v1/demo-readiness/deals/:dealId/screens/deals-portfolio",
     "SearchAuthorizedDeals",
     ["CreateSavedDealView"],
-    "operation-missing",
+    "read-only",
     ["default", "loading", "empty", "restricted", "long-content"],
   ),
   descriptor(
@@ -118,7 +119,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "tasks-approvals",
     "work-management",
-    "/api/v1/work-management",
+    "/api/v1/demo-readiness/deals/:dealId/screens/tasks-approvals",
     "SearchWorkItems",
     [
       "StartTask",
@@ -127,7 +128,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "SubmitApprovalDecision",
       "WithdrawApprovalRequest",
     ],
-    "not-registered",
+    "read-only",
     ["default", "restricted", "unavailable"],
   ),
   descriptor(
@@ -201,10 +202,10 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "deal-overview",
     "deal-intelligence",
-    "/api/v1/deals/:dealId",
+    "/api/v1/demo-readiness/deals/:dealId/screens/deal-overview",
     "GetDealOverview",
     ["UpdateDealConfiguration"],
-    "contract-pending",
+    "read-only",
     ["default", "blocked", "material-change"],
   ),
   descriptor(
@@ -219,7 +220,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "documents-vdr",
     "deal-intelligence",
-    "/api/v1/documents",
+    "/api/v1/demo-readiness/deals/:dealId/screens/documents-vdr",
     "GetDocumentRegister",
     [
       "InitiateDocumentUpload",
@@ -230,13 +231,13 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "RetryDocumentProcessing",
       "CancelProcessing",
     ],
-    "not-registered",
+    "read-only",
     ["default", "processing", "failure", "restricted"],
   ),
   descriptor(
     "diligence-decision-room",
     "deal-intelligence",
-    "/api/v1/evidence-knowledge",
+    "/api/v1/demo-readiness/deals/:dealId/screens/diligence-decision-room",
     "GetDiligenceDecisionPackage",
     [
       "ProposeFinding",
@@ -244,22 +245,22 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "ApproveFinding",
       "RecordDiligenceDecision",
     ],
-    "not-registered",
+    "read-only",
     ["default", "invalidated", "approval", "recorded", "evidence-drawer"],
   ),
   descriptor(
     "valuation-lab",
     "deal-intelligence",
-    "/api/v1/valuation/scenarios/:scenarioId",
+    "/api/v1/demo-readiness/deals/:dealId/screens/valuation-lab",
     "GetValuationLab",
     ["CreateValuationScenario", "ComputeValuation", "ApproveValuationScenario"],
-    "contract-pending",
+    "read-only",
     ["default", "provisional", "approved", "stale"],
   ),
   descriptor(
     "matching-universe",
     "deal-intelligence",
-    "/api/v1/matching/candidates/:candidateId",
+    "/api/v1/demo-readiness/deals/:dealId/screens/matching-universe",
     "GetCounterpartyUniverse",
     [
       "SetMatchingCriteria",
@@ -271,13 +272,13 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "ApproveShortlist",
       "AuthorizeOutreach",
     ],
-    "contract-pending",
+    "read-only",
     ["default", "restricted", "conflict-blocked"],
   ),
   descriptor(
     "negotiation-room",
     "deal-execution",
-    "/api/v1/negotiation/rounds/:roundId",
+    "/api/v1/demo-readiness/deals/:dealId/screens/negotiation-room",
     "GetNegotiationRoom",
     [
       "OpenNegotiationRound",
@@ -289,7 +290,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "SendApprovedProposal",
       "RetryProposalDelivery",
     ],
-    "contract-pending",
+    "read-only",
     ["buy-side", "sell-side", "restricted", "stale", "approval-pending"],
   ),
   descriptor(
@@ -335,10 +336,10 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "deal-activity-audit",
     "deal-execution",
-    "/api/v1/deals/:dealId/activity",
+    "/api/v1/demo-readiness/deals/:dealId/screens/deal-activity-audit",
     "ReconstructAuditEvent",
     ["RequestAuditExport"],
-    "contract-pending",
+    "read-only",
     ["default", "restricted-export", "stale-consequence"],
   ),
   descriptor(
@@ -358,7 +359,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "deliverables-exports",
     "deal-execution",
-    "/api/v1/deliverables",
+    "/api/v1/demo-readiness/deals/:dealId/screens/deliverables-exports",
     "GetDeliverableWorkspace",
     [
       "CreateDeliverableDraft",
@@ -371,7 +372,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
       "MarkDeliverableStale",
       "RegenerateDeliverable",
     ],
-    "contract-pending",
+    "read-only",
     ["draft", "approval", "external-release", "stale", "failure"],
   ),
   descriptor(

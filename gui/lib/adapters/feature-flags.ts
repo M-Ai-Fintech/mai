@@ -15,6 +15,7 @@ export interface AdapterCanary {
 }
 
 const CANARY_MAP_ENV = "NEXT_PUBLIC_ADAPTER_CANARY_MAP";
+const DEMO_READINESS_ENV = "NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED";
 
 export function adapterCanaryFor(
   family: AdapterFamily,
@@ -22,7 +23,10 @@ export function adapterCanaryFor(
     runtimeEnvironment(),
 ): AdapterCanary {
   const descriptor = adapterDescriptorFor(family);
-  const mode = adapterCanaryModeFor(family, environment);
+  const mode = descriptor.route.includes("/demo-readiness/") &&
+      environment[DEMO_READINESS_ENV] !== "true"
+    ? "off"
+    : adapterCanaryModeFor(family, environment);
   return {
     mode,
     activation: activationFor(mode, descriptor.routeReadiness),
@@ -87,7 +91,7 @@ function activationFor(
 ): AdapterActivation {
   if (mode === "previous") return "previous";
   if (mode === "off") return "off";
-  return readiness === "registered" ? "v1" : "off";
+  return readiness === "registered" || readiness === "read-only" ? "v1" : "off";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

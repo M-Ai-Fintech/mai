@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "serra-azul-synthetic-sell-side",
+  "synthetic": true,
+  "customerData": false,
+  "expectedCategories": ["legal", "financial", "tax", "operational"],
+  "documents": [
+    {
+      "documentId": "doc_company-overview",
+      "documentVersionId": "docver_company-overview-v1",
+      "sourceId": "source_managed-local-company-overview",
+      "objectReferenceId": "object_company-overview-v1",
+      "path": "company-overview.md",
+      "name": "Synthetic company overview",
+      "mimeType": "text/markdown",
+      "classification": "legal",
+      "checksum": "3f6aa62e72b3cb63d109e64aec44547b862d7b2dd1be37f2a76a4179e57d6ea2",
+      "citation": {
+        "startLine": 3,
+        "endLine": 5,
+        "excerpt": "Serra Azul is a synthetic Brazilian logistics operator serving industrial\ncustomers in Sao Paulo, Minas Gerais, and Parana. The company owns 42 trucks,\nleases 18 additional vehicles, and operates three distribution hubs."
+      }
+    },
+    {
+      "documentId": "doc_financial-summary",
+      "documentVersionId": "docver_financial-summary-v1",
+      "sourceId": "source_managed-local-financial-summary",
+      "objectReferenceId": "object_financial-summary-v1",
+      "path": "financial-summary.csv",
+      "name": "Synthetic financial summary",
+      "mimeType": "text/csv",
+      "classification": "financial",
+      "checksum": "b230cca1b3510e041a15ae0c931663a7d9c32de9f2eebcd51e69ba988b5fd3d7",
+      "citation": {
+        "startLine": 3,
+        "endLine": 3,
+        "excerpt": "ebitda,11700000,15100000"
+      }
+    },
+    {
+      "documentId": "doc_debt-schedule",
+      "documentVersionId": "docver_debt-schedule-v1",
+      "sourceId": "source_managed-local-debt-schedule",
+      "objectReferenceId": "object_debt-schedule-v1",
+      "path": "debt-schedule.csv",
+      "name": "Synthetic debt schedule",
+      "mimeType": "text/csv",
+      "classification": "financial",
+      "checksum": "738b9f52154891a8d9bc3a1d28cc922a6f4ed56065650db7b155b5cfc9f0dc2b",
+      "citation": {
+        "startLine": 2,
+        "endLine": 4,
+        "excerpt": "working_capital,6800000,CDI+2.10%,2027-03-31\nfleet_financing,12000000,CDI+1.75%,2028-09-30\ndebenture,5000000,IPCA+6.20%,2029-12-15"
+      }
+    },
+    {
+      "documentId": "doc_customer-concentration",
+      "documentVersionId": "docver_customer-concentration-v1",
+      "sourceId": "source_managed-local-customer-concentration",
+      "objectReferenceId": "object_customer-concentration-v1",
+      "path": "customer-concentration.csv",
+      "name": "Synthetic customer concentration",
+      "mimeType": "text/csv",
+      "classification": "operational",
+      "checksum": "674e9c2f970513673966842e157ba59bef95423e2ef43f39991ff3e224903bf1",
+      "citation": {
+        "startLine": 2,
+        "endLine": 2,
+        "excerpt": "Synthetic Industrials A,0.31,2027-12-31"
+      }
+    }
+  ]
+}

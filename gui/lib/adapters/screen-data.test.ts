@@ -34,37 +34,42 @@ function resolution(routeId: string, routeParameters = {}) {
 }
 
 describe("screen adapter integration", () => {
-  it("keeps an unregistered global route unavailable without a request", async () => {
-    const transport = new FakeScreenTransport(Response.json({}));
+  const demoEnvironment = {
+    NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
+  };
+
+  it("loads the registered command center through the typed demo route", async () => {
+    const transport = new FakeScreenTransport(Response.json({
+      data: { family: "command-center", items: [] },
+      meta: { correlationId: "correlation-screen", freshness: "current" },
+    }));
     transport.install();
 
-    const result = await readScreenAdapter(resolution("global.home"));
-
-    expect(result).toMatchObject({
-      state: "unavailable",
-      failure: { code: "ROUTE_UNAVAILABLE" },
+    const result = await readScreenAdapter(resolution("global.home"), {
+      environment: demoEnvironment,
+      routeParameters: { dealId: "deal_serra-azul" },
     });
-    expect(transport.requests).toHaveLength(0);
+
+    expect(result).toMatchObject({ state: "ready", source: "v1" });
+    expect(transport.requests).toHaveLength(1);
   });
 
-  it("fails closed for a contract-pending deal adapter", async () => {
+  it("loads the registered deal overview through its exact contract", async () => {
     const transport = new FakeScreenTransport(
       Response.json({
         data: { family: "deal-overview", items: [] },
-        meta: { correlationId: "correlation-screen" },
+        meta: { correlationId: "correlation-screen", freshness: "current" },
       }),
     );
     transport.install();
 
     const result = await readScreenAdapter(
       resolution("deal.overview", { dealId: "deal-1" }),
+      { environment: demoEnvironment },
     );
 
-    expect(result).toMatchObject({
-      state: "unavailable",
-      failure: { code: "ROUTE_UNAVAILABLE" },
-    });
-    expect(transport.requests).toHaveLength(0);
+    expect(result).toMatchObject({ state: "ready", source: "v1" });
+    expect(transport.requests).toHaveLength(1);
   });
 
   it("maps every approved global route to its named family adapter", async () => {
@@ -115,6 +120,7 @@ describe("screen adapter integration", () => {
 
     await expect(readScreenAdapter(resolution("global.home"), {
       environment: {
+        NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
         NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"command-center":"previous"}',
       },
       previousAdapters: { "command-center": async () => previous },

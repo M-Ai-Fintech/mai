@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { adapterCatalog, adapterFamilies, isAdapterFamily } from "./catalog";
 import { adapterCanaryFor } from "./feature-flags";
-import { readDealIntelligenceFamily } from "./deal-intelligence/adapter";
 import { readGlobalFamily } from "./global/adapter";
 import { readAdapter } from "./runtime";
 import { z } from "zod";
@@ -27,6 +26,10 @@ afterEach(() => {
 });
 
 describe("frontend adapter catalog", () => {
+  const demoEnvironment = {
+    NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
+  };
+
   it("defines all approved families exactly once", () => {
     expect(adapterFamilies).toHaveLength(25);
     expect(new Set(adapterFamilies).size).toBe(adapterFamilies.length);
@@ -37,25 +40,44 @@ describe("frontend adapter catalog", () => {
     expect(adapterCatalog.every((item) => item.states.length > 0)).toBe(true);
   });
 
-  it("turns unregistered and contract-pending routes off", () => {
+  it("activates the explicit read-only demo path and keeps unfinished routes off", () => {
     expect(
-      adapterCanaryFor("command-center", {}).activation,
-    ).toBe("off");
+      adapterCanaryFor("command-center", demoEnvironment).activation,
+    ).toBe("v1");
     expect(
       adapterCanaryFor("new-deal-setup", {}).activation,
     ).toBe("off");
     for (
       const family of [
+        "application-shell",
         "deal-overview",
+        "documents-vdr",
+        "diligence-decision-room",
+        "valuation-lab",
+        "matching-universe",
         "negotiation-room",
-        "closing-control-room",
+        "tasks-approvals",
         "deal-activity-audit",
         "deliverables-exports",
+      ] as const
+    ) {
+      expect(adapterCanaryFor(family, demoEnvironment).activation).toBe("v1");
+    }
+    for (
+      const family of [
+        "closing-control-room",
         "deal-settings-archive",
       ] as const
     ) {
       expect(adapterCanaryFor(family, {}).activation).toBe("off");
     }
+  });
+
+  it("keeps demo-only routes off without explicit activation", () => {
+    expect(adapterCanaryFor("command-center", {})).toMatchObject({
+      mode: "off",
+      activation: "off",
+    });
   });
 
   it("selects the previous adapter from the generic canary map", () => {
@@ -91,6 +113,7 @@ describe("frontend adapter catalog", () => {
       z.object({ value: z.string() }),
       {
         environment: {
+          NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
           NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"deal-overview":"previous"}',
         },
       },
@@ -116,7 +139,7 @@ describe("frontend adapter catalog", () => {
     const transport = new FakeAdapterTransport(Response.json({}));
     transport.install();
 
-    const result = await readGlobalFamily("command-center", {
+    const result = await readGlobalFamily("new-deal-setup", {
       environment: {},
     });
 
@@ -132,8 +155,8 @@ describe("frontend adapter catalog", () => {
     const transport = new FakeAdapterTransport(Response.json({}));
     transport.install();
 
-    const result = await readDealIntelligenceFamily("deal-overview", {
-      routeParameters: { dealId: "deal-1" },
+    const result = await readAdapter("closing-control-room", z.object({}), {
+      routeParameters: { workspaceId: "workspace-1" },
     });
 
     expect(result).toMatchObject({

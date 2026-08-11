@@ -20,5 +20,24 @@ services:
       timeout: 5s
       retries: 10
 
+  postgres-demo-readiness:
+    profiles: ["demo"]
+    image: pgvector/pgvector:pg15@sha256:18d16372b8406bb38a9f94cbff15d125c463d71fde2770aa8b5c64bfcc1578ee
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DEMO_READINESS_DATABASE_USER:-mai_demo_runner}
+      POSTGRES_PASSWORD: ${DEMO_READINESS_DATABASE_PASSWORD:?set the local demo database password}
+      POSTGRES_DB: mai_demo_readiness
+    ports:
+      - "127.0.0.1:55435:5432"
+    volumes:
+      - mai-demo-readiness-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d mai_demo_readiness"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   mai-postgres-integration-test-data:
+  mai-demo-readiness-data:

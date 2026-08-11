@@ -6,6 +6,8 @@ import {
 } from "@/lib/adapters/screen-data";
 import { resolveRouteContext } from "@/lib/shell/route-context";
 import type { ScreenDataSource } from "@/screens/screen-contracts";
+import { cookies, headers } from "next/headers";
+import { createDemoReadinessShellAdapter } from "@/lib/shell/demo-readiness-adapter";
 
 const previousAdapterRegistry = {
   screens: {} satisfies ScreenPreviousAdapters,
@@ -15,20 +17,50 @@ export default async function ShellRoute(
   { params }: { params: Promise<{ route: string; segments?: string[] }> },
 ) {
   const { route, segments = [] } = await params;
+  const demoEnabled = process.env.NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED ===
+    "true";
+  const dealId = segments[0] ?? process.env.MAI_DEMO_DEAL_ID ??
+    (demoEnabled ? "deal_serra-azul" : "");
+  const requestHeaders = await demoRequestHeaders(dealId);
   const dataSource: ScreenDataSource =
     process.env.MAI_FRONTEND_DATA_SOURCE === "fixture" ? "fixture" : "v1";
   const result = await resolveRouteContext([route, ...segments], {
     dataSource,
     environment: process.env,
+    ...(demoEnabled && dealId !== ""
+      ? {
+        v1ShellAdapter: createDemoReadinessShellAdapter(dealId, {
+          headers: requestHeaders,
+        }),
+      }
+      : {}),
   });
   if (result.kind !== "ready") return <ShellState result={result} />;
   const adapter = dataSource === "v1"
     ? await readScreenAdapter(result, {
       environment: process.env,
       previousAdapters: previousAdapterRegistry.screens,
+      routeParameters: { dealId },
+      headers: requestHeaders,
     })
     : undefined;
   return (
     <AppShell resolution={result} dataSource={dataSource} adapter={adapter} />
   );
+}
+
+async function demoRequestHeaders(dealId: string): Promise<Headers> {
+  const incoming = await headers();
+  const session = (await cookies()).get("mai_session")?.value;
+  const authorization = incoming.get("authorization") ??
+    (session === undefined ? undefined : `Bearer ${session}`);
+  const result = new Headers();
+  if (authorization !== undefined) result.set("Authorization", authorization);
+  result.set("X-Deal-Id", dealId);
+  result.set(
+    "X-Correlation-Id",
+    incoming.get("x-correlation-id") ??
+      `cor_${crypto.randomUUID().replaceAll("-", "")}`,
+  );
+  return result;
 }

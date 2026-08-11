@@ -4,7 +4,11 @@ import { describe, expect, it } from "vitest";
 import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
 import { routeRegistry } from "@/lib/shell/route-registry";
-import { DealIntelligenceBody } from "./DealIntelligenceBody";
+import {
+  DealIntelligenceBody,
+  humanReviewFailure,
+} from "./DealIntelligenceBody";
+import { APIError } from "@/lib/api-client/errors";
 
 function resolution(
   routeId: string,
@@ -108,5 +112,43 @@ describe("MAI-100 deal intelligence bodies", () => {
     expect(html).toContain("Data requires freshness review");
     expect(html).toContain("not current authoritative content");
     expect(html).toContain("Stale overview");
+  });
+
+  it("wires the persisted human review command into the live diligence path", () => {
+    const adapter: AdapterResult<AdapterReadModel> = {
+      source: "v1",
+      state: "ready",
+      data: {
+        family: "diligence-decision-room",
+        items: [{
+          id: "finding_demo",
+          title: "Synthetic diligence finding",
+          summary: "Human review required",
+          status: "proposed",
+        }],
+      },
+      meta: { correlationId: "cor_demo-review", freshness: "current" },
+    };
+    const html = renderToStaticMarkup(createElement(DealIntelligenceBody, {
+      resolution: resolution("deal.diligence"),
+      dataSource: "v1",
+      adapter,
+    }));
+
+    expect(html).toContain("Record authorized human review");
+    expect(html).toContain("requires the authenticated banker session");
+    expect(html).not.toContain("local demonstration action is not persisted");
+  });
+
+  it("keeps protected and dependency command failures truthful", () => {
+    expect(humanReviewFailure(new APIError("hidden", { status: 404 }))).toBe(
+      "restricted",
+    );
+    expect(humanReviewFailure(new APIError("denied", { status: 403 }))).toBe(
+      "restricted",
+    );
+    expect(humanReviewFailure(new APIError("offline", { status: 503 }))).toBe(
+      "unavailable",
+    );
   });
 });
