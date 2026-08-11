@@ -1,10 +1,4 @@
-import {
-  DealReconciliationExecutor,
-  type ReconciliationMode,
-  type ReconciliationRunResult,
-  type ReconciliationVerificationResult,
-} from "../src/deal_management/v1.ts";
-import type { ReconciliationOutcome } from "../src/deal_management/v1.ts";
+import { DealReconciliationExecutor } from "../src/deal_management/v1.ts";
 import type {
   DealCommandContext,
   DealScope,
@@ -13,6 +7,10 @@ import type {
 import type { DealReconciliationRecord } from "../src/deal_management/v1.ts";
 import {
   createRuntime as createAuthenticatedRuntime,
+  type ReconciliationCliMode,
+  type ReconciliationReport,
+  type RoutingReport,
+  sanitizeOperatorReport,
 } from "./deal_reconciliation_runtime.ts";
 import {
   type ActorId,
@@ -120,11 +118,7 @@ export async function runReconciliationExecutable(
 }
 
 interface ReconciliationOptions {
-  readonly mode:
-    | ReconciliationMode
-    | "verify"
-    | "rollback-routing"
-    | "authoritative-routing";
+  readonly mode: ReconciliationCliMode;
   readonly input: string;
   readonly tenant: string;
   readonly workspace: string;
@@ -414,102 +408,3 @@ function isLegacyDealSelector(value: unknown): value is LegacyDealSelector {
 }
 
 export type { TenantId, WorkspaceId };
-
-interface RoutingReport {
-  readonly mode: "rollback-routing" | "authoritative-routing";
-  readonly routed: readonly DealReconciliationRecord[];
-}
-
-interface OperatorIssueDto {
-  readonly code: string;
-  readonly operatorInterventionRequired: boolean;
-  readonly retrySafe: boolean;
-}
-
-interface OperatorRecordDto {
-  readonly recordId: string;
-  readonly legacySource: string;
-  readonly legacyDealId: string;
-  readonly authoritativeDealId?: string;
-  readonly status: DealReconciliationRecord["status"];
-  readonly routingMode: DealReconciliationRecord["routingMode"];
-  readonly issue?: OperatorIssueDto;
-  readonly updatedAt: string;
-}
-
-interface OperatorOutcomeDto {
-  readonly kind: ReconciliationOutcome["kind"] | "routed";
-  readonly record: OperatorRecordDto;
-}
-
-interface OperatorReportDto {
-  readonly mode: ReconciliationOptions["mode"];
-  readonly outcomes: readonly OperatorOutcomeDto[];
-}
-
-type ReconciliationReport =
-  | ReconciliationRunResult
-  | ReconciliationVerificationResult
-  | RoutingReport;
-
-function sanitizeOperatorReport(
-  report: ReconciliationReport,
-  mode: ReconciliationOptions["mode"],
-): OperatorReportDto {
-  if ("outcomes" in report) {
-    return {
-      mode,
-      outcomes: report.outcomes.map((outcome) => ({
-        kind: outcome.kind,
-        record: sanitizeOperatorRecord(outcome.record),
-      })),
-    };
-  }
-  return {
-    mode,
-    outcomes: report.routed.map((record) => ({
-      kind: "routed",
-      record: sanitizeOperatorRecord(record),
-    })),
-  };
-}
-
-function sanitizeOperatorRecord(
-  record: DealReconciliationRecord,
-): OperatorRecordDto {
-  return {
-    recordId: boundedOperatorIdentifier(record.recordId),
-    legacySource: boundedOperatorIdentifier(record.legacySource),
-    legacyDealId: boundedOperatorIdentifier(record.legacyDealId),
-    ...(record.authoritativeDealId === undefined ? {} : {
-      authoritativeDealId: boundedOperatorIdentifier(
-        record.authoritativeDealId,
-      ),
-    }),
-    status: record.status,
-    routingMode: record.routingMode,
-    ...(record.issue === undefined ? {} : {
-      issue: {
-        code: record.issue.code,
-        operatorInterventionRequired: record.issue.operatorInterventionRequired,
-        retrySafe: record.issue.retrySafe,
-      },
-    }),
-    updatedAt: boundedOperatorTimestamp(record.updatedAt),
-  };
-}
-
-function boundedOperatorIdentifier(value: string): string {
-  if (
-    value.length > 128 ||
-    /secret|token|password|credential|protected|party|mandate|authority/i
-      .test(value)
-  ) {
-    return "[redacted]";
-  }
-  return value;
-}
-
-function boundedOperatorTimestamp(value: string): string {
-  return Number.isFinite(Date.parse(value)) ? value : "[redacted]";
-}
