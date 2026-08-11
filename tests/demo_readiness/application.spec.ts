@@ -14,7 +14,10 @@ import type {
   DealAuthorizationPort,
 } from "../../src/deal_management/contracts.ts";
 import type { RequestContext } from "../../src/platform/api/v1.ts";
-import type { ActorReference } from "../../src/platform/authz/v1.ts";
+import type {
+  ActorReference,
+  AllowedAuthorizationDecision,
+} from "../../src/platform/authz/v1.ts";
 
 const actor: ActorReference = {
   id: "actor_demo-banker" as ActorReference["id"],
@@ -50,12 +53,37 @@ class DenyingAuthorizationFake implements DealAuthorizationPort {
   }
 }
 
+class AllowingAuthorizationFake implements DealAuthorizationPort {
+  authorize(_input: DealAuthorizationInput) {
+    return {
+      outcome: "allow" as const,
+      reasonCode: "ALLOWED" as const,
+      allowedActions: [],
+      approvedScope: {
+        decisionReference: "decision_demo-application-test",
+      } as AllowedAuthorizationDecision["approvedScope"],
+      fieldMask: {
+        include: [],
+        omit: [],
+        redact: [],
+        approvedClassifications: [],
+      },
+    };
+  }
+}
+
 class DealLoadSpy {
   calls = 0;
 
   find(): Promise<undefined> {
     this.calls += 1;
     return Promise.resolve(undefined);
+  }
+}
+
+class FailingDealRepositoryFake {
+  find(): Promise<never> {
+    return Promise.reject(new Error("PostgreSQL connection detail"));
   }
 }
 
@@ -119,10 +147,27 @@ Deno.test("demo policy denial occurs before protected Deal loading", async () =>
   assertEquals(deals.calls, 0);
 });
 
+Deno.test("demo maps Deal repository failure to sanitized dependency unavailable", async () => {
+  const application = applicationFor(
+    requestContext(demoScope.dealId),
+    new AllowingAuthorizationFake(),
+    new FailingDealRepositoryFake(),
+  );
+
+  const error = await assertRejects(
+    () =>
+      application.readScreen(new Request("http://localhost"), "documents-vdr"),
+    DemoReadinessApplicationError,
+  );
+  assertEquals(error.status, 503);
+  assertEquals(error.code, "DEMO_DEPENDENCY_UNAVAILABLE");
+  assertEquals(error.message.includes("PostgreSQL"), false);
+});
+
 function applicationFor(
   context: RequestContext,
   authorization: DealAuthorizationPort,
-  deals: DealLoadSpy,
+  deals: DemoReadinessApplicationConfig["deals"],
 ): DemoReadinessApplication {
   const config: DemoReadinessApplicationConfig = {
     manifest: manifestJson as DemoManifest,

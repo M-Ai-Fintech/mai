@@ -193,10 +193,15 @@ export class DemoReadinessApplication {
   private async requireDeal(
     context: import("../platform/api/v1.ts").RequestContext,
   ): Promise<void> {
-    const deal = await this.config.deals.find({
-      tenantId: context.tenantId,
-      workspaceId: context.workspaceId!,
-    }, demoScope.dealId);
+    let deal;
+    try {
+      deal = await this.config.deals.find({
+        tenantId: context.tenantId,
+        workspaceId: context.workspaceId!,
+      }, demoScope.dealId);
+    } catch {
+      throw dependencyUnavailable();
+    }
     if (deal !== undefined) return;
     throw new DemoReadinessApplicationError(
       404,
