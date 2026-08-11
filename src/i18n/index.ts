@@ -5,7 +5,7 @@ export const SUPPORTED_LOCALES = ["en", "pt-BR"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export type TranslationParameters = Readonly<Record<string, string | number>>;
 
-type CatalogValue = string | readonly string[] | Catalog;
+type CatalogValue = string | Catalog;
 type Catalog = { readonly [key: string]: CatalogValue };
 
 const catalogs: Readonly<Record<Locale, Catalog>> = {
@@ -35,7 +35,7 @@ function lookup(catalog: Catalog, key: string): CatalogValue | undefined {
   let value: CatalogValue | undefined = catalog;
 
   for (const segment of key.split(".")) {
-    if (typeof value !== "object" || Array.isArray(value)) return undefined;
+    if (typeof value !== "object") return undefined;
     value = (value as Catalog)[segment];
   }
 
@@ -69,17 +69,4 @@ export function t(
     : key;
 
   return interpolate(value, parameters);
-}
-
-export function tList(
-  key: string,
-  locale: Locale = currentLocale,
-): readonly string[] {
-  const localized = lookup(catalogs[locale], key);
-  const fallback = locale === "en" ? localized : lookup(catalogs.en, key);
-  const value = Array.isArray(localized) ? localized : fallback;
-
-  return Array.isArray(value) && value.every((item) => typeof item === "string")
-    ? value
-    : [key];
 }

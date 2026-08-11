@@ -3114,9 +3114,14 @@ The current repository contains a narrow document-generation foundation:
 * LaTeX generation and compilation;
 * a basic term-sheet data structure;
 * PDF watermark and signature-label support;
-* a CLI flow that produces term-sheet `.tex` and `.pdf` files.
+* a validated term-sheet output path used by the approved application/API and
+  Agentic Workspace boundaries.
 
-The canonical repository documentation explicitly limits the current capability: the present global PDF tool writes a term-sheet PDF after validation, while closing workflows require preview and human approval. The existing code is not evidence of a complete banker-facing deliverable library or general report-generation system.
+The canonical repository documentation explicitly limits the current
+capability: the approved application/API path may request a term-sheet PDF
+after validation, while the Agentic Workspace and closing workflows require
+preview and human approval. The existing code is not evidence of a complete
+banker-facing deliverable library or general report-generation system.
 
 ## Keep
 
@@ -3140,7 +3145,8 @@ Do not treat it as the entire Deliverables domain.
 
 ### Direct filesystem writes
 
-The current CLI writes artifacts to a requested path.
+The former direct-filesystem path is not a supported product interface. Approved
+frontend, API/application, and Agentic Workspace flows must use:
 
 Production should instead use:
 

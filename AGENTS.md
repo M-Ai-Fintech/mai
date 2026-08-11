@@ -109,3 +109,21 @@ the GUI, `gui/AGENTS.md` contains the Next.js-version rule.
 ## Resource naming
 
 Linear issue IDs are governance and traceability identifiers, not names for runtime resources. Never use Linear issue IDs or legacy Backlog identifiers in environment variables, database or schema names, Docker resources, code symbols, helpers, filenames, queues, topics, metrics, fixtures, or runtime configuration. Current issue IDs remain valid in Linear records, branches, pull requests, commits, comments, and current references; legacy Backlog IDs remain historical only.
+
+## Wave K execution authority — MAI-68
+
+The owner decision recorded in Linear comment `cf26b36a-b2e0-47b1-a998-9bd97b3f2746` is authoritative: the banker-facing CLI is obsolete and may be removed without replacement coverage. Broader legacy migration and retirement remain MAI-70 scope. MAI-68 is In Progress on `delivery/MAI-68-retire-legacy-banker-cli`, with Draft PR #70; Linear is the active work and decision record.
+
+The retired product surface includes `src/main.ts`, `src/cli/**`, `deno task start`, and Cliffy product registrations. They must not be restored as a supported banker workflow. The supported product boundaries are the approved frontend, API/application services, and agent workspace. Retained command-line work is bounded operator, migration, recovery, diagnostic, or developer tooling and is classified by the MAI-68 retirement test and its governed Linear inventory.
+
+Current correction authority additionally records the owner-authorized minimal
+reconciliation hardening: `scripts/deal_reconciliation.ts`,
+`scripts/deal_reconciliation_runtime.ts`, the focused reconciliation/runtime
+tests, and the existing `PostgresDealAuthorization` permission adapter may
+remove caller-controlled runtime injection, require a dedicated human operator
+grant, and emit only bounded redacted evidence. This does not authorize a
+broader API redesign, migration, deployment, GUI, worker, engine, frontend,
+platform, or MAI-70 change. Preserve every shared application path and all other
+retained tooling boundaries.
+
+Keep the PR Draft and MAI-68 In Progress for owner review. Do not self-approve, self-merge, mark Done, or close Wave K. The finisher requires a fresh exact-head Luna Max review with P0=0/P1=0, focused verification, and one terminal `DENO_ENV=test deno task verify`; canonical remains pending until then. Do not run Graphify manually. If hooks invoke Graphify, restore only its generated artifacts before publishing.

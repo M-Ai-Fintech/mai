@@ -24,7 +24,7 @@ export class AIProvider {
     if (Deno.env.get("DENO_ENV") === "test") {
       return { key: null, isFallback: true };
     }
-    if (Deno.args[0] !== "completions") warnAboutMissingApiKey();
+    warnAboutMissingApiKey();
     return { key: null, isFallback: true };
   }
 }

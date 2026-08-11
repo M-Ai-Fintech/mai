@@ -161,17 +161,20 @@ Deno.test("fast commands freeze and cache dependency resolution", async () => {
   );
 });
 
-Deno.test("fast command is developer tooling outside the banker-facing CLI", async () => {
+Deno.test("fast command remains bounded developer tooling after CLI retirement", async () => {
   const configuration = JSON.parse(await Deno.readTextFile("deno.json")) as {
     tasks?: Record<string, string>;
   };
-  const productCli = await Deno.readTextFile("src/main.ts");
 
   assertEquals(
     configuration.tasks?.["verify:fast"],
     "deno run --cached-only --frozen --allow-read=. --allow-run=deno --no-prompt scripts/verify_fast.ts",
   );
-  assert(!productCli.includes("verify:fast"));
+  assertEquals(configuration.tasks?.start, undefined);
+  for (const command of Object.values(configuration.tasks ?? {})) {
+    assert(!command.includes("src/main.ts"));
+    assert(!command.includes("src/cli/"));
+  }
 });
 
 Deno.test("fast CLI returns non-zero when an included component fails", async () => {

@@ -17,8 +17,8 @@ históricas.
 ```mermaid
 graph LR
     subgraph Memória de Curto Prazo
-        Context[Contexto de Execução Deno]
-        Session[Sessão de Conversação / Chat CLI]
+        Context[Contexto de Execução do Agentic Workspace/API]
+        Session[Sessão de Conversação do Agentic Workspace]
     end
 
     subgraph Memória de Longo Prazo Relacional
@@ -32,8 +32,8 @@ graph LR
 ```
 
 - **Curto Prazo (Short-Term Memory):** Retida em variáveis de runtime e no
-  histórico de mensagens da sessão ativa no Deno CLI. Serve para manter a
-  coerência imediata do diálogo.
+  histórico de mensagens da sessão ativa no Agentic Workspace. Serve para
+  manter a coerência imediata do diálogo.
 - **Longo Prazo (Long-Term Memory):** Persistida no PostgreSQL de forma
   segregada. Divide-se em:
   1. **Estado Operacional:** Registrado estritamente na tabela `phase_history`
@@ -138,7 +138,7 @@ seguinte protocolo determinístico:
    - Respeitar a classificação técnica no relatório final de Due Diligence
      (segurança jurídica).
    - Aplicar a restrição de conformidade e emitir um **Alerta Vermelho de
-     Risco** explícito no terminal CLI.
+     Risco** explícito no Agentic Workspace e no retorno da aplicação aprovada.
    - Impedir a geração do SPA final até que ocorra um override manual
      documentado com autenticação humana (HITL).
 

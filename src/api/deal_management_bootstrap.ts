@@ -21,14 +21,16 @@ import {
 import type {
   DealAuthorizationInput,
   DealAuthorizationPort,
+  DealCommandContext,
+  DealScope,
 } from "../deal_management/v1.ts";
 export { loadExecutableDealManagement } from "./deal_management_environment.ts";
-
+const RECONCILIATION_OPERATOR_RESOURCE = resourceKind("deal_reconciliation");
+const RECONCILIATION_OPERATOR_ACTION = action("operate");
 /** Authenticates opaque Identity Access session IDs against persisted sessions. */
 export class PostgresIdentityAccessAuthentication
   implements AuthenticationPort {
   constructor(private readonly pool: pg.Pool) {}
-
   async authenticate(
     input: { readonly credential: string },
   ): Promise<AuthenticatedPrincipal> {
@@ -43,11 +45,9 @@ export class PostgresIdentityAccessAuthentication
     }
   }
 }
-
 /** Evaluates Deal requests from persisted Identity Access policy facts. */
 export class PostgresDealAuthorization implements DealAuthorizationPort {
   constructor(private readonly pool: pg.Pool) {}
-
   async authorize(
     input: DealAuthorizationInput,
   ): Promise<AuthorizationDecision> {
@@ -94,8 +94,27 @@ export class PostgresDealAuthorization implements DealAuthorizationPort {
       `Operator actor "${input.actorId}" is not active in scope "${input.tenantId}/${input.workspaceId}".`,
     );
   }
+  async assertReconciliationPermission(input: {
+    readonly context: DealCommandContext;
+    readonly scope: DealScope;
+  }): Promise<void> {
+    const decision = await this.authorize({
+      context: input.context,
+      scope: input.scope,
+      resource: {
+        kind: RECONCILIATION_OPERATOR_RESOURCE,
+        id: "operator",
+      },
+      action: RECONCILIATION_OPERATOR_ACTION,
+      requestedFields: [],
+      humanOnly: true,
+    });
+    if (decision.outcome === "allow") return;
+    throw new Error(
+      `Reconciliation operator permission is denied; expected an active human operator grant (${decision.reasonCode}).`,
+    );
+  }
 }
-
 function authorizationRequest(
   input: DealAuthorizationInput,
   facts: readonly PolicyRow[],
@@ -151,7 +170,6 @@ interface PolicyRow {
   readonly kind: "role" | "grant" | "restriction";
   readonly document: Record<string, unknown>;
 }
-
 const sessionQuery =
   `SELECT aggregate_id AS "aggregateId", tenant_id AS "tenantId",
   workspace_id AS "workspaceId", state, expires_at AS "expiresAt", document

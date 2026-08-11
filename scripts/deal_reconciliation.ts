@@ -1,15 +1,17 @@
-import {
-  DealReconciliationExecutor,
-  type ReconciliationMode,
-  type ReconciliationRunResult,
-  type ReconciliationVerificationResult,
-} from "../src/deal_management/v1.ts";
+import { DealReconciliationExecutor } from "../src/deal_management/v1.ts";
 import type {
   DealCommandContext,
   DealScope,
   ReconciliationOperatorContext,
 } from "../src/deal_management/v1.ts";
 import type { DealReconciliationRecord } from "../src/deal_management/v1.ts";
+import {
+  createRuntime as createAuthenticatedRuntime,
+  type ReconciliationCliMode,
+  type ReconciliationReport,
+  type RoutingReport,
+  sanitizeOperatorReport,
+} from "./deal_reconciliation_runtime.ts";
 import {
   type ActorId,
   type CorrelationId,
@@ -26,9 +28,9 @@ const APPLY_CONFIRMATION = "APPLY_MAI_110";
 /**
  * Describes the approved runtime factory required for authoritative modes.
  *
- * @example const runtimeModule: ReconciliationRuntimeModule = { createRuntime }
+ * @example const runtimeFactory: ReconciliationRuntimeFactory = { createRuntime }
  */
-export interface ReconciliationRuntimeModule {
+export interface ReconciliationRuntimeFactory {
   createRuntime(input: {
     readonly scope: DealScope;
     readonly actorId: ActorId;
@@ -40,12 +42,17 @@ export interface ReconciliationRuntimeModule {
 /**
  * Provides the executor and scoped command context for one operator run.
  *
- * @example const runtime: ReconciliationRuntime = await module.createRuntime(input)
+ * @example const runtime: ReconciliationRuntime = await factory.createRuntime(input)
  */
 export interface ReconciliationRuntime {
   readonly executor: DealReconciliationExecutor;
   readonly commandContext: DealCommandContext;
   close(): Promise<void>;
+}
+
+/** Allows tests to inject a runtime without exposing a caller-controlled module path. */
+export interface ReconciliationCliDependencies {
+  readonly createRuntime?: ReconciliationRuntimeFactory["createRuntime"];
 }
 
 export interface LegacyDealSelector {
@@ -63,12 +70,17 @@ export interface LegacyDealSelector {
  */
 export async function runReconciliationCli(
   argumentsValue: readonly string[],
+  dependencies: ReconciliationCliDependencies = {},
 ): Promise<void> {
   const options = parseOptions(argumentsValue);
   const scope = parseScope(options);
   const selectors = await readSelectors(options.input);
   requireApplyConfirmation(options);
-  const runtime = await loadRuntime(options.runtimeModule, scope, options);
+  const runtime = await loadRuntime(
+    dependencies.createRuntime ?? createAuthenticatedRuntime,
+    scope,
+    options,
+  );
   try {
     const report = await runAuthoritativeMode(
       runtime,
@@ -76,29 +88,43 @@ export async function runReconciliationCli(
       selectors,
       scope,
     );
-    console.log(JSON.stringify(report));
+    console.log(JSON.stringify(sanitizeOperatorReport(report, options.mode)));
   } finally {
     await runtime.close();
   }
 }
 
 if (import.meta.main) {
-  await runReconciliationCli(Deno.args);
+  await runReconciliationExecutable(Deno.args);
+}
+
+/** Runs the direct executable with a stable, non-sensitive failure envelope. */
+export async function runReconciliationExecutable(
+  argumentsValue: readonly string[],
+): Promise<void> {
+  try {
+    await runReconciliationCli(argumentsValue);
+  } catch {
+    console.error(JSON.stringify({
+      ok: false,
+      error: {
+        code: "RECONCILIATION_FAILED",
+        message: "Reconciliation failed; inspect bounded operator evidence.",
+        operatorInterventionRequired: true,
+      },
+    }));
+    Deno.exitCode = 1;
+  }
 }
 
 interface ReconciliationOptions {
-  readonly mode:
-    | ReconciliationMode
-    | "verify"
-    | "rollback-routing"
-    | "authoritative-routing";
+  readonly mode: ReconciliationCliMode;
   readonly input: string;
   readonly tenant: string;
   readonly workspace: string;
   readonly actor: string;
   readonly correlation: string;
   readonly now: string;
-  readonly runtimeModule?: string;
   readonly confirmation?: string;
   readonly reason: string;
 }
@@ -116,6 +142,11 @@ function optionValues(argumentsValue: readonly string[]): Map<string, string> {
   for (let index = 0; index < argumentsValue.length; index += 2) {
     const flag = argumentsValue[index];
     const value = argumentsValue[index + 1];
+    if (flag === "--runtime-module") {
+      throw new Error(
+        'Operator option "--runtime-module" is retired; expected the project-owned authenticated runtime.',
+      );
+    }
     if (flag === undefined || value === undefined || !flag.startsWith("--")) {
       throw new Error(
         `Operator argument "${
@@ -151,7 +182,6 @@ function parsedOptions(
     actor: values.get("actor") ?? "actor_operator",
     correlation: values.get("correlation") ?? "cor_reconciliation",
     now: values.get("now") ?? new Date().toISOString(),
-    runtimeModule: values.get("runtime-module"),
     confirmation: values.get("confirm"),
     reason: values.get("reason") ?? "MAI-110 operator routing procedure",
   };
@@ -207,28 +237,17 @@ function assertSelectors(
 }
 
 async function loadRuntime(
-  path: string | undefined,
+  createRuntime: ReconciliationRuntimeFactory["createRuntime"],
   scope: DealScope,
   options: ReconciliationOptions,
 ): Promise<ReconciliationRuntime> {
-  const runtimePath = path ?? "./scripts/deal_reconciliation_runtime.ts";
-  const imported: unknown = await importRuntime(runtimePath);
-  if (!isRuntimeModule(imported)) {
-    throw new Error(
-      `Operator runtime module "${runtimePath}" is invalid; expected createRuntime(input).`,
-    );
-  }
   const identity = runtimeIdentity(options);
-  return await imported.createRuntime({
+  return await createRuntime({
     scope,
     actorId: identity.actorId,
     correlationId: identity.correlationId,
     now: options.now,
   });
-}
-
-function importRuntime(path: string): Promise<unknown> {
-  return import(new URL(path, `file://${Deno.cwd()}/`).href);
 }
 
 function runtimeIdentity(
@@ -250,9 +269,7 @@ async function runAuthoritativeMode(
   selectors: readonly LegacyDealSelector[],
   scope: DealScope,
 ): Promise<
-  | ReconciliationRunResult
-  | ReconciliationVerificationResult
-  | Readonly<Record<string, unknown>>
+  ReconciliationReport
 > {
   const operator = operatorContext(runtime, options, scope);
   const legacyDealIds = selectors.map((selector) => selector.legacyDealId);
@@ -265,7 +282,13 @@ async function runAuthoritativeMode(
     });
   }
   if (isRoutingMode(options.mode)) {
-    return await runRoutingBatch(runtime, options, selectors, operator);
+    return await runRoutingBatch(
+      runtime,
+      options.mode,
+      options,
+      selectors,
+      operator,
+    );
   }
   return await runtime.executor.runBatch({
     mode: options.mode,
@@ -304,15 +327,16 @@ function operatorContext(
 
 async function runRoutingBatch(
   runtime: ReconciliationRuntime,
+  mode: RoutingReport["mode"],
   options: ReconciliationOptions,
   selectors: readonly LegacyDealSelector[],
   operator: ReturnType<typeof operatorContext>,
-): Promise<Readonly<Record<string, unknown>>> {
+): Promise<RoutingReport> {
   const routed: DealReconciliationRecord[] = [];
   for (const selector of selectors) {
     routed.push(await routeRecord(runtime, options, selector, operator));
   }
-  return { mode: options.mode, routed };
+  return { mode, routed };
 }
 
 function isRoutingMode(
@@ -370,11 +394,6 @@ function isMode(
   return value === "dry-run" || value === "apply" || value === "resume" ||
     value === "verify" || value === "rollback-routing" ||
     value === "authoritative-routing";
-}
-
-function isRuntimeModule(value: unknown): value is ReconciliationRuntimeModule {
-  return typeof value === "object" && value !== null &&
-    "createRuntime" in value && typeof value.createRuntime === "function";
 }
 
 function isLegacyDealSelector(value: unknown): value is LegacyDealSelector {

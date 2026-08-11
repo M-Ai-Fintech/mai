@@ -1,6 +1,5 @@
 {
   "tasks": {
-    "start": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-ffi --allow-run src/main.ts",
     "api:start": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-ffi --allow-run src/api/server.ts",
     "worker:start": "deno run --env --allow-read --allow-env --allow-net src/platform/jobs/worker_process.ts",
     "test": "DENO_ENV=test deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net",
@@ -34,11 +33,7 @@
     "@huggingface/transformers": "npm:@huggingface/transformers@^4.2.0",
     "@std/assert": "https://deno.land/std@0.224.0/assert/mod.ts",
     "pg": "npm:pg@^8.11.3",
-    "@types/pg": "npm:@types/pg@^8.11.4",
-    "@cliffy/command": "https://deno.land/x/cliffy@v1.0.0-rc.4/command/mod.ts",
-    "@cliffy/prompt": "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts",
-    "@cliffy/table": "https://deno.land/x/cliffy@v1.0.0-rc.4/table/mod.ts",
-    "@cliffy/ansi": "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/mod.ts"
+    "@types/pg": "npm:@types/pg@^8.11.4"
   },
   "compilerOptions": {
     "strict": true
