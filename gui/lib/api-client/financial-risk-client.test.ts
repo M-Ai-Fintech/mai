@@ -123,7 +123,7 @@ describe("financial-risk typed client", () => {
       "/api/v1/financial-risk/assessments/risk_assessment_horizon/compute",
     );
     expect(String(fetchMock.mock.calls[1][0])).toBe(
-      "http://localhost:8000/api/v1/financial-risk/jobs/job_risk",
+      "http://127.0.0.1:8000/api/v1/financial-risk/jobs/job_risk",
     );
     expect(String(fetchMock.mock.calls[1][0])).not.toContain("/api/v1/jobs/");
     const commandRequest = fetchMock.mock.calls[0][1] as RequestInit;
