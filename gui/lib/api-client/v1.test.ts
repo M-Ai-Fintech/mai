@@ -27,6 +27,25 @@ afterEach(() => {
 });
 
 describe("v1 API client contract", () => {
+  it("preserves same-origin command paths in the browser", async () => {
+    vi.stubGlobal("window", { location: { origin: "http://localhost:3000" } });
+    const transport = new FakeV1Transport(Response.json({
+      data: { id: "receipt-1" },
+      meta: { correlationId: "cor_browser", freshness: "current" },
+    }));
+    transport.install();
+
+    await requestV1(
+      "/commands/demo-readiness/execute",
+      z.object({ id: z.string() }),
+      { query: { source: "banker" } },
+    );
+
+    expect(transport.requests[0].input).toBe(
+      "/commands/demo-readiness/execute?source=banker",
+    );
+  });
+
   it("sends correlation, concurrency, and idempotency headers", async () => {
     const transport = new FakeV1Transport(
       Response.json(

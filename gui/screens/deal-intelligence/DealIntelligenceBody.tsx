@@ -12,6 +12,9 @@ import {
   StatusIndicator,
 } from "@/components";
 import type { ReadyRouteResolution } from "@/lib/shell/route-context";
+import { executeDemoReadiness } from "@/lib/adapters/demo-readiness/commands";
+import { stateForApiError } from "@/lib/adapters/states";
+import { APIError } from "@/lib/api-client/errors";
 import {
   type ScreenDataSource,
   screenStateForAdapter,
@@ -135,7 +138,13 @@ export function DealIntelligenceBody({
         ? <StaleAdapterWarning />
         : null}
       {!replacesBody && (dataSource === "v1"
-        ? <LiveAdapterContent family={family} data={adapterData(adapter)} />
+        ? (
+          <LiveAdapterContent
+            family={family}
+            data={adapterData(adapter)}
+            dealId={resolution.routeParameters.dealId}
+          />
+        )
         : <Family family={family} state={resolvedState} />)}
     </section>
   );
@@ -182,7 +191,11 @@ function StaleAdapterWarning() {
 }
 
 function LiveAdapterContent(
-  { family, data }: { family: DealFamily; data?: AdapterReadModel },
+  { family, data, dealId }: {
+    family: DealFamily;
+    data?: AdapterReadModel;
+    dealId: string;
+  },
 ) {
   const items = data?.items ?? [];
   return (
@@ -211,8 +224,89 @@ function LiveAdapterContent(
             Permissions, freshness, and source version remain adapter-owned.
           </p>
         </Card>
+        {family === "diligence" ? <LiveHumanReview dealId={dealId} /> : null}
       </aside>
     </div>
+  );
+}
+
+type HumanReviewState =
+  | { readonly kind: "idle" | "submitting" }
+  | { readonly kind: "recorded"; readonly recordId: string }
+  | { readonly kind: "restricted" | "unavailable" | "failed" };
+
+function LiveHumanReview({ dealId }: { dealId: string }) {
+  const [review, setReview] = useState<HumanReviewState>({ kind: "idle" });
+  const recordReview = async (): Promise<void> => {
+    setReview({ kind: "submitting" });
+    try {
+      const receipt = await executeDemoReadiness({
+        idempotencyKey: "idem_investor-demo-execute",
+        correlationId: `cor_${crypto.randomUUID().replaceAll("-", "")}`,
+        headers: { "X-Deal-Id": dealId },
+      });
+      setReview({
+        kind: "recorded",
+        recordId: receipt.authority.humanDecisionRecordId,
+      });
+    } catch (error: unknown) {
+      setReview({ kind: humanReviewFailure(error) });
+    }
+  };
+  return (
+    <Card title="Human review command">
+      <p>
+        This persisted command requires the authenticated banker session. AI
+        remains a read/proposal boundary.
+      </p>
+      <LiveHumanReviewStatus review={review} />
+      <Button
+        loading={review.kind === "submitting"}
+        onClick={() => void recordReview()}
+      >
+        Record authorized human review
+      </Button>
+    </Card>
+  );
+}
+
+/** Maps protected and dependency failures without falling back to fixtures. */
+export function humanReviewFailure(
+  error: unknown,
+): "restricted" | "unavailable" | "failed" {
+  if (!(error instanceof APIError)) return "failed";
+  const state = stateForApiError(error);
+  if (state === "restricted" || error.kind === "not_found") {
+    return "restricted";
+  }
+  return state === "unavailable" ? "unavailable" : "failed";
+}
+
+function LiveHumanReviewStatus({ review }: { review: HumanReviewState }) {
+  if (review.kind === "recorded") {
+    return (
+      <StatusIndicator role="success">
+        Persisted · {review.recordId}
+      </StatusIndicator>
+    );
+  }
+  if (review.kind === "restricted") {
+    return (
+      <StatusIndicator role="restricted">Access denied safely</StatusIndicator>
+    );
+  }
+  if (review.kind === "unavailable") {
+    return (
+      <StatusIndicator role="warning">Dependency unavailable</StatusIndicator>
+    );
+  }
+  if (review.kind === "failed") {
+    return (
+      <StatusIndicator role="warning">Command failed safely</StatusIndicator>
+    );
+  }
+  return (
+    <StatusIndicator role="information">Human action required</StatusIndicator>
   );
 }
 

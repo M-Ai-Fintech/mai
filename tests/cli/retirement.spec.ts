@@ -56,6 +56,7 @@ const TASK_TARGETS = {
   "verify:fast": "scripts/verify_fast.ts",
   "verify:fast:benchmark": "scripts/verify_fast_benchmark.ts",
   "verify:integration": "scripts/verify_integration.ts",
+  "demo:verify": "scripts/investor_demo.ts",
   "test:smoke": "tests/smoke.spec.ts",
   "db:start": "docker compose up -d postgres-integration-test",
   "db:stop": "docker compose down",
@@ -90,6 +91,7 @@ const TASK_CLASSIFICATIONS: Readonly<
     "verify:fast",
     "verify:fast:benchmark",
     "verify:integration",
+    "demo:verify",
     "test:smoke",
   ],
   SHARED: ["api:start", "worker:start", "gui:start"],
@@ -103,6 +105,7 @@ const DIRECT_ENTRYPOINT_CLASSIFICATIONS: Readonly<
     "scripts/infra_bootstrap.ts",
     "scripts/infra_smoke.ts",
     "scripts/infra_validate.ts",
+    "scripts/investor_demo.ts",
   ],
   PRESERVE_MIGRATION: [
     "scripts/check_migration_integrity.ts",

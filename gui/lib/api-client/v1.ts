@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  fetchWithRetry,
-  parseResponse,
-  withQuery,
-} from "./transport";
+import { fetchWithRetry, parseResponse, withQuery } from "./transport";
 
 export const v1MetaSchema = z.object({
   correlationId: z.string().min(1),
@@ -98,7 +94,28 @@ async function fetchV1(
     idempotencyKey,
     correlationId,
   });
-  return fetchWithRetry(withQuery(path, query), { ...requestInit, headers });
+  return fetchWithRetry(requestUrl(path, query), {
+    ...requestInit,
+    headers,
+  });
+}
+
+function requestUrl(path: string, query: V1Query | undefined): string {
+  const resolved = serverAwareUrl(path);
+  if (typeof window === "undefined" || !resolved.startsWith("/")) {
+    return withQuery(resolved, query);
+  }
+  const url = new URL(resolved, window.location.origin);
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value !== undefined) url.searchParams.set(key, String(value));
+  }
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function serverAwareUrl(path: string): string {
+  if (typeof window !== "undefined" || !path.startsWith("/")) return path;
+  const base = process.env.MAI_API_BASE_URL ?? "http://127.0.0.1:8000";
+  return new URL(path, base).toString();
 }
 
 function requestHeaders(

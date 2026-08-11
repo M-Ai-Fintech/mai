@@ -1,4 +1,3 @@
-import { AgentOrchestrator } from "../agent/index.ts";
 import type { CorrelationId } from "../platform/api/v1.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
 import {
@@ -7,7 +6,6 @@ import {
   type DealManagementCompositionConfig,
   type DealManagementCompositionResult,
 } from "../deal_management/composition.ts";
-import { handleIdentityAccessRoute } from "../identity_access/http.ts";
 import { handleDealManagementRoute } from "../deal_management/http.ts";
 import {
   handleValuationV1Route,
@@ -35,8 +33,14 @@ import {
   type FinancialRiskServerRouteDependencies,
   routeFinancialRiskRequest,
 } from "./v1/financial_risk_server.ts";
-import { handleLegacyRoute } from "./routes/legacy.ts";
-import { handleMvpRoute } from "./mvp_routes.ts";
+import {
+  type CoreWorkflowRouteDependencies,
+  routeCoreWorkflowRequest,
+} from "./core_workflow_routes.ts";
+import {
+  type DemoReadinessV1RouteDependencies,
+  handleDemoReadinessV1Route,
+} from "./v1/demo_readiness_routes.ts";
 import {
   handleHealthRequest,
   RuntimeReadiness,
@@ -46,16 +50,26 @@ import {
   safeErrorCode,
 } from "../platform/operations/diagnostics.ts";
 import {
+  apiCorsHeaders,
   configuredPort,
   installApiShutdown,
+  jsonResponse,
+  requestCorrelationId,
+  requestWithCorrelation,
   withCorrelationId,
   withCorsHeaders,
 } from "./server_runtime.ts";
+import { routeNonDealRequest } from "./non_deal_routes.ts";
 import { loadExecutableDealManagement } from "./deal_management_bootstrap.ts";
 import {
   createExecutableNegotiationComposition,
   type ExecutableNegotiationConfig,
 } from "./negotiation_executable_composition.ts";
+import { createExecutableCoreWorkflowComposition } from "./core_workflow_executable_composition.ts";
+import {
+  createExecutableDemoReadinessComposition,
+} from "./demo_readiness_executable_composition.ts";
+import { loadExecutableDemoReadinessConfig } from "../demo_readiness/executable_config.ts";
 
 export interface WaveGRouteDependencies {
   readonly valuation?: ValuationV1RouteDependencies;
@@ -71,7 +85,11 @@ export interface WaveHRouteDependencies {
 
 export type WaveJRouteDependencies = FinancialRiskServerRouteDependencies;
 
+export type { CoreWorkflowRouteDependencies } from "./core_workflow_routes.ts";
+
 export interface ApiServerOptions {
+  readonly coreWorkflow?: CoreWorkflowRouteDependencies;
+  readonly demoReadiness?: DemoReadinessV1RouteDependencies;
   readonly dealManagement?:
     | DealManagementComposition
     | DealManagementCompositionConfig
@@ -83,6 +101,8 @@ export interface ApiServerOptions {
 }
 
 export interface ApiServerRouter {
+  readonly coreWorkflow: CoreWorkflowRouteDependencies;
+  readonly demoReadiness?: DemoReadinessV1RouteDependencies;
   readonly dealManagement: DealManagementCompositionResult;
   readonly repository: DealRepository;
   readonly readiness: RuntimeReadiness;
@@ -92,31 +112,6 @@ export interface ApiServerRouter {
   handle(request: Request): Promise<Response>;
 }
 
-function corsHeaders(): Headers {
-  return new Headers({
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers":
-      "Authorization, Content-Type, If-Match, Idempotency-Key, Last-Event-ID, X-Correlation-Id, X-Workspace-Id, X-Deal-Id",
-    "Access-Control-Expose-Headers": "ETag, X-Correlation-Id",
-  });
-}
-
-function withMvpHeaders(response: Response, cors: Headers): Response {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of cors.entries()) headers.set(name, value);
-  headers.set("X-MAI-Persistence", "mock-backed-in-memory");
-  headers.set(
-    "Access-Control-Expose-Headers",
-    "X-MAI-Persistence, X-Resource-Version",
-  );
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-}
-
 async function routeRequest(
   request: Request,
   repository: DealRepository,
@@ -124,11 +119,12 @@ async function routeRequest(
   waveG: WaveGRouteDependencies,
   waveH: WaveHRouteDependencies,
   waveJ: WaveJRouteDependencies,
+  coreWorkflow: CoreWorkflowRouteDependencies,
+  demoReadiness: DemoReadinessV1RouteDependencies | undefined,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
-  const headers = corsHeaders();
-  const correlationId = (request.headers.get("X-Correlation-Id") ??
-    crypto.randomUUID()) as CorrelationId;
+  const headers = apiCorsHeaders();
+  const correlationId = requestCorrelationId(request);
   if (request.method === "OPTIONS") return new Response(null, { headers });
   const healthResponse = handleHealthRequest(request, readiness);
   if (healthResponse) return withCorrelationId(healthResponse, correlationId);
@@ -147,6 +143,8 @@ async function routeRequest(
         waveG,
         waveH,
         waveJ,
+        coreWorkflow,
+        demoReadiness,
         headers,
         correlationId,
       ),
@@ -164,6 +162,8 @@ async function routedResponse(
   waveG: WaveGRouteDependencies,
   waveH: WaveHRouteDependencies,
   waveJ: WaveJRouteDependencies,
+  coreWorkflow: CoreWorkflowRouteDependencies,
+  demoReadiness: DemoReadinessV1RouteDependencies | undefined,
   headers: Headers,
   correlationId: CorrelationId,
 ): Promise<Response> {
@@ -175,6 +175,19 @@ async function routedResponse(
     headers,
   );
   if (dealManagementResponse) return dealManagementResponse;
+  const demoResponse = demoReadiness === undefined
+    ? undefined
+    : await handleDemoReadinessV1Route(
+      requestWithCorrelation(request, correlationId),
+      demoReadiness,
+    );
+  if (demoResponse !== undefined) return withCorsHeaders(demoResponse, headers);
+  const coreWorkflowResponse = await routeCoreWorkflowRequest(
+    request,
+    coreWorkflow,
+    headers,
+  );
+  if (coreWorkflowResponse !== undefined) return coreWorkflowResponse;
   const waveHResponse = await routeWaveHRequest(request, waveH, headers);
   if (waveHResponse !== undefined) return waveHResponse;
   const waveJResponse = await routeFinancialRiskRequest(
@@ -186,7 +199,7 @@ async function routedResponse(
   if (waveJResponse !== undefined) return waveJResponse;
   const waveGResponse = await routeWaveGRequest(request, waveG, headers);
   if (waveGResponse !== undefined) return waveGResponse;
-  return await nonDealResponse(request, repository, headers);
+  return await routeNonDealRequest(request, repository, headers);
 }
 
 async function routeWaveHRequest(
@@ -293,28 +306,6 @@ function notFoundResponse(): Response {
   return new Response("Not Found", { status: 404 });
 }
 
-async function nonDealResponse(
-  request: Request,
-  repository: DealRepository,
-  headers: Headers,
-): Promise<Response> {
-  const identityAccessResponse = await handleIdentityAccessRoute(
-    request,
-    undefined,
-    headers,
-  );
-  if (identityAccessResponse) return identityAccessResponse;
-  const mvpResponse = await handleMvpRoute(request, {
-    executeChat: async ({ dealId, message }) => ({
-      content: await AgentOrchestrator.executeAgentQuery(dealId, message),
-      citations: [],
-    }),
-  });
-  if (mvpResponse) return withMvpHeaders(mvpResponse, headers);
-  return await handleLegacyRoute(request, repository, headers) ??
-    new Response("Not Found", { status: 404, headers });
-}
-
 function unexpectedResponse(
   error: unknown,
   headers: Headers,
@@ -329,16 +320,6 @@ function unexpectedResponse(
     headers,
     500,
   );
-}
-
-function jsonResponse(
-  body: unknown,
-  headers: Headers,
-  status = 200,
-): Response {
-  const responseHeaders = new Headers(headers);
-  responseHeaders.set("Content-Type", "application/json");
-  return Response.json(body, { status, headers: responseHeaders });
 }
 
 async function connectRepository(
@@ -370,6 +351,8 @@ export function createApiServer(
       : DealRepository.getRepoInstance());
   const readiness = new RuntimeReadiness("api");
   return {
+    coreWorkflow: options.coreWorkflow ?? {},
+    demoReadiness: options.demoReadiness,
     dealManagement,
     repository,
     readiness,
@@ -384,6 +367,8 @@ export function createApiServer(
         options.waveG ?? {},
         options.waveH ?? {},
         options.waveJ ?? {},
+        options.coreWorkflow ?? {},
+        options.demoReadiness,
         readiness,
       ),
   };
@@ -414,27 +399,41 @@ export function createExecutableApiServer(
     readonly waveH?: WaveHRouteDependencies;
     readonly waveJ?: WaveJRouteDependencies;
     readonly negotiation?: ExecutableNegotiationConfig;
+    readonly coreWorkflow?: CoreWorkflowRouteDependencies;
   } = {},
 ): ApiServerRouter {
+  const executableEnvironment = environment ?? Deno.env.toObject();
   let dealManagement: ApiServerOptions["dealManagement"];
   try {
     dealManagement = options.dealManagement ??
-      loadExecutableDealManagement(environment);
+      loadExecutableDealManagement(executableEnvironment);
   } catch (error) {
     throw error;
-  }
-  if (options.waveH !== undefined || options.waveJ !== undefined) {
-    return createApiServer({
-      dealManagement,
-      waveH: options.waveH,
-      waveJ: options.waveJ,
-    });
   }
   const resolved = resolveDealManagement(dealManagement);
   if (resolved.kind !== "configured") {
     return createApiServer({
       dealManagement,
-      waveH: {},
+      coreWorkflow: options.coreWorkflow,
+      waveH: options.waveH ?? {},
+      waveJ: options.waveJ,
+    });
+  }
+  const coreWorkflow = options.coreWorkflow ??
+    createExecutableCoreWorkflowComposition(resolved.composition).routes;
+  const demoConfig = loadExecutableDemoReadinessConfig(executableEnvironment);
+  const demoReadiness = demoConfig === undefined
+    ? undefined
+    : createExecutableDemoReadinessComposition(
+      resolved.composition,
+      demoConfig,
+    );
+  if (options.waveH !== undefined) {
+    return createApiServer({
+      dealManagement,
+      coreWorkflow,
+      demoReadiness,
+      waveH: options.waveH,
       waveJ: options.waveJ,
     });
   }
@@ -445,6 +444,8 @@ export function createExecutableApiServer(
     });
     return createApiServer({
       dealManagement,
+      coreWorkflow,
+      demoReadiness,
       waveH: { negotiation },
       waveJ: options.waveJ,
     });
@@ -452,6 +453,8 @@ export function createExecutableApiServer(
     console.error("[API Server] Negotiation composition unavailable", error);
     return createApiServer({
       dealManagement,
+      coreWorkflow,
+      demoReadiness,
       waveH: {},
       waveJ: options.waveJ,
     });
@@ -460,7 +463,7 @@ export function createExecutableApiServer(
 
 if (import.meta.main) startServer();
 
-export { jsonResponse };
+export { jsonResponse } from "./server_runtime.ts";
 
 function resolveDealManagement(
   value: ApiServerOptions["dealManagement"],

@@ -6,6 +6,7 @@ import {
   type ShellCounts,
 } from "./adapters";
 import { adapterCanaryFor } from "@/lib/adapters/feature-flags";
+import { APIError } from "@/lib/api-client/errors";
 import {
   matchRoute,
   navigationRoutes,
@@ -34,6 +35,7 @@ export interface RouteContextOptions {
   readonly dataSource: "fixture" | "v1";
   readonly environment?: Readonly<Record<string, string | undefined>>;
   readonly previousShellAdapter?: ShellAdapter;
+  readonly v1ShellAdapter?: ShellAdapter;
 }
 
 export type ReadyRouteResolution = Extract<RouteResolution, { kind: "ready" }>;
@@ -59,7 +61,7 @@ export interface ShellBreadcrumb {
   readonly href?: string;
 }
 
-const identifier = /^[a-z0-9-]+$/;
+const identifier = /^[a-z0-9_-]+$/;
 
 function routeParameters(
   route: RouteDefinition,
@@ -225,7 +227,7 @@ export async function resolveRouteContext(
       kind: "invalid-context",
       reason: `The ${
         malformedParameter[0]
-      } route identifier must use lowercase letters, numbers, or hyphens.`,
+      } route identifier must use lowercase letters, numbers, hyphens, or underscores.`,
     };
   }
 
@@ -234,7 +236,25 @@ export async function resolveRouteContext(
     return unavailableV1Shell(route.id, options.environment);
   }
 
-  const access = await shellAdapter.resolveAccess(route.shellMode);
+  let access: Awaited<ReturnType<ShellAdapter["resolveAccess"]>>;
+  try {
+    access = await shellAdapter.resolveAccess(route.shellMode);
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "frontend.shell_context_failed",
+      kind: error instanceof APIError ? error.kind : "unknown",
+      code: error instanceof APIError ? error.code ?? "missing" : "missing",
+    }));
+    if (
+      error instanceof APIError &&
+      (error.kind === "forbidden" || error.kind === "unauthenticated" ||
+        error.code === "PROTECTED_NOT_FOUND")
+    ) return { kind: "restricted" };
+    return {
+      kind: "unavailable",
+      reason: "The authenticated v1 shell context is unavailable.",
+    };
+  }
   if (!access.permissions.includes(route.permission)) {
     return { kind: "restricted" };
   }
@@ -270,6 +290,7 @@ function shellAdapterFor(
 ): ShellAdapter | undefined {
   if (options.dataSource === "fixture") return fixtureShellAdapter;
   const shell = adapterCanaryFor("application-shell", options.environment);
+  if (shell.activation === "v1") return options.v1ShellAdapter;
   return shell.activation === "previous"
     ? options.previousShellAdapter
     : undefined;

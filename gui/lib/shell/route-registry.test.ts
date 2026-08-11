@@ -13,6 +13,7 @@ import {
   resolveRouteContext,
 } from "./route-context";
 import { fixtureShellAdapter } from "./adapters";
+import { APIError } from "@/lib/api-client/errors";
 
 describe("MAI-98 route architecture", () => {
   it("has unique IDs and all four shell modes", () => {
@@ -128,10 +129,31 @@ describe("MAI-98 route architecture", () => {
       .toMatchObject({ kind: "unavailable" });
   });
 
+  it("preserves protected and forbidden shell failures as restricted", async () => {
+    for (
+      const error of [
+        new APIError("hidden", { status: 404, code: "PROTECTED_NOT_FOUND" }),
+        new APIError("denied", { status: 403, code: "DEMO_ACCESS_DENIED" }),
+      ]
+    ) {
+      await expect(resolveRouteContext(["home"], {
+        dataSource: "v1",
+        environment: { NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true" },
+        v1ShellAdapter: {
+          resolveAccess: () => Promise.reject(error),
+          resolveOrganization: () => Promise.reject(error),
+          resolveDeal: () => Promise.reject(error),
+          resolveCounts: () => Promise.reject(error),
+        },
+      })).resolves.toMatchObject({ kind: "restricted" });
+    }
+  });
+
   it("uses the shell fixture only for an explicit previous canary", async () => {
     const result = await resolveRouteContext(["home"], {
       dataSource: "v1",
       environment: {
+        NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
         NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"application-shell":"previous"}',
       },
       previousShellAdapter: fixtureShellAdapter,
@@ -147,6 +169,7 @@ describe("MAI-98 route architecture", () => {
     await expect(resolveRouteContext(["home"], {
       dataSource: "v1",
       environment: {
+        NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true",
         NEXT_PUBLIC_ADAPTER_CANARY_MAP: '{"application-shell":"previous"}',
       },
     })).resolves.toMatchObject({

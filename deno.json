@@ -18,6 +18,7 @@
     "verify:fast": "deno run --cached-only --frozen --allow-read=. --allow-run=deno --no-prompt scripts/verify_fast.ts",
     "verify:fast:benchmark": "deno run --cached-only --frozen --allow-read=. --allow-run=deno --no-prompt scripts/verify_fast_benchmark.ts",
     "verify:integration": "deno run --allow-env --allow-net --allow-ffi --allow-sys scripts/verify_integration.ts",
+    "demo:verify": "deno run --allow-read=. --allow-net --allow-env=DATABASE_URL,POSTGRES_INTEGRATION_TEST_DATABASE_URL,PGBINARY,PGOPTIONS,PGSSLMODE,PGSSLNEGOTIATION,PGCLIENT_ENCODING,PGREPLICATION,PGAPPNAME,PGCONNECT_TIMEOUT,USER,NODE_PG_FORCE_NATIVE scripts/investor_demo.ts",
     "test:smoke": "deno test --env --allow-read --allow-write --allow-env --allow-ffi --allow-run --allow-net tests/smoke.spec.ts",
     "db:start": "docker compose up -d postgres-integration-test",
     "db:stop": "docker compose down",
