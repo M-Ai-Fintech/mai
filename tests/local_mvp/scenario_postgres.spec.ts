@@ -7,6 +7,10 @@ import { demoScope } from "../../src/demo_readiness/runner.ts";
 import { localMvpIdentity } from "../../src/local_mvp/identity_seed.ts";
 import { seedLocalMvpWorkflow } from "../../src/local_mvp/workflow_seed.ts";
 import { seedLocalMvpDatabase } from "../../scripts/local_mvp_seed.ts";
+import {
+  createIsolatedPostgresDatabase,
+  dropIsolatedPostgresDatabase,
+} from "../../scripts/postgres_test_state.ts";
 import { PostgresMigrationRunner } from "../../src/platform/persistence/v1.ts";
 import {
   registeredMigrationOptions,
@@ -17,44 +21,70 @@ import {
   postgresIntegrationTestDatabaseUrl,
 } from "../platform/support/postgres.ts";
 
-const databaseUrl = postgresIntegrationTestDatabaseUrl();
+const baseDatabaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "local scenario persists, replays, serves v1, and isolates scope",
   sanitizeResources: false,
   sanitizeOps: false,
   async fn() {
-    if (databaseUrl === undefined) {
+    if (baseDatabaseUrl === undefined) {
       throw new Error(
         "Local scenario integration is unverified; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL.",
       );
     }
-    const pool = createPostgresIntegrationTestPool(databaseUrl);
-    await new PostgresMigrationRunner(pool).apply(
-      registeredMigrations(),
-      registeredMigrationOptions(),
+    const databaseUrl = await createIsolatedPostgresDatabase(
+      baseDatabaseUrl,
+      "local_mvp_scenario_repeatability",
     );
-    assertEquals((await seedLocalMvpDatabase(pool)).kind, "created");
-    assertEquals((await seedLocalMvpDatabase(pool)).kind, "replayed");
-    const activeEnvironment = {
-      ...Deno.env.toObject(),
-      DATABASE_URL: databaseUrl,
-    };
-    const router = createExecutableApiServer(activeEnvironment);
+    const pool = createPostgresIntegrationTestPool(databaseUrl);
+    let router: ReturnType<typeof createExecutableApiServer> | undefined;
     try {
+      await new PostgresMigrationRunner(pool).apply(
+        registeredMigrations(),
+        registeredMigrationOptions(),
+      );
+      assertEquals((await seedLocalMvpDatabase(pool)).kind, "created");
+      assertEquals((await seedLocalMvpDatabase(pool)).kind, "replayed");
+      router = createExecutableApiServer({
+        ...Deno.env.toObject(),
+        DATABASE_URL: databaseUrl,
+      });
       assertEquals((await seedLocalMvpWorkflow(pool)).kind, "replayed");
       assertEquals(await positiveContextCounts(pool), 14);
       await assertRepresentativeScenarioRows(pool);
       await assertApiReadback(router.handle);
       await assertCrossScopeIsolation(router);
     } finally {
-      await pool.end();
-      if (router.dealManagement.kind === "configured") {
-        await router.dealManagement.composition.close();
-      }
+      await closeScenarioTestResources(
+        router,
+        pool,
+        baseDatabaseUrl,
+        databaseUrl,
+      );
     }
   },
 });
+
+async function closeScenarioTestResources(
+  router: ReturnType<typeof createExecutableApiServer> | undefined,
+  pool: pg.Pool,
+  baseDatabaseUrl: string,
+  databaseUrl: string,
+): Promise<void> {
+  try {
+    if (router?.dealManagement.kind === "configured") {
+      await router.dealManagement.composition.close();
+    }
+  } finally {
+    await pool.end().finally(() =>
+      dropIsolatedPostgresDatabase(
+        baseDatabaseUrl,
+        new URL(databaseUrl).pathname.slice(1),
+      )
+    );
+  }
+}
 
 async function assertRepresentativeScenarioRows(pool: pg.Pool): Promise<void> {
   const result = await pool.query<{ readonly complete: boolean }>(
