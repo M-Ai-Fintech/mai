@@ -5,6 +5,7 @@ Deno.test("clean bootstrap plan includes the documented executable sequence", ()
   assertEquals(CLEAN_BOOTSTRAP_STEPS[0], ["deno", "task", "local:prepare"]);
   assertStringIncludes(CLEAN_BOOTSTRAP_STEPS[1].join(" "), "postgres-local");
   assertStringIncludes(CLEAN_BOOTSTRAP_STEPS[1].join(" "), "storage-local");
-  assertStringIncludes(CLEAN_BOOTSTRAP_STEPS[4].join(" "), "--build");
-  assertEquals(CLEAN_BOOTSTRAP_STEPS[5], ["deno", "task", "infra:smoke"]);
+  assertEquals(CLEAN_BOOTSTRAP_STEPS[4], ["deno", "task", "local:mvp:seed"]);
+  assertStringIncludes(CLEAN_BOOTSTRAP_STEPS[5].join(" "), "--build");
+  assertEquals(CLEAN_BOOTSTRAP_STEPS[6], ["deno", "task", "infra:smoke"]);
 });

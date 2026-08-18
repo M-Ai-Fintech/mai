@@ -19,6 +19,7 @@ export const CLEAN_BOOTSTRAP_STEPS = [
   ],
   ["deno", "task", "infra:validate"],
   ["deno", "task", "db:migrate"],
+  ["deno", "task", "local:mvp:seed"],
   [
     "docker",
     "compose",

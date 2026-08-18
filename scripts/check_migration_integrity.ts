@@ -89,6 +89,10 @@ export const PUBLISHED_MIGRATION_CHECKSUMS: Readonly<Record<string, string>> = {
     "e9f362f2cb78b2a3424a52561c2c297d38f4224fb78bb5404f3f193fec237f52",
   "deal_access-0003-delivery-identity":
     "1fb2e52737bbcd9c2d6905bfb7e2eecadef10cc144a9841ad995391373ae6e3d",
+  "financial_risk-0001":
+    "b768ecffb9511622f1d88aa738330c84f14701be5874339793217cf3edd4d32e",
+  "demo_readiness-0001-workflow-snapshots":
+    "c8b7eb223263be1aa6b2b87d560adfef1a2ccfeed5e2ce98701dc867154c3f2f",
 };
 
 export function currentMigrationCatalog(): readonly ContextMigration[] {

@@ -22,6 +22,9 @@ Deno.test("local environment uses independent credentials and explicit local pro
   );
   assertStringIncludes(contents, "LOCAL_RUNTIME_PROFILE=local");
   assertStringIncludes(contents, "MAI_AI_PROVIDER=disabled");
+  assertStringIncludes(contents, "MAI_API_BASE_URL=http://localhost:18000");
+  assertStringIncludes(contents, "MAI_FRONTEND_DATA_SOURCE=v1");
+  assertStringIncludes(contents, "MAI_LOCAL_SESSION_ID=session_local-banker");
   assertNotEquals(
     value(contents, "LOCAL_POSTGRES_PASSWORD"),
     value(contents, "LOCAL_STORAGE_SECRET_KEY"),
@@ -73,6 +76,22 @@ Deno.test("local environment preserves existing values until forced rotation", a
   const rotated = await Deno.readTextFile(output);
   assertEquals(value(rotated, "LOCAL_POSTGRES_PASSWORD"), "second-postgres");
   assertEquals(value(rotated, "LOCAL_STORAGE_SECRET_KEY"), "second-storage");
+  await Deno.remove(root, { recursive: true });
+});
+
+Deno.test("local environment backfills operational MVP keys without rotating secrets", async () => {
+  const root = await Deno.makeTempDir({ prefix: "mai-local-env-backfill-" });
+  const output = new URL(`file://${root}/infra/local/.env`);
+  await Deno.mkdir(new URL(".", output), { recursive: true });
+  await Deno.writeTextFile(
+    output,
+    "LOCAL_POSTGRES_PASSWORD=preserved\nLOCAL_RUNTIME_PROFILE=local\n",
+  );
+  await writeLocalEnvironment({ output });
+  const contents = await Deno.readTextFile(output);
+  assertStringIncludes(contents, "LOCAL_POSTGRES_PASSWORD=preserved");
+  assertStringIncludes(contents, "MAI_LOCAL_MVP_ENABLED=true");
+  assertStringIncludes(contents, "MAI_LOCAL_DEAL_ID=deal_serra-azul");
   await Deno.remove(root, { recursive: true });
 });
 
