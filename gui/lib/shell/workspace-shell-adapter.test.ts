@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createWorkspaceShellAdapter } from "./workspace-shell-adapter";
+import { APIError } from "@/lib/api-client/errors";
 
 class WorkspaceShellTransport {
   readonly requests: string[] = [];
@@ -15,7 +16,16 @@ class WorkspaceShellTransport {
     if (url.includes("workspace-shell")) {
       return Promise.resolve(Response.json({
         data: {
-          organization: { id: "workspace_local", name: "M&Ai local workspace" },
+          organization: {
+            id: "institution_local",
+            name: "M&Ai local institution",
+          },
+          workspace: { id: "workspace_local", name: "M&Ai local workspace" },
+          principal: {
+            actorId: "actor_local",
+            identityId: "identity_local",
+            tenantId: "tenant_local",
+          },
           permissions: ["workspace", "deal"],
           counts: {},
         },
@@ -40,8 +50,8 @@ describe("workspace shell adapter", () => {
     });
 
     await expect(adapter.resolveOrganization()).resolves.toEqual({
-      id: "workspace_local",
-      name: "M&Ai local workspace",
+      id: "institution_local",
+      name: "M&Ai local institution",
     });
     await expect(adapter.resolveAccess("global")).resolves.toEqual({
       permissions: ["workspace", "deal"],
@@ -59,4 +69,60 @@ describe("workspace shell adapter", () => {
       transport.requests.some((url) => url.includes("/api/v1/deals/deal_local")),
     ).toBe(true);
   });
+
+  it("keeps forbidden shell access distinct from an empty projection", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(Response.json({
+        error: {
+          code: "ACTION_FORBIDDEN",
+          message: "Action is forbidden.",
+          correlationId: "cor_forbidden",
+          retryable: false,
+        },
+      }, { status: 403 })));
+    const adapter = createWorkspaceShellAdapter({ headers: {} });
+
+    await expect(adapter.resolveAccess("global")).rejects.toMatchObject({
+      kind: "forbidden",
+      code: "ACTION_FORBIDDEN",
+    } satisfies Partial<APIError>);
+  });
+
+  it("maps only protected absence to an inaccessible Deal", async () => {
+    vi.stubGlobal("fetch", (input: RequestInfo | URL) => {
+      if (String(input).includes("workspace-shell")) {
+        return Promise.resolve(localWorkspaceShellResponse());
+      }
+      return Promise.resolve(Response.json({
+        error: {
+          code: "PROTECTED_NOT_FOUND",
+          message: "Protected resource was not found.",
+          correlationId: "cor_missing",
+          retryable: false,
+        },
+      }, { status: 404 }));
+    });
+    const adapter = createWorkspaceShellAdapter({ headers: {} });
+
+    await expect(adapter.resolveDeal("deal_missing")).resolves.toBe(
+      "inaccessible",
+    );
+  });
 });
+
+function localWorkspaceShellResponse(): Response {
+  return Response.json({
+    data: {
+      organization: { id: "institution_local", name: "Atlas" },
+      workspace: { id: "workspace_local", name: "Local workspace" },
+      principal: {
+        actorId: "actor_local",
+        identityId: "identity_local",
+        tenantId: "tenant_local",
+      },
+      permissions: ["workspace", "deal"],
+      counts: {},
+    },
+    meta: { correlationId: "cor_shell", freshness: "current" },
+  });
+}

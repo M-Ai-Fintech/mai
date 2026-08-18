@@ -3,6 +3,7 @@ const outputPath = new URL("../infra/local/.env", import.meta.url);
 const mvpEnvironmentLines = Object.freeze([
   "MAI_API_BASE_URL=http://localhost:18000",
   "MAI_FRONTEND_DATA_SOURCE=v1",
+  "NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED=false",
   "MAI_LOCAL_MVP_ENABLED=true",
   "MAI_LOCAL_SESSION_ID=session_local-banker",
   "MAI_LOCAL_DEAL_ID=deal_serra-azul",

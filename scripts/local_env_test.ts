@@ -24,6 +24,10 @@ Deno.test("local environment uses independent credentials and explicit local pro
   assertStringIncludes(contents, "MAI_AI_PROVIDER=disabled");
   assertStringIncludes(contents, "MAI_API_BASE_URL=http://localhost:18000");
   assertStringIncludes(contents, "MAI_FRONTEND_DATA_SOURCE=v1");
+  assertStringIncludes(
+    contents,
+    "NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED=false",
+  );
   assertStringIncludes(contents, "MAI_LOCAL_SESSION_ID=session_local-banker");
   assertNotEquals(
     value(contents, "LOCAL_POSTGRES_PASSWORD"),

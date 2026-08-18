@@ -5,6 +5,7 @@ import {
   type DealManagementCompositionResult,
 } from "../deal_management/composition.ts";
 import type { WorkspaceShellRouteDependencies } from "./workspace_shell_routes.ts";
+import { PostgresWorkspaceShellProjection } from "./workspace_shell_repository.ts";
 
 export type DealManagementInput =
   | DealManagementComposition
@@ -37,7 +38,7 @@ export function configuredWorkspaceShell(
   return {
     authentication: composition.http.authentication,
     authorization: composition.authorization,
-    query: composition.pool,
+    projection: new PostgresWorkspaceShellProjection(composition.pool),
     now: composition.http.now,
     nextCorrelationId: composition.http.nextCorrelationId,
   };

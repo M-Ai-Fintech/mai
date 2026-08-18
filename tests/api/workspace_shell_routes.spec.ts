@@ -1,8 +1,11 @@
 import { assertEquals } from "@std/assert";
 import {
   handleWorkspaceShellRoute,
-  type WorkspaceShellQueryPort,
 } from "../../src/api/workspace_shell_routes.ts";
+import type {
+  WorkspaceShellProjection,
+  WorkspaceShellProjectionPort,
+} from "../../src/api/workspace_shell_repository.ts";
 import {
   actorId,
   sessionId,
@@ -41,24 +44,21 @@ class UnavailableAuthentication implements DealAuthenticationPort {
   }
 }
 
-class RecordingWorkspaceQuery implements WorkspaceShellQueryPort {
-  readonly queries: string[] = [];
+class RecordingWorkspaceProjection implements WorkspaceShellProjectionPort {
+  readonly scopes: string[] = [];
 
   constructor(private readonly present = true) {}
 
-  query<T>(text: string) {
-    this.queries.push(text);
-    return Promise.resolve(
-      this.present
-        ? {
-          rows: [{
-            workspaceId: "workspace_shell",
-            document: { name: "Shell workspace" },
-          } as T],
-          rowCount: 1,
-        }
-        : { rows: [] as T[], rowCount: 0 },
-    );
+  find(
+    tenant: ReturnType<typeof tenantId>,
+    workspace: ReturnType<typeof workspaceId>,
+  ) {
+    this.scopes.push(`${tenant}/${workspace}`);
+    const projection: WorkspaceShellProjection = {
+      organization: { id: "institution_shell", name: "Shell institution" },
+      workspace: { id: workspace, name: "Shell workspace" },
+    };
+    return Promise.resolve(this.present ? projection : undefined);
   }
 }
 
@@ -72,33 +72,39 @@ function request(authorization = "Bearer session_shell"): Request {
 }
 
 Deno.test("workspace shell reads the authenticated persisted workspace", async () => {
-  const query = new RecordingWorkspaceQuery();
+  const projection = new RecordingWorkspaceProjection();
   const authorization = new RecordingDealAuthorization();
   const response = await handleWorkspaceShellRoute(request(), {
     authentication: new FixedAuthentication(),
     authorization,
     now: () => "2026-08-12T08:00:00.000Z",
-    query,
+    projection,
     nextCorrelationId: () => "cor_workspace-shell" as never,
   });
 
   assertEquals(response?.status, 200);
   assertEquals((await response!.json()).data, {
-    organization: { id: "workspace_shell", name: "Shell workspace" },
+    organization: { id: "institution_shell", name: "Shell institution" },
+    workspace: { id: "workspace_shell", name: "Shell workspace" },
+    principal: {
+      actorId: "actor_shell",
+      identityId: "identity_shell",
+      tenantId: "tenant_shell",
+    },
     permissions: ["workspace", "deal"],
     counts: {},
   });
   assertEquals(authorization.calls.length, 1);
-  assertEquals(query.queries.length, 1);
+  assertEquals(projection.scopes, ["tenant_shell/workspace_shell"]);
 });
 
 Deno.test("workspace shell distinguishes authentication and protected absence", async () => {
-  const query = new RecordingWorkspaceQuery();
+  const projection = new RecordingWorkspaceProjection();
   const dependencies = {
     authentication: new FixedAuthentication(),
     authorization: new RecordingDealAuthorization(),
     now: () => "2026-08-12T08:00:00.000Z",
-    query,
+    projection,
     nextCorrelationId: () => "cor_workspace-shell" as never,
   };
   assertEquals(
@@ -115,7 +121,7 @@ Deno.test("workspace shell distinguishes authentication and protected absence", 
   assertEquals(
     (await handleWorkspaceShellRoute(request(), {
       ...dependencies,
-      query: new RecordingWorkspaceQuery(false),
+      projection: new RecordingWorkspaceProjection(false),
     }))?.status,
     404,
   );
@@ -131,7 +137,7 @@ Deno.test("workspace shell maps missing or failed dependencies to 503", async ()
       authentication: new UnavailableAuthentication(),
       authorization: new RecordingDealAuthorization(),
       now: () => "2026-08-12T08:00:00.000Z",
-      query: new RecordingWorkspaceQuery(),
+      projection: new RecordingWorkspaceProjection(),
       nextCorrelationId: () => "cor_workspace-shell" as never,
     }))?.status,
     503,

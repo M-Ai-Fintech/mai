@@ -6,22 +6,40 @@ import { tenantId, workspaceId } from "../../src/identity_access/v1.ts";
 import { demoScope } from "../../src/demo_readiness/runner.ts";
 import { localMvpIdentity } from "../../src/local_mvp/identity_seed.ts";
 import { seedLocalMvpWorkflow } from "../../src/local_mvp/workflow_seed.ts";
-import { runLocalMvpSeed } from "../../scripts/local_mvp_seed.ts";
+import { seedLocalMvpDatabase } from "../../scripts/local_mvp_seed.ts";
+import { PostgresMigrationRunner } from "../../src/platform/persistence/v1.ts";
+import {
+  registeredMigrationOptions,
+  registeredMigrations,
+} from "../../src/platform/persistence/registered_migrations.ts";
+import {
+  createPostgresIntegrationTestPool,
+  postgresIntegrationTestDatabaseUrl,
+} from "../platform/support/postgres.ts";
 
-const environment = localScenarioEnvironment();
+const databaseUrl = postgresIntegrationTestDatabaseUrl();
 
 Deno.test({
   name: "local scenario persists, replays, serves v1, and isolates scope",
-  ignore: environment === undefined,
   sanitizeResources: false,
   sanitizeOps: false,
   async fn() {
-    const activeEnvironment = requiredEnvironment(environment);
-    await runLocalMvpSeed(activeEnvironment);
-    const pool = new pg.Pool({
-      connectionString: activeEnvironment.DATABASE_URL,
-      max: 2,
-    });
+    if (databaseUrl === undefined) {
+      throw new Error(
+        "Local scenario integration is unverified; expected POSTGRES_INTEGRATION_TEST_DATABASE_URL.",
+      );
+    }
+    const pool = createPostgresIntegrationTestPool(databaseUrl);
+    await new PostgresMigrationRunner(pool).apply(
+      registeredMigrations(),
+      registeredMigrationOptions(),
+    );
+    assertEquals((await seedLocalMvpDatabase(pool)).kind, "created");
+    assertEquals((await seedLocalMvpDatabase(pool)).kind, "replayed");
+    const activeEnvironment = {
+      ...Deno.env.toObject(),
+      DATABASE_URL: databaseUrl,
+    };
     const router = createExecutableApiServer(activeEnvironment);
     try {
       assertEquals((await seedLocalMvpWorkflow(pool)).kind, "replayed");
@@ -38,31 +56,11 @@ Deno.test({
   },
 });
 
-function localScenarioEnvironment():
-  | Readonly<Record<string, string | undefined>>
-  | undefined {
-  const runtimeProfile = Deno.env.get("LOCAL_RUNTIME_PROFILE");
-  const databaseUrl = Deno.env.get("DATABASE_URL");
-  if (runtimeProfile !== "local" || databaseUrl === undefined) return undefined;
-  const target = new URL(databaseUrl);
-  if (target.pathname !== "/mai_local" || target.port !== "55438") return;
-  return { ...Deno.env.toObject(), LOCAL_RUNTIME_PROFILE: runtimeProfile };
-}
-
 async function assertRepresentativeScenarioRows(pool: pg.Pool): Promise<void> {
   const result = await pool.query<{ readonly complete: boolean }>(
     representativeScenarioQuery,
   );
   assertEquals(result.rows[0]?.complete, true);
-}
-
-function requiredEnvironment(
-  value: Readonly<Record<string, string | undefined>> | undefined,
-): Readonly<Record<string, string | undefined>> {
-  if (value !== undefined) return value;
-  throw new Error(
-    "Local scenario environment is unavailable after test guard.",
-  );
 }
 
 async function positiveContextCounts(pool: pg.Pool): Promise<number> {
@@ -79,7 +77,25 @@ async function assertApiReadback(
     (await handle(apiRequest("workspace-shell", false))).status,
     401,
   );
-  assertEquals((await handle(apiRequest("workspace-shell"))).status, 200);
+  const shell = await handle(apiRequest("workspace-shell"));
+  assertEquals(shell.status, 200);
+  assertEquals((await shell.json()).data, {
+    organization: {
+      id: localMvpIdentity.institutionId,
+      name: "Atlas M&A Advisory",
+    },
+    workspace: {
+      id: localMvpIdentity.workspaceId,
+      name: "Atlas M&A Advisory",
+    },
+    principal: {
+      actorId: localMvpIdentity.actorId,
+      identityId: localMvpIdentity.identityId,
+      tenantId: localMvpIdentity.tenantId,
+    },
+    permissions: ["workspace", "deal"],
+    counts: {},
+  });
   assertEquals(
     (await handle(apiRequest(`deals/${demoScope.dealId}`))).status,
     200,

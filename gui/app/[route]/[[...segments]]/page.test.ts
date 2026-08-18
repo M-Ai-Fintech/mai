@@ -89,7 +89,7 @@ describe("ShellRoute rollback boundary", () => {
       if (url.endsWith("/api/v1/deals/deal_serra-azul")) {
         return localDealResponse();
       }
-      return localOverviewResponse();
+      throw new Error(`Unexpected local reload request: ${url}`);
     });
 
     const firstLoad = await renderLocalOverview();
@@ -145,7 +145,13 @@ function localShellResponse(readCount: number): Response {
     : "Local workspace after reload";
   return Response.json({
     data: {
-      organization: { id: "workspace_local", name },
+      organization: { id: "institution_local", name },
+      workspace: { id: "workspace_local", name: "Local workspace" },
+      principal: {
+        actorId: "actor_demo-banker",
+        identityId: "identity_local-banker",
+        tenantId: "tenant_serra-azul",
+      },
       permissions: ["workspace", "deal"],
       counts: { tasks: 1, approvals: 1, notifications: 1 },
     },
@@ -161,20 +167,5 @@ function localDealResponse(): Response {
       state: "diligence",
     },
     meta: { correlationId: "cor_deal", freshness: "current" },
-  });
-}
-
-function localOverviewResponse(): Response {
-  return Response.json({
-    data: {
-      family: "deal-overview",
-      items: [{
-        id: "mandate_serra-azul",
-        title: "Serra Azul mandate",
-        summary: "Persisted local scenario",
-        status: "active",
-      }],
-    },
-    meta: { correlationId: "cor_overview", freshness: "current" },
   });
 }

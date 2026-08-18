@@ -15,25 +15,15 @@ import {
 } from "../deal_management/v1.ts";
 import { createDealContext } from "../deal_management/http_shared.ts";
 import { DEAL_ACTION, DEAL_RESOURCE } from "../deal_management/service.ts";
-
-export interface WorkspaceShellQueryPort {
-  query<T>(
-    text: string,
-    values?: readonly unknown[],
-  ): Promise<{ readonly rows: readonly T[]; readonly rowCount: number | null }>;
-}
+import type { WorkspaceShellData } from "./contracts/workspace_shell.ts";
+import type { WorkspaceShellProjectionPort } from "./workspace_shell_repository.ts";
 
 export interface WorkspaceShellRouteDependencies {
   readonly authentication: DealAuthenticationPort;
   readonly authorization: DealAuthorizationPort;
-  readonly query: WorkspaceShellQueryPort;
+  readonly projection: WorkspaceShellProjectionPort;
   readonly now: () => string;
   readonly nextCorrelationId: () => CorrelationId;
-}
-
-interface WorkspaceRow {
-  readonly workspaceId: string;
-  readonly document: unknown;
 }
 
 /** Routes the authenticated workspace projection from the Deal dependency graph. */
@@ -70,10 +60,26 @@ async function configuredShell(
     if (!await canAccessWorkspace(dependencies, context)) {
       return protectedNotFound(correlationId, headers);
     }
-    const organization = await loadOrganization(dependencies.query, principal);
-    return organization === undefined
+    const projection = await dependencies.projection.find(
+      principal.tenantId,
+      principal.workspaceId,
+    );
+    return projection === undefined
       ? protectedNotFound(correlationId, headers)
-      : success(organization, correlationId, headers);
+      : success(
+        {
+          ...projection,
+          principal: {
+            actorId: principal.actor.id,
+            identityId: principal.identityId,
+            tenantId: principal.tenantId,
+          },
+          permissions: ["workspace", "deal"],
+          counts: {},
+        },
+        correlationId,
+        headers,
+      );
   } catch {
     return unavailable(correlationId, headers);
   }
@@ -109,33 +115,13 @@ async function canAccessWorkspace(
   return decision.outcome === "allow";
 }
 
-async function loadOrganization(
-  query: WorkspaceShellQueryPort,
-  principal: Awaited<ReturnType<DealAuthenticationPort["authenticate"]>>,
-) {
-  const result = await query.query<WorkspaceRow>(workspaceQuery, [
-    principal.tenantId,
-    principal.workspaceId,
-  ]);
-  if (result.rowCount !== 1) return undefined;
-  const row = result.rows[0];
-  const document = record(row.document);
-  return typeof document.name === "string" && document.name.trim() !== ""
-    ? { id: row.workspaceId, name: document.name }
-    : undefined;
-}
-
 function success(
-  organization: { readonly id: string; readonly name: string },
+  data: WorkspaceShellData,
   correlationId: CorrelationId,
   headers: Headers,
 ): Response {
   return response(
-    createSuccessEnvelope({
-      organization,
-      permissions: ["workspace", "deal"],
-      counts: {},
-    }, { correlationId, freshness: "current" }),
+    createSuccessEnvelope(data, { correlationId, freshness: "current" }),
     200,
     headers,
   );
@@ -217,13 +203,3 @@ function response(
   headers.set("Content-Type", "application/json");
   return Response.json(body, { status, headers });
 }
-
-function record(value: unknown): Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? value as Readonly<Record<string, unknown>>
-    : {};
-}
-
-const workspaceQuery = `SELECT workspace_id AS "workspaceId", document
-  FROM iam.workspaces
-  WHERE tenant_id = $1 AND workspace_id = $2 AND state = 'active'`;

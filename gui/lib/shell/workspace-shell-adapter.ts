@@ -18,6 +18,12 @@ const permissionSchema = z.enum([
 
 const workspaceShellSchema = z.object({
   organization: z.object({ id: z.string().min(1), name: z.string().min(1) }),
+  workspace: z.object({ id: z.string().min(1), name: z.string().min(1) }),
+  principal: z.object({
+    actorId: z.string().min(1),
+    identityId: z.string().min(1),
+    tenantId: z.string().min(1),
+  }),
   permissions: z.array(permissionSchema).readonly(),
   counts: z.object({
     tasks: z.number().int().nonnegative().optional(),

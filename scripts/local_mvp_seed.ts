@@ -14,6 +14,7 @@ import {
   seedLocalMvpScenario,
 } from "../src/local_mvp/scenario_seed.ts";
 import { seedLocalMvpWorkflow } from "../src/local_mvp/workflow_seed.ts";
+import type { DemoPersistenceResult } from "../src/demo_readiness/persistence.ts";
 
 export interface LocalMvpSeedOptions {
   readonly reset?: boolean;
@@ -29,12 +30,23 @@ export async function runLocalMvpSeed(
   const pool = new pg.Pool({ connectionString: target.toString(), max: 2 });
   try {
     if (options.reset) await resetLocalMvpScenario(pool);
-    await seedScenarioTransaction(pool);
-    const workflow = await seedLocalMvpWorkflow(pool);
+    const workflow = await seedLocalMvpDatabase(pool);
     printSeedReceipt(workflow.kind);
   } finally {
     await pool.end();
   }
+}
+
+/**
+ * Seeds one idempotent scenario into a caller-owned migrated database.
+ *
+ * @example await seedLocalMvpDatabase(testPool)
+ */
+export async function seedLocalMvpDatabase(
+  pool: pg.Pool,
+): Promise<DemoPersistenceResult> {
+  await seedScenarioTransaction(pool);
+  return await seedLocalMvpWorkflow(pool);
 }
 
 async function seedScenarioTransaction(pool: pg.Pool): Promise<void> {
