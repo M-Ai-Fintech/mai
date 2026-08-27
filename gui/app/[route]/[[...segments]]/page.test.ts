@@ -68,10 +68,13 @@ describe("ShellRoute rollback boundary", () => {
   it("reads the persisted local workspace again after browser reload", async () => {
     vi.stubEnv("MAI_FRONTEND_DATA_SOURCE", "v1");
     vi.stubEnv("NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED", "false");
+    vi.stubEnv("LOCAL_RUNTIME_PROFILE", "local");
     vi.stubEnv("MAI_LOCAL_MVP_ENABLED", "true");
     vi.stubEnv("MAI_LOCAL_SESSION_ID", "session_local-banker");
     vi.stubEnv("MAI_LOCAL_DEAL_ID", "deal_serra-azul");
-    const requests: Array<{ readonly url: string; readonly session: string | null }> = [];
+    const requests: Array<
+      { readonly url: string; readonly session: string | null }
+    > = [];
     let shellReadCount = 0;
     vi.stubGlobal("fetch", async (
       input: RequestInfo | URL,
@@ -99,12 +102,14 @@ describe("ShellRoute rollback boundary", () => {
     expect(secondLoad).toContain("Local workspace after reload");
     expect(secondLoad).toContain("Serra Azul local mandate");
     expect(shellReadCount).toBe(2);
-    expect(requests.every(({ session }) =>
-      session === "Bearer session_local-banker"
-    )).toBe(true);
-    expect(requests.some(({ url }) =>
-      url.endsWith("/api/v1/deals/deal_serra-azul")
-    )).toBe(true);
+    expect(
+      requests.every(({ session }) =>
+        session === "Bearer session_local-banker"
+      ),
+    ).toBe(true);
+    expect(
+      requests.some(({ url }) => url.endsWith("/api/v1/deals/deal_serra-azul")),
+    ).toBe(true);
   });
 
   it("keeps v1 previous mode unavailable without a production legacy shell adapter", async () => {
