@@ -67,6 +67,16 @@ describe("server session resolution", () => {
     })).toBe("session_investor-demo");
   });
 
+  it("keeps the local fallback when the test runtime uses the local profile", () => {
+    expect(serverSession(undefined, {
+      NODE_ENV: "test",
+      DENO_ENV: "test",
+      LOCAL_RUNTIME_PROFILE: "local",
+      MAI_LOCAL_MVP_ENABLED: "true",
+      MAI_LOCAL_SESSION_ID: "session_local-banker",
+    })).toBe("session_local-banker");
+  });
+
   it("rejects synthetic demo authentication in production", () => {
     expect(serverSession(undefined, {
       NODE_ENV: "production",
