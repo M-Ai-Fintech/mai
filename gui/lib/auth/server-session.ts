@@ -24,7 +24,9 @@ function approvedSyntheticSessionRuntime(
   environment: Readonly<Record<string, string | undefined>>,
 ): SyntheticSessionRuntime | undefined {
   if (environment.NODE_ENV === "production") return undefined;
-  if (environment.LOCAL_RUNTIME_PROFILE === "local") return "local";
+  if (environment.DENO_ENV === undefined) {
+    return environment.LOCAL_RUNTIME_PROFILE === "local" ? "local" : undefined;
+  }
   if (environment.DENO_ENV === "local-demo") return "local-demo";
   return environment.DENO_ENV === "test" ? "test" : undefined;
 }

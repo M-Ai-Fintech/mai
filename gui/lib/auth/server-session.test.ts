@@ -29,6 +29,26 @@ describe("server session resolution", () => {
     })).toBeUndefined();
   });
 
+  it("rejects the local fallback when DENO_ENV is production", () => {
+    expect(serverSession(undefined, {
+      NODE_ENV: "development",
+      DENO_ENV: "production",
+      LOCAL_RUNTIME_PROFILE: "local",
+      MAI_LOCAL_MVP_ENABLED: "true",
+      MAI_LOCAL_SESSION_ID: "session_local-banker",
+    })).toBeUndefined();
+  });
+
+  it("rejects the local fallback in an unapproved DENO_ENV", () => {
+    expect(serverSession(undefined, {
+      NODE_ENV: "development",
+      DENO_ENV: "preview",
+      LOCAL_RUNTIME_PROFILE: "local",
+      MAI_LOCAL_MVP_ENABLED: "true",
+      MAI_LOCAL_SESSION_ID: "session_local-banker",
+    })).toBeUndefined();
+  });
+
   it("allows the explicit synthetic demo session in the local-demo runtime", () => {
     expect(serverSession(undefined, {
       NODE_ENV: "development",
