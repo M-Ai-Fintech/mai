@@ -40,6 +40,12 @@ describe("frontend adapter catalog", () => {
     expect(adapterCatalog.every((item) => item.states.length > 0)).toBe(true);
   });
 
+  it("routes the application shell through the authenticated workspace read", () => {
+    expect(
+      adapterCatalog.find((item) => item.family === "application-shell"),
+    ).toMatchObject({ route: "/api/v1/workspace-shell" });
+  });
+
   it("activates the explicit read-only demo path and keeps unfinished routes off", () => {
     expect(
       adapterCanaryFor("command-center", demoEnvironment).activation,

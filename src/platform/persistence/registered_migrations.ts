@@ -20,6 +20,8 @@ import { negotiationMigrations } from "../../negotiation/migrations/index.ts";
 import { diligenceDecisionsMigrations } from "../../diligence_decisions/migrations/index.ts";
 import { agentRuntimeMigrations } from "../../agent_runtime/migrations/index.ts";
 import { dealAccessMigrations } from "../../deal_access/migrations/index.ts";
+import { financialRiskMigrations } from "../../financial_risk/migrations/index.ts";
+import { demoReadinessMigrations } from "../../demo_readiness/migrations.ts";
 import type { MigrationApplyOptions } from "./migration_runner.ts";
 
 /** The complete migration catalog used by the local pre-traffic command. */
@@ -43,6 +45,8 @@ export function registeredMigrations(): readonly ContextMigration[] {
     ...diligenceDecisionsMigrations,
     ...agentRuntimeMigrations,
     ...dealAccessMigrations,
+    ...financialRiskMigrations,
+    ...demoReadinessMigrations,
   ];
 }
 

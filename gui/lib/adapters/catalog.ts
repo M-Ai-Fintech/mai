@@ -75,7 +75,7 @@ export const adapterCatalog: readonly AdapterDescriptor[] = [
   descriptor(
     "application-shell",
     "shell",
-    "/api/v1/demo-readiness/deals/:dealId/shell",
+    "/api/v1/workspace-shell",
     "GetAuthorizedShell",
     ["SwitchWorkspace", "SelectDealContext"],
     "read-only",

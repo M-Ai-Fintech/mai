@@ -8,6 +8,8 @@
     "infra:smoke": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-run --allow-sys scripts/infra_smoke.ts",
     "infra:bootstrap": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-run scripts/infra_bootstrap.ts",
     "local:prepare": "deno run --allow-read --allow-write scripts/local_env.ts",
+    "local:mvp:seed": "deno run --env-file=infra/local/.env --allow-read --allow-env --allow-net scripts/local_mvp_seed.ts",
+    "local:mvp:reset": "deno run --env-file=infra/local/.env --allow-read --allow-env --allow-net scripts/local_mvp_seed.ts --reset",
     "db:migrate": "deno run --env --allow-read --allow-env --allow-net scripts/migrate.ts",
     "infra:backup": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-run scripts/infra_recovery.ts backup",
     "infra:restore": "deno run --env --allow-read --allow-write --allow-env --allow-net --allow-run scripts/infra_recovery.ts restore",
@@ -23,6 +25,7 @@
     "db:start": "docker compose up -d postgres-integration-test",
     "db:stop": "docker compose down",
     "db:setup": "deno run --env --allow-read --allow-env --allow-net src/core/db/setup.ts",
+    "local:gui:start": "deno run --allow-read=infra/local/.env --allow-env --allow-run=npm scripts/local_gui_start.ts",
     "gui:start": "npm --prefix gui run dev"
   },
   "imports": {

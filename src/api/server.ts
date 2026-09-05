@@ -1,11 +1,6 @@
 import type { CorrelationId } from "../platform/api/v1.ts";
 import { DealRepository } from "../core/db/DealRepository.ts";
-import {
-  createDealManagementComposition,
-  type DealManagementComposition,
-  type DealManagementCompositionConfig,
-  type DealManagementCompositionResult,
-} from "../deal_management/composition.ts";
+import type { DealManagementCompositionResult } from "../deal_management/composition.ts";
 import { handleDealManagementRoute } from "../deal_management/http.ts";
 import {
   handleValuationV1Route,
@@ -70,6 +65,15 @@ import {
   createExecutableDemoReadinessComposition,
 } from "./demo_readiness_executable_composition.ts";
 import { loadExecutableDemoReadinessConfig } from "../demo_readiness/executable_config.ts";
+import {
+  handleWorkspaceShellRoute,
+  type WorkspaceShellRouteDependencies,
+} from "./workspace_shell_routes.ts";
+import {
+  configuredWorkspaceShell,
+  type DealManagementInput,
+  resolveDealManagementComposition,
+} from "./workspace_shell_composition.ts";
 
 export interface WaveGRouteDependencies {
   readonly valuation?: ValuationV1RouteDependencies;
@@ -90,14 +94,12 @@ export type { CoreWorkflowRouteDependencies } from "./core_workflow_routes.ts";
 export interface ApiServerOptions {
   readonly coreWorkflow?: CoreWorkflowRouteDependencies;
   readonly demoReadiness?: DemoReadinessV1RouteDependencies;
-  readonly dealManagement?:
-    | DealManagementComposition
-    | DealManagementCompositionConfig
-    | DealManagementCompositionResult;
+  readonly dealManagement?: DealManagementInput;
   readonly repository?: DealRepository;
   readonly waveG?: WaveGRouteDependencies;
   readonly waveH?: WaveHRouteDependencies;
   readonly waveJ?: WaveJRouteDependencies;
+  readonly workspaceShell?: WorkspaceShellRouteDependencies;
 }
 
 export interface ApiServerRouter {
@@ -109,6 +111,7 @@ export interface ApiServerRouter {
   readonly waveG: WaveGRouteDependencies;
   readonly waveH: WaveHRouteDependencies;
   readonly waveJ: WaveJRouteDependencies;
+  readonly workspaceShell?: WorkspaceShellRouteDependencies;
   handle(request: Request): Promise<Response>;
 }
 
@@ -121,6 +124,7 @@ async function routeRequest(
   waveJ: WaveJRouteDependencies,
   coreWorkflow: CoreWorkflowRouteDependencies,
   demoReadiness: DemoReadinessV1RouteDependencies | undefined,
+  workspaceShell: WorkspaceShellRouteDependencies | undefined,
   readiness: RuntimeReadiness,
 ): Promise<Response> {
   const headers = apiCorsHeaders();
@@ -145,6 +149,7 @@ async function routeRequest(
         waveJ,
         coreWorkflow,
         demoReadiness,
+        workspaceShell,
         headers,
         correlationId,
       ),
@@ -164,9 +169,16 @@ async function routedResponse(
   waveJ: WaveJRouteDependencies,
   coreWorkflow: CoreWorkflowRouteDependencies,
   demoReadiness: DemoReadinessV1RouteDependencies | undefined,
+  workspaceShell: WorkspaceShellRouteDependencies | undefined,
   headers: Headers,
   correlationId: CorrelationId,
 ): Promise<Response> {
+  const workspaceShellResponse = await handleWorkspaceShellRoute(
+    request,
+    workspaceShell,
+    headers,
+  );
+  if (workspaceShellResponse !== undefined) return workspaceShellResponse;
   const dealManagementResponse = await handleDealManagementRoute(
     request,
     dealManagement.kind === "configured"
@@ -344,12 +356,16 @@ async function connectRepository(
 export function createApiServer(
   options: ApiServerOptions = {},
 ): ApiServerRouter {
-  const dealManagement = resolveDealManagement(options.dealManagement);
+  const dealManagement = resolveDealManagementComposition(
+    options.dealManagement,
+  );
   const repository = options.repository ??
     (dealManagement.kind === "configured"
       ? new DealRepository(dealManagement.composition.pool)
       : DealRepository.getRepoInstance());
   const readiness = new RuntimeReadiness("api");
+  const workspaceShell = options.workspaceShell ??
+    configuredWorkspaceShell(dealManagement);
   return {
     coreWorkflow: options.coreWorkflow ?? {},
     demoReadiness: options.demoReadiness,
@@ -359,6 +375,7 @@ export function createApiServer(
     waveG: options.waveG ?? {},
     waveH: options.waveH ?? {},
     waveJ: options.waveJ ?? {},
+    workspaceShell,
     handle: (request) =>
       routeRequest(
         request,
@@ -369,6 +386,7 @@ export function createApiServer(
         options.waveJ ?? {},
         options.coreWorkflow ?? {},
         options.demoReadiness,
+        workspaceShell,
         readiness,
       ),
   };
@@ -410,7 +428,7 @@ export function createExecutableApiServer(
   } catch (error) {
     throw error;
   }
-  const resolved = resolveDealManagement(dealManagement);
+  const resolved = resolveDealManagementComposition(dealManagement);
   if (resolved.kind !== "configured") {
     return createApiServer({
       dealManagement,
@@ -464,33 +482,3 @@ export function createExecutableApiServer(
 if (import.meta.main) startServer();
 
 export { jsonResponse } from "./server_runtime.ts";
-
-function resolveDealManagement(
-  value: ApiServerOptions["dealManagement"],
-): DealManagementCompositionResult {
-  if (value === undefined) {
-    return {
-      kind: "unavailable",
-      reason: "missing_configuration",
-      message: "Deal Management is not configured.",
-    };
-  }
-  if (isCompositionResult(value)) return value;
-  if (isComposition(value)) {
-    return { kind: "configured", composition: value };
-  }
-  return createDealManagementComposition(value);
-}
-
-function isCompositionResult(
-  value: ApiServerOptions["dealManagement"],
-): value is DealManagementCompositionResult {
-  return typeof value === "object" && value !== null && "kind" in value;
-}
-
-function isComposition(
-  value: ApiServerOptions["dealManagement"],
-): value is DealManagementComposition {
-  return typeof value === "object" && value !== null && "http" in value &&
-    "pool" in value;
-}

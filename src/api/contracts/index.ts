@@ -9,3 +9,4 @@ export * from "./engines.ts";
 export * from "./entities.ts";
 export * from "./http.ts";
 export * from "./notifications.ts";
+export * from "./workspace_shell.ts";
