@@ -20,6 +20,7 @@
     "verify:execution-screens": "node scripts/verify-execution-screens.mjs",
     "verify:conformance": "node scripts/verify-frontend-conformance.mjs",
     "verify:workflows": "node scripts/verify-frontend-workflows.mjs",
+    "verify:capabilities": "node scripts/verify-capability-readiness.mjs",
     "verify:foundation": "node scripts/verify-frontend-foundation.mjs",
     "validate:storybook-docs": "node scripts/validate-storybook-docs.mjs",
     "test-storybook": "vitest --project=storybook",

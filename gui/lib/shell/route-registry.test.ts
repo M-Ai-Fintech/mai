@@ -129,13 +129,12 @@ describe("MAI-98 route architecture", () => {
       .toMatchObject({ kind: "unavailable" });
   });
 
-  it("preserves protected and forbidden shell failures as restricted", async () => {
-    for (
-      const error of [
-        new APIError("hidden", { status: 404, code: "PROTECTED_NOT_FOUND" }),
-        new APIError("denied", { status: 403, code: "DEMO_ACCESS_DENIED" }),
-      ]
-    ) {
+  it("distinguishes protected-not-found from forbidden shell failures", async () => {
+    const cases = [
+      [new APIError("hidden", { status: 404, code: "PROTECTED_NOT_FOUND" }), "protected-not-found"],
+      [new APIError("denied", { status: 403, code: "DEMO_ACCESS_DENIED" }), "forbidden"],
+    ] as const;
+    for (const [error, kind] of cases) {
       await expect(resolveRouteContext(["home"], {
         dataSource: "v1",
         environment: { NEXT_PUBLIC_MAI_DEMO_READINESS_ENABLED: "true" },
@@ -145,7 +144,7 @@ describe("MAI-98 route architecture", () => {
           resolveDeal: () => Promise.reject(error),
           resolveCounts: () => Promise.reject(error),
         },
-      })).resolves.toMatchObject({ kind: "restricted" });
+      })).resolves.toMatchObject({ kind });
     }
   });
 
@@ -246,7 +245,7 @@ describe("MAI-98 route architecture", () => {
     expect(navigationForResolution(restrictedResult)).toContainEqual({
       routeId: "administration.profile",
       label: "Administration",
-      state: "restricted",
+      state: "forbidden",
       section: "secondary",
     });
   });

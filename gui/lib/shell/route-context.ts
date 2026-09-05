@@ -7,6 +7,7 @@ import {
 } from "./adapters";
 import { adapterCanaryFor } from "@/lib/adapters/feature-flags";
 import { APIError } from "@/lib/api-client/errors";
+import type { CapabilityReadiness } from "../../../src/api/contracts/capability_readiness";
 import {
   matchRoute,
   navigationRoutes,
@@ -19,7 +20,8 @@ import {
 export type RouteResolution =
   | { readonly kind: "not-found" }
   | { readonly kind: "invalid-context"; readonly reason: string }
-  | { readonly kind: "restricted" }
+  | { readonly kind: "forbidden" }
+  | { readonly kind: "protected-not-found" }
   | { readonly kind: "unavailable"; readonly reason?: string }
   | {
     readonly kind: "ready";
@@ -42,9 +44,8 @@ export type ReadyRouteResolution = Extract<RouteResolution, { kind: "ready" }>;
 export type ShellNavigationState =
   | "available"
   | "active"
-  | "restricted"
-  | "unavailable"
-  | "disabled";
+  | "disabled"
+  | Exclude<CapabilityReadiness["state"], "enabled">;
 
 export interface ShellNavigationEntry {
   readonly routeId: string;
@@ -102,42 +103,36 @@ function breadcrumbForRoute(
 
 export function navigationForResolution(
   resolution: ReadyRouteResolution,
+  readinessForRoute?: (routeId: string) => CapabilityReadiness | undefined,
 ): readonly ShellNavigationEntry[] {
-  return navigationRoutes(resolution.route.shellMode).map((definition) => {
-    const section = definition.navigation?.section ?? "primary";
-    if (!resolution.permissions.includes(definition.permission)) {
-      return {
-        routeId: definition.id,
-        label: definition.label,
-        state: "restricted",
-        section,
-      };
-    }
-    if (definition.availability === "unavailable") {
-      return {
-        routeId: definition.id,
-        label: definition.label,
-        state: "unavailable",
-        section,
-      };
-    }
-    const href = routePath(definition, resolution.routeParameters);
-    if (!href) {
-      return {
-        routeId: definition.id,
-        label: definition.label,
-        state: "disabled",
-        section,
-      };
-    }
-    return {
-      routeId: definition.id,
-      label: definition.label,
-      state: definition.id === resolution.route.id ? "active" : "available",
-      href,
-      section,
-    };
-  });
+  return navigationRoutes(resolution.route.shellMode).map((definition) =>
+    navigationEntryForDefinition(resolution, definition, readinessForRoute)
+  );
+}
+
+export function navigationEntryForDefinition(
+  resolution: ReadyRouteResolution,
+  definition: RouteDefinition,
+  readinessForRoute?: (routeId: string) => CapabilityReadiness | undefined,
+): ShellNavigationEntry {
+  const section = definition.navigation?.section ?? "primary";
+  const base = { routeId: definition.id, label: definition.label, section };
+  if (!resolution.permissions.includes(definition.permission)) {
+    return { ...base, state: "forbidden" };
+  }
+  if (definition.availability === "unavailable") {
+    return { ...base, state: "deferred" };
+  }
+  const href = routePath(definition, resolution.routeParameters);
+  if (!href) return { ...base, state: "disabled" };
+  const readiness = readinessForRoute?.(definition.id);
+  if (readiness !== undefined && readiness.state !== "enabled") {
+    return readiness.state === "degraded"
+      ? { ...base, state: readiness.state, href }
+      : { ...base, state: readiness.state };
+  }
+  const state = definition.id === resolution.route.id ? "active" : "available";
+  return { ...base, state, href };
 }
 
 export function breadcrumbsForResolution(
@@ -245,18 +240,20 @@ export async function resolveRouteContext(
       kind: error instanceof APIError ? error.kind : "unknown",
       code: error instanceof APIError ? error.code ?? "missing" : "missing",
     }));
+    if (error instanceof APIError && error.code === "PROTECTED_NOT_FOUND") {
+      return { kind: "protected-not-found" };
+    }
     if (
       error instanceof APIError &&
-      (error.kind === "forbidden" || error.kind === "unauthenticated" ||
-        error.code === "PROTECTED_NOT_FOUND")
-    ) return { kind: "restricted" };
+      (error.kind === "forbidden" || error.kind === "unauthenticated")
+    ) return { kind: "forbidden" };
     return {
       kind: "unavailable",
       reason: "The authenticated v1 shell context is unavailable.",
     };
   }
   if (!access.permissions.includes(route.permission)) {
-    return { kind: "restricted" };
+    return { kind: "forbidden" };
   }
 
   if (route.shellMode === "external") {
@@ -271,7 +268,7 @@ export async function resolveRouteContext(
   const organization = await shellAdapter.resolveOrganization();
   const dealId = parameters.dealId;
   const deal = dealId ? await shellAdapter.resolveDeal(dealId) : undefined;
-  if (deal === "inaccessible") return { kind: "restricted" };
+  if (deal === "inaccessible") return { kind: "protected-not-found" };
   if (deal === "unavailable") return { kind: "unavailable" };
 
   return {
