@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { NavigationItem, StatusIndicator } from "@/components";
+import { InlineNotice, NavigationItem, StatusIndicator } from "@/components";
 import type { AdapterReadModel, AdapterResult } from "@/lib/adapters/contracts";
+import { capabilityReadinessForRoute } from "@/lib/adapters/capability-readiness";
 import {
   breadcrumbsForResolution,
+  navigationEntryForDefinition,
   navigationForResolution,
   type RouteResolution,
 } from "@/lib/shell/route-context";
@@ -18,6 +20,10 @@ import { DealIntelligenceBody } from "@/screens/deal-intelligence/DealIntelligen
 import { DealExecutionBody } from "@/screens/deal-execution/DealExecutionBody";
 import styles from "./AppShell.module.css";
 import type { ScreenDataSource } from "@/screens/screen-contracts";
+import type {
+  CapabilityReadiness,
+  CapabilityReadinessSnapshot,
+} from "../../../src/api/contracts/capability_readiness";
 
 function entryCount(
   definition: RouteDefinition,
@@ -33,13 +39,20 @@ export function AppShell({
   resolution,
   dataSource,
   adapter,
+  capabilitySnapshot,
+  activeCapability,
 }: {
   resolution: Extract<RouteResolution, { kind: "ready" }>;
   dataSource: ScreenDataSource;
   adapter?: AdapterResult<AdapterReadModel>;
+  capabilitySnapshot?: CapabilityReadinessSnapshot;
+  activeCapability?: CapabilityReadiness;
 }) {
   const { route, organization, deal, counts } = resolution;
-  const entries = navigationForResolution(resolution);
+  const routeReadiness = capabilitySnapshot === undefined
+    ? undefined
+    : (routeId: string) => capabilityReadinessForRoute(capabilitySnapshot, routeId);
+  const entries = navigationForResolution(resolution, routeReadiness);
   const utilityEntries = shellEntryRoutes();
   const breadcrumbEntries = breadcrumbsForResolution(resolution);
   const external = route.shellMode === "external";
@@ -101,10 +114,25 @@ export function AppShell({
                 aria-label="Fixture shell entry points"
               >
                 {utilityEntries.map((definition) => {
-                  if (!resolution.permissions.includes(definition.permission)) {
-                    return null;
+                  const entry = navigationEntryForDefinition(
+                    resolution,
+                    definition,
+                    routeReadiness,
+                  );
+                  const href = entry.href ?? routePath(definition);
+                  if (entry.state !== "available" && entry.state !== "active" &&
+                    entry.state !== "degraded") {
+                    return (
+                      <NavigationItem
+                        key={definition.id}
+                        kind="button"
+                        disabled
+                        status={stateLabel(entry.state)}
+                      >
+                        {definition.label}
+                      </NavigationItem>
+                    );
                   }
-                  const href = routePath(definition);
                   if (!href) return null;
                   return (
                     <NavigationItem
@@ -113,6 +141,7 @@ export function AppShell({
                       href={href}
                       active={route.id === definition.id}
                       count={entryCount(definition, counts)}
+                      status={entry.state === "degraded" ? "Degraded" : undefined}
                     >
                       {definition.label}
                     </NavigationItem>
@@ -184,7 +213,11 @@ export function AppShell({
               )
               : null}
 
-            <main id="main-content" className={styles.main}>
+            <main
+              id="main-content"
+              className={styles.main}
+              data-capability-state={activeCapability?.state}
+            >
               <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
                 <ol>
                   {breadcrumbEntries.map((breadcrumb) => (
@@ -219,7 +252,9 @@ export function AppShell({
                 )
                 : null}
 
-              {route.implementationStatus === "screen-body"
+              {activeCapability !== undefined && activeCapability.state !== "enabled"
+                ? <CapabilityStatePanel readiness={activeCapability} />
+                : route.implementationStatus === "screen-body"
                 ? <ScreenBody resolution={resolution} dataSource={dataSource} adapter={adapter} />
                 : route.implementationStatus === "deal-intelligence"
                 ? <DealIntelligenceBody resolution={resolution} dataSource={dataSource} adapter={adapter} />
@@ -236,6 +271,29 @@ export function AppShell({
       </div>
     </div>
   );
+}
+
+function CapabilityStatePanel(
+  { readiness }: { readiness: CapabilityReadiness },
+) {
+  const restricted = readiness.state === "forbidden" ||
+    readiness.state === "protected-not-found";
+  return (
+    <section data-capability-state={readiness.state}>
+      <InlineNotice
+        role={restricted ? "restricted" : "warning"}
+        title={`${readiness.name}: ${stateLabel(readiness.state)}`}
+      >
+        {readiness.detail} {readiness.action}
+      </InlineNotice>
+    </section>
+  );
+}
+
+function stateLabel(state: string): string {
+  return state.split("-").map((part) =>
+    `${part.charAt(0).toUpperCase()}${part.slice(1)}`
+  ).join(" ");
 }
 
 function DeferredScreenPlaceholder({ owner }: { owner: string }) {

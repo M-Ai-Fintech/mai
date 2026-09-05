@@ -4,17 +4,22 @@ import type { ShellNavigationEntry } from "@/lib/shell/route-context";
 import styles from "./AppShell.module.css";
 
 function navigationItem(entry: ShellNavigationEntry): ReactNode {
-  if (entry.state === "restricted") {
+  if (entry.state === "forbidden" || entry.state === "protected-not-found") {
     return (
-      <NavigationItem key={entry.routeId} kind="button" restricted>
+      <NavigationItem
+        key={entry.routeId}
+        kind="button"
+        disabled
+        status={stateLabel(entry.state)}
+      >
         {entry.label}
       </NavigationItem>
     );
   }
 
-  if (entry.state === "unavailable" || entry.state === "disabled" || !entry.href) {
+  if (entry.state === "disabled" || !entry.href) {
     return (
-      <NavigationItem key={entry.routeId} kind="button" disabled status="Unavailable">
+      <NavigationItem key={entry.routeId} kind="button" disabled status={stateLabel(entry.state)}>
         {entry.label}
       </NavigationItem>
     );
@@ -26,10 +31,20 @@ function navigationItem(entry: ShellNavigationEntry): ReactNode {
       kind="link"
       href={entry.href}
       active={entry.state === "active"}
+      status={entry.state === "degraded" ? "Degraded" : undefined}
     >
       {entry.label}
     </NavigationItem>
   );
+}
+
+function stateLabel(state: ShellNavigationEntry["state"]): string {
+  if (state === "forbidden") return "Forbidden";
+  if (state === "protected-not-found") return "Protected not found";
+  if (state === "deferred") return "Deferred";
+  if (state === "failed") return "Failed";
+  if (state === "degraded") return "Degraded";
+  return "Unavailable";
 }
 
 export function ShellNavigation({

@@ -61,7 +61,9 @@ export async function readScreenAdapter(
   );
 }
 
-function adapterFamilyForRoute(routeId: string): AdapterFamily | undefined {
+export function adapterFamilyForRoute(
+  routeId: string,
+): AdapterFamily | undefined {
   if (routeId.startsWith("administration.")) return "settings-family";
   if (routeId.startsWith("external.")) return "external-participant";
   if (routeId.startsWith("global.")) {

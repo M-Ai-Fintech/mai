@@ -1,32 +1,10 @@
-export const adapterFamilies = [
-  "application-shell",
-  "command-center",
-  "deals-portfolio",
-  "new-deal-setup",
-  "tasks-approvals",
-  "notification-center",
-  "global-search",
-  "organizations",
-  "organization-detail",
-  "team-workspace",
-  "settings-family",
-  "external-participant",
-  "deal-overview",
-  "target-dossier",
-  "documents-vdr",
-  "diligence-decision-room",
-  "valuation-lab",
-  "matching-universe",
-  "negotiation-room",
-  "closing-control-room",
-  "agentic-workspace",
-  "deal-activity-audit",
-  "deal-team-access",
-  "deliverables-exports",
-  "deal-settings-archive",
-] as const;
+import {
+  capabilityFamilies,
+  type CapabilityFamily,
+} from "../../../src/api/contracts/capability_readiness";
 
-export type AdapterFamily = (typeof adapterFamilies)[number];
+export const adapterFamilies = capabilityFamilies;
+export type AdapterFamily = CapabilityFamily;
 export type AdapterOwner =
   | "shell"
   | "global"

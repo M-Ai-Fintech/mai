@@ -107,8 +107,8 @@ export const RestrictedAdministrationNavigation: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const restricted = canvas
-      .getAllByText("Restricted")
-      .map((label) => label.closest('[aria-disabled="true"]'))
+      .getAllByText("Forbidden")
+      .map((label) => label.closest("button[disabled]"))
       .find((item) => item?.textContent?.includes("Administration"));
     await expect(restricted).toBeDefined();
     await expect(restricted).toHaveTextContent("Administration");
@@ -143,7 +143,7 @@ export const MobileDrawerKeyboard: Story = {
 
 export const RestrictedState: Story = {
   args: { resolution: fixture(["home"]) },
-  render: () => <ShellState result={{ kind: "restricted" }} />,
+  render: () => <ShellState result={{ kind: "forbidden" }} />,
 };
 
 export const InvalidContext: Story = {

@@ -4,6 +4,11 @@ import {
   readScreenAdapter,
   type ScreenPreviousAdapters,
 } from "@/lib/adapters/screen-data";
+import {
+  capabilityReadinessForAdapter,
+  capabilityReadinessForRoute,
+  readCapabilityReadiness,
+} from "@/lib/adapters/capability-readiness";
 import { resolveRouteContext } from "@/lib/shell/route-context";
 import type { ScreenDataSource } from "@/screens/screen-contracts";
 import { cookies, headers } from "next/headers";
@@ -36,7 +41,14 @@ export default async function ShellRoute(
     v1ShellAdapter,
   });
   if (result.kind !== "ready") return <ShellState result={result} />;
-  const adapter = dataSource === "v1"
+  const capabilitySnapshot = dataSource === "v1"
+    ? await readCapabilityReadiness(requestHeaders)
+    : undefined;
+  const publishedCapability = capabilitySnapshot === undefined
+    ? undefined
+    : capabilityReadinessForRoute(capabilitySnapshot, result.route.id);
+  const adapter = dataSource === "v1" &&
+      publishedCapability?.state === "enabled"
     ? await readScreenAdapter(result, {
       environment: process.env,
       previousAdapters: previousAdapterRegistry.screens,
@@ -44,8 +56,17 @@ export default async function ShellRoute(
       headers: requestHeaders,
     })
     : undefined;
+  const activeCapability = publishedCapability === undefined
+    ? undefined
+    : capabilityReadinessForAdapter(publishedCapability, adapter);
   return (
-    <AppShell resolution={result} dataSource={dataSource} adapter={adapter} />
+    <AppShell
+      resolution={result}
+      dataSource={dataSource}
+      adapter={adapter}
+      capabilitySnapshot={capabilitySnapshot}
+      activeCapability={activeCapability}
+    />
   );
 }
 

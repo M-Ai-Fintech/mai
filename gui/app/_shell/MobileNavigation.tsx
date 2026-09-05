@@ -29,7 +29,7 @@ export function MobileNavigation({
         open={open}
         onOpenChange={setOpen}
         title="Navigation"
-        description={`${label}. Fixture-only routes.`}
+        description={`${label}. Capability states reflect executable readiness.`}
         returnFocusRef={triggerRef}
       >
         <ShellNavigation entries={entries} label={label} />

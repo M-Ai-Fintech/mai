@@ -175,6 +175,7 @@ const RUNTIME_REGISTRATION_CLASSIFICATIONS: Readonly<
     "gui/package.json#scripts.verify:execution-screens",
     "gui/package.json#scripts.verify:conformance",
     "gui/package.json#scripts.verify:workflows",
+    "gui/package.json#scripts.verify:capabilities",
     "gui/package.json#scripts.verify:foundation",
     "gui/package.json#scripts.validate:storybook-docs",
     "gui/package.json#scripts.test-storybook",
@@ -400,10 +401,10 @@ Deno.test("runtime registrations are fully classified and non-product", async ()
   const classified = classifiedEntries(RUNTIME_REGISTRATION_CLASSIFICATIONS)
     .sort();
   assertUniqueEntries(classified, "Runtime registration inventory");
-  assertEquals(classified.length, 24);
+  assertEquals(classified.length, 25);
   assertEquals(
     RUNTIME_REGISTRATION_CLASSIFICATIONS.PRESERVE_DEVELOPER.length,
-    22,
+    23,
   );
   assertEquals(RUNTIME_REGISTRATION_CLASSIFICATIONS.SHARED.length, 2);
   assertEquals(classified, discovered);

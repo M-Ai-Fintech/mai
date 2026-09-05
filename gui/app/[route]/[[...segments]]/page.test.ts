@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { capabilityDefinitions } from "../../../../src/api/contracts/capability_readiness";
 import ShellRoute from "./page";
 
 vi.mock("next/headers", () => ({
@@ -37,6 +38,9 @@ describe("ShellRoute rollback boundary", () => {
           },
           meta: { correlationId: "cor_shell", freshness: "current" },
         });
+      }
+      if (url.endsWith("/api/v1/capabilities")) {
+        return capabilityResponse(new Set(["command-center"]));
       }
       return Response.json({
         data: {
@@ -92,6 +96,9 @@ describe("ShellRoute rollback boundary", () => {
       if (url.endsWith("/api/v1/deals/deal_serra-azul")) {
         return localDealResponse();
       }
+      if (url.endsWith("/api/v1/capabilities")) {
+        return capabilityResponse(new Set());
+      }
       throw new Error(`Unexpected local reload request: ${url}`);
     });
 
@@ -101,6 +108,7 @@ describe("ShellRoute rollback boundary", () => {
     expect(firstLoad).toContain("Local workspace first load");
     expect(secondLoad).toContain("Local workspace after reload");
     expect(secondLoad).toContain("Serra Azul local mandate");
+    expect(secondLoad).toContain('data-capability-state="deferred"');
     expect(shellReadCount).toBe(2);
     expect(
       requests.every(({ session }) =>
@@ -142,6 +150,24 @@ async function renderLocalOverview(): Promise<string> {
     }),
   });
   return renderToStaticMarkup(element);
+}
+
+function capabilityResponse(enabled: ReadonlySet<string>): Response {
+  return Response.json({
+    data: {
+      schemaVersion: 1,
+      capabilities: capabilityDefinitions.map(({ family, name, ownerAction }) => ({
+        family,
+        name,
+        state: enabled.has(family) ? "enabled" : "deferred",
+        detail: enabled.has(family)
+          ? "The executable capability contract is available."
+          : "No executable capability contract is published yet.",
+        action: enabled.has(family) ? "Open the capability." : ownerAction,
+      })),
+    },
+    meta: { correlationId: "cor_capability", freshness: "current" },
+  });
 }
 
 function localShellResponse(readCount: number): Response {

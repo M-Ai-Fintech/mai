@@ -177,7 +177,8 @@ const context = readFileSync(
 for (
   const state of [
     "invalid-context",
-    "restricted",
+    "forbidden",
+    "protected-not-found",
     "unavailable",
     "not-found",
     "ready",

@@ -36,10 +36,7 @@ import {
   type DemoReadinessV1RouteDependencies,
   handleDemoReadinessV1Route,
 } from "./v1/demo_readiness_routes.ts";
-import {
-  handleHealthRequest,
-  RuntimeReadiness,
-} from "../platform/operations/health.ts";
+import { RuntimeReadiness } from "../platform/operations/health.ts";
 import {
   logOperationalEvent,
   safeErrorCode,
@@ -74,6 +71,10 @@ import {
   type DealManagementInput,
   resolveDealManagementComposition,
 } from "./workspace_shell_composition.ts";
+import type { ExecutableCapabilityDependencies } from "./capability_readiness.ts";
+import type { CapabilityFamily } from "./contracts/capability_readiness.ts";
+import { executableCapabilityDependencies } from "./capability_composition.ts";
+import { handleOperationalRoute } from "./operational_routes.ts";
 
 export interface WaveGRouteDependencies {
   readonly valuation?: ValuationV1RouteDependencies;
@@ -92,6 +93,9 @@ export type WaveJRouteDependencies = FinancialRiskServerRouteDependencies;
 export type { CoreWorkflowRouteDependencies } from "./core_workflow_routes.ts";
 
 export interface ApiServerOptions {
+  readonly capabilityFailures?: Readonly<
+    Partial<Record<CapabilityFamily, true>>
+  >;
   readonly coreWorkflow?: CoreWorkflowRouteDependencies;
   readonly demoReadiness?: DemoReadinessV1RouteDependencies;
   readonly dealManagement?: DealManagementInput;
@@ -126,18 +130,20 @@ async function routeRequest(
   demoReadiness: DemoReadinessV1RouteDependencies | undefined,
   workspaceShell: WorkspaceShellRouteDependencies | undefined,
   readiness: RuntimeReadiness,
+  capabilityDependencies: ExecutableCapabilityDependencies,
+  capabilityFailures: Readonly<Partial<Record<CapabilityFamily, true>>>,
 ): Promise<Response> {
   const headers = apiCorsHeaders();
   const correlationId = requestCorrelationId(request);
   if (request.method === "OPTIONS") return new Response(null, { headers });
-  const healthResponse = handleHealthRequest(request, readiness);
-  if (healthResponse) return withCorrelationId(healthResponse, correlationId);
-  if (!readiness.isAcceptingTraffic()) {
-    return withCorrelationId(
-      jsonResponse({ error: "api_draining" }, headers, 503),
-      correlationId,
-    );
-  }
+  const operationalResponse = handleOperationalRoute(
+    request,
+    readiness,
+    { dependencies: capabilityDependencies, failures: capabilityFailures },
+    correlationId,
+    headers,
+  );
+  if (operationalResponse) return operationalResponse;
   try {
     return withCorrelationId(
       await routedResponse(
@@ -366,6 +372,11 @@ export function createApiServer(
   const readiness = new RuntimeReadiness("api");
   const workspaceShell = options.workspaceShell ??
     configuredWorkspaceShell(dealManagement);
+  const capabilityDependencies = executableCapabilityDependencies(
+    dealManagement,
+    options,
+    workspaceShell,
+  );
   return {
     coreWorkflow: options.coreWorkflow ?? {},
     demoReadiness: options.demoReadiness,
@@ -388,6 +399,8 @@ export function createApiServer(
         options.demoReadiness,
         workspaceShell,
         readiness,
+        capabilityDependencies,
+        options.capabilityFailures ?? {},
       ),
   };
 }
@@ -475,6 +488,7 @@ export function createExecutableApiServer(
       demoReadiness,
       waveH: {},
       waveJ: options.waveJ,
+      capabilityFailures: { "negotiation-room": true },
     });
   }
 }
